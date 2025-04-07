@@ -1,0 +1,15 @@
+@import "tailwindcss";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@theme {
+  --color-btnGreen: #62df90;
+  --color-btnOrange: #f6c274;
+  --color-btnRed: #eb1c24;
+  --font-main: "Mulish", sans-serif;
+}
+html {
+  background-color: #f4f4f4;
+}

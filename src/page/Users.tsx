@@ -1,14 +1,14 @@
 import React from "react";
-import { useGetUser } from "../graphql/hooks/user";
+import { useGetUsers } from "../graphql/hooks/user";
 
 const Users = () => {
-  const { users, loading, error, refetch } = useGetUser("", 10, 0);
+  const { users, loading, error, refetch } = useGetUsers("", 10, 0);
 
   if (loading) return <p>Loading...</p>;
   if (error)
     return (
       <div>
-        ERORR!:
+        ERROR!:
         <button
           onClick={() => {
             console.log("refetching...");

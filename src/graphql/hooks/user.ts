@@ -1,7 +1,7 @@
 import { useQuery } from "@apollo/client";
 import { GET_USERS } from "../query/user";
 
-export const useGetUser = (
+export const useGetUsers = (
   query: string = "",
   itemsPerPage: number = 10,
   currentPage: number = 0

@@ -1,28 +1,14 @@
 import { useState } from "react";
 import { Link } from "react-router";
-
-const categories = [
-  "БЕЗОПАСНОСТ",
-  "ОКОЛНА СРЕДА",
-  "ДОКУМЕНТИ",
-  "СОФТУЕРНИ ПРОДУКТИ",
-  "ДОСТАВКИ",
-  "ОРГАНИЗАЦИЯ",
-  "КАЧЕСТВО НА МАТЕРИАЛИ",
-  "КАЧЕСТВО НА РАБОТА",
-  "МАШИНИ И ИНСТРУМЕНТИ",
-  "КАПАЦИТЕТ",
-  "ТЕХНОЛОГИЯ",
-  "МАТЕРИАЛИ",
-  "РАБОТА В ЕКИП",
-  "КВАЛИФИКАЦИЯ",
-  "РАЗХОДИ",
-  "ДРУГО",
-];
+import { useGetCategories } from "../graphql/hooks/category";
 
 const CaseSubmittion = () => {
+  const { categories, loading, error } = useGetCategories("", 10, 0); // Assuming the hook returns { data, loading, error }
   const [priority, setPriority] = useState("Low");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error loading categories</div>;
 
   const toggleCategory = (category: string) => {
     setSelectedCategories((prev) =>
@@ -114,18 +100,18 @@ const CaseSubmittion = () => {
           <div>
             <h3 className="font-semibold mb-2">Отнася се за</h3>
             <div className="flex flex-wrap gap-2">
-              {categories.map((categ) => (
+              {categories.getAllCategories.map((category: { name: string }) => (
                 <button
-                  key={categ}
+                  key={category.name}
                   type="button"
-                  onClick={() => toggleCategory(categ)}
+                  onClick={() => toggleCategory(category.name)}
                   className={`px-3 py-1 border rounded-full text-sm transition-colors duration-200 cursor-pointer ${
-                    selectedCategories.includes(categ)
+                    selectedCategories.includes(category.name)
                       ? "bg-gray-400 text-white hover:bg-gray-500"
                       : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"
                   }`}
                 >
-                  {categ}
+                  {category.name}
                 </button>
               ))}
             </div>

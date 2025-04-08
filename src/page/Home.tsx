@@ -19,14 +19,18 @@ const CaseForm = ({
       </div>
       <div className="space-y-4">
         <div>
-          <button className="bg-btnRed hover:bg-red-200 text-white rounded-lg lg:w-88 w-72 py-3 px-5 uppercase font-bold shadow-xl lg:text-2xl transition-all duration-300">
-            Проблем
-          </button>
+          <Link to="/case-submittion">
+            <button className="bg-btnRed hover:bg-red-200 text-white rounded-lg lg:w-88 w-72 py-3 px-5 uppercase font-bold shadow-xl lg:text-2xl transition-all duration-300">
+              Проблем
+            </button>
+          </Link>
         </div>
         <div>
-          <button className="bg-btnGreen hover:bg-green-200 text-white rounded-lg lg:w-88 w-72 py-3 px-5  uppercase font-bold shadow-xl lg:text-2xl transition-all duration-300">
-            Подобрение
-          </button>
+          <Link to="/case-submittion">
+            <button className="bg-btnGreen hover:bg-green-200 text-white rounded-lg lg:w-88 w-72 py-3 px-5  uppercase font-bold shadow-xl lg:text-2xl transition-all duration-300">
+              Подобрение
+            </button>
+          </Link>
         </div>
       </div>
       <div className="mt-6 w-80 text-center">

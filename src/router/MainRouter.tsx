@@ -1,6 +1,7 @@
 import { createBrowserRouter, RouterProvider } from "react-router";
 import Home from "../page/Home";
 import Users from "../page/Users";
+import CaseSubmittion from "../page/CaseSubmittion";
 
 const mainRouter = createBrowserRouter([
   {
@@ -10,6 +11,10 @@ const mainRouter = createBrowserRouter([
   {
     path: "/users",
     element: <Users />,
+  },
+  {
+    path: "/case-submittion",
+    element: <CaseSubmittion />,
   },
 ]);
 

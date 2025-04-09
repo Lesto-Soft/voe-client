@@ -1,19 +1,9 @@
 import { useQuery } from "@apollo/client";
-import { GET_CATEGORIES } from "../query/category";
+import { GET_ACTIVE_CATEGORIES } from "../query/category";
 
-export const useGetCategories = (
-  query: string = "",
-  itemsPerPage: number = 50,
-  currentPage: number = 0
-) => {
-  const { loading, error, data, refetch } = useQuery(GET_CATEGORIES, {
-    variables: {
-      input: {
-        itemsPerPage,
-        currentPage,
-        query,
-      },
-    },
+export const useGetActiveCategories = () => {
+  const { loading, error, data, refetch } = useQuery(GET_ACTIVE_CATEGORIES, {
+    // fetchPolicy: "cache-first", //if a new category is updated it will not be shown until the page is refreshed manually
   });
   return {
     loading,

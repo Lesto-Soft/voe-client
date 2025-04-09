@@ -19,14 +19,14 @@ const CaseForm = ({
       </div>
       <div className="space-y-4">
         <div>
-          <Link to="/case-submittion">
+          <Link to={`/submit-case?type=problem`}>
             <button className="bg-btnRed hover:bg-red-200 text-white rounded-lg lg:w-88 w-72 py-3 px-5 uppercase font-bold shadow-xl lg:text-2xl transition-all duration-300">
               Проблем
             </button>
           </Link>
         </div>
         <div>
-          <Link to="/case-submittion">
+          <Link to="/submit-case?type=suggestion">
             <button className="bg-btnGreen hover:bg-green-200 text-white rounded-lg lg:w-88 w-72 py-3 px-5  uppercase font-bold shadow-xl lg:text-2xl transition-all duration-300">
               Подобрение
             </button>

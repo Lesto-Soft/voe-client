@@ -1,14 +1,27 @@
 import { useState } from "react";
 import { Link } from "react-router";
-import { useGetCategories } from "../graphql/hooks/category";
+import { useLocation } from "react-router";
+import { useGetActiveCategories } from "../graphql/hooks/category";
+
+export type CaseType = "problem" | "suggestion";
 
 const CaseSubmittion = () => {
-  const { categories, loading, error } = useGetCategories("", 10, 0); // Assuming the hook returns { data, loading, error }
+  const { categories, loading, error } = useGetActiveCategories(); // Assuming the hook returns { data, loading, error }
   const [priority, setPriority] = useState("Low");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
+  const { search } = useLocation();
+  const queryParams = new URLSearchParams(search);
+  const caseType = queryParams.get("type") as CaseType | null;
+
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error loading categories</div>;
+
+  // console.log(caseType);
+
+  if (!caseType || (caseType !== "problem" && caseType !== "suggestion")) {
+    return <div>Invalid case type</div>;
+  }
 
   const toggleCategory = (category: string) => {
     setSelectedCategories((prev) =>
@@ -100,20 +113,22 @@ const CaseSubmittion = () => {
           <div>
             <h3 className="font-semibold mb-2">Отнася се за</h3>
             <div className="flex flex-wrap gap-2">
-              {categories.getAllCategories.map((category: { name: string }) => (
-                <button
-                  key={category.name}
-                  type="button"
-                  onClick={() => toggleCategory(category.name)}
-                  className={`px-3 py-1 border rounded-full text-sm transition-colors duration-200 cursor-pointer ${
-                    selectedCategories.includes(category.name)
-                      ? "bg-gray-400 text-white hover:bg-gray-500"
-                      : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"
-                  }`}
-                >
-                  {category.name}
-                </button>
-              ))}
+              {categories.getLeanActiveCategories.map(
+                (category: { name: string }) => (
+                  <button
+                    key={category.name}
+                    type="button"
+                    onClick={() => toggleCategory(category.name)}
+                    className={`px-3 py-1 border rounded-full text-sm transition-colors duration-200 cursor-pointer ${
+                      selectedCategories.includes(category.name)
+                        ? "bg-gray-400 text-white hover:bg-gray-500"
+                        : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"
+                    }`}
+                  >
+                    {category.name}
+                  </button>
+                )
+              )}
             </div>
           </div>
         </div>

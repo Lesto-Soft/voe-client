@@ -13,7 +13,7 @@ const mainRouter = createBrowserRouter([
     element: <Users />,
   },
   {
-    path: "/case-submittion",
+    path: "/submit-case",
     element: <CaseSubmittion />,
   },
 ]);

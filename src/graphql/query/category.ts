@@ -8,9 +8,9 @@ fragment CategoryFragment on Category {
       suggestion
 }`;
 
-export const GET_CATEGORIES = gql`
-  query GetAllCategories($input: getAllInput) {
-    getAllCategories(input: $input) {
+export const GET_ACTIVE_CATEGORIES = gql`
+  query GetAllActiveCategories {
+    getLeanActiveCategories {
       ...CategoryFragment
     }
   }

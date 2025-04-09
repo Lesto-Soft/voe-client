@@ -137,23 +137,35 @@ const CaseSubmittion: React.FC = () => {
   // 5. EVENT HANDLERS and other component logic (Not Hooks)
   // ===========================================================
   const getCategoryClass = (categoryName: string): string => {
-    /* ... as before ... */
     const isSelected = selectedCategories.includes(categoryName);
+    const isDisabled = !isSelected && selectedCategories.length >= 3;
+
     const commonClasses =
       "px-3 py-1 border rounded-full text-sm transition-colors duration-200 cursor-pointer";
-    const styles: Record<CaseType, { selected: string; unselected: string }> = {
+
+    const styles: Record<
+      CaseType,
+      { selected: string; unselected: string; disabled: string }
+    > = {
       problem: {
         selected: `bg-red-500 text-white border-red-500 hover:bg-red-600`,
         unselected: `bg-white text-gray-700 border-gray-300 hover:bg-red-100 hover:border-red-300`,
+        disabled: `bg-gray-100 text-gray-400 border-gray-200 hover:cursor-default`,
       },
       suggestion: {
         selected: `bg-green-500 text-white border-green-500 hover:bg-green-600`,
         unselected: `bg-white text-gray-700 border-gray-300 hover:bg-green-100 hover:border-green-300`,
+        disabled: `bg-gray-100 text-gray-400 border-gray-200 hover:cursor-default`,
       },
     };
-    // caseType is guaranteed to be valid here
-    const state = isSelected ? "selected" : "unselected";
-    return `${commonClasses} ${styles[caseType][state]}`; // Removed optional chaining as caseType is validated
+
+    const state = isSelected
+      ? "selected"
+      : isDisabled
+      ? "disabled"
+      : "unselected";
+
+    return `${commonClasses} ${styles[caseType][state]}`;
   };
 
   const getSendButtonClass = (): string => {
@@ -167,12 +179,17 @@ const CaseSubmittion: React.FC = () => {
     return `${commonClasses} ${styles[caseType]}`;
   };
 
+  const MAX_SELECTED_CATEGORIES = 3; // Limit for selected categories
   const toggleCategory = (categoryName: string): void => {
-    setSelectedCategories((prev) =>
-      prev.includes(categoryName)
-        ? prev.filter((c) => c !== categoryName)
-        : [...prev, categoryName]
-    );
+    setSelectedCategories((prev) => {
+      if (prev.includes(categoryName)) {
+        return prev.filter((c) => c !== categoryName); // unselect
+      } else if (prev.length < MAX_SELECTED_CATEGORIES) {
+        return [...prev, categoryName]; // select new
+      } else {
+        return prev; // ignore if already 3 selected
+      }
+    });
   };
 
   const openHelpModal = (): void => setIsHelpModalOpen(true);
@@ -299,6 +316,10 @@ const CaseSubmittion: React.FC = () => {
                         type="button"
                         onClick={() => toggleCategory(category.name)}
                         className={getCategoryClass(category.name)}
+                        disabled={
+                          !selectedCategories.includes(category.name) &&
+                          selectedCategories.length >= MAX_SELECTED_CATEGORIES
+                        }
                       >
                         {category.name}
                       </button>

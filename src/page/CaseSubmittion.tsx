@@ -2,8 +2,34 @@ import React, { useState, useMemo, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router"; // Assuming React Router v6+ for useNavigate
 import { ApolloError } from "@apollo/client";
 import { useGetActiveCategories } from "../graphql/hooks/category";
-import { useCreateCase, CreateCaseInput } from "../graphql/hooks/case"; // Import the hook and type
+import {
+  useCreateCase,
+  CreateCaseInput,
+  AttachmentInput,
+} from "../graphql/hooks/case"; // Import the hook and type
 import HelpModal from "../components/modals/HelpModal";
+
+// Add this helper function inside or outside your component
+const readFileAsBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      // reader.result contains the Data URL: "data:mime/type;base64,BASE64_STRING"
+      // Extract only the base64 part after the comma
+      const base64String = (reader.result as string).split(",")[1];
+      if (base64String) {
+        resolve(base64String);
+      } else {
+        reject(
+          new Error("Could not extract base64 string from file reader result.")
+        );
+      }
+    };
+    reader.onerror = (error) => reject(error);
+    reader.readAsDataURL(file); // Read the file as a data URL
+  });
+};
+
 // --- Helper function for finding category IDs ---
 const findCategoryIds = (
   selectedNames: string[],
@@ -197,30 +223,64 @@ const CaseSubmittion: React.FC = () => {
   // --- Handle Form Submission ---
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setSubmissionError(null); // Clear previous errors
-    setIsSubmitting(true);
+    setSubmissionError(null); // Clear previous errors at the start
 
     // --- Basic Frontend Validation ---
     if (!content.trim()) {
       setSubmissionError("Описанието е задължително.");
-      setIsSubmitting(false);
-      return;
+      return; // Stop submission
     }
     if (selectedCategories.length === 0) {
       setSubmissionError("Моля, изберете поне една категория.");
-      setIsSubmitting(false);
+      return; // Stop submission
+    }
+    if (!caseTypeParam) {
+      // Should ideally not happen if page rendered correctly, but safe check
+      setSubmissionError(
+        "Невалиден тип на случая. Моля, проверете URL адреса."
+      );
       return;
     }
+    // TODO: Replace MOCK_USER_ID check with your actual user validation
     if (!MOCK_USER_ID) {
-      // TODO: Implement proper user ID check
       setSubmissionError(
         "Не може да се идентифицира потребител. Моля, влезте отново."
       );
-      setIsSubmitting(false);
-      return;
+      return; // Stop submission
     }
 
-    // --- Map selected category names to their IDs ---
+    // Set submitting state *after* initial validation checks pass
+    setIsSubmitting(true);
+
+    // --- Prepare Attachments (Read files to base64) ---
+    let attachmentInputs: AttachmentInput[] = [];
+    try {
+      attachmentInputs = await Promise.all(
+        // 'attachments' state holds the File objects selected by the user
+        attachments.map(async (file): Promise<AttachmentInput> => {
+          const base64Data = await readFileAsBase64(file);
+          return {
+            filename: file.name,
+            file: base64Data, // The base64 encoded string
+          };
+        })
+      );
+      console.log(
+        "Client: Prepared attachment inputs with base64 data for:",
+        attachmentInputs.map((a) => a.filename)
+      );
+    } catch (fileReadError) {
+      console.error("Client: Error reading files to base64:", fileReadError);
+      setSubmissionError(
+        "Грешка при обработка на прикачени файлове. Моля, опитайте отново."
+      );
+      setIsSubmitting(false); // Reset submitting state
+      return; // Stop submission if file reading fails
+    }
+
+    // --- Find Category IDs ---
+    // 'categoryList' state holds the category data fetched initially
+    // 'selectedCategories' state holds the names of selected categories
     const categoryIds = findCategoryIds(selectedCategories, categoryList);
     if (categoryIds.length !== selectedCategories.length) {
       console.error("Mismatch finding category IDs", {
@@ -231,74 +291,76 @@ const CaseSubmittion: React.FC = () => {
       setSubmissionError(
         "Грешка при обработката на избраните категории. Опитайте отново."
       );
-      setIsSubmitting(false);
-      return;
+      setIsSubmitting(false); // Reset submitting state
+      return; // Stop submission
     }
 
-    // --- Prepare Input for Mutation ---
-    // TODO: Implement actual file upload logic here.
-    // This example assumes `uploadAttachmentFiles` returns string identifiers (like URLs or IDs)
-    // For now, we'll pass empty array or file names as placeholders.
-    // You'll need to upload `attachments` (File objects) first.
-    const attachmentIdentifiers: string[] = attachments.map(
-      (file) => file.name
-    ); // Placeholder
-
-    // Inside handleSubmit, right before the try block:
+    // --- Prepare Final Input Object for GraphQL Mutation ---
+    // Assumes CreateCaseInput type is defined matching the hook and schema
     const input: CreateCaseInput = {
       content: content.trim(),
-      // date: ..., // Removed as likely set server-side
-      type: caseTypeParam, // Make sure this is "PROBLEM" or "SUGGESTION"
-      priority: priority, // Make sure this is "LOW", "MEDIUM", or "HIGH"
-      categories: categoryIds, // The result from findCategoryIds
-      creator: MOCK_USER_ID, // Or the actual user ID
-      attachments: attachmentIdentifiers, // Result from upload logic/placeholders
+      type: caseTypeParam, // Already validated non-null
+      priority: priority, // State variable holding "LOW", "MEDIUM", or "HIGH"
+      categories: categoryIds,
+      creator: MOCK_USER_ID, // TODO: Replace with actual authenticated user ID
+      attachments: attachmentInputs, // Use the array of {filename, file} objects
     };
 
+    // --- Logging before sending ---
     console.log("------ Client: Sending Input ------");
-    console.log("Type:", input.type, "(Expected: PROBLEM | SUGGESTION)");
-    console.log("Priority:", input.priority, "(Expected: LOW | MEDIUM | HIGH)");
-    console.log("Creator:", input.creator, "(Expected: Non-null ID string)");
+    // Log attachment info without logging full base64 data
     console.log(
-      "Categories:",
-      JSON.stringify(input.categories),
-      "(Expected: Array of ID strings, e.g., [])"
+      "Attachments being sent:",
+      JSON.stringify(
+        input.attachments?.map((a) => ({
+          filename: a.filename,
+          data_length: a.file.length,
+        }))
+      )
     );
-    console.log("Content Length:", input.content.length);
-    console.log("Attachments:", JSON.stringify(input.attachments));
-    console.log("Full Input Object:", JSON.stringify(input, null, 2));
+    // Log the rest of the input object
+    console.log(
+      "Full Input Object (excluding full file data):",
+      JSON.stringify(
+        { ...input, attachments: input.attachments?.map((a) => a.filename) },
+        null,
+        2
+      )
+    );
     console.log("---------------------------------");
 
+    // --- Execute GraphQL Mutation ---
     try {
-      setIsSubmitting(true); // Move this here maybe?
-      const response = await executeCreateCase(input); // The actual call
-      console.log("Case created successfully:", response);
-      alert("Сигналът е изпратен успешно!"); // Simple feedback
+      // 'executeCreateCase' is the mutation function obtained from the useCreateCase hook
+      const newCase = await executeCreateCase(input);
+      console.log("Case created successfully:", newCase); // Log the response data
+      alert("Сигналът е изпратен успешно!"); // User feedback
 
-      // --- Post-submission actions ---
-      // 1. Clear the form
+      // --- Post-submission actions (Clear form, navigate) ---
       setContent("");
       setPriority("LOW");
       setSelectedCategories([]);
-      setAttachments([]);
-      // setUsername(""); // Clear temporary fields if used
-      // setFullname("");
-
-      // 2. Optionally navigate away (e.g., to a success page or dashboard)
-      // navigate("/"); // Navigate to home page after success
+      setAttachments([]); // Clear selected file objects from state
+      // Clear temporary username/fullname if they are still used
+      setUsername("");
+      setFullname("");
+      // 'navigate' is obtained from the useNavigate hook (react-router-dom v6+)
+      navigate("/"); // Navigate to home page or a success page
     } catch (err) {
-      // Error handling is mostly done by the useEffect hook watching createCaseError
+      // --- Handle Submission Error ---
       console.error("Submission catch block:", err);
-      // If the error wasn't automatically caught by ApolloError, set it manually
-      if (!createCaseError) {
-        setSubmissionError(
-          err instanceof Error
-            ? err.message
-            : "An unexpected error occurred during submission."
-        );
-      }
+      // Prioritize using the specific error state from the Apollo useMutation hook if available
+      const errorMsg =
+        createCaseError?.message ||
+        (err instanceof Error
+          ? err.message
+          : "An unexpected error occurred during submission.");
+      setSubmissionError(`Failed to create case: ${errorMsg}`);
+      // Let the finally block handle setIsSubmitting(false)
     } finally {
-      setIsSubmitting(false); // Ensure submitting state is reset
+      // --- Cleanup ---
+      // Ensure the submitting state is always reset, regardless of success or error
+      setIsSubmitting(false);
     }
   };
 

@@ -1,11 +1,16 @@
 import { useMutation } from "@apollo/client";
 import { CREATE_CASE } from "../mutation/case";
 
+export type AttachmentInput = {
+  filename: string;
+  file: string; // base64 string
+};
+
 export type CreateCaseInput = {
   content: string;
   type: "PROBLEM" | "SUGGESTION";
   priority: "LOW" | "MEDIUM" | "HIGH";
-  attachments?: string[];
+  attachments?: AttachmentInput[];
   categories: string[];
   creator: string;
 };

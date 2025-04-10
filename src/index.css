@@ -4,8 +4,10 @@
 
 @theme {
   --color-btnGreen: #62df90;
+  --color-btnGreenHover: #449c64;
   --color-btnOrange: #f6c274;
   --color-btnRed: #eb1c24;
+  --color-btnRedHover: #a41319;
   --font-main: "Mulish", sans-serif;
 }
 html {

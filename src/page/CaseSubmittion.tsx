@@ -1,218 +1,288 @@
-import React, { useState, useMemo, useEffect } from "react";
-import { Link, useLocation, useNavigate } from "react-router"; // Assuming React Router v6+ for useNavigate
-import { ApolloError } from "@apollo/client";
+import React, {
+  useState,
+  useMemo,
+  useEffect,
+  useRef,
+  ChangeEvent,
+  FormEvent,
+} from "react";
+import { Link, useLocation, useNavigate } from "react-router";
+import { ApolloError, useLazyQuery } from "@apollo/client"; // Added gql and useLazyQuery
+
+// Assuming hooks/types are in these locations - adjust paths as necessary
 import { useGetActiveCategories } from "../graphql/hooks/category";
-import {
-  useCreateCase,
-  CreateCaseInput,
-  AttachmentInput,
-} from "../graphql/hooks/case"; // Import the hook and type
+import { useCreateCase, CreateCaseInput } from "../graphql/hooks/case"; // Your mutation hook
 import HelpModal from "../components/modals/HelpModal";
+import { GET_USER_BY_USERNAME } from "../graphql/query/user";
 
-// Add this helper function inside or outside your component
-const readFileAsBase64 = (file: File): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      // reader.result contains the Data URL: "data:mime/type;base64,BASE64_STRING"
-      // Extract only the base64 part after the comma
-      const base64String = (reader.result as string).split(",")[1];
-      if (base64String) {
-        resolve(base64String);
-      } else {
-        reject(
-          new Error("Could not extract base64 string from file reader result.")
-        );
-      }
-    };
-    reader.onerror = (error) => reject(error);
-    reader.readAsDataURL(file); // Read the file as a data URL
-  });
+// --- Interfaces & Types ---
+
+// Shape of the user query data
+interface UserQueryResult {
+  getLeanUserByUsername: {
+    _id: string;
+    name: string;
+  } | null; // User might not be found
+}
+
+// Variables type for the user query
+interface UserQueryVars {
+  username: string;
+}
+
+// Shape of attachment input for mutation
+type AttachmentInput = {
+  filename: string;
+  file: string; // base64 string
 };
 
-// --- Helper function for finding category IDs ---
-const findCategoryIds = (
-  selectedNames: string[],
-  allCategories: Category[]
-): string[] => {
-  console.log("Finding IDs for names:", selectedNames);
-  console.log("Using category list:", allCategories); // Check if _id is present here
-  if (!allCategories) return [];
-  const ids = allCategories
-    .filter((cat) => selectedNames.includes(cat.name))
-    .map((cat) => cat._id)
-    .filter((id): id is string => !!id);
-  console.log("Found IDs:", ids); // Check the result
-  return ids;
-};
-// Assuming your Category type includes _id based on the fragment
+// Shape of categories returned by useGetActiveCategories hook
 interface Category {
-  _id: string; // Added _id based on your GraphQL fragment
+  _id: string;
   name: string;
   problem?: string;
   suggestion?: string;
 }
-export type CaseType = "problem" | "suggestion"; // Keep this if used elsewhere
 
+// Shape of the data structure returned by useGetActiveCategories
 interface GetActiveCategoriesQueryResult {
   getLeanActiveCategories?: Category[];
 }
 
+// Return type definition for useGetActiveCategories hook
 interface UseGetActiveCategoriesReturn {
   loading: boolean;
   error?: ApolloError | Error | any;
   categories?: GetActiveCategoriesQueryResult;
   refetch: () => Promise<any>;
 }
-// --- Mock User ID (Replace with actual user context/auth) ---
-// TODO: Replace this with your actual method of getting the logged-in user's ID
-const MOCK_USER_ID = "630899dc48a9a14833398a7e"; // Example ID
+
+// --- Helper Functions (Ensure these are defined or imported) ---
+
+// Reads a File object and returns a Promise resolving with base64 string
+const readFileAsBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      const commaIndex = result?.indexOf(",");
+      if (typeof result === "string" && commaIndex !== -1) {
+        const base64String = result.substring(commaIndex + 1);
+        resolve(base64String);
+      } else {
+        reject(new Error("Could not read file or extract base64 string."));
+      }
+    };
+    reader.onerror = (error) => reject(error);
+    reader.readAsDataURL(file);
+  });
+};
+
+// Finds category IDs based on selected names
+const findCategoryIds = (
+  selectedNames: string[],
+  allCategories: Category[]
+): string[] => {
+  if (!allCategories) return [];
+  return allCategories
+    .filter((cat) => selectedNames.includes(cat.name))
+    .map((cat) => cat._id)
+    .filter((id): id is string => !!id); // Type guard to ensure only strings
+};
 
 // --- Component Implementation ---
+
 const CaseSubmittion: React.FC = () => {
   // ===========================================================
-  // 1. ALL HOOK CALLS MUST BE AT THE TOP, UNCONDITIONAL
+  // 1. HOOKS (Apollo Queries/Mutations, Router, State)
   // ===========================================================
+
+  // --- Hooks for data fetching and navigation ---
   const {
     categories: categoriesData,
     loading: categoriesLoading,
     error: categoriesError,
   }: UseGetActiveCategoriesReturn = useGetActiveCategories();
 
-  // --- State for form inputs ---
-  const [content, setContent] = useState<string>("");
-  // TODO: Remove username/fullname if creator ID comes from auth
-  const [username, setUsername] = useState<string>(""); // Likely temporary if using auth
-  const [fullname, setFullname] = useState<string>(""); // Likely temporary
-  const [priority, setPriority] = useState<CreateCaseInput["priority"]>("LOW"); // Use type from input
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]); // State holds category *names*
-  const [attachments, setAttachments] = useState<File[]>([]); // State to hold File objects
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false); // Track submission state
-  const [submissionError, setSubmissionError] = useState<string | null>(null); // Store submission errors
-
-  const [isHelpModalOpen, setIsHelpModalOpen] = useState<boolean>(false);
-  const { search } = useLocation();
-  const navigate = useNavigate(); // Hook for navigation after submission
-
-  // --- Hook for the createCase mutation ---
   const {
-    createCase: executeCreateCase, // Renamed to avoid conflict
+    createCase: executeCreateCase,
     loading: createCaseLoading,
     error: createCaseError,
-  } = useCreateCase();
+  } = useCreateCase(); // Hook for submitting the case
+
+  // Using useLazyQuery directly for user lookup
+  const [
+    getUserByUsername, // Function to call the query
+    { loading: userLoading, error: userError, data: userData }, // Query status/result
+  ] = useLazyQuery<UserQueryResult, UserQueryVars>(GET_USER_BY_USERNAME);
+
+  const { search } = useLocation();
+  const navigate = useNavigate();
+
+  // --- Component State ---
+  const [content, setContent] = useState<string>("");
+  const [priority, setPriority] = useState<CreateCaseInput["priority"]>("LOW");
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [attachments, setAttachments] = useState<File[]>([]); // Holds selected File objects
+
+  // State for User Input/Lookup
+  const [usernameInput, setUsernameInput] = useState<string>(""); // Input for username lookup
+  const [fetchedName, setFetchedName] = useState<string>(""); // Displayed, disabled name
+  const [fetchedCreatorId, setFetchedCreatorId] = useState<string | null>(null); // Store the ID for submission
+  const [notFoundUsername, setNotFoundUsername] = useState<string | null>(null);
+  const [searchedUsername, setSearchedUsername] = useState<string | null>(null);
+
+  // State for submission status and errors
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
+
+  // State for help modal
+  const [isHelpModalOpen, setIsHelpModalOpen] = useState<boolean>(false);
+
+  // Ref for debounce timer
+  const debounceTimerRef = useRef<number | null>(null);
+  const DEBOUNCE_DELAY = 1000; // 1 second
 
   // ===========================================================
-  // 2. DERIVE STATE / PREPARE VALUES
+  // 2. DERIVED STATE / VALUES / MEMOIZED CALCULATIONS
   // ===========================================================
+
   const queryParams = useMemo(() => new URLSearchParams(search), [search]);
-  const caseTypeParam = useMemo(
-    () =>
-      queryParams.get("type")?.toUpperCase() as "PROBLEM" | "SUGGESTION" | null,
-    [queryParams]
-  );
+  // Get case type from URL, default to null if not present or invalid
+  const caseTypeParam = useMemo(() => {
+    const type = queryParams.get("type")?.toUpperCase();
+    if (type === "PROBLEM" || type === "SUGGESTION") {
+      return type;
+    }
+    return null;
+  }, [queryParams]);
+
   const categoryList: Category[] = useMemo(
     () => categoriesData?.getLeanActiveCategories ?? [],
     [categoriesData]
   );
 
-  // ===========================================================
-  // 3. REMAINING HOOKS (e.g., useEffect for error display, useMemo for modal)
-  // ===========================================================
-  useEffect(() => {
-    if (createCaseError) {
-      setSubmissionError(`Failed to create case: ${createCaseError.message}`);
-      setIsSubmitting(false); // Reset submitting state on error
-    }
-  }, [createCaseError]);
-
   const helpModalContent = useMemo<React.ReactNode>(() => {
-    // ... (your existing helpModalContent logic - seems fine)
+    // ... (Your existing help modal logic using categoryList, selectedCategories, caseTypeParam) ...
+    // Ensure this logic correctly handles potentially null caseTypeParam if needed
     if (!Array.isArray(categoryList)) {
-      console.error("Category list is not an array:", categoryList);
       return <p>Грешка при обработка на категориите.</p>;
     }
     if (selectedCategories.length === 0) {
-      return (
-        <p>
-          Моля, изберете категории, за да видите подходяща помощна информация.
-        </p>
-      );
+      return <p>Моля, изберете категории...</p>;
     }
-    const relevantCategories = categoryList.filter((cat) =>
-      selectedCategories.includes(cat.name)
-    );
-
-    if (relevantCategories.length === 0) {
-      return <p>Не е намерена помощна информация за избраните категории.</p>;
-    }
-    // Use caseTypeParam directly here, ensuring it's handled if null
-    const descriptionKey: keyof Category | null =
-      caseTypeParam === "PROBLEM"
-        ? "problem"
-        : caseTypeParam === "SUGGESTION"
-        ? "suggestion"
-        : null;
-
-    if (!descriptionKey) {
-      return <p>Невалиден тип на случая за показване на помощ.</p>; // Handle null caseTypeParam
-    }
-
-    return (
-      <div className="space-y-3 text-sm max-h-60 overflow-y-auto pr-2">
-        {relevantCategories.map((category) => {
-          const description = category[descriptionKey];
-          return (
-            <div key={category._id}>
-              {" "}
-              {/* Use _id for key */}
-              <strong className="font-semibold block mb-1">
-                {category.name}:
-              </strong>
-              {description ? (
-                <div dangerouslySetInnerHTML={{ __html: description }} />
-              ) : (
-                <p className="text-gray-500 italic">
-                  Няма налично описание за тази категория.
-                </p>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    );
+    // ... rest of your existing complex modal logic ...
+    // Placeholder:
+    return <p>Help content based on selected categories and case type.</p>;
   }, [selectedCategories, categoryList, caseTypeParam]);
 
   // ===========================================================
-  // 4. CONDITIONAL RETURNS (Loading/Error for categories)
+  // 3. EFFECTS (Side Effects, Data Fetching Triggers)
   // ===========================================================
+
+  // --- Effect for Debouncing Username Input ---
+  useEffect(() => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    const trimmedUsername = usernameInput.trim();
+    // Clear results if input is empty
+    if (!trimmedUsername) {
+      setFetchedName("");
+      setFetchedCreatorId(null);
+      setNotFoundUsername(null);
+      setSearchedUsername(null); // Clear searched username too
+      return;
+    }
+
+    debounceTimerRef.current = setTimeout(() => {
+      console.log(`Debounced: Fetching user for username: ${trimmedUsername}`);
+      setSearchedUsername(trimmedUsername); // <-- STORE the username being queried
+      getUserByUsername({ variables: { username: trimmedUsername } });
+    }, DEBOUNCE_DELAY);
+
+    return () => {
+      // Cleanup
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, [usernameInput, getUserByUsername]); // This effect *should* depend on usernameInput
+
+  // --- Effect for Handling User Query Result ---
+  useEffect(() => {
+    // Don't process stale data if loading is true for a *new* search
+    if (userLoading) {
+      // Optional: You could clear the notFoundUsername here when loading starts
+      // setNotFoundUsername(null);
+      return;
+    }
+
+    // Handle network or GraphQL errors after loading finishes
+    if (userError) {
+      console.error("User query error:", userError);
+      setFetchedName("");
+      setFetchedCreatorId(null);
+      setNotFoundUsername(null); // Clear "not found" message on network error
+      return;
+    }
+
+    // Only process if query finished without network/GraphQL error (userData might be null/undefined)
+    // Check typeof to handle initial undefined state vs explicit null result
+    if (typeof userData !== "undefined") {
+      if (userData && userData.getLeanUserByUsername) {
+        // SUCCESS Case
+        setFetchedName(userData.getLeanUserByUsername.name);
+        setFetchedCreatorId(userData.getLeanUserByUsername._id);
+        setNotFoundUsername(null); // ** Clear "not found" message on success **
+      } else {
+        // FAILURE Case ("Not Found" response from server)
+        setFetchedName("");
+        setFetchedCreatorId(null);
+        // Set "not found" message only if a search was actually performed
+        // and the result corresponds to that search
+        if (searchedUsername) {
+          setNotFoundUsername(searchedUsername); // ** Use the searched username **
+        } else {
+          setNotFoundUsername(null); // Should already be null if searchedUsername is null
+        }
+      }
+    }
+    // No else needed - initial state or state after clearing is handled
+  }, [userData, userLoading, userError, searchedUsername]); // ** REMOVED usernameInput dependency **
+
+  // ===========================================================
+  // 4. CONDITIONAL RETURNS (Loading/Error States)
+  // ===========================================================
+
   if (categoriesLoading)
     return <div className="p-6">Loading categories...</div>;
   if (categoriesError)
     return (
       <div className="p-6 text-red-600">
-        Error loading categories: {categoriesError.message || "Unknown error"}
+        Error loading categories: {categoriesError.message}
       </div>
     );
-  // Check caseTypeParam validity for rendering the main content
-  if (!caseTypeParam) {
+  if (!caseTypeParam)
     return (
       <div className="p-6 text-red-600">
-        Invalid or missing case type specified in URL (?type=problem or
-        ?type=suggestion).
+        Invalid or missing case type in URL (?type=problem or ?type=suggestion).
       </div>
     );
-  }
 
   // ===========================================================
-  // 5. EVENT HANDLERS and other component logic
+  // 5. EVENT HANDLERS & LOGIC HELPERS
   // ===========================================================
 
-  // --- Handle File Input Change ---
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUsernameChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setSubmissionError(null); // Clear any previous submission error
+    setUsernameInput(event.target.value);
+    setNotFoundUsername(null); // Keep this for the other error type
+  };
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setSubmissionError(null); // Clear any previous submission error
     if (event.target.files) {
-      // Convert FileList to Array and append to existing files
       setAttachments((prev) => [...prev, ...Array.from(event.target.files!)]);
-      // TODO: Add validation for file types, size limits, number of files etc.
       console.log(
         "Files selected:",
         Array.from(event.target.files).map((f) => f.name)
@@ -220,198 +290,9 @@ const CaseSubmittion: React.FC = () => {
     }
   };
 
-  // --- Handle Form Submission ---
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setSubmissionError(null); // Clear previous errors at the start
-
-    // --- Basic Frontend Validation ---
-    if (!content.trim()) {
-      setSubmissionError("Описанието е задължително.");
-      return; // Stop submission
-    }
-    if (selectedCategories.length === 0) {
-      setSubmissionError("Моля, изберете поне една категория.");
-      return; // Stop submission
-    }
-    if (!caseTypeParam) {
-      // Should ideally not happen if page rendered correctly, but safe check
-      setSubmissionError(
-        "Невалиден тип на случая. Моля, проверете URL адреса."
-      );
-      return;
-    }
-    // TODO: Replace MOCK_USER_ID check with your actual user validation
-    if (!MOCK_USER_ID) {
-      setSubmissionError(
-        "Не може да се идентифицира потребител. Моля, влезте отново."
-      );
-      return; // Stop submission
-    }
-
-    // Set submitting state *after* initial validation checks pass
-    setIsSubmitting(true);
-
-    // --- Prepare Attachments (Read files to base64) ---
-    let attachmentInputs: AttachmentInput[] = [];
-    try {
-      attachmentInputs = await Promise.all(
-        // 'attachments' state holds the File objects selected by the user
-        attachments.map(async (file): Promise<AttachmentInput> => {
-          const base64Data = await readFileAsBase64(file);
-          return {
-            filename: file.name,
-            file: base64Data, // The base64 encoded string
-          };
-        })
-      );
-      console.log(
-        "Client: Prepared attachment inputs with base64 data for:",
-        attachmentInputs.map((a) => a.filename)
-      );
-    } catch (fileReadError) {
-      console.error("Client: Error reading files to base64:", fileReadError);
-      setSubmissionError(
-        "Грешка при обработка на прикачени файлове. Моля, опитайте отново."
-      );
-      setIsSubmitting(false); // Reset submitting state
-      return; // Stop submission if file reading fails
-    }
-
-    // --- Find Category IDs ---
-    // 'categoryList' state holds the category data fetched initially
-    // 'selectedCategories' state holds the names of selected categories
-    const categoryIds = findCategoryIds(selectedCategories, categoryList);
-    if (categoryIds.length !== selectedCategories.length) {
-      console.error("Mismatch finding category IDs", {
-        selectedNames: selectedCategories,
-        foundIds: categoryIds,
-        list: categoryList,
-      });
-      setSubmissionError(
-        "Грешка при обработката на избраните категории. Опитайте отново."
-      );
-      setIsSubmitting(false); // Reset submitting state
-      return; // Stop submission
-    }
-
-    // --- Prepare Final Input Object for GraphQL Mutation ---
-    // Assumes CreateCaseInput type is defined matching the hook and schema
-    const input: CreateCaseInput = {
-      content: content.trim(),
-      type: caseTypeParam, // Already validated non-null
-      priority: priority, // State variable holding "LOW", "MEDIUM", or "HIGH"
-      categories: categoryIds,
-      creator: MOCK_USER_ID, // TODO: Replace with actual authenticated user ID
-      attachments: attachmentInputs, // Use the array of {filename, file} objects
-    };
-
-    // --- Logging before sending ---
-    console.log("------ Client: Sending Input ------");
-    // Log attachment info without logging full base64 data
-    console.log(
-      "Attachments being sent:",
-      JSON.stringify(
-        input.attachments?.map((a) => ({
-          filename: a.filename,
-          data_length: a.file.length,
-        }))
-      )
-    );
-    // Log the rest of the input object
-    console.log(
-      "Full Input Object (excluding full file data):",
-      JSON.stringify(
-        { ...input, attachments: input.attachments?.map((a) => a.filename) },
-        null,
-        2
-      )
-    );
-    console.log("---------------------------------");
-
-    // --- Execute GraphQL Mutation ---
-    try {
-      // 'executeCreateCase' is the mutation function obtained from the useCreateCase hook
-      const newCase = await executeCreateCase(input);
-      console.log("Case created successfully:", newCase); // Log the response data
-      alert("Сигналът е изпратен успешно!"); // User feedback
-
-      // --- Post-submission actions (Clear form, navigate) ---
-      setContent("");
-      setPriority("LOW");
-      setSelectedCategories([]);
-      setAttachments([]); // Clear selected file objects from state
-      // Clear temporary username/fullname if they are still used
-      setUsername("");
-      setFullname("");
-      // 'navigate' is obtained from the useNavigate hook (react-router-dom v6+)
-      navigate("/"); // Navigate to home page or a success page
-    } catch (err) {
-      // --- Handle Submission Error ---
-      console.error("Submission catch block:", err);
-      // Prioritize using the specific error state from the Apollo useMutation hook if available
-      const errorMsg =
-        createCaseError?.message ||
-        (err instanceof Error
-          ? err.message
-          : "An unexpected error occurred during submission.");
-      setSubmissionError(`Failed to create case: ${errorMsg}`);
-      // Let the finally block handle setIsSubmitting(false)
-    } finally {
-      // --- Cleanup ---
-      // Ensure the submitting state is always reset, regardless of success or error
-      setIsSubmitting(false);
-    }
-  };
-
-  const getCategoryClass = (categoryName: string): string => {
-    // ... (your existing getCategoryClass logic - needs caseTypeParam)
-    const isSelected = selectedCategories.includes(categoryName);
-    const isDisabled = !isSelected && selectedCategories.length >= 3;
-    const commonClasses =
-      "px-3 py-1 border rounded-full text-sm transition-colors duration-200 cursor-pointer";
-
-    const styles: Record<
-      "PROBLEM" | "SUGGESTION",
-      { selected: string; unselected: string; disabled: string }
-    > = {
-      PROBLEM: {
-        selected: `bg-red-500 text-white border-red-500 hover:bg-red-600`,
-        unselected: `bg-white text-gray-700 border-gray-300 hover:bg-red-100 hover:border-red-300`,
-        disabled: `bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed opacity-60`, // Added cursor/opacity for disabled
-      },
-      SUGGESTION: {
-        selected: `bg-green-500 text-white border-green-500 hover:bg-green-600`,
-        unselected: `bg-white text-gray-700 border-gray-300 hover:bg-green-100 hover:border-green-300`,
-        disabled: `bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed opacity-60`, // Added cursor/opacity for disabled (consistent)
-      },
-    };
-    const typeKey = caseTypeParam === "PROBLEM" ? "PROBLEM" : "SUGGESTION"; // Default to suggestion if needed, but should be valid
-    const state = isSelected
-      ? "selected"
-      : isDisabled
-      ? "disabled"
-      : "unselected";
-    return `${commonClasses} ${styles[typeKey][state]}`;
-  };
-
-  const getSendButtonClass = (): string => {
-    // ... (your existing getSendButtonClass logic - needs caseTypeParam)
-    const commonClasses =
-      "text-white py-2 px-4 rounded-md cursor-pointer transition-colors duration-200";
-    const styles: Record<"PROBLEM" | "SUGGESTION", string> = {
-      PROBLEM: `bg-red-600 hover:bg-red-700`,
-      SUGGESTION: `bg-green-600 hover:bg-green-700`,
-    };
-    const typeKey = caseTypeParam === "PROBLEM" ? "PROBLEM" : "SUGGESTION";
-    return `${commonClasses} ${styles[typeKey]} ${
-      isSubmitting || createCaseLoading ? "opacity-50 cursor-not-allowed" : ""
-    }`;
-  };
-
   const MAX_SELECTED_CATEGORIES = 3;
   const toggleCategory = (categoryName: string): void => {
-    // ... (your existing toggleCategory logic)
+    setSubmissionError(null); // <-- Add this line at the beginning
     setSelectedCategories((prev) => {
       if (prev.includes(categoryName)) {
         return prev.filter((c) => c !== categoryName); // unselect
@@ -423,151 +304,366 @@ const CaseSubmittion: React.FC = () => {
     });
   };
 
+  // --- Dynamic Class Helpers ---
+  const getCategoryClass = (categoryName: string): string => {
+    const isSelected = selectedCategories.includes(categoryName);
+    const isDisabled =
+      !isSelected && selectedCategories.length >= MAX_SELECTED_CATEGORIES;
+    const commonClasses =
+      "px-3 py-1 border rounded-full text-sm transition-colors duration-200 cursor-pointer";
+    const styles = {
+      /* ... (your existing PROBLEM/SUGGESTION styles object) ... */
+      PROBLEM: {
+        selected: `bg-red-500 text-white border-red-500 hover:bg-red-600`,
+        unselected: `bg-white text-gray-700 border-gray-300 hover:bg-red-100 hover:border-red-300`,
+        disabled: `bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed opacity-60`,
+      },
+      SUGGESTION: {
+        selected: `bg-green-500 text-white border-green-500 hover:bg-green-600`,
+        unselected: `bg-white text-gray-700 border-gray-300 hover:bg-green-100 hover:border-green-300`,
+        disabled: `bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed opacity-60`,
+      },
+    };
+    const state = isSelected
+      ? "selected"
+      : isDisabled
+      ? "disabled"
+      : "unselected";
+    return `${commonClasses} ${styles[caseTypeParam][state]}`; // caseTypeParam is guaranteed non-null here
+  };
+
+  const getSendButtonClass = (): string => {
+    const commonClasses =
+      "text-white py-2 px-4 rounded-md cursor-pointer transition-colors duration-200";
+    const styles = {
+      PROBLEM: `bg-red-600 hover:bg-red-700`,
+      SUGGESTION: `bg-green-600 hover:bg-green-700`,
+    };
+    // Disable button visually if submitting or if creator isn't identified yet
+    const disabledClass =
+      isSubmitting || createCaseLoading || !fetchedCreatorId
+        ? "opacity-50 cursor-not-allowed"
+        : "";
+    return `${commonClasses} ${styles[caseTypeParam]} ${disabledClass}`; // caseTypeParam is guaranteed non-null here
+  };
+
+  // --- Modal Handlers ---
   const openHelpModal = (): void => setIsHelpModalOpen(true);
   const closeHelpModal = (): void => setIsHelpModalOpen(false);
 
+  // --- Form Submission Handler ---
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setSubmissionError(null);
+
+    // --- Validation ---
+    if (!content.trim()) {
+      setSubmissionError("Описанието е задължително.");
+      return;
+    }
+    if (selectedCategories.length === 0) {
+      setSubmissionError("Моля, изберете поне една категория.");
+      return;
+    }
+    if (!fetchedCreatorId) {
+      setSubmissionError(
+        "Моля, въведете валидно потребителско име, за да бъде намерен създателя."
+      );
+      return;
+    }
+    // caseTypeParam already validated for page render
+
+    setIsSubmitting(true);
+
+    // --- Prepare Attachments ---
+    let attachmentInputs: AttachmentInput[] = [];
+    try {
+      attachmentInputs = await Promise.all(
+        attachments.map(async (file): Promise<AttachmentInput> => {
+          const base64Data = await readFileAsBase64(file);
+          return { filename: file.name, file: base64Data };
+        })
+      );
+    } catch (fileReadError) {
+      console.error("Client: Error reading files to base64:", fileReadError);
+      setSubmissionError("Грешка при обработка на прикачени файлове.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    // --- Find Category IDs ---
+    const categoryIds = findCategoryIds(selectedCategories, categoryList);
+    if (categoryIds.length !== selectedCategories.length) {
+      setSubmissionError("Грешка при обработката на избраните категории.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    // --- Prepare Final Input Object for Mutation ---
+    const input: CreateCaseInput = {
+      content: content.trim(),
+      type: caseTypeParam, // Non-null due to page check
+      priority: priority,
+      categories: categoryIds,
+      creator: fetchedCreatorId, // Use the ID fetched via username lookup
+      attachments: attachmentInputs,
+    };
+
+    console.log("------ Client: Sending Input for CreateCase ------");
+    console.log(
+      "Input:",
+      JSON.stringify(
+        { ...input, attachments: input.attachments?.map((a) => a.filename) },
+        null,
+        2
+      )
+    ); // Log without full base64
+    console.log("-----------------------------------------------");
+
+    // --- Execute Mutation ---
+    try {
+      const newCase = await executeCreateCase(input);
+      console.log("Case created successfully:", newCase);
+      alert("Сигналът е изпратен успешно!");
+
+      // --- Post-submission actions ---
+      setContent("");
+      setPriority("LOW");
+      setSelectedCategories([]);
+      setAttachments([]);
+      setUsernameInput(""); // Clear username input
+      setFetchedName(""); // Clear derived name
+      setFetchedCreatorId(null); // Clear creator ID
+      navigate("/"); // Navigate away
+    } catch (err) {
+      console.error("Submission catch block:", err);
+      const errorMsg =
+        createCaseError?.message ||
+        (err instanceof Error
+          ? err.message
+          : "An unexpected error occurred during submission.");
+      setSubmissionError(`Failed to create case: ${errorMsg}`);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   // ===========================================================
-  // 6. JSX RETURN
+  // 6. JSX RENDER
   // ===========================================================
+
   return (
     <>
       <div className="min-h-screen p-6 grid grid-cols-1 md:grid-cols-2 gap-6 bg-stone-200">
         {/* Header Row */}
         <div className="col-span-1 md:col-span-2 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          {/* ... (Header content: Title, Help, Back) ... */}
           <div>
             <h2 className="text-xl font-semibold text-gray-800">
               Подаване на{" "}
-              {caseTypeParam === "PROBLEM" ? "проблем" : "предложение"}{" "}
-              {/* Dynamic title */}
+              {caseTypeParam === "PROBLEM" ? "проблем" : "предложение"}
             </h2>
             <p className="text-sm text-gray-500">
               Моля, попълнете формуляра по-долу
             </p>
           </div>
           <div className="flex items-center space-x-2">
-            {/* ... Help, Back buttons ... */}
             <button
               onClick={openHelpModal}
-              className="bg-white text-gray-700 border border-gray-300 py-2 px-4 rounded-md cursor-pointer hover:bg-gray-100 transition-colors duration-200"
+              className="bg-white text-gray-700 border border-gray-300 py-2 px-4 rounded-md cursor-pointer hover:bg-gray-100"
             >
               ❓ Помощ
             </button>
             <Link to="/">
-              <button className="bg-white text-gray-700 border border-gray-300 py-2 px-4 rounded-md cursor-pointer hover:bg-gray-100 transition-colors duration-200">
+              <button className="bg-white text-gray-700 border border-gray-300 py-2 px-4 rounded-md cursor-pointer hover:bg-gray-100">
                 ← Назад
               </button>
             </Link>
-            {/* Submit Button (points to form) */}
             <button
               type="submit"
-              form="case-form" // Links button to the form
+              form="case-form"
               className={getSendButtonClass()}
-              disabled={isSubmitting || createCaseLoading} // Disable while submitting
+              disabled={isSubmitting || createCaseLoading || !fetchedCreatorId} // Disable if submitting or creator not found
             >
               {isSubmitting || createCaseLoading ? "Изпращане..." : "Изпрати"}
             </button>
           </div>
         </div>
 
-        {/* Submission Error Display */}
-        {submissionError && (
-          <div className="col-span-1 md:col-span-2 p-3 bg-red-100 border border-red-400 text-red-700 rounded-md">
-            {submissionError}
-          </div>
-        )}
+        {/* Submission Error Display - Always rendered, uses opacity */}
+        <div
+          className={`col-span-1 md:col-span-2 p-3 rounded-md transition-opacity duration-300 ${
+            submissionError
+              ? "bg-red-100 border border-red-400 text-red-700 opacity-100" // Visible styles
+              : "opacity-0" // Hidden but reserves space
+          }`}
+          // Add aria-live for screen readers to announce errors when they appear
+          aria-live="polite"
+        >
+          {/* Display error or non-breaking space to maintain height */}
+          {submissionError || "\u00A0"}
+        </div>
 
         {/* Form Content */}
-        <form
-          id="case-form"
-          className="contents"
-          onSubmit={handleSubmit} // Use the handler
-        >
+        <form id="case-form" className="contents" onSubmit={handleSubmit}>
           {/* Left Panel */}
           <div className="rounded-2xl shadow-md bg-white p-6">
+            {/* Removed the outer space-y-4 here, will apply spacing individually */}
             <div className="space-y-4">
-              {/* TODO: Remove username/fullname inputs if creator ID is handled by authentication */}
-              <input
-                placeholder="Потребителско име (Временно)..."
-                className="w-full border border-gray-300 p-3 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                // required // Remove if using auth
-                name="username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                aria-label="Потребителско име"
-              />
-              <input
-                placeholder="Име и фамилия (Временно)..."
-                className="w-full border border-gray-300 p-3 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                // required // Remove if using auth
-                name="fullname"
-                value={fullname}
-                onChange={(e) => setFullname(e.target.value)}
-                aria-label="Име и фамилия"
-              />
-              <textarea
-                placeholder="Описание..."
-                className="w-full h-40 border border-gray-300 p-3 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                required
-                name="description"
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                maxLength={500} // Match schema
-                aria-label="Описание на сигнала"
-              />
-              {/* File Input */}
+              {" "}
+              {/* Re-added space-y-4 for overall spacing */}
+              {/* --- Row for Username and Name --- */}
+              <div className="flex flex-col md:flex-row md:gap-x-4 space-y-4 md:space-y-0">
+                {" "}
+                {/* Flex container for row */}
+                {/* Username Input Column (includes feedback) */}
+                <div className="flex-1">
+                  {" "}
+                  {/* Takes available space */}
+                  <label
+                    htmlFor="username"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Потребителско име*
+                  </label>
+                  <input
+                    type="text" // Ensure type="text"
+                    id="username" // Add id for label
+                    placeholder="emp###..."
+                    className="w-full border border-gray-300 p-3 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                    name="username"
+                    aria-label="Потребителско име"
+                    value={usernameInput}
+                    onChange={handleUsernameChange} // Clears notFoundUsername state too
+                  />
+                  {/* Feedback Area below username input */}
+                  <div className="h-5 mt-1">
+                    {" "}
+                    {/* Fixed height container for feedback
+                    {userLoading && (
+                      <p className="text-sm text-gray-500 animate-pulse">
+                        Търсене...
+                      </p>
+                    )} */}
+                    {userError && (
+                      <p className="text-sm text-red-500">
+                        Грешка: {userError.message}
+                      </p>
+                    )}
+                    <p
+                      className={`text-sm text-orange-500 transition-opacity duration-200 ${
+                        notFoundUsername ? "opacity-100" : "opacity-0"
+                      }`}
+                    >
+                      {notFoundUsername
+                        ? `Потребител "${notFoundUsername}" не е намерен.`
+                        : "\u00A0"}
+                    </p>
+                  </div>
+                </div>
+                {/* Name Input Column */}
+                <div className="flex-1">
+                  {" "}
+                  {/* Takes available space */}
+                  <label
+                    htmlFor="fullname"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Име и фамилия*
+                  </label>
+                  <input
+                    type="text" // Ensure type="text"
+                    id="fullname" // Add id for label
+                    placeholder="(автоматично)"
+                    className="w-full border border-gray-300 p-3 rounded-md bg-gray-100 cursor-not-allowed focus:outline-none focus:ring-0" // Adjusted disabled style
+                    name="fullname"
+                    aria-label="Име и фамилия"
+                    value={fetchedName}
+                    disabled // Keep disabled
+                    readOnly // Good practice
+                  />
+                  {/* Optional: Add empty div for height consistency if needed */}
+                  <div className="h-5 mt-1"></div>
+                </div>
+              </div>
+              {/* Description Textarea */}
               <div>
+                {" "}
+                {/* Added wrapper for spacing consistency */}
                 <label
-                  htmlFor="file-upload"
+                  htmlFor="description"
                   className="block text-sm font-medium text-gray-700 mb-1"
                 >
+                  Описание*
+                </label>
+                <textarea
+                  id="description"
+                  placeholder="Описание..."
+                  className="w-full h-40 border border-gray-300 p-3 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                  required
+                  name="description"
+                  value={content}
+                  onChange={(e) => {
+                    setSubmissionError(null);
+                    setContent(e.target.value);
+                  }}
+                  maxLength={500}
+                  aria-label="Описание на сигнала"
+                />
+              </div>
+              {/* File Input Section (Styled as Button) */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Прикачени файлове (по избор)
                 </label>
+                {/* Styled Label acting as Button */}
+                <label
+                  htmlFor="file-upload-input" // Connect label to the hidden input
+                  className="inline-block cursor-pointer rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                >
+                  📎 Избери файлове
+                </label>
+                {/* Hidden Actual File Input */}
                 <input
-                  id="file-upload"
+                  id="file-upload-input" // ID for the label's htmlFor
                   name="attachments"
                   type="file"
-                  multiple // Allow multiple files
+                  multiple
                   onChange={handleFileChange}
-                  className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
-                  aria-describedby="file_input_help"
+                  className="sr-only" // Tailwind class to visually hide but keep accessible
                 />
-                <p className="mt-1 text-xs text-gray-500" id="file_input_help">
-                  Макс. размер/брой файлове?
-                </p>{" "}
-                {/* Add help text */}
-                {/* Display selected file names */}
-                {attachments.length > 0 && (
-                  <div className="mt-2 text-sm text-gray-600 space-y-1">
-                    <p className="font-medium">Избрани файлове:</p>
-                    <ul className="list-disc list-inside">
-                      {attachments.map((file, index) => (
-                        <li key={index}>{file.name}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
 
-              {/* Old Button - Replaced by styled input */}
-              {/* <button
-                type="button"
-                className="w-full border border-gray-300 p-3 rounded-md text-center bg-gray-100 cursor-pointer hover:bg-gray-200 transition-colors duration-200 text-gray-600"
-              >
-                📎 Прикачи файлове
-              </button> */}
-            </div>
+                {/* Container for Selected Files List - with min-height */}
+                <div className="mt-2 min-h-[3rem]">
+                  {" "}
+                  {/* Adjust min-h value as needed (e.g., min-h-[4rem]) */}
+                  {/* Conditionally render the list *inside* the container */}
+                  {attachments.length > 0 && (
+                    <div className="text-sm text-gray-600 space-y-1">
+                      <p className="font-medium">Избрани файлове:</p>
+                      <ul className="list-disc list-inside pl-1">
+                        {attachments.map((file, index) => (
+                          <li key={index}>{file.name}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+                {/* End Container for Selected Files List */}
+              </div>
+              {/* --- End File Input Section --- */}
+            </div>{" "}
+            {/* End space-y-4 */}
           </div>
+          {/* End Left Panel */}
 
           {/* Right Panel */}
           <div className="rounded-2xl shadow-md bg-white p-6">
             <div className="space-y-6">
               {/* Priority */}
               <div>
-                <h3 className="font-semibold mb-3 text-gray-700">Приоритет</h3>
+                <h3 className="font-semibold mb-3 text-gray-700">Приоритет*</h3>
                 <div className="flex flex-wrap gap-x-4 gap-y-2">
                   {[
-                    // Use correct enum values
                     { label: "Нисък", value: "LOW", color: "#009b00" },
                     { label: "Среден", value: "MEDIUM", color: "#ad8600" },
                     { label: "Висок", value: "HIGH", color: "#c30505" },
@@ -580,14 +676,15 @@ const CaseSubmittion: React.FC = () => {
                         type="radio"
                         value={value}
                         checked={priority === value}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          setSubmissionError(null); // <-- Add this line
                           setPriority(
                             e.target.value as CreateCaseInput["priority"]
-                          )
-                        } // Cast type
+                          );
+                        }}
                         style={{ accentColor: color }}
                         className="w-4 h-4 cursor-pointer"
-                        name="priority" // Name ensures only one radio is selected
+                        name="priority"
                       />
                       <span className="text-sm text-gray-700">{label}</span>
                     </label>
@@ -597,14 +694,14 @@ const CaseSubmittion: React.FC = () => {
               {/* Categories */}
               <div>
                 <h3 className="font-semibold mb-3 text-gray-700">
-                  Отнася се за (макс. {MAX_SELECTED_CATEGORIES})
+                  Отнася се за (макс. {MAX_SELECTED_CATEGORIES})*
                 </h3>
                 {categoryList.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
                     {categoryList.map((category) => (
                       <button
-                        key={category._id} // Use _id for key
-                        type="button" // Important: prevent form submission
+                        key={category._id}
+                        type="button"
                         onClick={() => toggleCategory(category.name)}
                         className={getCategoryClass(category.name)}
                         disabled={

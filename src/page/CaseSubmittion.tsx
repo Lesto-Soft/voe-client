@@ -15,6 +15,10 @@ import { useCreateCase, CreateCaseInput } from "../graphql/hooks/case"; // Your 
 import HelpModal from "../components/modals/HelpModal";
 import { GET_USER_BY_USERNAME } from "../graphql/query/user";
 
+const MAX_FILES = 5;
+const MAX_FILE_SIZE_MB = 1;
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024; // 2MB in bytes
+const MAX_SELECTED_CATEGORIES = 3;
 // --- Interfaces & Types ---
 
 // Shape of the user query data
@@ -135,13 +139,14 @@ const CaseSubmittion: React.FC = () => {
   // State for submission status and errors
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null); // File-specific error state
 
   // State for help modal
   const [isHelpModalOpen, setIsHelpModalOpen] = useState<boolean>(false);
 
   // Ref for debounce timer
   const debounceTimerRef = useRef<number | null>(null);
-  const DEBOUNCE_DELAY = 1000; // 1 second
+  const DEBOUNCE_DELAY = 500; // 0.5 seconds
 
   // ===========================================================
   // 2. DERIVED STATE / VALUES / MEMOIZED CALCULATIONS
@@ -319,6 +324,7 @@ const CaseSubmittion: React.FC = () => {
   // --- Helper to clear all validation/feedback states ---
   const clearAllErrors = () => {
     setSubmissionError(null); // General submission error (e.g., for category)
+    setFileError(null); // Specific file error (e.g., size limit)
     // We don't clear userError (network/GraphQL errors) here, as they might persist
   };
 
@@ -326,18 +332,118 @@ const CaseSubmittion: React.FC = () => {
     setNotFoundUsername(null); // Specific "user not found" feedback from search
     setUsernameInput(event.target.value);
   };
+  // Updated handler to check limits BEFORE adding files
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    clearAllErrors(); // Clear all errors on new input
-    if (event.target.files) {
-      setAttachments((prev) => [...prev, ...Array.from(event.target.files!)]);
-      console.log(
-        "Files selected:",
-        Array.from(event.target.files).map((f) => f.name)
-      );
+    clearAllErrors(); // Clear previous errors (includes setFileError(null))
+    const selectedFiles = event.target.files
+      ? Array.from(event.target.files)
+      : [];
+
+    if (selectedFiles.length === 0) {
+      if (event.target) event.target.value = ""; // Clear input value on cancel/empty select
+      return; // No files selected, nothing to do
     }
+
+    let processingError: string | null = null; // Store the first critical error encountered
+
+    // Use setAttachments callback form to reliably access previous state
+    setAttachments((prevAttachments) => {
+      const currentCount = prevAttachments.length;
+      const availableSlots = MAX_FILES - currentCount;
+
+      // --- Check 1: Max file count ---
+      if (availableSlots <= 0) {
+        processingError = `Не можете да добавите повече файлове (максимум ${MAX_FILES}).`;
+        // Return previous state immediately, no need to process files
+        return prevAttachments;
+      }
+
+      let validFilesToAdd: File[] = [];
+      const oversizedFiles: string[] = [];
+      const duplicateFiles: string[] = [];
+      const countLimitedFiles: string[] = [];
+
+      // Create signatures of existing files for duplicate check
+      const existingFileSignatures = new Set(
+        prevAttachments.map((f) => `${f.name}-${f.size}-${f.lastModified}`)
+      );
+
+      // Process only as many selected files as there are available slots
+      for (let i = 0; i < selectedFiles.length; i++) {
+        const file = selectedFiles[i];
+        const signature = `${file.name}-${file.size}-${file.lastModified}`;
+
+        // --- Check 2: Individual file size ---
+        if (file.size > MAX_FILE_SIZE_BYTES) {
+          oversizedFiles.push(file.name);
+          continue; // Skip this file
+        }
+
+        // --- Check 3: Is count limit reached during processing? ---
+        if (validFilesToAdd.length >= availableSlots) {
+          countLimitedFiles.push(file.name);
+          continue; // Skip remaining files once slots are full
+        }
+
+        // --- Check 4: Duplicates ---
+        if (existingFileSignatures.has(signature)) {
+          duplicateFiles.push(file.name);
+          continue; // Skip this file
+        }
+
+        // If all checks pass, add to the list for this batch
+        validFilesToAdd.push(file);
+      }
+
+      // --- Set Feedback Messages (Prioritized) ---
+      if (oversizedFiles.length > 0) {
+        processingError = `Следните файлове са по-големи от ${MAX_FILE_SIZE_MB}MB и бяха пропуснати: ${oversizedFiles.join(
+          ", "
+        )}`;
+        // Optionally append count limit message if applicable
+        if (countLimitedFiles.length > 0) {
+          processingError += ` Освен това, лимитът от ${MAX_FILES} файла беше достигнат.`;
+        }
+      } else if (countLimitedFiles.length > 0) {
+        // This message now implies files were skipped *only* due to the count limit
+        processingError = `Лимитът от ${MAX_FILES} файла беше достигнат. ${countLimitedFiles.length} файла бяха пропуснати.`;
+      } else if (duplicateFiles.length > 0 && validFilesToAdd.length === 0) {
+        // Only duplicates were selected (and no size/count errors)
+        processingError = `Избраните файлове вече са в списъка: ${duplicateFiles.join(
+          ", "
+        )}`;
+      } else if (duplicateFiles.length > 0) {
+        // Some files were added, but some were duplicates (show as warning, not error)
+        console.warn(
+          "Пропуснати дублирани файлове:",
+          duplicateFiles.join(", ")
+        );
+      }
+
+      // Set the primary file error state if any error occurred
+      if (processingError) {
+        setFileError(processingError);
+      }
+
+      // Return the new state array
+      return [...prevAttachments, ...validFilesToAdd]; // Append valid files
+    });
+
+    // Clear the native file input value after processing in React state
+    // This allows selecting the same file again if it was removed/rejected
+    if (event.target) event.target.value = "";
+  };
+  const handleRemoveAttachment = (fileNameToRemove: string) => {
+    setFileError(null);
+    setAttachments((prevAttachments) =>
+      // Create a new array excluding the file with the matching name
+      prevAttachments.filter((file) => file.name !== fileNameToRemove)
+    );
+    // Note: Programmatically clearing the <input type="file"> value is
+    // unreliable across browsers and often not necessary. The user can
+    // always click "Choose Files" again to re-select.
   };
 
-  const MAX_SELECTED_CATEGORIES = 3;
   const toggleCategory = (categoryName: string): void => {
     clearAllErrors(); // Clear errors when category changes
     setSelectedCategories((prev) => {
@@ -514,12 +620,12 @@ const CaseSubmittion: React.FC = () => {
           <div className="flex items-center space-x-2">
             <button
               onClick={openHelpModal}
-              className="bg-white text-gray-700 border border-gray-300 py-2 px-4 rounded-md cursor-pointer hover:bg-gray-200"
+              className="bg-white text-gray-700 border border-gray-300 py-2 px-4 rounded-md cursor-pointer hover:bg-gray-200 active:bg-gray-300"
             >
               ❓ Помощ
             </button>
             <Link to="/">
-              <button className="bg-white text-gray-700 border border-gray-300 py-2 px-4 rounded-md cursor-pointer hover:bg-gray-200">
+              <button className="bg-white text-gray-700 border border-gray-300 py-2 px-4 rounded-md cursor-pointer hover:bg-gray-200 active:bg-gray-300">
                 ← Назад
               </button>
             </Link>
@@ -536,12 +642,15 @@ const CaseSubmittion: React.FC = () => {
 
         {/* Submission Error Display - Always rendered, uses opacity */}
         <div
-          className={`col-span-1 md:col-span-2 p-3 rounded-md transition-opacity duration-300 ${
+          className={`
+          col-span-1 md:col-span-2 p-3 rounded-md border
+          transition-opacity duration-300
+          ${
             submissionError
-              ? "bg-red-100 border border-red-400 text-red-700 opacity-100" // Visible styles
-              : "opacity-0" // Hidden but reserves space
-          }`}
-          // Add aria-live for screen readers to announce errors when they appear
+              ? "bg-red-100 border-red-400 text-red-700 opacity-100" // Visible styles
+              : "border-transparent text-transparent opacity-0" // Hidden: Make border & text transparent, opacity 0
+          }
+        `}
           aria-live="polite"
         >
           {/* Display error or non-breaking space to maintain height */}
@@ -551,7 +660,7 @@ const CaseSubmittion: React.FC = () => {
         {/* Form Content */}
         <form id="case-form" className="contents" onSubmit={handleSubmit}>
           {/* Left Panel */}
-          <div className="rounded-2xl shadow-md bg-white p-6">
+          <div className="rounded-2xl shadow-md bg-white p-6 min-h-96">
             {/* Removed the outer space-y-4 here, will apply spacing individually */}
             <div className="space-y-4">
               {" "}
@@ -573,7 +682,7 @@ const CaseSubmittion: React.FC = () => {
                   <input
                     type="text" // Ensure type="text"
                     id="username" // Add id for label
-                    placeholder="emp###..."
+                    placeholder="emp___"
                     className="w-full border border-gray-300 p-3 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                     name="username"
                     aria-label="Потребителско име"
@@ -655,43 +764,93 @@ const CaseSubmittion: React.FC = () => {
                   aria-label="Описание на сигнала"
                 />
               </div>
-              {/* File Input Section (Styled as Button) */}
+              {/* File Input Section */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Прикачени файлове (по избор)
+                  {/* Update label to show current count vs max */}
+                  Прикачени файлове ({attachments.length} / {MAX_FILES}) (макс.{" "}
+                  {MAX_FILE_SIZE_MB} MB всеки)
                 </label>
-                {/* Styled Label acting as Button */}
+                {/* Styled Label acting as Button - Disable visually if max files reached */}
                 <label
-                  htmlFor="file-upload-input" // Connect label to the hidden input
-                  className="w-full inline-block text-center cursor-pointer rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-200 active:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                  htmlFor="file-upload-input"
+                  className={`w-full text-center inline-block rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm ${
+                    attachments.length >= MAX_FILES
+                      ? "opacity-75 cursor-not-allowed" // Disabled style
+                      : "cursor-pointer hover:bg-gray-200 active:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2" // Enabled style
+                  }`}
+                  // Prevent triggering input if disabled (CSS should suffice, but JS backup)
+                  onClick={(e) => {
+                    if (attachments.length >= MAX_FILES) e.preventDefault();
+                  }}
                 >
                   📎 Избери файлове
                 </label>
-                {/* Hidden Actual File Input */}
+                {/* Hidden Actual File Input - Disable if max files reached */}
                 <input
-                  id="file-upload-input" // ID for the label's htmlFor
+                  id="file-upload-input"
                   name="attachments"
                   type="file"
                   multiple
                   onChange={handleFileChange}
-                  className="sr-only" // Tailwind class to visually hide but keep accessible
+                  className="sr-only"
+                  disabled={attachments.length >= MAX_FILES} // HTML disabled attribute
+                  // Optional: Add accept attribute for client-side hint (doesn't enforce size)
+                  // accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt"
                 />
 
-                {/* Container for Selected Files List - with min-height */}
+                {/* Display File Errors */}
+                <div className="h-5 mt-1">
+                  {" "}
+                  {/* Reserve space */}
+                  <p
+                    className={`text-sm text-red-500 transition-opacity duration-200 ${
+                      fileError ? "opacity-100" : "opacity-0"
+                    }`}
+                  >
+                    {fileError || "\u00A0"}
+                  </p>
+                </div>
+
+                {/* Container for Selected Files List - Reserves space */}
                 <div className="mt-2 min-h-[3rem]">
                   {" "}
-                  {/* Adjust min-h value as needed (e.g., min-h-[4rem]) */}
-                  {/* Conditionally render the list *inside* the container */}
-                  {attachments.length > 0 && (
-                    <div className="text-sm text-gray-600 space-y-1">
-                      <p className="font-medium">Избрани файлове:</p>
-                      <ul className="list-disc list-inside pl-1">
-                        {attachments.map((file, index) => (
-                          <li key={index}>{file.name}</li>
+                  {/* Keeps minimum space */}
+                  {/* Conditionally render the list container *inside* */}
+                  <div
+                    className="text-sm text-gray-600 space-y-1 h-20 overflow-y-auto border border-gray-200 rounded p-2 bg-gray-50" // Added max-h, overflow, border, padding, bg
+                  >
+                    {attachments.length > 0 && (
+                      // Apply max-height and overflow to this inner div
+                      <ul className="list-none pl-1 space-y-1">
+                        {attachments.map((file) => (
+                          <li
+                            key={file.name + "-" + file.lastModified}
+                            className="flex justify-between items-center group p-1 rounded hover:bg-gray-200" // Hover effect on item
+                          >
+                            <span
+                              className="truncate pr-2 group-hover:underline"
+                              title={file.name}
+                            >
+                              {file.name}{" "}
+                              <span className="text-xs text-gray-500">
+                                ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                              </span>
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveAttachment(file.name)}
+                              className="ml-2 px-1.5 py-0.5 text-red-500 hover:text-red-700 text-lg font-bold leading-none rounded focus:outline-none focus:ring-1 focus:ring-red-500 cursor-pointer"
+                              aria-label={`Премахни файл ${file.name}`}
+                              title="Премахни файл"
+                            >
+                              &times;
+                            </button>
+                          </li>
                         ))}
                       </ul>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
                 {/* End Container for Selected Files List */}
               </div>
@@ -702,11 +861,13 @@ const CaseSubmittion: React.FC = () => {
           {/* End Left Panel */}
 
           {/* Right Panel */}
-          <div className="rounded-2xl shadow-md bg-white p-6">
+          <div className="rounded-2xl shadow-md bg-white p-6 min-h-96">
             <div className="space-y-6">
               {/* Priority */}
               <div>
-                <h3 className="font-semibold mb-3 text-gray-700">Приоритет*</h3>
+                <p className="text-sm font-medium mb-3 text-gray-700">
+                  Приоритет*
+                </p>
                 <div className="flex flex-wrap gap-x-4 gap-y-2">
                   {[
                     { label: "Нисък", value: "LOW", color: "#009b00" },
@@ -738,9 +899,9 @@ const CaseSubmittion: React.FC = () => {
               </div>
               {/* Categories */}
               <div>
-                <h3 className="font-semibold mb-3 text-gray-700">
+                <p className="text-sm font-medium mb-3 text-gray-700">
                   Отнася се за (макс. {MAX_SELECTED_CATEGORIES})*
-                </h3>
+                </p>
                 {categoryList.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
                     {categoryList.map((category) => (

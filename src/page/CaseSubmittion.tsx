@@ -274,13 +274,18 @@ const CaseSubmittion: React.FC = () => {
   // 5. EVENT HANDLERS & LOGIC HELPERS
   // ===========================================================
 
+  // --- Helper to clear all validation/feedback states ---
+  const clearAllErrors = () => {
+    setSubmissionError(null); // General submission error (e.g., for category)
+    // We don't clear userError (network/GraphQL errors) here, as they might persist
+  };
+
   const handleUsernameChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setSubmissionError(null); // Clear any previous submission error
+    setNotFoundUsername(null); // Specific "user not found" feedback from search
     setUsernameInput(event.target.value);
-    setNotFoundUsername(null); // Keep this for the other error type
   };
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setSubmissionError(null); // Clear any previous submission error
+    clearAllErrors(); // Clear all errors on new input
     if (event.target.files) {
       setAttachments((prev) => [...prev, ...Array.from(event.target.files!)]);
       console.log(
@@ -292,7 +297,7 @@ const CaseSubmittion: React.FC = () => {
 
   const MAX_SELECTED_CATEGORIES = 3;
   const toggleCategory = (categoryName: string): void => {
-    setSubmissionError(null); // <-- Add this line at the beginning
+    clearAllErrors(); // Clear errors when category changes
     setSelectedCategories((prev) => {
       if (prev.includes(categoryName)) {
         return prev.filter((c) => c !== categoryName); // unselect
@@ -339,9 +344,9 @@ const CaseSubmittion: React.FC = () => {
       PROBLEM: `bg-red-600 hover:bg-red-700`,
       SUGGESTION: `bg-green-600 hover:bg-green-700`,
     };
-    // Disable button visually if submitting or if creator isn't identified yet
+    // Disable button visually if submitting //or if creator isn't identified yet
     const disabledClass =
-      isSubmitting || createCaseLoading || !fetchedCreatorId
+      isSubmitting || createCaseLoading //|| !fetchedCreatorId
         ? "opacity-50 cursor-not-allowed"
         : "";
     return `${commonClasses} ${styles[caseTypeParam]} ${disabledClass}`; // caseTypeParam is guaranteed non-null here
@@ -357,18 +362,16 @@ const CaseSubmittion: React.FC = () => {
     setSubmissionError(null);
 
     // --- Validation ---
+    if (!fetchedCreatorId) {
+      setSubmissionError("Моля, въведете валидно потребителско име.");
+      return;
+    }
     if (!content.trim()) {
       setSubmissionError("Описанието е задължително.");
       return;
     }
     if (selectedCategories.length === 0) {
       setSubmissionError("Моля, изберете поне една категория.");
-      return;
-    }
-    if (!fetchedCreatorId) {
-      setSubmissionError(
-        "Моля, въведете валидно потребителско име, за да бъде намерен създателя."
-      );
       return;
     }
     // caseTypeParam already validated for page render
@@ -482,7 +485,7 @@ const CaseSubmittion: React.FC = () => {
               type="submit"
               form="case-form"
               className={getSendButtonClass()}
-              disabled={isSubmitting || createCaseLoading || !fetchedCreatorId} // Disable if submitting or creator not found
+              disabled={isSubmitting || createCaseLoading} // Disable if submitting ( || !fetchedCreatorIdor creator not found)
             >
               {isSubmitting || createCaseLoading ? "Изпращане..." : "Изпрати"}
             </button>
@@ -599,11 +602,11 @@ const CaseSubmittion: React.FC = () => {
                   id="description"
                   placeholder="Описание..."
                   className="w-full h-40 border border-gray-300 p-3 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                  required
+                  // required
                   name="description"
                   value={content}
                   onChange={(e) => {
-                    setSubmissionError(null);
+                    clearAllErrors();
                     setContent(e.target.value);
                   }}
                   maxLength={500}
@@ -618,7 +621,7 @@ const CaseSubmittion: React.FC = () => {
                 {/* Styled Label acting as Button */}
                 <label
                   htmlFor="file-upload-input" // Connect label to the hidden input
-                  className="inline-block cursor-pointer rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                  className="w-full inline-block text-center cursor-pointer rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-200 active:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                 >
                   📎 Избери файлове
                 </label>
@@ -677,7 +680,7 @@ const CaseSubmittion: React.FC = () => {
                         value={value}
                         checked={priority === value}
                         onChange={(e) => {
-                          setSubmissionError(null); // <-- Add this line
+                          clearAllErrors();
                           setPriority(
                             e.target.value as CreateCaseInput["priority"]
                           );

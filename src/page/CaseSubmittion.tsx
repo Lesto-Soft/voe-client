@@ -163,17 +163,59 @@ const CaseSubmittion: React.FC = () => {
   );
 
   const helpModalContent = useMemo<React.ReactNode>(() => {
-    // ... (Your existing help modal logic using categoryList, selectedCategories, caseTypeParam) ...
-    // Ensure this logic correctly handles potentially null caseTypeParam if needed
     if (!Array.isArray(categoryList)) {
+      console.error("Category list is not an array:", categoryList);
       return <p>Грешка при обработка на категориите.</p>;
     }
     if (selectedCategories.length === 0) {
-      return <p>Моля, изберете категории...</p>;
+      return (
+        <p>
+          Моля, изберете категории, за да видите подходяща помощна информация.
+        </p>
+      );
     }
-    // ... rest of your existing complex modal logic ...
-    // Placeholder:
-    return <p>Help content based on selected categories and case type.</p>;
+    const relevantCategories = categoryList.filter((cat) =>
+      selectedCategories.includes(cat.name)
+    );
+
+    if (relevantCategories.length === 0) {
+      return <p>Не е намерена помощна информация за избраните категории.</p>;
+    }
+    // Use caseTypeParam directly here, ensuring it's handled if null
+    const descriptionKey: keyof Category | null =
+      caseTypeParam === "PROBLEM"
+        ? "problem"
+        : caseTypeParam === "SUGGESTION"
+        ? "suggestion"
+        : null;
+
+    if (!descriptionKey) {
+      return <p>Невалиден тип на случая за показване на помощ.</p>; // Handle null caseTypeParam
+    }
+
+    return (
+      <div className="space-y-3 text-sm max-h-60 overflow-y-auto pr-2">
+        {relevantCategories.map((category) => {
+          const description = category[descriptionKey];
+          return (
+            <div key={category._id}>
+              {" "}
+              {/* Use _id for key */}
+              <strong className="font-semibold block mb-1">
+                {category.name}:
+              </strong>
+              {description ? (
+                <div dangerouslySetInnerHTML={{ __html: description }} />
+              ) : (
+                <p className="text-gray-500 italic">
+                  Няма налично описание за тази категория.
+                </p>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
   }, [selectedCategories, categoryList, caseTypeParam]);
 
   // ===========================================================
@@ -472,12 +514,12 @@ const CaseSubmittion: React.FC = () => {
           <div className="flex items-center space-x-2">
             <button
               onClick={openHelpModal}
-              className="bg-white text-gray-700 border border-gray-300 py-2 px-4 rounded-md cursor-pointer hover:bg-gray-100"
+              className="bg-white text-gray-700 border border-gray-300 py-2 px-4 rounded-md cursor-pointer hover:bg-gray-200"
             >
               ❓ Помощ
             </button>
             <Link to="/">
-              <button className="bg-white text-gray-700 border border-gray-300 py-2 px-4 rounded-md cursor-pointer hover:bg-gray-100">
+              <button className="bg-white text-gray-700 border border-gray-300 py-2 px-4 rounded-md cursor-pointer hover:bg-gray-200">
                 ← Назад
               </button>
             </Link>

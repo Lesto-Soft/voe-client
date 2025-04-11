@@ -27,7 +27,7 @@ const HelpModal: React.FC<HelpModalProps> = ({
   return (
     // Overlay backdrop
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-stone-300/50 transition-opacity duration-300 ease-in-out"
+      className="fixed inset-0 z-50 flex items-center justify-center  transition-opacity bg-gray-500/50 duration-300 ease-in-out"
       onClick={handleOverlayClick} // Close on overlay click
       aria-labelledby="modal-title"
       role="dialog"

@@ -1,0 +1,13 @@
+{
+  "home": {
+    "title": "Voice of Employees",
+    "subtitle": "Submit a case",
+    "problem": "Problem",
+    "suggestion": "Suggestion",
+    "enterYourProfile": "Enter your profile",
+    "enterUsernamePassword": "Enter your username and password",
+    "submitCase": "Submit Case",
+    "login": "Log in",
+    "loggingIn": "Logging in..."
+  }
+}

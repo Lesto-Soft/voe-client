@@ -9,7 +9,7 @@ const CaseForm = ({
 }: {
   setIsLogin: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation("home");
   return (
     <>
       <LanguageSwitcher />
@@ -56,7 +56,7 @@ const LoginForm = ({
 }: {
   setIsLogin: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation("home");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);

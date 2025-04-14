@@ -27,9 +27,8 @@ const CaseForm = ({
 }: {
   setIsLogin: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
-  const { t } = useTranslation();
   const FORM_SECTION_MIN_HEIGHT = "min-h-80";
-
+  const { t } = useTranslation("home");
   return (
     <div
       className={`text-center lg:w-full space-y-6 ${FORM_SECTION_MIN_HEIGHT}`}
@@ -67,7 +66,7 @@ const LoginForm = ({
 }: {
   setIsLogin: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
-  const { t } = useTranslation();
+  const { t } = useTranslation("home");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);

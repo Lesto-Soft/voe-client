@@ -104,7 +104,7 @@ const CaseSubmittion: React.FC = () => {
   // ===========================================================
 
   // Translation hook
-  const { t } = useTranslation();
+  const { t } = useTranslation("caseSubmission");
   // --- Hooks for data fetching and navigation ---
   const {
     categories: categoriesData,

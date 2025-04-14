@@ -14,8 +14,8 @@ i18n
   .init({
     fallbackLng: "bg", // Fallback language if detection fails or translation is missing
     debug: process.env.NODE_ENV === "development", // Enable debug output in development
-    ns: ["translation"], // Namespace for your translations
-    defaultNS: "translation",
+    ns: ["home", "caseSubmission"], // Namespace for your translations
+    defaultNS: "home",
     backend: {
       // Path where resources get loaded from
       loadPath: "/locales/{{lng}}/{{ns}}.json",
@@ -41,6 +41,10 @@ i18n
       // Cache user language on
       caches: ["localStorage", "cookie"],
       excludeCacheFor: ["cimode"], // Languages to not persist (e.g., 'cimode' for debugging)
+      react: {
+        // Enable suspense for loading state
+        useSuspense: true,
+      },
     },
   });
 

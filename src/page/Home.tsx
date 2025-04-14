@@ -2,47 +2,52 @@ import axios from "axios";
 import { useState } from "react";
 import { dev_endpoint } from "../db/config";
 import { Link } from "react-router";
+import { useTranslation } from "react-i18next";
+import LanguageSwitcher from "../components/modals/LanguageSwitcher";
 const CaseForm = ({
   setIsLogin,
 }: {
   setIsLogin: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
+  const { t, i18n } = useTranslation();
   return (
-    <div className="text-center lg:text-left lg:w-full flex-1 space-y-6">
-      <div className="">
-        <h1 className="lg:text-5xl text-4xl font-extrabold font-main text-gray-800 uppercase w-80 text-center lg:text-left drop-shadow-lg">
-          Гласът на
-          <br /> служителите
-        </h1>
-        <p className="italic text-lg my-3 text-gray-600 w-80 text-center lg:text-left">
-          Подай сигнал
-        </p>
-      </div>
-      <div className="space-y-4">
-        <div>
-          <Link to={`/submit-case?type=problem`}>
-            <button className="bg-btnRed hover:bg-red-200 text-white rounded-lg lg:w-88 w-72 py-3 px-5 uppercase font-bold shadow-xl lg:text-2xl transition-all duration-300">
-              Проблем
-            </button>
-          </Link>
+    <>
+      <LanguageSwitcher />
+      <div className="text-center lg:text-left lg:w-full flex-1 space-y-6">
+        <div className="">
+          <h1 className="lg:text-5xl text-4xl font-extrabold font-main text-gray-800 uppercase w-full text-center lg:text-left drop-shadow-lg">
+            {t("home.title")}
+          </h1>
+          <p className="italic text-lg my-3 text-gray-600 w-80 text-center lg:text-left">
+            {t("home.subtitle")}
+          </p>
         </div>
-        <div>
-          <Link to="/submit-case?type=suggestion">
-            <button className="bg-btnGreen hover:bg-green-200 text-white rounded-lg lg:w-88 w-72 py-3 px-5  uppercase font-bold shadow-xl lg:text-2xl transition-all duration-300">
-              Подобрение
-            </button>
-          </Link>
+        <div className="space-y-4">
+          <div>
+            <Link to={`/submit-case?type=problem`}>
+              <button className="bg-btnRed hover:bg-red-200 text-white rounded-lg lg:w-88 w-72 py-3 px-5 uppercase font-bold shadow-xl lg:text-2xl transition-all duration-300">
+                {t("home.problem")}
+              </button>
+            </Link>
+          </div>
+          <div>
+            <Link to="/submit-case?type=suggestion">
+              <button className="bg-btnGreen hover:bg-green-200 text-white rounded-lg lg:w-88 w-72 py-3 px-5  uppercase font-bold shadow-xl lg:text-2xl transition-all duration-300">
+                {t("home.suggestion")}
+              </button>
+            </Link>
+          </div>
+        </div>
+        <div className="mt-6 w-80 text-center">
+          <button
+            className="text-blue-600 hover:text-blue-700 underline font-medium transition-all duration-300 hover:cursor-pointer"
+            onClick={() => setIsLogin(true)}
+          >
+            {t("home.enterYourProfile")} &rarr;
+          </button>
         </div>
       </div>
-      <div className="mt-6 w-80 text-center">
-        <button
-          className="text-blue-600 hover:text-blue-700 underline font-medium transition-all duration-300 hover:cursor-pointer"
-          onClick={() => setIsLogin(true)}
-        >
-          Влез в профила си &rarr;
-        </button>
-      </div>
-    </div>
+    </>
   );
 };
 
@@ -51,6 +56,7 @@ const LoginForm = ({
 }: {
   setIsLogin: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
+  const { t, i18n } = useTranslation();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -94,13 +100,9 @@ const LoginForm = ({
   return (
     <div className="text-center lg:text-left lg:w-full flex-1 space-y-6">
       <div className="">
-        <h1 className="lg:text-5xl text-4xl font-extrabold font-main text-gray-800 uppercase w-80 text-center lg:text-left drop-shadow-lg">
-          Гласът на
-          <br /> служителите
+        <h1 className="lg:text-5xl text-4xl font-extrabold font-main text-gray-800 uppercase w-full text-center lg:text-left drop-shadow-lg">
+          {t("home.title")}
         </h1>
-        <p className="italic text-lg my-3 text-gray-600 w-80 text-center lg:text-left">
-          Въведете потребител и парола
-        </p>
       </div>
 
       <form onSubmit={handleLoginSubmit} className="space-y-4">
@@ -142,7 +144,7 @@ const LoginForm = ({
             disabled={isLoading}
             className="bg-blue-400 hover:bg-blue-800 text-white rounded-lg lg:w-88 w-full py-3 px-5 uppercase font-bold shadow-xl lg:text-2xl transition-all duration-300 hover:cursor-pointer disabled:bg-blue-200 disabled:cursor-not-allowed"
           >
-            {isLoading ? "Влизане..." : "Влез"}
+            {isLoading ? `${t("home.loggingIn")}` : `${t("home.login")}`}
           </button>
         </div>
       </form>
@@ -153,7 +155,7 @@ const LoginForm = ({
           disabled={isLoading}
           className="text-blue-600 hover:text-blue-700 underline font-medium transition-all duration-300 hover:cursor-pointer disabled:opacity-50"
         >
-          &larr; Подай сигнал
+          &larr; {t("home.submitCase")}
         </button>
       </div>
     </div>

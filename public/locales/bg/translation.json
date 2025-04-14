@@ -1,4 +1,15 @@
 {
+  "home": {
+    "title": "Гласът на служителите",
+    "subtitle": "Подай сигнал",
+    "problem": "Проблем",
+    "suggestion": "Подобрение",
+    "enterYourProfile": "Влез в профила си",
+    "enterUsernamePassword": "Въведете потребител и парола",
+    "submitCase": "Подай сигнал",
+    "login": "Влез",
+    "loggingIn": "Влизане..."
+  },
   "caseSubmission": {
     "title": "Подаване на {{type}}",
     "subtitle": "Моля, попълнете формуляра по-долу",
@@ -40,6 +51,7 @@
         "missingCategory": "Моля, изберете поне една категория.",
         "fileProcessingError": "Грешка при обработка на прикачени файлове.",
         "categoryProcessingError": "Грешка при обработката на избраните категории.",
+        "categoryNoneFound": "Няма налични категории.",
         "generalSubmissionError": "Неуспешно създаване на сигнал: {{message}}",
         "unexpectedError": "Възникна неочаквана грешка при изпращането."
       },

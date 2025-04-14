@@ -632,36 +632,8 @@ const CaseSubmittion: React.FC = () => {
   const showLoadingModal =
     categoriesLoading || isSubmitting || createCaseLoading;
 
-  const LanguageSwitcher = () => (
-    <div className="flex space-x-2 items-center">
-      <button
-        onClick={() => i18n.changeLanguage("bg")}
-        disabled={i18n.language === "bg"}
-        className={`px-2 py-1 rounded border ${
-          i18n.language === "bg"
-            ? "bg-blue-500 text-white border-blue-500 cursor-default"
-            : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"
-        }`}
-      >
-        BG
-      </button>
-      <button
-        onClick={() => i18n.changeLanguage("en")}
-        disabled={i18n.language === "en"}
-        className={`px-2 py-1 rounded border ${
-          i18n.language === "en"
-            ? "bg-blue-500 text-white border-blue-500 cursor-default"
-            : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"
-        }`}
-      >
-        EN
-      </button>
-    </div>
-  );
-
   return (
     <>
-      {/* Rendered conditionally based on submission status */}
       <LoadingModal
         isOpen={showLoadingModal} // Use the declared variable
         message={
@@ -686,7 +658,6 @@ const CaseSubmittion: React.FC = () => {
             </p>
           </div>
           <div className="flex items-center space-x-2">
-            <LanguageSwitcher />
             <button
               onClick={openHelpModal}
               className="bg-white text-gray-700 border border-gray-300 py-2 px-4 rounded-md cursor-pointer hover:bg-gray-200 active:bg-gray-300"

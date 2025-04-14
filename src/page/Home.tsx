@@ -1,6 +1,7 @@
+import axios from "axios";
 import { useState } from "react";
+import { dev_endpoint } from "../db/config";
 import { Link } from "react-router";
-
 const CaseForm = ({
   setIsLogin,
 }: {
@@ -35,10 +36,10 @@ const CaseForm = ({
       </div>
       <div className="mt-6 w-80 text-center">
         <button
-          className="text-blue-600 hover:text-blue-700 underline font-medium transition-all duration-300"
+          className="text-blue-600 hover:text-blue-700 underline font-medium transition-all duration-300 hover:cursor-pointer"
           onClick={() => setIsLogin(true)}
         >
-          Влез в профила си
+          Влез в профила си &rarr;
         </button>
       </div>
     </div>
@@ -50,6 +51,46 @@ const LoginForm = ({
 }: {
   setIsLogin: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleLoginSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await axios.post(
+        `${dev_endpoint}/login`,
+        {
+          username,
+          password,
+        },
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          withCredentials: true, // Include cookies in the request
+        }
+      );
+
+      setIsLoading(false);
+
+      if (response.data.message === "Login successful") {
+        window.location.href = "/dashboard"; // Redirect to a dashboard or another page
+      }
+    } catch (err) {
+      setIsLoading(false);
+      console.log(err);
+      setError(
+        err instanceof Error ? err.message : "An unknown error occurred."
+      );
+    }
+  };
+
   return (
     <div className="text-center lg:text-left lg:w-full flex-1 space-y-6">
       <div className="">
@@ -61,28 +102,58 @@ const LoginForm = ({
           Въведете потребител и парола
         </p>
       </div>
-      <div className="space-y-4">
+
+      <form onSubmit={handleLoginSubmit} className="space-y-4">
         <div>
           <input
             type="text"
+            id="username"
             placeholder="Потребител"
-            className="lg:w-88 py-3 px-5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required
+            disabled={isLoading}
+            className="lg:w-88 w-full py-3 px-5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50" // Added w-full for consistency and disabled style
           />
         </div>
+
         <div>
           <input
             type="password"
+            id="password"
             placeholder="Парола"
-            className="lg:w-88  py-3 px-5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            disabled={isLoading}
+            className="lg:w-88 w-full py-3 px-5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50" // Added w-full for consistency and disabled style
           />
         </div>
-      </div>
-      <div className="mt-6 w-80 text-center">
+
+        {error && (
+          <div className="mt-2 text-red-600 text-sm w-80 text-center lg:text-left">
+            {error}
+          </div>
+        )}
+
+        <div className="mt-6 w-80 text-center lg:text-left">
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="bg-blue-400 hover:bg-blue-800 text-white rounded-lg lg:w-88 w-full py-3 px-5 uppercase font-bold shadow-xl lg:text-2xl transition-all duration-300 hover:cursor-pointer disabled:bg-blue-200 disabled:cursor-not-allowed"
+          >
+            {isLoading ? "Влизане..." : "Влез"}
+          </button>
+        </div>
+      </form>
+
+      <div className="mt-6 w-80 text-center lg:text-left">
         <button
           onClick={() => setIsLogin(false)}
-          className="text-blue-600 hover:text-blue-700 underline font-medium transition-all duration-300"
+          disabled={isLoading}
+          className="text-blue-600 hover:text-blue-700 underline font-medium transition-all duration-300 hover:cursor-pointer disabled:opacity-50"
         >
-          Подай сигнал
+          &larr; Подай сигнал
         </button>
       </div>
     </div>
@@ -92,18 +163,18 @@ const LoginForm = ({
 const Home = () => {
   const [isLogin, setIsLogin] = useState(false);
   return (
-    <div className="container mx-auto h-screen flex items-center ">
+    <div className="container mx-auto h-screen flex items-center">
       <div className="flex flex-col-reverse lg:flex-row justify-around items-center w-full p-6 lg:p-12">
         {isLogin ? (
           <LoginForm setIsLogin={setIsLogin} />
         ) : (
           <CaseForm setIsLogin={setIsLogin} />
         )}
-        <div className="lg:w-1/2 flex-1 flex justify-center items-center">
+        <div className="lg:w-1/2 flex-1 flex justify-center items-center ">
           <img
             src="/images/illustrations/voe2-bg.png"
             alt="VOE Image"
-            className="h-60 w-60 lg:h-full lg:w-full"
+            className="h-60 w-60 lg:h-full lg:w-full "
           />
         </div>
       </div>

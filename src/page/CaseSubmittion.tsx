@@ -13,6 +13,7 @@ import { ApolloError, useLazyQuery } from "@apollo/client"; // Added gql and use
 import { useGetActiveCategories } from "../graphql/hooks/category";
 import { useCreateCase, CreateCaseInput } from "../graphql/hooks/case"; // Your mutation hook
 import HelpModal from "../components/modals/HelpModal";
+import LoadingModal from "../components/modals/LoadingModal";
 import { GET_USER_BY_USERNAME } from "../graphql/query/user";
 
 const MAX_FILES = 5;
@@ -602,9 +603,20 @@ const CaseSubmittion: React.FC = () => {
   // ===========================================================
   // 6. JSX RENDER
   // ===========================================================
+  const showLoadingModal =
+    categoriesLoading || isSubmitting || createCaseLoading;
 
   return (
     <>
+      {/* Rendered conditionally based on submission status */}
+      <LoadingModal
+        isOpen={showLoadingModal} // Use the declared variable
+        message={
+          categoriesLoading
+            ? "Зареждане на формуляр..." // Message during initial load
+            : "Изпращане на сигнала..." // Message during submission
+        }
+      />
       <div className="min-h-screen p-6 grid grid-cols-1 md:grid-cols-2 gap-6 bg-stone-200">
         {/* Header Row */}
         <div className="col-span-1 md:col-span-2 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">

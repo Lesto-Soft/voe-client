@@ -8,6 +8,7 @@ import React, {
 } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 import { ApolloError, useLazyQuery } from "@apollo/client"; // Added gql and useLazyQuery
+import { useTranslation } from "react-i18next";
 
 // Assuming hooks/types are in these locations - adjust paths as necessary
 import { useGetActiveCategories } from "../graphql/hooks/category";
@@ -102,6 +103,8 @@ const CaseSubmittion: React.FC = () => {
   // 1. HOOKS (Apollo Queries/Mutations, Router, State)
   // ===========================================================
 
+  // Translation hook
+  const { t, i18n } = useTranslation();
   // --- Hooks for data fetching and navigation ---
   const {
     categories: categoriesData,
@@ -171,21 +174,17 @@ const CaseSubmittion: React.FC = () => {
   const helpModalContent = useMemo<React.ReactNode>(() => {
     if (!Array.isArray(categoryList)) {
       console.error("Category list is not an array:", categoryList);
-      return <p>Грешка при обработка на категориите.</p>;
+      return <p>{t("caseSubmission.helpModal.categoryProcessingError")}</p>;
     }
     if (selectedCategories.length === 0) {
-      return (
-        <p>
-          Моля, изберете категории, за да видите подходяща помощна информация.
-        </p>
-      );
+      return <p>{t("caseSubmission.helpModal.selectCategoriesPrompt")}</p>;
     }
     const relevantCategories = categoryList.filter((cat) =>
       selectedCategories.includes(cat.name)
     );
 
     if (relevantCategories.length === 0) {
-      return <p>Не е намерена помощна информация за избраните категории.</p>;
+      return <p>{t("caseSubmission.helpModal.noInfoFound")}</p>;
     }
     // Use caseTypeParam directly here, ensuring it's handled if null
     const descriptionKey: keyof Category | null =
@@ -196,8 +195,14 @@ const CaseSubmittion: React.FC = () => {
         : null;
 
     if (!descriptionKey) {
-      return <p>Невалиден тип на случая за показване на помощ.</p>; // Handle null caseTypeParam
+      return <p>{t("caseSubmission.helpModal.invalidCaseType")}</p>; // Handle null caseTypeParam
     }
+
+    // *** IMPORTANT: Category Descriptions ***
+    // If category.problem/category.suggestion ALSO need translation,
+    // your API needs to return localized descriptions based on the current language (i18n.language).
+    // Or, you could try mapping keys if the descriptions are simple, e.g., category.descriptionKey_en, category.descriptionKey_bg
+    // For now, assuming the description itself is language-agnostic or already correct.
 
     return (
       <div className="space-y-3 text-sm max-h-60 overflow-y-auto pr-2">
@@ -208,13 +213,14 @@ const CaseSubmittion: React.FC = () => {
               {" "}
               {/* Use _id for key */}
               <strong className="font-semibold block mb-1">
-                {category.name}:
+                {category.name}:{" "}
+                {/* Category name might also need translation if it comes from DB in one language */}
               </strong>
               {description ? (
                 <div dangerouslySetInnerHTML={{ __html: description }} />
               ) : (
                 <p className="text-gray-500 italic">
-                  Няма налично описание за тази категория.
+                  {t("caseSubmission.helpModal.noDescriptionAvailable")}
                 </p>
               )}
             </div>
@@ -308,14 +314,14 @@ const CaseSubmittion: React.FC = () => {
   if (categoriesError)
     return (
       <div className="p-6 text-red-600">
-        Error loading categories: {categoriesError.message}
+        {t("caseSubmission.loadingCategoriesError", {
+          message: categoriesError.message,
+        })}
       </div>
     );
   if (!caseTypeParam)
     return (
-      <div className="p-6 text-red-600">
-        Invalid or missing case type in URL (?type=problem or ?type=suggestion).
-      </div>
+      <div className="p-6 text-red-600">{t("caseSubmission.invalidType")}</div>
     );
 
   // ===========================================================
@@ -354,7 +360,9 @@ const CaseSubmittion: React.FC = () => {
 
       // --- Check 1: Max file count ---
       if (availableSlots <= 0) {
-        processingError = `Не можете да добавите повече файлове (максимум ${MAX_FILES}).`;
+        processingError = t("caseSubmission.errors.file.maxCountExceeded", {
+          max: MAX_FILES,
+        });
         // Return previous state immediately, no need to process files
         return prevAttachments;
       }
@@ -398,26 +406,34 @@ const CaseSubmittion: React.FC = () => {
 
       // --- Set Feedback Messages (Prioritized) ---
       if (oversizedFiles.length > 0) {
-        processingError = `Следните файлове са по-големи от ${MAX_FILE_SIZE_MB}MB и бяха пропуснати: ${oversizedFiles.join(
-          ", "
-        )}`;
+        processingError = t("caseSubmission.errors.file.oversized", {
+          maxSize: MAX_FILE_SIZE_MB,
+          fileList: oversizedFiles.join(", "),
+        });
         // Optionally append count limit message if applicable
         if (countLimitedFiles.length > 0) {
-          processingError += ` Освен това, лимитът от ${MAX_FILES} файла беше достигнат.`;
+          processingError += ` ${t(
+            "caseSubmission.errors.file.oversizedAndMaxCount",
+            { max: MAX_FILES }
+          )}`;
         }
       } else if (countLimitedFiles.length > 0) {
         // This message now implies files were skipped *only* due to the count limit
-        processingError = `Лимитът от ${MAX_FILES} файла беше достигнат. ${countLimitedFiles.length} файла бяха пропуснати.`;
+        processingError = t("caseSubmission.errors.file.maxCountReached", {
+          max: MAX_FILES,
+          count: countLimitedFiles.length,
+        });
       } else if (duplicateFiles.length > 0 && validFilesToAdd.length === 0) {
         // Only duplicates were selected (and no size/count errors)
-        processingError = `Избраните файлове вече са в списъка: ${duplicateFiles.join(
-          ", "
-        )}`;
+        processingError = t("caseSubmission.errors.file.duplicatesSkipped", {
+          fileList: duplicateFiles.join(", "),
+        });
       } else if (duplicateFiles.length > 0) {
         // Some files were added, but some were duplicates (show as warning, not error)
         console.warn(
-          "Пропуснати дублирани файлове:",
-          duplicateFiles.join(", ")
+          t("caseSubmission.errors.file.duplicatesSomeSkipped", {
+            fileList: duplicateFiles.join(", "),
+          })
         );
       }
 
@@ -512,15 +528,17 @@ const CaseSubmittion: React.FC = () => {
 
     // --- Validation ---
     if (!fetchedCreatorId) {
-      setSubmissionError("Моля, въведете валидно потребителско име.");
+      setSubmissionError(t("caseSubmission.errors.submission.missingUsername"));
       return;
     }
     if (!content.trim()) {
-      setSubmissionError("Описанието е задължително.");
+      setSubmissionError(
+        t("caseSubmission.errors.submission.missingDescription")
+      );
       return;
     }
     if (selectedCategories.length === 0) {
-      setSubmissionError("Моля, изберете поне една категория.");
+      setSubmissionError(t("caseSubmission.errors.submission.missingCategory"));
       return;
     }
     // caseTypeParam already validated for page render
@@ -538,7 +556,9 @@ const CaseSubmittion: React.FC = () => {
       );
     } catch (fileReadError) {
       console.error("Client: Error reading files to base64:", fileReadError);
-      setSubmissionError("Грешка при обработка на прикачени файлове.");
+      setSubmissionError(
+        t("caseSubmission.errors.submission.fileProcessingError")
+      );
       setIsSubmitting(false);
       return;
     }
@@ -546,7 +566,9 @@ const CaseSubmittion: React.FC = () => {
     // --- Find Category IDs ---
     const categoryIds = findCategoryIds(selectedCategories, categoryList);
     if (categoryIds.length !== selectedCategories.length) {
-      setSubmissionError("Грешка при обработката на избраните категории.");
+      setSubmissionError(
+        t("caseSubmission.errors.submission.categoryProcessingError")
+      );
       setIsSubmitting(false);
       return;
     }
@@ -593,8 +615,12 @@ const CaseSubmittion: React.FC = () => {
         createCaseError?.message ||
         (err instanceof Error
           ? err.message
-          : "An unexpected error occurred during submission.");
-      setSubmissionError(`Failed to create case: ${errorMsg}`);
+          : t("caseSubmission.errors.submission.unexpectedError"));
+      setSubmissionError(
+        t("caseSubmission.errors.submission.generalSubmissionError", {
+          message: errorMsg,
+        })
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -606,6 +632,33 @@ const CaseSubmittion: React.FC = () => {
   const showLoadingModal =
     categoriesLoading || isSubmitting || createCaseLoading;
 
+  const LanguageSwitcher = () => (
+    <div className="flex space-x-2 items-center">
+      <button
+        onClick={() => i18n.changeLanguage("bg")}
+        disabled={i18n.language === "bg"}
+        className={`px-2 py-1 rounded border ${
+          i18n.language === "bg"
+            ? "bg-blue-500 text-white border-blue-500 cursor-default"
+            : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"
+        }`}
+      >
+        BG
+      </button>
+      <button
+        onClick={() => i18n.changeLanguage("en")}
+        disabled={i18n.language === "en"}
+        className={`px-2 py-1 rounded border ${
+          i18n.language === "en"
+            ? "bg-blue-500 text-white border-blue-500 cursor-default"
+            : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"
+        }`}
+      >
+        EN
+      </button>
+    </div>
+  );
+
   return (
     <>
       {/* Rendered conditionally based on submission status */}
@@ -613,8 +666,8 @@ const CaseSubmittion: React.FC = () => {
         isOpen={showLoadingModal} // Use the declared variable
         message={
           categoriesLoading
-            ? "Зареждане на формуляр..." // Message during initial load
-            : "Изпращане на сигнала..." // Message during submission
+            ? t("caseSubmission.loadingForm") // Message during initial load
+            : t("caseSubmission.submittingCase") // Message during submission
         }
       />
       <div className="min-h-screen p-6 grid grid-cols-1 md:grid-cols-2 gap-6 bg-stone-200">
@@ -622,23 +675,27 @@ const CaseSubmittion: React.FC = () => {
         <div className="col-span-1 md:col-span-2 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h2 className="text-xl font-semibold text-gray-800">
-              Подаване на{" "}
-              {caseTypeParam === "PROBLEM" ? "проблем" : "предложение"}
+              {t("caseSubmission.title", {
+                type: t(
+                  `caseSubmission.caseType.${caseTypeParam.toLowerCase()}`
+                ), // e.g. caseType.problem or caseType.suggestion
+              })}
             </h2>
             <p className="text-sm text-gray-500">
-              Моля, попълнете формуляра по-долу
+              {t("caseSubmission.subtitle")}
             </p>
           </div>
           <div className="flex items-center space-x-2">
+            <LanguageSwitcher />
             <button
               onClick={openHelpModal}
               className="bg-white text-gray-700 border border-gray-300 py-2 px-4 rounded-md cursor-pointer hover:bg-gray-200 active:bg-gray-300"
             >
-              ❓ Помощ
+              {t("caseSubmission.helpButton")}
             </button>
             <Link to="/">
               <button className="bg-white text-gray-700 border border-gray-300 py-2 px-4 rounded-md cursor-pointer hover:bg-gray-200 active:bg-gray-300">
-                ← Назад
+                {t("caseSubmission.backButton")}
               </button>
             </Link>
             <button
@@ -647,7 +704,9 @@ const CaseSubmittion: React.FC = () => {
               className={getSendButtonClass()}
               disabled={isSubmitting || createCaseLoading} // Disable if submitting ( || !fetchedCreatorIdor creator not found)
             >
-              {isSubmitting || createCaseLoading ? "Изпращане..." : "Изпрати"}
+              {isSubmitting || createCaseLoading
+                ? t("caseSubmission.submittingButton")
+                : t("caseSubmission.submitButton")}
             </button>
           </div>
         </div>
@@ -689,7 +748,7 @@ const CaseSubmittion: React.FC = () => {
                     htmlFor="username"
                     className="block text-sm font-medium text-gray-700 mb-1"
                   >
-                    Потребителско име*
+                    {t("caseSubmission.usernameLabel")}
                   </label>
                   <input
                     type="text" // Ensure type="text"
@@ -697,7 +756,7 @@ const CaseSubmittion: React.FC = () => {
                     placeholder="emp___"
                     className="w-full border border-gray-300 p-3 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                     name="username"
-                    aria-label="Потребителско име"
+                    aria-label={t("caseSubmission.usernameLabel")}
                     value={usernameInput}
                     onChange={handleUsernameChange} // Clears notFoundUsername state too
                   />
@@ -712,7 +771,7 @@ const CaseSubmittion: React.FC = () => {
                     )} */}
                     {userError && (
                       <p className="text-sm text-red-500">
-                        Грешка: {userError.message}
+                        {t("caseSubmission.userSearchLoading")}
                       </p>
                     )}
                     <p
@@ -721,7 +780,9 @@ const CaseSubmittion: React.FC = () => {
                       }`}
                     >
                       {notFoundUsername
-                        ? `Потребител "${notFoundUsername}" не е намерен.`
+                        ? t("caseSubmission.userNotFoundError", {
+                            username: notFoundUsername,
+                          })
                         : "\u00A0"}
                     </p>
                   </div>
@@ -734,15 +795,15 @@ const CaseSubmittion: React.FC = () => {
                     htmlFor="fullname"
                     className="block text-sm font-medium text-gray-700 mb-1"
                   >
-                    Име и фамилия*
+                    {t("caseSubmission.fullNameLabel")}
                   </label>
                   <input
                     type="text" // Ensure type="text"
                     id="fullname" // Add id for label
-                    placeholder="(автоматично)"
+                    placeholder={t("caseSubmission.fullNamePlaceholder")}
                     className="w-full border border-gray-300 p-3 rounded-md bg-gray-100 cursor-not-allowed focus:outline-none focus:ring-0" // Adjusted disabled style
                     name="fullname"
-                    aria-label="Име и фамилия"
+                    aria-label={t("caseSubmission.fullNameLabel")}
                     value={fetchedName}
                     disabled // Keep disabled
                     readOnly // Good practice
@@ -759,11 +820,11 @@ const CaseSubmittion: React.FC = () => {
                   htmlFor="description"
                   className="block text-sm font-medium text-gray-700 mb-1"
                 >
-                  Описание*
+                  {t("caseSubmission.descriptionLabel")}
                 </label>
                 <textarea
                   id="description"
-                  placeholder="Описание..."
+                  placeholder={t("caseSubmission.descriptionPlaceholder")}
                   className="w-full h-40 border border-gray-300 p-3 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                   // required
                   name="description"
@@ -773,15 +834,18 @@ const CaseSubmittion: React.FC = () => {
                     setContent(e.target.value);
                   }}
                   maxLength={500}
-                  aria-label="Описание на сигнала"
+                  aria-label={t("caseSubmission.descriptionLabel")}
                 />
               </div>
               {/* File Input Section */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   {/* Update label to show current count vs max */}
-                  Прикачени файлове ({attachments.length} / {MAX_FILES}) (макс.{" "}
-                  {MAX_FILE_SIZE_MB} MB всеки)
+                  {t("caseSubmission.attachmentsLabel", {
+                    count: attachments.length,
+                    max: MAX_FILES,
+                    maxSize: MAX_FILE_SIZE_MB,
+                  })}
                 </label>
                 {/* Styled Label acting as Button - Disable visually if max files reached */}
                 <label
@@ -796,7 +860,7 @@ const CaseSubmittion: React.FC = () => {
                     if (attachments.length >= MAX_FILES) e.preventDefault();
                   }}
                 >
-                  📎 Избери файлове
+                  {t("caseSubmission.selectFilesButton")}
                 </label>
                 {/* Hidden Actual File Input - Disable if max files reached */}
                 <input
@@ -857,8 +921,7 @@ const CaseSubmittion: React.FC = () => {
                               type="button"
                               onClick={() => handleRemoveAttachment(file.name)}
                               className="ml-2 px-1.5 py-0.5 text-red-500 hover:text-red-700 text-lg font-bold leading-none rounded focus:outline-none focus:ring-1 focus:ring-red-500 cursor-pointer"
-                              aria-label={`Премахни файл ${file.name}`}
-                              title="Премахни файл"
+                              aria-label={`Remove ${file.name}`}
                             >
                               &times;
                             </button>
@@ -882,13 +945,25 @@ const CaseSubmittion: React.FC = () => {
               {/* Priority */}
               <div>
                 <p className="text-sm font-medium mb-3 text-gray-700">
-                  Приоритет*
+                  {t("caseSubmission.priorityLabel")}
                 </p>
                 <div className="flex flex-wrap gap-x-4 gap-y-2">
                   {[
-                    { label: "Нисък", value: "LOW", color: "#009b00" },
-                    { label: "Среден", value: "MEDIUM", color: "#ad8600" },
-                    { label: "Висок", value: "HIGH", color: "#c30505" },
+                    {
+                      label: `${t("caseSubmission.priority.low")}`,
+                      value: "LOW",
+                      color: "#009b00",
+                    },
+                    {
+                      label: `${t("caseSubmission.priority.medium")}`,
+                      value: "MEDIUM",
+                      color: "#ad8600",
+                    },
+                    {
+                      label: `${t("caseSubmission.priority.high")}`,
+                      value: "HIGH",
+                      color: "#c30505",
+                    },
                   ].map(({ label, value, color }) => (
                     <label
                       key={value}
@@ -916,7 +991,9 @@ const CaseSubmittion: React.FC = () => {
               {/* Categories */}
               <div>
                 <p className="text-sm font-medium mb-3 text-gray-700">
-                  Отнася се за (макс. {MAX_SELECTED_CATEGORIES})*
+                  {t("caseSubmission.categoriesLabel", {
+                    maxSelect: MAX_SELECTED_CATEGORIES,
+                  })}
                 </p>
                 {categoryList.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
@@ -942,7 +1019,7 @@ const CaseSubmittion: React.FC = () => {
                   </div>
                 ) : (
                   <p className="text-sm text-gray-500 italic">
-                    Няма налични категории.
+                    {t("caseSubmission.categoryNoneFound")}
                   </p>
                 )}
               </div>
@@ -955,7 +1032,7 @@ const CaseSubmittion: React.FC = () => {
       <HelpModal
         isOpen={isHelpModalOpen}
         onClose={closeHelpModal}
-        title="Помощна Информация"
+        title={t("caseSubmission.helpModal.title")}
       >
         {helpModalContent}
       </HelpModal>

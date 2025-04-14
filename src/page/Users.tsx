@@ -1,4 +1,3 @@
-import React from "react";
 import { useGetUsers } from "../graphql/hooks/user";
 
 const Users = () => {

@@ -20,3 +20,12 @@ export const GET_USERS = gql`
   }
   ${userFragment}
 `;
+
+export const GET_USER_BY_USERNAME = gql`
+  query GetUserByUsername($username: String!) {
+    getLeanUserByUsername(username: $username) {
+      _id
+      name
+    }
+  }
+`;

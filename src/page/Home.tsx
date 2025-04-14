@@ -1,6 +1,7 @@
 import axios from "axios";
 import { useState } from "react";
 import { dev_endpoint } from "../db/config";
+import { Link } from "react-router";
 const CaseForm = ({
   setIsLogin,
 }: {
@@ -19,14 +20,18 @@ const CaseForm = ({
       </div>
       <div className="space-y-4">
         <div>
-          <button className="bg-btnRed hover:bg-btnRedHover text-white rounded-lg lg:w-88 w-72 py-3 px-5 uppercase font-bold shadow-xl lg:text-2xl transition-all duration-300 hover:cursor-pointer">
-            Проблем
-          </button>
+          <Link to={`/submit-case?type=problem`}>
+            <button className="bg-btnRed hover:bg-red-200 text-white rounded-lg lg:w-88 w-72 py-3 px-5 uppercase font-bold shadow-xl lg:text-2xl transition-all duration-300">
+              Проблем
+            </button>
+          </Link>
         </div>
         <div>
-          <button className="bg-btnGreen hover:bg-btnGreenHover text-white rounded-lg lg:w-88 w-72 py-3 px-5  uppercase font-bold shadow-xl lg:text-2xl transition-all duration-300 hover:cursor-pointer">
-            Подобрение
-          </button>
+          <Link to="/submit-case?type=suggestion">
+            <button className="bg-btnGreen hover:bg-green-200 text-white rounded-lg lg:w-88 w-72 py-3 px-5  uppercase font-bold shadow-xl lg:text-2xl transition-all duration-300">
+              Подобрение
+            </button>
+          </Link>
         </div>
       </div>
       <div className="mt-6 w-80 text-center">

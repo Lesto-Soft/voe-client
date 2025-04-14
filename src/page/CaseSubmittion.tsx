@@ -818,7 +818,11 @@ const CaseSubmittion: React.FC = () => {
                   {/* Keeps minimum space */}
                   {/* Conditionally render the list container *inside* */}
                   <div
-                    className="text-sm text-gray-600 space-y-1 h-20 overflow-y-auto border border-gray-200 rounded p-2 bg-gray-50" // Added max-h, overflow, border, padding, bg
+                    className={`text-sm text-gray-600 space-y-1 h-20 overflow-y-auto rounded p-2 ${
+                      attachments.length === 0
+                        ? ""
+                        : "border border-gray-200 bg-gray-50"
+                    }`} // Added max-h, overflow, border, padding, bg
                   >
                     {attachments.length > 0 && (
                       // Apply max-height and overflow to this inner div
@@ -909,7 +913,9 @@ const CaseSubmittion: React.FC = () => {
                         key={category._id}
                         type="button"
                         onClick={() => toggleCategory(category.name)}
-                        className={getCategoryClass(category.name)}
+                        className={`uppercase ${getCategoryClass(
+                          category.name
+                        )}`}
                         disabled={
                           !selectedCategories.includes(category.name) &&
                           selectedCategories.length >= MAX_SELECTED_CATEGORIES

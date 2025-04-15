@@ -4,6 +4,7 @@ import Users from "../page/Users";
 import CaseSubmittion from "../page/CaseSubmittion";
 import Dashboard from "../page/Dashboard";
 import LoadingTestPage from "../page/LoadingTestPage";
+import UserManagementPage from "../page/UserManagementPage";
 
 const mainRouter = createBrowserRouter([
   {
@@ -21,6 +22,10 @@ const mainRouter = createBrowserRouter([
   {
     path: "/dashboard",
     element: <Dashboard />,
+  },
+  {
+    path: "/user-management",
+    element: <UserManagementPage />,
   },
   {
     path: "/loading",

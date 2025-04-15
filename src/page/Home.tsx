@@ -27,23 +27,23 @@ const CaseForm = ({
 }: {
   setIsLogin: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
-  const FORM_SECTION_MIN_HEIGHT = "min-h-80";
+  const FORM_SECTION_MIN_HEIGHT = "min-h-55";
   const { t } = useTranslation("home");
   return (
-    <div
-      className={`text-center lg:w-full space-y-6 ${FORM_SECTION_MIN_HEIGHT}`}
-    >
-      <div className={`space-y-4`}>
+    <div className={`text-center lg:w-full space-y-6`}>
+      <div
+        className={`flex flex-col justify-center items-stretch space-y-4 ${FORM_SECTION_MIN_HEIGHT}`}
+      >
         <div>
           <Link to={`/submit-case?type=problem`}>
-            <button className="bg-btnRed hover:bg-red-200 text-white rounded-lg w-full py-3 px-5 uppercase font-bold shadow-xl lg:text-2xl transition-all duration-300">
+            <button className="bg-btnRed hover:bg-red-800 active:bg-red-500 hover:cursor-pointer  text-white rounded-lg w-full py-3 px-5 uppercase font-bold shadow-xl lg:text-2xl transition-all duration-300">
               {t("home.problem")}
             </button>
           </Link>
         </div>
         <div>
           <Link to="/submit-case?type=suggestion">
-            <button className="bg-btnGreen hover:bg-green-200 text-white rounded-lg w-full py-3 px-5 uppercase font-bold shadow-xl lg:text-2xl transition-all duration-300">
+            <button className="bg-btnGreen hover:bg-green-700 active:bg-green-500 hover:cursor-pointer  text-white rounded-lg w-full py-3 px-5 uppercase font-bold shadow-xl lg:text-2xl transition-all duration-300">
               {t("home.suggestion")}
             </button>
           </Link>
@@ -51,7 +51,7 @@ const CaseForm = ({
       </div>
       <div className="mt-6 w-full text-center">
         <button
-          className="text-blue-600 hover:text-blue-700 underline font-medium transition-all duration-300 hover:cursor-pointer"
+          className="text-gray-600 hover:text-gray-700 font-medium transition-all duration-300 hover:cursor-pointer"
           onClick={() => setIsLogin(true)}
         >
           {t("home.enterYourProfile")} &rarr;
@@ -71,7 +71,7 @@ const LoginForm = ({
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const FORM_SECTION_MIN_HEIGHT = "min-h-40";
+  const FORM_SECTION_MIN_HEIGHT = "min-h-55";
 
   const handleLoginSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -104,10 +104,11 @@ const LoginForm = ({
   };
 
   return (
-    <div
-      className={`text-center lg:w-full space-y-6 ${FORM_SECTION_MIN_HEIGHT}`}
-    >
-      <form onSubmit={handleLoginSubmit} className={`space-y-4`}>
+    <div className={`text-center lg:w-full space-y-6`}>
+      <form
+        onSubmit={handleLoginSubmit}
+        className={`flex flex-col justify-center items-center space-y-4 ${FORM_SECTION_MIN_HEIGHT}`}
+      >
         <div>
           <input
             type="text"
@@ -141,7 +142,7 @@ const LoginForm = ({
           <button
             type="submit"
             disabled={isLoading}
-            className="bg-blue-400 hover:bg-blue-800 text-white rounded-lg w-full py-3 px-5 uppercase font-bold shadow-xl lg:text-2xl transition-all duration-300 hover:cursor-pointer disabled:bg-blue-200 disabled:cursor-not-allowed" // Already w-full
+            className="bg-blue-400 hover:bg-blue-800 active:bg-blue-500 text-white rounded-lg w-full py-3 px-5 uppercase font-bold shadow-xl lg:text-2xl transition-all duration-300 hover:cursor-pointer disabled:bg-blue-200 disabled:cursor-not-allowed" // Already w-full
           >
             {isLoading ? t("home.loggingIn") : t("home.login")}
           </button>
@@ -151,7 +152,7 @@ const LoginForm = ({
         <button
           onClick={() => setIsLogin(false)}
           disabled={isLoading}
-          className="text-blue-600 hover:text-blue-700 underline font-medium transition-all duration-300 hover:cursor-pointer disabled:opacity-50"
+          className="text-gray-600 hover:text-gray-700 font-medium transition-all duration-300 hover:cursor-pointer disabled:opacity-50"
         >
           &larr; {t("home.submitCase")}
         </button>

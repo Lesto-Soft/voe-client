@@ -480,7 +480,7 @@ const CaseSubmittion: React.FC = () => {
     const isDisabled =
       !isSelected && selectedCategories.length >= MAX_SELECTED_CATEGORIES;
     const commonClasses =
-      "px-3 py-1 border rounded-full text-sm transition-colors duration-200 cursor-pointer";
+      "px-3 py-1 border rounded-md h-9 text-sm transition-colors duration-200 cursor-pointer";
     const styles = {
       /* ... (your existing PROBLEM/SUGGESTION styles object) ... */
       PROBLEM: {
@@ -504,10 +504,10 @@ const CaseSubmittion: React.FC = () => {
 
   const getSendButtonClass = (): string => {
     const commonClasses =
-      "text-white py-2 px-4 rounded-md cursor-pointer transition-colors duration-200";
+      "text-white py-2 px-4 rounded-md cursor-pointer shadow-md font-medium transition-colors duration-200";
     const styles = {
-      PROBLEM: `bg-red-600 hover:bg-red-700`,
-      SUGGESTION: `bg-green-600 hover:bg-green-700`,
+      PROBLEM: `bg-red-600 hover:bg-red-700 active:bg-red-500`,
+      SUGGESTION: `bg-green-600 hover:bg-green-700 active:bg-green-500`,
     };
     // Disable button visually if submitting //or if creator isn't identified yet
     const disabledClass =
@@ -660,12 +660,12 @@ const CaseSubmittion: React.FC = () => {
           <div className="flex items-center space-x-2">
             <button
               onClick={openHelpModal}
-              className="bg-white text-gray-700 border border-gray-300 py-2 px-4 rounded-md cursor-pointer hover:bg-gray-200 active:bg-gray-300"
+              className="bg-white text-gray-700 border border-gray-300 py-2 px-4 rounded-md cursor-pointer shadow-md font-medium hover:bg-gray-200 active:bg-gray-300"
             >
               {t("caseSubmission.helpButton")}
             </button>
             <Link to="/">
-              <button className="bg-white text-gray-700 border border-gray-300 py-2 px-4 rounded-md cursor-pointer hover:bg-gray-200 active:bg-gray-300">
+              <button className="bg-white text-gray-700 border border-gray-300 py-2 px-4 rounded-md cursor-pointer shadow-md font-medium hover:bg-gray-200 active:bg-gray-300">
                 {t("caseSubmission.backButton")}
               </button>
             </Link>
@@ -951,7 +951,7 @@ const CaseSubmittion: React.FC = () => {
                           );
                         }}
                         style={{ accentColor: color }}
-                        className="w-4 h-4 cursor-pointer"
+                        className="w-5 h-5 cursor-pointer"
                         name="priority"
                       />
                       <span className="text-sm text-gray-700">{label}</span>

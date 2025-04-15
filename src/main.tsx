@@ -5,11 +5,17 @@ import "./index.css"; // Your global styles
 import Router from "./router/MainRouter";
 import { ApolloProvider } from "@apollo/client";
 import { apolloClient } from "./graphql/client";
+import LoadingModal from "./components/modals/LoadingModal";
 
 createRoot(document.getElementById("root")!).render(
   <ApolloProvider client={apolloClient}>
     <StrictMode>
-      <Suspense fallback={<div>Loading translations...</div>}>
+      <Suspense
+        fallback={LoadingModal({
+          isOpen: true,
+          message: "Loading translations...",
+        })}
+      >
         <Router />
       </Suspense>
     </StrictMode>

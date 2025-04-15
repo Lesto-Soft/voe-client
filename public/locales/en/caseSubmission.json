@@ -1,0 +1,66 @@
+{
+  "caseSubmission": {
+    "title": "Submit {{type}}",
+    "subtitle": "Please fill out the form below",
+    "loadingForm": "Loading form...",
+    "submittingCase": "Submitting case...",
+    "invalidType": "Invalid or missing case type in URL (?type=problem or ?type=suggestion).",
+    "loadingCategoriesError": "Error loading categories: {{message}}",
+    "submissionSuccessAlert": "Case submitted successfully!",
+    "submitButton": "Submit",
+    "submittingButton": "Submitting...",
+    "backButton": "← Back",
+    "helpButton": "❓ Help",
+    "selectFilesButton": "📎 Select Files",
+    "usernameLabel": "Username*",
+    "usernamePlaceholder": "emp___",
+    "fullNameLabel": "Full Name*",
+    "fullNamePlaceholder": "(automatic)",
+    "descriptionLabel": "Description*",
+    "descriptionPlaceholder": "Description...",
+    "attachmentsLabel": "Attachments ({{count}} / {{max}}) (max. {{maxSize}} MB each)",
+    "priorityLabel": "Priority*",
+    "categoriesLabel": "Categories* (max. {{maxSelect}})",
+    "userSearchLoading": "Searching...",
+    "userSearchError": "Error: {{message}}",
+    "userNotFoundError": "User \"{{username}}\" not found.",
+    "priority": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High"
+    },
+    "caseType": {
+      "problem": "Problem",
+      "suggestion": "Suggestion"
+    },
+    "errors": {
+      "submission": {
+        "missingUsername": "Please enter a valid username.",
+        "missingDescription": "Description is required.",
+        "missingCategory": "Please select at least one category.",
+        "fileProcessingError": "Error processing attachments.",
+        "categoryProcessingError": "Error processing selected categories.",
+        "categoryNoneFound": "No categories found.",
+        "generalSubmissionError": "Failed to create case: {{message}}",
+        "unexpectedError": "An unexpected error occurred during submission."
+      },
+      "file": {
+        "maxCountExceeded": "You cannot add more files (maximum {{max}}).",
+        "oversized": "The following files are larger than {{maxSize}}MB and were skipped: {{fileList}}",
+        "oversizedAndMaxCount": "Additionally, the limit of {{max}} files was reached.",
+        "maxCountReached": "The limit of {{max}} files was reached. {{count}} file(s) were skipped.",
+        "duplicatesSkipped": "The selected files are already in the list: {{fileList}}",
+        "duplicatesSomeSkipped": "Skipped duplicate files: {{fileList}}"
+      }
+    },
+    "helpModal": {
+      "title": "Help Information",
+      "closeButton": "Close",
+      "categoryProcessingError": "Error processing categories.",
+      "selectCategoriesPrompt": "Please select categories to see relevant help information.",
+      "noInfoFound": "No help information found for the selected categories.",
+      "invalidCaseType": "Invalid case type for displaying help.",
+      "noDescriptionAvailable": "No description available for this category."
+    }
+  }
+}

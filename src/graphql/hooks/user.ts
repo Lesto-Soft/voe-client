@@ -1,5 +1,5 @@
 import { useQuery } from "@apollo/client";
-import { GET_USERS } from "../query/user";
+import { GET_ME, GET_USERS } from "../query/user";
 
 export const useGetUsers = (
   query: string = "",
@@ -19,6 +19,16 @@ export const useGetUsers = (
     loading,
     error,
     users: data,
+    refetch,
+  };
+};
+
+export const useGetMe = () => {
+  const { loading, error, data, refetch } = useQuery(GET_ME);
+  return {
+    loading,
+    error,
+    me: data,
     refetch,
   };
 };

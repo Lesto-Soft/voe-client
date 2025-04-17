@@ -7,10 +7,6 @@ const userFragment = `
     username
     name
     email
-    role {
-      _id
-      name
-    }
     avatar
     position
   }

@@ -1,16 +1,20 @@
 import React, { useState, useEffect, useRef } from "react";
 import { UsersIcon, PencilSquareIcon } from "@heroicons/react/24/outline";
 import { PlusIcon as PlusIconSolid } from "@heroicons/react/20/solid";
-import { useGetUsers } from "../graphql/hooks/user";
-import { useCreateUser, useUpdateUser } from "../graphql/hooks/user";
+import {
+  useGetUsers,
+  useCreateUser,
+  useUpdateUser,
+} from "../graphql/hooks/user";
 import { CreateUserInput, UpdateUserInput } from "../graphql/mutation/user";
 import CreateUserModal from "../components/modals/CreateUserModal";
 import CreateUserFormModal from "../components/modals/CreateUserFormModal";
+import { useGetRoles } from "../graphql/hooks/role";
 
-interface Role {
+export interface Role {
   __typename?: "Role";
-  name: string;
   _id: string;
+  name: string;
 }
 interface User {
   _id: string;
@@ -44,7 +48,18 @@ const UserManagementPage: React.FC = () => {
     loading: updateLoading,
     error: updateError,
   } = useUpdateUser();
-  const users: User[] = usersData?.getAllUsers || [];
+  const {
+    roles: rolesData,
+    error: rolesError,
+    loading: rolesLoading,
+    refetch: refetchRoles,
+  } = useGetRoles();
+  const users: User[] = usersData?.getAllUsers || []; // Extract users from the hook's data
+  const roles: Role[] = rolesData?.getAllLeanRoles || []; // Extract roles from the hook's data
+  // const users: User[] = usersData?.getAllUsers || [];
+  // console.log("Users:", users);
+  // const roles: Role[] = rolesData?.getAllLeanRoles || []; // Extract roles from the hook's data
+  // console.log("Roles:", roles);
 
   const getInitials = (name: string): string => {
     const names = name.split(" ");
@@ -56,6 +71,13 @@ const UserManagementPage: React.FC = () => {
       initials += names[1].charAt(0).toUpperCase();
     }
     return initials;
+  };
+
+  const capitalizeFirstLetter = (str: string | undefined): string => {
+    if (!str) {
+      return "";
+    }
+    return str.charAt(0).toUpperCase() + str.slice(1);
   };
 
   const openCreateModal = () => {
@@ -246,6 +268,7 @@ const UserManagementPage: React.FC = () => {
                           placeholderDiv.className =
                             "absolute inset-0 bg-gray-300 flex items-center justify-center text-white font-semibold";
                           placeholderDiv.textContent = initials;
+                          // placeholderDiv.id = "avatar-div-" + user.avatar;
                           imgElement.parentNode?.replaceChild(
                             placeholderDiv,
                             imgElement
@@ -270,7 +293,9 @@ const UserManagementPage: React.FC = () => {
                 <td className="px-4 py-3 lg:px-6">{user.name}</td>
                 <td className="px-4 py-3 lg:px-6">{user.position}</td>
                 <td className="px-4 py-3 lg:px-6">{user.email}</td>
-                <td className="px-4 py-3 lg:px-6">{user.role?.name}</td>
+                <td className="px-4 py-3 lg:px-6">
+                  {capitalizeFirstLetter(user.role?.name)}
+                </td>
 
                 <td className="px-4 py-3 text-center lg:px-6">
                   <button
@@ -304,6 +329,9 @@ const UserManagementPage: React.FC = () => {
           onClose={closeModal}
           initialData={editingUser}
           submitButtonText={editingUser ? "Запази промените" : "Създай"}
+          roles={roles} // Pass the fetched roles to the form
+          rolesLoading={rolesLoading} // Optionally pass loading state
+          rolesError={rolesError} // Optionally pass error state
         />
       </CreateUserModal>
     </div>

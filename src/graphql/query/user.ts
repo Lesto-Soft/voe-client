@@ -9,6 +9,7 @@ fragment UserFragment on User {
       position
       role {
         _id
+        name
       }
 }`;
 

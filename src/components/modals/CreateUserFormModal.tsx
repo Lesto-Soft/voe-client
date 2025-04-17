@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Role } from "../../page/UserManagementPage"; // Adjust the path if needed
 
 interface User {
   _id: string;
@@ -6,13 +7,17 @@ interface User {
   name: string;
   position: string;
   email: string;
+  role: Role | null;
 }
 
 interface CreateUserFormProps {
   onSubmit: (formData: any, editingUserId: string | null) => void;
   onClose: () => void;
-  initialData?: User | null;
-  submitButtonText?: string;
+  initialData: User | null;
+  submitButtonText: string;
+  roles: Role[];
+  rolesLoading: boolean;
+  rolesError: any;
 }
 
 const CreateUserFormModal: React.FC<CreateUserFormProps> = ({
@@ -20,6 +25,9 @@ const CreateUserFormModal: React.FC<CreateUserFormProps> = ({
   onClose,
   initialData = null,
   submitButtonText = "Създай",
+  roles = [],
+  rolesLoading = false,
+  rolesError = null,
 }) => {
   // --- Form State ---
   const [username, setUsername] = useState("");
@@ -30,6 +38,7 @@ const CreateUserFormModal: React.FC<CreateUserFormProps> = ({
   const [confirmPassword, setConfirmPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const [role, setRoleId] = useState("");
 
   // --- Effect to pre-fill form when initialData changes ---
   useEffect(() => {
@@ -42,6 +51,7 @@ const CreateUserFormModal: React.FC<CreateUserFormProps> = ({
       setConfirmPassword("");
       setNewPassword("");
       setConfirmNewPassword("");
+      setRoleId(initialData.role?._id || ""); // Pre-fill roleId
     } else {
       // Reset form for creation
       setUsername("");
@@ -52,6 +62,7 @@ const CreateUserFormModal: React.FC<CreateUserFormProps> = ({
       setConfirmPassword("");
       setNewPassword("");
       setConfirmNewPassword("");
+      setRoleId(""); // Reset roleId
     }
   }, [initialData]);
 
@@ -64,6 +75,7 @@ const CreateUserFormModal: React.FC<CreateUserFormProps> = ({
       name: fullName,
       email,
       position,
+      role: role, // Include roleId in the form data
     };
 
     if (!initialData) {
@@ -94,6 +106,18 @@ const CreateUserFormModal: React.FC<CreateUserFormProps> = ({
     );
     onSubmit(formData, initialData ? initialData._id : null);
   };
+
+  if (rolesLoading) {
+    return <div className="p-4 text-center">Зареждане на роли...</div>;
+  }
+
+  if (rolesError) {
+    return (
+      <div className="p-4 text-center text-red-500">
+        Грешка при зареждане на роли: {rolesError.message}
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit}>
@@ -162,6 +186,31 @@ const CreateUserFormModal: React.FC<CreateUserFormProps> = ({
             className="w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
           />
         </div>
+        {/* Role Dropdown */}
+        <div>
+          <label
+            htmlFor="role"
+            className="mb-1 block text-sm font-medium text-gray-700"
+          >
+            Роля<span className="text-red-500">*</span>
+          </label>
+          <select
+            id="role"
+            name="role"
+            value={role}
+            onChange={(e) => setRoleId(e.target.value)}
+            required
+            className="w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          >
+            <option value="">Изберете роля</option>
+            {roles.map((role) => (
+              <option key={role._id} value={role._id}>
+                {role.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
         {!initialData && (
           <>
             <div>

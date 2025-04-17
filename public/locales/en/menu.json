@@ -1,0 +1,19 @@
+{
+  "title": "Oops... Page not found.",
+  "description": "The page you are looking for does not exist.",
+  "back": "To Home",
+  "dashboard": "Dashboard",
+  "dashboard_desc": "Your dashboard",
+  "analyses": "Analyses",
+  "analyses_desc": "Analyses and statistics",
+  "categories": "Categories",
+  "categories_desc": "Manage categories",
+  "accounts": "Accounts",
+  "accounts_desc": "Manage accounts",
+  "profile": "Profile",
+  "profile_desc": "Your profile",
+  "signOut": "Sign Out",
+  "voe": "Voice Of Employees",
+  "submit-case": "Submit Case",
+  "submit-case_desc": "Submit a case to the system"
+}

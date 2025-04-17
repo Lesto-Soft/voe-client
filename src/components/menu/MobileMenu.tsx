@@ -8,6 +8,7 @@ import {
   UserIcon,
   ArrowRightCircleIcon,
 } from "@heroicons/react/24/solid";
+import { useTranslation } from "react-i18next";
 
 // Re-define or import NavLink if needed, or pass necessary props
 // For simplicity, let's define a mobile-specific link style here
@@ -52,6 +53,8 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
   handleSignOut,
   onLinkClick,
 }) => {
+  const { t } = useTranslation("menu");
+
   return (
     <div
       className={`
@@ -68,31 +71,31 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
         <MobileNavLink
           to="/user-management"
           icon={<UsersIcon className="h-6 w-6" />}
-          label="Акаунти"
+          label={t("accounts")}
           onClick={onLinkClick}
         />
         <MobileNavLink
           to="/category-management"
           icon={<TagIcon className="h-6 w-6" />}
-          label="Категории"
+          label={t("categories")}
           onClick={onLinkClick}
         />
         <MobileNavLink
           to="/dashboard"
           icon={<ClipboardDocumentListIcon className="h-6 w-6" />}
-          label="Табло"
+          label={t("dashboard")}
           onClick={onLinkClick}
         />
         <MobileNavLink
           to="/analyses"
           icon={<ChartPieIcon className="h-6 w-6" />}
-          label="Анализи"
+          label={t("analyses")}
           onClick={onLinkClick}
         />
         <MobileNavLink
           to="/profile"
           icon={<UserIcon className="h-6 w-6" />} // Add icon if desired
-          label="Профил"
+          label={t("profile")}
           onClick={onLinkClick}
         />
         <button
@@ -100,10 +103,10 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
             handleSignOut();
             onLinkClick(); // Close menu after sign out action
           }}
-          className="flex items-center space-x-3 p-3 w-full text-left text-gray-700 hover:bg-gray-300 hover:text-btnRedHover transition duration-150 ease-in-out"
+          className="flex items-center rounded-md  space-x-3 p-3 w-full text-left text-gray-700 hover:bg-gray-300 hover:text-btnRedHover transition duration-150 ease-in-out"
         >
           <ArrowRightCircleIcon className="h-6 w-6" />
-          <span className="text-base font-medium">Излез</span>
+          <span className="text-base font-medium">{t("signOut")}</span>
         </button>
       </div>
     </div>

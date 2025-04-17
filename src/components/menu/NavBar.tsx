@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useTransition } from "react";
 import { useLocation } from "react-router";
 import { Link } from "react-router";
 import {
@@ -11,11 +11,12 @@ import {
   UserIcon,
   ArrowRightCircleIcon,
 } from "@heroicons/react/24/solid";
-import { useGetMe } from "../graphql/hooks/user";
+import { useGetMe } from "../../graphql/hooks/user";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { dev_endpoint } from "../db/config";
+import { dev_endpoint } from "../../db/config";
 import axios from "axios";
 import MobileMenu from "./MobileMenu";
+import { useTranslation } from "react-i18next";
 
 const NavLink = ({
   to,
@@ -54,6 +55,7 @@ const NavBar = () => {
   const location = useLocation();
   const { me, error, loading } = useGetMe();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { t } = useTranslation("menu");
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error.message}</div>;
@@ -84,13 +86,13 @@ const NavBar = () => {
   };
 
   const pageNames: { [key: string]: string } = {
-    "/dashboard": "Твоето табло",
-    "/profile": "Профил",
-    "/users": "Потребители",
-    "/submit-case": "Подай сигнал",
-    "/user-management": "Управление на акаунти",
-    "/category-management": "Управление на категории",
-    "/analyses": "Анализи",
+    "/dashboard": t("dashboard_desc"),
+    "/profile": t("profile_desc"),
+    "/users": t("accounts_desc"),
+    "/submit-case": t("submit_case_desc"),
+    "/user-management": t("accounts_desc"),
+    "/category-management": t("categories_desc"),
+    "/analyses": t("analyses_desc"),
   };
 
   const currentPage =
@@ -99,10 +101,8 @@ const NavBar = () => {
   return (
     <div className="bg-gradient-to-r from-gray-100 to-gray-200 shadow-md relative">
       <div className="flex items-center justify-between p-4 px-6 md:px-12">
-        <div className="text-lg font-bold">
-          <h1 className="text-gray-800 text-xl md:text-2xl">
-            Гласът на служителите
-          </h1>
+        <div className="text-lg font-bold ">
+          <h1 className="text-gray-800 text-xl md:text-2xl">{t("voe")}</h1>
           <h3 className="text-gray-600 italic text-md md:text-md font-light mt-1 hidden md:block">
             {currentPage}
           </h3>
@@ -112,26 +112,26 @@ const NavBar = () => {
           <NavLink
             to="/user-management"
             icon={<UsersIcon className="h-6 w-6" />}
-            label="Акаунти"
+            label={t("accounts")}
           />
           <NavLink
             to="/category-management"
             icon={<TagIcon className="h-6 w-6" />}
-            label="Категории"
+            label={t("categories")}
           />
           <NavLink
             to="/dashboard"
             icon={<ClipboardDocumentListIcon className="h-6 w-6" />}
-            label="Табло"
+            label={t("dashboard")}
           />
           <NavLink
             to="/analyses"
             icon={<ChartPieIcon className="h-6 w-6" />}
-            label="Анализи"
+            label={t("analyses")}
           />
           <DropdownMenu.Root>
             <div className="relative">
-              <DropdownMenu.Trigger asChild>
+              <DropdownMenu.Trigger asChild className="focus:outline-none">
                 <button className="flex items-center justify-center w-12 h-12 bg-white text-white rounded-full shadow-lg overflow-hidden">
                   {!me.me.avatar ? (
                     <img
@@ -154,17 +154,17 @@ const NavBar = () => {
                   <NavLink
                     to="/profile"
                     dropdown={true}
-                    label="Профил"
+                    label={t("profile")}
                     icon={<UserIcon className="h-6 w-6" />}
                   />
                 </DropdownMenu.Item>
-                <DropdownMenu.Item asChild>
+                <DropdownMenu.Item asChild className="focus:outline-none">
                   <button
                     onClick={handleSignOut}
                     className="p-2 text-sm text-gray-700 rounded-md w-full block text-left hover:scale-105 hover:text-btnRedHover hover:cursor-pointer"
                   >
                     <ArrowRightCircleIcon className="h-6 w-6 inline-block mr-2" />
-                    Излез
+                    {t("signOut")}
                   </button>
                 </DropdownMenu.Item>
               </DropdownMenu.Content>
@@ -178,9 +178,9 @@ const NavBar = () => {
             className="text-gray-800 focus:outline-none "
           >
             {isMenuOpen ? (
-              <XMarkIcon className="h-8 w-8" />
+              <XMarkIcon className="h-8 w-8  hover:cursor-pointer" />
             ) : (
-              <Bars3Icon className="h-8 w-8" />
+              <Bars3Icon className="h-8 w-8  hover:cursor-pointer" />
             )}
           </button>
         </div>

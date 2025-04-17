@@ -4,7 +4,7 @@ import Users from "../page/Users";
 import CaseSubmittion from "../page/CaseSubmittion";
 import Dashboard from "../page/Dashboard";
 import LoadingTestPage from "../page/LoadingTestPage";
-import NavBar from "./NavBar";
+import NavBar from "../components/menu/NavBar";
 import Profile from "../page/Profile";
 import Analyses from "../page/Analyses";
 import NotFoundPage from "../page/NotFound";

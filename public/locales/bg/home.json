@@ -1,0 +1,13 @@
+{
+  "home": {
+    "title": "Гласът на служителите",
+    "subtitle": "Подай сигнал",
+    "problem": "Проблем",
+    "suggestion": "Подобрение",
+    "enterYourProfile": "Влез в профила си",
+    "enterUsernamePassword": "Въведете потребител и парола",
+    "submitCase": "Подай сигнал",
+    "login": "Влез",
+    "loggingIn": "Влизане..."
+  }
+}

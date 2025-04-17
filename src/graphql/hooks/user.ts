@@ -1,5 +1,5 @@
 import { useQuery, useMutation } from "@apollo/client";
-import { GET_USERS } from "../query/user";
+import { GET_USERS, COUNT_USERS } from "../query/user";
 import {
   CREATE_USER,
   CreateUserInput,
@@ -25,6 +25,16 @@ export const useGetUsers = (
     loading,
     error,
     users: data,
+    refetch,
+  };
+};
+
+export const useCountUsers = () => {
+  const { loading, error, data, refetch } = useQuery(COUNT_USERS);
+  return {
+    loading,
+    error,
+    count: data?.countUsers,
     refetch,
   };
 };

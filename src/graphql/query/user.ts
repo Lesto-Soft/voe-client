@@ -13,6 +13,12 @@ fragment UserFragment on User {
       }
 }`;
 
+export const COUNT_USERS = gql`
+  query CountUsers {
+    countUsers
+  }
+`;
+
 export const GET_USERS = gql`
   query GetAllUsers($input: getAllInput) {
     getAllUsers(input: $input) {

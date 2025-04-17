@@ -5,6 +5,9 @@ fragment RoleFragment on Role {
       _id
       name
       description
+      users {
+        _id
+      }
 }`;
 
 export const GET_ROLES = gql`

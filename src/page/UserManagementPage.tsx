@@ -5,17 +5,19 @@ import {
   useGetUsers,
   useCreateUser,
   useUpdateUser,
+  useCountUsers,
 } from "../graphql/hooks/user";
 import { CreateUserInput, UpdateUserInput } from "../graphql/mutation/user";
 import CreateUserModal from "../components/modals/CreateUserModal";
 import CreateUserFormModal from "../components/modals/CreateUserFormModal";
 import { useGetRoles } from "../graphql/hooks/role";
-import RoleStatsCards from "../components/cards/RoleStatsCard";
+import StatCard from "../components/cards/StatCard";
 
 export interface Role {
   __typename?: "Role";
   _id: string;
   name: string;
+  users: any[];
 }
 interface User {
   _id: string;
@@ -39,6 +41,12 @@ const UserManagementPage: React.FC = () => {
     loading: usersLoading,
     refetch: refetchUsers,
   } = useGetUsers(searchQuery, itemsPerPage, currentPage);
+  const {
+    count: userCount,
+    error: userCountError,
+    loading: userCountLoading,
+    refetch,
+  } = useCountUsers();
   const {
     createUser,
     loading: createLoading,
@@ -149,22 +157,21 @@ const UserManagementPage: React.FC = () => {
       </div>
     );
 
-  // --- Calculate Stats ---
-  const totalUsers = users.length;
-  const expertCount = users.filter((u) => u.role?.name === "експерт").length;
-  const adminCount = users.filter((u) => u.role?.name === "админ").length;
-
   return (
     <div className="min-h-screen bg-gray-100 p-6 font-sans">
       {/* Stats and Actions Section */}
       <section className="mb-6 flex flex-wrap items-start justify-between gap-4">
-        {/* Stats Cards - Updated counts */}
-        <RoleStatsCards
-          totalUsers={totalUsers}
-          expertCount={expertCount}
-          adminCount={adminCount}
-        />
-
+        <div className="flex flex-wrap gap-4">
+          {/* Stats Cards - Updated counts */}
+          <StatCard amount={userCount} title="Общо потребители" />
+          {roles.map((role) => (
+            <StatCard
+              key={role._id}
+              amount={role.users?.length || 0}
+              title={role.name}
+            />
+          ))}
+        </div>
         {/* Create User Button */}
         <button
           onClick={openCreateModal}

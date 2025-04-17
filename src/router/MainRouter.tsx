@@ -7,6 +7,7 @@ import LoadingTestPage from "../page/LoadingTestPage";
 import NavBar from "./NavBar";
 import Profile from "../page/Profile";
 import Analyses from "../page/Analyses";
+import NotFoundPage from "../page/NotFound";
 
 const AppLayout = () => {
   return (
@@ -55,6 +56,10 @@ const mainRouter = createBrowserRouter([
         element: <Analyses />,
       },
     ],
+  },
+  {
+    path: "*",
+    element: <NotFoundPage />,
   },
 ]);
 

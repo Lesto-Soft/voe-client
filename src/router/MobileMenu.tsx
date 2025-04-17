@@ -52,10 +52,18 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
   handleSignOut,
   onLinkClick,
 }) => {
-  if (!isOpen) return null;
-
   return (
-    <div className="md:hidden absolute top-full left-0 w-full bg-gray-200 shadow-lg z-20 border-t border-gray-300">
+    <div
+      className={`
+        md:hidden absolute top-full left-0 w-full bg-gray-200 shadow-lg z-20 border-t border-gray-300
+        transition-all duration-500 ease-in-out transform origin-top
+        ${
+          isOpen
+            ? "opacity-100 scale-y-100"
+            : "opacity-0 scale-y-95 pointer-events-none"
+        }
+      `}
+    >
       <div className="flex flex-col space-y-1 p-4">
         <MobileNavLink
           to="/user-management"
@@ -92,11 +100,9 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
             handleSignOut();
             onLinkClick(); // Close menu after sign out action
           }}
-          className="flex items-center space-x-3 p-3 rounded-md w-full text-left text-gray-700 hover:bg-gray-300 hover:text-btnRedHover transition duration-150 ease-in-out"
+          className="flex items-center space-x-3 p-3 w-full text-left text-gray-700 hover:bg-gray-300 hover:text-btnRedHover transition duration-150 ease-in-out"
         >
-          <ArrowRightCircleIcon className="h-6 w-6" />{" "}
-          {/* Add icon if desired */}
-          {/* Add logout icon if desired */}
+          <ArrowRightCircleIcon className="h-6 w-6" />
           <span className="text-base font-medium">Излез</span>
         </button>
       </div>

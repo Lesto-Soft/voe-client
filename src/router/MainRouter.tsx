@@ -1,6 +1,5 @@
 import { createBrowserRouter, Outlet, RouterProvider } from "react-router";
 import Home from "../page/Home";
-import Users from "../page/Users";
 import CaseSubmittion from "../page/CaseSubmittion";
 import Dashboard from "../page/Dashboard";
 import LoadingTestPage from "../page/LoadingTestPage";

@@ -45,7 +45,7 @@ const UserManagementPage: React.FC = () => {
     count: userCount,
     error: userCountError,
     loading: userCountLoading,
-    refetch,
+    refetch: refetchUserCount,
   } = useCountUsers();
   const {
     createUser,
@@ -116,6 +116,8 @@ const UserManagementPage: React.FC = () => {
         const finalInput: UpdateUserInput = { ...formData };
         await updateUser(editingUserId, finalInput);
         console.log("User updated successfully.");
+        await refetchRoles(); // Refetch roles after user update, as role might have changed.
+        console.log("Roles refetched.");
       } else {
         const finalInput: CreateUserInput = {
           ...formData,
@@ -123,6 +125,10 @@ const UserManagementPage: React.FC = () => {
         };
         await createUser(finalInput);
         console.log("User created successfully.");
+        await refetchRoles();
+        console.log("Roles refetched.");
+        await refetchUserCount(); // Refetch user count after creating a new user
+        console.log("User count refetched");
       }
 
       await refetchUsers();
@@ -329,5 +335,4 @@ const UserManagementPage: React.FC = () => {
     </div>
   );
 };
-
 export default UserManagementPage;

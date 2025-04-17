@@ -28,6 +28,8 @@ const CreateUserFormModal: React.FC<CreateUserFormProps> = ({
   const [position, setPosition] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
 
   // --- Effect to pre-fill form when initialData changes ---
   useEffect(() => {
@@ -38,6 +40,8 @@ const CreateUserFormModal: React.FC<CreateUserFormProps> = ({
       setPosition(initialData.position || "");
       setPassword("");
       setConfirmPassword("");
+      setNewPassword("");
+      setConfirmNewPassword("");
     } else {
       // Reset form for creation
       setUsername("");
@@ -46,21 +50,14 @@ const CreateUserFormModal: React.FC<CreateUserFormProps> = ({
       setPosition("");
       setPassword("");
       setConfirmPassword("");
+      setNewPassword("");
+      setConfirmNewPassword("");
     }
   }, [initialData]);
 
   // --- Handlers ---
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-
-    if (!initialData && !password) {
-      alert("Паролата е задължителна при създаване на потребител!");
-      return;
-    }
-    if (password && password !== confirmPassword) {
-      alert("Паролите не съвпадат!");
-      return;
-    }
 
     const formData: any = {
       username,
@@ -69,8 +66,24 @@ const CreateUserFormModal: React.FC<CreateUserFormProps> = ({
       position,
     };
 
-    if (!initialData && password) {
+    if (!initialData) {
+      if (!password) {
+        alert("Паролата е задължителна при създаване на потребител!");
+        return;
+      }
+      if (password !== confirmPassword) {
+        alert("Паролите не съвпадат!");
+        return;
+      }
       formData.password = password;
+    } else {
+      if (newPassword) {
+        if (newPassword !== confirmNewPassword) {
+          alert("Новите пароли не съвпадат!");
+          return;
+        }
+        formData.password = newPassword; // Include newPassword in formData for update
+      }
     }
 
     console.log(
@@ -181,6 +194,45 @@ const CreateUserFormModal: React.FC<CreateUserFormProps> = ({
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required={!initialData}
                 className="w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              />
+            </div>
+          </>
+        )}
+        {initialData && (
+          <>
+            <div>
+              <label
+                htmlFor="newPassword"
+                className="mb-1 block text-sm font-medium text-gray-700"
+              >
+                Нова парола{" "}
+                <span className="text-xs text-gray-500">
+                  (оставете празно, ако не променяте)
+                </span>
+              </label>
+              <input
+                type="password"
+                id="newPassword"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                className="w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                placeholder="Нова парола (опционално)"
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="confirmNewPassword"
+                className="mb-1 block text-sm font-medium text-gray-700"
+              >
+                Потвърди нова парола
+              </label>
+              <input
+                type="password"
+                id="confirmNewPassword"
+                value={confirmNewPassword}
+                onChange={(e) => setConfirmNewPassword(e.target.value)}
+                className="w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                placeholder="Потвърди нова парола"
               />
             </div>
           </>

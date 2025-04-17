@@ -3,10 +3,9 @@ import { UsersIcon, PencilSquareIcon } from "@heroicons/react/24/outline";
 import { PlusIcon as PlusIconSolid } from "@heroicons/react/20/solid";
 import { useGetUsers } from "../graphql/hooks/user";
 import { useCreateUser, useUpdateUser } from "../graphql/hooks/user";
-
+import { CreateUserInput, UpdateUserInput } from "../graphql/mutation/user";
 import CreateUserModal from "../components/modals/CreateUserModal";
 import CreateUserFormModal from "../components/modals/CreateUserFormModal";
-import { CreateUserInput, UpdateUserInput } from "../graphql/mutation/user";
 
 interface Role {
   __typename?: "Role";
@@ -63,35 +62,22 @@ const UserManagementPage: React.FC = () => {
 
   // --- Form Submission Handler ---
   const handleFormSubmit = async (
-    formData: any, // The structure of this needs to match CreateUserInput or UpdateUserInput
+    formData: any,
     editingUserId: string | null
-    // selectedRoleId: string | null // Removed
   ) => {
-    console.log(
-      "Handling submit for:",
-      formData,
-      "Editing ID:",
-      editingUserId
-      // "Role ID:", // Removed
-      // selectedRoleId
-    );
+    console.log("Handling submit for:", formData, "Editing ID:", editingUserId);
 
     try {
-      const finalInput:
-        | Omit<CreateUserInput, "role">
-        | Omit<UpdateUserInput, "role"> = {
-        ...formData,
-        // role: selectedRoleId || undefined, // Removed
-      };
-
       if (editingUserId) {
-        await updateUser(
-          editingUserId,
-          finalInput as Omit<UpdateUserInput, "role">
-        );
+        const finalInput: UpdateUserInput = { ...formData };
+        await updateUser(editingUserId, finalInput);
         console.log("User updated successfully.");
       } else {
-        await createUser(finalInput as Omit<CreateUserInput, "role">);
+        const finalInput: CreateUserInput = {
+          ...formData,
+          password: formData.password!,
+        };
+        await createUser(finalInput);
         console.log("User created successfully.");
       }
 
@@ -141,7 +127,7 @@ const UserManagementPage: React.FC = () => {
           <div className="flex min-w-[200px] items-center space-x-3 rounded-md border border-gray-200 bg-white p-4 shadow-sm">
             <UsersIcon className="h-8 w-8 text-gray-400" />
             <div>
-              <p className="text-xs text-gray-500">Брой потребители WIP</p>
+              <p className="text-xs text-gray-500">Брой потребители</p>
               <p className="text-2xl font-semibold text-gray-800">
                 {totalUsers}
               </p>
@@ -150,7 +136,7 @@ const UserManagementPage: React.FC = () => {
           <div className="flex min-w-[200px] items-center space-x-3 rounded-md border border-gray-200 bg-white p-4 shadow-sm">
             <div className="w-[32px]"></div>
             <div>
-              <p className="text-xs text-gray-500">Експерти WIP</p>
+              <p className="text-xs text-gray-500">Експерти</p>
               <p className="text-2xl font-semibold text-gray-800">
                 {expertCount}
               </p>
@@ -159,7 +145,7 @@ const UserManagementPage: React.FC = () => {
           <div className="flex min-w-[200px] items-center space-x-3 rounded-md border border-gray-200 bg-white p-4 shadow-sm">
             <div className="w-[32px]"></div>
             <div>
-              <p className="text-xs text-gray-500">Администратори WIP</p>
+              <p className="text-xs text-gray-500">Администратори</p>
               <p className="text-2xl font-semibold text-gray-800">
                 {adminCount}
               </p>
@@ -206,7 +192,6 @@ const UserManagementPage: React.FC = () => {
               >
                 Имейл
               </th>
-              {/* Removed Role Column */}
               <th
                 scope="col"
                 className="border-l border-gray-600 px-4 py-3 font-medium tracking-wider lg:px-6"
@@ -232,7 +217,6 @@ const UserManagementPage: React.FC = () => {
                 <td className="px-4 py-3 lg:px-6">{user.name}</td>
                 <td className="px-4 py-3 lg:px-6">{user.position}</td>
                 <td className="px-4 py-3 lg:px-6">{user.email}</td>
-                {/* Removed Role Data */}
                 <td className="px-4 py-3 text-center lg:px-6">
                   <button
                     onClick={() => openEditModal(user)} // Pass the full user object

@@ -205,7 +205,7 @@ const CreateUserFormModal: React.FC<CreateUserFormProps> = ({
             <option value="">Изберете роля</option>
             {roles.map((role) => (
               <option key={role._id} value={role._id}>
-                {role.name}
+                {role.name.charAt(0).toUpperCase() + role.name.slice(1)}
               </option>
             ))}
           </select>

@@ -147,6 +147,14 @@ const UserManagementPage: React.FC = () => {
         Грешка при зареждане: {usersError.message}
       </div>
     );
+  if (userCountLoading)
+    return <div className="p-6">Зареждане на брой потребители...</div>;
+  if (userCountError)
+    return (
+      <div className="p-6 text-red-600">
+        Грешка при зареждане: {userCountError.message}
+      </div>
+    );
   if (createLoading || updateLoading)
     return <div className="p-6">Изпращане на данни...</div>;
   if (createError || updateError)
@@ -168,7 +176,7 @@ const UserManagementPage: React.FC = () => {
             <StatCard
               key={role._id}
               amount={role.users?.length || 0}
-              title={role.name}
+              title={capitalizeFirstLetter(role?.name)}
             />
           ))}
         </div>

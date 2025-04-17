@@ -14,7 +14,7 @@ i18n
   .init({
     fallbackLng: "bg", // Fallback language if detection fails or translation is missing
     debug: process.env.NODE_ENV === "development", // Enable debug output in development
-    ns: ["home", "caseSubmission"], // Namespace for your translations
+    ns: ["home", "caseSubmission", "menu"], // Namespace for your translations
     defaultNS: "home",
     backend: {
       // Path where resources get loaded from

@@ -33,7 +33,7 @@ const UserManagementPage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [currentPage] = useState(0);
-  const [itemsPerPage] = useState(50);
+  const [itemsPerPage] = useState(10);
   const [searchQuery] = useState("");
   const {
     users: usersData,

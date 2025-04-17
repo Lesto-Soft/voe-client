@@ -1,5 +1,5 @@
 import { useQuery, useMutation } from "@apollo/client";
-import { GET_USERS, COUNT_USERS } from "../query/user";
+import { GET_USERS, COUNT_USERS, GET_ME } from "../query/user";
 import {
   CREATE_USER,
   CreateUserInput,
@@ -80,5 +80,15 @@ export const useUpdateUser = () => {
     user: data?.updateUser,
     loading,
     error,
+  };
+};
+
+export const useGetMe = () => {
+  const { loading, error, data, refetch } = useQuery(GET_ME);
+  return {
+    loading,
+    error,
+    me: data,
+    refetch,
   };
 };

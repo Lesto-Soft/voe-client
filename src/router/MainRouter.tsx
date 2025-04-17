@@ -1,10 +1,27 @@
-import { createBrowserRouter, RouterProvider } from "react-router";
+import { createBrowserRouter, Outlet, RouterProvider } from "react-router";
 import Home from "../page/Home";
 import Users from "../page/Users";
 import CaseSubmittion from "../page/CaseSubmittion";
 import Dashboard from "../page/Dashboard";
 import LoadingTestPage from "../page/LoadingTestPage";
 import UserManagementPage from "../page/UserManagementPage";
+import NavBar from "../components/menu/NavBar";
+import Profile from "../page/Profile";
+import Analyses from "../page/Analyses";
+import NotFoundPage from "../page/NotFound";
+
+const AppLayout = () => {
+  return (
+    <div>
+      <div>
+        <NavBar />
+      </div>
+      <div>
+        <Outlet />
+      </div>
+    </div>
+  );
+};
 
 const mainRouter = createBrowserRouter([
   {
@@ -12,24 +29,38 @@ const mainRouter = createBrowserRouter([
     element: <Home />,
   },
   {
-    path: "/users",
-    element: <Users />,
-  },
-  {
     path: "/submit-case",
     element: <CaseSubmittion />,
   },
-  {
-    path: "/dashboard",
-    element: <Dashboard />,
-  },
-  {
-    path: "/user-management",
-    element: <UserManagementPage />,
-  },
+
   {
     path: "/loading",
     element: <LoadingTestPage />,
+  },
+  {
+    element: <AppLayout />,
+    children: [
+      {
+        path: "/dashboard",
+        element: <Dashboard />,
+      },
+      {
+        path: "/user-management",
+        element: <UserManagementPage />,
+      },
+      {
+        path: "/profile",
+        element: <Profile />,
+      },
+      {
+        path: "/analyses",
+        element: <Analyses />,
+      },
+    ],
+  },
+  {
+    path: "*",
+    element: <NotFoundPage />,
   },
 ]);
 

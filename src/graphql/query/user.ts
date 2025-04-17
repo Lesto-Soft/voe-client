@@ -11,6 +11,7 @@ fragment UserFragment on User {
         _id
         name
       }
+     
 }`;
 
 export const COUNT_USERS = gql`
@@ -36,4 +37,14 @@ export const GET_USER_BY_USERNAME = gql`
       name
     }
   }
+`;
+
+export const GET_ME = gql`
+  query GetMe {
+    me {
+      ...UserFragment
+      avatar
+    }
+  }
+  ${userFragment}
 `;

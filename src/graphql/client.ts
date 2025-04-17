@@ -1,6 +1,5 @@
 import { ApolloClient, InMemoryCache, createHttpLink } from "@apollo/client";
 import { dev_endpoint, dev_graphqlEndpoint } from "../db/config";
-// import axios from "axios";
 
 const httpLink = createHttpLink({
   uri: dev_graphqlEndpoint,
@@ -19,20 +18,3 @@ export const apolloClient = new ApolloClient({
     },
   },
 });
-
-// export const uploadFile = async (file: File, id: string): Promise<void> => {
-//   const formData = new FormData();
-//   formData.append("picture", file); // Key must match the backend's `upload.single("picture")`
-//   formData.append("id", id);
-
-//   try {
-//     const response = await axios.post(`${dev_endpoint}/upload/${id}`, formData, {
-//       headers: {
-//         "Content-Type": "multipart/form-data",
-//       },
-//     });
-//     console.log("Upload successful:", response.data);
-//   } catch (error) {
-//     console.error("Upload failed:", error);
-//   }
-// };

@@ -9,7 +9,9 @@ const userFragment = `
     email
     role {
       _id
+      name
     }
+    avatar
     position
   }
 `;

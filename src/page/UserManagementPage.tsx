@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { UsersIcon, PencilSquareIcon } from "@heroicons/react/24/outline";
 import { PlusIcon as PlusIconSolid } from "@heroicons/react/20/solid";
 import { useGetUsers } from "../graphql/hooks/user";
@@ -19,13 +19,14 @@ interface User {
   position: string;
   email: string;
   role: Role;
+  avatar?: string | null;
 }
 
 const UserManagementPage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [currentPage] = useState(0);
-  const [itemsPerPage] = useState(10);
+  const [itemsPerPage] = useState(50);
   const [searchQuery] = useState("");
   const {
     users: usersData,
@@ -44,6 +45,18 @@ const UserManagementPage: React.FC = () => {
     error: updateError,
   } = useUpdateUser();
   const users: User[] = usersData?.getAllUsers || [];
+
+  const getInitials = (name: string): string => {
+    const names = name.split(" ");
+    let initials = "";
+    if (names.length > 0 && names[0]) {
+      initials += names[0].charAt(0).toUpperCase();
+    }
+    if (names.length > 1 && names[1]) {
+      initials += names[1].charAt(0).toUpperCase();
+    }
+    return initials;
+  };
 
   const openCreateModal = () => {
     setEditingUser(null);
@@ -172,6 +185,12 @@ const UserManagementPage: React.FC = () => {
                 scope="col"
                 className="border-l border-gray-600 px-4 py-3 font-medium tracking-wider lg:px-6"
               >
+                Аватар
+              </th>
+              <th
+                scope="col"
+                className="border-l border-gray-600 px-4 py-3 font-medium tracking-wider lg:px-6"
+              >
                 Потребителско име
               </th>
               <th
@@ -196,6 +215,12 @@ const UserManagementPage: React.FC = () => {
                 scope="col"
                 className="border-l border-gray-600 px-4 py-3 font-medium tracking-wider lg:px-6"
               >
+                Роля
+              </th>
+              <th
+                scope="col"
+                className="border-l border-gray-600 px-4 py-3 font-medium tracking-wider lg:px-6"
+              >
                 Редактирай
               </th>
             </tr>
@@ -207,6 +232,34 @@ const UserManagementPage: React.FC = () => {
                 className="border-b border-gray-200 bg-white hover:bg-gray-50"
               >
                 <td className="px-4 py-3 lg:px-6">
+                  {/* Avatar Image (if a valid one exists) OR div if it doesn't */}
+                  {user.avatar ? (
+                    <span className="relative block h-8 w-8 rounded-full overflow-hidden">
+                      <img
+                        src={user.avatar}
+                        alt={user.name + "'s avatar"}
+                        className="h-full w-full object-cover"
+                        onError={(e) => {
+                          const imgElement = e.target as HTMLImageElement;
+                          const initials = getInitials(user.name);
+                          const placeholderDiv = document.createElement("div");
+                          placeholderDiv.className =
+                            "absolute inset-0 bg-gray-300 flex items-center justify-center text-white font-semibold";
+                          placeholderDiv.textContent = initials;
+                          imgElement.parentNode?.replaceChild(
+                            placeholderDiv,
+                            imgElement
+                          );
+                        }}
+                      />
+                    </span>
+                  ) : (
+                    <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center text-white font-semibold">
+                      {getInitials(user.name)}
+                    </div>
+                  )}
+                </td>
+                <td className="px-4 py-3 lg:px-6">
                   <a
                     href="#"
                     className="font-medium text-blue-600 hover:underline"
@@ -217,6 +270,8 @@ const UserManagementPage: React.FC = () => {
                 <td className="px-4 py-3 lg:px-6">{user.name}</td>
                 <td className="px-4 py-3 lg:px-6">{user.position}</td>
                 <td className="px-4 py-3 lg:px-6">{user.email}</td>
+                <td className="px-4 py-3 lg:px-6">{user.role?.name}</td>
+
                 <td className="px-4 py-3 text-center lg:px-6">
                   <button
                     onClick={() => openEditModal(user)} // Pass the full user object
@@ -230,7 +285,7 @@ const UserManagementPage: React.FC = () => {
             ))}
             {users.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
+                <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
                   Няма намерени потребители.
                 </td>
               </tr>
@@ -239,7 +294,6 @@ const UserManagementPage: React.FC = () => {
         </table>
       </section>
 
-      {/* Modal Rendering (Passes correct data) */}
       <CreateUserModal
         isOpen={isModalOpen}
         onClose={closeModal}

@@ -3,11 +3,12 @@ import { gql } from "@apollo/client";
 const userFragment = `
 fragment UserFragment on User {
       _id
+      username
       name
       email
       position
       role {
-        name
+        _id
       }
 }`;
 

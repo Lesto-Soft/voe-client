@@ -17,7 +17,7 @@ import CreateUserFormModal from "../components/modals/CreateUserFormModal";
 import { useGetRoles } from "../graphql/hooks/role";
 import StatCard from "../components/cards/StatCard";
 import UserAvatar from "../components/cards/UserAvatar"; // Import the UserAvatar component
-import { Link } from "react-router";
+import { Link, useSearchParams } from "react-router";
 
 // Interfaces matching GraphQL Schema and component needs
 export interface Role {
@@ -83,6 +83,13 @@ const UserManagementPage: React.FC = () => {
   const users: User[] = usersData?.getAllUsers || [];
   console.log("Users Data Received:", users);
   const roles: Role[] = rolesData?.getAllLeanRoles || [];
+
+  const roleColors = [
+    "text-gray-400", // normal
+    "text-blue-400", // expert
+    "text-blue-700", // admin
+    "text-red-300", // no longer employed
+  ];
 
   // Utility Function
   const capitalizeFirstLetter = (str: string | undefined | null): string => {
@@ -160,14 +167,26 @@ const UserManagementPage: React.FC = () => {
       {/* Stats and Actions Section */}
       <section className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div className="flex flex-wrap gap-4">
-          <StatCard amount={userCount ?? 0} title="Общо потребители" />
-          {roles.map((role) => (
-            <StatCard
-              key={role._id}
-              amount={role.users?.length || 0} // Ensure role.users is fetched or count comes from elsewhere if needed
-              title={capitalizeFirstLetter(role.name)}
-            />
-          ))}
+          <StatCard
+            amount={userCount ?? 0}
+            title="Общо потребители"
+            iconColor="text-gray-400"
+            onClick={() => {}}
+          />
+          {roles.map((role, index) => {
+            const colorIndex = index % roleColors.length;
+            const dynamicColor = roleColors[colorIndex];
+
+            return (
+              <StatCard
+                key={role._id}
+                amount={role.users?.length || 0}
+                title={capitalizeFirstLetter(role.name)}
+                iconColor={dynamicColor}
+                onClick={() => {}}
+              />
+            );
+          })}
         </div>
         <button
           onClick={openCreateModal}

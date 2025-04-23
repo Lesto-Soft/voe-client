@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Role } from "../../page/UserManagementPage"; // Adjust path if needed
 import UserAvatar from "../cards/UserAvatar"; // Import the UserAvatar component
+import ImageCropModal from "../modals/ImageCropModal";
 
 // --- Interfaces ---
 interface User {
@@ -50,7 +51,7 @@ const readFileAsBase64 = (file: File): Promise<string> => {
 };
 
 // --- Component ---
-const CreateUserFormModal: React.FC<CreateUserFormProps> = ({
+const CreateUserForm: React.FC<CreateUserFormProps> = ({
   onSubmit,
   onClose,
   initialData = null,
@@ -444,7 +445,7 @@ const CreateUserFormModal: React.FC<CreateUserFormProps> = ({
       <div className="mt-8 text-center">
         <button
           type="submit"
-          className="rounded-md bg-green-600 px-8 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+          className="rounded-md bg-green-600 px-8 py-2 text-sm font-semibold text-white shadow-sm hover:cursor-pointer shover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
         >
           {submitButtonText}
         </button>
@@ -453,4 +454,4 @@ const CreateUserFormModal: React.FC<CreateUserFormProps> = ({
   );
 };
 
-export default CreateUserFormModal;
+export default CreateUserForm;

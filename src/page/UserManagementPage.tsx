@@ -13,7 +13,7 @@ import {
   UpdateUserInput,
 } from "../graphql/mutation/user";
 import CreateUserModal from "../components/modals/CreateUserModal";
-import CreateUserFormModal from "../components/modals/CreateUserFormModal";
+import CreateUserForm from "../components/forms/CreateUserForm";
 import { useGetRoles } from "../graphql/hooks/role";
 import StatCard from "../components/cards/StatCard";
 import UserAvatar from "../components/cards/UserAvatar"; // Import the UserAvatar component
@@ -287,10 +287,10 @@ const UserManagementPage: React.FC = () => {
                     <td className="px-4 py-3 lg:px-6">
                       {capitalizeFirstLetter(user.role?.name) || "-"}
                     </td>
-                    <td className="px-4 py-3 text-center lg:px-6">
+                    <td className=" text-center">
                       <button
                         onClick={() => openEditModal(user)}
-                        className="text-blue-600 transition-all duration-150 ease-in-out hover:cursor-pointer hover:text-blue-800 active:text-blue-900 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed" // Added transition, active styles, and disabled cursor
+                        className="flex w-full items-center justify-center rounded bg-sky-100 p-1.5 text-sky-700 border border-sky-200 hover:border-sky-300 transition-all duration-150 ease-in-out hover:cursor-pointer hover:bg-sky-200 hover:text-sky-800 active:bg-sky-300 active:scale-[0.96] disabled:bg-gray-100 disabled:text-gray-400 disabled:opacity-70 disabled:cursor-not-allowed disabled:scale-100" // <-- Updated classes
                         aria-label={`Редактирай ${user.username}`}
                         disabled={createLoading || updateLoading} // Disable edit during mutation
                       >
@@ -333,7 +333,7 @@ const UserManagementPage: React.FC = () => {
 
         {/* Render form only when NOT actively processing a mutation */}
         {!(createLoading || updateLoading) && (
-          <CreateUserFormModal
+          <CreateUserForm
             // Key prop helps ensure state resets properly in the form when switching between create/edit user
             key={editingUser ? editingUser._id : "create"}
             onSubmit={handleFormSubmit}

@@ -280,7 +280,10 @@ const CreateUserFormModal: React.FC<CreateUserFormProps> = ({
             className="w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
           />
         </div>
+        {/* --- Role Input --- */}
         <div>
+          {" "}
+          {/* This div occupies one grid column */}
           <label
             htmlFor="role"
             className="mb-1 block text-sm font-medium text-gray-700"
@@ -303,9 +306,10 @@ const CreateUserFormModal: React.FC<CreateUserFormProps> = ({
             ))}
           </select>
         </div>
-
         {/* --- Avatar Upload Section --- */}
-        <div className="md:col-span-2 mt-2">
+        {/* Removed md:col-span-2 and mt-2 */}
+        <div>
+          {/* This div now also occupies one grid column */}
           <label className="mb-1 block text-sm font-medium text-gray-700">
             Аватар
           </label>
@@ -319,17 +323,14 @@ const CreateUserFormModal: React.FC<CreateUserFormProps> = ({
               style={{ display: "none" }}
               name="avatarFile"
             />
-
             {/* Avatar Preview/Fallback using UserAvatar component */}
             <div className="cursor-pointer" onClick={handleAvatarClick}>
-              <UserAvatar
-                // Use full name for initials, fallback to username if name is empty
+              <UserAvatar // Use full name for initials, fallback to username if name is empty
                 name={fullName || username || "?"}
                 imageUrl={avatarPreview} // Pass the preview URL (data: or http://) or null
                 size={64} // Larger preview size for form (e.g., h-16 w-16)
               />
             </div>
-
             {/* Action Buttons */}
             <div className="flex flex-col gap-2">
               <button
@@ -358,7 +359,6 @@ const CreateUserFormModal: React.FC<CreateUserFormProps> = ({
             </div>
           </div>
         </div>
-
         {/* --- Password Fields --- */}
         {!initialData ? (
           <>

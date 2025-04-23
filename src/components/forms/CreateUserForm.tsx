@@ -407,7 +407,8 @@ const CreateUserForm: React.FC<CreateUserFormProps> = ({
             <label className="mb-1 block text-sm font-medium text-gray-700">
               Аватар
             </label>
-            <div className="flex items-center gap-4">
+            {/* Use flex-wrap to allow buttons to wrap below avatar on narrow screens */}
+            <div className="flex flex-wrap items-center gap-4">
               {/* Hidden File Input */}
               <input
                 type="file"
@@ -415,27 +416,30 @@ const CreateUserForm: React.FC<CreateUserFormProps> = ({
                 ref={fileInputRef}
                 onChange={handleFileChange}
                 style={{ display: "none" }}
-                name="avatarFile" // Use a distinct name if needed
+                name="avatarFile"
               />
               {/* Avatar Preview/Fallback */}
-              <div className="cursor-pointer" onClick={handleAvatarClick}>
+              <div
+                className="cursor-pointer flex-shrink-0"
+                onClick={handleAvatarClick}
+              >
+                {/* Prevent avatar shrinking */}
                 <UserAvatar
                   name={fullName || username || "?"}
-                  imageUrl={avatarPreview} // Shows existing or cropped preview
+                  imageUrl={avatarPreview}
                   size={64}
                 />
               </div>
               {/* Action Buttons */}
-              <div className="flex flex-col gap-2">
+              {/* Allow button group to grow if needed when wrapped */}
+              <div className="flex flex-col gap-2 flex-grow sm:flex-grow-0">
                 <button
                   type="button"
                   onClick={handleAvatarClick}
                   className="rounded bg-blue-500 px-3 py-1 text-xs text-white shadow-sm hover:bg-blue-600"
                 >
-                  {/* Text depends on whether *any* preview exists now */}
                   {avatarPreview ? "Смени" : "Качи"} Аватар
                 </button>
-                {/* Show remove only if there's a preview AND we're not already in removal state */}
                 {avatarPreview && !isRemovingAvatar && (
                   <button
                     type="button"
@@ -538,7 +542,7 @@ const CreateUserForm: React.FC<CreateUserFormProps> = ({
         <div className="mt-8 text-center">
           <button
             type="submit"
-            className="rounded-md bg-green-600 px-8 py-2 text-sm font-semibold text-white shadow-sm hover:cursor-pointer shover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+            className="rounded-md bg-green-600 px-8 py-2 text-sm font-semibold text-white shadow-sm hover:cursor-pointer hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-1"
           >
             {submitButtonText}
           </button>

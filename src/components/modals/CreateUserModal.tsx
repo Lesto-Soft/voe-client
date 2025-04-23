@@ -71,34 +71,33 @@ const CreateUserModal: React.FC<ModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    // Use Radix Portal for the main modal for better stacking context
     <AlertDialog.Root
       open={showConfirmDialog}
       onOpenChange={setShowConfirmDialog}
     >
       {/* Main Modal Backdrop & Content */}
       <div
-        className="fixed inset-0 z-40 flex items-center justify-center bg-stone-500/75"
+        className="fixed inset-0 z-50 flex items-center justify-center bg-stone-500/75 p-4"
         // Use attemptClose for backdrop click
         onClick={attemptClose}
       >
         {/* Main Modal Content */}
         <div
-          className="relative w-full max-w-2xl rounded-lg bg-white p-6 shadow-xl"
+          className="relative w-full max-w-md md:max-w-lg lg:max-w-2xl rounded-lg bg-white p-4 md:p-6 shadow-xl max-h-[85vh] overflow-y-auto"
           onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside modal
           {...interactionProps} // Spread interaction handlers here or on specific child elements
         >
           {/* Close Button for Main Modal */}
           <button
             onClick={attemptClose} // Use attemptClose for the 'X' button
-            className="absolute top-3 right-3 text-gray-500 transition-colors hover:text-gray-800 hover:cursor-pointer"
+            className="absolute top-2 right-2 rounded-sm p-1 text-gray-500 opacity-70 transition-opacity hover:text-gray-800 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 md:top-3 md:right-3 z-10"
             aria-label="Close modal"
           >
-            <XMarkIcon className="h-6 w-6" />
+            <XMarkIcon className="h-5 w-5" />
           </button>
 
           {/* Main Modal Header */}
-          <h2 className="mb-6 text-center text-xl font-semibold text-gray-800">
+          <h2 className="mb-4 text-center text-lg font-semibold text-gray-800 md:mb-6 md:text-xl">
             {title}
           </h2>
 
@@ -109,8 +108,6 @@ const CreateUserModal: React.FC<ModalProps> = ({
           </div>
         </div>
       </div>
-
-      {/* Confirmation Dialog (using Radix AlertDialog) */}
       <AlertDialog.Portal>
         <AlertDialog.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm data-[state=open]:animate-overlayShow" />
         <AlertDialog.Content className="fixed top-1/2 left-1/2 z-50 w-[90vw] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-lg bg-white p-6 shadow-lg focus:outline-none data-[state=open]:animate-contentShow">

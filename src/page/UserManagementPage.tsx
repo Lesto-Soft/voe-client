@@ -168,32 +168,35 @@ const UserManagementPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-100 p-6 font-sans">
       {/* Stats and Actions Section */}
-      <section className="mb-6 flex flex-wrap items-start justify-between gap-4">
-        <div className="flex flex-wrap gap-4">
+      <section className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div className="flex flex-col gap-4 md:flex-row md:flex-wrap md:items-start">
           <StatCard
             amount={userCount ?? 0}
             title="Общо потребители"
-            iconColor="text-gray-400"
+            iconColor="text-gray-700"
             onClick={() => {}}
+            className="w-full md:w-auto"
           />
-          {roles.map((role, index) => {
-            const colorIndex = index % roleColors.length;
-            const dynamicColor = roleColors[colorIndex];
+          <div className="grid grid-cols-2 gap-4 md:flex md:flex-wrap md:gap-4">
+            {roles.map((role, index) => {
+              const colorIndex = index % roleColors.length;
+              const dynamicColor = roleColors[colorIndex];
 
-            return (
-              <StatCard
-                key={role._id}
-                amount={role.users?.length || 0}
-                title={capitalizeFirstLetter(role.name)}
-                iconColor={dynamicColor}
-                onClick={() => {}}
-              />
-            );
-          })}
+              return (
+                <StatCard
+                  key={role._id}
+                  amount={role.users?.length || 0}
+                  title={capitalizeFirstLetter(role.name)}
+                  iconColor={dynamicColor}
+                  onClick={() => {}}
+                />
+              );
+            })}
+          </div>
         </div>
         <button
           onClick={openCreateModal}
-          className="flex items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 shadow-sm transition-all duration-150 ease-in-out hover:cursor-pointer hover:bg-gray-50 hover:shadow-md active:bg-gray-100 active:shadow-inner disabled:opacity-50 disabled:cursor-not-allowed" // Added transition, enhanced hover, active styles, and disabled styles
+          className="flex flex-shrink-0 items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 shadow-sm transition-all duration-150 ease-in-out hover:cursor-pointer hover:bg-gray-50 hover:shadow-md active:bg-gray-100 active:shadow-inner disabled:opacity-50 disabled:cursor-not-allowed"
           disabled={createLoading || updateLoading} // Disable button during mutation
         >
           <PlusIconSolid className="h-5 w-5" />

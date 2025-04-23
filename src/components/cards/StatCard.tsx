@@ -6,6 +6,7 @@ interface Props {
   title: string;
   iconColor?: string;
   onClick?: () => void;
+  className?: string;
 }
 
 const StatCard: React.FC<Props> = ({
@@ -13,6 +14,7 @@ const StatCard: React.FC<Props> = ({
   title,
   iconColor = "text-gray-500",
   onClick,
+  className = "",
 }) => {
   // Base classes
   const baseClasses =
@@ -24,7 +26,10 @@ const StatCard: React.FC<Props> = ({
     : "";
 
   return (
-    <div className={`${baseClasses} ${interactiveClasses}`} onClick={onClick}>
+    <div
+      className={`${baseClasses} ${interactiveClasses} ${className}`}
+      onClick={onClick}
+    >
       <UserIcon
         className={`h-7 w-7 flex-shrink-0 ${iconColor}`}
         aria-hidden="true"

@@ -42,6 +42,7 @@ const UserManagementPage: React.FC = () => {
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [currentPage] = useState(0);
   const [itemsPerPage] = useState(10);
+  const [avatarVersion, setAvatarVersion] = useState(Date.now());
   const [searchQuery] = useState("");
 
   // Access environment variables using Vite's standard method
@@ -135,6 +136,8 @@ const UserManagementPage: React.FC = () => {
       await refetchUsers();
       await refetchRoles();
       if (!editingUserId) await refetchUserCount();
+      // --- Force avatar URL refresh by updating version state ---
+      setAvatarVersion(Date.now());
       closeModal(); // Close modal on success
     } catch (err: any) {
       console.error("Error submitting form via GQL hook:", err);
@@ -253,7 +256,7 @@ const UserManagementPage: React.FC = () => {
                 // Construct the full image URL ONLY if user.avatar path exists
                 const imageUrl =
                   user.avatar && user._id
-                    ? `${serverBaseUrl}/static/avatars/${user._id}/${user.avatar}` // Corrected syntax
+                    ? `${serverBaseUrl}/static/avatars/${user._id}/${user.avatar}?v=${avatarVersion}` // Corrected syntax
                     : null;
                 console.log(
                   `User ${user._id} | Avatar Path: ${user.avatar} | Full URL: ${imageUrl}`

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Role } from "../../page/UserManagementPage"; // Adjust path if needed
 import UserAvatar from "../cards/UserAvatar"; // Import the UserAvatar component
 import ImageCropModal from "../modals/ImageCropModal";
@@ -72,11 +72,16 @@ const CreateUserForm: React.FC<CreateUserFormProps> = ({
   const [role, setRoleId] = useState("");
 
   // Avatar State
-  const [avatarFile, setAvatarFile] = useState<File | null>(null);
-  // Preview holds the full URL (http://... or data:image/...) or null
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [originalAvatarFile, setOriginalAvatarFile] = useState<File | null>(
+    null
+  ); // Store original
+  const [finalCroppedBlob, setFinalCroppedBlob] = useState<Blob | null>(null); // Store the cropped result
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null); // Now holds existing URL or Cropped Blob URL
   const [isRemovingAvatar, setIsRemovingAvatar] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [isCropModalOpen, setIsCropModalOpen] = useState(false);
+  const [imageToCrop, setImageToCrop] = useState<string | null>(null); // Data URL for cropper
 
   // --- Constants ---
   const serverBaseUrl = import.meta.env.VITE_API_URL || "";
@@ -94,15 +99,19 @@ const CreateUserForm: React.FC<CreateUserFormProps> = ({
       setConfirmNewPassword("");
       setRoleId(initialData.role?._id || "");
 
-      // Set initial avatar preview URL or null
+      // Set initial avatar preview from existing data
       const currentAvatarUrl = initialData.avatar
         ? `${serverBaseUrl}/static/avatars/${initialData._id}/${initialData.avatar}`
-        : null; // Set to null if no avatar path
-      setAvatarPreview(currentAvatarUrl);
-      setAvatarFile(null);
+        : null;
+      setAvatarPreview(currentAvatarUrl); // This is the initial display
+
+      // Reset crop/file state
+      // setAvatarFile(null); // Keep original? Maybe not needed now
+      setOriginalAvatarFile(null);
+      setFinalCroppedBlob(null);
       setIsRemovingAvatar(false);
-      console.log("INITIAL DATA:", initialData); // Debugging line
-      console.log("Avatar URL:", currentAvatarUrl); // Debugging line
+      setImageToCrop(null);
+      setIsCropModalOpen(false);
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
@@ -117,9 +126,14 @@ const CreateUserForm: React.FC<CreateUserFormProps> = ({
       setNewPassword("");
       setConfirmNewPassword("");
       setRoleId("");
-      setAvatarPreview(null); // Initialize preview to null
-      setAvatarFile(null);
+      // Reset avatar/crop state
+      setAvatarPreview(null);
+      // setAvatarFile(null);
+      setOriginalAvatarFile(null);
+      setFinalCroppedBlob(null);
       setIsRemovingAvatar(false);
+      setImageToCrop(null);
+      setIsCropModalOpen(false);
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
@@ -130,26 +144,97 @@ const CreateUserForm: React.FC<CreateUserFormProps> = ({
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      setAvatarFile(file);
-      setIsRemovingAvatar(false);
+      setOriginalAvatarFile(file); // Store the original file
+      // setAvatarFile(file); // Maybe not needed now
+      setIsRemovingAvatar(false); // Reset removal flag
+      setFinalCroppedBlob(null); // Reset previous crop result
       const reader = new FileReader();
       reader.onloadend = () => {
-        // Set preview to the local file's data URL
-        setAvatarPreview(reader.result as string);
+        setImageToCrop(reader.result as string); // Set image for cropper modal
+        setIsCropModalOpen(true); // Open the cropper modal
       };
       reader.readAsDataURL(file);
     }
   };
+
+  // Callback from ImageCropModal
+  const handleCropComplete = useCallback(
+    (croppedBlob: Blob | null) => {
+      setImageToCrop(null); // Clear the image source for the cropper
+      setIsCropModalOpen(false); // Close cropper modal
+
+      if (croppedBlob) {
+        console.log("Cropped Blob received:", croppedBlob);
+        setFinalCroppedBlob(croppedBlob); // Store the cropped Blob
+        // Create a temporary URL for previewing the cropped Blob
+        const blobUrl = URL.createObjectURL(croppedBlob);
+        setAvatarPreview(blobUrl); // Update the preview to show the cropped image
+        console.log("Blob URL for preview:", blobUrl);
+
+        // IMPORTANT: Revoke the object URL when the component unmounts
+        // or when a new image/crop happens to avoid memory leaks.
+        // Handled in a cleanup effect (see below).
+      } else {
+        // Crop was cancelled or failed, revert? Or do nothing?
+        // Reset file input if cancelled
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
+        setOriginalAvatarFile(null); // Clear stored original file if cancelled
+        // Decide if you want to revert avatarPreview to initialData state here
+        console.log("Crop cancelled or failed.");
+      }
+    },
+    [] // No dependencies needed if it only calls setState
+  );
+
+  // Effect to clean up Blob URLs
+  useEffect(() => {
+    // Store the current preview URL
+    const currentPreview = avatarPreview;
+
+    // Return a cleanup function
+    return () => {
+      if (currentPreview && currentPreview.startsWith("blob:")) {
+        // Revoke the object URL to free up memory
+        URL.revokeObjectURL(currentPreview);
+        console.log("Revoked Blob URL:", currentPreview);
+      }
+    };
+  }, [avatarPreview]); // Run when avatarPreview changes
+
   const handleAvatarClick = () => {
     fileInputRef.current?.click();
   };
+
   const handleRemoveAvatar = () => {
-    setAvatarFile(null);
+    // setAvatarFile(null);
+    setOriginalAvatarFile(null);
+    setFinalCroppedBlob(null);
     setAvatarPreview(null); // Reset preview to null (will show initials)
-    setIsRemovingAvatar(true);
+    setIsRemovingAvatar(true); // Flag that avatar should be removed on submit
+    setImageToCrop(null);
+    setIsCropModalOpen(false);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
+  };
+
+  // --- Helper to convert Blob to Base64 ---
+  const blobToBase64 = (blob: Blob): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64String = (reader.result as string)?.split(",")[1];
+        if (base64String) {
+          resolve(base64String);
+        } else {
+          reject(new Error("Could not convert Blob to base64."));
+        }
+      };
+      reader.onerror = (error) => reject(error);
+      reader.readAsDataURL(blob);
+    });
   };
 
   // --- Form Submission ---
@@ -181,22 +266,28 @@ const CreateUserForm: React.FC<CreateUserFormProps> = ({
     else if (newPassword) formDataObject.password = newPassword;
 
     // Prepare Avatar Data
-    let avatarInputData: AvatarInputData | null | undefined = undefined;
-    if (avatarFile) {
+    let avatarInputData: AvatarInputData | null | undefined = undefined; // undefined = no change
+
+    if (finalCroppedBlob) {
+      // Prioritize cropped blob
       try {
-        const base64String = await readFileAsBase64(avatarFile);
-        avatarInputData = { filename: avatarFile.name, file: base64String };
+        const base64String = await blobToBase64(finalCroppedBlob);
+        // Use original filename or generate a new one
+        const filename = originalAvatarFile?.name
+          ? `cropped_${originalAvatarFile.name}`
+          : "cropped_avatar.png";
+        avatarInputData = { filename: filename, file: base64String };
       } catch (error) {
-        console.error("Error reading file:", error);
+        console.error("Error converting cropped blob to base64:", error);
         alert(
-          `Грешка при обработка на файла: $
+          `Грешка при обработка на изрязания аватар: ${
             error instanceof Error ? error.message : "Неизвестна грешка"
           }`
         );
-        return;
+        return; // Stop submission
       }
     } else if (isRemovingAvatar && initialData?._id) {
-      avatarInputData = null;
+      avatarInputData = null; // Explicitly set to null for removal
     }
 
     // Call Parent Submit
@@ -214,243 +305,263 @@ const CreateUserForm: React.FC<CreateUserFormProps> = ({
     );
 
   return (
-    <form onSubmit={handleSubmit}>
-      <div className="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2">
-        {/* --- Input fields (Username, Full Name, Email, Position, Role) --- */}
-        <div>
-          <label
-            htmlFor="username"
-            className="mb-1 block text-sm font-medium text-gray-700"
-          >
-            Потребителско име<span className="text-red-500">*</span>
-          </label>
-          <input
-            type="text"
-            id="username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-            className={`w-full rounded-md border p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
-              !!initialData ? "border-gray-300 bg-gray-100" : "border-gray-300"
-            }`}
-          />
-        </div>
-        <div>
-          <label
-            htmlFor="fullName"
-            className="mb-1 block text-sm font-medium text-gray-700"
-          >
-            Име и фамилия<span className="text-red-500">*</span>
-          </label>
-          <input
-            type="text"
-            id="fullName"
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
-            required
-            className="w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-          />
-        </div>
-        <div>
-          <label
-            htmlFor="email"
-            className="mb-1 block text-sm font-medium text-gray-700"
-          >
-            Имейл
-          </label>
-          <input
-            type="email"
-            id="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-          />
-        </div>
-        <div>
-          <label
-            htmlFor="position"
-            className="mb-1 block text-sm font-medium text-gray-700"
-          >
-            Позиция
-          </label>
-          <input
-            type="text"
-            id="position"
-            value={position}
-            onChange={(e) => setPosition(e.target.value)}
-            className="w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-          />
-        </div>
-        {/* --- Role Input --- */}
-        <div>
-          {" "}
-          {/* This div occupies one grid column */}
-          <label
-            htmlFor="role"
-            className="mb-1 block text-sm font-medium text-gray-700"
-          >
-            Роля<span className="text-red-500">*</span>
-          </label>
-          <select
-            id="role"
-            name="role"
-            value={role}
-            onChange={(e) => setRoleId(e.target.value)}
-            required
-            className="w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-          >
-            <option value="">Изберете роля</option>
-            {roles.map((r) => (
-              <option key={r._id} value={r._id}>
-                {r.name.charAt(0).toUpperCase() + r.name.slice(1)}
-              </option>
-            ))}
-          </select>
-        </div>
-        {/* --- Avatar Upload Section --- */}
-        {/* Removed md:col-span-2 and mt-2 */}
-        <div>
-          {/* This div now also occupies one grid column */}
-          <label className="mb-1 block text-sm font-medium text-gray-700">
-            Аватар
-          </label>
-          <div className="flex items-center gap-4">
-            {/* Hidden File Input */}
+    <>
+      <form onSubmit={handleSubmit}>
+        <div className="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2">
+          {/* --- Input fields (Username, Full Name, Email, Position, Role) --- */}
+          <div>
+            <label
+              htmlFor="username"
+              className="mb-1 block text-sm font-medium text-gray-700"
+            >
+              Потребителско име<span className="text-red-500">*</span>
+            </label>
             <input
-              type="file"
-              accept="image/*"
-              ref={fileInputRef}
-              onChange={handleFileChange}
-              style={{ display: "none" }}
-              name="avatarFile"
+              type="text"
+              id="username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+              className={`w-full rounded-md border p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
+                !!initialData
+                  ? "border-gray-300 bg-gray-100"
+                  : "border-gray-300"
+              }`}
             />
-            {/* Avatar Preview/Fallback using UserAvatar component */}
-            <div className="cursor-pointer" onClick={handleAvatarClick}>
-              <UserAvatar // Use full name for initials, fallback to username if name is empty
-                name={fullName || username || "?"}
-                imageUrl={avatarPreview} // Pass the preview URL (data: or http://) or null
-                size={64} // Larger preview size for form (e.g., h-16 w-16)
+          </div>
+          <div>
+            <label
+              htmlFor="fullName"
+              className="mb-1 block text-sm font-medium text-gray-700"
+            >
+              Име и фамилия<span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              id="fullName"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              required
+              className="w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="email"
+              className="mb-1 block text-sm font-medium text-gray-700"
+            >
+              Имейл
+            </label>
+            <input
+              type="email"
+              id="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="position"
+              className="mb-1 block text-sm font-medium text-gray-700"
+            >
+              Позиция
+            </label>
+            <input
+              type="text"
+              id="position"
+              value={position}
+              onChange={(e) => setPosition(e.target.value)}
+              className="w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            />
+          </div>
+          {/* --- Role Input --- */}
+          <div>
+            {" "}
+            {/* This div occupies one grid column */}
+            <label
+              htmlFor="role"
+              className="mb-1 block text-sm font-medium text-gray-700"
+            >
+              Роля<span className="text-red-500">*</span>
+            </label>
+            <select
+              id="role"
+              name="role"
+              value={role}
+              onChange={(e) => setRoleId(e.target.value)}
+              required
+              className="w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            >
+              <option value="">Изберете роля</option>
+              {roles.map((r) => (
+                <option key={r._id} value={r._id}>
+                  {r.name.charAt(0).toUpperCase() + r.name.slice(1)}
+                </option>
+              ))}
+            </select>
+          </div>
+          {/* --- Avatar Upload Section --- */}
+          {/* Removed md:col-span-2 and mt-2 */}
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700">
+              Аватар
+            </label>
+            <div className="flex items-center gap-4">
+              {/* Hidden File Input */}
+              <input
+                type="file"
+                accept="image/*"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                style={{ display: "none" }}
+                name="avatarFile" // Use a distinct name if needed
               />
-            </div>
-            {/* Action Buttons */}
-            <div className="flex flex-col gap-2">
-              <button
-                type="button"
-                onClick={handleAvatarClick}
-                className="rounded bg-blue-500 px-3 py-1 text-xs text-white shadow-sm hover:bg-blue-600"
-              >
-                {/* Change text based on whether an image is currently displayed */}
-                {avatarPreview ? "Смени" : "Качи"} Аватар
-              </button>
-              {/* Show remove button only if an avatar is currently displayed (preview is not null) */}
-              {avatarPreview && !isRemovingAvatar && initialData && (
+              {/* Avatar Preview/Fallback */}
+              <div className="cursor-pointer" onClick={handleAvatarClick}>
+                <UserAvatar
+                  name={fullName || username || "?"}
+                  imageUrl={avatarPreview} // Shows existing or cropped preview
+                  size={64}
+                />
+              </div>
+              {/* Action Buttons */}
+              <div className="flex flex-col gap-2">
                 <button
                   type="button"
-                  onClick={handleRemoveAvatar}
-                  className="rounded bg-red-100 px-3 py-1 text-xs text-red-700 shadow-sm hover:bg-red-200"
+                  onClick={handleAvatarClick}
+                  className="rounded bg-blue-500 px-3 py-1 text-xs text-white shadow-sm hover:bg-blue-600"
                 >
-                  Премахни Аватар
+                  {/* Text depends on whether *any* preview exists now */}
+                  {avatarPreview ? "Смени" : "Качи"} Аватар
                 </button>
-              )}
-              {isRemovingAvatar && (
-                <span className="text-xs text-red-600">
-                  Аватарът ще бъде премахнат.
-                </span>
-              )}
+                {/* Show remove only if there's a preview AND we're not already in removal state */}
+                {avatarPreview && !isRemovingAvatar && (
+                  <button
+                    type="button"
+                    onClick={handleRemoveAvatar}
+                    className="rounded bg-red-100 px-3 py-1 text-xs text-red-700 shadow-sm hover:bg-red-200"
+                  >
+                    Премахни Аватар
+                  </button>
+                )}
+                {isRemovingAvatar && (
+                  <span className="text-xs text-red-600">
+                    Аватарът ще бъде премахнат.
+                  </span>
+                )}
+              </div>
             </div>
           </div>
+          {/* --- Password Fields --- */}
+          {!initialData ? (
+            <>
+              {" "}
+              {/* Create Mode Passwords */}
+              <div>
+                <label
+                  htmlFor="password"
+                  className="mb-1 block text-sm font-medium text-gray-700"
+                >
+                  Парола<span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="password"
+                  id="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required={!initialData}
+                  className="w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="confirmPassword"
+                  className="mb-1 block text-sm font-medium text-gray-700"
+                >
+                  Повтори парола<span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="password"
+                  id="confirmPassword"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required={!initialData}
+                  className="w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                />
+              </div>
+            </>
+          ) : (
+            <>
+              {" "}
+              {/* Edit Mode Passwords */}
+              <div>
+                <label
+                  htmlFor="newPassword"
+                  className="mb-1 block text-sm font-medium text-gray-700"
+                >
+                  Нова парола{" "}
+                  <span className="text-xs text-gray-500">
+                    (оставете празно, ако не променяте)
+                  </span>
+                </label>
+                <input
+                  type="password"
+                  id="newPassword"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  placeholder="Нова парола"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="confirmNewPassword"
+                  className="mb-1 block text-sm font-medium text-gray-700"
+                >
+                  Потвърди нова парола
+                </label>
+                <input
+                  type="password"
+                  id="confirmNewPassword"
+                  value={confirmNewPassword}
+                  onChange={(e) => setConfirmNewPassword(e.target.value)}
+                  className="w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  placeholder="Потвърди нова парола"
+                />
+              </div>
+            </>
+          )}
         </div>
-        {/* --- Password Fields --- */}
-        {!initialData ? (
-          <>
-            {" "}
-            {/* Create Mode Passwords */}
-            <div>
-              <label
-                htmlFor="password"
-                className="mb-1 block text-sm font-medium text-gray-700"
-              >
-                Парола<span className="text-red-500">*</span>
-              </label>
-              <input
-                type="password"
-                id="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required={!initialData}
-                className="w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="confirmPassword"
-                className="mb-1 block text-sm font-medium text-gray-700"
-              >
-                Повтори парола<span className="text-red-500">*</span>
-              </label>
-              <input
-                type="password"
-                id="confirmPassword"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required={!initialData}
-                className="w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              />
-            </div>
-          </>
-        ) : (
-          <>
-            {" "}
-            {/* Edit Mode Passwords */}
-            <div>
-              <label
-                htmlFor="newPassword"
-                className="mb-1 block text-sm font-medium text-gray-700"
-              >
-                Нова парола{" "}
-                <span className="text-xs text-gray-500">
-                  (оставете празно, ако не променяте)
-                </span>
-              </label>
-              <input
-                type="password"
-                id="newPassword"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                className="w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                placeholder="Нова парола"
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="confirmNewPassword"
-                className="mb-1 block text-sm font-medium text-gray-700"
-              >
-                Потвърди нова парола
-              </label>
-              <input
-                type="password"
-                id="confirmNewPassword"
-                value={confirmNewPassword}
-                onChange={(e) => setConfirmNewPassword(e.target.value)}
-                className="w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                placeholder="Потвърди нова парола"
-              />
-            </div>
-          </>
-        )}
-      </div>
 
-      {/* --- Submit Button --- */}
-      <div className="mt-8 text-center">
-        <button
-          type="submit"
-          className="rounded-md bg-green-600 px-8 py-2 text-sm font-semibold text-white shadow-sm hover:cursor-pointer shover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-        >
-          {submitButtonText}
-        </button>
-      </div>
-    </form>
+        {/* --- Submit Button --- */}
+        <div className="mt-8 text-center">
+          <button
+            type="submit"
+            className="rounded-md bg-green-600 px-8 py-2 text-sm font-semibold text-white shadow-sm hover:cursor-pointer shover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+          >
+            {submitButtonText}
+          </button>
+        </div>
+      </form>
+
+      <ImageCropModal
+        isOpen={isCropModalOpen}
+        onClose={() => {
+          // Handle manual close (cancel)
+          setIsCropModalOpen(false);
+          setImageToCrop(null);
+          // Reset file input if user cancels crop without confirming
+          if (fileInputRef.current) {
+            fileInputRef.current.value = "";
+          }
+          setOriginalAvatarFile(null);
+          handleCropComplete(null); // Ensure parent knows it was cancelled
+        }}
+        imageSrc={imageToCrop}
+        onCropComplete={handleCropComplete} // Pass the callback
+      />
+    </>
   );
 };
 

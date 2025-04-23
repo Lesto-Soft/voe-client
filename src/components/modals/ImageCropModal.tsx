@@ -90,14 +90,14 @@ const ImageCropModal: React.FC<ImageCropModalProps> = ({
           <button
             type="button"
             onClick={handleCancel}
-            className="rounded bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
+            className="rounded bg-gray-100 border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
           >
             Отказ
           </button>
           <button
             type="button"
             onClick={handleConfirmCrop}
-            className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            className="rounded bg-blue-600  border border-gray-500 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
           >
             Потвърди
           </button>

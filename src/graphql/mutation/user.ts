@@ -42,18 +42,18 @@ export type CreateUserInput = {
   username: string;
   password: string;
   name: string;
-  email?: string;
-  role?: string; // ID of the role
-  // avatar?: AttachmentInput[];
-  position?: string;
+  email?: string | null; // Allow null
+  role?: string | null; // ID of the role, allow null
+  avatar?: AttachmentInput | null; // Optional avatar input
+  position?: string | null; // Allow null
 };
 
 export type UpdateUserInput = {
   username?: string;
-  password?: string;
+  password?: string; // Optional password change
   name?: string;
-  email?: string;
-  role?: string; // ID of the role
-  // avatar?: AttachmentInput[];
-  position?: string;
+  email?: string | null; // Allow null
+  role?: string | null; // ID of the role, allow null
+  avatar?: AttachmentInput | null | undefined; //  Can be object, null (remove), or undefined
+  position?: string | null; // Allow null
 };

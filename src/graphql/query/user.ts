@@ -11,6 +11,7 @@ fragment UserFragment on User {
         _id
         name
       }
+        avatar
      
 }`;
 

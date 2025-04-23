@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from "react";
-import { UsersIcon, PencilSquareIcon } from "@heroicons/react/24/outline";
+import React, { useState, useEffect } from "react";
+import { PencilSquareIcon } from "@heroicons/react/24/outline";
 import { PlusIcon as PlusIconSolid } from "@heroicons/react/20/solid";
 import {
   useGetUsers,
@@ -7,26 +7,33 @@ import {
   useUpdateUser,
   useCountUsers,
 } from "../graphql/hooks/user";
-import { CreateUserInput, UpdateUserInput } from "../graphql/mutation/user";
+import {
+  AttachmentInput,
+  CreateUserInput,
+  UpdateUserInput,
+} from "../graphql/mutation/user";
 import CreateUserModal from "../components/modals/CreateUserModal";
 import CreateUserFormModal from "../components/modals/CreateUserFormModal";
 import { useGetRoles } from "../graphql/hooks/role";
 import StatCard from "../components/cards/StatCard";
+import UserAvatar from "../components/cards/UserAvatar"; // Import the UserAvatar component
 
+// Interfaces matching GraphQL Schema and component needs
 export interface Role {
   __typename?: "Role";
   _id: string;
   name: string;
-  users: any[];
+  users?: { _id: string }[]; // Or the full User type if needed/queried
 }
+
 interface User {
   _id: string;
   username: string;
   name: string;
   position: string;
   email: string;
-  role: Role;
-  avatar?: string | null;
+  role: Role | null;
+  avatar?: string | null; // Relative path string from DB (e.g., /avatars/...)
 }
 
 const UserManagementPage: React.FC = () => {
@@ -35,6 +42,13 @@ const UserManagementPage: React.FC = () => {
   const [currentPage] = useState(0);
   const [itemsPerPage] = useState(10);
   const [searchQuery] = useState("");
+
+  // Access environment variables using Vite's standard method
+  // Ensure VITE_API_URL is defined in your .env file (e.g., VITE_API_URL=http://localhost:4000)
+  const serverBaseUrl = import.meta.env.VITE_API_URL || "";
+  console.log("Server Base URL:", serverBaseUrl);
+
+  // GraphQL Hooks
   const {
     users: usersData,
     error: usersError,
@@ -63,111 +77,80 @@ const UserManagementPage: React.FC = () => {
     loading: rolesLoading,
     refetch: refetchRoles,
   } = useGetRoles();
-  const users: User[] = usersData?.getAllUsers || []; // Extract users from the hook's data
-  const roles: Role[] = rolesData?.getAllLeanRoles || []; // Extract roles from the hook's data
-  // const users: User[] = usersData?.getAllUsers || [];
-  // console.log("Users:", users);
-  // const roles: Role[] = rolesData?.getAllLeanRoles || []; // Extract roles from the hook's data
-  // console.log("Roles:", roles);
 
-  const getInitials = (name: string): string => {
-    const names = name.split(" ");
-    let initials = "";
-    if (names.length > 0 && names[0]) {
-      initials += names[0].charAt(0).toUpperCase();
-    }
-    if (names.length > 1 && names[1]) {
-      initials += names[1].charAt(0).toUpperCase();
-    }
-    return initials;
-  };
+  // Process Data
+  const users: User[] = usersData?.getAllUsers || [];
+  console.log("Users Data Received:", users);
+  const roles: Role[] = rolesData?.getAllLeanRoles || [];
 
-  const capitalizeFirstLetter = (str: string | undefined): string => {
-    if (!str) {
-      return "";
-    }
+  // Utility Function
+  const capitalizeFirstLetter = (str: string | undefined | null): string => {
+    if (!str) return "";
     return str.charAt(0).toUpperCase() + str.slice(1);
   };
 
+  // Modal Controls
   const openCreateModal = () => {
     setEditingUser(null);
     setIsModalOpen(true);
   };
-
   const openEditModal = (userToEdit: User) => {
     setEditingUser(userToEdit);
     setIsModalOpen(true);
   };
-
   const closeModal = () => {
     setIsModalOpen(false);
     setEditingUser(null);
   };
 
-  // --- Form Submission Handler ---
+  // Form Submission Logic
   const handleFormSubmit = async (
-    formData: any,
-    editingUserId: string | null
+    formData: any, // Contains fields like name, email, role, potentially password
+    editingUserId: string | null,
+    avatarData: AttachmentInput | null | undefined // Contains {filename, file} or null or undefined
   ) => {
-    console.log("Handling submit for:", formData, "Editing ID:", editingUserId);
+    const finalInput: CreateUserInput | UpdateUserInput = {
+      ...formData,
+      // Conditionally add the 'avatar' field based on avatarData state
+      ...(avatarData !== undefined && { avatar: avatarData }),
+    };
 
     try {
       if (editingUserId) {
-        const finalInput: UpdateUserInput = { ...formData };
-        await updateUser(editingUserId, finalInput);
-        console.log("User updated successfully.");
-        await refetchRoles(); // Refetch roles after user update, as role might have changed.
-        console.log("Roles refetched.");
+        // Call the updateUser function from the hook
+        await updateUser(editingUserId, finalInput as UpdateUserInput);
       } else {
-        const finalInput: CreateUserInput = {
-          ...formData,
-          password: formData.password!,
-        };
-        await createUser(finalInput);
-        console.log("User created successfully.");
-        await refetchRoles();
-        console.log("Roles refetched.");
-        await refetchUserCount(); // Refetch user count after creating a new user
-        console.log("User count refetched");
+        // Call the createUser function from the hook
+        await createUser(finalInput as CreateUserInput);
       }
-
+      // Refetch necessary data after successful mutation
       await refetchUsers();
-      console.log("User list refetched.");
-      closeModal();
+      await refetchRoles();
+      if (!editingUserId) await refetchUserCount();
+      closeModal(); // Close modal on success
     } catch (err: any) {
-      console.error("Error submitting form:", err);
+      console.error("Error submitting form via GQL hook:", err);
+      const graphQLError = err.graphQLErrors?.[0]?.message;
+      const networkError = err.networkError?.message;
+      const generalMessage = err.message;
+      // Display error to the user (consider a more user-friendly notification system)
       alert(
-        `Грешка при ${
-          editingUserId ? "редактиране" : "създаване"
-        } на потребител: ${err?.message || "Неизвестна грешка"}`
+        `Грешка при ${editingUserId ? "редактиране" : "създаване"}: ${
+          graphQLError || networkError || generalMessage || "Неизвестна грешка"
+        }`
       );
     }
   };
 
-  // --- Render Loading/Error States ---
-  if (usersLoading)
-    return <div className="p-6">Зареждане на потребители...</div>;
-  if (usersError)
+  // Loading / Error States for page data
+  const isLoading = usersLoading || userCountLoading || rolesLoading;
+  const dataError = usersError || userCountError || rolesError;
+  if (isLoading && !isModalOpen)
+    return <div className="p-6 text-center">Зареждане на данни...</div>;
+  if (dataError)
     return (
       <div className="p-6 text-red-600">
-        Грешка при зареждане: {usersError.message}
-      </div>
-    );
-  if (userCountLoading)
-    return <div className="p-6">Зареждане на брой потребители...</div>;
-  if (userCountError)
-    return (
-      <div className="p-6 text-red-600">
-        Грешка при зареждане: {userCountError.message}
-      </div>
-    );
-  if (createLoading || updateLoading)
-    return <div className="p-6">Изпращане на данни...</div>;
-  if (createError || updateError)
-    return (
-      <div className="p-6 text-red-600">
-        Грешка при създаване/редактиране:{" "}
-        {createError?.message || updateError?.message}
+        Грешка при зареждане: {dataError.message}
       </div>
     );
 
@@ -176,20 +159,19 @@ const UserManagementPage: React.FC = () => {
       {/* Stats and Actions Section */}
       <section className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div className="flex flex-wrap gap-4">
-          {/* Stats Cards - Updated counts */}
-          <StatCard amount={userCount} title="Общо потребители" />
+          <StatCard amount={userCount ?? 0} title="Общо потребители" />
           {roles.map((role) => (
             <StatCard
               key={role._id}
-              amount={role.users?.length || 0}
-              title={capitalizeFirstLetter(role?.name)}
+              amount={role.users?.length || 0} // Ensure role.users is fetched or count comes from elsewhere if needed
+              title={capitalizeFirstLetter(role.name)}
             />
           ))}
         </div>
-        {/* Create User Button */}
         <button
           onClick={openCreateModal}
           className="flex items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 shadow-sm hover:bg-gray-50"
+          disabled={createLoading || updateLoading} // Disable button during mutation
         >
           <PlusIconSolid className="h-5 w-5" />
           Създай Потребител
@@ -198,141 +180,151 @@ const UserManagementPage: React.FC = () => {
 
       {/* Users Table Section */}
       <section className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-md">
-        <table className="w-full text-left text-sm">
-          <thead className="bg-gray-700 text-xs uppercase text-gray-300">
-            <tr>
-              <th
-                scope="col"
-                className="border-l border-gray-600 px-4 py-3 font-medium tracking-wider lg:px-6"
-              >
-                Аватар
-              </th>
-              <th
-                scope="col"
-                className="border-l border-gray-600 px-4 py-3 font-medium tracking-wider lg:px-6"
-              >
-                Потребителско име
-              </th>
-              <th
-                scope="col"
-                className="border-l border-gray-600 px-4 py-3 font-medium tracking-wider lg:px-6"
-              >
-                Име
-              </th>
-              <th
-                scope="col"
-                className="border-l border-gray-600 px-4 py-3 font-medium tracking-wider lg:px-6"
-              >
-                Позиция
-              </th>
-              <th
-                scope="col"
-                className="border-l border-gray-600 px-4 py-3 font-medium tracking-wider lg:px-6"
-              >
-                Имейл
-              </th>
-              <th
-                scope="col"
-                className="border-l border-gray-600 px-4 py-3 font-medium tracking-wider lg:px-6"
-              >
-                Роля
-              </th>
-              <th
-                scope="col"
-                className="border-l border-gray-600 px-4 py-3 font-medium tracking-wider lg:px-6"
-              >
-                Редактирай
-              </th>
-            </tr>
-          </thead>
-          <tbody className="text-gray-700">
-            {users.map((user) => (
-              <tr
-                key={user._id}
-                className="border-b border-gray-200 bg-white hover:bg-gray-50"
-              >
-                <td className="px-4 py-3 lg:px-6">
-                  {/* Avatar Image (if a valid one exists) OR div if it doesn't */}
-                  {user.avatar ? (
-                    <span className="relative block h-8 w-8 rounded-full overflow-hidden">
-                      <img
-                        src={user.avatar}
-                        alt={user.name + "'s avatar"}
-                        className="h-full w-full object-cover"
-                        onError={(e) => {
-                          const imgElement = e.target as HTMLImageElement;
-                          const initials = getInitials(user.name);
-                          const placeholderDiv = document.createElement("div");
-                          placeholderDiv.className =
-                            "absolute inset-0 bg-gray-300 flex items-center justify-center text-white font-semibold";
-                          placeholderDiv.textContent = initials;
-                          // placeholderDiv.id = "avatar-div-" + user.avatar;
-                          imgElement.parentNode?.replaceChild(
-                            placeholderDiv,
-                            imgElement
-                          );
-                        }}
-                      />
-                    </span>
-                  ) : (
-                    <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center text-white font-semibold">
-                      {getInitials(user.name)}
-                    </div>
-                  )}
-                </td>
-                <td className="px-4 py-3 lg:px-6">
-                  <a
-                    href="#"
-                    className="font-medium text-blue-600 hover:underline"
-                  >
-                    {user.username}
-                  </a>
-                </td>
-                <td className="px-4 py-3 lg:px-6">{user.name}</td>
-                <td className="px-4 py-3 lg:px-6">{user.position}</td>
-                <td className="px-4 py-3 lg:px-6">{user.email}</td>
-                <td className="px-4 py-3 lg:px-6">
-                  {capitalizeFirstLetter(user.role?.name)}
-                </td>
-
-                <td className="px-4 py-3 text-center lg:px-6">
-                  <button
-                    onClick={() => openEditModal(user)} // Pass the full user object
-                    className="text-blue-600 hover:text-blue-800"
-                    aria-label={`Редактирай потребител ${user.username}`}
-                  >
-                    <PencilSquareIcon className="h-5 w-5" />
-                  </button>
-                </td>
-              </tr>
-            ))}
-            {users.length === 0 && (
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[640px] text-left text-sm">
+            <thead className="bg-gray-700 text-xs uppercase text-gray-300">
               <tr>
-                <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
-                  Няма намерени потребители.
-                </td>
+                <th
+                  scope="col"
+                  className="border-l border-gray-600 px-4 py-3 font-medium tracking-wider lg:px-6"
+                >
+                  Аватар
+                </th>
+                <th
+                  scope="col"
+                  className="border-l border-gray-600 px-4 py-3 font-medium tracking-wider lg:px-6"
+                >
+                  Потребителско име
+                </th>
+                <th
+                  scope="col"
+                  className="border-l border-gray-600 px-4 py-3 font-medium tracking-wider lg:px-6"
+                >
+                  Име
+                </th>
+                <th
+                  scope="col"
+                  className="border-l border-gray-600 px-4 py-3 font-medium tracking-wider lg:px-6"
+                >
+                  Позиция
+                </th>
+                <th
+                  scope="col"
+                  className="border-l border-gray-600 px-4 py-3 font-medium tracking-wider lg:px-6"
+                >
+                  Имейл
+                </th>
+                <th
+                  scope="col"
+                  className="border-l border-gray-600 px-4 py-3 font-medium tracking-wider lg:px-6"
+                >
+                  Роля
+                </th>
+                <th
+                  scope="col"
+                  className="border-l border-gray-600 px-4 py-3 font-medium tracking-wider lg:px-6"
+                >
+                  Редактирай
+                </th>
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="text-gray-700">
+              {users.map((user) => {
+                // Construct the full image URL ONLY if user.avatar path exists
+                const imageUrl =
+                  user.avatar && user._id
+                    ? `${serverBaseUrl}/static/avatars/${user._id}/${user.avatar}` // Corrected syntax
+                    : null;
+                console.log(
+                  `User ${user._id} | Avatar Path: ${user.avatar} | Full URL: ${imageUrl}`
+                ); // <-- ADD THIS LOG
+
+                return (
+                  <tr
+                    key={user._id}
+                    className="border-b border-gray-200 bg-white hover:bg-gray-50"
+                  >
+                    <td className="px-4 py-3 lg:px-6">
+                      <UserAvatar
+                        name={user.name || user.username || "User"} // Provide name for initials fallback
+                        imageUrl={imageUrl} // Pass the constructed URL or null
+                        size={32} // Corresponds to h-8 w-8 classes
+                      />
+                    </td>
+                    <td className="px-4 py-3 lg:px-6">
+                      <span className="font-medium text-blue-600 hover:underline">
+                        {user.username}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 lg:px-6">{user.name || "-"}</td>
+                    <td className="px-4 py-3 lg:px-6">
+                      {user.position || "-"}
+                    </td>
+                    <td className="px-4 py-3 lg:px-6">{user.email || "-"}</td>
+                    <td className="px-4 py-3 lg:px-6">
+                      {capitalizeFirstLetter(user.role?.name) || "-"}
+                    </td>
+                    <td className="px-4 py-3 text-center lg:px-6">
+                      <button
+                        onClick={() => openEditModal(user)}
+                        className="text-blue-600 hover:text-blue-800 disabled:opacity-50"
+                        aria-label={`Редактирай ${user.username}`}
+                        disabled={createLoading || updateLoading} // Disable edit during mutation
+                      >
+                        <PencilSquareIcon className="h-5 w-5" />
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+              {users.length === 0 && (
+                <tr>
+                  <td
+                    colSpan={7}
+                    className="px-6 py-4 text-center text-gray-500"
+                  >
+                    Няма намерени потребители.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </section>
 
+      {/* Modal */}
       <CreateUserModal
         isOpen={isModalOpen}
         onClose={closeModal}
         title={editingUser ? "Редактирай потребител" : "Създай нов потребител"}
       >
-        <CreateUserFormModal
-          onSubmit={handleFormSubmit}
-          onClose={closeModal}
-          initialData={editingUser}
-          submitButtonText={editingUser ? "Запази промените" : "Създай"}
-          roles={roles} // Pass the fetched roles to the form
-          rolesLoading={rolesLoading} // Optionally pass loading state
-          rolesError={rolesError} // Optionally pass error state
-        />
+        {/* Display loading/error specific to the mutation within the modal */}
+        {(createLoading || updateLoading) && (
+          <div className="p-4 text-center">Изпращане...</div>
+        )}
+        {(createError || updateError) && (
+          <div className="p-4 text-center text-red-500">
+            Грешка при запис: {createError?.message || updateError?.message}
+          </div>
+        )}
+
+        {/* Render form only when NOT actively processing a mutation */}
+        {!(createLoading || updateLoading) && (
+          <CreateUserFormModal
+            // Key prop helps ensure state resets properly in the form when switching between create/edit user
+            key={editingUser ? editingUser._id : "create"}
+            onSubmit={handleFormSubmit}
+            onClose={closeModal}
+            initialData={editingUser}
+            submitButtonText={editingUser ? "Запази" : "Създай"}
+            roles={roles}
+            rolesLoading={rolesLoading}
+            rolesError={rolesError}
+          />
+        )}
       </CreateUserModal>
     </div>
   );
 };
+
 export default UserManagementPage;

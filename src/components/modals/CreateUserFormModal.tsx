@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from "react";
-import { Role } from "../../page/UserManagementPage"; // Adjust the path if needed
+import React, { useState, useEffect, useRef } from "react";
+import { Role } from "../../page/UserManagementPage"; // Adjust path if needed
+import UserAvatar from "../cards/UserAvatar"; // Import the UserAvatar component
 
+// --- Interfaces ---
 interface User {
   _id: string;
   username: string;
@@ -8,10 +10,20 @@ interface User {
   position: string;
   email: string;
   role: Role | null;
+  avatar?: string | null;
+}
+
+interface AvatarInputData {
+  filename: string;
+  file: string; // base64 string
 }
 
 interface CreateUserFormProps {
-  onSubmit: (formData: any, editingUserId: string | null) => void;
+  onSubmit: (
+    formData: any,
+    editingUserId: string | null,
+    avatarData: AvatarInputData | null | undefined
+  ) => void;
   onClose: () => void;
   initialData: User | null;
   submitButtonText: string;
@@ -20,6 +32,24 @@ interface CreateUserFormProps {
   rolesError: any;
 }
 
+// --- Helper Function ---
+const readFileAsBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64String = (reader.result as string)?.split(",")[1];
+      if (base64String) {
+        resolve(base64String);
+      } else {
+        reject(new Error("Не може да се прочете файла като base64."));
+      }
+    };
+    reader.onerror = (error) => reject(error);
+    reader.readAsDataURL(file);
+  });
+};
+
+// --- Component ---
 const CreateUserFormModal: React.FC<CreateUserFormProps> = ({
   onSubmit,
   onClose,
@@ -29,7 +59,7 @@ const CreateUserFormModal: React.FC<CreateUserFormProps> = ({
   rolesLoading = false,
   rolesError = null,
 }) => {
-  // --- Form State ---
+  // --- State ---
   const [username, setUsername] = useState("");
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -40,7 +70,17 @@ const CreateUserFormModal: React.FC<CreateUserFormProps> = ({
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [role, setRoleId] = useState("");
 
-  // --- Effect to pre-fill form when initialData changes ---
+  // Avatar State
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  // Preview holds the full URL (http://... or data:image/...) or null
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [isRemovingAvatar, setIsRemovingAvatar] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // --- Constants ---
+  const serverBaseUrl = import.meta.env.VITE_API_URL || "";
+
+  // --- Effect for Initial Data ---
   useEffect(() => {
     if (initialData) {
       setUsername(initialData.username || "");
@@ -51,7 +91,20 @@ const CreateUserFormModal: React.FC<CreateUserFormProps> = ({
       setConfirmPassword("");
       setNewPassword("");
       setConfirmNewPassword("");
-      setRoleId(initialData.role?._id || ""); // Pre-fill roleId
+      setRoleId(initialData.role?._id || "");
+
+      // Set initial avatar preview URL or null
+      const currentAvatarUrl = initialData.avatar
+        ? `${serverBaseUrl}/static/avatars/${initialData._id}/${initialData.avatar}`
+        : null; // Set to null if no avatar path
+      setAvatarPreview(currentAvatarUrl);
+      setAvatarFile(null);
+      setIsRemovingAvatar(false);
+      console.log("INITIAL DATA:", initialData); // Debugging line
+      console.log("Avatar URL:", currentAvatarUrl); // Debugging line
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
     } else {
       // Reset form for creation
       setUsername("");
@@ -62,66 +115,107 @@ const CreateUserFormModal: React.FC<CreateUserFormProps> = ({
       setConfirmPassword("");
       setNewPassword("");
       setConfirmNewPassword("");
-      setRoleId(""); // Reset roleId
-    }
-  }, [initialData]);
-
-  // --- Handlers ---
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    const formData: any = {
-      username,
-      name: fullName,
-      email,
-      position,
-      role: role, // Include roleId in the form data
-    };
-
-    if (!initialData) {
-      if (!password) {
-        alert("Паролата е задължителна при създаване на потребител!");
-        return;
-      }
-      if (password !== confirmPassword) {
-        alert("Паролите не съвпадат!");
-        return;
-      }
-      formData.password = password;
-    } else {
-      if (newPassword) {
-        if (newPassword !== confirmNewPassword) {
-          alert("Новите пароли не съвпадат!");
-          return;
-        }
-        formData.password = newPassword; // Include newPassword in formData for update
+      setRoleId("");
+      setAvatarPreview(null); // Initialize preview to null
+      setAvatarFile(null);
+      setIsRemovingAvatar(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
       }
     }
+  }, [initialData, serverBaseUrl]); // Removed defaultAvatarPath dependency
 
-    console.log(
-      "Form Data Submitted: ",
-      formData,
-      "Editing ID:",
-      initialData ? initialData._id : null
-    );
-    onSubmit(formData, initialData ? initialData._id : null);
+  // --- Avatar Handlers ---
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setAvatarFile(file);
+      setIsRemovingAvatar(false);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        // Set preview to the local file's data URL
+        setAvatarPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+  const handleRemoveAvatar = () => {
+    setAvatarFile(null);
+    setAvatarPreview(null); // Reset preview to null (will show initials)
+    setIsRemovingAvatar(true);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
-  if (rolesLoading) {
-    return <div className="p-4 text-center">Зареждане на роли...</div>;
-  }
+  // --- Form Submission ---
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    // Validation
+    if (!initialData && !password) {
+      alert("Паролата е задължителна при създаване!");
+      return;
+    }
+    if (!initialData && password !== confirmPassword) {
+      alert("Паролите не съвпадат!");
+      return;
+    }
+    if (initialData && newPassword && newPassword !== confirmNewPassword) {
+      alert("Новите пароли не съвпадат!");
+      return;
+    }
 
-  if (rolesError) {
+    // Prepare Core Data
+    const formDataObject: any = {
+      username,
+      name: fullName,
+      email: email || null,
+      position: position || null,
+      role: role || null,
+    };
+    if (!initialData) formDataObject.password = password;
+    else if (newPassword) formDataObject.password = newPassword;
+
+    // Prepare Avatar Data
+    let avatarInputData: AvatarInputData | null | undefined = undefined;
+    if (avatarFile) {
+      try {
+        const base64String = await readFileAsBase64(avatarFile);
+        avatarInputData = { filename: avatarFile.name, file: base64String };
+      } catch (error) {
+        console.error("Error reading file:", error);
+        alert(
+          `Грешка при обработка на файла: $
+            error instanceof Error ? error.message : "Неизвестна грешка"
+          }`
+        );
+        return;
+      }
+    } else if (isRemovingAvatar && initialData?._id) {
+      avatarInputData = null;
+    }
+
+    // Call Parent Submit
+    onSubmit(formDataObject, initialData?._id || null, avatarInputData);
+  };
+
+  // --- Render ---
+  if (rolesLoading)
+    return <div className="p-4 text-center">Зареждане на роли...</div>;
+  if (rolesError)
     return (
       <div className="p-4 text-center text-red-500">
-        Грешка при зареждане на роли: {rolesError.message}
+        Грешка: {rolesError.message}
       </div>
     );
-  }
 
   return (
     <form onSubmit={handleSubmit}>
       <div className="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2">
+        {/* --- Input fields (Username, Full Name, Email, Position, Role) --- */}
         <div>
           <label
             htmlFor="username"
@@ -135,8 +229,8 @@ const CreateUserFormModal: React.FC<CreateUserFormProps> = ({
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             required
-            className={`w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
-              !!initialData ? "bg-gray-100" : ""
+            className={`w-full rounded-md border p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
+              !!initialData ? "border-gray-300 bg-gray-100" : "border-gray-300"
             }`}
           />
         </div>
@@ -186,7 +280,6 @@ const CreateUserFormModal: React.FC<CreateUserFormProps> = ({
             className="w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
           />
         </div>
-        {/* Role Dropdown */}
         <div>
           <label
             htmlFor="role"
@@ -203,16 +296,74 @@ const CreateUserFormModal: React.FC<CreateUserFormProps> = ({
             className="w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
           >
             <option value="">Изберете роля</option>
-            {roles.map((role) => (
-              <option key={role._id} value={role._id}>
-                {role.name.charAt(0).toUpperCase() + role.name.slice(1)}
+            {roles.map((r) => (
+              <option key={r._id} value={r._id}>
+                {r.name.charAt(0).toUpperCase() + r.name.slice(1)}
               </option>
             ))}
           </select>
         </div>
 
-        {!initialData && (
+        {/* --- Avatar Upload Section --- */}
+        <div className="md:col-span-2 mt-2">
+          <label className="mb-1 block text-sm font-medium text-gray-700">
+            Аватар
+          </label>
+          <div className="flex items-center gap-4">
+            {/* Hidden File Input */}
+            <input
+              type="file"
+              accept="image/*"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              style={{ display: "none" }}
+              name="avatarFile"
+            />
+
+            {/* Avatar Preview/Fallback using UserAvatar component */}
+            <div className="cursor-pointer" onClick={handleAvatarClick}>
+              <UserAvatar
+                // Use full name for initials, fallback to username if name is empty
+                name={fullName || username || "?"}
+                imageUrl={avatarPreview} // Pass the preview URL (data: or http://) or null
+                size={64} // Larger preview size for form (e.g., h-16 w-16)
+              />
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={handleAvatarClick}
+                className="rounded bg-blue-500 px-3 py-1 text-xs text-white shadow-sm hover:bg-blue-600"
+              >
+                {/* Change text based on whether an image is currently displayed */}
+                {avatarPreview ? "Смени" : "Качи"} Аватар
+              </button>
+              {/* Show remove button only if an avatar is currently displayed (preview is not null) */}
+              {avatarPreview && !isRemovingAvatar && initialData && (
+                <button
+                  type="button"
+                  onClick={handleRemoveAvatar}
+                  className="rounded bg-red-100 px-3 py-1 text-xs text-red-700 shadow-sm hover:bg-red-200"
+                >
+                  Премахни Аватар
+                </button>
+              )}
+              {isRemovingAvatar && (
+                <span className="text-xs text-red-600">
+                  Аватарът ще бъде премахнат.
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* --- Password Fields --- */}
+        {!initialData ? (
           <>
+            {" "}
+            {/* Create Mode Passwords */}
             <div>
               <label
                 htmlFor="password"
@@ -246,9 +397,10 @@ const CreateUserFormModal: React.FC<CreateUserFormProps> = ({
               />
             </div>
           </>
-        )}
-        {initialData && (
+        ) : (
           <>
+            {" "}
+            {/* Edit Mode Passwords */}
             <div>
               <label
                 htmlFor="newPassword"
@@ -265,7 +417,7 @@ const CreateUserFormModal: React.FC<CreateUserFormProps> = ({
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 className="w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                placeholder="Нова парола (опционално)"
+                placeholder="Нова парола"
               />
             </div>
             <div>
@@ -288,6 +440,7 @@ const CreateUserFormModal: React.FC<CreateUserFormProps> = ({
         )}
       </div>
 
+      {/* --- Submit Button --- */}
       <div className="mt-8 text-center">
         <button
           type="submit"

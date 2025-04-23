@@ -8,6 +8,7 @@ import NavBar from "../components/menu/NavBar";
 import Profile from "../page/Profile";
 import Analyses from "../page/Analyses";
 import NotFoundPage from "../page/NotFound";
+import UserData from "../page/UserData";
 
 const AppLayout = () => {
   return (
@@ -31,7 +32,10 @@ const mainRouter = createBrowserRouter([
     path: "/submit-case",
     element: <CaseSubmittion />,
   },
-
+  {
+    path: "/user-data/:userId",
+    element: <UserData />,
+  },
   {
     path: "/loading",
     element: <LoadingTestPage />,

@@ -17,6 +17,7 @@ import CreateUserFormModal from "../components/modals/CreateUserFormModal";
 import { useGetRoles } from "../graphql/hooks/role";
 import StatCard from "../components/cards/StatCard";
 import UserAvatar from "../components/cards/UserAvatar"; // Import the UserAvatar component
+import { Link } from "react-router";
 
 // Interfaces matching GraphQL Schema and component needs
 export interface Role {
@@ -170,7 +171,7 @@ const UserManagementPage: React.FC = () => {
         </div>
         <button
           onClick={openCreateModal}
-          className="flex items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 shadow-sm hover:bg-gray-50"
+          className="flex items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 shadow-sm transition-all duration-150 ease-in-out hover:cursor-pointer hover:bg-gray-50 hover:shadow-md active:bg-gray-100 active:shadow-inner disabled:opacity-50 disabled:cursor-not-allowed" // Added transition, enhanced hover, active styles, and disabled styles
           disabled={createLoading || updateLoading} // Disable button during mutation
         >
           <PlusIconSolid className="h-5 w-5" />
@@ -252,9 +253,12 @@ const UserManagementPage: React.FC = () => {
                       />
                     </td>
                     <td className="px-4 py-3 lg:px-6">
-                      <span className="font-medium text-blue-600 hover:underline">
+                      <Link
+                        to={`/user-data/${user._id}`} // Dynamic path
+                        className="font-medium text-blue-600 hover:underline" // Keep styling
+                      >
                         {user.username}
-                      </span>
+                      </Link>
                     </td>
                     <td className="px-4 py-3 lg:px-6">{user.name || "-"}</td>
                     <td className="px-4 py-3 lg:px-6">
@@ -267,7 +271,7 @@ const UserManagementPage: React.FC = () => {
                     <td className="px-4 py-3 text-center lg:px-6">
                       <button
                         onClick={() => openEditModal(user)}
-                        className="text-blue-600 hover:text-blue-800 disabled:opacity-50"
+                        className="text-blue-600 transition-all duration-150 ease-in-out hover:cursor-pointer hover:text-blue-800 active:text-blue-900 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed" // Added transition, active styles, and disabled cursor
                         aria-label={`Редактирай ${user.username}`}
                         disabled={createLoading || updateLoading} // Disable edit during mutation
                       >

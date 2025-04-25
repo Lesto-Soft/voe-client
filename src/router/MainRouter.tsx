@@ -8,14 +8,17 @@ import NavBar from "../components/menu/NavBar";
 import Profile from "../page/Profile";
 import Analyses from "../page/Analyses";
 import NotFoundPage from "../page/NotFound";
+import User from "../page/User";
+import Category from "../page/Category";
+import Case from "../page/Case";
 
 const AppLayout = () => {
   return (
-    <div>
+    <div className="w-full min-h-screen flex flex-col">
       <div>
         <NavBar />
       </div>
-      <div>
+      <div className="flex-1 flex flex-col w-full min-h-0">
         <Outlet />
       </div>
     </div>
@@ -54,6 +57,18 @@ const mainRouter = createBrowserRouter([
       {
         path: "/analyses",
         element: <Analyses />,
+      },
+      {
+        path: "/user/:id",
+        element: <User />,
+      },
+      {
+        path: "/category/:id",
+        element: <Category />,
+      },
+      {
+        path: "/case/:id",
+        element: <Case />,
       },
     ],
   },

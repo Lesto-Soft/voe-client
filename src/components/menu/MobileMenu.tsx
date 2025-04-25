@@ -9,21 +9,15 @@ import {
   ArrowRightCircleIcon,
 } from "@heroicons/react/24/solid";
 import { useTranslation } from "react-i18next";
+import { NavLinkProps } from "./NavBar";
 
-// Re-define or import NavLink if needed, or pass necessary props
-// For simplicity, let's define a mobile-specific link style here
-const MobileNavLink = ({
+const MobileNavLink: React.FC<NavLinkProps> = ({
   to,
   icon,
   label,
   onClick,
-}: {
-  to: string;
-  icon?: React.ReactNode;
-  label: string;
-  onClick?: () => void; // To close menu on navigation
 }) => {
-  const location = useLocation(); // Assuming useLocation is available here
+  const location = useLocation();
   const isActive = location.pathname === to;
 
   return (
@@ -58,11 +52,11 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
   return (
     <div
       className={`
-        md:hidden absolute top-full left-0 w-full bg-gray-200 shadow-lg z-20 border-t border-gray-300
+      md:hidden absolute top-full left-0 w-full bg-gray-200 shadow-lg z-20 border-t border-gray-300
         transition-all duration-500 ease-in-out transform origin-top
         ${
           isOpen
-            ? "opacity-100 scale-y-100"
+            ? "opacity-100 scale-y-100 "
             : "opacity-0 scale-y-95 pointer-events-none"
         }
       `}

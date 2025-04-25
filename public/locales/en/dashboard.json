@@ -1,0 +1,10 @@
+{
+  "PROBLEM": "ISSUE",
+  "SUGGESTION": "SUGGESTION",
+  "LOW": "LOW",
+  "MEDIUM": "MEDIUM",
+  "HIGH": "HIGH",
+  "OPEN": "OPEN",
+  "CLOSED": "CLOSED",
+  "IN_PROGRESS": "IN PROGRESS"
+}

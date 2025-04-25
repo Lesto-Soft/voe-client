@@ -309,8 +309,6 @@ const CaseSubmittion: React.FC = () => {
   // 4. CONDITIONAL RETURNS (Loading/Error States)
   // ===========================================================
 
-  if (categoriesLoading)
-    return <div className="p-6">Loading categories...</div>;
   if (categoriesError)
     return (
       <div className="p-6 text-red-600">
@@ -630,18 +628,22 @@ const CaseSubmittion: React.FC = () => {
   // 6. JSX RENDER
   // ===========================================================
   const showLoadingModal =
-    categoriesLoading || isSubmitting || createCaseLoading;
+    categoriesLoading || isSubmitting || createCaseLoading || userLoading;
 
-  return (
-    <>
+  if (showLoadingModal) {
+    return (
       <LoadingModal
-        isOpen={showLoadingModal} // Use the declared variable
         message={
           categoriesLoading
             ? t("caseSubmission.loadingForm") // Message during initial load
             : t("caseSubmission.submittingCase") // Message during submission
         }
       />
+    );
+  }
+
+  return (
+    <>
       <div className="min-h-screen p-6 grid grid-cols-1 md:grid-cols-2 gap-6 bg-stone-200">
         {/* Header Row */}
         <div className="col-span-1 md:col-span-2 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">

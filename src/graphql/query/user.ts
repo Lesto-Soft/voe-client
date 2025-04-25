@@ -31,6 +31,15 @@ export const GET_USER_BY_USERNAME = gql`
   }
 `;
 
+export const GET_LEAN_USERS = gql`
+  query GetLeanUsers($input: String) {
+    getLeanUsers(input: $input) {
+      _id
+      name
+    }
+  }
+`;
+
 export const GET_ME = gql`
   query GetMe {
     me {

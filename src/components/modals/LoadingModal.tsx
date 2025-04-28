@@ -2,21 +2,14 @@ import React from "react";
 
 // Define an interface for the component's props
 interface LoadingModalProps {
-  isOpen: boolean; // Required boolean prop
   message?: string; // Optional string prop (denoted by '?')
 }
 
 // Use the props interface to type the component's props
 // Provide a default value for the optional 'message' prop
 const LoadingModal = ({
-  isOpen,
   message = "Loading...",
 }: LoadingModalProps): React.ReactElement | null => {
-  // Don't render anything if the modal is not open
-  if (!isOpen) {
-    return null; // Return type explicitly includes null
-  }
-
   // Return type is React.ReactElement when rendering the modal
   return (
     // Modal Overlay: Fixed position, covers the entire screen, centers content, semi-transparent background, high z-index

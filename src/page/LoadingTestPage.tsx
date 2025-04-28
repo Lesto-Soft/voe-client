@@ -26,7 +26,6 @@ const LoadingTestPage: React.FC = () => {
       {/* --- Loading Modal --- */}
       {/* Render the modal and explicitly set isOpen to true */}
       <LoadingModal
-        isOpen={true}
         message="Modal is permanently open for testing..." // Optional: Customize the message
       />
     </div>

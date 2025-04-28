@@ -221,22 +221,41 @@ const CaseTable: React.FC<{ cases: ICase[]; t: (word: string) => string }> = ({
                     isClosed ? "bg-gray-100 text-gray-500" : "hover:bg-gray-100"
                   }`}
                 >
-                  {/* Case Number Cell - Now a Link */}
+                  {/* Case Number Cell - Now a Button-like Link */}
                   <td
                     className={`w-24 px-3 py-4 whitespace-nowrap text-sm ${
                       isClosed ? "text-gray-500" : "font-medium"
                     }`}
                   >
                     <Link
-                      to={`/case/${my_case._id}`} // Use Link
-                      className={`text-left w-full hover:cursor-pointer ${
-                        isClosed
-                          ? "text-blue-400 hover:text-blue-600 hover:underline"
-                          : "text-blue-600 hover:text-blue-800 hover:underline"
-                      }`}
+                      to={`/case/${my_case._id}`}
+                      className={`inline-flex items-center justify-center w-full px-2 py-1 rounded-md transition-colors duration-150 border border-blue-200 shadow-sm
+                        ${
+                          isClosed
+                            ? "bg-blue-50 text-blue-400 cursor-not-allowed"
+                            : "bg-blue-100 text-blue-700 hover:bg-blue-200 hover:text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 cursor-pointer"
+                        }`}
                       title={`${t("details_for")} ${my_case.case_number}`}
+                      tabIndex={0}
                     >
-                      {my_case.case_number}
+                      <span className="font-semibold">
+                        {my_case.case_number}
+                      </span>
+                      {/* Optionally, add an icon for clarity */}
+                      <svg
+                        className="ml-1 h-4 w-4 text-blue-400 group-hover:text-blue-600"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M9 5l7 7-7 7"
+                        />
+                      </svg>
                     </Link>
                   </td>
                   {/* Priority Cell - Text hidden on medium and below */}
@@ -286,7 +305,7 @@ const CaseTable: React.FC<{ cases: ICase[]; t: (word: string) => string }> = ({
                           className={`px-2 py-0.5 rounded-md text-xs font-medium cursor-pointer transition-colors duration-150 ease-in-out ${
                             isClosed
                               ? "bg-gray-200 text-gray-500 pointer-events-none" // Keep visually distinct and non-interactive if closed
-                              : "bg-blue-100 text-blue-800 hover:bg-blue-200 border border-blue-200"
+                              : "bg-sky-100 text-sky-800 hover:bg-sky-200 border border-sky-200"
                           }`}
                         >
                           {category.name}

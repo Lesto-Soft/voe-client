@@ -136,6 +136,7 @@ const Dashboard = () => {
               onClick={() => {
                 const params = new URLSearchParams(location.search);
                 params.set("screen", item.hookKey);
+                params.set("page", "1"); // <-- Ensure page is set to 1 on menu click
                 navigate(`${location.pathname}?${params.toString()}`, {
                   replace: true,
                 });

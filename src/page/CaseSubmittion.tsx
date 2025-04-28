@@ -16,6 +16,7 @@ import { useCreateCase, CreateCaseInput } from "../graphql/hooks/case"; // Your 
 import HelpModal from "../components/modals/HelpModal";
 import LoadingModal from "../components/modals/LoadingModal";
 import { GET_USER_BY_USERNAME } from "../graphql/query/user";
+import { ICategory } from "../db/interfaces";
 
 const MAX_FILES = 5;
 const MAX_FILE_SIZE_MB = 1;
@@ -50,16 +51,11 @@ interface Category {
   suggestion?: string;
 }
 
-// Shape of the data structure returned by useGetActiveCategories
-interface GetActiveCategoriesQueryResult {
-  getLeanActiveCategories?: Category[];
-}
-
 // Return type definition for useGetActiveCategories hook
 interface UseGetActiveCategoriesReturn {
   loading: boolean;
   error?: ApolloError | Error | any;
-  categories?: GetActiveCategoriesQueryResult;
+  categories?: ICategory[];
   refetch: () => Promise<any>;
 }
 
@@ -167,7 +163,7 @@ const CaseSubmittion: React.FC = () => {
   }, [queryParams]);
 
   const categoryList: Category[] = useMemo(
-    () => categoriesData?.getLeanActiveCategories ?? [],
+    () => categoriesData ?? [],
     [categoriesData]
   );
 
@@ -309,8 +305,6 @@ const CaseSubmittion: React.FC = () => {
   // 4. CONDITIONAL RETURNS (Loading/Error States)
   // ===========================================================
 
-  if (categoriesLoading)
-    return <div className="p-6">Loading categories...</div>;
   if (categoriesError)
     return (
       <div className="p-6 text-red-600">
@@ -630,18 +624,22 @@ const CaseSubmittion: React.FC = () => {
   // 6. JSX RENDER
   // ===========================================================
   const showLoadingModal =
-    categoriesLoading || isSubmitting || createCaseLoading;
+    categoriesLoading || isSubmitting || createCaseLoading || userLoading;
 
-  return (
-    <>
+  if (showLoadingModal) {
+    return (
       <LoadingModal
-        isOpen={showLoadingModal} // Use the declared variable
         message={
           categoriesLoading
             ? t("caseSubmission.loadingForm") // Message during initial load
             : t("caseSubmission.submittingCase") // Message during submission
         }
       />
+    );
+  }
+
+  return (
+    <>
       <div className="min-h-screen p-6 grid grid-cols-1 md:grid-cols-2 gap-6 bg-stone-200">
         {/* Header Row */}
         <div className="col-span-1 md:col-span-2 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">

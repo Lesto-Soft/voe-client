@@ -1,14 +1,17 @@
 import { useQuery } from "@apollo/client";
 import { GET_ACTIVE_CATEGORIES } from "../query/category";
+import { ICategory } from "../../db/interfaces";
 
+// Hook to fetch active categories (can be extended with search later if needed)
 export const useGetActiveCategories = () => {
-  const { loading, error, data, refetch } = useQuery(GET_ACTIVE_CATEGORIES, {
-    // fetchPolicy: "cache-first", //if a new category is updated it will not be shown until the page is refreshed manually
-  });
+  const { loading, error, data, refetch } = useQuery<{
+    getLeanActiveCategories: ICategory[];
+  }>(GET_ACTIVE_CATEGORIES);
+
   return {
     loading,
     error,
-    categories: data,
+    categories: data?.getLeanActiveCategories || [], // Ensure default empty array
     refetch,
   };
 };

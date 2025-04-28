@@ -18,16 +18,19 @@ import axios from "axios";
 import MobileMenu from "./MobileMenu";
 import { useTranslation } from "react-i18next";
 
-const NavLink = ({
-  to,
-  icon,
-  label,
-  dropdown,
-}: {
+export interface NavLinkProps {
   to: string;
   icon?: React.ReactNode;
   label: string;
+  onClick?: () => void; // Add this line
   dropdown?: boolean;
+}
+
+const NavLink: React.FC<NavLinkProps> = ({
+  to,
+  icon,
+  label,
+  dropdown = false,
 }) => {
   const location = useLocation();
   const isActive = location.pathname === to;
@@ -37,8 +40,8 @@ const NavLink = ({
       to={to}
       className={`${
         dropdown
-          ? "space-x-2 p-2 text-gray-700 rounded-md w-full text-left transition duration-300 hover:scale-105  hover:text-btnRedHover flex  "
-          : "w-32 flex items-center space-x-2 p-3 rounded-full shadow-lg transition duration-300 ease-in-out hover:scale-105 hover:text-btnRedHover"
+          ? "space-x-2 p-2 text-gray-700 rounded-lg w-full text-left transition duration-300 hover:scale-105  hover:text-btnRedHover flex  "
+          : "w-32 flex items-center space-x-2 p-3 rounded-lg shadow-lg transition duration-300 ease-in-out hover:scale-105 hover:text-btnRedHover"
       } ${
         isActive
           ? "bg-btnRedHover text-white hover:text-white"
@@ -99,7 +102,7 @@ const NavBar = () => {
     pageNames[location.pathname] || "Страницата не е намерена";
 
   return (
-    <div className="bg-gradient-to-r from-gray-100 to-gray-200 shadow-md relative">
+    <div className="bg-gradient-to-r from-gray-100 to-gray-200 shadow-md relative max-w-full">
       <div className="flex items-center justify-between p-4 px-6 md:px-12">
         <div className="text-lg font-bold ">
           <h1 className="text-gray-800 text-xl md:text-2xl">{t("voe")}</h1>

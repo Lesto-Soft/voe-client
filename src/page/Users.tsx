@@ -1,7 +1,7 @@
 import { useGetUsers } from "../graphql/hooks/user";
 
 const Users = () => {
-  const { users, loading, error, refetch } = useGetUsers("", 10, 0);
+  const { users, loading, error, refetch } = useGetUsers({});
 
   if (loading) return <p>Loading...</p>;
   if (error)

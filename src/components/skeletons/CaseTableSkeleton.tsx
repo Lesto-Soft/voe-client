@@ -5,82 +5,44 @@ interface CaseTableSkeletonProps {
 }
 
 const CaseTableSkeleton: React.FC<CaseTableSkeletonProps> = ({ rows = 10 }) => {
-  // Define static headers matching CaseTable (adjust if needed)
-  const headers = [
-    "Номер",
-    "Приоритет",
-    "Тип",
-    "Подател",
-    "Категории",
-    "Дата",
-    "Статус",
-  ];
-
   return (
-    <div className="flex-1 min-h-0 overflow-y-auto sm:px-6 lg:px-">
+    <div className="flex-1 min-h-0 overflow-y-auto sm:px-6 lg:px-8">
       <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50 sticky top-0 z-10">
+        <thead className="bg-gray-500 sticky top-0 z-10">
           <tr>
-            {/* Static Headers */}
-            {headers.map((header) => (
-              <th
-                key={header}
-                scope="col"
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-              >
-                {header}
-              </th>
-            ))}
-            {/* Optional: Add empty th if CaseTable has an actions column */}
-            {/* <th scope="col" className="relative px-6 py-3">
-              <span className="sr-only">Edit</span>
-            </th> */}
+            <th colSpan={9} className="h-13 bg-gray-500 rounded-t-md"></th>
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
-          {/* Pulsing Rows - Loop uses the 'rows' prop which defaults to 10 */}
           {Array.from({ length: rows }).map((_, index) => (
             <tr key={index} className="animate-pulse">
-              {/* Match number of columns to headers */}
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                <div className="bg-gray-200 rounded w-5/6 animate-pulse">
-                  &nbsp;
-                </div>
+              <td className="w-24 px-3 py-4 whitespace-nowrap text-sm text-gray-500 border-b border-gray-200">
+                <div className="bg-gray-200 rounded w-5/6 h-4" />
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                <div className="bg-gray-200 rounded w-3/4 animate-pulse">
-                  &nbsp;
-                </div>
+              <td className="w-28 px-3 py-4 whitespace-nowrap text-sm text-gray-500 border-b border-gray-200">
+                <div className="bg-gray-200 rounded w-3/4 h-4" />
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                <div className="bg-gray-200 rounded w-1/2 animate-pulse">
-                  &nbsp;
-                </div>
+              <td className="w-32 px-3 py-4 whitespace-nowrap text-sm text-gray-500 border-b border-gray-200">
+                <div className="bg-gray-200 rounded w-1/2 h-4" />
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                <div className="bg-gray-200 rounded w-2/3 animate-pulse">
-                  &nbsp;
-                </div>
+              <td className="max-w-[150px] px-3 py-4 text-sm break-words">
+                <div className="bg-gray-200 rounded w-2/3 h-4" />
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                <div className="bg-gray-200 rounded w-3/4 animate-pulse">
-                  &nbsp;
-                </div>
+              <td className="max-w-[180px] px-3 py-4 whitespace-nowrap text-sm text-gray-500 border-b border-gray-200 hidden md:table-cell">
+                <div className="bg-gray-200 rounded w-3/4 h-4" />
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                <div className="bg-gray-200 rounded w-1/2 animate-pulse">
-                  &nbsp;
-                </div>
+              <td className="max-w-[200px] sm:max-w-[250px] lg:max-w-[300px] px-3 py-4 whitespace-nowrap text-sm text-gray-500 border-b border-gray-200">
+                <div className="bg-gray-200 rounded w-5/6 h-4" />
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                <div className="bg-gray-200 rounded w-2/3 animate-pulse">
-                  &nbsp;
-                </div>
+              <td className="w-32 px-3 py-4 whitespace-nowrap text-sm text-gray-500 border-b border-gray-200">
+                <div className="bg-gray-200 rounded w-1/2 h-4" />
               </td>
-              {/* Optional: Add empty td if CaseTable has an actions column */}
-              {/* <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                 <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-              </td> */}
+              <td className="w-32 px-3 py-4 whitespace-nowrap text-sm text-gray-500 border-b border-gray-200">
+                <div className="bg-gray-200 rounded w-2/3 h-4" />
+              </td>
+              <td className="w-16 px-3 py-4 whitespace-nowrap text-sm text-gray-500 border-b border-gray-200">
+                <div className="bg-gray-200 rounded w-6 h-4 mx-auto" />
+              </td>
             </tr>
           ))}
         </tbody>

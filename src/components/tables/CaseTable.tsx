@@ -5,10 +5,12 @@ import {
   ArrowsUpDownIcon,
 } from "@heroicons/react/24/solid";
 import { Link } from "react-router"; // Import Link
-
+import moment from "moment";
+// @ts-ignore
+import "moment/dist/locale/bg";
+import { useTranslation } from "react-i18next"; // Import useTranslation
 import { ICase, ICategory, IUser } from "../../db/interfaces";
 import { useEffect, useState } from "react";
-
 // Helper function to get priority styles
 const getPriorityStyles = (priority: ICase["priority"]): string => {
   switch (priority) {
@@ -67,6 +69,15 @@ const CaseTable: React.FC<{ cases: ICase[]; t: (word: string) => string }> = ({
   cases,
   t,
 }) => {
+  const { i18n } = useTranslation();
+  const currentLanguage = i18n.language;
+
+  // Example: log the current language and the moment locale for the first case
+  if (cases.length > 0) {
+    const m = moment(cases[0].date).locale("bg").format("LLL");
+    console.log(m);
+  }
+
   // State to hold the current window width (still needed for description truncation)
   const [windowWidth, setWindowWidth] = useState(
     typeof window !== "undefined" ? window.innerWidth : 0
@@ -112,7 +123,7 @@ const CaseTable: React.FC<{ cases: ICase[]; t: (word: string) => string }> = ({
                 scope="col"
                 className="w-24 px-3 py-4 text-left text-sm font-semibold text-white uppercase tracking-wide cursor-pointer hover:bg-gray-600"
               >
-                Номер
+                {t("case_number")}
               </th>
               {/* Subsequent Headers (Simplified structure) */}
               <th
@@ -122,7 +133,7 @@ const CaseTable: React.FC<{ cases: ICase[]; t: (word: string) => string }> = ({
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 pr-2 text-gray-400">
                   |
                 </span>
-                Приоритет
+                {t("priority")}
               </th>
               <th
                 scope="col"
@@ -131,7 +142,7 @@ const CaseTable: React.FC<{ cases: ICase[]; t: (word: string) => string }> = ({
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 pr-2 text-gray-400">
                   |
                 </span>
-                Тип
+                {t("type")}
               </th>
               <th
                 scope="col"
@@ -140,7 +151,7 @@ const CaseTable: React.FC<{ cases: ICase[]; t: (word: string) => string }> = ({
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 pr-2 text-gray-400">
                   |
                 </span>
-                Подател
+                {t("creator")}
               </th>
               <th
                 scope="col"
@@ -149,7 +160,7 @@ const CaseTable: React.FC<{ cases: ICase[]; t: (word: string) => string }> = ({
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 pr-2 text-gray-400 hidden md:inline-block">
                   |
                 </span>
-                Категория
+                {t("categories")}
               </th>
               <th
                 scope="col"
@@ -158,7 +169,7 @@ const CaseTable: React.FC<{ cases: ICase[]; t: (word: string) => string }> = ({
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 pr-2 text-gray-400">
                   |
                 </span>
-                Описание
+                {t("description")}
               </th>
               <th
                 scope="col"
@@ -167,14 +178,23 @@ const CaseTable: React.FC<{ cases: ICase[]; t: (word: string) => string }> = ({
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 pr-2 text-gray-400">
                   |
                 </span>
-                Статус
+                {t("date")}
+              </th>
+              <th
+                scope="col"
+                className="w-32 px-3 py-4 text-center text-sm font-semibold text-white uppercase tracking-wide relative"
+              >
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 pr-2 text-gray-400">
+                  |
+                </span>
+                {t("status")}
               </th>
               {/* Last Header */}
               <th scope="col" className="relative w-16 px-3 py-4">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 pr-2 text-gray-400">
                   |
                 </span>
-                <span className="sr-only">Действия</span>
+                <span className="sr-only">{t("actions")}</span>
               </th>
             </tr>
           </thead>
@@ -214,7 +234,7 @@ const CaseTable: React.FC<{ cases: ICase[]; t: (word: string) => string }> = ({
                           ? "text-blue-400 hover:text-blue-600 hover:underline"
                           : "text-blue-600 hover:text-blue-800 hover:underline"
                       }`}
-                      title={`Виж детайли за ${my_case.case_number}`}
+                      title={`${t("details_for")} ${my_case.case_number}`}
                     >
                       {my_case.case_number}
                     </Link>
@@ -274,7 +294,7 @@ const CaseTable: React.FC<{ cases: ICase[]; t: (word: string) => string }> = ({
                       ))}
                       {my_case.categories.length === 0 && (
                         <span className="text-xs text-gray-400 italic">
-                          Няма
+                          {t("no_categories")}
                         </span>
                       )}
                     </div>
@@ -285,6 +305,14 @@ const CaseTable: React.FC<{ cases: ICase[]; t: (word: string) => string }> = ({
                     title={my_case.content}
                   >
                     {displayContent}
+                  </td>
+                  {/* Date Cell */}
+                  <td className="w-32 px-3 py-4 whitespace-nowrap text-sm">
+                    <div className="flex items-center" title={my_case.date}>
+                      {`${moment(my_case.date)
+                        .locale(currentLanguage)
+                        .format("lll")}`}
+                    </div>
                   </td>
                   {/* Status Cell - Text hidden on medium and below */}
                   <td className="w-32 px-3 py-4 whitespace-nowrap text-sm">
@@ -310,12 +338,12 @@ const CaseTable: React.FC<{ cases: ICase[]; t: (word: string) => string }> = ({
                       }`}
                       disabled={isClosed}
                       title={
-                        isClosed ? "Действия не са налични" : "Още действия"
+                        isClosed ? t("no_more_actions") : t("more_actions")
                       }
                     >
                       <EllipsisHorizontalIcon className="h-5 w-5" />
                       <span className="sr-only">
-                        Действия за {my_case.case_number}
+                        {t("actions")} {my_case.case_number}
                       </span>
                     </button>
                   </td>
@@ -326,7 +354,7 @@ const CaseTable: React.FC<{ cases: ICase[]; t: (word: string) => string }> = ({
             {cases.length === 0 && (
               <tr>
                 <td colSpan={8} className="text-center py-10 text-gray-500">
-                  Няма намерени случаи.
+                  {t("no_cases_found")}
                 </td>
               </tr>
             )}

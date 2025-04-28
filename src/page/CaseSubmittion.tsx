@@ -16,6 +16,7 @@ import { useCreateCase, CreateCaseInput } from "../graphql/hooks/case"; // Your 
 import HelpModal from "../components/modals/HelpModal";
 import LoadingModal from "../components/modals/LoadingModal";
 import { GET_USER_BY_USERNAME } from "../graphql/query/user";
+import { ICategory } from "../db/interfaces";
 
 const MAX_FILES = 5;
 const MAX_FILE_SIZE_MB = 1;
@@ -50,16 +51,11 @@ interface Category {
   suggestion?: string;
 }
 
-// Shape of the data structure returned by useGetActiveCategories
-interface GetActiveCategoriesQueryResult {
-  getLeanActiveCategories?: Category[];
-}
-
 // Return type definition for useGetActiveCategories hook
 interface UseGetActiveCategoriesReturn {
   loading: boolean;
   error?: ApolloError | Error | any;
-  categories?: GetActiveCategoriesQueryResult;
+  categories?: ICategory[];
   refetch: () => Promise<any>;
 }
 
@@ -167,7 +163,7 @@ const CaseSubmittion: React.FC = () => {
   }, [queryParams]);
 
   const categoryList: Category[] = useMemo(
-    () => categoriesData?.getLeanActiveCategories ?? [],
+    () => categoriesData ?? [],
     [categoriesData]
   );
 

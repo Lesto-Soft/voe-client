@@ -17,8 +17,9 @@ type FetchHook = (input: any) => {
 
 interface CaseTableWithFiltersProps {
   fetchHook: FetchHook;
-  clearFiltersSignal?: any; // Add this prop to trigger filter reset
+  clearFiltersSignal?: any;
   filter: boolean;
+  t: (key: string) => string;
 }
 
 function useDebounce<T>(value: T, delay: number): T {
@@ -67,8 +68,8 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
   fetchHook,
   clearFiltersSignal,
   filter,
+  t,
 }) => {
-  const { t } = useTranslation("dashboard");
   const location = useLocation();
   const navigate = useNavigate();
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -321,6 +322,7 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
           setContent={setContent}
           status={status}
           setStatus={setStatus}
+          t={t}
         />
       </div>
       <div className="flex-1 min-h-0 flex flex-col">
@@ -331,7 +333,7 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
           <CaseTable cases={cases} t={t} />
         ) : (
           <div className="text-center py-10 text-gray-500">
-            Няма намерени случаи.
+            {t("no_cases_found")}
           </div>
         )}
       </div>

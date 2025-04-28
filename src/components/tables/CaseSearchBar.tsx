@@ -49,6 +49,7 @@ interface CaseSearchBarProps {
   setContent: (v: string) => void;
   status: ICase["status"] | "";
   setStatus: (v: ICase["status"] | "") => void;
+  t: (key: string) => string;
 }
 
 const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
@@ -66,6 +67,7 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
   setContent,
   status,
   setStatus,
+  t,
 }) => {
   // --- State for Creator Search ---
   const [creatorInput, setCreatorInput] = useState(""); // Input field value
@@ -297,7 +299,7 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
             htmlFor="caseNumber"
             className="block text-sm font-medium text-gray-700 mb-1"
           >
-            Номер
+            {t("case_number")}
           </label>
           <input
             type="text"
@@ -305,7 +307,7 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
             value={caseNumber}
             onChange={(e) => setCaseNumber(e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition duration-150 ease-in-out"
-            placeholder="Търси по номер..."
+            placeholder={t("search_by_case_number")}
           />
         </div>
 
@@ -315,7 +317,7 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
             htmlFor="priority"
             className="block text-sm font-medium text-gray-700 mb-1"
           >
-            Приоритет
+            {t("priority")}
           </label>
           <select
             id="priority"
@@ -326,10 +328,10 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
             }}
             className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-white appearance-none"
           >
-            <option value="">Всички</option>
-            <option value="LOW">Нисък</option>
-            <option value="MEDIUM">Среден</option>
-            <option value="HIGH">Висок</option>
+            <option value=""> {t("all")}</option>
+            <option value="LOW"> {t("LOW")}</option>
+            <option value="MEDIUM"> {t("MEDIUM")}</option>
+            <option value="HIGH"> {t("HIGH")}</option>
           </select>
           <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 top-[calc(1.75rem+1px)]">
             <ChevronDownIcon className="h-5 w-5 transition-transform duration-200 ease-in-out group-focus-within:rotate-180" />
@@ -342,7 +344,7 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
             htmlFor="type"
             className="block text-sm font-medium text-gray-700 mb-1"
           >
-            Тип
+            {t("type")}
           </label>
           <select
             id="type"
@@ -353,9 +355,9 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
             }}
             className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-white appearance-none"
           >
-            <option value="">Всички</option>
-            <option value="PROBLEM">Проблем</option>
-            <option value="SUGGESTION">Предложение</option>
+            <option value=""> {t("all")}</option>
+            <option value="PROBLEM"> {t("PROBLEM")}</option>
+            <option value="SUGGESTION"> {t("SUGGESTION")}</option>
           </select>
           <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 top-[calc(1.75rem+1px)]">
             <ChevronDownIcon className="h-5 w-5 transition-transform duration-200 ease-in-out group-focus-within:rotate-180" />
@@ -368,7 +370,7 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
             htmlFor="creator"
             className="block text-sm font-medium text-gray-700 mb-1"
           >
-            Подател
+            {t("creator")}
           </label>
           <input
             type="text"
@@ -378,7 +380,7 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
             onChange={handleCreatorInputChange}
             onFocus={handleCreatorInputFocus}
             className="bg-white w-full px-3 pr-8 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition duration-150 ease-in-out"
-            placeholder="Търси подател (мин. 3)..."
+            placeholder={t("choose_creator")}
             autoComplete="off"
           />
           {/* Clear Button */}
@@ -387,7 +389,7 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
               type="button"
               onClick={clearCreatorSelection}
               className="mt-6 absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 hover:text-gray-900 focus:outline-none cursor-pointer"
-              title="Изчисти подател"
+              title={t("clear_creator")}
             >
               <XMarkIcon className="h-5 w-5" />
             </button>
@@ -399,15 +401,15 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
             >
               {loadingUsers && serverFetchedUsers.length === 0 ? (
                 <div className="px-3 py-2 text-sm text-gray-500">
-                  Зареждане...
+                  {t("loading")}
                 </div>
               ) : usersError ? (
                 <div className="px-3 py-2 text-sm text-red-600">
-                  Грешка: {usersError.message}
+                  {t("error")}: {usersError.message}
                 </div>
               ) : filteredDisplayUsers.length === 0 ? (
                 <div className="px-3 py-2 text-sm text-gray-500">
-                  Няма резултати
+                  {t("no_users")}
                 </div>
               ) : (
                 filteredDisplayUsers.map((user) => (
@@ -422,7 +424,7 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
               )}
               {loadingUsers && serverFetchedUsers.length > 0 && (
                 <div className="px-3 py-1 text-xs text-gray-400 text-center">
-                  Обновяване...
+                  {t("refreshing")}
                 </div>
               )}
             </div>
@@ -435,7 +437,7 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
             htmlFor="category"
             className="block text-sm font-medium text-gray-700 mb-1"
           >
-            Категории
+            {t("categories")}
           </label>
           <input
             type="text"
@@ -445,7 +447,7 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
             onClick={handleCategoryInputClick}
             readOnly
             className="bg-white w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm cursor-pointer"
-            placeholder="Избери категории..."
+            placeholder={t("choose_categories")}
             autoComplete="off"
           />
           {isCategoryDropdownVisible && (
@@ -458,21 +460,21 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
                   type="text"
                   value={categorySearch}
                   onChange={handleCategorySearchChange}
-                  placeholder="Търси..."
+                  placeholder={t("search")}
                   className="w-full px-2 py-1 mb-2 border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500 text-sm"
                 />
               </div>
               {loadingCategories && serverFetchedCategories.length === 0 ? (
                 <div className="px-3 py-2 text-sm text-gray-500">
-                  Зареждане...
+                  {t("loading")}
                 </div>
               ) : categoriesError ? (
                 <div className="px-3 py-2 text-sm text-red-600">
-                  Грешка: {categoriesError.message}
+                  {t("error")}: {categoriesError.message}
                 </div>
               ) : filteredCategories.length === 0 ? (
                 <div className="px-3 py-2 text-sm text-gray-500">
-                  Няма резултати
+                  {t("no_categories")}
                 </div>
               ) : (
                 filteredCategories.map((cat) => (
@@ -502,7 +504,7 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
             htmlFor="content"
             className="block text-sm font-medium text-gray-700 mb-1"
           >
-            Описание
+            {t("description")}
           </label>
           <input
             type="text"
@@ -510,7 +512,7 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
             value={content}
             onChange={(e) => setContent(e.target.value)}
             className="bg-white w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition duration-150 ease-in-out"
-            placeholder="Търси в описание..."
+            placeholder={t("search_by_description")}
           />
         </div>
 
@@ -520,7 +522,7 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
             htmlFor="status"
             className="block text-sm font-medium text-gray-700 mb-1"
           >
-            Статус
+            {t("status")}
           </label>
           <select
             id="status"
@@ -531,10 +533,10 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
             }}
             className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-white appearance-none"
           >
-            <option value="">Всички</option>
-            <option value="OPEN">Отворен</option>
-            <option value="IN_PROGRESS">В процес</option>
-            <option value="CLOSED">Затворен</option>
+            <option value=""> {t("all")}</option>
+            <option value="OPEN"> {t("OPEN")}</option>
+            <option value="IN_PROGRESS"> {t("IN_PROGRESS")}</option>
+            <option value="CLOSED"> {t("CLOSED")}</option>
           </select>
           <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 top-[calc(1.75rem+1px)]">
             <ChevronDownIcon className="h-5 w-5 transition-transform duration-200 ease-in-out group-focus-within:rotate-180" />

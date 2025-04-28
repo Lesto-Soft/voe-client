@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { ArrowLeftIcon, ArrowRightIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import { useLocation, useNavigate } from "react-router";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/solid";
+import { useTranslation } from "react-i18next";
 
 const generatePagination = (currentPage: number, totalPages: number) => {
   if (totalPages <= 7) {
@@ -65,6 +66,7 @@ const Pagination = ({
   onItemsPerPageChange,
   onPageChange,
 }: PaginationProps) => {
+  const { t } = useTranslation("pagination");
   const location = useLocation();
   const navigate = useNavigate();
   const allPages = generatePagination(currentPage, totalPages);
@@ -104,17 +106,12 @@ const Pagination = ({
     onItemsPerPageChange(value);
   };
 
-  // Calculate shown count
-  const shownCount = Math.min(currentPage * itemsPerPage, totalCount);
-  const startCount =
-    totalCount === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
-
   return (
     <div className="flex flex-col md:flex-row items-center justify-between my-8 px-4 sm:px-6 lg:px-8 gap-4">
       {/* Left: Info (hidden on small screens) */}
       <div className="text-gray-600 text-sm w-full md:w-auto text-left hidden md:flex items-center gap-2">
         <span>
-          Показани&nbsp;
+          {t("shown")}&nbsp;
           <select
             className="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
             value={itemsPerPage}
@@ -124,7 +121,7 @@ const Pagination = ({
             <option value={20}>20</option>
             <option value={50}>50</option>
           </select>
-          &nbsp;от {totalCount} резултата
+          &nbsp;{t("from_results", { count: totalCount })}
         </span>
       </div>
       {/* Center: Pagination */}
@@ -166,7 +163,7 @@ const Pagination = ({
       </div>
       {/* Right: Go to page (hidden on small screens) */}
       <div className="items-center gap-2 w-full md:w-auto justify-end hidden md:flex">
-        <span className="text-gray-600 text-sm">Към страница:</span>
+        <span className="text-gray-600 text-sm">{t("to_page")}:</span>
         <input
           type="number"
           min={1}

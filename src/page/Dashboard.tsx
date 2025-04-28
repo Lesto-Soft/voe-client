@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   useGetAllCases,
   useGetCasesByUserCategories,
@@ -14,43 +14,12 @@ import {
   AcademicCapIcon,
   ChatBubbleLeftRightIcon,
   ChatBubbleOvalLeftEllipsisIcon,
-  ChevronUpIcon, // Import ChevronUpIcon
-  ChevronDownIcon, // Import ChevronDownIcon
+  ChevronUpIcon,
+  ChevronDownIcon,
 } from "@heroicons/react/24/outline";
 import { useLocation, useNavigate } from "react-router";
-
-const submenu = [
-  {
-    label: "Всички",
-    hookKey: "all",
-    hook: useGetAllCases,
-    icon: <ListBulletIcon className="h-5 w-5 mr-2" />,
-  },
-  {
-    label: "Моите",
-    hookKey: "mine",
-    hook: null, // will be set later
-    icon: <UserCircleIcon className="h-5 w-5 mr-2" />,
-  },
-  {
-    label: "Експертни",
-    hookKey: "expert",
-    hook: null, // will be set later
-    icon: <AcademicCapIcon className="h-5 w-5 mr-2" />,
-  },
-  {
-    label: "Отговорени",
-    hookKey: "answered",
-    hook: null, // will be set later
-    icon: <ChatBubbleLeftRightIcon className="h-5 w-5 mr-2" />,
-  },
-  {
-    label: "Коментирани",
-    hookKey: "commented",
-    hook: null, // will be set later
-    icon: <ChatBubbleOvalLeftEllipsisIcon className="h-5 w-5 mr-2" />,
-  },
-];
+import { useTranslation } from "react-i18next";
+import LoadingModal from "../components/modals/LoadingModal";
 
 function withUserIdHook(
   hook: (userId: string, input: any) => any,
@@ -71,13 +40,49 @@ function withUserIdHook(
 }
 
 const Dashboard = () => {
+  const { t } = useTranslation("dashboard");
   const location = useLocation();
   const navigate = useNavigate();
   const [clearFiltersSignal, setClearFiltersSignal] = useState(0);
   const { me, error: meError, loading: meLoading } = useGetMe();
   const [fitler, setFilter] = useState(true);
 
-  // Determine selected screen from URL
+  const submenu = useMemo(
+    () => [
+      {
+        label: t("all"),
+        hookKey: "all",
+        hook: useGetAllCases,
+        icon: <ListBulletIcon className="h-5 w-5 mr-2" />,
+      },
+      {
+        label: t("mine"),
+        hookKey: "mine",
+        hook: null,
+        icon: <UserCircleIcon className="h-5 w-5 mr-2" />,
+      },
+      {
+        label: t("expert"),
+        hookKey: "expert",
+        hook: null,
+        icon: <AcademicCapIcon className="h-5 w-5 mr-2" />,
+      },
+      {
+        label: t("answered"),
+        hookKey: "answered",
+        hook: null,
+        icon: <ChatBubbleLeftRightIcon className="h-5 w-5 mr-2" />,
+      },
+      {
+        label: t("commented"),
+        hookKey: "commented",
+        hook: null,
+        icon: <ChatBubbleOvalLeftEllipsisIcon className="h-5 w-5 mr-2" />,
+      },
+    ],
+    [t]
+  );
+
   const searchParams = new URLSearchParams(location.search);
   const screenKey = searchParams.get("screen") || "all";
   const selectedHookIdx =
@@ -85,7 +90,6 @@ const Dashboard = () => {
       ? submenu.findIndex((item) => item.hookKey === screenKey)
       : 0;
 
-  // Prepare hooks with userId
   const getCasesByUserCategoriesWithUser = withUserIdHook(
     useGetCasesByUserCategories,
     me?.me?._id
@@ -100,28 +104,33 @@ const Dashboard = () => {
     me?.me?._id
   );
 
-  // Assign hooks to submenu
-  submenu[1].hook = getUserCasesWithUser;
-  submenu[2].hook = getCasesByUserCategoriesWithUser;
-  submenu[3].hook = getUserAnsweredCasesWithUser;
-  submenu[4].hook = getUserCommentedCasesWithUser;
+  const submenuWithHooks = useMemo(() => {
+    const updatedSubmenu = [...submenu];
+    updatedSubmenu[1].hook = getUserCasesWithUser;
+    updatedSubmenu[2].hook = getCasesByUserCategoriesWithUser;
+    updatedSubmenu[3].hook = getUserAnsweredCasesWithUser;
+    updatedSubmenu[4].hook = getUserCommentedCasesWithUser;
+    return updatedSubmenu;
+  }, [
+    submenu,
+    getUserCasesWithUser,
+    getCasesByUserCategoriesWithUser,
+    getUserAnsweredCasesWithUser,
+    getUserCommentedCasesWithUser,
+  ]);
 
-  // When screen changes, clear filters
   useEffect(() => {
     setClearFiltersSignal((s) => s + 1);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screenKey]);
 
-  if (meLoading) return <div>Loading...</div>;
+  if (meLoading) return <LoadingModal />;
   if (meError) return <div>Error: {meError.message}</div>;
 
   return (
     <div className="flex flex-col flex-1 min-h-0 h-full">
-      {/* Submenu and Add New Button */}
       <div className="flex items-center justify-between gap-2 mb-6 px-8 mt-6">
-        {/* Submenu - Added flex-wrap */}
         <div className="flex flex-wrap gap-2">
-          {submenu.map((item, idx) => (
+          {submenuWithHooks.map((item, idx) => (
             <button
               key={item.label}
               onClick={() => {
@@ -145,10 +154,9 @@ const Dashboard = () => {
           ))}
         </div>
 
-        {/* Filter Toggle Button */}
         <button
           className="flex items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-gray-500 text-white hover:bg-gray-600 hover:cursor-pointer"
-          title={fitler ? "Скрий филтри" : "Покажи филтри"}
+          title={fitler ? t("hide_filters") : t("show_filters")}
           onClick={() => setFilter(!fitler)}
         >
           {fitler ? (
@@ -156,13 +164,14 @@ const Dashboard = () => {
           ) : (
             <ChevronDownIcon className="h-5 w-5 mr-1" />
           )}
-          Филтри
+          {t("filter")}
         </button>
       </div>
       <CaseTableWithFilters
-        fetchHook={submenu[selectedHookIdx].hook!}
+        fetchHook={submenuWithHooks[selectedHookIdx].hook!}
         clearFiltersSignal={clearFiltersSignal}
         filter={fitler}
+        t={t}
       />
     </div>
   );

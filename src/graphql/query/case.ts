@@ -16,6 +16,7 @@ fragment CaseFragment on Case {
     }
     content
     status  
+    date
 }`;
 
 export const GET_CASES = gql`

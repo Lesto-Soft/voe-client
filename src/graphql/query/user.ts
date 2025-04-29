@@ -16,13 +16,13 @@ fragment UserFragment on User {
 }`;
 
 export const COUNT_USERS = gql`
-  query CountUsers {
-    countUsers
+  query CountUsers($input: getUserFiltersInput) {
+    countUsers(input: $input)
   }
 `;
 
 export const GET_USERS = gql`
-  query GetAllUsers($input: getAllInput) {
+  query GetAllUsers($input: getUserFiltersInput) {
     getAllUsers(input: $input) {
       ...UserFragment
       avatar

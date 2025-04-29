@@ -15,89 +15,69 @@ interface UserFiltersInput {
   position?: string;
   email?: string;
   roleIds?: string[];
+  itemsPerPage?: number;
+  currentPage?: number; // Expecting the 0-based index here
+  query?: string; // Include if your getAllInput still has/needs it
   // Add any other filter fields your backend supports
 }
 
-// Interface for the options object passed to useGetUsers
-interface GetUsersOptions {
-  filters?: UserFiltersInput;
-  limit?: number;
-  offset?: number; // Use offset for flexibility
-}
+export function buildUserQueryVariables(input: any) {
+  const {
+    itemsPerPage = 10,
+    currentPage = 0,
+    query,
+    name,
+    username,
+    position,
+    email,
+    roleIds,
+  } = input || {};
 
-// --- Modified useGetUsers Hook ---
-export const useGetUsers = (options?: GetUsersOptions) => {
-  const itemsPerPage = options?.limit ?? 10; // Default limit if not provided
-  const offset = options?.offset ?? 0; // Default offset if not provided
-  // Calculate currentPage based on offset and limit (backend might prefer offset directly)
-  const currentPage = itemsPerPage > 0 ? Math.floor(offset / itemsPerPage) : 0;
-
-  // Prepare variables matching the *expected* structure of the GET_USERS query input
-  // --- IMPORTANT ---
-  // This assumes your GET_USERS GraphQL query expects an 'input' argument,
-  // and you will modify that 'input' type on the backend to include 'filters'.
-  const variables: { input: any } = {
-    // Use 'any' for input temporarily, define a proper type later
+  const variables: any = {
     input: {
-      itemsPerPage: itemsPerPage,
-      currentPage: currentPage, // Pass calculated page, OR modify backend to accept offset
-      // query: "", // Remove the old generic query string? Or pass filters differently?
-      // Add filters nested within input - ADJUST THIS based on backend changes!
-      filters: options?.filters,
+      itemsPerPage,
+      currentPage,
     },
   };
+  if (query) variables.input.query = query;
+  if (name) variables.input.name = name;
+  if (username) variables.input.username = username;
+  if (position) variables.input.position = position;
+  if (email) variables.input.email = email;
+  if (roleIds && roleIds.length > 0) variables.input.roleIds = roleIds;
 
-  // If no filters are present, remove the filters key to avoid sending empty objects?
-  // (Depends on backend requirements)
-  if (!options?.filters || Object.keys(options.filters).length === 0) {
-    delete variables.input.filters;
-  }
+  return variables;
+}
+
+export const useGetAllUsers = (input: any) => {
+  const variables = buildUserQueryVariables(input);
 
   const { loading, error, data, refetch } = useQuery(GET_USERS, {
-    variables: variables,
-    fetchPolicy: "cache-and-network", // Example fetch policy
+    variables,
   });
-
+  const users = data?.getAllUsers || [];
   return {
+    users,
     loading,
     error,
-    // --- ADJUST data access based on your GQL Query response ---
-    // Common patterns: data?.getAllUsers, data?.users
-    users: data?.getAllUsers, // <= CHECK YOUR QUERY RESPONSE FIELD NAME!
     refetch,
-    data, // Expose raw data
   };
 };
 
-// --- Modified useCountUsers Hook ---
-// Define options type
-interface CountUsersOptions {
-  filters?: UserFiltersInput;
-}
-
-export const useCountUsers = (options?: CountUsersOptions) => {
-  // Prepare variables based on how COUNT_USERS query expects filters
-  // --- IMPORTANT ---
-  // This assumes your COUNT_USERS query will be updated on the backend
-  // to accept a 'filters' argument. Adjust structure if needed (e.g., { input: { filters: ... } })
-  const variables: CountUsersOptions = {};
-  if (options?.filters && Object.keys(options.filters).length > 0) {
-    variables.filters = options.filters;
-  }
+export const useCountUsers = (input: any) => {
+  const variables = buildUserQueryVariables(input);
 
   const { loading, error, data, refetch } = useQuery(COUNT_USERS, {
-    // Pass variables only if filters exist, or always pass empty obj if required
-    variables: Object.keys(variables).length > 0 ? variables : undefined,
-    fetchPolicy: "cache-and-network", // Ensure it refetches when filters change
+    variables,
   });
 
+  const count = data?.countUsers || 0;
+
   return {
+    count,
     loading,
     error,
-    // Data access seems correct based on original hook
-    count: data?.countUsers,
     refetch,
-    data, // Expose raw data
   };
 };
 

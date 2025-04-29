@@ -257,7 +257,7 @@ const UserManagementPage: React.FC = () => {
   const roleColors = [
     "text-gray-400",
     "text-blue-400",
-    "text-blue-700",
+    "text-indigo-400",
     "text-red-300",
   ];
 
@@ -627,12 +627,12 @@ const UserManagementPage: React.FC = () => {
   // Define Column Widths
   const columnWidths = {
     avatar: "w-16",
-    username: "w-40",
+    username: "w-1/6",
     name: "w-1/5",
     position: "w-1/5",
-    email: "w-1/4",
-    role: "w-1/6",
-    edit: "w-20",
+    email: "w-1/6",
+    role: "w-1/10",
+    edit: "w-1/10",
   };
 
   // --- Render Component ---
@@ -649,6 +649,12 @@ const UserManagementPage: React.FC = () => {
             isActive={filterRoleIds.length === 0}
             onClick={() => setFilterRoleIds([])}
           />
+          <div
+            aria-hidden="true"
+            className="hidden md:block self-stretch w-1 mx-2
+                       bg-gradient-to-b from-transparent via-gray-300 to-transparent"
+          ></div>
+
           <div className="grid grid-cols-2 gap-4 md:flex md:flex-wrap md:gap-4">
             {roles.map((role: Role, index: number) => {
               const colorIndex = index % roleColors.length;
@@ -669,25 +675,25 @@ const UserManagementPage: React.FC = () => {
         </div>
         <div className="flex flex-col sm:flex-row gap-2 items-center md:items-start flex-shrink-0">
           <button
-            className="flex w-full sm:w-auto items-center justify-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 shadow-sm hover:bg-gray-50"
+            className="flex items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-gray-500 text-white hover:bg-gray-600 hover:cursor-pointer"
             title={showFilters ? "Скрий филтри" : "Покажи филтри"}
             onClick={() => setShowFilters(!showFilters)}
           >
             {showFilters ? (
-              <ChevronUpIcon className="h-5 w-5" />
+              <ChevronUpIcon className="h-5 w-5 mr-1" />
             ) : (
-              <ChevronDownIcon className="h-5 w-5" />
+              <ChevronDownIcon className="h-5 w-5 mr-1" />
             )}{" "}
             Филтри
           </button>
           <button
             onClick={openCreateModal}
-            className="flex flex-shrink-0 items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 shadow-sm transition-all duration-150 ease-in-out hover:cursor-pointer hover:bg-gray-50 hover:shadow-md active:bg-gray-100 active:shadow-inner disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex flex-shrink-0 items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-green-500 text-white hover:bg-green-600 hover:cursor-pointer active:bg-green-700 active:shadow-inner disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={
               createLoading || updateLoading || usersLoading || countLoading
             }
           >
-            <PlusIconSolid className="h-5 w-5" /> Създай Потребител
+            <PlusIconSolid className="h-5 w-5 mr-1" /> Създай Потребител
           </button>
         </div>
       </section>
@@ -695,7 +701,7 @@ const UserManagementPage: React.FC = () => {
       {/* Filter Section */}
       <div
         className={`transition-all duration-300 ease-in-out overflow-hidden ${
-          showFilters ? "max-h-screen opacity-100 mb-6" : "max-h-0 opacity-0"
+          showFilters ? "max-h-screen opacity-100" : "max-h-0 opacity-0"
         }`}
       >
         <UserSearchBar
@@ -727,41 +733,41 @@ const UserManagementPage: React.FC = () => {
                 <tr>
                   <th
                     scope="col"
-                    className={`${columnWidths.avatar} px-3 py-4 text-left text-sm font-semibold text-white uppercase tracking-wide`}
+                    className={`${columnWidths.avatar} px-3 py-4 text-center text-sm font-semibold text-white uppercase tracking-wide`}
                   >
                     Аватар
                   </th>
                   <th
                     scope="col"
-                    className={`${columnWidths.username} px-3 py-4 text-left text-sm font-semibold text-white uppercase tracking-wide relative whitespace-nowrap`}
+                    className={`${columnWidths.username} px-3 py-4 text-center text-sm font-semibold text-white uppercase tracking-wide relative whitespace-nowrap`}
                   >
                     <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-px bg-gray-400"></span>
                     Потребителско име
                   </th>
                   <th
                     scope="col"
-                    className={`${columnWidths.name} px-3 py-4 text-left text-sm font-semibold text-white uppercase tracking-wide relative`}
+                    className={`${columnWidths.name} px-3 py-4 text-center text-sm font-semibold text-white uppercase tracking-wide relative`}
                   >
                     <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-px bg-gray-400"></span>
                     Име
                   </th>
                   <th
                     scope="col"
-                    className={`${columnWidths.position} hidden md:table-cell px-3 py-4 text-left text-sm font-semibold text-white uppercase tracking-wide relative`}
+                    className={`${columnWidths.position} hidden md:table-cell px-3 py-4 text-center text-sm font-semibold text-white uppercase tracking-wide relative`}
                   >
                     <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-px bg-gray-400"></span>
                     Позиция
                   </th>
                   <th
                     scope="col"
-                    className={`${columnWidths.email} hidden md:table-cell px-3 py-4 text-left text-sm font-semibold text-white uppercase tracking-wide relative`}
+                    className={`${columnWidths.email} hidden md:table-cell px-3 py-4 text-center text-sm font-semibold text-white uppercase tracking-wide relative`}
                   >
                     <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-px bg-gray-400"></span>
                     Имейл
                   </th>
                   <th
                     scope="col"
-                    className={`${columnWidths.role} px-3 py-4 text-left text-sm font-semibold text-white uppercase tracking-wide relative`}
+                    className={`${columnWidths.role} px-3 py-4 text-center text-sm font-semibold text-white uppercase tracking-wide relative`}
                   >
                     <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-px bg-gray-400"></span>
                     Роля
@@ -827,7 +833,7 @@ const UserManagementPage: React.FC = () => {
                       >
                         <button
                           onClick={() => openEditModal(user)}
-                          className="inline-flex justify-center rounded bg-sky-100 p-1.5 text-sky-700 border border-sky-200 hover:border-sky-300 transition-all duration-150 ease-in-out hover:cursor-pointer hover:bg-sky-200 hover:text-sky-800 active:bg-sky-300 active:scale-[0.96] disabled:bg-gray-100 disabled:text-gray-400 disabled:opacity-70 disabled:cursor-not-allowed disabled:scale-100"
+                          className="w-30 inline-flex justify-center rounded bg-sky-100 p-1.5 text-sky-700 border border-sky-200 hover:border-sky-300 transition-all duration-150 ease-in-out hover:cursor-pointer hover:bg-sky-200 hover:text-sky-800 active:bg-sky-300 active:scale-[0.96] disabled:bg-gray-100 disabled:text-gray-400 disabled:opacity-70 disabled:cursor-not-allowed disabled:scale-100"
                           aria-label={`Редактирай ${user.username}`}
                           disabled={
                             createLoading ||

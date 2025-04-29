@@ -90,7 +90,7 @@ const CreateUserModal: React.FC<ModalProps> = ({
           {/* Close Button for Main Modal */}
           <button
             onClick={attemptClose} // Use attemptClose for the 'X' button
-            className="absolute top-2 right-2 rounded-sm p-1 text-gray-500 opacity-70 transition-opacity hover:text-gray-800 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 md:top-3 md:right-3 z-10"
+            className="absolute top-2 right-2 rounded-sm p-1 text-gray-500 opacity-70 transition-opacity hover:text-gray-800 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 md:top-3 md:right-3 z-10 hover:cursor-pointer"
             aria-label="Close modal"
           >
             <XMarkIcon className="h-5 w-5" />

@@ -1,6 +1,7 @@
 // src/components/cards/StatCard.tsx
 import React from "react";
 import { UserIcon } from "@heroicons/react/24/solid";
+import { UserGroupIcon } from "@heroicons/react/24/solid";
 
 interface Props {
   amount: number;
@@ -31,8 +32,15 @@ const StatCard: React.FC<Props> = ({
   // Active state classes (apply when isActive is true)
   // Example: Brighter background, maybe a ring/border highlight
   const activeClasses = isActive
-    ? "bg-sky-100 border-sky-300 ring-2 ring-sky-400 ring-offset-1 shadow-inner" // Example active style
-    : "bg-white border-gray-200 hover:bg-gray-50 active:bg-gray-100"; // Default/inactive style
+    ? "bg-white border-sky-200 border-3 ring-2 ring-white ring-offset-1 shadow-inner scale-102" // Example active style
+    : "bg-gray-200 border-gray-200 border-3 hover:bg-gray-50 hover:border-gray-100 active:bg-gray-100"; // Default/inactive style
+
+  const activeTitle = isActive ? "text-gray-500" : "text-gray-400";
+  const activeAmount = isActive ? "text-gray-800" : "text-gray-500";
+  const finalIconColor = isActive ? iconColor : `${iconColor}`; //TODO add opacity here
+
+  // className defined only for the main statcard currently
+  const IconComponent = className ? UserGroupIcon : UserIcon;
 
   return (
     <div
@@ -40,13 +48,13 @@ const StatCard: React.FC<Props> = ({
       className={`${baseClasses} ${interactiveClasses} ${activeClasses} ${className}`}
       onClick={onClick} // Keep onClick prop
     >
-      <UserIcon
-        className={`h-7 w-7 flex-shrink-0 ${iconColor}`}
+      <IconComponent
+        className={`h-7 w-7 flex-shrink-0 ${finalIconColor}`}
         aria-hidden="true"
       />
       <div className="overflow-hidden">
-        <p className="truncate text-xs text-gray-500">{title}</p>
-        <p className="text-2xl font-semibold text-gray-800">{amount}</p>
+        <p className={`truncate text-xs ${activeTitle}`}>{title}</p>
+        <p className={`text-2xl font-semibold ${activeAmount}`}>{amount}</p>
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Role } from "../../page/UserManagementPage"; // Adjust path if needed
+import { Role } from "../../page/types/userManagementTypes";
 import UserAvatar from "../cards/UserAvatar";
 import ImageCropModal from "../modals/ImageCropModal";
 

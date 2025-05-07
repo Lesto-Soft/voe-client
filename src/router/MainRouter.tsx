@@ -3,7 +3,7 @@ import Home from "../page/Home";
 import CaseSubmittion from "../page/CaseSubmittion";
 import Dashboard from "../page/Dashboard";
 import LoadingTestPage from "../page/LoadingTestPage";
-import UserManagementPage from "../page/UserManagementPage";
+import UserManagementPage from "../page/UserManagement";
 import NavBar from "../components/menu/NavBar";
 import Profile from "../page/Profile";
 import Analyses from "../page/Analyses";

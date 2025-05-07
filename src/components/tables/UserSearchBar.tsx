@@ -34,7 +34,7 @@ const UserSearchBar: React.FC<UserSearchBarProps> = ({
   return (
     // Container with padding, similar to CaseSearchBar
     // px-4 sm:px-6 lg:px-8
-    <div className="py-5">
+    <div className="pt-2.5">
       {/* Grid layout for filter inputs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-3 items-start">
         {/* Filter by Username */}

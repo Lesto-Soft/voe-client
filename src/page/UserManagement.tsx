@@ -1,6 +1,8 @@
-import React, { useState } from "react";
+// src/page/UserManagement.tsx (Or UserManagementPage.tsx)
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import { ChevronUpIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
 import { PlusIcon as PlusIconSolid } from "@heroicons/react/20/solid";
+// Removed i18n import: import { useTranslation } from 'react-i18next';
 
 // GraphQL Hooks & Types
 import {
@@ -8,27 +10,30 @@ import {
   useCountUsers,
   useCreateUser,
   useUpdateUser,
-} from "../graphql/hooks/user";
+} from "../graphql/hooks/user"; // Adjust path
 import {
   AttachmentInput,
   CreateUserInput,
   UpdateUserInput,
-} from "../graphql/mutation/user";
-import { useGetRoles } from "../graphql/hooks/role";
+} from "../graphql/mutation/user"; // Adjust path
+import { useGetRoles } from "../graphql/hooks/role"; // Adjust path
 
 // Shared Components
-import CreateUserModal from "../components/modals/CreateUserModal";
-import CreateUserForm from "../components/forms/CreateUserForm";
+import CreateUserModal from "../components/modals/CreateUserModal"; // Adjust path
+import CreateUserForm from "../components/forms/CreateUserForm"; // Adjust path
+import LoadingModal from "../components/modals/LoadingModal"; // Adjust path
 
 // Page-Specific Imports
-import UserStats from "../components/features/userManagement/UserStats";
-import UserFilters from "../components/features/userManagement/UserFilters";
-import UserTable from "../components/features/userManagement/UserTable";
-import { useUserManagement } from "./hooks/useUserManagement";
-import { Role, User } from "./types/userManagementTypes";
-import LoadingModal from "../components/modals/LoadingModal";
+import UserStats from "../components/features/userManagement/UserStats"; // Import UserStats
+import UserFilters from "../components/features/userManagement/UserFilters"; // Adjust path
+import UserTable from "../components/features/userManagement/UserTable"; // Adjust path
+import { useUserManagement } from "./hooks/useUserManagement"; // Adjust path
+import { Role, User } from "./types/userManagementTypes"; // Adjust path
 
-const UserManagementPage: React.FC = () => {
+const UserManagement: React.FC = () => {
+  // Renamed component if desired
+  // Removed: const { t } = useTranslation();
+
   // State & Logic Hook
   const {
     currentPage,
@@ -60,23 +65,30 @@ const UserManagementPage: React.FC = () => {
 
   // GraphQL Data Fetching
   const {
-    users,
+    users: usersData,
     loading: usersLoading,
     error: usersError,
     refetch: refetchUsers,
   } = useGetAllUsers(currentQueryInput);
   const {
-    count: totalUserCount,
+    count: filteredUserCount,
     loading: countLoading,
     error: countError,
     refetch: refetchUserCount,
   } = useCountUsers(currentQueryInput);
   const {
+    count: absoluteTotalUserCount,
+    loading: absoluteTotalLoading,
+    error: absoluteTotalError,
+  } = useCountUsers({});
+  const {
     roles: rolesData,
-    error: rolesError,
-    loading: rolesLoading,
+    error: rolesErrorHook,
+    loading: rolesLoadingHook,
     refetch: refetchRoles,
   } = useGetRoles();
+
+  const users: User[] = usersData || [];
   const roles: Role[] = rolesData?.getAllLeanRoles || [];
 
   // GraphQL Mutations
@@ -115,6 +127,7 @@ const UserManagementPage: React.FC = () => {
       ...formData,
       ...(avatarData !== undefined && { avatar: avatarData }),
     };
+    const context = editingUser ? "редактиране" : "създаване"; // Hardcoded context
     try {
       if (editingUserId) {
         await updateUser(editingUserId, finalInput as UpdateUserInput);
@@ -129,48 +142,65 @@ const UserManagementPage: React.FC = () => {
       setAvatarVersion(Date.now());
       closeModal();
     } catch (err: any) {
-      console.error(
-        `Error during user ${editingUserId ? "update" : "create"}:`,
-        err
-      );
+      console.error(`Error during user ${context}:`, err);
       const graphQLError = err.graphQLErrors?.[0]?.message;
       const networkError = err.networkError?.message;
-      alert(
-        `Грешка при ${editingUserId ? "редактиране" : "създаване"}: ${
-          graphQLError || networkError || err.message || "Неизвестна грешка"
-        }`
-      );
+      const message =
+        graphQLError || networkError || err.message || "Неизвестна грешка";
+      alert(`Грешка при ${context}: ${message}`);
     }
   };
 
-  // Combined loading/error for page/table
-  const isLoadingPageData = usersLoading || countLoading;
-  const pageDataError = usersError || countError;
+  // Combined loading/error for table data
+  const isLoadingTableData = usersLoading || countLoading;
+  const tableDataError = usersError || countError;
 
-  // Initial Page Load Check (Roles are essential)
-  if (rolesLoading)
-    return <LoadingModal message="Зареждане на страницата..." />;
-  if (rolesError)
+  // Determine if any text filter is active
+  const hasActiveTextFilters = useMemo(() => {
+    return !!(
+      currentQueryInput.name ||
+      currentQueryInput.username ||
+      currentQueryInput.position ||
+      currentQueryInput.email
+    );
+  }, [currentQueryInput]);
+
+  // Initial Page Load Check (Wait for roles and absolute total)
+  if (rolesLoadingHook || absoluteTotalLoading) {
+    return <LoadingModal message={"Зареждане на страницата..."} />;
+  }
+
+  // Check for critical errors
+  if (rolesErrorHook || absoluteTotalError) {
     return (
       <div className="p-6 text-red-600 text-center">
-        Грешка при зареждане на роли: {rolesError.message}
+        {rolesErrorHook
+          ? `Грешка при зареждане на роли: ${rolesErrorHook.message}`
+          : ""}
+        {absoluteTotalError
+          ? ` Грешка при зареждане на общ брой потребители: ${absoluteTotalError.message}`
+          : ""}
       </div>
     );
+  }
 
   return (
     <div className="min-h-screen bg-gray-100 p-6 font-sans">
-      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+      {/* Combined Stats and Actions Section */}
+      <div className="mb-6 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
         <UserStats
-          totalUserCount={totalUserCount ?? 0}
+          filteredUserCount={filteredUserCount ?? 0}
+          absoluteTotalUserCount={absoluteTotalUserCount}
+          hasActiveTextFilters={hasActiveTextFilters}
           roles={roles}
           filterRoleIds={filterRoleIds}
           handleRoleFilterToggle={handleRoleFilterToggle}
           onShowAllUsers={() => setFilterRoleIds([])}
         />
-
-        <div className="mb-6 flex flex-col sm:flex-row justify-end items-center gap-2">
+        {/* Action Buttons */}
+        <div className="flex flex-col sm:flex-row gap-2 items-center md:items-start flex-shrink-0 mt-4 md:mt-0">
           <button
-            className="flex items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-gray-500 text-white hover:bg-gray-600 hover:cursor-pointer"
+            className="w-full sm:w-auto flex justify-center items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-gray-500 text-white hover:bg-gray-600 hover:cursor-pointer"
             title={showFilters ? "Скрий филтри" : "Покажи филтри"}
             onClick={() => setShowFilters(!showFilters)}
           >
@@ -178,24 +208,31 @@ const UserManagementPage: React.FC = () => {
               <ChevronUpIcon className="h-5 w-5 mr-1" />
             ) : (
               <ChevronDownIcon className="h-5 w-5 mr-1" />
-            )}{" "}
+            )}
             Филтри
           </button>
           <button
             onClick={openCreateModal}
-            className="flex flex-shrink-0 items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-green-500 text-white hover:bg-green-600 hover:cursor-pointer active:bg-green-700 active:shadow-inner disabled:cursor-not-allowed"
+            className="w-full sm:w-auto flex flex-shrink-0 justify-center items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-green-500 text-white hover:bg-green-600 hover:cursor-pointer active:bg-green-700 active:shadow-inner disabled:cursor-not-allowed"
             disabled={
-              createLoading || updateLoading || usersLoading || countLoading
+              createLoading ||
+              updateLoading ||
+              usersLoading ||
+              countLoading ||
+              rolesLoadingHook ||
+              absoluteTotalLoading
             }
           >
-            <PlusIconSolid className="h-5 w-5 mr-1" /> Създай Потребител
+            <PlusIconSolid className="h-5 w-5 mr-1" />
+            Създай Потребител
           </button>
         </div>
       </div>
 
+      {/* Filter Section - Conditionally Rendered */}
       <div
         className={`transition-all duration-300 ease-in-out overflow-hidden ${
-          showFilters ? "max-h-screen opacity-100" : "max-h-0 opacity-0"
+          showFilters ? "max-h-screen opacity-100 mb-6" : "max-h-0 opacity-0"
         }`}
       >
         <UserFilters
@@ -211,10 +248,10 @@ const UserManagementPage: React.FC = () => {
       </div>
 
       <UserTable
-        users={users || []} // Adjust based on actual return structure of useGetAllUsers
-        isLoadingUsers={isLoadingPageData}
-        usersError={pageDataError}
-        totalUserCount={totalUserCount ?? 0}
+        users={users || []}
+        isLoadingUsers={isLoadingTableData}
+        usersError={tableDataError}
+        totalUserCount={filteredUserCount ?? 0}
         currentPage={currentPage}
         itemsPerPage={itemsPerPage}
         onPageChange={handlePageChange}
@@ -237,7 +274,10 @@ const UserManagementPage: React.FC = () => {
         )}
         {(createError || updateError) && !(createLoading || updateLoading) && (
           <div className="p-4 mb-4 text-center text-red-600 bg-red-100 rounded-md">
-            Грешка при запис: {createError?.message || updateError?.message}
+            Грешка при запис:{" "}
+            {createError?.message ||
+              updateError?.message ||
+              "Неизвестна грешка"}
           </div>
         )}
         {!(createLoading || updateLoading) && (
@@ -248,8 +288,8 @@ const UserManagementPage: React.FC = () => {
             initialData={editingUser}
             submitButtonText={editingUser ? "Запази" : "Създай"}
             roles={roles}
-            rolesLoading={rolesLoading}
-            rolesError={rolesError}
+            rolesLoading={rolesLoadingHook}
+            rolesError={rolesErrorHook}
           />
         )}
       </CreateUserModal>
@@ -257,4 +297,4 @@ const UserManagementPage: React.FC = () => {
   );
 };
 
-export default UserManagementPage;
+export default UserManagement;

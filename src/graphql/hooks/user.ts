@@ -1,5 +1,12 @@
-import { useQuery, useMutation } from "@apollo/client";
-import { GET_USERS, COUNT_USERS, GET_ME } from "../query/user"; // Adjust path if needed
+import { useQuery, useMutation, ApolloError } from "@apollo/client";
+import {
+  GET_USERS,
+  COUNT_USERS,
+  GET_ME,
+  GET_USER_BY_USERNAME,
+  COUNT_USERS_BY_EXACT_EMAIL,
+  COUNT_USERS_BY_EXACT_USERNAME,
+} from "../query/user"; // Adjust path if needed
 import {
   CREATE_USER,
   CreateUserInput,
@@ -86,7 +93,6 @@ export const useCountUsers = (input: any) => {
 export const useCreateUser = () => {
   const [createUserMutation, { data, loading, error }] =
     useMutation(CREATE_USER);
-  // ... (rest of hook is unchanged) ...
   const createUser = async (input: CreateUserInput) => {
     try {
       const response = await createUserMutation({ variables: { input } });
@@ -103,7 +109,6 @@ export const useCreateUser = () => {
 export const useUpdateUser = () => {
   const [updateUserMutation, { data, loading, error }] =
     useMutation(UPDATE_USER);
-  // ... (rest of hook is unchanged) ...
   const updateUser = async (id: string, input: UpdateUserInput) => {
     try {
       const response = await updateUserMutation({ variables: { id, input } });
@@ -115,6 +120,115 @@ export const useUpdateUser = () => {
   };
 
   return { updateUser, user: data?.updateUser, loading, error };
+};
+
+export const useGetUserByUsername = (username: string) => {
+  const { loading, error, data } = useQuery(GET_USER_BY_USERNAME, {
+    variables: { username },
+  });
+  const user = data?.getLeanUserByUsername || null;
+  return {
+    user,
+    loading,
+    error,
+  };
+};
+
+interface CountHookOptions {
+  /**
+   * If true, the query will be skipped.
+   */
+  skip?: boolean;
+  /**
+   * Specifies how the query should interact with the Apollo Client cache.
+   * Defaults to 'network-only' for validation to ensure fresh data.
+   */
+  fetchPolicy?:
+    | "cache-first"
+    | "network-only"
+    | "cache-only"
+    | "no-cache"
+    | "standby"
+    | "cache-and-network";
+}
+
+interface CountHookResult {
+  /**
+   * The number of users found with the exact email. Defaults to 0.
+   */
+  count: number;
+  /**
+   * True if the query is currently in flight.
+   */
+  loading: boolean;
+  /**
+   * An ApolloError object if the query failed.
+   */
+  error: ApolloError | undefined;
+  /**
+   * A function to refetch the query.
+   */
+  refetch?: (variables?: { email: string }) => Promise<any>; // Typed variables for refetch
+}
+
+export const useCountUsersByExactEmail = (
+  email: string,
+  options?: CountHookOptions
+): CountHookResult => {
+  // Determine if the query should be skipped:
+  // 1. If options.skip is explicitly true.
+  // 2. If the email string itself is empty/falsy (no need to query for an empty email).
+  const shouldSkipQuery = options?.skip || !email;
+
+  const { loading, error, data, refetch } = useQuery(
+    COUNT_USERS_BY_EXACT_EMAIL,
+    {
+      variables: { email },
+      // Pass the calculated skip condition to useQuery
+      skip: shouldSkipQuery,
+      // Default to 'network-only' for validation to ensure fresh data,
+      // but allow override via options.
+      fetchPolicy: options?.fetchPolicy || "network-only",
+      // Optional: if you want 'loading' to be true during refetches triggered by polling or refetch()
+      // notifyOnNetworkStatusChange: true,
+    }
+  );
+
+  // Ensure 'countUsersByExactEmail' matches the field name in your GQL query response.
+  // Default to 0 if data is not yet available or if the field is missing.
+  const count = data?.countUsersByExactEmail ?? 0;
+
+  return {
+    count,
+    loading,
+    error,
+    refetch,
+  };
+};
+
+export const useCountUsersByExactUsername = (
+  username: string,
+  options?: CountHookOptions
+): CountHookResult => {
+  const shouldSkipQuery = options?.skip || !username;
+
+  const { loading, error, data, refetch } = useQuery(
+    COUNT_USERS_BY_EXACT_USERNAME,
+    {
+      variables: { username },
+      skip: shouldSkipQuery,
+      fetchPolicy: options?.fetchPolicy || "network-only",
+    }
+  );
+
+  const count = data?.countUsersByExactUsername ?? 0;
+
+  return {
+    count,
+    loading,
+    error,
+    refetch,
+  };
 };
 
 // --- useGetMe Hook (Unchanged) ---

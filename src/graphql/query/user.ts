@@ -40,6 +40,18 @@ export const GET_USER_BY_USERNAME = gql`
   }
 `;
 
+export const COUNT_USERS_BY_EXACT_USERNAME = gql`
+  query CountUsersByExactUsername($username: String!) {
+    countUsersByExactUsername(username: $username)
+  }
+`;
+
+export const COUNT_USERS_BY_EXACT_EMAIL = gql`
+  query CountUsersByExactEmail($email: String!) {
+    countUsersByExactEmail(email: $email)
+  }
+`;
+
 export const GET_LEAN_USERS = gql`
   query GetLeanUsers($input: String) {
     getLeanUsers(input: $input) {

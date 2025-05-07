@@ -32,8 +32,8 @@ const StatCard: React.FC<Props> = ({
   // Active state classes (apply when isActive is true)
   // Example: Brighter background, maybe a ring/border highlight
   const activeClasses = isActive
-    ? "bg-white border-sky-200 border-3 ring-2 ring-white ring-offset-1 shadow-inner scale-102" // Example active style
-    : "bg-gray-200 border-gray-200 border-3 hover:bg-gray-50 hover:border-gray-100 active:bg-gray-100"; // Default/inactive style
+    ? "bg-white border-sky-200 border-4 ring-2 ring-sky-100 ring-offset-0 shadow-inner scale-102" // Example active style
+    : "bg-gray-200 border-gray-200 border-4 hover:bg-gray-50 hover:border-gray-100 active:bg-gray-100"; // Default/inactive style
 
   const activeTitle = isActive ? "text-gray-500" : "text-gray-400";
   const activeAmount = isActive ? "text-gray-800" : "text-gray-500";

@@ -67,7 +67,7 @@ const mainRouter = createBrowserRouter([
         element: <Category />,
       },
       {
-        path: "/case/:id",
+        path: "/case/:number",
         element: <Case />,
       },
     ],

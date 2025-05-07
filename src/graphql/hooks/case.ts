@@ -2,6 +2,7 @@ import { useMutation, useQuery } from "@apollo/client";
 import { CREATE_CASE } from "../mutation/case";
 import {
   COUNT_CASES,
+  GET_CASE_BY_CASE_NUMBER,
   GET_CASES,
   GET_CASES_BY_USER_CATEGORIES,
   GET_USER_ANSWERED_CASES,
@@ -66,6 +67,19 @@ export const useGetAllCases = (input: any) => {
   return {
     cases,
     count,
+    loading,
+    error,
+    refetch,
+  };
+};
+
+export const useGetCaseByCaseNumber = (caseNumber: number) => {
+  const { loading, error, data, refetch } = useQuery(GET_CASE_BY_CASE_NUMBER, {
+    variables: { caseNumber },
+  });
+  const caseData = data?.getCaseByNumber || null;
+  return {
+    caseData,
     loading,
     error,
     refetch,

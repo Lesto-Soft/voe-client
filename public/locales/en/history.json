@@ -1,0 +1,16 @@
+{
+  "history": "History",
+  "old_content": "Old description",
+  "new_content": "New description",
+  "old_type": "Old type",
+  "new_type": "New type",
+  "old_priority": "Old priority",
+  "new_priority": "New priority",
+  "old_categories": "Old categories",
+  "new_categories": "New categories",
+  "close": "Close",
+  "LOW": "LOW",
+  "MEDIUM": "MEDIUM",
+  "HIGH": "HIGH",
+  "priority": "Priority"
+}

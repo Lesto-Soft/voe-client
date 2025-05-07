@@ -20,7 +20,7 @@ const StatCard: React.FC<Props> = ({
   isActive = false,
 }) => {
   const baseClasses =
-    "flex min-w-[200px] items-center space-x-4 rounded-md border p-4 shadow-sm transition-all duration-150 ease-in-out";
+    "flex min-w-[200px] items-center space-x-4 rounded-md border p-2.5 shadow-sm transition-all duration-150 ease-in-out";
   const interactiveClasses = onClick
     ? "cursor-pointer hover:shadow-md active:scale-[0.98]"
     : "";

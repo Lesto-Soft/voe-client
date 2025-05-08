@@ -66,8 +66,8 @@ const UserTable: React.FC<UserTableProps> = ({
 
   const columnWidths = {
     avatar: "w-16",
-    username: "w-1/6",
-    name: "w-1/5",
+    name: "w-1/6",
+    username: "w-1/5",
     position: "w-1/5",
     email: "w-1/6",
     role: "w-1/10",
@@ -97,17 +97,17 @@ const UserTable: React.FC<UserTableProps> = ({
                 </th>
                 <th
                   scope="col"
-                  className={`${columnWidths.username} px-3 py-4 text-center text-sm font-semibold text-white uppercase tracking-wide relative whitespace-nowrap`}
-                >
-                  <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-px bg-gray-400"></span>
-                  Потребителско име
-                </th>
-                <th
-                  scope="col"
                   className={`${columnWidths.name} px-3 py-4 text-center text-sm font-semibold text-white uppercase tracking-wide relative`}
                 >
                   <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-px bg-gray-400"></span>
                   Име
+                </th>
+                <th
+                  scope="col"
+                  className={`${columnWidths.username} px-3 py-4 text-center text-sm font-semibold text-white uppercase tracking-wide relative whitespace-nowrap`}
+                >
+                  <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-px bg-gray-400"></span>
+                  Потребителско име
                 </th>
                 <th
                   scope="col"
@@ -178,19 +178,27 @@ const UserTable: React.FC<UserTableProps> = ({
                     <td
                       className={`${
                         columnWidths.username
-                      } px-3 py-4 whitespace-nowrap font-medium hover:underline ${
+                      } px-3 py-4 text-sm break-words ${
                         isInactive ? "text-blue-400" : "text-blue-600"
                       }`}
                     >
                       {" "}
-                      <Link to={`/user-data/${user._id}`}>
-                        {user.username}
+                      <Link
+                        to={`/user-data/${user._id}`}
+                        className={`inline-block px-2 py-0.5 rounded-md font-medium transition-colors duration-150 ease-in-out text-left hover:cursor-pointer ${
+                          isInactive
+                            ? "bg-purple-50 text-purple-600 hover:bg-purple-100 border border-purple-100"
+                            : "bg-purple-100 text-purple-800 hover:bg-purple-200 border border-purple-200"
+                        }`}
+                      >
+                        {user.name}
                       </Link>{" "}
                     </td>
+
                     <td
-                      className={`${columnWidths.name} px-3 py-4 whitespace-nowrap`}
+                      className={`${columnWidths.username} px-3 py-4 whitespace-nowrap`}
                     >
-                      {user.name || "-"}
+                      {user.username || "-"}
                     </td>
                     <td
                       className={`${columnWidths.position} hidden md:table-cell px-3 py-4 whitespace-nowrap`}

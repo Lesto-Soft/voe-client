@@ -37,6 +37,24 @@ const UserSearchBar: React.FC<UserSearchBarProps> = ({
     <div className="pt-2.5">
       {/* Grid layout for filter inputs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-3 items-start">
+        {/* Filter by Name */}
+        <div>
+          <label
+            htmlFor="filterName"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            {/* {t("name")} */} Име {/* Replace with t('name') */}
+          </label>
+          <input
+            type="text"
+            id="filterName"
+            value={filterName}
+            onChange={(e) => setFilterName(e.target.value)}
+            className="bg-white w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition duration-150 ease-in-out"
+            placeholder="Търси по име..." // Example placeholder
+          />
+        </div>
+
         {/* Filter by Username */}
         <div>
           <label
@@ -53,24 +71,6 @@ const UserSearchBar: React.FC<UserSearchBarProps> = ({
             onChange={(e) => setFilterUsername(e.target.value)}
             className="bg-white w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition duration-150 ease-in-out"
             placeholder="Търси по потр. име..." // Example placeholder
-          />
-        </div>
-
-        {/* Filter by Name */}
-        <div>
-          <label
-            htmlFor="filterName"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            {/* {t("name")} */} Име {/* Replace with t('name') */}
-          </label>
-          <input
-            type="text"
-            id="filterName"
-            value={filterName}
-            onChange={(e) => setFilterName(e.target.value)}
-            className="bg-white w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition duration-150 ease-in-out"
-            placeholder="Търси по име..." // Example placeholder
           />
         </div>
 

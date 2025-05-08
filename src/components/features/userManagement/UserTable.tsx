@@ -145,10 +145,28 @@ const UserTable: React.FC<UserTableProps> = ({
                   user.avatar && user._id
                     ? `${serverBaseUrl}/static/avatars/${user._id}/${user.avatar}?v=${avatarVersion}`
                     : null;
+
+                // Determine if the user is inactive
+                const isInactive = user.role?.name === "напуснал";
+
+                // Define base row classes
+                let rowClasses = "hover:bg-gray-100";
+                // Define inactive specific classes
+                const inactiveClasses =
+                  "bg-gray-50 text-gray-400 hover:bg-gray-100"; // Example inactive style
+
+                if (isInactive) {
+                  rowClasses = inactiveClasses;
+                }
+
                 return (
-                  <tr key={user._id} className="hover:bg-gray-100">
+                  <tr key={user._id} className={rowClasses}>
                     <td
-                      className={`${columnWidths.avatar} px-3 py-4 whitespace-nowrap`}
+                      className={`${
+                        columnWidths.avatar
+                      } px-3 py-4 whitespace-nowrap ${
+                        isInactive ? "opacity-75" : ""
+                      }`}
                     >
                       {" "}
                       <UserAvatar
@@ -158,13 +176,14 @@ const UserTable: React.FC<UserTableProps> = ({
                       />{" "}
                     </td>
                     <td
-                      className={`${columnWidths.username} px-3 py-4 whitespace-nowrap font-medium`}
+                      className={`${
+                        columnWidths.username
+                      } px-3 py-4 whitespace-nowrap font-medium hover:underline ${
+                        isInactive ? "text-blue-400" : "text-blue-600"
+                      }`}
                     >
                       {" "}
-                      <Link
-                        to={`/user-data/${user._id}`}
-                        className="text-blue-600 hover:underline"
-                      >
+                      <Link to={`/user-data/${user._id}`}>
                         {user.username}
                       </Link>{" "}
                     </td>
@@ -193,7 +212,9 @@ const UserTable: React.FC<UserTableProps> = ({
                     >
                       <button
                         onClick={() => onEditUser(user)}
-                        className="w-30 inline-flex justify-center rounded bg-sky-100 p-1.5 text-sky-700 border border-sky-200 hover:border-sky-300 transition-all duration-150 ease-in-out hover:cursor-pointer hover:bg-sky-200 hover:text-sky-800 active:bg-sky-300 active:scale-[0.96] disabled:bg-gray-100 disabled:text-gray-400 disabled:opacity-70 disabled:cursor-not-allowed disabled:scale-100"
+                        className={`${
+                          isInactive ? "opacity-75" : ""
+                        } w-30 inline-flex justify-center rounded bg-sky-100 p-1.5 text-sky-700 border border-sky-200 hover:border-sky-300 transition-all duration-150 ease-in-out hover:cursor-pointer hover:bg-sky-200 hover:text-sky-800 active:bg-sky-300 active:scale-[0.96] disabled:bg-gray-100 disabled:text-gray-400 disabled:opacity-70 disabled:cursor-not-allowed disabled:scale-100`}
                         aria-label={`Редактирай ${user.username}`}
                         disabled={
                           createLoading || updateLoading || isLoadingUsers

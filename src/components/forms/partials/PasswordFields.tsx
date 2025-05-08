@@ -27,6 +27,9 @@ const PasswordFields: React.FC<PasswordFieldsProps> = ({
   setConfirmNewPassword,
   errorPlaceholderClass,
 }) => {
+  const newPasswordFullLabel =
+    "Нова парола (оставете празно, ако не променяте)";
+
   return (
     <>
       {!isEditing ? (
@@ -43,7 +46,7 @@ const PasswordFields: React.FC<PasswordFieldsProps> = ({
               type="password"
               id="password"
               value={password}
-              onChange={(e) => setPassword?.(e.target.value)} // Use optional chaining as props are conditional
+              onChange={(e) => setPassword?.(e.target.value)}
               required={!isEditing}
               className="w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
             />
@@ -73,7 +76,8 @@ const PasswordFields: React.FC<PasswordFieldsProps> = ({
           <div>
             <label
               htmlFor="newPassword"
-              className="mb-1 block text-sm font-medium text-gray-700"
+              className="mb-1 block text-sm font-medium text-gray-700 truncate" // Added truncate
+              title={newPasswordFullLabel} // Added title attribute
             >
               Нова парола{" "}
               <span className="text-xs text-gray-500">

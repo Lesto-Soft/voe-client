@@ -3,17 +3,26 @@ import { gql } from "@apollo/client";
 const userFragment = `
 fragment UserFragment on User {
       _id
+      username
       name
       email
       position
       role {
+        _id
         name
       }
+        avatar
      
 }`;
 
+export const COUNT_USERS = gql`
+  query CountUsers($input: getUserFiltersInput) {
+    countUsers(input: $input)
+  }
+`;
+
 export const GET_USERS = gql`
-  query GetAllUsers($input: getAllInput) {
+  query GetAllUsers($input: getUserFiltersInput) {
     getAllUsers(input: $input) {
       ...UserFragment
       avatar
@@ -28,6 +37,18 @@ export const GET_USER_BY_USERNAME = gql`
       _id
       name
     }
+  }
+`;
+
+export const COUNT_USERS_BY_EXACT_USERNAME = gql`
+  query CountUsersByExactUsername($username: String!) {
+    countUsersByExactUsername(username: $username)
+  }
+`;
+
+export const COUNT_USERS_BY_EXACT_EMAIL = gql`
+  query CountUsersByExactEmail($email: String!) {
+    countUsersByExactEmail(email: $email)
   }
 `;
 

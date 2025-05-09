@@ -1,13 +1,14 @@
 import { createBrowserRouter, Outlet, RouterProvider } from "react-router";
 import Home from "../page/Home";
-import Users from "../page/Users";
 import CaseSubmittion from "../page/CaseSubmittion";
 import Dashboard from "../page/Dashboard";
 import LoadingTestPage from "../page/LoadingTestPage";
+import UserManagement from "../page/UserManagement";
 import NavBar from "../components/menu/NavBar";
 import Profile from "../page/Profile";
 import Analyses from "../page/Analyses";
 import NotFoundPage from "../page/NotFound";
+import UserData from "../page/UserData";
 import User from "../page/User";
 import Category from "../page/Category";
 import Case from "../page/Case";
@@ -34,7 +35,10 @@ const mainRouter = createBrowserRouter([
     path: "/submit-case",
     element: <CaseSubmittion />,
   },
-
+  {
+    path: "/user-data/:userId",
+    element: <UserData />,
+  },
   {
     path: "/loading",
     element: <LoadingTestPage />,
@@ -47,8 +51,8 @@ const mainRouter = createBrowserRouter([
         element: <Dashboard />,
       },
       {
-        path: "/users",
-        element: <Users />,
+        path: "/user-management",
+        element: <UserManagement />,
       },
       {
         path: "/profile",

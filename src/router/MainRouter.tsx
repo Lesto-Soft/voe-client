@@ -12,6 +12,7 @@ import UserData from "../page/UserData";
 import User from "../page/User";
 import Category from "../page/Category";
 import Case from "../page/Case";
+import CategoryManagement from "../page/CategoryManagement";
 
 const AppLayout = () => {
   return (
@@ -53,6 +54,10 @@ const mainRouter = createBrowserRouter([
       {
         path: "/user-management",
         element: <UserManagement />,
+      },
+      {
+        path: "/category-management",
+        element: <CategoryManagement />,
       },
       {
         path: "/profile",

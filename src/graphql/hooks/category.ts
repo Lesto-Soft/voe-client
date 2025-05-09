@@ -1,6 +1,88 @@
 import { useQuery } from "@apollo/client";
-import { GET_ACTIVE_CATEGORIES } from "../query/category";
+import {
+  GET_ACTIVE_CATEGORIES,
+  GET_ALL_LEAN_CATEGORIES,
+  COUNT_CATEGORIES,
+} from "../query/category";
 import { ICategory } from "../../db/interfaces";
+
+export function buildCategoryQueryVariables(input: any) {
+  // Destructure input with default values for pagination
+  const {
+    itemsPerPage, // Default items per page
+    currentPage, // Default current page (0-indexed)
+    query, // Generic search query
+    name, // Filter by category name
+    archived, // Filter by archived status (boolean)
+    expertIds, // Filter by array of expert User IDs
+    managerIds, // Filter by array of manager User IDs
+  } = input || {}; // Ensure input is not null/undefined
+
+  // Initialize the base variables object with pagination
+  const variables: any = {
+    // Using 'any' for flexibility, or define a specific type
+    input: {
+      itemsPerPage,
+      currentPage,
+    },
+  };
+
+  // Conditionally add filter fields to the variables.input object
+
+  // Generic query string
+  if (typeof query === "string" && query.trim())
+    variables.input.query = query.trim();
+
+  // Filter by category name
+  if (typeof name === "string" && name.trim())
+    variables.input.name = name.trim();
+
+  // Filter by archived status
+  // Only include 'archived' if it's explicitly a boolean (true or false)
+  if (typeof archived === "boolean") variables.input.archived = archived;
+
+  // Filter by expert IDs
+  if (Array.isArray(expertIds) && expertIds.length > 0)
+    variables.input.expertIds = expertIds;
+
+  // Filter by manager IDs
+  if (Array.isArray(managerIds) && managerIds.length > 0)
+    variables.input.managerIds = managerIds;
+
+  return variables;
+}
+
+export const useGetAllLeanCategories = (input: any) => {
+  const variables = buildCategoryQueryVariables(input);
+
+  const { loading, error, data, refetch } = useQuery<{
+    getAllLeanCategories: ICategory[];
+  }>(GET_ALL_LEAN_CATEGORIES, { variables });
+
+  return {
+    loading,
+    error,
+    categories: data?.getAllLeanCategories || [], // Ensure default empty array
+    refetch,
+  };
+};
+
+export const useCountCategories = (input: any) => {
+  const variables = buildCategoryQueryVariables(input);
+
+  const { loading, error, data, refetch } = useQuery(COUNT_CATEGORIES, {
+    variables,
+  });
+
+  const count = data?.countCategories || 0;
+
+  return {
+    count,
+    loading,
+    error,
+    refetch,
+  };
+};
 
 // Hook to fetch active categories (can be extended with search later if needed)
 export const useGetActiveCategories = () => {

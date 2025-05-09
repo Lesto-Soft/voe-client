@@ -21,8 +21,9 @@ export interface ICategory {
   name: string;
   problem?: string;
   suggestion?: string;
-  experts?: string[];
   cases?: ICase[];
+  experts?: IUser[] | [];
+  managers?: IUser[] | [];
   archived?: boolean;
 }
 
@@ -40,6 +41,7 @@ export interface IUser {
   categories?: ICategory[];
   comments?: IComment[];
   answers?: IAnswer[];
+  financialApprover?: boolean;
 }
 
 export interface IRating {

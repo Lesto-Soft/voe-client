@@ -17,8 +17,6 @@ const columnWidths = {
   edit: "w-20", // Example: Broader edit column (adjust from previous w-16)
 };
 
-const rowHeight = "h-13";
-
 const UserTableSkeleton: React.FC<UserTableSkeletonProps> = ({ rows = 10 }) => {
   return (
     <div className="flex flex-col shadow-md rounded-lg overflow-hidden bg-white border border-gray-200">
@@ -27,30 +25,7 @@ const UserTableSkeleton: React.FC<UserTableSkeletonProps> = ({ rows = 10 }) => {
         <table className="min-w-full divide-y divide-gray-200 table-fixed">
           <thead className="bg-gray-500 sticky top-0 z-10">
             <tr>
-              {/* Define ALL TH elements with widths and responsive classes */}
-              <th
-                className={`${columnWidths.avatar} ${rowHeight} px-3 py-4`}
-              ></th>
-              <th
-                className={`${columnWidths.username} ${rowHeight} px-3 py-4`}
-              ></th>
-              <th
-                className={`${columnWidths.name} ${rowHeight} px-3 py-4`}
-              ></th>
-              {/* Add hidden md:table-cell to match td */}
-              <th
-                className={`${columnWidths.position} hidden md:table-cell ${rowHeight} px-3 py-4`}
-              ></th>
-              {/* Add hidden md:table-cell to match td */}
-              <th
-                className={`${columnWidths.email} hidden md:table-cell ${rowHeight} px-3 py-4`}
-              ></th>
-              <th
-                className={`${columnWidths.role} ${rowHeight} px-3 py-4`}
-              ></th>
-              <th
-                className={`${columnWidths.edit} ${rowHeight} px-3 py-4`}
-              ></th>
+              <th colSpan={7} className="h-13 bg-gray-500 rounded-t-md"></th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">

@@ -2,7 +2,6 @@ import { IAnswer, IComment } from "../../db/interfaces";
 import moment from "moment";
 import {
   UserCircleIcon,
-  PencilIcon,
   CheckCircleIcon,
   XCircleIcon,
   ClockIcon,
@@ -13,6 +12,8 @@ import Comment from "./Comment";
 import UserLink from "../global/UserLink";
 import ShowDate from "../global/ShowDate";
 import { useTranslation } from "react-i18next";
+import EditButton from "../global/EditButton";
+import { admin_check } from "../../utils/rowStringCheckers";
 
 // Dummy AnswerHistoryModal for now (replace with your real modal if needed)
 const AnswerHistoryModal: React.FC<{
@@ -90,7 +91,7 @@ const AnswerHistoryModal: React.FC<{
   );
 };
 
-const Answer: React.FC<{ answer: IAnswer }> = ({ answer }) => {
+const Answer: React.FC<{ answer: IAnswer; me?: any }> = ({ answer, me }) => {
   const [approved, setApproved] = useState(!!answer.approved);
   const { t } = useTranslation("answer");
   return (
@@ -121,7 +122,7 @@ const Answer: React.FC<{ answer: IAnswer }> = ({ answer }) => {
               </span>
               {/* Approve/Unapprove Button */}
               <button
-                className={`ml-2 flex items-center px-2 py-1 rounded text-xs font-medium border transition ${
+                className={`w-26 ml-2 flex items-center px-2 py-1 rounded text-xs font-medium border transition hover:cursor-pointer ${
                   approved
                     ? "bg-green-100 text-green-700 border-green-200 hover:bg-green-200"
                     : "bg-gray-100 text-gray-500 border-gray-200 hover:bg-gray-200"
@@ -142,29 +143,22 @@ const Answer: React.FC<{ answer: IAnswer }> = ({ answer }) => {
                   </>
                 )}
               </button>
-              {/* Edit Button */}
-              <button
-                className="ml-2 flex items-center px-2 py-1 rounded text-xs font-medium border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 transition"
-                type="button"
-                title="Редактирай"
-                // onClick={...} // Add your edit logic here
-              >
-                <PencilIcon className="h-4 w-4 mr-1" />
-                {t("edit")}
-              </button>
             </div>
             <div className="flex items-center gap-2">
               <ShowDate date={answer.date} />
               {answer.history && answer.history.length > 0 && (
                 <AnswerHistoryModal history={answer.history} />
               )}
+              {me &&
+                (me._id === answer.creator._id ||
+                  admin_check(me.role.name)) && <EditButton />}
             </div>
           </div>
           <div className="mt-1 flex-1 flex">
             <div
               className={`${
                 approved ? "bg-green-50" : "bg-gray-50"
-              } rounded p-3 text-gray-900 whitespace-pre-line w-full flex`}
+              } rounded p-3 text-gray-900 whitespace-pre-line w-full flex max-h-48 overflow-y-auto`}
             >
               {answer.content}
             </div>
@@ -177,7 +171,7 @@ const Answer: React.FC<{ answer: IAnswer }> = ({ answer }) => {
           <hr className="my-2 border-gray-200" />
           <div className="flex flex-col gap-2">
             {answer.comments.map((comment: IComment) => (
-              <Comment key={comment._id} {...comment} />
+              <Comment key={comment._id} comment={comment} me={me} />
             ))}
           </div>
         </div>

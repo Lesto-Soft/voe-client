@@ -4,9 +4,7 @@ import { useParams } from "react-router";
 import {
   PaperClipIcon,
   UserCircleIcon,
-  CalendarIcon,
   StarIcon,
-  PencilIcon,
 } from "@heroicons/react/24/outline";
 import { FlagIcon } from "@heroicons/react/24/solid";
 import { ICase, ICategory, IComment, IAnswer, IRating } from "../db/interfaces";
@@ -17,6 +15,9 @@ import Comment from "../components/case-components/Comment";
 import UserLink from "../components/global/UserLink";
 import CategoryLink from "../components/global/CategoryLink";
 import ShowDate from "../components/global/ShowDate";
+import EditButton from "../components/global/EditButton";
+import { useGetMe } from "../graphql/hooks/user";
+import { admin_check } from "../utils/rowStringCheckers";
 
 // --- Rating Component ---
 const CaseRating: React.FC<{
@@ -35,14 +36,15 @@ const CaseRating: React.FC<{
   const [selected, setSelected] = useState<number>(avg);
 
   const handleClick = (star: number) => {
+    console.log(star);
     if (disabled) return;
     setSelected(star);
     onRate?.(star);
   };
 
   return (
-    <div className="flex items-center flex-row-reverse">
-      {[1, 2, 3, 4, 5].reverse().map((star) => (
+    <div className="">
+      {[5, 4, 3, 2, 1].reverse().map((star) => (
         <button
           key={star}
           type="button"
@@ -84,13 +86,14 @@ const CaseRating: React.FC<{
 const Case = () => {
   const { t } = useTranslation("dashboard");
   const { number } = useParams<{ number: string }>();
+  const { me, loading: loadingMe, error: errorMe } = useGetMe();
   if (!number) {
     return <div>Case number is required</div>;
   }
 
   const { caseData, loading, error } = useGetCaseByCaseNumber(parseInt(number));
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>Error loading case</div>;
+  if (loading || loadingMe) return <div>Loading...</div>;
+  if (error || errorMe) return <div>Error loading case</div>;
   if (!caseData) return <div>No case found</div>;
 
   const c = caseData as ICase;
@@ -98,7 +101,7 @@ const Case = () => {
   // --- UI Consistency with CaseTable ---
   // Shared box style for case number, priority, status, type
   const caseBoxClasses =
-    "inline-flex flex-col items-center gap-0 px-2.5 py-1 rounded text-xs font-semibold bg-white min-w-[70px] justify-center";
+    "inline-flex flex-col items-left gap-0 px-2.5 py-1 rounded text-xs font-semibold bg-white min-w-[70px] justify-center";
 
   const labelTextClass = "text-xs text-gray-400 italic mb-1";
 
@@ -225,9 +228,7 @@ const Case = () => {
                   </span>
 
                   {/* Categories */}
-                  <span
-                    className={`${caseBoxClasses} flex-col items-start bg-white`}
-                  >
+                  <span className={`${caseBoxClasses} flex-col bg-white`}>
                     <span className={labelTextClass}>{t("categories")}:</span>
                     <span className="flex flex-wrap gap-1">
                       {c.categories.length > 0 ? (
@@ -241,34 +242,33 @@ const Case = () => {
                       )}
                     </span>
                   </span>
+
+                  {/* Rating */}
+                  <span className={`${caseBoxClasses} flex-col bg-white`}>
+                    <span className={labelTextClass}>{t("rating")}:</span>
+                    <span className="flex flex-wrap gap-1">
+                      <CaseRating ratings={c.rating} />
+                    </span>
+                  </span>
                 </div>
               </div>
-              <div>
-                {" "}
-                <CaseRating ratings={c.rating} />
-                <div className="flex items-center gap-2">
-                  <ShowDate date={c.date} />
-                  {/* History Button */}
-                  {c.history && c.history.length > 0 && (
-                    <CaseHistoryModal history={c.history} />
-                  )}
-                  {/* Edit Button */}
-                  <button
-                    className="flex items-center px-2 py-1 rounded text-xs font-medium border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 transition ml-2"
-                    type="button"
-                    title={t("edit")}
-                    // onClick={...} // Add your edit logic here
-                  >
-                    <PencilIcon className="h-4 w-4 mr-1" />
-                    {t("edit")}
-                  </button>
-                </div>
-                {/* Rating */}
+              <div className="flex items-center gap-2">
+                <ShowDate date={c.date} />
+                {/* History Button */}
+                {c.history && c.history.length > 0 && (
+                  <CaseHistoryModal history={c.history} />
+                )}
+                {/* Only show EditButton if current user is the creator */}
+                {me &&
+                  me.me &&
+                  (me.me._id === c.creator._id ||
+                    admin_check(me.me.role.name)) && <EditButton />}
+                {console.log(admin_check(me.me.role.name))}
               </div>
             </div>
             {/* Content */}
             <div className="mt-auto flex-1 flex">
-              <div className="bg-gray-50 rounded p-3 text-gray-900 whitespace-pre-line w-full  flex">
+              <div className="max-h-48 bg-gray-50 rounded p-3 text-gray-900 whitespace-pre-line w-full flex overflow-y-auto">
                 {c.content}
               </div>
             </div>
@@ -304,7 +304,7 @@ const Case = () => {
             <hr className="my-2 border-gray-200" />
             <div className="flex flex-col gap-2">
               {c.comments.map((comment: IComment) => (
-                <Comment key={comment._id} {...comment} />
+                <Comment key={comment._id} comment={comment} me={me?.me} />
               ))}
             </div>
           </div>
@@ -318,7 +318,7 @@ const Case = () => {
             ...c.answers.filter((a) => !!a.approved),
             ...c.answers.filter((a) => !a.approved),
           ].map((answer: IAnswer) => (
-            <Answer answer={answer} />
+            <Answer key={answer._id} answer={answer} me={me?.me} />
           ))}
         </ul>
       )}

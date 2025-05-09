@@ -71,6 +71,8 @@ const commentFragment = `
         _id
         creator {
           name
+          position
+          _id
         }
         content
         date

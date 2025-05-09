@@ -12,5 +12,6 @@
   "LOW": "LOW",
   "MEDIUM": "MEDIUM",
   "HIGH": "HIGH",
-  "priority": "Priority"
+  "priority": "Priority",
+  "categories": "Categories"
 }

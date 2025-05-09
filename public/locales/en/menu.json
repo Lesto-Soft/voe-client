@@ -15,6 +15,6 @@
   "signOut": "Sign Out",
   "voe": "Voice Of Employees",
   "submit-case": "Submit Case",
-  "submit-case_desc": "Submit a case to the system",
-  "case_desc": "Case number {{caseId}}"
+  "case_desc": "Case number {{caseId}}",
+  "submit_case_desc": "Submit a case to the system"
 }

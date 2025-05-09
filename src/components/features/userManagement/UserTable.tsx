@@ -152,8 +152,7 @@ const UserTable: React.FC<UserTableProps> = ({
                 // Define base row classes
                 let rowClasses = "hover:bg-gray-100";
                 // Define inactive specific classes
-                const inactiveClasses =
-                  "bg-gray-50 text-gray-400 hover:bg-gray-100"; // Example inactive style
+                const inactiveClasses = "bg-gray-50 text-gray-300 cursor-text"; // Example inactive style
 
                 if (isInactive) {
                   rowClasses = inactiveClasses;
@@ -164,32 +163,27 @@ const UserTable: React.FC<UserTableProps> = ({
                     <td
                       className={`${
                         columnWidths.avatar
-                      } px-3 py-4 whitespace-nowrap ${
-                        isInactive ? "opacity-75" : ""
+                      } px-3 py-4 whitespace-nowrap flex justify-center items-center${
+                        isInactive ? "opacity-50" : ""
                       }`}
                     >
                       {" "}
                       <UserAvatar
                         name={user.name || user.username || "U"}
                         imageUrl={imageUrl}
-                        size={32}
+                        size={42}
                       />{" "}
                     </td>
-                    <td
-                      className={`${
-                        columnWidths.username
-                      } px-3 py-4 text-sm break-words ${
-                        isInactive ? "text-blue-400" : "text-blue-600"
-                      }`}
-                    >
+                    <td className={`${columnWidths.name} px-3 py-4 text-sm`}>
                       {" "}
                       <Link
                         to={`/user-data/${user._id}`}
-                        className={`inline-block px-2 py-0.5 rounded-md font-medium transition-colors duration-150 ease-in-out text-left hover:cursor-pointer ${
+                        className={`max-w-75 inline-block px-2 py-0.5 rounded-md font-medium transition-colors duration-150 ease-in-out text-left hover:cursor-pointer ${
                           isInactive
-                            ? "bg-purple-50 text-purple-600 hover:bg-purple-100 border border-purple-100"
+                            ? "bg-purple-50 text-purple-400 hover:bg-purple-100 border border-purple-100 opacity-75"
                             : "bg-purple-100 text-purple-800 hover:bg-purple-200 border border-purple-200"
-                        }`}
+                        } truncate`}
+                        title={user.name}
                       >
                         {user.name}
                       </Link>{" "}
@@ -221,7 +215,7 @@ const UserTable: React.FC<UserTableProps> = ({
                       <button
                         onClick={() => onEditUser(user)}
                         className={`${
-                          isInactive ? "opacity-75" : ""
+                          isInactive ? "opacity-50" : ""
                         } w-30 inline-flex justify-center rounded bg-sky-100 p-1.5 text-sky-700 border border-sky-200 hover:border-sky-300 transition-all duration-150 ease-in-out hover:cursor-pointer hover:bg-sky-200 hover:text-sky-800 active:bg-sky-300 active:scale-[0.96] disabled:bg-gray-100 disabled:text-gray-400 disabled:opacity-70 disabled:cursor-not-allowed disabled:scale-100`}
                         aria-label={`Редактирай ${user.username}`}
                         disabled={

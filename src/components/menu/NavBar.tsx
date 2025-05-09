@@ -98,8 +98,14 @@ const NavBar = () => {
     "/analyses": t("analyses_desc"),
   };
 
-  const currentPage =
-    pageNames[location.pathname] || "Страницата не е намерена";
+  // Handle dynamic /case/:number path for heading
+  let currentPage: string;
+  if (/^\/case\/\d+/.test(location.pathname)) {
+    const caseId = location.pathname.split("/").pop();
+    currentPage = t("case_desc", { caseId });
+  } else {
+    currentPage = pageNames[location.pathname] || "Страницата не е намерена";
+  }
 
   return (
     <div className="bg-gradient-to-r from-gray-100 to-gray-200 shadow-md relative max-w-full">

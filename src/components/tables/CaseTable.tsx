@@ -1,16 +1,14 @@
 import React from "react";
-import {
-  EllipsisHorizontalIcon,
-  FlagIcon,
-  ArrowsUpDownIcon,
-} from "@heroicons/react/24/solid";
-import { Link } from "react-router"; // Import Link
+import { EllipsisHorizontalIcon, FlagIcon } from "@heroicons/react/24/solid";
 import moment from "moment";
 // @ts-ignore
 import "moment/dist/locale/bg";
 import { useTranslation } from "react-i18next"; // Import useTranslation
-import { ICase, ICategory, IUser } from "../../db/interfaces";
+import { ICase } from "../../db/interfaces";
 import { useEffect, useState } from "react";
+import UserLink from "../global/UserLink";
+import CategoryLink from "../global/CategoryLink";
+import CaseLink from "../global/CaseLink";
 // Helper function to get priority styles
 const getPriorityStyles = (priority: ICase["priority"]): string => {
   switch (priority) {
@@ -31,11 +29,11 @@ const getStatusStyles = (
 ): { dotBgColor: string; textColor: string } => {
   switch (status) {
     case "OPEN":
-      return { dotBgColor: "bg-green-500", textColor: "text-gray-800" };
+      return { dotBgColor: "bg-green-500", textColor: "text-green-800" };
     case "CLOSED":
       return { dotBgColor: "bg-gray-400", textColor: "text-gray-500" };
     case "IN_PROGRESS":
-      return { dotBgColor: "bg-blue-500", textColor: "text-gray-800" };
+      return { dotBgColor: "bg-yellow-500", textColor: "text-yellow-800" };
     default:
       return { dotBgColor: "bg-gray-400", textColor: "text-gray-500" };
   }
@@ -51,17 +49,6 @@ const getTypeBadgeStyles = (type: ICase["type"]): string => {
     default:
       return "bg-gray-100 text-gray-800 border border-gray-200";
   }
-};
-
-// Helper function to get initials from a name
-const getInitials = (name: string): string => {
-  if (!name) return "";
-  return name
-    .split(" ")
-    .map((word) => word[0])
-    .filter((initial) => initial) // Ensure we don't get undefined if there are extra spaces
-    .join("")
-    .toUpperCase();
 };
 
 // --- Main CaseTable Component ---
@@ -205,7 +192,6 @@ const CaseTable: React.FC<{ cases: ICase[]; t: (word: string) => string }> = ({
               const priorityStyle = getPriorityStyles(my_case.priority);
               const typeBadgeStyle = getTypeBadgeStyles(my_case.type);
               const isClosed = my_case.status === "CLOSED";
-              const creatorInitials = getInitials(my_case.creator.name);
 
               // Dynamic truncation based on window width
               const truncateLength = getContentTruncateLength();
@@ -227,36 +213,7 @@ const CaseTable: React.FC<{ cases: ICase[]; t: (word: string) => string }> = ({
                       isClosed ? "text-gray-500" : "font-medium"
                     }`}
                   >
-                    <Link
-                      to={`/case/${my_case._id}`}
-                      className={`inline-flex items-center justify-center w-full px-2 py-1 rounded-md transition-colors duration-150 border border-blue-200 shadow-sm
-                        ${
-                          isClosed
-                            ? "bg-blue-50 text-blue-400 cursor-not-allowed"
-                            : "bg-blue-100 text-blue-700 hover:bg-blue-200 hover:text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 cursor-pointer"
-                        }`}
-                      title={`${t("details_for")} ${my_case.case_number}`}
-                      tabIndex={0}
-                    >
-                      <span className="font-semibold">
-                        {my_case.case_number}
-                      </span>
-                      {/* Optionally, add an icon for clarity */}
-                      <svg
-                        className="ml-1 h-4 w-4 text-blue-400 group-hover:text-blue-600"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth={2}
-                        viewBox="0 0 24 24"
-                        aria-hidden="true"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M9 5l7 7-7 7"
-                        />
-                      </svg>
-                    </Link>
+                    <CaseLink my_case={my_case} t={t} />
                   </td>
                   {/* Priority Cell - Text hidden on medium and below */}
                   <td className="w-28 px-3 py-4 whitespace-nowrap text-sm">
@@ -265,7 +222,7 @@ const CaseTable: React.FC<{ cases: ICase[]; t: (word: string) => string }> = ({
                         className={`mr-1.5 h-4 w-4 flex-shrink-0 ${priorityStyle}`}
                       />
                       {/* Text is hidden on screens smaller than md */}
-                      <span className="hidden md:inline">
+                      <span className={`hidden md:inline ${priorityStyle}`}>
                         {t(`${my_case.priority}`)}
                       </span>
                     </div>
@@ -280,36 +237,13 @@ const CaseTable: React.FC<{ cases: ICase[]; t: (word: string) => string }> = ({
                   </td>
                   {/* Creator Cell - Now a Link */}
                   <td className="max-w-[150px] px-3 py-4 text-sm break-words">
-                    <Link
-                      to={`/user/${my_case.creator._id}`} // Use Link
-                      className={`inline-block px-2 py-0.5 rounded-md text-xs font-medium transition-colors duration-150 ease-in-out text-left hover:cursor-pointer ${
-                        isClosed
-                          ? "bg-purple-50 text-purple-600 hover:bg-purple-100 border border-purple-100"
-                          : "bg-purple-100 text-purple-800 hover:bg-purple-200 border border-purple-200"
-                      }`}
-                      title={my_case.creator.name}
-                    >
-                      <span className="md:hidden">{creatorInitials}</span>
-                      <span className="hidden md:inline">
-                        {my_case.creator.name}
-                      </span>
-                    </Link>
+                    <UserLink {...my_case.creator} />
                   </td>
                   {/* Category Cell - Now Links */}
                   <td className="max-w-[180px] px-3 py-4 text-sm hidden md:table-cell">
                     <div className="flex flex-wrap gap-1">
                       {my_case.categories.map((category) => (
-                        <Link
-                          key={category._id} // Use category._id for key
-                          to={`/category/${category._id}`} // Use Link
-                          className={`px-2 py-0.5 rounded-md text-xs font-medium cursor-pointer transition-colors duration-150 ease-in-out ${
-                            isClosed
-                              ? "bg-gray-200 text-gray-500 pointer-events-none" // Keep visually distinct and non-interactive if closed
-                              : "bg-sky-100 text-sky-800 hover:bg-sky-200 border border-sky-200"
-                          }`}
-                        >
-                          {category.name}
-                        </Link>
+                        <CategoryLink key={category._id} {...category} />
                       ))}
                       {my_case.categories.length === 0 && (
                         <span className="text-xs text-gray-400 italic">

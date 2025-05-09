@@ -14,6 +14,7 @@ export interface ICase {
   rating?: IRating[];
   readBy?: IUser[];
   history?: ICaseHistory[];
+  last_update?: string;
 }
 
 export interface ICategory {

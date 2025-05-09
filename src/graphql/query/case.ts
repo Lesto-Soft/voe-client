@@ -7,6 +7,8 @@ fragment CaseFragment on Case {
     creator {
       _id
       name
+      position
+      
     }
     priority
     type
@@ -19,6 +21,64 @@ fragment CaseFragment on Case {
     date
 }`;
 
+const caseHistoryFragment = `
+fragment CaseHistoryFragment on CaseHistory { 
+      _id
+      date_change
+      user {
+        name
+        _id
+      }
+      old_type
+      new_type
+      old_priority
+      new_priority
+      old_content
+      new_content
+      new_categories {
+        name
+      }
+      old_categories {
+        name
+      }  
+}`;
+
+const answerFragment = `
+fragment AnswerFragment on Answer {
+      _id
+      content
+      date
+      creator {
+        _id
+        name
+        position
+      }
+      approved{
+        _id
+        name  
+      }
+      history {
+        _id
+        new_content
+        old_content
+        date_change
+      }
+        
+}`;
+
+const commentFragment = ` 
+ fragment CommentFragment on Comment {
+        _id
+        creator {
+          name
+          position
+          _id
+        }
+        content
+        date
+        attachments 
+  }`;
+
 export const GET_CASES = gql`
   query GET_CASES($input: getAllInput) {
     getAllCases(input: $input) {
@@ -29,6 +89,30 @@ export const GET_CASES = gql`
     }
   }
   ${caseFragment}
+`;
+
+export const GET_CASE_BY_CASE_NUMBER = gql`
+  query GET_CASE_BY_CASE_NUMBER($caseNumber: Int!) {
+    getCaseByNumber(case_number: $caseNumber) {
+      ...CaseFragment
+      comments {
+        ...CommentFragment
+      }
+      history {
+        ...CaseHistoryFragment
+      }
+      answers {
+        ...AnswerFragment
+        comments {
+          ...CommentFragment
+        }
+      }
+    }
+  }
+  ${caseFragment}
+  ${caseHistoryFragment}
+  ${answerFragment}
+  ${commentFragment}
 `;
 
 export const GET_CASES_BY_USER_CATEGORIES = gql`

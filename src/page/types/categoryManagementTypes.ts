@@ -8,6 +8,7 @@ export interface Category {
   _id: string;
   name: string;
   experts: User[];
+  managers: User[];
   cases: string[];
   archived: boolean;
 }
@@ -15,8 +16,8 @@ export interface Category {
 // Interface for the filters state managed by the hook
 export interface CategoryFiltersState {
   name?: string;
-  experts?: string;
-  managers?: string;
+  expertIds?: string[];
+  managerIds?: string[];
   archived?: boolean;
 }
 
@@ -37,7 +38,7 @@ export interface StateForUrl {
   currentPage: number;
   itemsPerPage: number;
   filterName?: string;
-  filterExperts?: string;
-  filterManagers?: string;
+  filterExpertIds?: string[];
+  filterManagerIds?: string[];
   filterArchived?: boolean;
 }

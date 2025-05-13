@@ -137,13 +137,28 @@ const CategoryTable: React.FC<CategoryTableProps> = ({
                   <tr key={category._id} className={rowClasses}>
                     <td
                       className={`${
-                        columnWidths.name
-                      } px-3 py-4 whitespace-nowrap font-medium ${
-                        isInactive ? "opacity-50" : ""
-                      }`}
+                        columnWidths.name // Assuming columnWidths.name provides necessary width/alignment
+                      } px-3 py-4 whitespace-nowrap`} // Removed font-medium, as link will have its own
                     >
-                      {category.name}
+                      <Link
+                        to={`/category/${category._id}`} // Link to the category's detail page
+                        key={category._id} // Key for list item, good practice
+                        className={`inline-block px-3 py-1 rounded-lg text-sm font-semibold cursor-pointer transition-colors duration-150 ease-in-out ${
+                          // Increased padding slightly for better look
+                          isInactive // This is category.archived
+                            ? "bg-gray-200 text-gray-500 pointer-events-none" // Style for inactive/archived categories
+                            : "bg-sky-100 text-sky-800 hover:bg-sky-200 border border-sky-200" // Style for active categories
+                        }`}
+                        title={
+                          isInactive
+                            ? `${category.name} (Архивирана)`
+                            : category.name
+                        } // Tooltip
+                      >
+                        {category.name}
+                      </Link>
                     </td>
+
                     {/* EXPERTS Column */}
                     <td className={`${columnWidths.experts} px-3 py-4 text-sm`}>
                       <TruncatedListWithDialog
@@ -187,7 +202,7 @@ const CategoryTable: React.FC<CategoryTableProps> = ({
                       className={`${columnWidths.signalAmount} px-3 py-4 whitespace-nowrap`}
                     >
                       {category.cases && category.cases.length > 0
-                        ? category.cases.length
+                        ? category.cases.length + " (open X / closed Y)"
                         : 0}
                     </td>
                     <td

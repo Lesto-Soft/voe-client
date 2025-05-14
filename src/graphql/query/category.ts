@@ -10,8 +10,13 @@ fragment CategoryFragment on Category {
         _id
         name
       }
+      managers {
+        _id
+        name
+      }
       cases {
         _id
+        status
       }
       archived
 }`;
@@ -28,6 +33,12 @@ export const GET_ALL_LEAN_CATEGORIES = gql`
 export const COUNT_CATEGORIES = gql`
   query CountCategories($input: getCategoryFiltersInput) {
     countCategories(input: $input)
+  }
+`;
+
+export const COUNT_CATEGORIES_BY_EXACT_NAME = gql`
+  query CountCategoriesByExactName($name: String!) {
+    countCategoriesByExactName(name: $name)
   }
 `;
 

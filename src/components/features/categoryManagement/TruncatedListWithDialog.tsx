@@ -162,10 +162,10 @@ function TruncatedListWithDialog<T extends ListItem>({
             </div>
             {/* "View All" text appears below the tags when truncated */}
             <div
-              className={`mt-1 text-sm font-medium text-purple-600 ${
+              className={`mt-1 text-sm font-medium ${
                 isContextInactive
-                  ? "opacity-75"
-                  : "hover:text-purple-800 group-hover:underline"
+                  ? "opacity-75 text-gray-600"
+                  : "text-purple-600 hover:text-purple-800 group-hover:underline"
               }`} // Use group-hover if needed
             >
               View all {totalItems}...

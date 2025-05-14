@@ -170,32 +170,17 @@ const CategoryTable: React.FC<CategoryTableProps> = ({
                       />
                     </td>
 
+                    {/* MANAGERS Column */}
                     <td
                       className={`${columnWidths.managers} px-3 py-4 text-sm`}
                     >
-                      {" "}
-                      {category.managers && category.managers.length > 0 ? (
-                        category.managers.map((manager) => (
-                          <div
-                            key={manager._id}
-                            className="flex items-center space-x-2"
-                          >
-                            <Link
-                              to={`/user-data/${manager._id}`}
-                              className={`max-w-75 inline-block px-2 py-0.5 rounded-md font-medium transition-colors duration-150 ease-in-out text-left hover:cursor-pointer ${
-                                isInactive
-                                  ? "bg-purple-50 text-purple-400 hover:bg-purple-100 border border-purple-100 opacity-75"
-                                  : "bg-purple-100 text-purple-800 hover:bg-purple-200 border border-purple-200"
-                              } truncate`}
-                              title={manager._id}
-                            >
-                              {manager.name}
-                            </Link>
-                          </div>
-                        ))
-                      ) : (
-                        <span className="text-gray-500">Няма мениджъри</span>
-                      )}{" "}
+                      <TruncatedListWithDialog
+                        items={category.managers || []} // Pass the experts array
+                        itemTypeLabel="Manager" // Label for this type of item
+                        parentContextName={category.name} // Optional: For dialog title
+                        baseLinkPath="/user-data/" // Path prefix for individual item links
+                        isContextInactive={isInactive} // Pass the category's inactive state
+                      />
                     </td>
 
                     <td

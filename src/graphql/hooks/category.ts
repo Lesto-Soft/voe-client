@@ -1,10 +1,18 @@
-import { useQuery } from "@apollo/client";
+import { useQuery, useMutation } from "@apollo/client";
 import {
   GET_ACTIVE_CATEGORIES,
   GET_ALL_LEAN_CATEGORIES,
   COUNT_CATEGORIES,
+  COUNT_CATEGORIES_BY_EXACT_NAME,
 } from "../query/category";
 import { ICategory } from "../../db/interfaces";
+import {
+  CREATE_CATEGORY,
+  CreateCategoryInput,
+  UPDATE_CATEGORY,
+  UpdateCategoryInput,
+} from "../mutation/category";
+import Category from "../../page/Category";
 
 export function buildCategoryQueryVariables(input: any) {
   // Destructure input with default values for pagination
@@ -95,5 +103,57 @@ export const useGetActiveCategories = () => {
     error,
     categories: data?.getLeanActiveCategories || [], // Ensure default empty array
     refetch,
+  };
+};
+
+// Category Mutations
+
+export const useCreateCategory = () => {
+  const [createCategoryMutation, { data, loading, error }] =
+    useMutation(CREATE_CATEGORY);
+  const createCategory = async (input: CreateCategoryInput) => {
+    try {
+      const response = await createCategoryMutation({ variables: { input } });
+      return response.data?.createCategory;
+    } catch (err) {
+      console.error("Failed to create category:", err);
+      throw err;
+    }
+  };
+
+  return { createCategory, category: data?.createCategory, loading, error };
+};
+
+export const useUpdateCategory = () => {
+  const [updateCategoryMutation, { data, loading, error }] =
+    useMutation(UPDATE_CATEGORY);
+  const updateCategory = async (id: string, input: UpdateCategoryInput) => {
+    try {
+      const response = await updateCategoryMutation({
+        variables: { id, input },
+      });
+      return response.data?.updateCategory;
+    } catch (err) {
+      console.error("Failed to update category:", err);
+      throw err;
+    }
+  };
+
+  return {
+    updateCategory,
+    category: data?.updateCategory,
+    loading,
+    error,
+  };
+};
+
+export const useCountCategoriesByName = () => {
+  const { loading, error, data } = useQuery(COUNT_CATEGORIES_BY_EXACT_NAME);
+  const count = data?.countCategoriesByExactName || 0;
+
+  return {
+    count,
+    loading,
+    error,
   };
 };

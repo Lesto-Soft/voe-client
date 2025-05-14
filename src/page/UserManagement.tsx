@@ -166,6 +166,7 @@ const UserManagement: React.FC = () => {
   }, [currentQueryInput]);
 
   // Initial Page Load Check (Wait for roles and absolute total)
+  // TODO: Add skeleton for for the stat cards instead of a loading modal
   if (rolesLoadingHook || absoluteTotalLoading) {
     return <LoadingModal message={"Зареждане на страницата..."} />;
   }

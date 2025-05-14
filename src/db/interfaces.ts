@@ -5,7 +5,7 @@ export interface ICase {
   type: string;
   attachments?: string[];
   priority: string;
-  status: string;
+  status: ICaseStatus;
   case_number: number;
   categories: ICategory[];
   creator: IUser;
@@ -101,3 +101,17 @@ export interface ICaseHistory {
   old_categories: ICategory[];
   new_categories: ICategory[];
 }
+
+export enum ICaseStatus {
+  Open = "OPEN",
+  InProgress = "IN_PROGRESS",
+  AwaitingFinance = "AWAITING_FINANCE",
+  Closed = "CLOSED",
+}
+
+export const CASE_STATUS_DISPLAY_ORDER: ICaseStatus[] = [
+  ICaseStatus.Open,
+  ICaseStatus.InProgress,
+  ICaseStatus.AwaitingFinance,
+  ICaseStatus.Closed,
+];

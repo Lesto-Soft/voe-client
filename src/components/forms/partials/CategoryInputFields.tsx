@@ -260,21 +260,16 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
 
       {/* Archived Checkbox */}
       <div>
-        {/* Invisible label for alignment with Name field's label if needed, or rely on grid auto-alignment */}
         <label className="mb-1 block text-sm font-medium text-transparent select-none">
-          {/* This label helps align the checkbox group vertically with the Name input field. */}
-          {/* You can also use "text-transparent select-none" to make it take up space without being visible or selectable. */}
-          &nbsp; {/* Or some non-breaking space to ensure height */}
+          &nbsp;
         </label>
-        <div className="flex items-center h-full">
-          {" "}
-          {/* Adjust height or alignment as needed */}
+        <div className="flex items-center">
           <input
             type="checkbox"
             id="categoryArchived"
             checked={archived}
             onChange={(e) => setArchived(e.target.checked)}
-            className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+            className="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
           />
           <label
             htmlFor="categoryArchived"
@@ -283,7 +278,6 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
             {t("Архивирана категория")}
           </label>
         </div>
-        {/* Add placeholder for consistent spacing if other fields have it prominently */}
         <p className={`${errorPlaceholderClass}`}>&nbsp;</p>
       </div>
 

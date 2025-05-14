@@ -1,12 +1,59 @@
-// src/components/features/userManagement/UserTable.tsx
+// src/components/features/categoryManagement/CategoryTable.tsx
 import React, { useState, useEffect, useRef } from "react";
-import { capitalizeFirstLetter } from "../../../utils/stringUtils"; // Adjust path
 import { ICategory } from "../../../db/interfaces";
-import { Link } from "react-router";
+import { Link } from "react-router"; // Standard import
 import { PencilSquareIcon } from "@heroicons/react/24/solid";
 import Pagination from "../../tables/Pagination";
 import CategoryTableSkeleton from "../../skeletons/CategoryTableSkeleton";
-import TruncatedListWithDialog, { ListItem } from "./TruncatedListWithDialog";
+import TruncatedListWithDialog from "./TruncatedListWithDialog";
+import {
+  // Assuming these are correctly defined and exported from your interfaces file
+  ICaseStatus as CaseStatus,
+  CASE_STATUS_DISPLAY_ORDER,
+} from "../../../db/interfaces";
+
+// Define base styles for the status buttons
+const BASE_STATUS_BUTTON_STYLE =
+  "px-1.5 py-0.5 text-xs font-semibold rounded border transition-colors duration-150";
+
+// Styles for CLICKABLE status buttons (count > 0)
+const CASE_STATUS_STYLES_CLICKABLE: Record<CaseStatus, string> = {
+  [CaseStatus.Open]: `${BASE_STATUS_BUTTON_STYLE} bg-green-50 text-green-700 border-green-300 hover:bg-green-100 hover:border-green-400`,
+  [CaseStatus.InProgress]: `${BASE_STATUS_BUTTON_STYLE} bg-yellow-50 text-yellow-700 border-yellow-300 hover:bg-yellow-100 hover:border-yellow-400`,
+  [CaseStatus.AwaitingFinance]: `${BASE_STATUS_BUTTON_STYLE} bg-blue-50 text-blue-700 border-blue-300 hover:bg-blue-100 hover:border-blue-400`,
+  [CaseStatus.Closed]: `${BASE_STATUS_BUTTON_STYLE} bg-gray-100 text-gray-600 border-gray-300 hover:bg-gray-200 hover:border-gray-400`,
+};
+
+// Styles for NON-CLICKABLE (zero count) status indicators
+const CASE_STATUS_STYLES_ZERO: Record<CaseStatus, string> = {
+  [CaseStatus.Open]: `${BASE_STATUS_BUTTON_STYLE} bg-green-50 text-green-500 border-green-200 opacity-70 cursor-default`,
+  [CaseStatus.InProgress]: `${BASE_STATUS_BUTTON_STYLE} bg-yellow-50 text-yellow-500 border-yellow-200 opacity-70 cursor-default`,
+  [CaseStatus.AwaitingFinance]: `${BASE_STATUS_BUTTON_STYLE} bg-blue-50 text-blue-500 border-blue-200 opacity-70 cursor-default`,
+  [CaseStatus.Closed]: `${BASE_STATUS_BUTTON_STYLE} bg-gray-100 text-gray-400 border-gray-200 opacity-70 cursor-default`,
+};
+
+// Styles for the TOTAL CASES button
+const TOTAL_CASES_BUTTON_STYLE_CLICKABLE =
+  "w-full block text-center px-2 py-1 text-sm font-semibold rounded border border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200 hover:border-slate-400 transition-colors duration-150";
+const TOTAL_CASES_BUTTON_STYLE_ZERO =
+  "w-full block text-center px-2 py-1 text-sm font-semibold rounded border border-gray-200 bg-gray-50 text-gray-400 opacity-70 cursor-default";
+
+// Helper to get a user-friendly label for the status (optional, for titles)
+const getStatusLabel = (status: CaseStatus): string => {
+  switch (status) {
+    case CaseStatus.Open:
+      return "Open";
+    case CaseStatus.InProgress:
+      return "In Progress";
+    case CaseStatus.AwaitingFinance:
+      return "Awaiting Finance";
+    case CaseStatus.Closed:
+      return "Closed";
+    default:
+      const exhaustiveCheck: never = status;
+      return String(exhaustiveCheck);
+  }
+};
 
 interface CategoryTableProps {
   categories: ICategory[];
@@ -64,7 +111,7 @@ const CategoryTable: React.FC<CategoryTableProps> = ({
     name: "w-1/5",
     experts: "w-1/4",
     managers: "w-1/4",
-    signalAmount: "w-1/8",
+    signalAmount: "w-auto px-2", // Added px-2 for internal padding for the full-width button
     edit: "w-1/6",
   };
 
@@ -105,7 +152,10 @@ const CategoryTable: React.FC<CategoryTableProps> = ({
                 </th>
                 <th
                   scope="col"
-                  className={`${columnWidths.signalAmount} px-3 py-4 text-center text-sm font-semibold text-white uppercase tracking-wide relative whitespace-nowrap`}
+                  className={`${columnWidths.signalAmount.replace(
+                    "px-2",
+                    "px-3"
+                  )} py-4 text-center text-sm font-semibold text-white uppercase tracking-wide relative`} // Use px-3 for header like others
                 >
                   <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-px bg-gray-400"></span>
                   Брой Сигнали
@@ -121,74 +171,143 @@ const CategoryTable: React.FC<CategoryTableProps> = ({
             </thead>
             <tbody className="bg-white divide-y divide-gray-200 text-gray-700">
               {categories.map((category) => {
-                // Determine if the user is inactive
                 const isInactive = category.archived;
-
-                // Define base row classes
                 let rowClasses = "hover:bg-gray-100";
-                // Define inactive specific classes
-                const inactiveClasses = "bg-gray-50 text-gray-300 cursor-text"; // Example inactive style
+                const inactiveClasses = "bg-gray-50 text-gray-300";
 
                 if (isInactive) {
                   rowClasses = inactiveClasses;
                 }
 
+                // --- Calculate Case Counts and Prepare JSX for Display ---
+                const cases = category.cases || [];
+                const totalCases = cases.length;
+
+                const countsByStatus: Record<CaseStatus, number> = {
+                  [CaseStatus.Open]: 0,
+                  [CaseStatus.InProgress]: 0,
+                  [CaseStatus.AwaitingFinance]: 0,
+                  [CaseStatus.Closed]: 0,
+                };
+
+                cases.forEach((c) => {
+                  if (
+                    c.status &&
+                    countsByStatus.hasOwnProperty(c.status as CaseStatus)
+                  ) {
+                    countsByStatus[c.status as CaseStatus]++;
+                  }
+                });
+
+                const totalCasesElement =
+                  totalCases > 0 ? (
+                    <Link
+                      to={`/dashboard?perPage=10&page=1&categoryIds=${category._id}`}
+                      className={TOTAL_CASES_BUTTON_STYLE_CLICKABLE}
+                      title={`View all ${totalCases} cases for ${category.name}`}
+                    >
+                      {totalCases}
+                    </Link>
+                  ) : (
+                    <span className={TOTAL_CASES_BUTTON_STYLE_ZERO}>0</span>
+                  );
+
+                const statusElements = CASE_STATUS_DISPLAY_ORDER.map(
+                  (status, index, array) => {
+                    const count = countsByStatus[status];
+                    const element =
+                      count > 0 ? (
+                        <Link
+                          to={`/dashboard?perPage=10&page=1&categoryIds=${category._id}&status=${status}`}
+                          className={CASE_STATUS_STYLES_CLICKABLE[status]}
+                          title={`View ${count} ${getStatusLabel(
+                            status
+                          )} cases for ${category.name}`}
+                        >
+                          {count}
+                        </Link>
+                      ) : (
+                        <span
+                          className={CASE_STATUS_STYLES_ZERO[status]}
+                          title={`${getStatusLabel(status)} cases`}
+                        >
+                          {count}
+                        </span>
+                      );
+
+                    return (
+                      <React.Fragment key={status}>
+                        {element}
+                        {index < array.length - 1 && (
+                          <span className="mx-1 text-gray-300">|</span>
+                        )}
+                      </React.Fragment>
+                    );
+                  }
+                );
+
+                const signalAmountDisplay = (
+                  // Main container: column, stretch items, centered content, gap
+                  <div className="flex flex-col items-stretch justify-center gap-1 py-1">
+                    {totalCasesElement}
+                    {/* Sub-container for status buttons, centered */}
+                    <div className="flex items-center justify-center gap-1 flex-wrap">
+                      {statusElements}
+                    </div>
+                  </div>
+                );
+                // --- End Calculate Case Counts ---
+
                 return (
                   <tr key={category._id} className={rowClasses}>
                     <td
-                      className={`${
-                        columnWidths.name // Assuming columnWidths.name provides necessary width/alignment
-                      } px-3 py-4 whitespace-nowrap`} // Removed font-medium, as link will have its own
+                      className={`${columnWidths.name} px-3 py-4 whitespace-nowrap`}
                     >
                       <Link
-                        to={`/category/${category._id}`} // Link to the category's detail page
-                        key={category._id} // Key for list item, good practice
+                        to={`/category/${category._id}`}
+                        key={category._id}
                         className={`inline-block px-3 py-1 rounded-lg text-sm font-semibold cursor-pointer transition-colors duration-150 ease-in-out ${
-                          // Increased padding slightly for better look
-                          isInactive // This is category.archived
-                            ? "bg-gray-200 text-gray-500 pointer-events-none" // Style for inactive/archived categories
-                            : "bg-sky-100 text-sky-800 hover:bg-sky-200 border border-sky-200" // Style for active categories
+                          isInactive
+                            ? "bg-gray-200 text-gray-500 pointer-events-none"
+                            : "bg-sky-100 text-sky-800 hover:bg-sky-200 border border-sky-200"
                         }`}
                         title={
                           isInactive
                             ? `${category.name} (Архивирана)`
                             : category.name
-                        } // Tooltip
+                        }
                       >
                         {category.name}
                       </Link>
                     </td>
-
-                    {/* EXPERTS Column */}
                     <td className={`${columnWidths.experts} px-3 py-4 text-sm`}>
                       <TruncatedListWithDialog
-                        items={category.experts || []} // Pass the experts array
-                        itemTypeLabel="Expert" // Label for this type of item
-                        parentContextName={category.name} // Optional: For dialog title
-                        baseLinkPath="/user-data/" // Path prefix for individual item links
-                        isContextInactive={isInactive} // Pass the category's inactive state
+                        items={category.experts || []}
+                        itemTypeLabel="Expert"
+                        parentContextName={category.name}
+                        baseLinkPath="/user-data/"
+                        isContextInactive={!!isInactive}
                       />
                     </td>
-
-                    {/* MANAGERS Column */}
                     <td
                       className={`${columnWidths.managers} px-3 py-4 text-sm`}
                     >
                       <TruncatedListWithDialog
-                        items={category.managers || []} // Pass the experts array
-                        itemTypeLabel="Manager" // Label for this type of item
-                        parentContextName={category.name} // Optional: For dialog title
-                        baseLinkPath="/user-data/" // Path prefix for individual item links
-                        isContextInactive={isInactive} // Pass the category's inactive state
+                        items={category.managers || []}
+                        itemTypeLabel="Manager"
+                        parentContextName={category.name}
+                        baseLinkPath="/user-data/"
+                        isContextInactive={!!isInactive}
                       />
                     </td>
-
+                    {/* Apply column width for the td, internal padding is handled by the button or content */}
                     <td
-                      className={`${columnWidths.signalAmount} px-3 py-4 whitespace-nowrap`}
+                      className={`${columnWidths.signalAmount.replace(
+                        "px-2",
+                        ""
+                      )} py-2 text-center`}
                     >
-                      {category.cases && category.cases.length > 0
-                        ? category.cases.length + " (open X / closed Y)"
-                        : 0}
+                      {signalAmountDisplay}
                     </td>
                     <td
                       className={`${columnWidths.edit} px-3 py-4 whitespace-nowrap text-center`}

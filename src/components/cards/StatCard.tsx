@@ -1,5 +1,5 @@
 // src/components/cards/StatCard.tsx
-import React, { useState, useEffect, useRef } from "react"; // Added useState, useEffect, useRef
+import React, { useState, useEffect, useRef } from "react";
 
 interface Props {
   amount: number | string;
@@ -12,7 +12,7 @@ interface Props {
   isLoading?: boolean;
 }
 
-const MIN_SKELETON_TIME = 250; // Minimum time in milliseconds to display the skeleton
+const MIN_SKELETON_TIME = 250;
 
 const StatCard: React.FC<Props> = ({
   amount,
@@ -22,48 +22,35 @@ const StatCard: React.FC<Props> = ({
   onClick,
   className = "",
   isActive = false,
-  isLoading = false, // This is the prop indicating if data is loading
+  isLoading = false,
 }) => {
-  const [displayAsLoading, setDisplayAsLoading] = useState(isLoading); // Internal state for skeleton visibility
+  const [displayAsLoading, setDisplayAsLoading] = useState(isLoading);
   const timerRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (isLoading) {
-      // If the prop indicates loading, we must show the skeleton.
       setDisplayAsLoading(true);
-      // If a timer was previously set to hide the skeleton, clear it.
       if (timerRef.current) {
         clearTimeout(timerRef.current);
         timerRef.current = null;
       }
     } else {
-      // The prop indicates data is not loading.
-      // If we are currently showing a skeleton (displayAsLoading is true),
-      // it means isLoading was true and just became false.
-      // We want to keep showing the skeleton for at least MIN_SKELETON_TIME.
       if (displayAsLoading) {
-        // Check if skeleton is currently active
         timerRef.current = window.setTimeout(() => {
-          setDisplayAsLoading(false); // Hide skeleton after delay
+          setDisplayAsLoading(false);
           timerRef.current = null;
         }, MIN_SKELETON_TIME);
       } else {
-        // If isLoading is false and displayAsLoading is already false (e.g. initial render with no loading)
-        // ensure displayAsLoading remains false.
         setDisplayAsLoading(false);
       }
     }
-
-    // Cleanup timer on unmount or if isLoading prop changes again
     return () => {
       if (timerRef.current) {
         clearTimeout(timerRef.current);
       }
     };
-  }, [isLoading, displayAsLoading]); // Re-run if isLoading prop changes or if displayAsLoading changes (e.g. timer completes)
-  // Adding displayAsLoading to deps handles the case where the timer completes and sets it to false.
+  }, [isLoading, displayAsLoading]);
 
-  // --- Rest of your existing StatCard logic ---
   const baseClasses =
     "flex min-w-[180px] sm:min-w-[200px] items-center space-x-3 sm:space-x-4 rounded-lg border p-3 shadow-sm transition-all duration-150 ease-in-out";
   const interactiveClasses = onClick
@@ -89,21 +76,24 @@ const StatCard: React.FC<Props> = ({
     if (match && match[1] && match[2]) {
       mainAmount = match[1].trim();
       outOfText = `(от ${match[2].trim()})`;
+    } else {
+      mainAmount = amount;
+      outOfText = null;
     }
   }
 
-  const isAmountLargeOrFormatted =
-    isFormattedString ||
-    (typeof mainAmount === "string" && mainAmount.length > 6) ||
-    (typeof mainAmount === "number" && mainAmount > 9999);
+  const isAmountConsideredLarge =
+    (typeof mainAmount === "string" &&
+      mainAmount.length > 3 &&
+      !isFormattedString) ||
+    (typeof mainAmount === "number" && mainAmount > 999) ||
+    isFormattedString;
 
-  const mainAmountClasses = `font-bold ${amountColorFinal} ${
-    isAmountLargeOrFormatted ? "text-xl" : "text-2xl"
-  }`;
+  const amountTextClass = isAmountConsideredLarge ? "text-xl" : "text-2xl";
+  const amountDisplayAreaHeightClass = isAmountConsideredLarge ? "h-7" : "h-8"; // For text-xl & text-2xl line height
 
-  const skeletonAmountClasses = `animate-pulse bg-gray-300 rounded ${
-    isAmountLargeOrFormatted ? "h-5 w-6" : "h-6 w-5"
-  } my-1`;
+  const mainAmountFinalClasses = `font-bold ${amountColorFinal} ${amountTextClass}`;
+  const skeletonWidthClass = isAmountConsideredLarge ? "w-12" : "w-10";
 
   return (
     <div
@@ -127,20 +117,27 @@ const StatCard: React.FC<Props> = ({
         <p className={`truncate text-xs font-medium ${titleColorFinal}`}>
           {title}
         </p>
-        <div className="flex items-baseline space-x-1">
-          {displayAsLoading ? ( // Use the internal displayAsLoading state here
-            <div className={skeletonAmountClasses}></div>
-          ) : (
-            <>
-              <p className={mainAmountClasses}>{mainAmount}</p>
-              {outOfText && (
-                <p
-                  className={`text-xs font-normal ${amountColorFinal} opacity-75`}
-                >
-                  {outOfText}
-                </p>
-              )}
-            </>
+        {/* Changed items-baseline to items-end for bottom alignment */}
+        <div className="flex items-end space-x-1">
+          {/* This divwrapper ensures the main amount or its skeleton maintains a consistent height */}
+          <div className={`flex items-center ${amountDisplayAreaHeightClass}`}>
+            {displayAsLoading ? (
+              <div
+                className={`animate-pulse bg-gray-300 rounded h-full ${skeletonWidthClass}`}
+              ></div>
+            ) : (
+              <p className={mainAmountFinalClasses}>{mainAmount}</p>
+            )}
+          </div>
+
+          {/* outOfText is always rendered if it exists */}
+          {outOfText && (
+            <p
+              className={`text-xs font-normal ${amountColorFinal} opacity-75 pb-1`}
+            >
+              {/* Added pb-px or similar for fine-tuning if needed with items-end */}
+              {outOfText}
+            </p>
           )}
         </div>
       </div>

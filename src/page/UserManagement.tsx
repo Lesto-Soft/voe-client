@@ -41,12 +41,12 @@ const UserManagement: React.FC = () => {
     setFilterPosition,
     filterEmail,
     setFilterEmail,
-    filterRoleIds, // This is the role filter for the main table
+    filterRoleIds,
     setFilterRoleIds,
     handlePageChange,
     handleItemsPerPageChange,
     handleRoleFilterToggle,
-    currentQueryInput, // Contains all filters including pagination and roleIds for the main table
+    currentQueryInput,
   } = useUserManagement();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -74,10 +74,17 @@ const UserManagement: React.FC = () => {
 
   // Fetch ALL users (once) for client-side filtering for UserStats' dynamic role counts
   const {
-    users: absoluteTotalUsersData, // This will contain ALL users
+    users: absoluteTotalUsersData,
     loading: absoluteTotalUsersLoading,
     error: absoluteTotalUsersError,
-  } = useGetAllUsers({}); // Empty filter object fetches all users
+  } = useGetAllUsers({});
+
+  // Count of ALL users (for the "(от X)" part of "Общо Потребители")
+  const {
+    count: absoluteTotalUserCountValue, // Renamed to avoid conflict with other absoluteTotalUserCount variable if any
+    loading: absoluteTotalCountLoading,
+    error: absoluteTotalCountError,
+  } = useCountUsers({});
 
   // Fetch all role definitions
   const {
@@ -88,32 +95,26 @@ const UserManagement: React.FC = () => {
   } = useGetRoles();
 
   const usersForTable: User[] = usersDataForTable || [];
-  const allUsersForStatsCalculation: User[] = absoluteTotalUsersData || []; // Use a distinct name
+  const allUsersForStatsCalculation: User[] = absoluteTotalUsersData || [];
   const roles: Role[] = rolesData?.getAllLeanRoles || [];
 
   // Calculate dynamic role counts based on client-filtering absoluteTotalUsersData
-  // These counts respect text/attribute filters but ignore pagination and the main role filter
   const dynamicRoleCounts = useMemo(() => {
     const counts: Record<string, number> = {};
-
-    // Initialize counts for all defined roles to 0
     roles.forEach((role) => {
       counts[role._id] = 0;
     });
 
     if (allUsersForStatsCalculation.length === 0 || roles.length === 0) {
-      return counts; // Return early if no users or no roles to process
+      return counts;
     }
 
-    // Get the current text/attribute filters (excluding roleIds, page, itemsPerPage)
-    // currentQueryInput from useUserManagement hook already contains these
     const nameFilter = currentQueryInput.name?.toLowerCase();
     const usernameFilter = currentQueryInput.username?.toLowerCase();
     const positionFilter = currentQueryInput.position?.toLowerCase();
     const emailFilter = currentQueryInput.email?.toLowerCase();
 
     allUsersForStatsCalculation.forEach((user) => {
-      // Apply text/attribute filters client-side
       const nameMatch =
         !nameFilter ||
         (user.name && user.name.toLowerCase().includes(nameFilter));
@@ -128,7 +129,6 @@ const UserManagement: React.FC = () => {
         (user.email && user.email.toLowerCase().includes(emailFilter));
 
       if (nameMatch && usernameMatch && positionMatch && emailMatch) {
-        // Determine the user's role ID
         const userRoleId =
           typeof user.role === "string" ? user.role : user.role?._id;
         if (userRoleId && counts.hasOwnProperty(userRoleId)) {
@@ -178,9 +178,9 @@ const UserManagement: React.FC = () => {
     const finalInput: Partial<CreateUserInput | UpdateUserInput> = {
       username: formData.username,
       name: formData.name,
-      email: formData.email, // Assuming empty string is handled by validation/backend if it's optional
+      email: formData.email,
       position: formData.position,
-      role: formData.roleId,
+      role: formData.role, // This should be the roleId string from CreateUserForm
       ...(formData.password && { password: formData.password }),
       ...(avatarData !== undefined && { avatar: avatarData }),
     };
@@ -235,20 +235,37 @@ const UserManagement: React.FC = () => {
     currentQueryInput.email,
   ]);
 
-  // isLoading for UserStats includes roles loading, the full user list loading (for dynamic counts), and general count loading
-  const isLoadingUserStats =
-    rolesLoadingHook || absoluteTotalUsersLoading || countLoading;
+  // Loading state for the "Общо Потребители" card's main numbers
+  // Loading state for role definitions OR the base data for dynamicRoleCounts
 
-  // Initial Page Load Check: Display modal if critical data for stats is still loading
-  if (rolesLoadingHook || absoluteTotalUsersLoading) {
+  const isLoadingUserStatsOverallCounts =
+    countLoading || absoluteTotalCountLoading;
+  const isLoadingUserStatsRoleDefinitions =
+    rolesLoadingHook || absoluteTotalUsersLoading;
+
+  // Initial Page Load Check: if any essential data for stats is still loading
+  if (
+    rolesLoadingHook ||
+    absoluteTotalUsersLoading ||
+    absoluteTotalCountLoading
+  ) {
     return <LoadingModal message={"Зареждане на страницата..."} />;
   }
 
   // Handle critical errors that prevent page rendering
   const criticalPageError =
-    rolesErrorHook || absoluteTotalUsersError || usersError || countError; // Include table data errors
-  if (criticalPageError && !isLoadingTableData && !isLoadingUserStats) {
-    // Only show if not already covered by a skeleton/loading state
+    rolesErrorHook ||
+    absoluteTotalUsersError ||
+    absoluteTotalCountError ||
+    usersError ||
+    countError;
+
+  if (
+    criticalPageError &&
+    !isLoadingTableData &&
+    !isLoadingUserStatsOverallCounts &&
+    !isLoadingUserStatsRoleDefinitions
+  ) {
     return (
       <div className="p-6 text-red-600 text-center">
         Грешка при зареждане на данни: {criticalPageError.message}
@@ -261,13 +278,14 @@ const UserManagement: React.FC = () => {
       <div className="mb-6 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
         <UserStats
           filteredUserCount={filteredUserCountForTableDisplay ?? 0}
-          absoluteTotalUserCount={absoluteTotalUsersData.length} // This is the count from useCountUsers({})
+          absoluteTotalUserCount={absoluteTotalUserCountValue} // Use the count from useCountUsers({})
           hasActiveTextFilters={hasActiveTextFilters}
           roles={roles}
           filterRoleIds={filterRoleIds}
           handleRoleFilterToggle={handleRoleFilterToggle}
           onShowAllUsers={() => setFilterRoleIds([])}
-          isLoading={isLoadingUserStats}
+          isLoadingOverallCounts={isLoadingUserStatsOverallCounts}
+          isLoadingRoleDefinitions={isLoadingUserStatsRoleDefinitions}
           dynamicRoleCounts={dynamicRoleCounts}
         />
         <div className="flex flex-col sm:flex-row gap-2 items-center md:items-start flex-shrink-0 mt-4 md:mt-0">
@@ -289,8 +307,9 @@ const UserManagement: React.FC = () => {
             disabled={
               createLoading ||
               updateLoading ||
-              isLoadingTableData || // if table data is still loading (users or its count)
-              isLoadingUserStats // if stats data is still loading
+              isLoadingTableData ||
+              isLoadingUserStatsOverallCounts || // Disable if any part of stats is loading
+              isLoadingUserStatsRoleDefinitions
             }
           >
             <PlusIconSolid className="h-5 w-5 mr-1" />
@@ -359,6 +378,8 @@ const UserManagement: React.FC = () => {
             roles={roles}
             rolesLoading={rolesLoadingHook}
             rolesError={rolesErrorHook}
+            // serverBaseUrl prop is needed by useCreateUserFormState, ensure CreateUserForm receives it.
+            // Your CreateUserForm already passes it down if it takes it as a prop.
           />
         )}
       </CreateUserModal>

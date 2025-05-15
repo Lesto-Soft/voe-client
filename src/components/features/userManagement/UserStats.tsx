@@ -14,13 +14,14 @@ import {
 interface UserStatsProps {
   filteredUserCount: number;
   absoluteTotalUserCount: number | null | undefined;
-  hasActiveTextFilters: boolean;
+  hasActiveTextFilters?: boolean;
   roles: Role[];
   filterRoleIds: string[];
   handleRoleFilterToggle: (roleId: string) => void;
   onShowAllUsers: () => void;
-  dynamicRoleCounts: Record<string, number>; // Ensure this is in the props
-  isLoading?: boolean; // New prop
+  dynamicRoleCounts: Record<string, number>;
+  isLoadingOverallCounts?: boolean; // Loading for "Общо Потребители" card's numbers
+  isLoadingRoleDefinitions?: boolean; // Loading for role list / base data for their dynamic counts
 }
 
 const getRoleAppearance = (
@@ -50,7 +51,8 @@ const UserStats: React.FC<UserStatsProps> = ({
   handleRoleFilterToggle,
   onShowAllUsers,
   dynamicRoleCounts,
-  isLoading = false, // Default isLoading to false
+  isLoadingOverallCounts = false,
+  isLoadingRoleDefinitions = false,
 }) => {
   const totalUsersDisplay = `${filteredUserCount} (от ${
     absoluteTotalUserCount ?? "N/A"
@@ -66,6 +68,7 @@ const UserStats: React.FC<UserStatsProps> = ({
         // className="flex-shrink-0" // Allow shrinking but also growing if space
         isActive={filterRoleIds.length === 0}
         onClick={onShowAllUsers}
+        isLoading={isLoadingOverallCounts} // Use specific loading state
       />
       {/* Optional: Divider can be conditional or styled differently if needed */}
       {roles.length > 0 && (
@@ -90,7 +93,7 @@ const UserStats: React.FC<UserStatsProps> = ({
             iconColor={appearance.color}
             onClick={() => handleRoleFilterToggle(role._id)}
             isActive={isActive}
-            isLoading={isLoading}
+            isLoading={isLoadingRoleDefinitions} // Use specific loading for role cards
           />
         );
       })}

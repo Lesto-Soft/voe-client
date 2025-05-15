@@ -9,47 +9,11 @@ import { useEffect, useState } from "react";
 import UserLink from "../global/UserLink";
 import CategoryLink from "../global/CategoryLink";
 import CaseLink from "../global/CaseLink";
-// Helper function to get priority styles
-const getPriorityStyles = (priority: ICase["priority"]): string => {
-  switch (priority) {
-    case "LOW":
-      return "text-green-600";
-    case "HIGH":
-      return "text-red-600";
-    case "MEDIUM":
-      return "text-yellow-600";
-    default:
-      return "text-gray-500";
-  }
-};
-
-// Helper function to get status styles
-const getStatusStyles = (
-  status: ICase["status"]
-): { dotBgColor: string; textColor: string } => {
-  switch (status) {
-    case "OPEN":
-      return { dotBgColor: "bg-green-500", textColor: "text-green-800" };
-    case "CLOSED":
-      return { dotBgColor: "bg-gray-400", textColor: "text-gray-500" };
-    case "IN_PROGRESS":
-      return { dotBgColor: "bg-yellow-500", textColor: "text-yellow-800" };
-    default:
-      return { dotBgColor: "bg-gray-400", textColor: "text-gray-500" };
-  }
-};
-
-// Helper function to get type badge styles
-const getTypeBadgeStyles = (type: ICase["type"]): string => {
-  switch (type) {
-    case "PROBLEM":
-      return "bg-red-100 text-red-800 border border-red-200";
-    case "SUGGESTION":
-      return "bg-green-100 text-green-800 border border-green-200";
-    default:
-      return "bg-gray-100 text-gray-800 border border-gray-200";
-  }
-};
+import {
+  getPriorityStyle,
+  getStatusStyle,
+  getTypeBadgeStyle,
+} from "../../utils/style-helpers";
 
 // --- Main CaseTable Component ---
 const CaseTable: React.FC<{ cases: ICase[]; t: (word: string) => string }> = ({
@@ -188,9 +152,9 @@ const CaseTable: React.FC<{ cases: ICase[]; t: (word: string) => string }> = ({
           {/* Table Body */}
           <tbody className="bg-white divide-y divide-gray-200">
             {cases.map((my_case) => {
-              const statusStyle = getStatusStyles(my_case.status);
-              const priorityStyle = getPriorityStyles(my_case.priority);
-              const typeBadgeStyle = getTypeBadgeStyles(my_case.type);
+              const statusStyle = getStatusStyle(my_case.status);
+              const priorityStyle = getPriorityStyle(my_case.priority);
+              const typeBadgeStyle = getTypeBadgeStyle(my_case.type);
               const isClosed = my_case.status === "CLOSED";
 
               // Dynamic truncation based on window width
@@ -237,7 +201,7 @@ const CaseTable: React.FC<{ cases: ICase[]; t: (word: string) => string }> = ({
                   </td>
                   {/* Creator Cell - Now a Link */}
                   <td className="max-w-[150px] px-3 py-4 text-sm break-words">
-                    <UserLink {...my_case.creator} />
+                    <UserLink user={my_case.creator} type="table" />
                   </td>
                   {/* Category Cell - Now Links */}
                   <td className="max-w-[180px] px-3 py-4 text-sm hidden md:table-cell">

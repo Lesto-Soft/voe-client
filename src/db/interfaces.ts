@@ -76,6 +76,10 @@ export interface IAnswer {
   creator: IUser;
   comments?: IComment[];
   approved?: IUser;
+  approved_date?: string;
+  financial_approved?: IUser;
+  financial_approved_date?: string;
+  needs_finance?: boolean;
   history?: IAnswerHistory[];
 }
 

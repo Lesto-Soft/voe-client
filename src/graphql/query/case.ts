@@ -57,6 +57,13 @@ fragment AnswerFragment on Answer {
         _id
         name  
       }
+      approved_date
+      financial_approved{
+        _id
+        name  
+      }
+      financial_approved_date
+      needs_finance
       history {
         _id
         new_content

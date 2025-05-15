@@ -7,6 +7,7 @@
   "OPEN": "OPEN",
   "CLOSED": "CLOSED",
   "IN_PROGRESS": "IN PROGRESS",
+  "AWAITING_FINANCE": "FINANCE",
   "all": "All",
   "mine": "Mine",
   "expert": "Expert",

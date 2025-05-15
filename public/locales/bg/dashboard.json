@@ -7,6 +7,7 @@
   "OPEN": "ОТВОРЕН",
   "CLOSED": "ЗАТВОРЕН",
   "IN_PROGRESS": "В ПРОЦЕС",
+  "AWAITING_FINANCE": "ФИНАНСИРАНЕ",
   "all": "Всички",
   "mine": "Мои",
   "expert": "Експертни",

@@ -14,7 +14,7 @@ const Comment: React.FC<CommentProps> = ({ comment, me }) => {
     <div className="flex flex-row items-stretch gap-3 rounded p-3">
       {/* Left: Creator info, vertically centered */}
       <div className=" flex-col  justify-center">
-        <UserLink {...comment.creator} />
+        <UserLink user={comment.creator} type="case" />
         {comment.creator.position && (
           <span className="text-xs text-gray-400 italic mt-1 text-center w-full block">
             {comment.creator.position}

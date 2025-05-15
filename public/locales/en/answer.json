@@ -3,5 +3,19 @@
   "approved": "Approved",
   "approvedBy": "Approved by",
   "unapproved": "Unapproved",
-  "edit": "Edit"
+  "edit": "Edit",
+  "approved_date": "Approval date",
+  "approve": "Approve",
+  "unapprove": "Unapprove",
+  "unapproveFinance": "Unapprove finance",
+  "finance": "Finance",
+  "areYouSureUnapprove": "Are you sure you want to unapprove this answer?",
+  "areYouSureApprove": "Are you sure you want to approve this answer?",
+  "cancel": "Cancel",
+  "areYouSureUnapproveFinance": "Are you sure you want to unapprove this finance?",
+  "areYouSureApproveFinance": "Are you sure you want to approve this finance?",
+  "isFinanceNeeded": "Financing needed?",
+  "yes": "Yes",
+  "no": "No",
+  "financedBy": "Financed by"
 }

@@ -1,27 +1,32 @@
 // src/pages/CategoryManagement.tsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { ChevronUpIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
 import { PlusIcon as PlusIconSolid } from "@heroicons/react/20/solid";
 import {
   useGetAllLeanCategories,
   useCountCategories,
-  useCountCategoriesByName,
   useCreateCategory,
   useUpdateCategory,
 } from "../graphql/hooks/category";
+import { useCountFilteredCases } from "../graphql/hooks/case"; // Assuming this is the correct path
 import {
   CreateCategoryInput,
   UpdateCategoryInput,
 } from "../graphql/mutation/category";
-import { ICategory } from "../db/interfaces";
+import {
+  ICategory,
+  ICaseStatus as CaseStatus,
+  CASE_STATUS_DISPLAY_ORDER,
+} from "../db/interfaces";
 import CategoryTable from "../components/features/categoryManagement/CategoryTable";
 import { useCategoryManagement } from "./hooks/useCategoryManagement";
 import LoadingModal from "../components/modals/LoadingModal";
 import CategoryFilters from "../components/features/categoryManagement/CategoryFilters";
 import CreateCategoryModal from "../components/modals/CreateCategoryModal";
 import CreateCategoryForm, {
-  CategoryFormData, // This is from the form component
+  CategoryFormData,
 } from "../components/forms/CreateCategoryForm";
+import CategoryStats from "../components/features/categoryManagement/CategoryStats";
 
 const CategoryManagement: React.FC = () => {
   const {
@@ -35,9 +40,11 @@ const CategoryManagement: React.FC = () => {
     setFilterManagerIds,
     filterArchived,
     setFilterArchived,
+    // filterCaseStatus, // Not used by CategoryStats directly for filtering
+    // setFilterCaseStatus, // Not used by CategoryStats directly for filtering
     handlePageChange,
     handleItemsPerPageChange,
-    currentQueryInput,
+    currentQueryInput, // This is for CATEGORY filtering
   } = useCategoryManagement();
 
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
@@ -47,77 +54,192 @@ const CategoryManagement: React.FC = () => {
   const [formHasUnsavedChanges, setFormHasUnsavedChanges] = useState(false);
   const [showFilters, setShowFilters] = useState(true);
 
+  // Fetching data for the category table based on currentQueryInput
   const {
-    categories: categoriesData,
+    categories: categoriesData, // This is the list of categories matching currentQueryInput
     loading: categoriesListLoading,
     error: categoriesListError,
     refetch: refetchCategories,
   } = useGetAllLeanCategories(currentQueryInput);
 
+  // Count of categories for table pagination (respects all filters from currentQueryInput)
   const {
-    count: filteredCategoryCount,
+    count: filteredCategoryCountForTable,
     loading: categoryCountLoading,
     error: categoryCountError,
     refetch: refetchCategoryCount,
   } = useCountCategories(currentQueryInput);
 
-  // Use actual GraphQL mutation hooks
+  // --- Fetching data for CategoryStats based on the filtered categories ---
+
+  // 1. Extract IDs of the currently filtered categories.
+  // These IDs will be used to fetch case counts specific to these categories.
+  const filteredCategoryIdsForStats = useMemo(() => {
+    return (categoriesData || []).map((category) => category._id);
+  }, [categoriesData]);
+
+  // 2. Determine if case stat queries should be skipped.
+  // Skip if categories are still loading OR if no categories were found (and not loading).
+  const skipCaseStatsQueries = useMemo(() => {
+    return (
+      categoriesListLoading ||
+      (!categoriesListLoading && filteredCategoryIdsForStats.length === 0)
+    );
+  }, [categoriesListLoading, filteredCategoryIdsForStats.length]);
+
+  // 3. Base variables for case counting, using the IDs of filtered categories.
+  const baseCaseVariablesForStats = useMemo(
+    () => ({
+      categories: filteredCategoryIdsForStats,
+      // Add any other non-status, non-pagination filters relevant for cases if your backend supports them
+      // For example, if currentQueryInput had a global text search applicable to cases:
+      // query: currentQueryInput.name, // Assuming category name filter could be a general case query
+    }),
+    [filteredCategoryIdsForStats]
+  );
+
+  // 4. Total case count for "Общо Сигнали" card (for the filtered categories)
+  const {
+    count: totalCaseCountForStatsRaw,
+    loading: totalCaseCountLoading,
+    error: totalCaseCountError,
+  } = useCountFilteredCases(baseCaseVariablesForStats, {
+    skip: skipCaseStatsQueries,
+  });
+  const totalCaseCountForStats =
+    skipCaseStatsQueries && !categoriesListLoading
+      ? 0
+      : totalCaseCountForStatsRaw;
+
+  // 5. Case counts for each status (for the filtered categories)
+  const {
+    count: openCasesRaw,
+    loading: openLoading,
+    error: openError,
+  } = useCountFilteredCases(
+    { ...baseCaseVariablesForStats, status: CaseStatus.Open },
+    { skip: skipCaseStatsQueries }
+  );
+  const {
+    count: inProgressCasesRaw,
+    loading: inProgressLoading,
+    error: inProgressError,
+  } = useCountFilteredCases(
+    { ...baseCaseVariablesForStats, status: CaseStatus.InProgress },
+    { skip: skipCaseStatsQueries }
+  );
+  const {
+    count: awaitingFinanceCasesRaw,
+    loading: awaitingFinanceLoading,
+    error: awaitingFinanceError,
+  } = useCountFilteredCases(
+    { ...baseCaseVariablesForStats, status: CaseStatus.AwaitingFinance },
+    { skip: skipCaseStatsQueries }
+  );
+  const {
+    count: closedCasesRaw,
+    loading: closedLoading,
+    error: closedError,
+  } = useCountFilteredCases(
+    { ...baseCaseVariablesForStats, status: CaseStatus.Closed },
+    { skip: skipCaseStatsQueries }
+  );
+
+  const caseCountsByStatus = useMemo(
+    () => ({
+      [CaseStatus.Open]:
+        skipCaseStatsQueries && !categoriesListLoading ? 0 : openCasesRaw,
+      [CaseStatus.InProgress]:
+        skipCaseStatsQueries && !categoriesListLoading ? 0 : inProgressCasesRaw,
+      [CaseStatus.AwaitingFinance]:
+        skipCaseStatsQueries && !categoriesListLoading
+          ? 0
+          : awaitingFinanceCasesRaw,
+      [CaseStatus.Closed]:
+        skipCaseStatsQueries && !categoriesListLoading ? 0 : closedCasesRaw,
+    }),
+    [
+      skipCaseStatsQueries,
+      categoriesListLoading,
+      openCasesRaw,
+      inProgressCasesRaw,
+      awaitingFinanceCasesRaw,
+      closedCasesRaw,
+    ]
+  );
+
+  // --- End Fetching data for CategoryStats ---
+
   const {
     createCategory,
-    category: createdCategory, // Optional: use if needed for immediate feedback
     loading: createCategoryLoading,
-    error: createCategoryErrorObj, // Rename to avoid conflict with component error state
+    error: createCategoryErrorObj,
   } = useCreateCategory();
   const {
     updateCategory,
-    category: updatedCategory, // Optional
     loading: updateCategoryLoading,
-    error: updateCategoryErrorObj, // Rename to avoid conflict
+    error: updateCategoryErrorObj,
   } = useUpdateCategory();
 
   const categories: ICategory[] = categoriesData || [];
 
-  const isInitialPageLoad =
-    categoriesListLoading &&
-    !categoriesData &&
-    categoryCountLoading &&
-    (filteredCategoryCount === undefined || filteredCategoryCount === 0);
+  const isInitialPageLoading = // Combined loading for initial page display
+    categoriesListLoading || // Still loading the list of categories
+    categoryCountLoading || // Still loading the count of categories for the table
+    (!skipCaseStatsQueries && // Only consider case stats loading if queries are not skipped
+      (totalCaseCountLoading ||
+        openLoading ||
+        inProgressLoading ||
+        awaitingFinanceLoading ||
+        closedLoading));
+
   const isTableDataRefreshing = categoriesListLoading || categoryCountLoading;
-  const tableDisplayError = categoriesListError || categoryCountError;
+  const isStatsDataRefreshing =
+    !skipCaseStatsQueries &&
+    (totalCaseCountLoading ||
+      openLoading ||
+      inProgressLoading ||
+      awaitingFinanceLoading ||
+      closedLoading);
+
+  const pageDisplayError =
+    categoriesListError ||
+    categoryCountError ||
+    (!skipCaseStatsQueries &&
+      (totalCaseCountError ||
+        openError ||
+        inProgressError ||
+        awaitingFinanceError ||
+        closedError));
 
   const openCreateCategoryModal = () => {
     setEditingCategory(null);
     setFormHasUnsavedChanges(false);
     setIsCategoryModalOpen(true);
   };
-
   const openEditCategoryModal = (categoryToEdit: ICategory) => {
     setEditingCategory(categoryToEdit);
     setFormHasUnsavedChanges(false);
     setIsCategoryModalOpen(true);
   };
-
   const closeCategoryModal = () => {
-    // Confirmation for unsaved changes is handled by CreateCategoryModal's attemptClose
     setIsCategoryModalOpen(false);
     setEditingCategory(null);
-    setFormHasUnsavedChanges(false); // Always reset when definitively closing
+    setFormHasUnsavedChanges(false);
   };
 
   const handleCategoryFormSubmit = async (
-    formData: CategoryFormData, // Data from CreateCategoryForm
+    formData: CategoryFormData,
     editingCategoryId: string | null
   ) => {
-    // Map CategoryFormData to CreateCategoryGQLInput or UpdateCategoryGQLInput
     const inputForMutation = {
       name: formData.name,
       problem: formData.problem,
       suggestion: formData.suggestion,
-      experts: formData.expertIds, // Map expertIds to experts
-      managers: formData.managerIds, // Map managerIds to managers
+      experts: formData.expertIds,
+      managers: formData.managerIds,
       archived: formData.archived,
     };
-
     try {
       if (editingCategoryId) {
         await updateCategory(
@@ -127,24 +249,34 @@ const CategoryManagement: React.FC = () => {
       } else {
         await createCategory(inputForMutation as CreateCategoryInput);
       }
-      await Promise.all([refetchCategories(), refetchCategoryCount()]);
-      closeCategoryModal(); // Close modal on success
+      // Refetch all relevant data
+      await Promise.all([
+        refetchCategories(),
+        refetchCategoryCount(),
+        // Consider refetching case counts if category changes affect them broadly
+        // For now, they refetch based on currentQueryInput changes (which triggers categoriesData change -> filteredCategoryIdsForStats -> case queries)
+      ]);
+      closeCategoryModal();
     } catch (err: any) {
       console.error(
         `Error during category ${editingCategoryId ? "update" : "create"}:`,
         err
       );
-      // Error will be displayed by the form or the modal's error section
-      // Re-throw so the form's catch block can also handle it if needed (e.g. to display in form)
       throw err;
     }
   };
 
-  // The useEffect for formHasUnsavedChanges is removed from here,
-  // as it's now handled by CreateCategoryForm calling onDirtyChange -> setFormHasUnsavedChanges
-
-  if (isInitialPageLoad) {
+  // Show loading modal if any initial data is loading and there's no error yet
+  if (isInitialPageLoading && !pageDisplayError) {
     return <LoadingModal message={"Зареждане на страницата..."} />;
+  }
+  // Show error message if any critical data fetching failed
+  if (pageDisplayError) {
+    return (
+      <div className="p-6 text-red-600 text-center">
+        Грешка при зареждане на данни: {pageDisplayError.message}
+      </div>
+    );
   }
 
   const mutationInProgress = createCategoryLoading || updateCategoryLoading;
@@ -153,7 +285,10 @@ const CategoryManagement: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-100 p-6 font-sans">
       <div className="mb-6 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-        <div> {/* Left side placeholder */} </div>
+        <CategoryStats
+          totalCaseCount={totalCaseCountForStats}
+          caseCountsByStatus={caseCountsByStatus}
+        />
         <div className="flex flex-col sm:flex-row gap-2 items-center md:items-start flex-shrink-0 mt-4 md:mt-0">
           <button
             className="w-full sm:w-auto flex justify-center items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-gray-500 text-white hover:bg-gray-600 hover:cursor-pointer"
@@ -170,7 +305,11 @@ const CategoryManagement: React.FC = () => {
           <button
             onClick={openCreateCategoryModal}
             className="w-full sm:w-auto flex flex-shrink-0 justify-center items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-green-500 text-white hover:bg-green-600 hover:cursor-pointer active:bg-green-700 active:shadow-inner disabled:opacity-50 disabled:cursor-not-allowed"
-            disabled={mutationInProgress}
+            disabled={
+              mutationInProgress ||
+              isTableDataRefreshing ||
+              isStatsDataRefreshing
+            }
           >
             <PlusIconSolid className="h-5 w-5 mr-1" />
             Създай Категория
@@ -200,8 +339,8 @@ const CategoryManagement: React.FC = () => {
       <CategoryTable
         categories={categories}
         isLoadingCategories={isTableDataRefreshing}
-        categoriesError={tableDisplayError}
-        totalCategoryCount={filteredCategoryCount || 0}
+        categoriesError={categoriesListError || categoryCountError}
+        totalCategoryCount={filteredCategoryCountForTable || 0}
         currentPage={currentPage}
         itemsPerPage={itemsPerPage}
         onPageChange={handlePageChange}
@@ -214,13 +353,12 @@ const CategoryManagement: React.FC = () => {
 
       <CreateCategoryModal
         isOpen={isCategoryModalOpen}
-        onClose={closeCategoryModal} // Radix will handle confirmation via attemptClose
+        onClose={closeCategoryModal}
         title={
           editingCategory ? "Редактирай категория" : "Създай нова категория"
         }
         hasUnsavedChanges={formHasUnsavedChanges}
       >
-        {/* Display general loading/error state for mutations if not handled by form */}
         {mutationInProgress && (
           <div className="p-4 text-center">Изпращане...</div>
         )}
@@ -229,18 +367,17 @@ const CategoryManagement: React.FC = () => {
             Грешка при запис: {mutationError.message || "Неизвестна грешка"}
           </div>
         )}
-        {/* Render form only when not in top-level loading state (form has its own submit state) */}
         {!mutationInProgress && (
           <CreateCategoryForm
             key={editingCategory ? editingCategory._id : "create-new-category"}
             onSubmit={handleCategoryFormSubmit}
-            onClose={closeCategoryModal} // For cancel buttons inside form, though modal X handles main close
+            onClose={closeCategoryModal}
             initialData={editingCategory}
             submitButtonText={
               editingCategory ? "Запази промените" : "Създай категория"
             }
-            isSubmitting={mutationInProgress} // Pass submitting state to form
-            onDirtyChange={setFormHasUnsavedChanges} // Connect form's dirty state
+            isSubmitting={mutationInProgress}
+            onDirtyChange={setFormHasUnsavedChanges}
           />
         )}
       </CreateCategoryModal>

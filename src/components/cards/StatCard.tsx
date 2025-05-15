@@ -1,10 +1,10 @@
 // src/components/cards/StatCard.tsx
 import React from "react";
-import { UserIcon, UserGroupIcon } from "@heroicons/react/24/solid";
 
 interface Props {
-  amount: number | string; // Accepts string for formatted display
+  amount: number | string; // Accepts string for formatted display like "X (от Y)"
   title: string;
+  icon: React.ElementType; // Prop to explicitly pass the icon component
   iconColor?: string;
   onClick?: () => void;
   className?: string;
@@ -14,49 +14,53 @@ interface Props {
 const StatCard: React.FC<Props> = ({
   amount,
   title,
+  icon: IconComponent, // Use the destructured and aliased prop
   iconColor = "text-gray-500",
   onClick,
   className = "",
   isActive = false,
 }) => {
+  // Base classes for the card
   const baseClasses =
-    "flex min-w-[200px] items-center space-x-4 rounded-md border p-2.5 shadow-sm transition-all duration-150 ease-in-out";
+    "flex min-w-[180px] sm:min-w-[200px] items-center space-x-3 sm:space-x-4 rounded-lg border p-3 shadow-sm transition-all duration-150 ease-in-out";
+
+  // Classes for interactive cards (if onClick is provided)
   const interactiveClasses = onClick
-    ? "cursor-pointer hover:shadow-md active:scale-[0.98]"
+    ? "cursor-pointer hover:shadow-md active:scale-[0.98] "
     : "";
+
+  // Classes for active vs. inactive state
   const activeClasses = isActive
-    ? "bg-white border-sky-200 border-4 ring-2 ring-sky-100 ring-offset-0 shadow-inner scale-102"
-    : "bg-gray-200 border-gray-200 border-4 hover:bg-gray-50 hover:border-gray-100 active:bg-gray-100";
+    ? "bg-white border-sky-500 border-2 ring-2 ring-sky-200 shadow-lg scale-[1.02]" // More prominent active state
+    : "bg-gray-50 border-gray-200 border-2 hover:bg-gray-100 hover:border-gray-300 active:bg-gray-200";
 
-  const activeTitle = isActive ? "text-gray-500" : "text-gray-400";
-  const amountColor = isActive ? "text-gray-800" : "text-gray-500";
-  const finalIconColor = isActive ? iconColor : `${iconColor}`; // Consider adding opacity-75 if needed for inactive
+  // Text and icon color adjustments based on active state
+  const titleColorFinal = isActive
+    ? "text-sky-700 font-semibold"
+    : "text-gray-500";
+  const amountColorFinal = isActive ? "text-sky-800" : "text-gray-700";
+  const finalIconColor = isActive ? iconColor : `${iconColor} opacity-80`; // Apply more opacity for inactive icons
 
-  const IconComponent =
-    title.toLowerCase().includes("общо") ||
-    title.toLowerCase().includes("total")
-      ? UserGroupIcon
-      : UserIcon;
-
-  // Check if amount is a string and contains the "out of" pattern
+  // Logic to parse "X (от Y)" format for amount
   const isFormattedString =
-    typeof amount === "string" && amount.includes("(от ");
-  let mainAmount: number | string = amount;
+    typeof amount === "string" && /\(от\s.*\)/.test(amount);
+  let mainAmount: string | number = amount;
   let outOfText: string | null = null;
 
   if (isFormattedString) {
-    const parts = amount.split("(от ");
-    mainAmount = parts[0]?.trim() || amount; // Take the part before '(', fallback to original
-    outOfText = parts[1] ? `(от ${parts[1]}` : null; // Reconstruct the 'out of' part
+    const match = amount.match(/(.*)\s*\(от\s+(.*)\)/);
+    if (match && match[1] && match[2]) {
+      mainAmount = match[1].trim();
+      outOfText = `(от ${match[2].trim()})`; // Ensure the closing parenthesis is part of the match or added
+    }
   }
 
-  // Base classes for the main amount part
-  const mainAmountClasses = `font-semibold ${amountColor} ${
-    // Adjust size based on whether it's formatted or long
+  // Dynamic text size for the main amount
+  const mainAmountClasses = `font-bold ${amountColorFinal} ${
     isFormattedString ||
-    (typeof amount === "string" && amount.length > 8) ||
-    (typeof amount === "number" && amount > 9999)
-      ? "text-xl" // Slightly smaller if formatted or long number
+    (typeof mainAmount === "string" && mainAmount.length > 6) || // Adjusted length threshold
+    (typeof mainAmount === "number" && mainAmount > 9999)
+      ? "text-xl" // Slightly smaller for formatted or long numbers
       : "text-2xl"
   }`;
 
@@ -64,21 +68,30 @@ const StatCard: React.FC<Props> = ({
     <div
       className={`${baseClasses} ${interactiveClasses} ${activeClasses} ${className}`}
       onClick={onClick}
+      role={onClick ? "button" : undefined} // Accessibility: role button if clickable
+      tabIndex={onClick ? 0 : undefined} // Accessibility: make it focusable if clickable
+      onKeyDown={
+        onClick
+          ? (e) => {
+              if (e.key === "Enter" || e.key === " ") onClick();
+            }
+          : undefined
+      } // Accessibility: allow click with Enter/Space
     >
       <IconComponent
-        className={`h-7 w-7 flex-shrink-0 ${finalIconColor}`}
+        className={`h-6 w-6 sm:h-7 sm:w-7 flex-shrink-0 ${finalIconColor}`}
         aria-hidden="true"
       />
-      <div className="overflow-hidden">
-        <p className={`truncate text-xs ${activeTitle}`}>{title}</p>
-        {/* Render amount, potentially split */}
+      <div className="overflow-hidden flex-grow">
+        {" "}
+        {/* flex-grow to take available space */}
+        <p className={`truncate text-xs font-medium ${titleColorFinal}`}>
+          {title}
+        </p>
         <div className="flex items-baseline space-x-1">
-          {" "}
-          {/* Use flex to align parts */}
           <p className={mainAmountClasses}>{mainAmount}</p>
           {outOfText && (
-            // Smaller text size for the "(out of ...)" part
-            <p className={`text-xs font-normal ${amountColor} opacity-80`}>
+            <p className={`text-xs font-normal ${amountColorFinal} opacity-75`}>
               {outOfText}
             </p>
           )}

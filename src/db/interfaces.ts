@@ -5,7 +5,7 @@ export interface ICase {
   type: string;
   attachments?: string[];
   priority: string;
-  status: ICaseStatus;
+  status: ICaseStatus | string;
   case_number: number;
   categories: ICategory[];
   creator: IUser;

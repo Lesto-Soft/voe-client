@@ -1,26 +1,25 @@
 // src/components/features/categoryManagement/CategoryStats.tsx
 import React from "react";
-import StatCard from "../../cards/StatCard"; // Adjust path as needed
+import StatCard from "../../cards/StatCard";
 import {
   ICaseStatus as CaseStatus,
   CASE_STATUS_DISPLAY_ORDER,
-} from "../../../db/interfaces"; // Adjust path for your CaseStatus enum and display order
+} from "../../../db/interfaces";
 import {
-  ClipboardDocumentListIcon, // For "Total Cases/Signals"
+  ClipboardDocumentListIcon,
   FolderOpenIcon,
   ClockIcon,
   CurrencyDollarIcon,
   ArchiveBoxXMarkIcon,
-  CubeTransparentIcon, // Fallback icon
+  CubeTransparentIcon,
 } from "@heroicons/react/24/solid";
 
-// Define props for CategoryStats to display case counts
 interface CategoryStatsProps {
-  totalCaseCount: number; // Total number of cases/signals
-  caseCountsByStatus: Record<CaseStatus, number>; // Counts for each specific status
+  totalCaseCount: number;
+  caseCountsByStatus: Record<CaseStatus, number>;
+  isLoading?: boolean; // New prop
 }
 
-// Define icon, color, and label mapping for case statuses for the StatCard
 const STATUS_APPEARANCE: Record<
   CaseStatus,
   { icon: React.ElementType; color: string; label: string }
@@ -50,6 +49,7 @@ const STATUS_APPEARANCE: Record<
 const CategoryStats: React.FC<CategoryStatsProps> = ({
   totalCaseCount,
   caseCountsByStatus,
+  isLoading = false, // Default isLoading to false
 }) => {
   const totalCasesTitle = "Общо Сигнали";
 
@@ -58,21 +58,19 @@ const CategoryStats: React.FC<CategoryStatsProps> = ({
       <StatCard
         amount={totalCaseCount}
         title={totalCasesTitle}
-        icon={ClipboardDocumentListIcon} // Icon for "Total Cases/Signals"
+        icon={ClipboardDocumentListIcon}
         iconColor="text-slate-500"
-        // No onClick or isActive as this is display-only for filtering
+        isLoading={isLoading} // Pass isLoading prop
       />
-      {/* Optional: Divider can be conditional or styled differently if needed */}
       {(CASE_STATUS_DISPLAY_ORDER || []).length > 0 && (
         <div
           aria-hidden="true"
           className="self-stretch w-px mx-1 bg-gradient-to-b from-transparent via-gray-300 to-transparent"
         ></div>
       )}
-      {/* Map over CASE_STATUS_DISPLAY_ORDER to ensure consistent order */}
       {(CASE_STATUS_DISPLAY_ORDER || []).map((status) => {
         const appearance = STATUS_APPEARANCE[status] || {
-          icon: CubeTransparentIcon, // Fallback icon
+          icon: CubeTransparentIcon,
           color: "text-gray-400",
           label: "Unknown Status",
         };
@@ -85,7 +83,7 @@ const CategoryStats: React.FC<CategoryStatsProps> = ({
             title={appearance.label}
             icon={appearance.icon}
             iconColor={appearance.color}
-            // No onClick or isActive
+            isLoading={isLoading} // Pass isLoading prop
           />
         );
       })}

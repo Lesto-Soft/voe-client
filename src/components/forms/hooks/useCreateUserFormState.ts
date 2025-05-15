@@ -9,7 +9,7 @@ import { Role, User } from "../../../page/types/userManagementTypes"; // Adjust 
 
 // Helper function
 const isValidEmailFormat = (emailToTest: string): boolean =>
-  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailToTest);
+  emailToTest === "" || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailToTest);
 
 interface UseCreateUserFormStateProps {
   initialData: User | null;

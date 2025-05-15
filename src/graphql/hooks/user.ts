@@ -30,8 +30,8 @@ interface UserFiltersInput {
 
 export function buildUserQueryVariables(input: any) {
   const {
-    itemsPerPage = 10,
-    currentPage = 0,
+    itemsPerPage,
+    currentPage,
     query,
     name,
     username,

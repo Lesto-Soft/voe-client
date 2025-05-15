@@ -19,6 +19,8 @@ interface UserStatsProps {
   filterRoleIds: string[];
   handleRoleFilterToggle: (roleId: string) => void;
   onShowAllUsers: () => void;
+  dynamicRoleCounts: Record<string, number>; // Ensure this is in the props
+  isLoading?: boolean; // New prop
 }
 
 const getRoleAppearance = (
@@ -47,17 +49,18 @@ const UserStats: React.FC<UserStatsProps> = ({
   filterRoleIds,
   handleRoleFilterToggle,
   onShowAllUsers,
+  dynamicRoleCounts,
+  isLoading = false, // Default isLoading to false
 }) => {
   const totalUsersDisplay = `${filteredUserCount} (от ${
     absoluteTotalUserCount ?? "N/A"
   })`;
-
   return (
     // Main container: flex row, wrap, align items to start, gap between items
     <div className="flex flex-row flex-wrap items-start gap-3">
       <StatCard
         amount={totalUsersDisplay}
-        title="Общо потребители"
+        title="Общо Потребители"
         icon={UserGroupIcon}
         iconColor="text-slate-500"
         // className="flex-shrink-0" // Allow shrinking but also growing if space
@@ -76,7 +79,7 @@ const UserStats: React.FC<UserStatsProps> = ({
       {roles.map((role) => {
         const appearance = getRoleAppearance(role.name);
         const isActive = filterRoleIds.includes(role._id);
-        const roleUserCount = role.users?.length || 0;
+        const roleUserCount = dynamicRoleCounts[role._id] ?? 0;
 
         return (
           <StatCard
@@ -87,7 +90,7 @@ const UserStats: React.FC<UserStatsProps> = ({
             iconColor={appearance.color}
             onClick={() => handleRoleFilterToggle(role._id)}
             isActive={isActive}
-            // className="flex-shrink-0" // Allow shrinking
+            isLoading={isLoading}
           />
         );
       })}

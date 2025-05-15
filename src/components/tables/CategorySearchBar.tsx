@@ -1,11 +1,9 @@
 // src/components/search/CategorySearchBar.tsx
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { useLazyQuery } from "@apollo/client";
-// Ensure this path is correct for your project structure
 import { GET_LEAN_USERS } from "../../graphql/query/user";
 import { ChevronDownIcon, XMarkIcon } from "@heroicons/react/24/outline";
 
-// Interface for Lean User (adjust if your actual ILeanUser is different)
 interface ILeanUser {
   _id: string;
   name: string;
@@ -14,68 +12,69 @@ interface ILeanUser {
 interface CategorySearchBarProps {
   filterName: string;
   setFilterName: (value: string) => void;
-  expertIds: string[]; // Expecting this to be an array
+  expertIds: string[];
   setExpertIds: (ids: string[]) => void;
-  managerIds: string[]; // Expecting this to be an array
+  managerIds: string[];
   setManagerIds: (ids: string[]) => void;
   filterArchived: boolean | undefined;
   setFilterArchived: (value: boolean | undefined) => void;
-  // t?: (key: string) => string; // Optional translation function
 }
-
-// --- Custom Hook: useDebounce ---
-function useDebounce<T>(value: T, delay: number): T {
-  const [debouncedValue, setDebouncedValue] = useState<T>(value);
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [value, delay]);
-  return debouncedValue;
-}
-// --- End Custom Hook ---
 
 const CategorySearchBar: React.FC<CategorySearchBarProps> = ({
   filterName,
   setFilterName,
-  expertIds: expertIdsProp, // Use prop alias
+  expertIds: expertIdsProp,
   setExpertIds,
-  managerIds: managerIdsProp, // Use prop alias
+  managerIds: managerIdsProp,
   setManagerIds,
   filterArchived,
   setFilterArchived,
-  // t = (key: string) => key, // Default translation
 }) => {
-  // Ensure expertIds and managerIds are always arrays internally
   const expertIds = expertIdsProp || [];
   const managerIds = managerIdsProp || [];
+
+  // --- Central Store for All Users & Cache ---
+  const [allAvailableUsers, setAllAvailableUsers] = useState<ILeanUser[]>([]);
+  const [userCache, setUserCache] = useState<Record<string, ILeanUser>>({});
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false); // To track if the initial fetch has been done
+
+  const [fetchAllUsers, { loading: loadingUsers, error: usersError }] =
+    useLazyQuery<{ getLeanUsers: ILeanUser[] }>(GET_LEAN_USERS, {
+      onCompleted: (data) => {
+        const users = data?.getLeanUsers || [];
+        setAllAvailableUsers(users);
+        const newCache: Record<string, ILeanUser> = {};
+        users.forEach((user) => {
+          newCache[user._id] = user;
+        });
+        setUserCache((prevCache) => ({ ...prevCache, ...newCache })); // Merge ensures pre-selected IDs might get names if already in cache
+        setInitialLoadComplete(true);
+      },
+      fetchPolicy: "network-only", // Fetch fresh on first call
+    });
+
+  // Helper to trigger fetch if needed (e.g., on first dropdown open)
+  const ensureUsersFetched = () => {
+    if (!initialLoadComplete && !loadingUsers) {
+      fetchAllUsers({ variables: { input: "" } }); // Assuming empty input fetches all relevant users
+    }
+  };
 
   // --- State & Logic for Experts Dropdown ---
   const [isExpertDropdownVisible, setIsExpertDropdownVisible] = useState(false);
   const expertDisplayInputRef = useRef<HTMLInputElement>(null);
   const expertDropdownRef = useRef<HTMLDivElement>(null);
-  const [expertSearchTerm, setExpertSearchTerm] = useState("");
-  const [serverFetchedExperts, setServerFetchedExperts] = useState<ILeanUser[]>(
-    []
-  );
-  const debouncedExpertSearchTerm = useDebounce(expertSearchTerm, 300);
+  const [expertSearchTerm, setExpertSearchTerm] = useState(""); // Non-debounced
 
-  const [fetchExperts, { loading: loadingExperts, error: expertsError }] =
-    useLazyQuery<{ getLeanUsers: ILeanUser[] }>(GET_LEAN_USERS, {
-      onCompleted: (data) => {
-        setServerFetchedExperts(data?.getLeanUsers || []);
-      },
-      fetchPolicy: "network-only",
-    });
-
-  useEffect(() => {
-    if (isExpertDropdownVisible) {
-      fetchExperts({ variables: { input: debouncedExpertSearchTerm } });
+  // Client-side filtering for expert dropdown
+  const displayableExperts = useMemo(() => {
+    if (!expertSearchTerm.trim()) {
+      return allAvailableUsers;
     }
-  }, [isExpertDropdownVisible, debouncedExpertSearchTerm, fetchExperts]);
+    return allAvailableUsers.filter((user) =>
+      user.name.toLowerCase().includes(expertSearchTerm.toLowerCase())
+    );
+  }, [allAvailableUsers, expertSearchTerm]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -93,52 +92,48 @@ const CategorySearchBar: React.FC<CategorySearchBarProps> = ({
   }, []);
 
   const selectedExpertNames = useMemo(() => {
-    const names = serverFetchedExperts
-      .filter((user) => expertIds.includes(user._id))
-      .map((user) => user.name);
-    return names.length > 0 ? names.join(", ") : "";
-  }, [expertIds, serverFetchedExperts]);
+    return (
+      expertIds
+        .map((id) => userCache[id]?.name)
+        .filter((name) => !!name)
+        .join(", ") || ""
+    );
+  }, [expertIds, userCache]);
 
-  const handleExpertToggle = (userId: string) => {
-    if (typeof setExpertIds === "function") {
-      setExpertIds(
-        expertIds.includes(userId)
-          ? expertIds.filter((id) => id !== userId)
-          : [...expertIds, userId]
-      );
-    } else {
-      console.error(
-        "setExpertIds is not a function in CategorySearchBar",
-        setExpertIds
-      );
-    }
+  const handleExpertToggle = (user: ILeanUser) => {
+    // Ensure user is in cache (might be redundant if allAvailableUsers populates it fully, but safe)
+    setUserCache((prevCache) => {
+      if (prevCache[user._id]?.name === user.name) return prevCache;
+      return { ...prevCache, [user._id]: user };
+    });
+    setExpertIds(
+      expertIds.includes(user._id)
+        ? expertIds.filter((id) => id !== user._id)
+        : [...expertIds, user._id]
+    );
   };
-  // --- End Experts Dropdown ---
+
+  const openExpertDropdown = () => {
+    ensureUsersFetched();
+    setIsExpertDropdownVisible(true);
+  };
 
   // --- State & Logic for Managers Dropdown ---
   const [isManagerDropdownVisible, setIsManagerDropdownVisible] =
     useState(false);
   const managerDisplayInputRef = useRef<HTMLInputElement>(null);
   const managerDropdownRef = useRef<HTMLDivElement>(null);
-  const [managerSearchTerm, setManagerSearchTerm] = useState("");
-  const [serverFetchedManagers, setServerFetchedManagers] = useState<
-    ILeanUser[]
-  >([]);
-  const debouncedManagerSearchTerm = useDebounce(managerSearchTerm, 300);
+  const [managerSearchTerm, setManagerSearchTerm] = useState(""); // Non-debounced
 
-  const [fetchManagers, { loading: loadingManagers, error: managersError }] =
-    useLazyQuery<{ getLeanUsers: ILeanUser[] }>(GET_LEAN_USERS, {
-      onCompleted: (data) => {
-        setServerFetchedManagers(data?.getLeanUsers || []);
-      },
-      fetchPolicy: "network-only",
-    });
-
-  useEffect(() => {
-    if (isManagerDropdownVisible) {
-      fetchManagers({ variables: { input: debouncedManagerSearchTerm } });
+  // Client-side filtering for manager dropdown
+  const displayableManagers = useMemo(() => {
+    if (!managerSearchTerm.trim()) {
+      return allAvailableUsers; // Assuming managers are also in allAvailableUsers
     }
-  }, [isManagerDropdownVisible, debouncedManagerSearchTerm, fetchManagers]);
+    return allAvailableUsers.filter((user) =>
+      user.name.toLowerCase().includes(managerSearchTerm.toLowerCase())
+    );
+  }, [allAvailableUsers, managerSearchTerm]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -156,27 +151,54 @@ const CategorySearchBar: React.FC<CategorySearchBarProps> = ({
   }, []);
 
   const selectedManagerNames = useMemo(() => {
-    const names = serverFetchedManagers
-      .filter((user) => managerIds.includes(user._id))
-      .map((user) => user.name);
-    return names.length > 0 ? names.join(", ") : "";
-  }, [managerIds, serverFetchedManagers]);
+    return (
+      managerIds
+        .map((id) => userCache[id]?.name)
+        .filter((name) => !!name)
+        .join(", ") || ""
+    );
+  }, [managerIds, userCache]);
 
-  const handleManagerToggle = (userId: string) => {
-    if (typeof setManagerIds === "function") {
-      setManagerIds(
-        managerIds.includes(userId)
-          ? managerIds.filter((id) => id !== userId)
-          : [...managerIds, userId]
-      );
-    } else {
-      console.error(
-        "setManagerIds is not a function in CategorySearchBar",
-        setManagerIds
-      );
-    }
+  const handleManagerToggle = (user: ILeanUser) => {
+    setUserCache((prevCache) => {
+      if (prevCache[user._id]?.name === user.name) return prevCache;
+      return { ...prevCache, [user._id]: user };
+    });
+    setManagerIds(
+      managerIds.includes(user._id)
+        ? managerIds.filter((id) => id !== user._id)
+        : [...managerIds, user._id]
+    );
   };
-  // --- End Managers Dropdown ---
+
+  const openManagerDropdown = () => {
+    ensureUsersFetched();
+    setIsManagerDropdownVisible(true);
+  };
+
+  // Effect to try to populate names for initially provided expertIds/managerIds if not in cache
+  // This is best-effort if GET_LEAN_USERS with specific IDs isn't available.
+  // The single fetch with input: "" is the primary mechanism now.
+  useEffect(() => {
+    const allSelectedIds = [...new Set([...expertIdsProp, ...managerIdsProp])];
+    const idsNotInCache = allSelectedIds.filter((id) => !userCache[id]);
+    if (idsNotInCache.length > 0 && !initialLoadComplete && !loadingUsers) {
+      // If initial load hasn't happened, it will cover these.
+      // If it has, and names are still missing, it implies GET_LEAN_USERS with "" didn't fetch them.
+      // Or they were set externally after initial load.
+      // A targeted fetch for these IDs would be ideal if the API supports it.
+      // For now, rely on the ensureUsersFetched called on dropdown open.
+      // Or, if the component is always visible, fetch on mount.
+      ensureUsersFetched();
+    }
+  }, [
+    expertIdsProp,
+    managerIdsProp,
+    userCache,
+    initialLoadComplete,
+    loadingUsers,
+    ensureUsersFetched,
+  ]);
 
   const handleArchivedChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
@@ -185,7 +207,7 @@ const CategorySearchBar: React.FC<CategorySearchBarProps> = ({
     else setFilterArchived(undefined);
   };
 
-  const t = (key: string) => key; // Placeholder for translation
+  const t = (key: string) => key;
 
   return (
     <div className="pt-2.5">
@@ -234,7 +256,7 @@ const CategorySearchBar: React.FC<CategorySearchBarProps> = ({
               id="filterExpertsDisplay"
               ref={expertDisplayInputRef}
               value={selectedExpertNames || ""}
-              onClick={() => setIsExpertDropdownVisible((v) => !v)}
+              onClick={openExpertDropdown}
               readOnly
               className="bg-white w-full px-3 py-2 pr-10 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm cursor-pointer truncate"
               placeholder={t("Избери експерти...")}
@@ -250,8 +272,7 @@ const CategorySearchBar: React.FC<CategorySearchBarProps> = ({
                 className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700"
                 title={t("Изчисти експерти")}
               >
-                {" "}
-                <XMarkIcon className="h-5 w-5" />{" "}
+                <XMarkIcon className="h-5 w-5" />
               </button>
             )}
           </div>
@@ -262,43 +283,41 @@ const CategorySearchBar: React.FC<CategorySearchBarProps> = ({
             >
               <div className="p-2">
                 <div className="relative">
-                  {" "}
-                  {/* Added relative wrapper for search input */}
                   <input
                     type="text"
                     value={expertSearchTerm}
-                    onChange={(e) => setExpertSearchTerm(e.target.value)}
+                    onChange={(e) => setExpertSearchTerm(e.target.value)} // No debounce
                     placeholder={t("Търси експерт...")}
-                    className="w-full px-2 py-1 pr-8 mb-2 border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500 text-sm" // Added pr-8
+                    className="w-full px-2 py-1 pr-8 mb-2 border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500 text-sm"
                     autoFocus
                   />
                   {expertSearchTerm && (
                     <button
                       type="button"
                       onClick={() => setExpertSearchTerm("")}
-                      className="absolute inset-y-0 right-0 flex items-center pr-2 pb-2 text-gray-500 hover:text-gray-700" // Adjusted padding for pb-2
+                      className="absolute inset-y-0 right-0 flex items-center pr-2 pb-2 text-gray-500 hover:text-gray-700"
                       title={t("Изчисти търсенето")}
                     >
-                      <XMarkIcon className="h-4 w-4" />{" "}
-                      {/* Smaller icon for dropdown search */}
+                      <XMarkIcon className="h-4 w-4" />
                     </button>
                   )}
                 </div>
               </div>
-              {loadingExperts && serverFetchedExperts.length === 0 ? (
+              {loadingUsers && !initialLoadComplete ? ( // Show loading only on initial fetch
                 <div className="px-3 py-2 text-sm text-gray-500">
                   {t("Зареждане...")}
                 </div>
-              ) : expertsError ? (
+              ) : usersError ? (
                 <div className="px-3 py-2 text-sm text-red-600">
-                  {t("Грешка")}: {expertsError.message}
+                  {t("Грешка при зареждане на потребители")}:{" "}
+                  {usersError.message}
                 </div>
-              ) : serverFetchedExperts.length === 0 ? (
+              ) : displayableExperts.length === 0 ? (
                 <div className="px-3 py-2 text-sm text-gray-500">
                   {t("Няма намерени потребители.")}
                 </div>
               ) : (
-                serverFetchedExperts.map((user) => (
+                displayableExperts.map((user) => (
                   <label
                     key={user._id}
                     className="flex items-center px-3 py-2 cursor-pointer hover:bg-indigo-50"
@@ -306,7 +325,7 @@ const CategorySearchBar: React.FC<CategorySearchBarProps> = ({
                     <input
                       type="checkbox"
                       checked={expertIds.includes(user._id)}
-                      onChange={() => handleExpertToggle(user._id)}
+                      onChange={() => handleExpertToggle(user)} // Pass full user object
                       className="form-checkbox h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
                     />
                     <span className="ml-2 text-sm text-gray-800">
@@ -333,7 +352,7 @@ const CategorySearchBar: React.FC<CategorySearchBarProps> = ({
               id="filterManagersDisplay"
               ref={managerDisplayInputRef}
               value={selectedManagerNames || ""}
-              onClick={() => setIsManagerDropdownVisible((v) => !v)}
+              onClick={openManagerDropdown}
               readOnly
               className="bg-white w-full px-3 py-2 pr-10 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm cursor-pointer truncate"
               placeholder={t("Избери мениджъри...")}
@@ -349,8 +368,7 @@ const CategorySearchBar: React.FC<CategorySearchBarProps> = ({
                 className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700"
                 title={t("Изчисти мениджъри")}
               >
-                {" "}
-                <XMarkIcon className="h-5 w-5" />{" "}
+                <XMarkIcon className="h-5 w-5" />
               </button>
             )}
           </div>
@@ -361,43 +379,41 @@ const CategorySearchBar: React.FC<CategorySearchBarProps> = ({
             >
               <div className="p-2">
                 <div className="relative">
-                  {" "}
-                  {/* Added relative wrapper for search input */}
                   <input
                     type="text"
                     value={managerSearchTerm}
-                    onChange={(e) => setManagerSearchTerm(e.target.value)}
+                    onChange={(e) => setManagerSearchTerm(e.target.value)} // No debounce
                     placeholder={t("Търси мениджър...")}
-                    className="w-full px-2 py-1 pr-8 mb-2 border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500 text-sm" // Added pr-8
+                    className="w-full px-2 py-1 pr-8 mb-2 border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500 text-sm"
                     autoFocus
                   />
                   {managerSearchTerm && (
                     <button
                       type="button"
                       onClick={() => setManagerSearchTerm("")}
-                      className="absolute inset-y-0 right-0 flex items-center pr-2 pb-2 text-gray-500 hover:text-gray-700" // Adjusted padding for pb-2
+                      className="absolute inset-y-0 right-0 flex items-center pr-2 pb-2 text-gray-500 hover:text-gray-700"
                       title={t("Изчисти търсенето")}
                     >
-                      <XMarkIcon className="h-4 w-4" />{" "}
-                      {/* Smaller icon for dropdown search */}
+                      <XMarkIcon className="h-4 w-4" />
                     </button>
                   )}
                 </div>
               </div>
-              {loadingManagers && serverFetchedManagers.length === 0 ? (
+              {loadingUsers && !initialLoadComplete ? ( // Show loading only on initial fetch
                 <div className="px-3 py-2 text-sm text-gray-500">
                   {t("Зареждане...")}
                 </div>
-              ) : managersError ? (
+              ) : usersError ? (
                 <div className="px-3 py-2 text-sm text-red-600">
-                  {t("Грешка")}: {managersError.message}
+                  {t("Грешка при зареждане на потребители")}:{" "}
+                  {usersError.message}
                 </div>
-              ) : serverFetchedManagers.length === 0 ? (
+              ) : displayableManagers.length === 0 ? (
                 <div className="px-3 py-2 text-sm text-gray-500">
                   {t("Няма намерени потребители.")}
                 </div>
               ) : (
-                serverFetchedManagers.map((user) => (
+                displayableManagers.map((user) => (
                   <label
                     key={user._id}
                     className="flex items-center px-3 py-2 cursor-pointer hover:bg-indigo-50"
@@ -405,7 +421,7 @@ const CategorySearchBar: React.FC<CategorySearchBarProps> = ({
                     <input
                       type="checkbox"
                       checked={managerIds.includes(user._id)}
-                      onChange={() => handleManagerToggle(user._id)}
+                      onChange={() => handleManagerToggle(user)} // Pass full user object
                       className="form-checkbox h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
                     />
                     <span className="ml-2 text-sm text-gray-800">

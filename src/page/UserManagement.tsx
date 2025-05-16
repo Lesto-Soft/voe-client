@@ -1,5 +1,5 @@
 // src/page/UserManagement.tsx
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import { ChevronUpIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
 import { PlusIcon as PlusIconSolid } from "@heroicons/react/20/solid";
 
@@ -72,12 +72,27 @@ const UserManagement: React.FC = () => {
     refetch: refetchUserCount,
   } = useCountUsers(currentQueryInput);
 
+  const textAttributeFiltersOnlyInput = useMemo(() => {
+    const { name, username, position, email } = currentQueryInput;
+    const filters: any = {};
+    if (name) filters.name = name;
+    if (username) filters.username = username;
+    if (position) filters.position = position;
+    if (email) filters.email = email;
+    return filters;
+  }, [
+    currentQueryInput.name,
+    currentQueryInput.username,
+    currentQueryInput.position,
+    currentQueryInput.email,
+  ]);
+
   // Fetch ALL users (once) for client-side filtering for UserStats' dynamic role counts
   const {
-    users: absoluteTotalUsersData,
-    loading: absoluteTotalUsersLoading,
-    error: absoluteTotalUsersError,
-  } = useGetAllUsers({});
+    users: usersForRoleCountsData,
+    loading: loadingUsersForRoleCounts,
+    error: errorUsersForRoleCounts,
+  } = useGetAllUsers(textAttributeFiltersOnlyInput);
 
   // Count of ALL users (for the "(от X)" part of "Общо Потребители")
   const {
@@ -95,56 +110,55 @@ const UserManagement: React.FC = () => {
   } = useGetRoles();
 
   const usersForTable: User[] = usersDataForTable || [];
-  const allUsersForStatsCalculation: User[] = absoluteTotalUsersData || [];
+  const allUsersForDynamicRoleCount: User[] = usersForRoleCountsData || []; // Use data from the correct fetch
   const roles: Role[] = rolesData?.getAllLeanRoles || [];
+
+  // --- State to track if text filters changed, making dynamicRoleCounts need recalculation/show skeleton ---
+
+  const [isDynamicRoleDataStale, setIsDynamicRoleDataStale] = useState(false);
+  const prevTextAttributeFiltersRef = useRef(textAttributeFiltersOnlyInput);
+
+  useEffect(() => {
+    if (
+      JSON.stringify(prevTextAttributeFiltersRef.current) !==
+      JSON.stringify(textAttributeFiltersOnlyInput)
+    ) {
+      setIsDynamicRoleDataStale(true);
+
+      prevTextAttributeFiltersRef.current = textAttributeFiltersOnlyInput;
+    }
+  }, [textAttributeFiltersOnlyInput]);
+
+  useEffect(() => {
+    if (isDynamicRoleDataStale && !loadingUsersForRoleCounts) {
+      setIsDynamicRoleDataStale(false);
+    }
+  }, [isDynamicRoleDataStale, loadingUsersForRoleCounts]);
 
   // Calculate dynamic role counts based on client-filtering absoluteTotalUsersData
   const dynamicRoleCounts = useMemo(() => {
     const counts: Record<string, number> = {};
+
     roles.forEach((role) => {
       counts[role._id] = 0;
     });
 
-    if (allUsersForStatsCalculation.length === 0 || roles.length === 0) {
+    if (allUsersForDynamicRoleCount.length === 0 || roles.length === 0)
       return counts;
-    }
 
-    const nameFilter = currentQueryInput.name?.toLowerCase();
-    const usernameFilter = currentQueryInput.username?.toLowerCase();
-    const positionFilter = currentQueryInput.position?.toLowerCase();
-    const emailFilter = currentQueryInput.email?.toLowerCase();
+    allUsersForDynamicRoleCount.forEach((user) => {
+      // Iterate over already filtered users
 
-    allUsersForStatsCalculation.forEach((user) => {
-      const nameMatch =
-        !nameFilter ||
-        (user.name && user.name.toLowerCase().includes(nameFilter));
-      const usernameMatch =
-        !usernameFilter ||
-        (user.username && user.username.toLowerCase().includes(usernameFilter));
-      const positionMatch =
-        !positionFilter ||
-        (user.position && user.position.toLowerCase().includes(positionFilter));
-      const emailMatch =
-        !emailFilter ||
-        (user.email && user.email.toLowerCase().includes(emailFilter));
+      const userRoleId =
+        typeof user.role === "string" ? user.role : user.role?._id;
 
-      if (nameMatch && usernameMatch && positionMatch && emailMatch) {
-        const userRoleId =
-          typeof user.role === "string" ? user.role : user.role?._id;
-        if (userRoleId && counts.hasOwnProperty(userRoleId)) {
-          counts[userRoleId]++;
-        }
+      if (userRoleId && counts.hasOwnProperty(userRoleId)) {
+        counts[userRoleId]++;
       }
     });
+
     return counts;
-  }, [
-    allUsersForStatsCalculation,
-    roles,
-    currentQueryInput.name,
-    currentQueryInput.username,
-    currentQueryInput.position,
-    currentQueryInput.email,
-  ]);
+  }, [allUsersForDynamicRoleCount, roles]);
 
   const {
     createUser,
@@ -187,13 +201,10 @@ const UserManagement: React.FC = () => {
 
     if (editingUserId) {
       Object.keys(finalInput).forEach((key) => {
-        const K = key as keyof typeof finalInput;
-        if (finalInput[K] === undefined) {
-          delete finalInput[K];
-        }
+        if (finalInput[key as keyof typeof finalInput] === undefined)
+          delete finalInput[key as keyof typeof finalInput];
       });
     }
-
     const context = editingUser ? "редактиране" : "създаване";
     try {
       if (editingUserId) {
@@ -221,33 +232,36 @@ const UserManagement: React.FC = () => {
   const isLoadingTableData = usersLoading || countLoading;
   const tableDataError = usersError || countError;
 
-  const hasActiveTextFilters = useMemo(() => {
-    return !!(
-      currentQueryInput.name ||
-      currentQueryInput.username ||
-      currentQueryInput.position ||
-      currentQueryInput.email
-    );
-  }, [
-    currentQueryInput.name,
-    currentQueryInput.username,
-    currentQueryInput.position,
-    currentQueryInput.email,
-  ]);
+  const hasActiveTextFilters = useMemo(
+    () =>
+      !!(
+        currentQueryInput.name ||
+        currentQueryInput.username ||
+        currentQueryInput.position ||
+        currentQueryInput.email
+      ),
 
-  // Loading state for the "Общо Потребители" card's main numbers
-  // Loading state for role definitions OR the base data for dynamicRoleCounts
+    [
+      currentQueryInput.name,
+      currentQueryInput.username,
+      currentQueryInput.position,
+      currentQueryInput.email,
+    ]
+  );
 
+  // Loading state for the "Общо Потребители" card's numbers
   const isLoadingUserStatsOverallCounts =
     countLoading || absoluteTotalCountLoading;
-  const isLoadingUserStatsRoleDefinitions =
-    rolesLoadingHook || absoluteTotalUsersLoading;
+
+  // Loading state for role definitions OR if dynamic role data is recalculating due to text filter changes
+  const isLoadingUserStatsRoleDefinitionsAndCounts =
+    rolesLoadingHook || loadingUsersForRoleCounts || isDynamicRoleDataStale;
 
   // Initial Page Load Check: if any essential data for stats is still loading
   if (
-    rolesLoadingHook ||
-    absoluteTotalUsersLoading ||
-    absoluteTotalCountLoading
+    //rolesLoadingHook ||
+    absoluteTotalCountLoading //||
+    //loadingUsersForRoleCounts
   ) {
     return <LoadingModal message={"Зареждане на страницата..."} />;
   }
@@ -255,8 +269,8 @@ const UserManagement: React.FC = () => {
   // Handle critical errors that prevent page rendering
   const criticalPageError =
     rolesErrorHook ||
-    absoluteTotalUsersError ||
     absoluteTotalCountError ||
+    errorUsersForRoleCounts ||
     usersError ||
     countError;
 
@@ -264,7 +278,7 @@ const UserManagement: React.FC = () => {
     criticalPageError &&
     !isLoadingTableData &&
     !isLoadingUserStatsOverallCounts &&
-    !isLoadingUserStatsRoleDefinitions
+    !isLoadingUserStatsRoleDefinitionsAndCounts
   ) {
     return (
       <div className="p-6 text-red-600 text-center">
@@ -285,7 +299,7 @@ const UserManagement: React.FC = () => {
           handleRoleFilterToggle={handleRoleFilterToggle}
           onShowAllUsers={() => setFilterRoleIds([])}
           isLoadingOverallCounts={isLoadingUserStatsOverallCounts}
-          isLoadingRoleDefinitions={isLoadingUserStatsRoleDefinitions}
+          isLoadingRoleDefinitions={isLoadingUserStatsRoleDefinitionsAndCounts}
           dynamicRoleCounts={dynamicRoleCounts}
         />
         <div className="flex flex-col sm:flex-row gap-2 items-center md:items-start flex-shrink-0 mt-4 md:mt-0">
@@ -305,11 +319,9 @@ const UserManagement: React.FC = () => {
             onClick={openCreateModal}
             className="w-full sm:w-auto flex flex-shrink-0 justify-center items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-green-500 text-white hover:bg-green-600 hover:cursor-pointer active:bg-green-700 active:shadow-inner disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={
-              createLoading ||
-              updateLoading ||
-              isLoadingTableData ||
-              isLoadingUserStatsOverallCounts || // Disable if any part of stats is loading
-              isLoadingUserStatsRoleDefinitions
+              createLoading || updateLoading //|| isLoadingTableData ||
+              // isLoadingUserStatsOverallCounts || // Disable if any part of stats is loading
+              // isLoadingUserStatsRoleDefinitionsAndCounts
             }
           >
             <PlusIconSolid className="h-5 w-5 mr-1" />

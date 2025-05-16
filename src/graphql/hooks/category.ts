@@ -19,7 +19,6 @@ export function buildCategoryQueryVariables(input: any) {
   const {
     itemsPerPage, // Default items per page
     currentPage, // Default current page (0-indexed)
-    query, // Generic search query
     name, // Filter by category name
     archived, // Filter by archived status (boolean)
     expertIds, // Filter by array of expert User IDs
@@ -36,11 +35,6 @@ export function buildCategoryQueryVariables(input: any) {
   };
 
   // Conditionally add filter fields to the variables.input object
-
-  // Generic query string
-  if (typeof query === "string" && query.trim())
-    variables.input.query = query.trim();
-
   // Filter by category name
   if (typeof name === "string" && name.trim())
     variables.input.name = name.trim();

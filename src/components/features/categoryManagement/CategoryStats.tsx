@@ -15,9 +15,13 @@ import {
 } from "@heroicons/react/24/solid";
 
 interface CategoryStatsProps {
-  totalCaseCount: number;
-  caseCountsByStatus: Record<CaseStatus, number>;
-  isLoading?: boolean; // New prop
+  totalCaseCount: number; // Filtered total cases for current categories
+  absoluteTotalCaseCountAllTime?: number | null; // Absolute total of all cases
+  caseCountsByStatus: Record<CaseStatus | string, number>;
+  activeCaseStatusFilter?: CaseStatus | string | null;
+  onCaseStatusCardClick?: (status: CaseStatus | string) => void;
+  isLoadingOverallCounts?: boolean; // For "Total Cases" card's numbers
+  isLoadingStatusSpecificCounts?: boolean; // For individual status card numbers
 }
 
 const STATUS_APPEARANCE: Record<
@@ -48,19 +52,31 @@ const STATUS_APPEARANCE: Record<
 
 const CategoryStats: React.FC<CategoryStatsProps> = ({
   totalCaseCount,
+  absoluteTotalCaseCountAllTime,
   caseCountsByStatus,
-  isLoading = false, // Default isLoading to false
+  activeCaseStatusFilter,
+  onCaseStatusCardClick,
+  isLoadingOverallCounts = false,
+  isLoadingStatusSpecificCounts = false,
 }) => {
   const totalCasesTitle = "Общо Сигнали";
+
+  // Format the main total display string
+  const totalDisplayAmount =
+    absoluteTotalCaseCountAllTime !== undefined &&
+    absoluteTotalCaseCountAllTime !== null
+      ? `${totalCaseCount} (от ${absoluteTotalCaseCountAllTime})`
+      : `${totalCaseCount}`; // Fallback if absolute total isn't available
 
   return (
     <div className="flex flex-row flex-wrap items-start gap-3">
       <StatCard
-        amount={totalCaseCount}
+        amount={totalDisplayAmount}
         title={totalCasesTitle}
         icon={ClipboardDocumentListIcon}
         iconColor="text-slate-500"
-        isLoading={isLoading} // Pass isLoading prop
+        isLoading={isLoadingOverallCounts} // Use specific loading for this card
+        // This card could also have an onClick to clear all filters if desired
       />
       {(CASE_STATUS_DISPLAY_ORDER || []).length > 0 && (
         <div
@@ -72,7 +88,7 @@ const CategoryStats: React.FC<CategoryStatsProps> = ({
         const appearance = STATUS_APPEARANCE[status] || {
           icon: CubeTransparentIcon,
           color: "text-gray-400",
-          label: "Unknown Status",
+          label: status.toString(), // Fallback label,
         };
         const count = caseCountsByStatus[status] ?? 0;
 
@@ -83,7 +99,13 @@ const CategoryStats: React.FC<CategoryStatsProps> = ({
             title={appearance.label}
             icon={appearance.icon}
             iconColor={appearance.color}
-            isLoading={isLoading} // Pass isLoading prop
+            onClick={
+              onCaseStatusCardClick
+                ? () => onCaseStatusCardClick(status)
+                : undefined
+            }
+            isActive={activeCaseStatusFilter === status}
+            isLoading={isLoadingStatusSpecificCounts} // Use specific loading for these cards
           />
         );
       })}

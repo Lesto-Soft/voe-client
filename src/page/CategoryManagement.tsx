@@ -7,30 +7,29 @@ import {
   useCountCategories,
   useCreateCategory,
   useUpdateCategory,
-} from "../graphql/hooks/category";
-import { useCountFilteredCases } from "../graphql/hooks/case"; // Assuming this is the correct path
+} from "../graphql/hooks/category"; // Adjust path as needed
+import { useCountFilteredCases, useCountCases } from "../graphql/hooks/case"; // Adjust path as needed
 import {
   CreateCategoryInput,
   UpdateCategoryInput,
-} from "../graphql/mutation/category";
+} from "../graphql/mutation/category"; // Adjust path as needed
+import { ICategory, ICaseStatus as CaseStatus } from "../db/interfaces"; // Adjust path as needed, ensure ICaseItem is defined
+import CategoryTable from "../components/features/categoryManagement/CategoryTable"; // Adjust path as needed
 import {
-  ICategory,
-  ICaseStatus as CaseStatus,
-  // CASE_STATUS_DISPLAY_ORDER, // Not used in this file snippet
-} from "../db/interfaces";
-import CategoryTable from "../components/features/categoryManagement/CategoryTable";
-import { useCategoryManagement } from "./hooks/useCategoryManagement"; // Ensure this path is correct
-import LoadingModal from "../components/modals/LoadingModal";
-import CategoryFilters from "../components/features/categoryManagement/CategoryFilters";
-import CreateCategoryModal from "../components/modals/CreateCategoryModal";
+  useCategoryManagement,
+  CategoryQueryApiParams,
+} from "./hooks/useCategoryManagement"; // Adjust path as needed
+import LoadingModal from "../components/modals/LoadingModal"; // Adjust path as needed
+import CategoryFilters from "../components/features/categoryManagement/CategoryFilters"; // Adjust path as needed
+import CreateCategoryModal from "../components/modals/CreateCategoryModal"; // Adjust path as needed
 import CreateCategoryForm, {
   CategoryFormData,
-} from "../components/forms/CreateCategoryForm";
-import CategoryStats from "../components/features/categoryManagement/CategoryStats";
+} from "../components/forms/CreateCategoryForm"; // Adjust path as needed
+import CategoryStats from "../components/features/categoryManagement/CategoryStats"; // Adjust path as needed
 
 const CategoryManagement: React.FC = () => {
   const {
-    currentPage,
+    currentPage, // UI current page (1-indexed)
     itemsPerPage,
     filterName,
     setFilterName,
@@ -40,9 +39,11 @@ const CategoryManagement: React.FC = () => {
     setFilterManagerIds,
     filterArchived,
     setFilterArchived,
-    handlePageChange,
+    filterCaseStatus, // This is your client-side case status filter state
+    setFilterCaseStatus,
+    handlePageChange, // This function should set the currentPage state
     handleItemsPerPageChange,
-    currentQueryInput, // This is for CATEGORY filtering
+    currentQueryInput, // Contains backend filters (name, expert, etc.) + pagination
   } = useCategoryManagement();
 
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
@@ -51,69 +52,205 @@ const CategoryManagement: React.FC = () => {
   );
   const [formHasUnsavedChanges, setFormHasUnsavedChanges] = useState(false);
   const [showFilters, setShowFilters] = useState(true);
-
-  // State to track if the initial full page load has completed
   const [isInitialAppLoadComplete, setIsInitialAppLoadComplete] =
     useState(false);
 
-  // Fetching data for the category table based on currentQueryInput
+  // Query input that EXCLUDES pagination parameters - used for fetching ALL categories matching backend filters
+  const categoryFiltersWithoutPagination = useMemo((): Omit<
+    CategoryQueryApiParams,
+    "itemsPerPage" | "currentPage"
+  > => {
+    const {
+      itemsPerPage: _itemsPerPage,
+      currentPage: _currentPage,
+      ...filters
+    } = currentQueryInput;
+    return filters; // These are the backend filters (name, expert, etc.)
+  }, [currentQueryInput]);
+
+  // 1. Fetching categories for the TABLE (paginated, based on backend filters)
+  // This data is primarily used when filterCaseStatus is NOT active.
   const {
-    categories: categoriesData,
+    categories: rawCategoriesDataForTable,
     loading: categoriesListLoading,
     error: categoriesListError,
-    refetch: refetchCategories,
+    refetch: refetchCategoriesForTable,
   } = useGetAllLeanCategories(currentQueryInput);
 
-  // Count of categories for table pagination (respects all filters from currentQueryInput)
+  // 2. Count of categories matching backend filters for TABLE pagination total (BEFORE client-side caseStatus filter)
+  // This count is used when filterCaseStatus is NOT active.
   const {
-    count: filteredCategoryCountForTable,
-    loading: categoryCountLoading,
-    error: categoryCountError,
-    refetch: refetchCategoryCount,
+    count: backendFilteredCategoryCountForTable,
+    loading: categoryCountLoadingForTable,
+    error: categoryCountErrorForTable,
+    refetch: refetchCategoryCountForTable,
   } = useCountCategories(currentQueryInput);
 
-  // --- Fetching data for CategoryStats based on the filtered categories ---
-  const filteredCategoryIdsForStats = useMemo(() => {
-    return (categoriesData || []).map((category) => category._id);
-  }, [categoriesData]);
-
-  const skipCaseStatsQueries = useMemo(() => {
-    return (
-      categoriesListLoading || // if category list is loading, case stats depend on it
-      (!categoriesListLoading && filteredCategoryIdsForStats.length === 0)
-    );
-  }, [categoriesListLoading, filteredCategoryIdsForStats.length]);
-
-  const baseCaseVariablesForStats = useMemo(
-    () => ({
-      categories: filteredCategoryIdsForStats,
-      ...(currentQueryInput.expertIds &&
-        currentQueryInput.expertIds.length > 0 && {
-          experts: currentQueryInput.expertIds,
-        }),
-      ...(currentQueryInput.managerIds &&
-        currentQueryInput.managerIds.length > 0 && {
-          managers: currentQueryInput.managerIds,
-        }),
-    }),
-    [
-      filteredCategoryIdsForStats,
-      currentQueryInput.expertIds,
-      currentQueryInput.managerIds,
-    ]
+  // 3. Fetch ALL categories that match the current backend filters (NOT paginated)
+  // This is the master list for client-side filtering by caseStatus and for stats.
+  const {
+    categories: allCategoriesMatchingBackendFilters, // Contains all categories matching backend filters (name, expert, etc.)
+    loading: allFilteredCategoriesLoading, // Loading state for this complete list
+    error: allFilteredCategoriesError,
+    refetch: refetchAllFilteredCategoriesForStats, // Also used for stats
+  } = useGetAllLeanCategories(
+    categoryFiltersWithoutPagination as CategoryQueryApiParams // Uses filters without pagination
   );
 
+  // Derived list: ALL categories after applying client-side caseStatus filter
+  const clientFilteredAllCategories = useMemo(() => {
+    // If case status filter is not active, this list isn't used for table pagination (backend pagination takes over).
+    // However, it's cleaner to define it based on whether the filter is active.
+    // If the base list is loading, return empty to avoid errors during filtering.
+    if (allFilteredCategoriesLoading && filterCaseStatus) {
+      return [];
+    }
+    if (!filterCaseStatus) {
+      // If no client filter, this list conceptually contains all items matching backend filters.
+      // For pagination purposes, this isn't directly used if filterCaseStatus is off.
+      return allCategoriesMatchingBackendFilters || [];
+    }
+    return (allCategoriesMatchingBackendFilters || []).filter((category) =>
+      category.cases?.some((caseItem) => caseItem.status === filterCaseStatus)
+    );
+  }, [
+    allCategoriesMatchingBackendFilters,
+    filterCaseStatus,
+    allFilteredCategoriesLoading,
+  ]);
+
+  // Calculate the effective total category count for table pagination
+  const effectiveTotalCategoryCountForTable = useMemo(() => {
+    if (!filterCaseStatus) {
+      // No client-side filter, use the count directly from the backend.
+      return backendFilteredCategoryCountForTable ?? 0;
+    }
+    // Client-side filter is active. The total count is the length of the `clientFilteredAllCategories`.
+    // Must check if the base list for this filtering is still loading.
+    if (allFilteredCategoriesLoading) {
+      return 0; // Or another indicator that the count is not yet accurate
+    }
+    return clientFilteredAllCategories.length;
+  }, [
+    filterCaseStatus,
+    backendFilteredCategoryCountForTable,
+    clientFilteredAllCategories,
+    allFilteredCategoriesLoading,
+  ]);
+
+  // Determine categories to display on the current page
+  const displayCategoriesForTable = useMemo(() => {
+    if (!filterCaseStatus) {
+      // No client-side case status filter, use backend-paginated data as is.
+      return rawCategoriesDataForTable || [];
+    }
+
+    // Client-side case status filter is active. Paginate the `clientFilteredAllCategories` list.
+    // Ensure the base list for this client-side pagination is not loading.
+    if (allFilteredCategoriesLoading) {
+      return [];
+    }
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return clientFilteredAllCategories.slice(startIndex, endIndex);
+  }, [
+    rawCategoriesDataForTable, // Used when no filterCaseStatus
+    filterCaseStatus,
+    clientFilteredAllCategories, // Used when filterCaseStatus is active
+    currentPage,
+    itemsPerPage,
+    allFilteredCategoriesLoading, // Important dependency for client-side pagination logic
+  ]);
+
+  // For CategoryStats - uses the same unpaginated list matching backend filters
+  const allFilteredCategoriesForStatsData = allCategoriesMatchingBackendFilters;
+
+  const allMatchingCategoryIdsForStats = useMemo(() => {
+    return (allFilteredCategoriesForStatsData || []).map(
+      (category) => category._id
+    );
+  }, [allFilteredCategoriesForStatsData]);
+
+  const activeCategoryFiltersExistForStats = useMemo(
+    () =>
+      Object.values(categoryFiltersWithoutPagination).some(
+        // categoryFiltersWithoutPagination has name, expert, manager, archived from currentQueryInput
+        (val) =>
+          val !== undefined &&
+          (Array.isArray(val) ? val.length > 0 : String(val).trim().length > 0)
+      ),
+    [categoryFiltersWithoutPagination]
+  );
+
+  const skipCaseStatsQueries = useMemo(() => {
+    if (allFilteredCategoriesLoading) return true;
+    if (
+      activeCategoryFiltersExistForStats &&
+      allMatchingCategoryIdsForStats.length === 0
+    ) {
+      return true;
+    }
+    return false;
+  }, [
+    allFilteredCategoriesLoading,
+    allMatchingCategoryIdsForStats.length,
+    activeCategoryFiltersExistForStats,
+  ]);
+
+  const baseCaseVariablesForStats = useMemo(() => {
+    const baseVars: {
+      categories?: string[];
+      experts?: string[];
+      managers?: string[];
+      archived?: boolean;
+      name?: string;
+    } = {};
+    if (allMatchingCategoryIdsForStats.length > 0) {
+      baseVars.categories = allMatchingCategoryIdsForStats;
+    } else if (activeCategoryFiltersExistForStats) {
+      baseVars.categories = [];
+    }
+
+    // These filters (name, experts, etc.) defined `allMatchingCategoryIdsForStats`
+    // If `useCountFilteredCases` can use these to refine its own query on cases related to these category IDs:
+    if (categoryFiltersWithoutPagination.name) {
+      baseVars.name = categoryFiltersWithoutPagination.name;
+    }
+    if (
+      categoryFiltersWithoutPagination.expertIds &&
+      categoryFiltersWithoutPagination.expertIds.length > 0
+    ) {
+      baseVars.experts = categoryFiltersWithoutPagination.expertIds;
+    }
+    if (
+      categoryFiltersWithoutPagination.managerIds &&
+      categoryFiltersWithoutPagination.managerIds.length > 0
+    ) {
+      baseVars.managers = categoryFiltersWithoutPagination.managerIds;
+    }
+    if (categoryFiltersWithoutPagination.archived !== undefined) {
+      baseVars.archived = categoryFiltersWithoutPagination.archived;
+    }
+    return baseVars;
+  }, [
+    allMatchingCategoryIdsForStats,
+    categoryFiltersWithoutPagination,
+    activeCategoryFiltersExistForStats,
+  ]);
+
   const {
-    count: totalCaseCountForStatsRaw,
+    count: totalCaseCountForStats,
     loading: totalCaseCountLoading,
     error: totalCaseCountError,
   } = useCountFilteredCases(baseCaseVariablesForStats, {
     skip: skipCaseStatsQueries,
   });
-  const totalCaseCountForStats =
-    skipCaseStatsQueries && !categoriesListLoading
-      ? 0
-      : totalCaseCountForStatsRaw;
+
+  const {
+    count: absoluteTotalCaseCountAllTime,
+    loading: absoluteTotalCaseCountLoading,
+    error: absoluteTotalCaseCountError,
+  } = useCountCases();
 
   const {
     count: openCasesRaw,
@@ -151,26 +288,39 @@ const CategoryManagement: React.FC = () => {
   const caseCountsByStatus = useMemo(
     () => ({
       [CaseStatus.Open]:
-        skipCaseStatsQueries && !categoriesListLoading ? 0 : openCasesRaw,
+        skipCaseStatsQueries || allFilteredCategoriesLoading || openLoading
+          ? 0
+          : openCasesRaw,
       [CaseStatus.InProgress]:
-        skipCaseStatsQueries && !categoriesListLoading ? 0 : inProgressCasesRaw,
+        skipCaseStatsQueries ||
+        allFilteredCategoriesLoading ||
+        inProgressLoading
+          ? 0
+          : inProgressCasesRaw,
       [CaseStatus.AwaitingFinance]:
-        skipCaseStatsQueries && !categoriesListLoading
+        skipCaseStatsQueries ||
+        allFilteredCategoriesLoading ||
+        awaitingFinanceLoading
           ? 0
           : awaitingFinanceCasesRaw,
       [CaseStatus.Closed]:
-        skipCaseStatsQueries && !categoriesListLoading ? 0 : closedCasesRaw,
+        skipCaseStatsQueries || allFilteredCategoriesLoading || closedLoading
+          ? 0
+          : closedCasesRaw,
     }),
     [
       skipCaseStatsQueries,
-      categoriesListLoading,
+      allFilteredCategoriesLoading,
+      openLoading,
+      inProgressLoading,
+      awaitingFinanceLoading,
+      closedLoading,
       openCasesRaw,
       inProgressCasesRaw,
       awaitingFinanceCasesRaw,
       closedCasesRaw,
     ]
   );
-  // --- End Fetching data for CategoryStats ---
 
   const {
     createCategory,
@@ -183,55 +333,65 @@ const CategoryManagement: React.FC = () => {
     error: updateCategoryErrorObj,
   } = useUpdateCategory();
 
-  const categories: ICategory[] = categoriesData || [];
+  const isLoadingOverallCaseCounts =
+    totalCaseCountLoading ||
+    absoluteTotalCaseCountLoading ||
+    allFilteredCategoriesLoading;
+  const isLoadingStatusSpecificCaseCounts =
+    openLoading ||
+    inProgressLoading ||
+    awaitingFinanceLoading ||
+    closedLoading ||
+    allFilteredCategoriesLoading;
 
-  // Determine if any critical data is currently being loaded
   const isCurrentlyLoadingPageData = useMemo(
     () =>
       categoriesListLoading ||
-      categoryCountLoading ||
-      (!skipCaseStatsQueries && // Only consider case stats loading if queries are not skipped
-        (totalCaseCountLoading ||
-          openLoading ||
-          inProgressLoading ||
-          awaitingFinanceLoading ||
-          closedLoading)),
+      categoryCountLoadingForTable ||
+      allFilteredCategoriesLoading ||
+      totalCaseCountLoading ||
+      openLoading ||
+      inProgressLoading ||
+      awaitingFinanceLoading ||
+      closedLoading ||
+      absoluteTotalCaseCountLoading,
     [
       categoriesListLoading,
-      categoryCountLoading,
-      skipCaseStatsQueries,
+      categoryCountLoadingForTable,
+      allFilteredCategoriesLoading,
       totalCaseCountLoading,
       openLoading,
       inProgressLoading,
       awaitingFinanceLoading,
       closedLoading,
+      absoluteTotalCaseCountLoading,
     ]
   );
 
-  // Consolidate all potential page-blocking errors
   const pageDisplayError = useMemo(
     () =>
       categoriesListError ||
-      categoryCountError ||
-      (!skipCaseStatsQueries &&
-        (totalCaseCountError || // Including stats errors in pageDisplayError
-          openError ||
-          inProgressError ||
-          awaitingFinanceError ||
-          closedError)),
+      categoryCountErrorForTable ||
+      allFilteredCategoriesError ||
+      totalCaseCountError ||
+      openError ||
+      inProgressError ||
+      awaitingFinanceError ||
+      closedError ||
+      absoluteTotalCaseCountError,
     [
       categoriesListError,
-      categoryCountError,
-      skipCaseStatsQueries,
+      categoryCountErrorForTable,
+      allFilteredCategoriesError,
       totalCaseCountError,
       openError,
       inProgressError,
       awaitingFinanceError,
       closedError,
+      absoluteTotalCaseCountError,
     ]
   );
 
-  // Effect to mark initial app load as complete
   useEffect(() => {
     if (
       !isInitialAppLoadComplete &&
@@ -242,25 +402,44 @@ const CategoryManagement: React.FC = () => {
     }
   }, [isInitialAppLoadComplete, isCurrentlyLoadingPageData, pageDisplayError]);
 
-  const isTableDataRefreshing = categoriesListLoading || categoryCountLoading;
-  const isStatsDataRefreshing =
-    !skipCaseStatsQueries &&
-    (totalCaseCountLoading ||
-      openLoading ||
-      inProgressLoading ||
-      awaitingFinanceLoading ||
-      closedLoading);
+  const isTableDataRefreshing = useMemo(() => {
+    if (filterCaseStatus) {
+      // When client-side filtering by case status is active, table refreshes if the full list for client pagination is loading
+      return allFilteredCategoriesLoading;
+    }
+    // Otherwise, depends on the backend paginated fetch for the current page
+    return categoriesListLoading || categoryCountLoadingForTable;
+  }, [
+    filterCaseStatus,
+    allFilteredCategoriesLoading,
+    categoriesListLoading,
+    categoryCountLoadingForTable,
+  ]);
+
+  const handleCaseStatusCardClick = (status: CaseStatus | string) => {
+    const newStatus =
+      filterCaseStatus === status ? null : (status as CaseStatus);
+    setFilterCaseStatus(newStatus);
+    // Reset to page 1 whenever the case status filter changes,
+    // as the total number of items and pages will change.
+    if (handlePageChange) {
+      // Ensure handlePageChange is available from the hook
+      handlePageChange(1);
+    }
+  };
 
   const openCreateCategoryModal = () => {
     setEditingCategory(null);
     setFormHasUnsavedChanges(false);
     setIsCategoryModalOpen(true);
   };
+
   const openEditCategoryModal = (categoryToEdit: ICategory) => {
     setEditingCategory(categoryToEdit);
     setFormHasUnsavedChanges(false);
     setIsCategoryModalOpen(true);
   };
+
   const closeCategoryModal = () => {
     setIsCategoryModalOpen(false);
     setEditingCategory(null);
@@ -273,8 +452,8 @@ const CategoryManagement: React.FC = () => {
   ) => {
     const inputForMutation = {
       name: formData.name,
-      problem: formData.problem,
-      suggestion: formData.suggestion,
+      problem: formData.problem || "", // Ensure problem/suggestion are at least empty strings if not optional in backend
+      suggestion: formData.suggestion || "",
       experts: formData.expertIds,
       managers: formData.managerIds,
       archived: formData.archived,
@@ -288,18 +467,21 @@ const CategoryManagement: React.FC = () => {
       } else {
         await createCategory(inputForMutation as CreateCategoryInput);
       }
-      await Promise.all([refetchCategories(), refetchCategoryCount()]);
+      await Promise.all([
+        refetchCategoriesForTable(),
+        refetchCategoryCountForTable(),
+        refetchAllFilteredCategoriesForStats(),
+      ]);
       closeCategoryModal();
     } catch (err: any) {
       console.error(
         `Error during category ${editingCategoryId ? "update" : "create"}:`,
         err
       );
-      throw err; // Re-throw to be caught by form's error handling if needed
+      throw err;
     }
   };
 
-  // Updated condition for the main LoadingModal
   if (
     !isInitialAppLoadComplete &&
     isCurrentlyLoadingPageData &&
@@ -309,9 +491,22 @@ const CategoryManagement: React.FC = () => {
   }
 
   if (pageDisplayError) {
+    const errorMessages = [
+      categoriesListError?.message,
+      categoryCountErrorForTable?.message,
+      allFilteredCategoriesError?.message,
+      totalCaseCountError?.message,
+      openError?.message,
+      inProgressError?.message,
+      awaitingFinanceError?.message,
+      closedError?.message,
+      absoluteTotalCaseCountError?.message,
+    ]
+      .filter(Boolean)
+      .join("; ");
     return (
       <div className="p-6 text-red-600 text-center">
-        Грешка при зареждане на данни: {pageDisplayError.message}
+        Грешка при зареждане на данни: {errorMessages || "Неизвестна грешка."}
       </div>
     );
   }
@@ -323,12 +518,17 @@ const CategoryManagement: React.FC = () => {
     <div className="min-h-screen bg-gray-100 p-6 font-sans">
       <div className="mb-6 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
         <CategoryStats
-          totalCaseCount={totalCaseCountForStats}
+          totalCaseCount={totalCaseCountForStats ?? 0}
+          absoluteTotalCaseCountAllTime={absoluteTotalCaseCountAllTime ?? 0}
           caseCountsByStatus={caseCountsByStatus}
-          isLoading={isStatsDataRefreshing || isTableDataRefreshing}
+          activeCaseStatusFilter={filterCaseStatus}
+          onCaseStatusCardClick={handleCaseStatusCardClick}
+          isLoadingOverallCounts={isLoadingOverallCaseCounts}
+          isLoadingStatusSpecificCounts={isLoadingStatusSpecificCaseCounts}
         />
         <div className="flex flex-col sm:flex-row gap-2 items-center md:items-start flex-shrink-0 mt-4 md:mt-0">
           <button
+            type="button"
             className="w-full sm:w-auto flex justify-center items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-gray-500 text-white hover:bg-gray-600 hover:cursor-pointer"
             title={showFilters ? "Скрий филтри" : "Покажи филтри"}
             onClick={() => setShowFilters(!showFilters)}
@@ -341,13 +541,10 @@ const CategoryManagement: React.FC = () => {
             Филтри
           </button>
           <button
+            type="button"
             onClick={openCreateCategoryModal}
-            className="w-full sm:w-auto flex flex-shrink-0 justify-center items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-green-500 text-white hover:bg-green-600 hover:cursor-pointer active:bg-green-700 active:shadow-inner disabled:cursor-not-allowed"
-            disabled={
-              mutationInProgress
-              //|| isTableDataRefreshing || // Disable if table data is refreshing
-              // isStatsDataRefreshing // Disable if stats data is refreshing
-            }
+            className="w-full sm:w-auto flex flex-shrink-0 justify-center items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-green-500 text-white hover:bg-green-600 hover:cursor-pointer active:bg-green-700 active:shadow-inner disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={mutationInProgress || isCurrentlyLoadingPageData}
           >
             <PlusIconSolid className="h-5 w-5 mr-1" />
             Създай Категория
@@ -375,16 +572,20 @@ const CategoryManagement: React.FC = () => {
       </div>
 
       <CategoryTable
-        categories={categories}
-        isLoadingCategories={isTableDataRefreshing} // This will show CategoryTableSkeleton
-        categoriesError={categoriesListError || categoryCountError} // Pass relevant error
-        totalCategoryCount={filteredCategoryCountForTable || 0}
+        categories={displayCategoriesForTable}
+        isLoadingCategories={isTableDataRefreshing}
+        categoriesError={
+          categoriesListError ||
+          categoryCountErrorForTable ||
+          allFilteredCategoriesError
+        }
+        totalCategoryCount={effectiveTotalCategoryCountForTable}
         currentPage={currentPage}
         itemsPerPage={itemsPerPage}
         onPageChange={handlePageChange}
         onItemsPerPageChange={handleItemsPerPageChange}
         onEditCategory={openEditCategoryModal}
-        currentQueryInput={currentQueryInput} // Pass the current filters/pagination for context if needed
+        currentQueryInput={currentQueryInput}
         createLoading={createCategoryLoading}
         updateLoading={updateCategoryLoading}
       />

@@ -1,22 +1,21 @@
 // src/page/hooks/useCategoryManagement.ts
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { useLocation, useNavigate } from "react-router"; // Ensure react-router-dom
-import {
-  CategoryFiltersState,
-  PaginationState,
-} from "../types/categoryManagementTypes";
+import { useLocation, useNavigate } from "react-router";
 import { useDebounce } from "../../hooks/useDebounce";
+import { ICaseStatus } from "../../db/interfaces";
 
 export interface CategoryQueryApiParams {
   name?: string;
   expertIds?: string[];
   managerIds?: string[];
   archived?: boolean;
-  limit?: number; // Changed from itemsPerPage
-  page?: number; // Changed from currentPage (0-indexed for API)
+  itemsPerPage?: number;
+  currentPage?: number; // 0-indexed for your API
 }
 
-interface UseCategoryManagementReturn extends PaginationState {
+interface UseCategoryManagementReturn {
+  currentPage: number;
+  itemsPerPage: number;
   filterName: string;
   setFilterName: (value: string) => void;
   filterExpertIds: string[];
@@ -25,6 +24,8 @@ interface UseCategoryManagementReturn extends PaginationState {
   setFilterManagerIds: (ids: string[]) => void;
   filterArchived?: boolean;
   setFilterArchived: (value: boolean | undefined) => void;
+  filterCaseStatus: ICaseStatus | string | null;
+  setFilterCaseStatus: (status: ICaseStatus | string | null) => void;
   debouncedFilterName: string;
   handlePageChange: (page: number) => void;
   handleItemsPerPageChange: (size: number) => void;
@@ -49,6 +50,15 @@ const parseStringArrayParam = (param: string | null | undefined): string[] => {
   return [];
 };
 
+const parseCaseStatusParam = (
+  param: string | null | undefined
+): ICaseStatus | null => {
+  if (param && Object.values(ICaseStatus).includes(param as ICaseStatus)) {
+    return param as ICaseStatus;
+  }
+  return null;
+};
+
 export function useCategoryManagement(): UseCategoryManagementReturn {
   const location = useLocation();
   const navigate = useNavigate();
@@ -62,6 +72,7 @@ export function useCategoryManagement(): UseCategoryManagementReturn {
       expertIds: parseStringArrayParam(params.get("experts")),
       managerIds: parseStringArrayParam(params.get("managers")),
       archived: parseBooleanParam(params.get("archived")),
+      caseStatus: parseCaseStatusParam(params.get("caseStatus")),
     };
   }, [location.search]);
 
@@ -70,6 +81,7 @@ export function useCategoryManagement(): UseCategoryManagementReturn {
     [getFiltersFromUrl]
   );
 
+  // State definitions (1-indexed for UI currentPage)
   const [currentPage, setCurrentPage] = useState(initialUrlState.page);
   const [itemsPerPage, setItemsPerPage] = useState(
     initialUrlState.itemsPerPage
@@ -84,17 +96,20 @@ export function useCategoryManagement(): UseCategoryManagementReturn {
   const [filterArchived, setFilterArchived] = useState<boolean | undefined>(
     initialUrlState.archived
   );
+  const [filterCaseStatus, setFilterCaseStatus] = useState<
+    ICaseStatus | string | null
+  >(initialUrlState.caseStatus);
 
   const debouncedFilterName = useDebounce(filterName, 500);
 
-  // Effect to update URL from state changes (filters, pagination)
+  // Effect to update URL from state changes (State -> URL)
   useEffect(() => {
     const params = new URLSearchParams();
     params.set("page", String(currentPage));
     params.set("itemsPerPage", String(itemsPerPage));
 
     if (debouncedFilterName) params.set("name", debouncedFilterName);
-    else params.delete("name");
+    else params.delete("name"); // Explicitly remove if empty
 
     if (filterExpertIds.length > 0)
       params.set("experts", filterExpertIds.join(","));
@@ -108,75 +123,108 @@ export function useCategoryManagement(): UseCategoryManagementReturn {
       params.set("archived", String(filterArchived));
     else params.delete("archived");
 
-    const newSearchString = params.toString();
-    const currentSearchString = location.search.substring(1); // Remove '?'
+    if (filterCaseStatus) params.set("caseStatus", filterCaseStatus);
+    else params.delete("caseStatus");
 
-    if (newSearchString !== currentSearchString) {
+    const newSearchString = params.toString();
+    const currentActualSearch = location.search.startsWith("?")
+      ? location.search.substring(1)
+      : location.search;
+
+    if (newSearchString !== currentActualSearch) {
       navigate(`${location.pathname}?${newSearchString}`, { replace: true });
     }
   }, [
+    // --- MODIFICATION: REMOVED location.search from dependencies ---
     debouncedFilterName,
     filterExpertIds,
     filterManagerIds,
     filterArchived,
+    filterCaseStatus,
     currentPage,
     itemsPerPage,
-    navigate,
-    location.pathname,
-    // IMPORTANT: location.search (or params derived from it like user's 'searchParams') is NOT a dependency here.
+    navigate, // navigate is stable
+    location.pathname, // Typically stable within the same page component
   ]);
 
-  // Effect to update state from URL changes (e.g., browser back/forward)
+  // Effect to update state from URL changes (URL -> State)
   useEffect(() => {
     const stateFromUrl = getFiltersFromUrl();
 
-    // Compare and set state only if different to avoid unnecessary re-renders
-    // that could feed back into the previous useEffect if not careful.
+    if (stateFromUrl.page !== currentPage) {
+      setCurrentPage(stateFromUrl.page); // Use RAW setter from useState
+    }
+    if (stateFromUrl.itemsPerPage !== itemsPerPage) {
+      setItemsPerPage(stateFromUrl.itemsPerPage); // Use RAW setter
+    }
+    // For filters, ensure we're comparing apples to apples and use raw setters
+    // to prevent reset-page logic from firing due to URL sync.
     if (stateFromUrl.name !== filterName) {
-      setFilterName(stateFromUrl.name);
+      setFilterName(stateFromUrl.name); // Use RAW setter
     }
     if (
       JSON.stringify(stateFromUrl.expertIds.sort()) !==
       JSON.stringify(filterExpertIds.sort())
     ) {
-      setFilterExpertIds(stateFromUrl.expertIds);
+      setFilterExpertIds(stateFromUrl.expertIds); // Use RAW setter
     }
     if (
       JSON.stringify(stateFromUrl.managerIds.sort()) !==
       JSON.stringify(filterManagerIds.sort())
     ) {
-      setFilterManagerIds(stateFromUrl.managerIds);
+      setFilterManagerIds(stateFromUrl.managerIds); // Use RAW setter
     }
     if (stateFromUrl.archived !== filterArchived) {
-      setFilterArchived(stateFromUrl.archived);
+      setFilterArchived(stateFromUrl.archived); // Use RAW setter
     }
-    if (stateFromUrl.page !== currentPage) {
-      setCurrentPage(stateFromUrl.page);
+    if (stateFromUrl.caseStatus !== filterCaseStatus) {
+      setFilterCaseStatus(stateFromUrl.caseStatus); // Use RAW setter
     }
-    if (stateFromUrl.itemsPerPage !== itemsPerPage) {
-      setItemsPerPage(stateFromUrl.itemsPerPage);
-    }
-  }, [getFiltersFromUrl]); // Depends on getFiltersFromUrl, which is memoized on location.search.
-  // Setters are not in deps. React bails out of state updates if value is same.
+  }, [getFiltersFromUrl]); // This effect ONLY depends on getFiltersFromUrl (i.e. location.search changing)
+  // And the state values for comparison, which are read, not changed by this effect's dependencies directly.
+  // Adding state values (currentPage, itemsPerPage, filterName etc.) to this dependency array
+  // is necessary IF we only want to call setters when things are TRULY different.
+  // However, the primary trigger must remain getFiltersFromUrl.
+  // Let's refine its dependencies for safety and clarity:
+  // [getFiltersFromUrl, currentPage, itemsPerPage, filterName, filterExpertIds, filterManagerIds, filterArchived, filterCaseStatus]
+  // This ensures it re-evaluates if local state changes AND URL changes, but the internal checks `(stateFromUrl.page !== currentPage)` prevent loops.
 
-  const handlePageChange = useCallback((page: number) => {
-    setCurrentPage(page);
-  }, []);
+  // Callback for page changes
+  const handlePageChange = useCallback(
+    (page: number) => {
+      if (page !== currentPage) {
+        // Prevent re-setting if already on that page
+        setCurrentPage(page);
+      }
+    },
+    [currentPage] // Depend on currentPage to ensure the comparison is fresh
+  );
 
-  const handleItemsPerPageChange = useCallback((size: number) => {
-    setItemsPerPage(size);
-    setCurrentPage(1);
-  }, []);
+  // Callback for items per page changes
+  const handleItemsPerPageChange = useCallback(
+    (size: number) => {
+      if (size !== itemsPerPage) {
+        // Prevent re-setting
+        setItemsPerPage(size);
+        setCurrentPage(1); // Reset to page 1 when items per page changes
+      }
+    },
+    [itemsPerPage]
+  ); // Depend on itemsPerPage
 
+  // HOC for creating filter setters that also reset the page
   const createFilterSetter = <T>(
     setter: React.Dispatch<React.SetStateAction<T>>
   ) =>
     useCallback(
       (value: T) => {
+        // Check if the value actually changed to prevent unnecessary page resets
+        // This requires knowing the current value, which is tricky inside this generic HOC
+        // For simplicity, we assume if this is called, a change is intended.
         setter(value);
         setCurrentPage(1);
       },
-      [setter]
+      [setter] // setCurrentPage from useState is stable
     );
 
   const setFilterNameAndResetPage = createFilterSetter(setFilterName);
@@ -184,11 +232,18 @@ export function useCategoryManagement(): UseCategoryManagementReturn {
   const setFilterManagerIdsAndResetPage =
     createFilterSetter(setFilterManagerIds);
   const setFilterArchivedAndResetPage = createFilterSetter(setFilterArchived);
+  const setFilterCaseStatusAndResetPage = createFilterSetter(
+    setFilterCaseStatus as React.Dispatch<
+      // Cast needed due to complex type
+      React.SetStateAction<ICaseStatus | string | null>
+    >
+  );
 
+  // Memoized query input for GraphQL hooks
   const currentQueryInput = useMemo((): CategoryQueryApiParams => {
     const input: CategoryQueryApiParams = {
-      limit: itemsPerPage,
-      page: currentPage > 0 ? currentPage - 1 : 0, // API 0-indexed
+      itemsPerPage: itemsPerPage,
+      currentPage: currentPage > 0 ? currentPage - 1 : 0, // 0-indexed
     };
     if (debouncedFilterName) input.name = debouncedFilterName;
     if (filterExpertIds.length > 0) input.expertIds = filterExpertIds;
@@ -215,6 +270,8 @@ export function useCategoryManagement(): UseCategoryManagementReturn {
     setFilterManagerIds: setFilterManagerIdsAndResetPage,
     filterArchived,
     setFilterArchived: setFilterArchivedAndResetPage,
+    filterCaseStatus,
+    setFilterCaseStatus: setFilterCaseStatusAndResetPage,
     debouncedFilterName,
     handlePageChange,
     handleItemsPerPageChange,

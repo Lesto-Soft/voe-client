@@ -1,3 +1,5 @@
+import { ICaseStatus } from "../../db/interfaces";
+
 export interface User {
   __typename?: "User";
   _id: string;
@@ -9,7 +11,7 @@ export interface Category {
   name: string;
   experts: User[];
   managers: User[];
-  cases: string[];
+  cases: Array<{ _id: string; status: ICaseStatus | string }>;
   archived: boolean;
 }
 
@@ -19,6 +21,7 @@ export interface CategoryFiltersState {
   expertIds?: string[];
   managerIds?: string[];
   archived?: boolean;
+  caseStatus?: ICaseStatus | string | null; // Added for case status filtering
 }
 
 // Interface for pagination state
@@ -41,4 +44,5 @@ export interface StateForUrl {
   filterExpertIds?: string[];
   filterManagerIds?: string[];
   filterArchived?: boolean;
+  filterCaseStatus?: ICaseStatus | string | null; // Added
 }

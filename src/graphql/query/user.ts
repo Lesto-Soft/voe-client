@@ -7,11 +7,12 @@ fragment UserFragment on User {
       name
       email
       position
+      financial_approver
       role {
         _id
         name
       }
-        avatar
+      avatar
      
 }`;
 

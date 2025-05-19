@@ -42,6 +42,8 @@ const UserManagement: React.FC = () => {
     filterEmail,
     setFilterEmail,
     filterRoleIds,
+    filterFinancial,
+    setFilterFinancial,
     setFilterRoleIds,
     handlePageChange,
     handleItemsPerPageChange,
@@ -73,18 +75,24 @@ const UserManagement: React.FC = () => {
   } = useCountUsers(currentQueryInput);
 
   const textAttributeFiltersOnlyInput = useMemo(() => {
-    const { name, username, position, email } = currentQueryInput;
+    const { name, username, position, email, financial_approver } =
+      currentQueryInput;
     const filters: any = {};
     if (name) filters.name = name;
     if (username) filters.username = username;
     if (position) filters.position = position;
     if (email) filters.email = email;
+    // Add financial filter if active (currentQueryInput already handles this logic)
+    if (financial_approver) {
+      filters.financial_approver = financial_approver;
+    }
     return filters;
   }, [
     currentQueryInput.name,
     currentQueryInput.username,
     currentQueryInput.position,
     currentQueryInput.email,
+    currentQueryInput.financial_approver, // Use currentQueryInput.financial which is already processed
   ]);
 
   // Fetch ALL users (once) for client-side filtering for UserStats' dynamic role counts
@@ -344,6 +352,8 @@ const UserManagement: React.FC = () => {
           setFilterPosition={setFilterPosition}
           filterEmail={filterEmail}
           setFilterEmail={setFilterEmail}
+          filterFinancial={filterFinancial} // <-- Pass prop
+          setFilterFinancial={setFilterFinancial} // <-- Pass prop
         />
       </div>
 

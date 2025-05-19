@@ -22,6 +22,7 @@ interface UserFiltersInput {
   position?: string;
   email?: string;
   roleIds?: string[];
+  financial_approver: boolean;
   itemsPerPage?: number;
   currentPage?: number; // Expecting the 0-based index here
   query?: string; // Include if your getAllInput still has/needs it
@@ -38,6 +39,7 @@ export function buildUserQueryVariables(input: any) {
     position,
     email,
     roleIds,
+    financial_approver,
   } = input || {};
 
   const variables: any = {
@@ -52,6 +54,8 @@ export function buildUserQueryVariables(input: any) {
   if (position) variables.input.position = position;
   if (email) variables.input.email = email;
   if (roleIds && roleIds.length > 0) variables.input.roleIds = roleIds;
+  if (financial_approver)
+    variables.input.financial_approver = financial_approver;
 
   return variables;
 }

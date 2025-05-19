@@ -175,18 +175,34 @@ const UserTable: React.FC<UserTableProps> = ({
                       />{" "}
                     </td>
                     <td className={`${columnWidths.name} px-3 py-4 text-sm`}>
-                      {" "}
-                      <Link
-                        to={`/user-data/${user._id}`}
-                        className={`max-w-75 inline-block px-2 py-0.5 rounded-md font-medium transition-colors duration-150 ease-in-out text-left hover:cursor-pointer ${
-                          isInactive
-                            ? "bg-purple-50 text-purple-400 hover:bg-purple-100 border border-purple-100 opacity-75"
-                            : "bg-purple-100 text-purple-800 hover:bg-purple-200 border border-purple-200"
-                        } truncate`}
-                        title={user.name}
-                      >
-                        {user.name}
-                      </Link>{" "}
+                      <div className="flex items-center justify-left flex-row">
+                        <Link
+                          to={`/user-data/${user._id}`}
+                          className={`max-w-75 inline-block px-2 py-0.5 rounded-md font-medium transition-colors duration-150 ease-in-out text-left hover:cursor-pointer ${
+                            isInactive
+                              ? "bg-purple-50 text-purple-400 hover:bg-purple-100 border border-purple-100 opacity-75"
+                              : "bg-purple-100 text-purple-800 hover:bg-purple-200 border border-purple-200"
+                          } truncate`}
+                          title={user.name}
+                        >
+                          {user.name}
+                        </Link>
+                        {user.financial_approver ? (
+                          <span
+                            className={`ml-1 inline-block px-1.5 py-0.5 text-xs rounded font-medium transition-colors duration-150 ease-in-out text-center align-middle ${
+                              // Adjusted base classes for a smaller badge
+                              isInactive
+                                ? "bg-green-50 text-green-500 hover:bg-green-100 border border-green-100 opacity-75" // Muted green for inactive state
+                                : "bg-green-100 text-green-700 hover:bg-green-200 border border-green-200" // Standard green for active state
+                            }`}
+                            title="Financial Approver"
+                          >
+                            $
+                          </span>
+                        ) : (
+                          ""
+                        )}
+                      </div>
                     </td>
 
                     <td
@@ -208,6 +224,11 @@ const UserTable: React.FC<UserTableProps> = ({
                       className={`${columnWidths.role} px-3 py-4 whitespace-nowrap`}
                     >
                       {capitalizeFirstLetter(user.role?.name) || "-"}
+                      {/* {user.managed_categories?.length > 0 ? (
+                        <span>M</span>
+                      ) : (
+                        ""
+                      )} */}
                     </td>
                     <td
                       className={`${columnWidths.edit} px-3 py-4 whitespace-nowrap text-center`}

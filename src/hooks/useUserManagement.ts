@@ -1,16 +1,17 @@
-// src/page/hooks/useUserManagement.ts
+// src/hooks/useUserManagement.ts (adjust path if different)
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { useLocation, useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router"; // Assuming react-router-dom
 import {
   UserFiltersState,
   PaginationState,
-  StateForUrl,
+  StateForUrl, // expects financial_approver?: string
 } from "../types/userManagementTypes"; // Adjust path
 import { useDebounce } from "./useDebounce"; // Adjust path
 import { getUrlParams, setUrlParams } from "../utils/urlUtils"; // Adjust path
 
 // Interface for the return value of the hook
-interface UseUserManagementReturn extends PaginationState, UserFiltersState {
+interface UseUserManagementReturn extends PaginationState {
+  // Removed UserFiltersState if it's part of this
   filterName: string;
   setFilterName: React.Dispatch<React.SetStateAction<string>>;
   filterUsername: string;
@@ -21,6 +22,8 @@ interface UseUserManagementReturn extends PaginationState, UserFiltersState {
   setFilterEmail: React.Dispatch<React.SetStateAction<string>>;
   filterRoleIds: string[];
   setFilterRoleIds: React.Dispatch<React.SetStateAction<string[]>>;
+  filterFinancial: boolean; // <-- ADDED
+  setFilterFinancial: React.Dispatch<React.SetStateAction<boolean>>; // <-- ADDED
   debouncedFilterName: string;
   debouncedFilterUsername: string;
   debouncedFilterPosition: string;
@@ -28,8 +31,19 @@ interface UseUserManagementReturn extends PaginationState, UserFiltersState {
   handlePageChange: (page: number) => void;
   handleItemsPerPageChange: (size: number) => void;
   handleRoleFilterToggle: (roleId: string) => void;
-  currentQueryInput: any; // Consider defining a stricter type based on GraphQL hook input
+  currentQueryInput: any;
 }
+
+// Assume StateForUrl in userManagementTypes.ts is updated like this:
+// export interface StateForUrl {
+//   // ... other props
+//   filterFinancial?: string; // 'true' or undefined/omitted
+// }
+// Assume UserFiltersState in userManagementTypes.ts is updated like this:
+// export interface UserFiltersState {
+//   // ... other props
+//   financial?: boolean;
+// }
 
 export function useUserManagement(): UseUserManagementReturn {
   const location = useLocation();
@@ -40,7 +54,7 @@ export function useUserManagement(): UseUserManagementReturn {
     [location.search]
   );
   const initialStateFromUrl = useMemo(
-    () => getUrlParams(searchParams),
+    () => getUrlParams(searchParams), // Ensure getUrlParams parses 'financial' string to boolean
     [searchParams]
   );
 
@@ -59,6 +73,10 @@ export function useUserManagement(): UseUserManagementReturn {
   const [filterRoleIds, setFilterRoleIds] = useState<string[]>(
     initialStateFromUrl.roleIds || []
   );
+  // --- ADD filterFinancial state ---
+  const [filterFinancial, setFilterFinancial] = useState<boolean>(
+    initialStateFromUrl.financial || false // getUrlParams should return boolean for 'financial'
+  );
 
   const debouncedFilterName = useDebounce(filterName, 500);
   const debouncedFilterUsername = useDebounce(filterUsername, 500);
@@ -76,7 +94,13 @@ export function useUserManagement(): UseUserManagementReturn {
       position: debouncedFilterPosition,
       email: debouncedFilterEmail,
       roleIds: filterRoleIds,
+      // --- ADD filterFinancial to query input ---
+      // We only send 'financial: true' if the filter is active.
+      // If 'financial: false', we omit it, meaning "don't filter on this criterion".
+      // Adjust if your backend expects 'financial: false' explicitly.
+      ...(filterFinancial && { financial_approver: true }),
     };
+
     Object.keys(input).forEach((key) => {
       if (
         (input[key] === "" ||
@@ -84,6 +108,8 @@ export function useUserManagement(): UseUserManagementReturn {
           (Array.isArray(input[key]) && input[key].length === 0)) &&
         key !== "currentPage" &&
         key !== "itemsPerPage"
+        // No need for special handling for 'financial: false' here anymore
+        // as it's conditionally added above.
       ) {
         delete input[key];
       }
@@ -97,6 +123,31 @@ export function useUserManagement(): UseUserManagementReturn {
     debouncedFilterPosition,
     debouncedFilterEmail,
     filterRoleIds,
+    filterFinancial, // <-- ADDED dependency
+  ]);
+
+  const createStateForUrl = useCallback((): StateForUrl => {
+    return {
+      currentPage,
+      itemsPerPage,
+      filterName: debouncedFilterName,
+      filterUsername: debouncedFilterUsername,
+      filterPosition: debouncedFilterPosition,
+      filterEmail: debouncedFilterEmail,
+      filterRoleIds,
+      // --- ADD financial_approver to URL state ---
+      // Store as 'true' string if true, otherwise omit (or 'false' string if preferred)
+      financial_approver: filterFinancial ? "true" : undefined,
+    };
+  }, [
+    currentPage,
+    itemsPerPage,
+    debouncedFilterName,
+    debouncedFilterUsername,
+    debouncedFilterPosition,
+    debouncedFilterEmail,
+    filterRoleIds,
+    filterFinancial,
   ]);
 
   const handlePageChange = useCallback(
@@ -104,29 +155,17 @@ export function useUserManagement(): UseUserManagementReturn {
       if (page === currentPage) return;
       setCurrentPage(page);
       const params = new URLSearchParams(location.search);
-      const stateForUrl: StateForUrl = {
-        currentPage: page,
-        itemsPerPage,
-        filterName: debouncedFilterName,
-        filterUsername: debouncedFilterUsername,
-        filterPosition: debouncedFilterPosition,
-        filterEmail: debouncedFilterEmail,
-        filterRoleIds,
-      };
+      const stateForUrl = createStateForUrl();
+      stateForUrl.currentPage = page; // Update page for this specific action
       setUrlParams(params, stateForUrl);
       navigate(`${location.pathname}?${params.toString()}`);
     },
     [
       currentPage,
-      itemsPerPage,
-      debouncedFilterName,
-      debouncedFilterUsername,
-      debouncedFilterPosition,
-      debouncedFilterEmail,
-      filterRoleIds,
+      createStateForUrl,
+      location.pathname,
       location.search,
       navigate,
-      location.pathname,
     ]
   );
 
@@ -135,34 +174,23 @@ export function useUserManagement(): UseUserManagementReturn {
       if (size === itemsPerPage) return;
       const newPage = 1;
       setItemsPerPage(size);
-      setCurrentPage(newPage);
+      setCurrentPage(newPage); // Also update current page to 1
       const params = new URLSearchParams(location.search);
-      const stateForUrl: StateForUrl = {
-        currentPage: newPage,
-        itemsPerPage: size,
-        filterName: debouncedFilterName,
-        filterUsername: debouncedFilterUsername,
-        filterPosition: debouncedFilterPosition,
-        filterEmail: debouncedFilterEmail,
-        filterRoleIds,
-      };
+      const stateForUrl = createStateForUrl();
+      stateForUrl.itemsPerPage = size; // Update itemsPerPage
+      stateForUrl.currentPage = newPage; // Reset page
       setUrlParams(params, stateForUrl);
       navigate(`${location.pathname}?${params.toString()}`, { replace: true });
     },
     [
       itemsPerPage,
-      debouncedFilterName,
-      debouncedFilterUsername,
-      debouncedFilterPosition,
-      debouncedFilterEmail,
-      filterRoleIds,
+      createStateForUrl,
+      location.pathname,
       location.search,
       navigate,
-      location.pathname,
     ]
   );
 
-  // Effect to Update URL & Reset Page ONLY when effective FILTERS change
   useEffect(() => {
     const currentEffectiveFilters: UserFiltersState = {
       name: debouncedFilterName,
@@ -170,44 +198,51 @@ export function useUserManagement(): UseUserManagementReturn {
       position: debouncedFilterPosition,
       email: debouncedFilterEmail,
       roleIds: filterRoleIds,
+      financial: filterFinancial, // <-- ADDED
     };
+
     const previousEffectiveFilters = prevFiltersRef.current ?? {
       name: initialStateFromUrl.name,
       username: initialStateFromUrl.username,
       position: initialStateFromUrl.position,
       email: initialStateFromUrl.email,
       roleIds: initialStateFromUrl.roleIds,
+      financial: initialStateFromUrl.financial, // <-- ADDED
     };
-    const stringifiedCurrent = JSON.stringify({
-      ...currentEffectiveFilters,
-      roleIds: [...(currentEffectiveFilters.roleIds ?? [])].sort(),
-    });
-    const stringifiedPrevious = JSON.stringify({
-      ...previousEffectiveFilters,
-      roleIds: [...(previousEffectiveFilters.roleIds ?? [])].sort(),
-    });
-    const filtersHaveChanged = stringifiedCurrent !== stringifiedPrevious;
-    prevFiltersRef.current = currentEffectiveFilters; // Update ref *after* comparison
+
+    // Create comparable string versions
+    const stringifyFilters = (filters: UserFiltersState) =>
+      JSON.stringify({
+        ...filters,
+        roleIds: [...(filters.roleIds ?? [])].sort(),
+      });
+
+    const filtersHaveChanged =
+      stringifyFilters(currentEffectiveFilters) !==
+      stringifyFilters(previousEffectiveFilters);
+    prevFiltersRef.current = currentEffectiveFilters;
 
     if (filtersHaveChanged) {
       const newPage = 1;
+      // It's important to set the state that will be used by createStateForUrl BEFORE calling it
+      // or ensure createStateForUrl uses the latest values directly.
+      // The handlePageChange/ItemsPerPageChange already use a callback (createStateForUrl)
+      // to get latest state. Here, we update URL with current filters.
+
       if (currentPage !== newPage) {
-        // Setting page state will trigger a re-render, and the handlePageChange
-        // logic (or the URL sync effect if preferred) will update the URL.
-        // Avoid direct navigation here if state change handles it.
-        setCurrentPage(newPage);
+        setCurrentPage(newPage); // This will trigger another effect or handlePageChange logic eventually.
+        // For immediate URL update when filters change and page also needs reset:
+        const params = new URLSearchParams(); // Start fresh or use location.search
+        const stateForUrl = createStateForUrl(); // This will use current state values
+        stateForUrl.currentPage = newPage; // Set page to 1
+        setUrlParams(params, stateForUrl);
+        navigate(`${location.pathname}?${params.toString()}`, {
+          replace: true,
+        });
       } else {
-        // Page is already 1, but filters changed, so update URL directly
+        // Page is already 1, just update filter params
         const params = new URLSearchParams(location.search);
-        const stateForUrl: StateForUrl = {
-          currentPage: newPage,
-          itemsPerPage,
-          filterName: debouncedFilterName,
-          filterUsername: debouncedFilterUsername,
-          filterPosition: debouncedFilterPosition,
-          filterEmail: debouncedFilterEmail,
-          filterRoleIds,
-        };
+        const stateForUrl = createStateForUrl(); // Will use current filter states
         setUrlParams(params, stateForUrl);
         const newSearchString = params.toString();
         if (newSearchString !== location.search.substring(1)) {
@@ -217,69 +252,63 @@ export function useUserManagement(): UseUserManagementReturn {
         }
       }
     }
-    // Dependencies: Debounced values, role IDs, pagination state (for URL update), and navigation utils.
   }, [
     debouncedFilterName,
     debouncedFilterUsername,
     debouncedFilterPosition,
     debouncedFilterEmail,
     filterRoleIds,
-    currentPage,
-    itemsPerPage,
-    initialStateFromUrl,
+    filterFinancial, // <-- ADDED dependency
+    currentPage, // Added to correctly decide if page needs reset
+    initialStateFromUrl, // To correctly compare on first load after URL parse
+    createStateForUrl, // Now includes filterFinancial
     location.pathname,
     location.search,
     navigate,
   ]);
 
-  // Effect to sync state FROM URL (e.g., browser back/forward)
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    const stateFromUrl = getUrlParams(params);
+    const stateFromUrl = getUrlParams(params); // Ensure this parses 'financial' correctly
 
-    // Sync pagination state
     if (stateFromUrl.page !== currentPage) setCurrentPage(stateFromUrl.page);
     if (stateFromUrl.perPage !== itemsPerPage)
       setItemsPerPage(stateFromUrl.perPage);
 
-    // Sync filter state *only if* the URL value differs from the *debounced* value.
-    // This prevents overwriting user input that hasn't been debounced and reflected in the URL yet.
     const urlName = stateFromUrl.name ?? "";
-    if (urlName !== debouncedFilterName && urlName !== filterName) {
+    if (urlName !== debouncedFilterName && urlName !== filterName)
       setFilterName(urlName);
-    }
 
     const urlUsername = stateFromUrl.username ?? "";
     if (
       urlUsername !== debouncedFilterUsername &&
       urlUsername !== filterUsername
-    ) {
+    )
       setFilterUsername(urlUsername);
-    }
 
     const urlPosition = stateFromUrl.position ?? "";
     if (
       urlPosition !== debouncedFilterPosition &&
       urlPosition !== filterPosition
-    ) {
+    )
       setFilterPosition(urlPosition);
-    }
 
     const urlEmail = stateFromUrl.email ?? "";
-    if (urlEmail !== debouncedFilterEmail && urlEmail !== filterEmail) {
+    if (urlEmail !== debouncedFilterEmail && urlEmail !== filterEmail)
       setFilterEmail(urlEmail);
-    }
 
     const urlRoleIds = stateFromUrl.roleIds ?? [];
     if (
       JSON.stringify(urlRoleIds.sort()) !== JSON.stringify(filterRoleIds.sort())
-    ) {
+    )
       setFilterRoleIds(urlRoleIds);
-    }
 
-    // This effect should ONLY depend on location.search to avoid infinite loops
-    // caused by state updates within the effect itself.
-  }, [location.search]); // Removed state dependencies
+    // --- ADD filterFinancial sync from URL ---
+    const urlFinancial = stateFromUrl.financial || false;
+    if (urlFinancial !== filterFinancial) {
+      setFilterFinancial(urlFinancial);
+    }
+  }, [location.search]); // Keep this minimal to location.search for syncing FROM URL
 
   const handleRoleFilterToggle = useCallback((roleId: string) => {
     setFilterRoleIds((prevRoleIds) =>
@@ -287,7 +316,6 @@ export function useUserManagement(): UseUserManagementReturn {
         ? prevRoleIds.filter((id) => id !== roleId)
         : [...prevRoleIds, roleId]
     );
-    // Page reset is handled by the filter change effect
   }, []);
 
   return {
@@ -303,6 +331,8 @@ export function useUserManagement(): UseUserManagementReturn {
     setFilterEmail,
     filterRoleIds,
     setFilterRoleIds,
+    filterFinancial, // <-- ADDED
+    setFilterFinancial, // <-- ADDED
     debouncedFilterName,
     debouncedFilterUsername,
     debouncedFilterPosition,

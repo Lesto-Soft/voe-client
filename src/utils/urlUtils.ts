@@ -20,12 +20,19 @@ export function getUrlParams(params: URLSearchParams): UrlParamsInput {
     ? roleIdsParam.split(",").filter(Boolean)
     : undefined;
 
+  // --- ADDED: Parse financial_approver from URL ---
+  const financialApproverParam = params.get("financial_approver"); // Read the 'financial_approver' URL param
+  const financial = financialApproverParam === "true"; // Convert to boolean for React state
+
   const parsed: UrlParamsInput = { page, perPage };
   if (name) parsed.name = name;
   if (username) parsed.username = username;
   if (position) parsed.position = position;
   if (email) parsed.email = email;
   if (roleIds) parsed.roleIds = roleIds;
+  // --- ADDED: Assign parsed financial boolean ---
+  // The UrlParamsInput type expects a 'financial' key (from UserFiltersState)
+  parsed.financial = financial;
 
   return parsed;
 }
@@ -33,11 +40,11 @@ export function getUrlParams(params: URLSearchParams): UrlParamsInput {
 /**
  * Sets URL parameters based on the provided state.
  * @param params URLSearchParams object to modify.
- * @param state An object containing currentPage, itemsPerPage, and filter values.
+ * @param state An object containing currentPage, itemsPerPage, and filter values (StateForUrl type).
  */
 export function setUrlParams(
   params: URLSearchParams,
-  state: StateForUrl
+  state: StateForUrl // StateForUrl now has financial_approver?: string
 ): void {
   params.set("page", String(state.currentPage));
   params.set("perPage", String(state.itemsPerPage));
@@ -59,5 +66,13 @@ export function setUrlParams(
     params.set("roleIds", state.filterRoleIds.join(","));
   } else {
     params.delete("roleIds");
+  }
+
+  // --- ADDED: Set financial_approver URL parameter ---
+  // 'state.financial_approver' comes from 'createStateForUrl' and is 'true' or undefined
+  if (state.financial_approver === "true") {
+    params.set("financial_approver", "true");
+  } else {
+    params.delete("financial_approver"); // Remove param if not 'true' (i.e., if it's undefined)
   }
 }

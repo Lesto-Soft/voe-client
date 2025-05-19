@@ -1,8 +1,8 @@
 // src/page/hooks/useCategoryManagement.ts
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router";
-import { useDebounce } from "../../hooks/useDebounce";
-import { ICaseStatus } from "../../db/interfaces";
+import { useDebounce } from "./useDebounce";
+import { ICaseStatus } from "../db/interfaces";
 
 export interface CategoryQueryApiParams {
   name?: string;

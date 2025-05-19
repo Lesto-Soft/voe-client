@@ -5,7 +5,7 @@ import { PencilSquareIcon } from "@heroicons/react/24/outline";
 import UserAvatar from "../../cards/UserAvatar"; // Adjust path
 import UserTableSkeleton from "../../skeletons/UserTableSkeleton"; // Adjust path
 import Pagination from "../../tables/Pagination"; // Adjust path
-import { User } from "../../../page/types/userManagementTypes"; // Adjust path
+import { User } from "../../../types/userManagementTypes"; // Adjust path
 import { capitalizeFirstLetter } from "../../../utils/stringUtils"; // Adjust path
 
 interface UserTableProps {

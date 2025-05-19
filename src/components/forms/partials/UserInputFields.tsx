@@ -1,6 +1,6 @@
 // src/components/forms/partials/UserInputFields.tsx
 import React from "react";
-import { Role } from "../../../page/types/userManagementTypes"; // Adjust path
+import { Role } from "../../../types/userManagementTypes"; // Adjust path
 
 interface UserInputFieldsProps {
   username: string;

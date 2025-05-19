@@ -1,5 +1,5 @@
 // src/utils/urlUtils.ts
-import { UrlParamsInput, StateForUrl } from "../page/types/userManagementTypes"; // Adjust path if needed
+import { UrlParamsInput, StateForUrl } from "../types/userManagementTypes"; // Adjust path if needed
 
 /**
  * Parses URLSearchParams to extract filter values, page, and perPage.

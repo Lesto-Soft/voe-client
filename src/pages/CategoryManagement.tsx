@@ -18,7 +18,7 @@ import CategoryTable from "../components/features/categoryManagement/CategoryTab
 import {
   useCategoryManagement,
   CategoryQueryApiParams,
-} from "./hooks/useCategoryManagement"; // Adjust path as needed
+} from "../hooks/useCategoryManagement"; // Adjust path as needed
 import LoadingModal from "../components/modals/LoadingModal"; // Adjust path as needed
 import CategoryFilters from "../components/features/categoryManagement/CategoryFilters"; // Adjust path as needed
 import CreateCategoryModal from "../components/modals/CreateCategoryModal"; // Adjust path as needed

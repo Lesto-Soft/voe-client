@@ -6,8 +6,8 @@ import {
   PaginationState,
   StateForUrl,
 } from "../types/userManagementTypes"; // Adjust path
-import { useDebounce } from "../../hooks/useDebounce"; // Adjust path
-import { getUrlParams, setUrlParams } from "../../utils/urlUtils"; // Adjust path
+import { useDebounce } from "./useDebounce"; // Adjust path
+import { getUrlParams, setUrlParams } from "../utils/urlUtils"; // Adjust path
 
 // Interface for the return value of the hook
 interface UseUserManagementReturn extends PaginationState, UserFiltersState {

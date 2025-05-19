@@ -5,7 +5,7 @@ import {
   useCountUsersByExactUsername,
   useCountUsersByExactEmail,
 } from "../../../graphql/hooks/user"; // Adjust path
-import { Role, User } from "../../../page/types/userManagementTypes"; // Adjust path
+import { Role, User } from "../../../types/userManagementTypes"; // Adjust path
 
 // Helper function
 const isValidEmailFormat = (emailToTest: string): boolean =>

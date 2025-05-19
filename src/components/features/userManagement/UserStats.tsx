@@ -1,7 +1,7 @@
 // src/components/features/userManagement/UserStats.tsx
 import React from "react";
 import StatCard from "../../cards/StatCard"; // Adjust path
-import { Role } from "../../../page/types/userManagementTypes"; // Adjust path
+import { Role } from "../../../types/userManagementTypes"; // Adjust path
 import { capitalizeFirstLetter } from "../../../utils/stringUtils"; // Adjust path
 import {
   UserGroupIcon,

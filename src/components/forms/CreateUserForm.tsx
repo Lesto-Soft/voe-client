@@ -1,6 +1,6 @@
 // src/components/forms/CreateUserForm.tsx
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Role, User } from "../../page/types/userManagementTypes"; // Adjust path
+import { Role, User } from "../../types/userManagementTypes"; // Adjust path
 import ImageCropModal from "../modals/ImageCropModal";
 import { useCreateUserFormState } from "./hooks/useCreateUserFormState"; // Import the new hook
 import UserInputFields from "./partials/UserInputFields"; // Import sub-components

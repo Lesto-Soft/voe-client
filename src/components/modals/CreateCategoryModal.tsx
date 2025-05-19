@@ -59,7 +59,7 @@ const CreateCategoryModal: React.FC<ModalProps> = ({
         onClick={attemptClose} // Use attemptClose for backdrop click
       >
         <div
-          className="relative w-full max-w-md md:max-w-lg lg:max-w-2xl rounded-lg bg-white p-4 md:p-6 shadow-xl max-h-[85vh] overflow-y-auto"
+          className="relative w-full max-w-xl md:max-w-3xl lg:max-w-5xl rounded-lg bg-white p-4 md:p-6 shadow-xl max-h-[85vh] overflow-y-auto"
           onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside modal
         >
           <button

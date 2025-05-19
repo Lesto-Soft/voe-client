@@ -26,8 +26,8 @@ import LoadingModal from "../components/modals/LoadingModal"; // Adjust path
 import UserStats from "../components/features/userManagement/UserStats";
 import UserFilters from "../components/features/userManagement/UserFilters";
 import UserTable from "../components/features/userManagement/UserTable";
-import { useUserManagement } from "./hooks/useUserManagement"; // Adjust path
-import { Role, User } from "./types/userManagementTypes"; // Adjust path
+import { useUserManagement } from "../hooks/useUserManagement"; // Adjust path
+import { Role, User } from "../types/userManagementTypes"; // Adjust path
 
 const UserManagement: React.FC = () => {
   const {

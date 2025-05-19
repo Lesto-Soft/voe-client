@@ -1,4 +1,4 @@
-import { ICaseStatus } from "../../db/interfaces";
+import { ICaseStatus } from "../db/interfaces";
 
 export interface User {
   __typename?: "User";

@@ -4,12 +4,14 @@ import { useLazyQuery } from "@apollo/client";
 import { GET_LEAN_USERS } from "../../../graphql/query/user"; // Adjust path if needed
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { IUser } from "../../../db/interfaces"; // Adjust path if needed
+import TextEditor from "./TextEditor";
 
 interface IUserLean {
   _id: string;
   name: string;
 }
 
+// useDebounce function (as you provided)
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
   useEffect(() => {
@@ -27,10 +29,10 @@ interface CategoryInputFieldsProps {
   name: string;
   setName: (value: string) => void;
   nameError: string | null;
-  problem: string;
-  setProblem: (value: string) => void;
-  suggestion: string;
-  setSuggestion: (value: string) => void;
+  problem: string; // This will be HTML string
+  setProblem: (value: string) => void; // Callback expects HTML string
+  suggestion: string; // This will be HTML string
+  setSuggestion: (value: string) => void; // Callback expects HTML string
   expertIds: string[];
   setExpertIds: (ids: string[]) => void;
   managerIds: string[];
@@ -46,10 +48,10 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
   name,
   setName,
   nameError,
-  problem,
-  setProblem,
-  suggestion,
-  setSuggestion,
+  problem, // Expects HTML string from parent
+  setProblem, // Will be called with HTML string
+  suggestion, // Expects HTML string from parent
+  setSuggestion, // Will be called with HTML string
   expertIds,
   setExpertIds,
   managerIds,
@@ -62,7 +64,7 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
 }) => {
   const t = (key: string) => key; // Placeholder for translations
 
-  // --- State & Logic for Experts Dropdown ---
+  // --- State & Logic for Experts Dropdown (remains the same) ---
   const [isExpertDropdownVisible, setIsExpertDropdownVisible] = useState(false);
   const expertDisplayInputRef = useRef<HTMLInputElement>(null);
   const expertDropdownRef = useRef<HTMLDivElement>(null);
@@ -105,19 +107,15 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
     const names: string[] = [];
     const uniqueExpertsMap = new Map<string, string>();
     initialExperts.forEach((expert) => {
-      if (expertIds.includes(expert._id)) {
+      if (expertIds.includes(expert._id))
         uniqueExpertsMap.set(expert._id, expert.name);
-      }
     });
     serverFetchedExperts.forEach((expert) => {
-      if (expertIds.includes(expert._id) && !uniqueExpertsMap.has(expert._id)) {
+      if (expertIds.includes(expert._id) && !uniqueExpertsMap.has(expert._id))
         uniqueExpertsMap.set(expert._id, expert.name);
-      }
     });
     expertIds.forEach((id) => {
-      if (uniqueExpertsMap.has(id)) {
-        names.push(uniqueExpertsMap.get(id)!);
-      }
+      if (uniqueExpertsMap.has(id)) names.push(uniqueExpertsMap.get(id)!);
     });
     return (
       names.join(", ") ||
@@ -142,7 +140,7 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
   }, [initialExperts, serverFetchedExperts]);
   // --- End Experts Dropdown ---
 
-  // --- State & Logic for Managers Dropdown ---
+  // --- State & Logic for Managers Dropdown (remains the same) ---
   const [isManagerDropdownVisible, setIsManagerDropdownVisible] =
     useState(false);
   const managerDisplayInputRef = useRef<HTMLInputElement>(null);
@@ -188,22 +186,18 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
     const names: string[] = [];
     const uniqueManagersMap = new Map<string, string>();
     initialManagers.forEach((manager) => {
-      if (managerIds.includes(manager._id)) {
+      if (managerIds.includes(manager._id))
         uniqueManagersMap.set(manager._id, manager.name);
-      }
     });
     serverFetchedManagers.forEach((manager) => {
       if (
         managerIds.includes(manager._id) &&
         !uniqueManagersMap.has(manager._id)
-      ) {
+      )
         uniqueManagersMap.set(manager._id, manager.name);
-      }
     });
     managerIds.forEach((id) => {
-      if (uniqueManagersMap.has(id)) {
-        names.push(uniqueManagersMap.get(id)!);
-      }
+      if (uniqueManagersMap.has(id)) names.push(uniqueManagersMap.get(id)!);
     });
     return (
       names.join(", ") ||
@@ -281,7 +275,7 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
         <p className={`${errorPlaceholderClass}`}>&nbsp;</p>
       </div>
 
-      {/* Row 2: Experts | Managers */}
+      {/* Row 2: Experts | Managers (remains the same) */}
       {/* Experts Filter */}
       <div className="relative">
         <label
@@ -386,7 +380,7 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
         <p className={`${errorPlaceholderClass}`}>&nbsp;</p>
       </div>
 
-      {/* Managers Filter */}
+      {/* Managers Filter (remains the same) */}
       <div className="relative">
         <label
           htmlFor="filterManagersDisplayForm"
@@ -490,8 +484,8 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
         <p className={`${errorPlaceholderClass}`}>&nbsp;</p>
       </div>
 
-      {/* Row 3: Problem | Suggestion */}
-      {/* Problem Textarea */}
+      {/* Row 3: Problem | Suggestion - REPLACED WITH TextEditor */}
+      {/* Problem TextEditor */}
       <div>
         <label
           htmlFor="categoryProblem"
@@ -499,17 +493,18 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
         >
           {t("Проблем")}
         </label>
-        <textarea
-          id="categoryProblem"
-          value={problem}
-          onChange={(e) => setProblem(e.target.value)}
-          rows={3}
-          className="w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+        <TextEditor
+          content={problem} // Pass existing HTML string
+          onUpdate={(html) => setProblem(html)} // Update state with new HTML
+          placeholder={t("Опишете проблема...")}
+          minHeight="120px" // Example height, adjust as needed
+          maxHeight="120px" // You can pass other props like wrapperClassName, editorClassName if needed
         />
-        <p className={`${errorPlaceholderClass}`}>&nbsp;</p>
+        <p className={`${errorPlaceholderClass}`}>&nbsp;</p>{" "}
+        {/* For consistent spacing if you had errors */}
       </div>
 
-      {/* Suggestion Textarea */}
+      {/* Suggestion TextEditor */}
       <div>
         <label
           htmlFor="categorySuggestion"
@@ -517,14 +512,15 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
         >
           {t("Предложение")}
         </label>
-        <textarea
-          id="categorySuggestion"
-          value={suggestion}
-          onChange={(e) => setSuggestion(e.target.value)}
-          rows={3}
-          className="w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+        <TextEditor
+          content={suggestion}
+          onUpdate={(html) => setSuggestion(html)}
+          placeholder={t("Напишете предложение...")}
+          minHeight="120px"
+          maxHeight="120px" // Content will scroll if it exceeds 300px
         />
-        <p className={`${errorPlaceholderClass}`}>&nbsp;</p>
+        <p className={`${errorPlaceholderClass}`}>&nbsp;</p>{" "}
+        {/* For consistent spacing */}
       </div>
     </>
   );

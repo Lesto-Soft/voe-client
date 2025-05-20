@@ -9,6 +9,7 @@ import {
   useCountUsers,
   useCreateUser,
   useUpdateUser,
+  useDeleteUser,
 } from "../graphql/hooks/user"; // Adjust path
 import {
   AttachmentInput,
@@ -21,6 +22,7 @@ import { useGetRoles } from "../graphql/hooks/role"; // Adjust path
 import CreateUserModal from "../components/modals/CreateUserModal"; // Adjust path
 import CreateUserForm from "../components/forms/CreateUserForm"; // Adjust path
 import LoadingModal from "../components/modals/LoadingModal"; // Adjust path
+import ConfirmActionDialog from "../components/modals/ConfirmActionDialog";
 
 // Page-Specific Imports
 import UserStats from "../components/features/userManagement/UserStats";
@@ -55,6 +57,10 @@ const UserManagement: React.FC = () => {
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [avatarVersion, setAvatarVersion] = useState(Date.now());
   const [showFilters, setShowFilters] = useState(true);
+
+  // State for delete confirmation
+  const [showUserDeleteConfirm, setShowUserDeleteConfirm] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
 
   const serverBaseUrl = import.meta.env.VITE_API_URL || "";
 
@@ -178,6 +184,11 @@ const UserManagement: React.FC = () => {
     loading: updateLoading,
     error: updateError,
   } = useUpdateUser();
+  const {
+    deleteUser,
+    loading: deleteUserLoading,
+    error: deleteUserError,
+  } = useDeleteUser();
 
   const openCreateModal = () => {
     setEditingUser(null);
@@ -250,6 +261,32 @@ const UserManagement: React.FC = () => {
     }
   };
 
+  // Handlers for user deletion
+  const triggerDeleteUser = (user: User) => {
+    setUserToDelete(user);
+    setShowUserDeleteConfirm(true);
+  };
+
+  const handleConfirmUserDelete = async () => {
+    console.log("trying to delete user with id: ", userToDelete?._id);
+    if (!userToDelete) if (!userToDelete) return;
+    try {
+      await deleteUser(userToDelete._id);
+      console.log("did we delete the user?: ", userToDelete?._id);
+      // alert("User deleted successfully!"); // Consider using a toast notification
+      setShowUserDeleteConfirm(false);
+      setUserToDelete(null);
+      await Promise.all([refetchUsers(), refetchUserCount()]);
+      // Optionally refetch roles if user deletion affects role counts displayed elsewhere
+      if (refetchRoles) refetchRoles();
+    } catch (err: any) {
+      console.error("Error deleting user:", err);
+      // alert(`Failed to delete user: ${err.message}`); // Consider using a toast notification
+      setShowUserDeleteConfirm(false);
+      setUserToDelete(null);
+    }
+  };
+
   const isLoadingTableData = usersLoading || countLoading;
   const tableDataError = usersError || countError;
 
@@ -278,13 +315,9 @@ const UserManagement: React.FC = () => {
   const isLoadingUserStatsRoleDefinitionsAndCounts =
     rolesLoadingHook || loadingUsersForRoleCounts || isDynamicRoleDataStale;
 
-  // Initial Page Load Check: if any essential data for stats is still loading
-  if (
-    //rolesLoadingHook ||
-    absoluteTotalCountLoading //||
-    //loadingUsersForRoleCounts
-  ) {
-    //return <LoadingModal message={"Зареждане на страницата..."} />;
+  if (absoluteTotalCountLoading && !rolesData) {
+    // Simplified initial load check
+    // return <LoadingModal message={"Зареждане на страницата..."} />;
   }
 
   // Handle critical errors that prevent page rendering
@@ -293,13 +326,15 @@ const UserManagement: React.FC = () => {
     absoluteTotalCountError ||
     errorUsersForRoleCounts ||
     usersError ||
-    countError;
+    countError ||
+    deleteUserError;
 
   if (
     criticalPageError &&
     !isLoadingTableData &&
     !isLoadingUserStatsOverallCounts &&
-    !isLoadingUserStatsRoleDefinitionsAndCounts
+    !isLoadingUserStatsRoleDefinitionsAndCounts &&
+    !deleteUserLoading
   ) {
     return (
       <div className="p-6 text-red-600 text-center">
@@ -380,11 +415,13 @@ const UserManagement: React.FC = () => {
         onPageChange={handlePageChange}
         onItemsPerPageChange={handleItemsPerPageChange}
         onEditUser={openEditModal}
+        onDeleteUser={triggerDeleteUser} // Pass the delete trigger
         serverBaseUrl={serverBaseUrl}
         avatarVersion={avatarVersion}
         currentQueryInput={currentQueryInput}
         createLoading={createLoading}
         updateLoading={updateLoading}
+        deleteUserLoading={deleteUserLoading} // Pass delete loading state
       />
 
       <CreateUserModal
@@ -416,6 +453,21 @@ const UserManagement: React.FC = () => {
           />
         )}
       </CreateUserModal>
+
+      {/* Confirmation Dialog for User Deletion */}
+      <ConfirmActionDialog
+        isOpen={showUserDeleteConfirm}
+        onOpenChange={setShowUserDeleteConfirm}
+        onConfirm={handleConfirmUserDelete}
+        title="Потвърди изтриването на потребител"
+        description={
+          userToDelete
+            ? `Сигурни ли сте, че искате да изтриете потребител "${userToDelete.name}" (${userToDelete.username})? Тази операция е необратима.`
+            : "Сигурни ли сте, че искате да изтриете този потребител? Тази операция е необратима."
+        }
+        confirmButtonText="Изтрий потребител"
+        isDestructiveAction={true}
+      />
     </div>
   );
 };

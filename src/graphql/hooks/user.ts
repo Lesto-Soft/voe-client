@@ -12,6 +12,7 @@ import {
   CreateUserInput,
   UPDATE_USER,
   UpdateUserInput,
+  DELETE_USER,
 } from "../mutation/user"; // Adjust path if needed
 
 // --- Define Input Types (These should match your GraphQL Schema!) ---
@@ -124,6 +125,24 @@ export const useUpdateUser = () => {
   };
 
   return { updateUser, user: data?.updateUser, loading, error };
+};
+
+export const useDeleteUser = () => {
+  const [deleteUserMutation, { data, loading, error }] =
+    useMutation(DELETE_USER);
+  const deleteUser = async (id: string) => {
+    try {
+      console.log("[HOOK] Deleting user with ID:", id);
+      const response = await deleteUserMutation({ variables: { id } });
+      console.log("[HOOK PT2]");
+      return response.data?.deleteUser;
+    } catch (err) {
+      console.error("Failed to delete user:", err);
+      throw err;
+    }
+  };
+
+  return { deleteUser, user: data?.deleteUser, loading, error };
 };
 
 export const useGetUserByUsername = (username: string) => {

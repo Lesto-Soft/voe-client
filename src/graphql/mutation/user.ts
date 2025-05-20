@@ -33,6 +33,15 @@ export const UPDATE_USER = gql`
   ${userFragment}
 `;
 
+export const DELETE_USER = gql`
+  mutation DeleteUser($id: ID!) {
+    deleteUser(_id: $id) {
+      ...MutationUserFragment
+    }
+  }
+  ${userFragment}
+`;
+
 // Define the input type for the mutation
 export type AttachmentInput = {
   filename: string;

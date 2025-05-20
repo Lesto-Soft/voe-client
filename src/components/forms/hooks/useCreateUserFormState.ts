@@ -30,6 +30,7 @@ export function useCreateUserFormState({
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [roleId, setRoleId] = useState("");
+  const [financialApprover, setFinancialApprover] = useState<boolean>(false); // Added state
 
   // --- Validation State ---
   const [usernameError, setUsernameError] = useState<string | null>(null);
@@ -90,6 +91,7 @@ export function useCreateUserFormState({
       setEmail(initialData.email || "");
       setPosition(initialData.position || "");
       setRoleId(initialData.role?._id || "");
+      setFinancialApprover(initialData.financial_approver || false); // Set financialApprover
       const currentAvatarUrl = initialData.avatar
         ? `${serverBaseUrl}/static/avatars/${initialData._id}/${
             initialData.avatar
@@ -106,6 +108,7 @@ export function useCreateUserFormState({
       setEmail("");
       setPosition("");
       setRoleId("");
+      setFinancialApprover(false); // Reset financialApprover
       setAvatarPreview(null);
       console.log(
         "[Hook] InitialData Effect: Cleared form fields and avatarPreview."
@@ -298,6 +301,8 @@ export function useCreateUserFormState({
     setConfirmNewPassword,
     roleId,
     setRoleId,
+    financialApprover, // Return state
+    setFinancialApprover, // Return setter
 
     // Validation State
     usernameError,

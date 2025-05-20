@@ -42,8 +42,8 @@ const UserManagement: React.FC = () => {
     filterEmail,
     setFilterEmail,
     filterRoleIds,
-    filterFinancial,
-    setFilterFinancial,
+    filterFinancial, // This is for filtering the table, not form input
+    setFilterFinancial, // This is for filtering the table, not form input
     setFilterRoleIds,
     handlePageChange,
     handleItemsPerPageChange,
@@ -82,8 +82,8 @@ const UserManagement: React.FC = () => {
     if (username) filters.username = username;
     if (position) filters.position = position;
     if (email) filters.email = email;
-    // Add financial filter if active (currentQueryInput already handles this logic)
-    if (financial_approver) {
+    if (typeof financial_approver === "boolean") {
+      // Ensure it's a boolean before adding
       filters.financial_approver = financial_approver;
     }
     return filters;
@@ -92,7 +92,7 @@ const UserManagement: React.FC = () => {
     currentQueryInput.username,
     currentQueryInput.position,
     currentQueryInput.email,
-    currentQueryInput.financial_approver, // Use currentQueryInput.financial which is already processed
+    currentQueryInput.financial_approver,
   ]);
 
   // Fetch ALL users (once) for client-side filtering for UserStats' dynamic role counts
@@ -193,26 +193,39 @@ const UserManagement: React.FC = () => {
   };
 
   const handleFormSubmit = async (
-    formData: any,
+    formData: any, // This formData comes from CreateUserForm
     editingUserId: string | null,
     avatarData: AttachmentInput | null | undefined
   ) => {
+    // formData now includes financial_approver from CreateUserForm
     const finalInput: Partial<CreateUserInput | UpdateUserInput> = {
       username: formData.username,
       name: formData.name,
       email: formData.email,
       position: formData.position,
       role: formData.role, // This should be the roleId string from CreateUserForm
+      financial_approver: formData.financial_approver, // Add here
       ...(formData.password && { password: formData.password }),
       ...(avatarData !== undefined && { avatar: avatarData }),
     };
 
     if (editingUserId) {
+      // For updates, remove undefined fields so they don't overwrite existing values with null
       Object.keys(finalInput).forEach((key) => {
         if (finalInput[key as keyof typeof finalInput] === undefined)
           delete finalInput[key as keyof typeof finalInput];
       });
+      // Special handling for financial_approver for update:
+      // If it's not explicitly passed in formData (e.g., if the form logic changes),
+      // ensure it's present if it was part of the original editingUser or if it's being set.
+      // However, since CreateUserForm explicitly adds it to formDataObject, this should be fine.
+      // Just ensure `formData.financial_approver` is always a boolean.
+      finalInput.financial_approver = formData.financial_approver;
+    } else {
+      // For create, ensure financial_approver is explicitly set (even if false)
+      finalInput.financial_approver = formData.financial_approver || false;
     }
+
     const context = editingUser ? "редактиране" : "създаване";
     try {
       if (editingUserId) {
@@ -352,8 +365,8 @@ const UserManagement: React.FC = () => {
           setFilterPosition={setFilterPosition}
           filterEmail={filterEmail}
           setFilterEmail={setFilterEmail}
-          filterFinancial={filterFinancial} // <-- Pass prop
-          setFilterFinancial={setFilterFinancial} // <-- Pass prop
+          filterFinancial={filterFinancial}
+          setFilterFinancial={setFilterFinancial}
         />
       </div>
 
@@ -400,8 +413,6 @@ const UserManagement: React.FC = () => {
             roles={roles}
             rolesLoading={rolesLoadingHook}
             rolesError={rolesErrorHook}
-            // serverBaseUrl prop is needed by useCreateUserFormState, ensure CreateUserForm receives it.
-            // Your CreateUserForm already passes it down if it takes it as a prop.
           />
         )}
       </CreateUserModal>

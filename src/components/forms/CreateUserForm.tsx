@@ -77,6 +77,8 @@ const CreateUserForm: React.FC<CreateUserFormProps> = ({
     setConfirmNewPassword,
     roleId,
     setRoleId,
+    financialApprover, // Get from hook
+    setFinancialApprover, // Get from hook
     usernameError,
     setUsernameError,
     emailError,
@@ -257,6 +259,7 @@ const CreateUserForm: React.FC<CreateUserFormProps> = ({
       email: finalTrimmedEmail || null,
       position: position.trim() || null,
       role: roleId || null,
+      financial_approver: financialApprover, // Add to form data
     };
     if (!initialData) formDataObject.password = password;
     else if (newPassword) formDataObject.password = newPassword;
@@ -353,6 +356,12 @@ const CreateUserForm: React.FC<CreateUserFormProps> = ({
               setFormSubmitError(null);
             }}
             roles={roles}
+            financialApprover={financialApprover} // Pass to UserInputFields
+            setFinancialApprover={(v) => {
+              // Pass to UserInputFields
+              setFinancialApprover(v);
+              setFormSubmitError(null);
+            }}
             errorPlaceholderClass={errorPlaceholderClass}
           />
 

@@ -9,6 +9,7 @@ const userFragment = `
     email
     avatar
     position
+    financial_approver
   }
 `;
 
@@ -46,6 +47,7 @@ export type CreateUserInput = {
   role?: string | null; // ID of the role, allow null
   avatar?: AttachmentInput | null; // Optional avatar input
   position?: string | null; // Allow null
+  financial_approver?: boolean;
 };
 
 export type UpdateUserInput = {
@@ -56,4 +58,5 @@ export type UpdateUserInput = {
   role?: string | null; // ID of the role, allow null
   avatar?: AttachmentInput | null | undefined; //  Can be object, null (remove), or undefined
   position?: string | null; // Allow null
+  financial_approver?: boolean;
 };

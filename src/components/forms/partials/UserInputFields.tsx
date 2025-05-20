@@ -22,6 +22,8 @@ interface UserInputFieldsProps {
   roleId: string;
   setRoleId: (value: string) => void;
   roles: Role[];
+  financialApprover: boolean;
+  setFinancialApprover: (value: boolean) => void;
   errorPlaceholderClass: string;
   // Add t function if needed for labels/placeholders
 }
@@ -46,6 +48,8 @@ const UserInputFields: React.FC<UserInputFieldsProps> = ({
   roleId,
   setRoleId,
   roles,
+  financialApprover,
+  setFinancialApprover,
   errorPlaceholderClass,
 }) => {
   return (
@@ -169,30 +173,69 @@ const UserInputFields: React.FC<UserInputFieldsProps> = ({
         <p className={`${errorPlaceholderClass}`}>&nbsp;</p>
       </div>
 
-      {/* Role Input */}
+      {/* Combined Row for Role and Financial Approver */}
+      {/* This div is part of the natural flow of UserInputFields.
+          Its children (Role and Financial Approver) will be laid out side-by-side on medium screens and up.
+      */}
       <div>
-        <label
-          htmlFor="role"
-          className="mb-1 block text-sm font-medium text-gray-700"
-        >
-          Роля<span className="text-red-500">*</span>
-        </label>
-        <select
-          id="role"
-          name="role"
-          value={roleId}
-          onChange={(e) => setRoleId(e.target.value)}
-          required
-          className="w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-        >
-          <option value="">Изберете роля</option>
-          {roles.map((r) => (
-            <option key={r._id} value={r._id}>
-              {r.name.charAt(0).toUpperCase() + r.name.slice(1)}
-            </option>
-          ))}
-        </select>
-        <p className={`${errorPlaceholderClass}`}>&nbsp;</p>
+        {" "}
+        {/* Wrapper for the row of Role and Financial Approver */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
+          {/* Role Input */}
+          <div>
+            <label
+              htmlFor="role"
+              className="mb-1 block text-sm font-medium text-gray-700"
+            >
+              Роля<span className="text-red-500">*</span>
+            </label>
+            <select
+              id="role"
+              name="role"
+              value={roleId}
+              onChange={(e) => setRoleId(e.target.value)}
+              required
+              className="w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            >
+              <option value="">Изберете роля</option>
+              {roles.map((r) => (
+                <option key={r._id} value={r._id}>
+                  {r.name.charAt(0).toUpperCase() + r.name.slice(1)}
+                </option>
+              ))}
+            </select>
+            <p className={`${errorPlaceholderClass}`}>&nbsp;</p>
+          </div>
+
+          {/* Financial Approver Checkbox */}
+          {/* This div will be the second column in the md:grid-cols-2 */}
+          <div>
+            {/* Invisible label for spacing to align with Role input's label visually */}
+            <label className="mb-1 block text-sm font-medium text-transparent select-none">
+              &nbsp; {/* Placeholder for alignment */}
+            </label>
+            <div className="flex items-center h-10">
+              {" "}
+              {/* Adjust h-10 to match input height of select (p-2 + border) */}
+              <input
+                type="checkbox"
+                id="financial_approver"
+                name="financial_approver"
+                checked={financialApprover}
+                onChange={(e) => setFinancialApprover(e.target.checked)}
+                className="h-5 w-5 rounded border-gray-300 text-blue-600 shadow-sm focus:ring-blue-500"
+              />
+              <label
+                htmlFor="financial_approver"
+                className="ml-2 text-sm font-medium text-gray-700"
+              >
+                Финансов Одобрител
+              </label>
+            </div>
+            <p className={`${errorPlaceholderClass}`}>&nbsp;</p>{" "}
+            {/* For consistent bottom spacing */}
+          </div>
+        </div>
       </div>
     </>
   );

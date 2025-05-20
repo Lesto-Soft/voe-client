@@ -69,7 +69,7 @@ const CategoryStats: React.FC<CategoryStatsProps> = ({
       : `${totalCaseCount}`; // Fallback if absolute total isn't available
 
   return (
-    <div className="flex flex-row flex-wrap items-start gap-3">
+    <div className="flex flex-row flex-wrap gap-3">
       <StatCard
         amount={totalDisplayAmount}
         title={totalCasesTitle}

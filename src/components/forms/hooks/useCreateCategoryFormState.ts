@@ -1,16 +1,7 @@
 // src/components/forms/hooks/useCreateCategoryFormState.ts
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { ICategory, IUser } from "../../../db/interfaces"; // Adjust path
-
-// Helper to compare arrays of strings (ignoring order)
-const arraysEqualUnordered = (a?: string[], b?: string[]): boolean => {
-  if (!a && !b) return true; // Both are undefined or null
-  if (!a || !b) return false; // One is undefined or null, the other isn't
-  if (a.length !== b.length) return false;
-  const sortedA = [...a].sort();
-  const sortedB = [...b].sort();
-  return sortedA.every((val, index) => val === sortedB[index]);
-};
+import { arraysEqualUnordered } from "../../../utils/arrayUtils";
 
 interface IUserLean {
   // Define a lean user type based on what ICategory provides

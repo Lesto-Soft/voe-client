@@ -132,7 +132,7 @@ function TruncatedListWithDialog<T extends ListItem>({
         ? "експерти"
         : itemLabelLower === "manager"
         ? "мениджъри"
-        : itemTypeLabelPlural || `${itemLabelLower}s`; // Fallback
+        : itemTypeLabelPlural || `${itemLabelLower}и`; // Fallback
     return <span className="text-sm text-gray-500">Няма {noItemsText}</span>;
   }
 

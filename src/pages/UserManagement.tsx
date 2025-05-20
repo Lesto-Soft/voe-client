@@ -284,7 +284,7 @@ const UserManagement: React.FC = () => {
     absoluteTotalCountLoading //||
     //loadingUsersForRoleCounts
   ) {
-    return <LoadingModal message={"Зареждане на страницата..."} />;
+    //return <LoadingModal message={"Зареждане на страницата..."} />;
   }
 
   // Handle critical errors that prevent page rendering

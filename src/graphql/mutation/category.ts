@@ -33,6 +33,15 @@ export const UPDATE_CATEGORY = gql`
   ${categoryFragment}
 `;
 
+export const DELETE_CATEGORY = gql`
+  mutation DeleteCategory($id: ID!) {
+    deleteCategory(_id: $id) {
+      ...MutationCategoryFragment
+    }
+  }
+  ${categoryFragment}
+`;
+
 export type CreateCategoryInput = {
   name: string;
   problem?: string;

@@ -1,22 +1,20 @@
 // src/components/features/categoryManagement/CategoryTable.tsx
 import React, { useState, useEffect, useRef } from "react";
-import { ICategory } from "../../../db/interfaces";
-import { Link } from "react-router"; // Standard import
-import { PencilSquareIcon } from "@heroicons/react/24/solid";
-import Pagination from "../../tables/Pagination";
-import CategoryTableSkeleton from "../../skeletons/CategoryTableSkeleton";
-import TruncatedListWithDialog from "./TruncatedListWithDialog";
 import {
-  // Assuming these are correctly defined and exported from your interfaces file
+  ICategory,
   ICaseStatus as CaseStatus,
   CASE_STATUS_DISPLAY_ORDER,
-} from "../../../db/interfaces";
+} from "../../../db/interfaces"; // Adjust path
+import { Link } from "react-router"; // Corrected import for React Router v5/v6
+import { PencilSquareIcon, TrashIcon } from "@heroicons/react/24/solid"; // Or your preferred variant
+import Pagination from "../../tables/Pagination"; // Adjust path
+import CategoryTableSkeleton from "../../skeletons/CategoryTableSkeleton"; // Adjust path
+import TruncatedListWithDialog from "./TruncatedListWithDialog"; // Adjust path
+import { isNullOrEmptyArray } from "../../../utils/arrayUtils"; // Adjust path
 
-// Define base styles for the status buttons
 const BASE_STATUS_BUTTON_STYLE =
   "px-1.5 py-0.5 text-xs font-semibold rounded border transition-colors duration-150";
 
-// Styles for CLICKABLE status buttons (count > 0)
 const CASE_STATUS_STYLES_CLICKABLE: Record<CaseStatus, string> = {
   [CaseStatus.Open]: `${BASE_STATUS_BUTTON_STYLE} bg-green-50 text-green-700 border-green-300 hover:bg-green-100 hover:border-green-400`,
   [CaseStatus.InProgress]: `${BASE_STATUS_BUTTON_STYLE} bg-yellow-50 text-yellow-700 border-yellow-300 hover:bg-yellow-100 hover:border-yellow-400`,
@@ -24,7 +22,6 @@ const CASE_STATUS_STYLES_CLICKABLE: Record<CaseStatus, string> = {
   [CaseStatus.Closed]: `${BASE_STATUS_BUTTON_STYLE} bg-gray-100 text-gray-600 border-gray-300 hover:bg-gray-200 hover:border-gray-400`,
 };
 
-// Styles for NON-CLICKABLE (zero count) status indicators
 const CASE_STATUS_STYLES_ZERO: Record<CaseStatus, string> = {
   [CaseStatus.Open]: `${BASE_STATUS_BUTTON_STYLE} bg-green-50 text-green-500 border-green-200 opacity-70 cursor-default`,
   [CaseStatus.InProgress]: `${BASE_STATUS_BUTTON_STYLE} bg-yellow-50 text-yellow-500 border-yellow-200 opacity-70 cursor-default`,
@@ -32,13 +29,11 @@ const CASE_STATUS_STYLES_ZERO: Record<CaseStatus, string> = {
   [CaseStatus.Closed]: `${BASE_STATUS_BUTTON_STYLE} bg-gray-100 text-gray-400 border-gray-200 opacity-70 cursor-default`,
 };
 
-// Styles for the TOTAL CASES button
 const TOTAL_CASES_BUTTON_STYLE_CLICKABLE =
   "w-full block text-center px-2 py-1 text-sm font-semibold rounded border border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200 hover:border-slate-400 transition-colors duration-150";
 const TOTAL_CASES_BUTTON_STYLE_ZERO =
   "w-full block text-center px-2 py-1 text-sm font-semibold rounded border border-gray-200 bg-gray-50 text-gray-400 opacity-70 cursor-default";
 
-// Helper to get a user-friendly label for the status (optional, for titles)
 const getStatusLabel = (status: CaseStatus): string => {
   switch (status) {
     case CaseStatus.Open:
@@ -50,6 +45,7 @@ const getStatusLabel = (status: CaseStatus): string => {
     case CaseStatus.Closed:
       return "Closed";
     default:
+      // This ensures that if a new status is added and not handled, TypeScript will complain.
       const exhaustiveCheck: never = status;
       return String(exhaustiveCheck);
   }
@@ -65,9 +61,11 @@ interface CategoryTableProps {
   onPageChange: (page: number) => void;
   onItemsPerPageChange: (size: number) => void;
   onEditCategory: (category: ICategory) => void;
-  currentQueryInput: any;
+  onDeleteCategory: (category: ICategory) => void; // New prop
+  currentQueryInput: any; // Consider defining a more specific type if possible
   createLoading: boolean;
   updateLoading: boolean;
+  deleteLoading?: boolean; // New prop
 }
 
 const MIN_SKELETON_TIME = 250;
@@ -82,9 +80,11 @@ const CategoryTable: React.FC<CategoryTableProps> = ({
   onPageChange,
   onItemsPerPageChange,
   onEditCategory,
+  onDeleteCategory,
   currentQueryInput,
   createLoading,
   updateLoading,
+  deleteLoading,
 }) => {
   const [showSkeleton, setShowSkeleton] = useState(true);
   const skeletonTimerRef = useRef<number | null>(null);
@@ -111,15 +111,17 @@ const CategoryTable: React.FC<CategoryTableProps> = ({
     name: "w-1/5",
     experts: "w-1/4",
     managers: "w-1/4",
-    signalAmount: "w-auto px-2", // Added px-2 for internal padding for the full-width button
+    signalAmount: "w-auto px-2",
     edit: "w-1/6",
   };
 
-  if (showSkeleton) return <CategoryTableSkeleton rows={itemsPerPage} />;
-  if (categoriesError)
+  if (showSkeleton && isLoadingCategories)
+    return <CategoryTableSkeleton rows={itemsPerPage} />; // Show skeleton only if truly loading
+  if (!isLoadingCategories && categoriesError)
+    // Show error if not loading but error exists
     return (
       <div className="p-6 text-red-600 bg-white rounded-lg shadow-md text-center">
-        Грешка при зареждане: {categoriesError.message}
+        Грешка при зареждане: {categoriesError.message || "Неизвестна грешка"}
       </div>
     );
 
@@ -155,7 +157,7 @@ const CategoryTable: React.FC<CategoryTableProps> = ({
                   className={`${columnWidths.signalAmount.replace(
                     "px-2",
                     "px-3"
-                  )} py-4 text-center text-sm font-semibold text-white uppercase tracking-wide relative`} // Use px-3 for header like others
+                  )} py-4 text-center text-sm font-semibold text-white uppercase tracking-wide relative`}
                 >
                   <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-px bg-gray-400"></span>
                   Брой Сигнали
@@ -165,31 +167,31 @@ const CategoryTable: React.FC<CategoryTableProps> = ({
                   className={`${columnWidths.edit} hidden md:table-cell px-3 py-4 text-center text-sm font-semibold text-white uppercase tracking-wide relative`}
                 >
                   <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-px bg-gray-400"></span>
-                  Редактирай
+                  Действия{" "}
+                  {/* Changed from "Редактирай" to "Действия" as it now includes delete */}
                 </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200 text-gray-700">
               {categories.map((category) => {
                 const isInactive = category.archived;
-                let rowClasses = "hover:bg-gray-100";
-                const inactiveClasses = "bg-gray-50 text-gray-300";
+                let rowClasses =
+                  "hover:bg-gray-100 transition-colors duration-150"; // Added transition
+                const inactiveClasses =
+                  "bg-gray-50 text-gray-400 hover:bg-gray-100"; // Still allow hover on inactive for consistency
 
                 if (isInactive) {
                   rowClasses = inactiveClasses;
                 }
 
-                // --- Calculate Case Counts and Prepare JSX for Display ---
                 const cases = category.cases || [];
                 const totalCases = cases.length;
-
                 const countsByStatus: Record<CaseStatus, number> = {
                   [CaseStatus.Open]: 0,
                   [CaseStatus.InProgress]: 0,
                   [CaseStatus.AwaitingFinance]: 0,
                   [CaseStatus.Closed]: 0,
                 };
-
                 cases.forEach((c) => {
                   if (
                     c.status &&
@@ -198,7 +200,6 @@ const CategoryTable: React.FC<CategoryTableProps> = ({
                     countsByStatus[c.status as CaseStatus]++;
                   }
                 });
-
                 const totalCasesElement =
                   totalCases > 0 ? (
                     <Link
@@ -211,7 +212,6 @@ const CategoryTable: React.FC<CategoryTableProps> = ({
                   ) : (
                     <span className={TOTAL_CASES_BUTTON_STYLE_ZERO}>0</span>
                   );
-
                 const statusElements = CASE_STATUS_DISPLAY_ORDER.map(
                   (status, index, array) => {
                     const count = countsByStatus[status];
@@ -234,29 +234,29 @@ const CategoryTable: React.FC<CategoryTableProps> = ({
                           {count}
                         </span>
                       );
-
                     return (
                       <React.Fragment key={status}>
                         {element}
                         {index < array.length - 1 && (
-                          <span className="mx-1 text-gray-300">|</span>
+                          <span className="mx-0.5 text-gray-300">|</span>
                         )}
                       </React.Fragment>
                     );
                   }
                 );
-
                 const signalAmountDisplay = (
-                  // Main container: column, stretch items, centered content, gap
                   <div className="flex flex-col items-stretch justify-center gap-1 py-1">
                     {totalCasesElement}
-                    {/* Sub-container for status buttons, centered */}
-                    <div className="flex items-center justify-center gap-1 flex-wrap">
+                    <div className="flex items-center justify-center gap-0.5 flex-wrap">
                       {statusElements}
                     </div>
                   </div>
                 );
-                // --- End Calculate Case Counts ---
+
+                const canDeleteCategory =
+                  isNullOrEmptyArray(category.experts) &&
+                  isNullOrEmptyArray(category.managers) &&
+                  isNullOrEmptyArray(category.cases);
 
                 return (
                   <tr key={category._id} className={rowClasses}>
@@ -264,18 +264,18 @@ const CategoryTable: React.FC<CategoryTableProps> = ({
                       className={`${columnWidths.name} px-3 py-4 whitespace-nowrap`}
                     >
                       <Link
-                        to={`/category/${category._id}`}
-                        key={category._id}
-                        className={`inline-block px-3 py-1 rounded-lg text-sm font-semibold cursor-pointer transition-colors duration-150 ease-in-out ${
+                        to={`/category/${category._id}`} // Ensure Link leads somewhere meaningful or remove if not needed
+                        className={`inline-block px-3 py-1 rounded-lg text-sm font-semibold transition-colors duration-150 ease-in-out ${
                           isInactive
-                            ? "bg-gray-200 text-gray-500 pointer-events-none"
-                            : "bg-sky-100 text-sky-800 hover:bg-sky-200 border border-sky-200"
+                            ? "bg-gray-200 text-gray-500" // cursor-not-allowed" // Made inactive link look more disabled
+                            : "bg-sky-100 text-sky-800 hover:bg-sky-200 border border-sky-200 cursor-pointer"
                         }`}
                         title={
                           isInactive
                             ? `${category.name} (Архивирана)`
                             : category.name
                         }
+                        // onClick={(e) => isInactive && e.preventDefault()} // Prevent navigation for inactive categories
                       >
                         {category.name}
                       </Link>
@@ -283,9 +283,9 @@ const CategoryTable: React.FC<CategoryTableProps> = ({
                     <td className={`${columnWidths.experts} px-3 py-4 text-sm`}>
                       <TruncatedListWithDialog
                         items={category.experts || []}
-                        itemTypeLabel="Expert"
+                        itemTypeLabel="Експерт"
                         parentContextName={category.name}
-                        baseLinkPath="/user-data/"
+                        baseLinkPath="/user-data/" // Example path
                         isContextInactive={!!isInactive}
                       />
                     </td>
@@ -294,17 +294,16 @@ const CategoryTable: React.FC<CategoryTableProps> = ({
                     >
                       <TruncatedListWithDialog
                         items={category.managers || []}
-                        itemTypeLabel="Manager"
+                        itemTypeLabel="Мениджър"
                         parentContextName={category.name}
-                        baseLinkPath="/user-data/"
+                        baseLinkPath="/user-data/" // Example path
                         isContextInactive={!!isInactive}
                       />
                     </td>
-                    {/* Apply column width for the td, internal padding is handled by the button or content */}
                     <td
                       className={`${columnWidths.signalAmount.replace(
                         "px-2",
-                        ""
+                        "" // Allow internal padding of signalAmountDisplay to control spacing
                       )} py-2 text-center`}
                     >
                       {signalAmountDisplay}
@@ -312,18 +311,52 @@ const CategoryTable: React.FC<CategoryTableProps> = ({
                     <td
                       className={`${columnWidths.edit} px-3 py-4 whitespace-nowrap text-center`}
                     >
-                      <button
-                        onClick={() => onEditCategory(category)}
-                        className={`${
-                          isInactive ? "opacity-50" : ""
-                        } w-30 inline-flex justify-center rounded bg-sky-100 p-1.5 text-sky-700 border border-sky-200 hover:border-sky-300 transition-all duration-150 ease-in-out hover:cursor-pointer hover:bg-sky-200 hover:text-sky-800 active:bg-sky-300 active:scale-[0.96] disabled:bg-gray-100 disabled:text-gray-400 disabled:opacity-70 disabled:cursor-not-allowed disabled:scale-100`}
-                        aria-label={`Редактирай ${category.name}`}
-                        disabled={
-                          createLoading || updateLoading || isLoadingCategories
-                        }
+                      <div
+                        className={`inline-flex items-center ${
+                          canDeleteCategory ? "space-x-1" : ""
+                        }`}
                       >
-                        <PencilSquareIcon className="h-5 w-5" />
-                      </button>
+                        <button
+                          onClick={() => onEditCategory(category)}
+                          className={`${
+                            isInactive ? "opacity-50" : "" // pointer-events-none" : ""
+                          } ${
+                            // Pointer-events-none for inactive
+                            canDeleteCategory ? "w-10" : "w-20"
+                          } inline-flex justify-center items-center rounded bg-sky-100 p-1.5 text-sky-700 border border-sky-200 hover:border-sky-300 transition-all duration-150 ease-in-out hover:cursor-pointer hover:bg-sky-200 hover:text-sky-800 active:bg-sky-300 active:scale-[0.96] disabled:bg-gray-100 disabled:text-gray-400 disabled:opacity-70 disabled:cursor-not-allowed disabled:scale-100`}
+                          aria-label={`Редактирай ${category.name}`}
+                          title={`Редактирай ${category.name}`}
+                          // disabled={
+                          //   isInactive ||
+                          //   createLoading ||
+                          //   updateLoading ||
+                          //   deleteLoading ||
+                          //   isLoadingCategories
+                          // }
+                        >
+                          <PencilSquareIcon className="h-5 w-5" />
+                        </button>
+
+                        {canDeleteCategory && (
+                          <button
+                            onClick={() => onDeleteCategory(category)}
+                            className={`${
+                              isInactive ? "opacity-50" : "" //pointer-events-none" : "" // Pointer-events-none for inactive
+                            } w-10 inline-flex justify-center items-center rounded bg-red-100 p-1.5 text-red-700 border border-red-200 hover:border-red-300 transition-all duration-150 ease-in-out hover:cursor-pointer hover:bg-red-200 hover:text-red-800 active:bg-red-300 active:scale-[0.96] disabled:bg-gray-100 disabled:text-gray-400 disabled:opacity-70 disabled:cursor-not-allowed disabled:scale-100`}
+                            aria-label={`Изтрий ${category.name}`}
+                            title={`Изтрий ${category.name}`}
+                            // disabled={
+                            //   isInactive ||
+                            //   createLoading ||
+                            //   updateLoading ||
+                            //   deleteLoading ||
+                            //   isLoadingCategories
+                            // }
+                          >
+                            <TrashIcon className="h-5 w-5" />
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );
@@ -364,4 +397,5 @@ const CategoryTable: React.FC<CategoryTableProps> = ({
     </>
   );
 };
+
 export default CategoryTable;

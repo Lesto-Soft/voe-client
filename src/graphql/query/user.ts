@@ -13,6 +13,11 @@ fragment UserFragment on User {
         name
       }
       avatar
+      cases {_id}
+      answers {_id}
+      comments {_id}
+      expert_categories {_id}
+      managed_categories {_id}
      
 }`;
 

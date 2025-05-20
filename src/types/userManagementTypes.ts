@@ -14,6 +14,11 @@ export interface User {
   role: Role | null;
   avatar?: string | null;
   financial_approver: boolean;
+  cases: string[];
+  answers: string[];
+  comments: string[];
+  expert_categories: string[];
+  managed_categories: string[];
 }
 
 // Interface for the filters state managed by the hook

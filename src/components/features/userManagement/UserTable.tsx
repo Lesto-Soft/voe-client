@@ -1,12 +1,13 @@
 // src/components/features/userManagement/UserTable.tsx
 import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router";
-import { PencilSquareIcon } from "@heroicons/react/24/outline";
+import { PencilSquareIcon, TrashIcon } from "@heroicons/react/24/solid";
 import UserAvatar from "../../cards/UserAvatar"; // Adjust path
 import UserTableSkeleton from "../../skeletons/UserTableSkeleton"; // Adjust path
 import Pagination from "../../tables/Pagination"; // Adjust path
 import { User } from "../../../types/userManagementTypes"; // Adjust path
 import { capitalizeFirstLetter } from "../../../utils/stringUtils"; // Adjust path
+import { isNullOrEmptyArray } from "../../../utils/arrayUtils";
 
 interface UserTableProps {
   users: User[];
@@ -192,8 +193,8 @@ const UserTable: React.FC<UserTableProps> = ({
                             className={`ml-1 inline-block px-1.5 py-0.5 text-xs rounded font-medium transition-colors duration-150 ease-in-out text-center align-middle ${
                               // Adjusted base classes for a smaller badge
                               isInactive
-                                ? "bg-green-50 text-green-500 hover:bg-green-100 border border-green-100 opacity-75" // Muted green for inactive state
-                                : "bg-green-100 text-green-700 hover:bg-green-200 border border-green-200" // Standard green for active state
+                                ? "bg-green-50 text-green-500 border border-green-100 opacity-75" // Muted green for inactive state
+                                : "bg-green-100 text-green-700  border border-green-200" // Standard green for active state
                             }`}
                             title="Financial Approver"
                           >
@@ -224,27 +225,80 @@ const UserTable: React.FC<UserTableProps> = ({
                       className={`${columnWidths.role} px-3 py-4 whitespace-nowrap`}
                     >
                       {capitalizeFirstLetter(user.role?.name) || "-"}
-                      {/* {user.managed_categories?.length > 0 ? (
-                        <span>M</span>
+                      {user.managed_categories?.length > 0 ? (
+                        <Link
+                          to={`/category-management?page=1&itemsPerPage=10&managers=${user._id}`}
+                          className={`ml-1 inline-block px-1.5 py-0.1 text-xs rounded font-medium transition-colors duration-150 ease-in-out text-center align-middle ${
+                            isInactive
+                              ? "bg-blue-50 text-blue-500 hover:bg-blue-100 border border-blue-100 opacity-75"
+                              : "bg-blue-100 text-blue-700 hover:bg-blue-200 border border-blue-200"
+                          }`}
+                          title="Manager"
+                        >
+                          M
+                        </Link>
                       ) : (
                         ""
-                      )} */}
+                      )}
                     </td>
                     <td
                       className={`${columnWidths.edit} px-3 py-4 whitespace-nowrap text-center`}
                     >
-                      <button
-                        onClick={() => onEditUser(user)}
-                        className={`${
-                          isInactive ? "opacity-50" : ""
-                        } w-30 inline-flex justify-center rounded bg-sky-100 p-1.5 text-sky-700 border border-sky-200 hover:border-sky-300 transition-all duration-150 ease-in-out hover:cursor-pointer hover:bg-sky-200 hover:text-sky-800 active:bg-sky-300 active:scale-[0.96] disabled:bg-gray-100 disabled:text-gray-400 disabled:opacity-70 disabled:cursor-not-allowed disabled:scale-100`}
-                        aria-label={`Редактирай ${user.username}`}
-                        disabled={
-                          createLoading || updateLoading || isLoadingUsers
-                        }
-                      >
-                        <PencilSquareIcon className="h-5 w-5" />
-                      </button>
+                      {(() => {
+                        // Define the condition for showing the Delete button
+                        const canDeleteUser =
+                          isNullOrEmptyArray(user.cases) &&
+                          isNullOrEmptyArray(user.comments) &&
+                          isNullOrEmptyArray(user.answers) &&
+                          isNullOrEmptyArray(user.expert_categories) &&
+                          isNullOrEmptyArray(user.managed_categories);
+
+                        return (
+                          <div
+                            className={`inline-flex items-center ${
+                              canDeleteUser ? "space-x-1" : "" // Add space only if delete button will be present
+                            }`}
+                          >
+                            <button
+                              onClick={() => onEditUser(user)}
+                              className={`${
+                                isInactive ? "opacity-50" : "" // Apply if relevant for user rows
+                              } ${
+                                canDeleteUser
+                                  ? "w-10" // Shrunken width when delete button is present
+                                  : "w-20" // Default "quite large" width
+                              } inline-flex justify-center items-center rounded bg-sky-100 p-1.5 text-sky-700 border border-sky-200 hover:border-sky-300 transition-all duration-150 ease-in-out hover:cursor-pointer hover:bg-sky-200 hover:text-sky-800 active:bg-sky-300 active:scale-[0.96] disabled:bg-gray-100 disabled:text-gray-400 disabled:opacity-70 disabled:cursor-not-allowed disabled:scale-100`}
+                              aria-label={`Редактирай ${user.username}`}
+                              title={`Редактирай ${user.username}`}
+                              disabled={
+                                createLoading || updateLoading || isLoadingUsers
+                              }
+                            >
+                              <PencilSquareIcon className="h-5 w-5" />
+                            </button>
+
+                            {canDeleteUser && (
+                              <button
+                                onClick={() => {
+                                  alert("TBD");
+                                }} //onDeleteUser(user)} // You'll need an onDeleteUser function
+                                className={`${
+                                  isInactive ? "opacity-50" : "" // Apply if relevant for user rows
+                                } w-10 inline-flex justify-center items-center rounded bg-red-100 p-1.5 text-red-700 border border-red-200 hover:border-red-300 transition-all duration-150 ease-in-out hover:cursor-pointer hover:bg-red-200 hover:text-red-800 active:bg-red-300 active:scale-[0.96] disabled:bg-gray-100 disabled:text-gray-400 disabled:opacity-70 disabled:cursor-not-allowed disabled:scale-100`}
+                                aria-label={`Изтрий ${user.username}`}
+                                title={`Изтрий ${user.username}`}
+                                disabled={
+                                  createLoading ||
+                                  updateLoading ||
+                                  isLoadingUsers // Consider a separate deleteLoading state
+                                }
+                              >
+                                <TrashIcon className="h-5 w-5" />
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </td>
                   </tr>
                 );

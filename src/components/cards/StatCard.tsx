@@ -54,10 +54,10 @@ const StatCard: React.FC<Props> = ({
   const baseClasses =
     "flex min-w-[180px] sm:min-w-[200px] items-center space-x-3 sm:space-x-4 rounded-lg border p-3 shadow-sm transition-all duration-150 ease-in-out";
   const interactiveClasses = onClick
-    ? "cursor-pointer hover:shadow-md active:scale-[0.98] "
+    ? "cursor-pointer hover:shadow-md" // active:scale-[0.98] "
     : "";
   const activeClasses = isActive
-    ? "bg-white border-sky-500 border-2 ring-2 ring-sky-200 shadow-lg scale-[1.02]"
+    ? "bg-white border-sky-500 border-2 ring-2 ring-sky-200 shadow-lg" // scale-[1.02]"
     : "bg-gray-50 border-gray-200 border-2 hover:bg-gray-100 hover:border-gray-300 active:bg-gray-200";
 
   const titleColorFinal = isActive

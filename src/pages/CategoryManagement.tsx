@@ -7,25 +7,27 @@ import {
   useCountCategories,
   useCreateCategory,
   useUpdateCategory,
+  useDeleteCategory, // Import the new hook
 } from "../graphql/hooks/category"; // Adjust path as needed
 import { useCountFilteredCases, useCountCases } from "../graphql/hooks/case"; // Adjust path as needed
 import {
   CreateCategoryInput,
   UpdateCategoryInput,
 } from "../graphql/mutation/category"; // Adjust path as needed
-import { ICategory, ICaseStatus as CaseStatus } from "../db/interfaces"; // Adjust path as needed, ensure ICaseItem is defined
+import { ICategory, ICaseStatus as CaseStatus } from "../db/interfaces"; // Adjust path as needed
 import CategoryTable from "../components/features/categoryManagement/CategoryTable"; // Adjust path as needed
 import {
   useCategoryManagement,
   CategoryQueryApiParams,
 } from "../hooks/useCategoryManagement"; // Adjust path as needed
-import LoadingModal from "../components/modals/LoadingModal"; // Adjust path as needed
+// import LoadingModal from "../components/modals/LoadingModal"; // Adjust path as needed
 import CategoryFilters from "../components/features/categoryManagement/CategoryFilters"; // Adjust path as needed
 import CreateCategoryModal from "../components/modals/CreateCategoryModal"; // Adjust path as needed
 import CreateCategoryForm, {
   CategoryFormData,
 } from "../components/forms/CreateCategoryForm"; // Adjust path as needed
 import CategoryStats from "../components/features/categoryManagement/CategoryStats"; // Adjust path as needed
+import ConfirmActionDialog from "../components/modals/ConfirmActionDialog"; // Import the new dialog
 
 const CategoryManagement: React.FC = () => {
   const {
@@ -55,7 +57,12 @@ const CategoryManagement: React.FC = () => {
   const [isInitialAppLoadComplete, setIsInitialAppLoadComplete] =
     useState(false);
 
-  // Query input that EXCLUDES pagination parameters - used for fetching ALL categories matching backend filters
+  // State for delete confirmation
+  const [showDeleteConfirmDialog, setShowDeleteConfirmDialog] = useState(false);
+  const [categoryToDelete, setCategoryToDelete] = useState<ICategory | null>(
+    null
+  );
+
   const categoryFiltersWithoutPagination = useMemo((): Omit<
     CategoryQueryApiParams,
     "itemsPerPage" | "currentPage"
@@ -65,11 +72,9 @@ const CategoryManagement: React.FC = () => {
       currentPage: _currentPage,
       ...filters
     } = currentQueryInput;
-    return filters; // These are the backend filters (name, expert, etc.)
+    return filters;
   }, [currentQueryInput]);
 
-  // 1. Fetching categories for the TABLE (paginated, based on backend filters)
-  // This data is primarily used when filterCaseStatus is NOT active.
   const {
     categories: rawCategoriesDataForTable,
     loading: categoriesListLoading,
@@ -77,8 +82,6 @@ const CategoryManagement: React.FC = () => {
     refetch: refetchCategoriesForTable,
   } = useGetAllLeanCategories(currentQueryInput);
 
-  // 2. Count of categories matching backend filters for TABLE pagination total (BEFORE client-side caseStatus filter)
-  // This count is used when filterCaseStatus is NOT active.
   const {
     count: backendFilteredCategoryCountForTable,
     loading: categoryCountLoadingForTable,
@@ -86,28 +89,20 @@ const CategoryManagement: React.FC = () => {
     refetch: refetchCategoryCountForTable,
   } = useCountCategories(currentQueryInput);
 
-  // 3. Fetch ALL categories that match the current backend filters (NOT paginated)
-  // This is the master list for client-side filtering by caseStatus and for stats.
   const {
-    categories: allCategoriesMatchingBackendFilters, // Contains all categories matching backend filters (name, expert, etc.)
-    loading: allFilteredCategoriesLoading, // Loading state for this complete list
+    categories: allCategoriesMatchingBackendFilters,
+    loading: allFilteredCategoriesLoading,
     error: allFilteredCategoriesError,
-    refetch: refetchAllFilteredCategoriesForStats, // Also used for stats
+    refetch: refetchAllFilteredCategoriesForStats,
   } = useGetAllLeanCategories(
-    categoryFiltersWithoutPagination as CategoryQueryApiParams // Uses filters without pagination
+    categoryFiltersWithoutPagination as CategoryQueryApiParams
   );
 
-  // Derived list: ALL categories after applying client-side caseStatus filter
   const clientFilteredAllCategories = useMemo(() => {
-    // If case status filter is not active, this list isn't used for table pagination (backend pagination takes over).
-    // However, it's cleaner to define it based on whether the filter is active.
-    // If the base list is loading, return empty to avoid errors during filtering.
     if (allFilteredCategoriesLoading && filterCaseStatus) {
       return [];
     }
     if (!filterCaseStatus) {
-      // If no client filter, this list conceptually contains all items matching backend filters.
-      // For pagination purposes, this isn't directly used if filterCaseStatus is off.
       return allCategoriesMatchingBackendFilters || [];
     }
     return (allCategoriesMatchingBackendFilters || []).filter((category) =>
@@ -119,16 +114,12 @@ const CategoryManagement: React.FC = () => {
     allFilteredCategoriesLoading,
   ]);
 
-  // Calculate the effective total category count for table pagination
   const effectiveTotalCategoryCountForTable = useMemo(() => {
     if (!filterCaseStatus) {
-      // No client-side filter, use the count directly from the backend.
       return backendFilteredCategoryCountForTable ?? 0;
     }
-    // Client-side filter is active. The total count is the length of the `clientFilteredAllCategories`.
-    // Must check if the base list for this filtering is still loading.
     if (allFilteredCategoriesLoading) {
-      return 0; // Or another indicator that the count is not yet accurate
+      return 0;
     }
     return clientFilteredAllCategories.length;
   }, [
@@ -138,15 +129,10 @@ const CategoryManagement: React.FC = () => {
     allFilteredCategoriesLoading,
   ]);
 
-  // Determine categories to display on the current page
   const displayCategoriesForTable = useMemo(() => {
     if (!filterCaseStatus) {
-      // No client-side case status filter, use backend-paginated data as is.
       return rawCategoriesDataForTable || [];
     }
-
-    // Client-side case status filter is active. Paginate the `clientFilteredAllCategories` list.
-    // Ensure the base list for this client-side pagination is not loading.
     if (allFilteredCategoriesLoading) {
       return [];
     }
@@ -154,15 +140,14 @@ const CategoryManagement: React.FC = () => {
     const endIndex = startIndex + itemsPerPage;
     return clientFilteredAllCategories.slice(startIndex, endIndex);
   }, [
-    rawCategoriesDataForTable, // Used when no filterCaseStatus
+    rawCategoriesDataForTable,
     filterCaseStatus,
-    clientFilteredAllCategories, // Used when filterCaseStatus is active
+    clientFilteredAllCategories,
     currentPage,
     itemsPerPage,
-    allFilteredCategoriesLoading, // Important dependency for client-side pagination logic
+    allFilteredCategoriesLoading,
   ]);
 
-  // For CategoryStats - uses the same unpaginated list matching backend filters
   const allFilteredCategoriesForStatsData = allCategoriesMatchingBackendFilters;
 
   const allMatchingCategoryIdsForStats = useMemo(() => {
@@ -174,7 +159,6 @@ const CategoryManagement: React.FC = () => {
   const activeCategoryFiltersExistForStats = useMemo(
     () =>
       Object.values(categoryFiltersWithoutPagination).some(
-        // categoryFiltersWithoutPagination has name, expert, manager, archived from currentQueryInput
         (val) =>
           val !== undefined &&
           (Array.isArray(val) ? val.length > 0 : String(val).trim().length > 0)
@@ -211,8 +195,6 @@ const CategoryManagement: React.FC = () => {
       baseVars.categories = [];
     }
 
-    // These filters (name, experts, etc.) defined `allMatchingCategoryIdsForStats`
-    // If `useCountFilteredCases` can use these to refine its own query on cases related to these category IDs:
     if (categoryFiltersWithoutPagination.name) {
       baseVars.name = categoryFiltersWithoutPagination.name;
     }
@@ -332,6 +314,11 @@ const CategoryManagement: React.FC = () => {
     loading: updateCategoryLoading,
     error: updateCategoryErrorObj,
   } = useUpdateCategory();
+  const {
+    deleteCategory,
+    loading: deleteCategoryLoading,
+    error: deleteCategoryErrorObj,
+  } = useDeleteCategory();
 
   const isLoadingOverallCaseCounts =
     totalCaseCountLoading ||
@@ -404,10 +391,8 @@ const CategoryManagement: React.FC = () => {
 
   const isTableDataRefreshing = useMemo(() => {
     if (filterCaseStatus) {
-      // When client-side filtering by case status is active, table refreshes if the full list for client pagination is loading
       return allFilteredCategoriesLoading;
     }
-    // Otherwise, depends on the backend paginated fetch for the current page
     return categoriesListLoading || categoryCountLoadingForTable;
   }, [
     filterCaseStatus,
@@ -420,10 +405,7 @@ const CategoryManagement: React.FC = () => {
     const newStatus =
       filterCaseStatus === status ? null : (status as CaseStatus);
     setFilterCaseStatus(newStatus);
-    // Reset to page 1 whenever the case status filter changes,
-    // as the total number of items and pages will change.
     if (handlePageChange) {
-      // Ensure handlePageChange is available from the hook
       handlePageChange(1);
     }
   };
@@ -452,7 +434,7 @@ const CategoryManagement: React.FC = () => {
   ) => {
     const inputForMutation = {
       name: formData.name,
-      problem: formData.problem || "", // Ensure problem/suggestion are at least empty strings if not optional in backend
+      problem: formData.problem || "",
       suggestion: formData.suggestion || "",
       experts: formData.expertIds,
       managers: formData.managerIds,
@@ -478,7 +460,35 @@ const CategoryManagement: React.FC = () => {
         `Error during category ${editingCategoryId ? "update" : "create"}:`,
         err
       );
+      // It's often better to let the form handle displaying this error if it has a try/catch
+      // alert(`Error: ${err.message}`);
       throw err;
+    }
+  };
+
+  const triggerDeleteCategory = (category: ICategory) => {
+    setCategoryToDelete(category);
+    setShowDeleteConfirmDialog(true);
+  };
+
+  const handleConfirmDeleteCategory = async () => {
+    if (!categoryToDelete) return;
+    try {
+      await deleteCategory(categoryToDelete._id);
+      // Consider using a toast notification library for better UX
+      // alert("Category deleted successfully!");
+      setShowDeleteConfirmDialog(false);
+      setCategoryToDelete(null);
+      await Promise.all([
+        refetchCategoriesForTable(),
+        refetchCategoryCountForTable(),
+        refetchAllFilteredCategoriesForStats(),
+      ]);
+    } catch (err: any) {
+      console.error("Error deleting category:", err);
+      // alert(`Failed to delete category: ${err.message}`);
+      setShowDeleteConfirmDialog(false); // Close dialog even on error, or show error in dialog
+      setCategoryToDelete(null);
     }
   };
 
@@ -487,10 +497,12 @@ const CategoryManagement: React.FC = () => {
     isCurrentlyLoadingPageData &&
     !pageDisplayError
   ) {
-    return <LoadingModal message={"Зареждане на страницата..."} />;
+    // Depending on your UI, a full page LoadingModal might be too much if skeletons are in place
+    // return <LoadingModal message={"Зареждане на страницата..."} />;
   }
 
-  if (pageDisplayError) {
+  if (pageDisplayError && !isCurrentlyLoadingPageData) {
+    // Show error only if not actively loading other parts
     const errorMessages = [
       categoriesListError?.message,
       categoryCountErrorForTable?.message,
@@ -511,8 +523,10 @@ const CategoryManagement: React.FC = () => {
     );
   }
 
-  const mutationInProgress = createCategoryLoading || updateCategoryLoading;
-  const mutationError = createCategoryErrorObj || updateCategoryErrorObj;
+  const mutationInProgress =
+    createCategoryLoading || updateCategoryLoading || deleteCategoryLoading;
+  const mutationError =
+    createCategoryErrorObj || updateCategoryErrorObj || deleteCategoryErrorObj;
 
   return (
     <div className="min-h-screen bg-gray-100 p-6 font-sans">
@@ -585,9 +599,11 @@ const CategoryManagement: React.FC = () => {
         onPageChange={handlePageChange}
         onItemsPerPageChange={handleItemsPerPageChange}
         onEditCategory={openEditCategoryModal}
+        onDeleteCategory={triggerDeleteCategory} // Pass the new handler
         currentQueryInput={currentQueryInput}
         createLoading={createCategoryLoading}
         updateLoading={updateCategoryLoading}
+        deleteLoading={deleteCategoryLoading} // Pass delete loading state
       />
 
       <CreateCategoryModal
@@ -598,15 +614,15 @@ const CategoryManagement: React.FC = () => {
         }
         hasUnsavedChanges={formHasUnsavedChanges}
       >
-        {mutationInProgress && (
+        {(createCategoryLoading || updateCategoryLoading) && (
           <div className="p-4 text-center">Изпращане...</div>
         )}
-        {mutationError && !mutationInProgress && (
+        {mutationError && !(createCategoryLoading || updateCategoryLoading) && (
           <div className="p-4 mb-4 text-center text-red-600 bg-red-100 rounded-md">
             Грешка при запис: {mutationError.message || "Неизвестна грешка"}
           </div>
         )}
-        {!mutationInProgress && (
+        {!(createCategoryLoading || updateCategoryLoading) && (
           <CreateCategoryForm
             key={editingCategory ? editingCategory._id : "create-new-category"}
             onSubmit={handleCategoryFormSubmit}
@@ -615,11 +631,25 @@ const CategoryManagement: React.FC = () => {
             submitButtonText={
               editingCategory ? "Запази промените" : "Създай категория"
             }
-            isSubmitting={mutationInProgress}
+            isSubmitting={createCategoryLoading || updateCategoryLoading} // Use the combined one without deleteLoading for form
             onDirtyChange={setFormHasUnsavedChanges}
           />
         )}
       </CreateCategoryModal>
+
+      <ConfirmActionDialog
+        isOpen={showDeleteConfirmDialog}
+        onOpenChange={setShowDeleteConfirmDialog}
+        onConfirm={handleConfirmDeleteCategory}
+        title="Потвърди изтриването"
+        description={
+          categoryToDelete
+            ? `Сигурни ли сте, че искате да изтриете категорията "${categoryToDelete.name}"? Тази операция е необратима.`
+            : "Сигурни ли сте, че искате да изтриете тази категория? Тази операция е необратима."
+        }
+        confirmButtonText="Изтрий"
+        isDestructiveAction={true}
+      />
     </div>
   );
 };

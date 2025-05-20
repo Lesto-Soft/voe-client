@@ -11,6 +11,7 @@ import {
   CreateCategoryInput,
   UPDATE_CATEGORY,
   UpdateCategoryInput,
+  DELETE_CATEGORY,
 } from "../mutation/category";
 import Category from "../../pages/Category";
 
@@ -136,6 +137,27 @@ export const useUpdateCategory = () => {
   return {
     updateCategory,
     category: data?.updateCategory,
+    loading,
+    error,
+  };
+};
+
+export const useDeleteCategory = () => {
+  const [deleteCategoryMutation, { data, loading, error }] =
+    useMutation(DELETE_CATEGORY);
+  const deleteCategory = async (id: string) => {
+    try {
+      const response = await deleteCategoryMutation({ variables: { id } });
+      return response.data?.deleteCategory;
+    } catch (err) {
+      console.error("Failed to delete category:", err);
+      throw err;
+    }
+  };
+
+  return {
+    deleteCategory,
+    category: data?.deleteCategory,
     loading,
     error,
   };

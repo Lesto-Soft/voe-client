@@ -11,6 +11,8 @@ interface UserFiltersProps {
   setFilterPosition: (value: string) => void;
   filterEmail: string;
   setFilterEmail: (value: string) => void;
+  filterFinancial: boolean;
+  setFilterFinancial: (value: boolean) => void;
 }
 
 const UserFilters: React.FC<UserFiltersProps> = (props) => {

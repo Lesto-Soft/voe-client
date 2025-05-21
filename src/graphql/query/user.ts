@@ -7,11 +7,17 @@ fragment UserFragment on User {
       name
       email
       position
+      financial_approver
       role {
         _id
         name
       }
-        avatar
+      avatar
+      cases {_id}
+      answers {_id}
+      comments {_id}
+      expert_categories {_id}
+      managed_categories {_id}
      
 }`;
 

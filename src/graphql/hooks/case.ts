@@ -1,7 +1,8 @@
-import { useMutation, useQuery } from "@apollo/client";
+import { useMutation, useQuery, QueryHookOptions } from "@apollo/client";
 import { CREATE_CASE, RATE_CASE } from "../mutation/case";
 import {
   COUNT_CASES,
+  COUNT_FILTERED_CASES,
   GET_CASE_BY_CASE_NUMBER,
   GET_CASES,
   GET_CASES_BY_USER_CATEGORIES,
@@ -23,6 +24,17 @@ export type CreateCaseInput = {
   categories: string[];
   creator: string;
 };
+
+// Define a more specific type for the data returned by the query
+interface CountFilteredCasesData {
+  countFilteredCases: number;
+}
+
+// Define a more specific type for the variables expected by the query
+// Replace 'any' with the actual structure of your 'getAllInput' if defined
+interface CountFilteredCasesVariables {
+  input: any;
+}
 
 // Reusable function to build variables for case queries
 export function buildCaseQueryVariables(input: any) {
@@ -221,5 +233,39 @@ export const useRateCase = () => {
     data,
     loading,
     error,
+  };
+};
+
+export const useCountFilteredCases = (
+  // The first argument is your custom object used to build the actual GraphQL variables
+  inputForVariables: any,
+  // The second argument (optional) is for Apollo's standard QueryHookOptions
+  options?: QueryHookOptions<
+    CountFilteredCasesData,
+    CountFilteredCasesVariables
+  >
+) => {
+  // Build the GraphQL variables using your utility function
+  const gqlVariables = buildCaseQueryVariables(inputForVariables);
+
+  const { loading, error, data, refetch } = useQuery<
+    CountFilteredCasesData,
+    CountFilteredCasesVariables
+  >(
+    COUNT_FILTERED_CASES, // Your GraphQL query document
+    {
+      variables: gqlVariables, // Pass the built variables
+      ...options, // Spread any additional Apollo options (like skip, onCompleted, etc.)
+    }
+  );
+
+  // Default count to 0 if data or countFilteredCases is not available
+  const count = data?.countFilteredCases ?? 0;
+
+  return {
+    count,
+    loading,
+    error,
+    refetch,
   };
 };

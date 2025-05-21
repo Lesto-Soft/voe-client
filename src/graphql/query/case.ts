@@ -185,3 +185,9 @@ export const COUNT_CASES = gql`
     countCases
   }
 `;
+
+export const COUNT_FILTERED_CASES = gql`
+  query CountFilteredCases($input: getAllInput) {
+    countFilteredCases(input: $input)
+  }
+`;

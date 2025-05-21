@@ -1,12 +1,13 @@
 // src/components/features/userManagement/UserTable.tsx
 import React, { useState, useEffect, useRef } from "react";
-import { Link } from "react-router";
-import { PencilSquareIcon } from "@heroicons/react/24/outline";
+import { Link } from "react-router"; // Corrected import
+import { PencilSquareIcon, TrashIcon } from "@heroicons/react/24/solid"; // Or your preferred variant
 import UserAvatar from "../../cards/UserAvatar"; // Adjust path
 import UserTableSkeleton from "../../skeletons/UserTableSkeleton"; // Adjust path
 import Pagination from "../../tables/Pagination"; // Adjust path
-import { User } from "../../../page/types/userManagementTypes"; // Adjust path
+import { User } from "../../../types/userManagementTypes"; // Adjust path
 import { capitalizeFirstLetter } from "../../../utils/stringUtils"; // Adjust path
+import { isNullOrEmptyArray } from "../../../utils/arrayUtils"; // Ensure this path is correct
 
 interface UserTableProps {
   users: User[];
@@ -18,11 +19,13 @@ interface UserTableProps {
   onPageChange: (page: number) => void;
   onItemsPerPageChange: (size: number) => void;
   onEditUser: (user: User) => void;
+  onDeleteUser: (user: User) => void; // New prop
   serverBaseUrl: string;
   avatarVersion: number;
-  currentQueryInput: any;
+  currentQueryInput: any; // Consider more specific type
   createLoading: boolean;
   updateLoading: boolean;
+  deleteUserLoading?: boolean; // New prop
 }
 
 const MIN_SKELETON_TIME = 250;
@@ -37,11 +40,13 @@ const UserTable: React.FC<UserTableProps> = ({
   onPageChange,
   onItemsPerPageChange,
   onEditUser,
+  onDeleteUser, // Destructure new prop
   serverBaseUrl,
   avatarVersion,
   currentQueryInput,
   createLoading,
   updateLoading,
+  deleteUserLoading, // Destructure new prop
 }) => {
   const [showSkeleton, setShowSkeleton] = useState(true);
   const skeletonTimerRef = useRef<number | null>(null);
@@ -65,7 +70,7 @@ const UserTable: React.FC<UserTableProps> = ({
   }, [isLoadingUsers]);
 
   const columnWidths = {
-    avatar: "w-16",
+    avatar: "w-16", // approx 64px
     name: "w-1/6",
     username: "w-1/5",
     position: "w-1/5",
@@ -74,11 +79,12 @@ const UserTable: React.FC<UserTableProps> = ({
     edit: "w-1/10",
   };
 
-  if (showSkeleton) return <UserTableSkeleton rows={itemsPerPage} />;
-  if (usersError)
+  if (showSkeleton && isLoadingUsers)
+    return <UserTableSkeleton rows={itemsPerPage} />;
+  if (!isLoadingUsers && usersError)
     return (
       <div className="p-6 text-red-600 bg-white rounded-lg shadow-md text-center">
-        Грешка при зареждане: {usersError.message}
+        Грешка при зареждане: {usersError.message || "Неизвестна грешка."}
       </div>
     );
 
@@ -135,7 +141,7 @@ const UserTable: React.FC<UserTableProps> = ({
                   className={`${columnWidths.edit} px-3 py-4 text-center text-sm font-semibold text-white uppercase tracking-wide relative`}
                 >
                   <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-px bg-gray-400"></span>
-                  Редактирай
+                  Действия
                 </th>
               </tr>
             </thead>
@@ -145,85 +151,153 @@ const UserTable: React.FC<UserTableProps> = ({
                   user.avatar && user._id
                     ? `${serverBaseUrl}/static/avatars/${user._id}/${user.avatar}?v=${avatarVersion}`
                     : null;
-
-                // Determine if the user is inactive
                 const isInactive = user.role?.name === "напуснал";
-
-                // Define base row classes
-                let rowClasses = "hover:bg-gray-100";
-                // Define inactive specific classes
-                const inactiveClasses = "bg-gray-50 text-gray-300 cursor-text"; // Example inactive style
+                let rowClasses =
+                  "hover:bg-gray-100 transition-colors duration-150";
+                const inactiveClasses =
+                  "bg-gray-50 text-gray-400 hover:bg-gray-100";
 
                 if (isInactive) {
                   rowClasses = inactiveClasses;
                 }
+
+                const canDeleteUser =
+                  isNullOrEmptyArray(user.cases) &&
+                  isNullOrEmptyArray(user.comments) &&
+                  isNullOrEmptyArray(user.answers) &&
+                  isNullOrEmptyArray(user.expert_categories) &&
+                  isNullOrEmptyArray(user.managed_categories);
 
                 return (
                   <tr key={user._id} className={rowClasses}>
                     <td
                       className={`${
                         columnWidths.avatar
-                      } px-3 py-4 whitespace-nowrap flex justify-center items-center${
+                      } px-3 py-4 whitespace-nowrap flex justify-center items-center ${
                         isInactive ? "opacity-50" : ""
                       }`}
                     >
-                      {" "}
                       <UserAvatar
                         name={user.name || user.username || "U"}
                         imageUrl={imageUrl}
                         size={42}
-                      />{" "}
+                      />
                     </td>
                     <td className={`${columnWidths.name} px-3 py-4 text-sm`}>
-                      {" "}
-                      <Link
-                        to={`/user-data/${user._id}`}
-                        className={`max-w-75 inline-block px-2 py-0.5 rounded-md font-medium transition-colors duration-150 ease-in-out text-left hover:cursor-pointer ${
-                          isInactive
-                            ? "bg-purple-50 text-purple-400 hover:bg-purple-100 border border-purple-100 opacity-75"
-                            : "bg-purple-100 text-purple-800 hover:bg-purple-200 border border-purple-200"
-                        } truncate`}
-                        title={user.name}
-                      >
-                        {user.name}
-                      </Link>{" "}
+                      <div className="flex items-center justify-start flex-row">
+                        {" "}
+                        {/* Changed to justify-start */}
+                        <Link
+                          to={`/user-data/${user._id}`}
+                          className={`max-w-75 inline-block px-2 py-0.5 rounded-md font-medium transition-colors duration-150 ease-in-out text-left hover:cursor-pointer ${
+                            // Adjusted max-w
+                            isInactive
+                              ? "bg-purple-50 text-purple-400 hover:bg-purple-100 border border-purple-100 opacity-75" // pointer-events-none"
+                              : "bg-purple-100 text-purple-800 hover:bg-purple-200 border border-purple-200"
+                          } truncate`}
+                          title={user.name}
+                          //onClick={(e) => isInactive && e.preventDefault()}
+                        >
+                          {user.name}
+                        </Link>
+                        {user.financial_approver ? (
+                          <span
+                            className={`ml-1 inline-block px-1.5 py-0.5 text-xs rounded font-medium transition-colors duration-150 ease-in-out text-center align-middle ${
+                              isInactive
+                                ? "bg-green-50 text-green-500 border border-green-100 opacity-75"
+                                : "bg-green-100 text-green-700 border border-green-200"
+                            }`}
+                            title="Financial Approver"
+                          >
+                            $
+                          </span>
+                        ) : null}
+                      </div>
                     </td>
-
                     <td
-                      className={`${columnWidths.username} px-3 py-4 whitespace-nowrap`}
+                      className={`${columnWidths.username} px-3 py-4 whitespace-nowrap text-sm`}
                     >
                       {user.username || "-"}
                     </td>
                     <td
-                      className={`${columnWidths.position} hidden md:table-cell px-3 py-4 whitespace-nowrap`}
+                      className={`${columnWidths.position} hidden md:table-cell px-3 py-4 whitespace-nowrap text-sm`}
                     >
                       {user.position || "-"}
                     </td>
                     <td
-                      className={`${columnWidths.email} hidden md:table-cell px-3 py-4 whitespace-nowrap`}
+                      className={`${columnWidths.email} hidden md:table-cell px-3 py-4 whitespace-nowrap text-sm`}
                     >
                       {user.email || "-"}
                     </td>
                     <td
-                      className={`${columnWidths.role} px-3 py-4 whitespace-nowrap`}
+                      className={`${columnWidths.role} px-3 py-4 whitespace-nowrap text-sm`}
                     >
-                      {capitalizeFirstLetter(user.role?.name) || "-"}
+                      <span className={isInactive ? "opacity-70" : ""}>
+                        {capitalizeFirstLetter(user.role?.name) || "-"}
+                      </span>
+                      {user.managed_categories?.length > 0 ? (
+                        <Link
+                          to={`/category-management?page=1&itemsPerPage=10&managers=${user._id}`}
+                          className={`ml-1 inline-block px-1.5 py-0.5 text-xs rounded font-medium transition-colors duration-150 ease-in-out text-center align-middle ${
+                            isInactive
+                              ? "bg-blue-50 text-blue-500 hover:bg-blue-100 border border-blue-100 opacity-75" // pointer-events-none"
+                              : "bg-blue-100 text-blue-700 hover:bg-blue-200 border border-blue-200"
+                          }`}
+                          title="Менажира категории"
+                          // onClick={(e) => isInactive && e.preventDefault()}
+                        >
+                          M
+                        </Link>
+                      ) : null}
                     </td>
                     <td
                       className={`${columnWidths.edit} px-3 py-4 whitespace-nowrap text-center`}
                     >
-                      <button
-                        onClick={() => onEditUser(user)}
-                        className={`${
-                          isInactive ? "opacity-50" : ""
-                        } w-30 inline-flex justify-center rounded bg-sky-100 p-1.5 text-sky-700 border border-sky-200 hover:border-sky-300 transition-all duration-150 ease-in-out hover:cursor-pointer hover:bg-sky-200 hover:text-sky-800 active:bg-sky-300 active:scale-[0.96] disabled:bg-gray-100 disabled:text-gray-400 disabled:opacity-70 disabled:cursor-not-allowed disabled:scale-100`}
-                        aria-label={`Редактирай ${user.username}`}
-                        disabled={
-                          createLoading || updateLoading || isLoadingUsers
-                        }
+                      <div
+                        className={`inline-flex items-center ${
+                          canDeleteUser ? "space-x-1" : ""
+                        }`}
                       >
-                        <PencilSquareIcon className="h-5 w-5" />
-                      </button>
+                        <button
+                          onClick={() => onEditUser(user)}
+                          className={`${
+                            isInactive ? "opacity-50" : "" // pointer-events-none" : ""
+                          } ${
+                            canDeleteUser ? "w-10" : "w-20"
+                          } inline-flex justify-center items-center rounded bg-sky-100 p-1.5 text-sky-700 border border-sky-200 hover:border-sky-300 transition-all duration-150 ease-in-out hover:cursor-pointer hover:bg-sky-200 hover:text-sky-800 active:bg-sky-300 active:scale-[0.96] disabled:bg-gray-100 disabled:text-gray-400 disabled:opacity-70 disabled:cursor-not-allowed disabled:scale-100`}
+                          aria-label={`Редактирай ${user.username}`}
+                          title={`Редактирай ${user.username}`}
+                          // disabled={
+                          //   isInactive ||
+                          //   createLoading ||
+                          //   updateLoading ||
+                          //   deleteUserLoading ||
+                          //   isLoadingUsers
+                          // }
+                        >
+                          <PencilSquareIcon className="h-5 w-5" />
+                        </button>
+
+                        {canDeleteUser && (
+                          <button
+                            onClick={() => onDeleteUser(user)}
+                            className={`${
+                              isInactive ? "opacity-50" : "" // pointer-events-none" : ""
+                            } w-10 inline-flex justify-center items-center rounded bg-red-100 p-1.5 text-red-700 border border-red-200 hover:border-red-300 transition-all duration-150 ease-in-out hover:cursor-pointer hover:bg-red-200 hover:text-red-800 active:bg-red-300 active:scale-[0.96] disabled:bg-gray-100 disabled:text-gray-400 disabled:opacity-70 disabled:cursor-not-allowed disabled:scale-100`}
+                            aria-label={`Изтрий ${user.username}`}
+                            title={`Изтрий ${user.username}`}
+                            // disabled={
+                            //   isInactive ||
+                            //   createLoading ||
+                            //   updateLoading ||
+                            //   deleteUserLoading ||
+                            //   isLoadingUsers
+                            // }
+                          >
+                            <TrashIcon className="h-5 w-5" />
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );
@@ -264,4 +338,5 @@ const UserTable: React.FC<UserTableProps> = ({
     </>
   );
 };
+
 export default UserTable;

@@ -1,778 +1,166 @@
-import React, {
-  useState,
-  useMemo,
-  useEffect,
-  useRef,
-  ChangeEvent,
-  FormEvent,
-} from "react";
-import { Link, useLocation, useNavigate } from "react-router";
-import { ApolloError, useLazyQuery } from "@apollo/client"; // Added gql and useLazyQuery
+// src/pages/CaseSubmissionPage.tsx
+import React, { useState, useMemo } from "react";
+import { useLocation, Link } from "react-router"; // Corrected Link import
 import { useTranslation } from "react-i18next";
 
-// Assuming hooks/types are in these locations - adjust paths as necessary
-import { useGetActiveCategories } from "../graphql/hooks/category";
-import { useCreateCase, CreateCaseInput } from "../graphql/hooks/case"; // Your mutation hook
-import HelpModal from "../components/modals/HelpModal";
-import LoadingModal from "../components/modals/LoadingModal";
-import { GET_USER_BY_USERNAME } from "../graphql/query/user";
-import { ICategory } from "../db/interfaces";
-import FileAttachmentBtn from "../components/global/FileAttachmentBtn";
-import { readFileAsBase64 } from "../utils/attachment-handling";
+import { useGetActiveCategories } from "../graphql/hooks/category"; // Adjust path
+import { useCreateCase } from "../graphql/hooks/case"; // Adjust path
+import { useCaseFormState } from "../components/features/caseSubmission/hooks/useCaseFormState"; // Adjust path
+import { FormCategory } from "../components/features/caseSubmission/types"; // Adjust path
 
-const MAX_SELECTED_CATEGORIES = 3;
-// --- Interfaces & Types ---
+import CaseSubmissionHeader from "../components/features/caseSubmission/components/CaseSubmissionHeader"; // Adjust path
+import CaseSubmissionLeftPanel from "../components/features/caseSubmission/components/CaseSubmissionLeftPanel"; // Adjust path
+import CaseSubmissionRightPanel from "../components/features/caseSubmission/components/CaseSubmissionRightPanel"; // Adjust path
+import HelpModal from "../components/modals/HelpModal"; // Adjust path
+// import LoadingModal from "../components/modals/LoadingModal"; // Optional
 
-// Shape of the user query data
-interface UserQueryResult {
-  getLeanUserByUsername: {
-    _id: string;
-    name: string;
-  } | null; // User might not be found
-}
+const CaseSubmission: React.FC = () => {
+  const { t } = useTranslation("caseSubmission"); // Add namespaces if needed
+  const { search } = useLocation();
 
-// Variables type for the user query
-interface UserQueryVars {
-  username: string;
-}
-
-// Shape of attachment input for mutation
-type AttachmentInput = {
-  filename: string;
-  file: string; // base64 string
-};
-
-// Shape of categories returned by useGetActiveCategories hook
-interface Category {
-  _id: string;
-  name: string;
-  problem?: string;
-  suggestion?: string;
-}
-
-// Return type definition for useGetActiveCategories hook
-interface UseGetActiveCategoriesReturn {
-  loading: boolean;
-  error?: ApolloError | Error | any;
-  categories?: ICategory[];
-  refetch: () => Promise<any>;
-}
-
-// --- Helper Functions (Ensure these are defined or imported) ---
-
-// Finds category IDs based on selected names
-const findCategoryIds = (
-  selectedNames: string[],
-  allCategories: Category[]
-): string[] => {
-  if (!allCategories) return [];
-  return allCategories
-    .filter((cat) => selectedNames.includes(cat.name))
-    .map((cat) => cat._id)
-    .filter((id): id is string => !!id); // Type guard to ensure only strings
-};
-
-// --- Component Implementation ---
-
-const CaseSubmittion: React.FC = () => {
-  // ===========================================================
-  // 1. HOOKS (Apollo Queries/Mutations, Router, State)
-  // ===========================================================
-
-  // Translation hook
-  const { t } = useTranslation("caseSubmission");
-  // --- Hooks for data fetching and navigation ---
   const {
-    categories: categoriesData,
+    categories: categoriesDataFromHook, // Renamed to avoid conflict
     loading: categoriesLoading,
     error: categoriesError,
-  }: UseGetActiveCategoriesReturn = useGetActiveCategories();
+  } = useGetActiveCategories();
 
   const {
     createCase: executeCreateCase,
-    loading: createCaseLoading,
-    error: createCaseError,
-  } = useCreateCase(); // Hook for submitting the case
-
-  // Using useLazyQuery directly for user lookup
-  const [
-    getUserByUsername, // Function to call the query
-    { loading: userLoading, error: userError, data: userData }, // Query status/result
-  ] = useLazyQuery<UserQueryResult, UserQueryVars>(GET_USER_BY_USERNAME);
-
-  const { search } = useLocation();
-  const navigate = useNavigate();
-
-  // --- Component State ---
-  const [content, setContent] = useState<string>("");
-  const [priority, setPriority] = useState<CreateCaseInput["priority"]>("LOW");
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [attachments, setAttachments] = useState<File[]>([]); // Holds selected File objects
-
-  // State for User Input/Lookup
-  const [usernameInput, setUsernameInput] = useState<string>(""); // Input for username lookup
-  const [fetchedName, setFetchedName] = useState<string>(""); // Displayed, disabled name
-  const [fetchedCreatorId, setFetchedCreatorId] = useState<string | null>(null); // Store the ID for submission
-  const [notFoundUsername, setNotFoundUsername] = useState<string | null>(null);
-  const [searchedUsername, setSearchedUsername] = useState<string | null>(null);
-
-  // State for submission status and errors
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [submissionError, setSubmissionError] = useState<string | null>(null);
-
-  // State for help modal
-  const [isHelpModalOpen, setIsHelpModalOpen] = useState<boolean>(false);
-
-  // Ref for debounce timer
-  const debounceTimerRef = useRef<number | null>(null);
-  const DEBOUNCE_DELAY = 500; // 0.5 seconds
-
-  // ===========================================================
-  // 2. DERIVED STATE / VALUES / MEMOIZED CALCULATIONS
-  // ===========================================================
+    loading: createCaseLoadingHook,
+    error: createCaseErrorHook,
+  } = useCreateCase();
 
   const queryParams = useMemo(() => new URLSearchParams(search), [search]);
-  // Get case type from URL, default to null if not present or invalid
   const caseTypeParam = useMemo(() => {
     const type = queryParams.get("type")?.toUpperCase();
-    if (type === "PROBLEM" || type === "SUGGESTION") {
-      return type;
-    }
-    return null;
+    return type === "PROBLEM" || type === "SUGGESTION" ? type : null;
   }, [queryParams]);
 
-  const categoryList: Category[] = useMemo(
-    () => categoriesData ?? [],
-    [categoriesData]
+  // Adapt data for the form hook
+  const formCategories = useMemo(
+    (): FormCategory[] =>
+      (categoriesDataFromHook || []).map((cat) => ({
+        _id: cat._id,
+        name: cat.name,
+        problem: cat.problem,
+        suggestion: cat.suggestion,
+      })),
+    [categoriesDataFromHook]
   );
 
-  const helpModalContent = useMemo<React.ReactNode>(() => {
-    if (!Array.isArray(categoryList)) {
-      console.error("Category list is not an array:", categoryList);
-      return <p>{t("caseSubmission.helpModal.categoryProcessingError")}</p>;
-    }
-    if (selectedCategories.length === 0) {
-      return <p>{t("caseSubmission.helpModal.selectCategoriesPrompt")}</p>;
-    }
-    const relevantCategories = categoryList.filter((cat) =>
-      selectedCategories.includes(cat.name)
-    );
+  const formState = useCaseFormState({
+    caseTypeParam,
+    categoriesData: formCategories,
+    executeCreateCase,
+    createCaseLoadingHook,
+    createCaseErrorHook,
+  });
 
-    if (relevantCategories.length === 0) {
-      return <p>{t("caseSubmission.helpModal.noInfoFound")}</p>;
-    }
-    // Use caseTypeParam directly here, ensuring it's handled if null
-    const descriptionKey: keyof Category | null =
-      caseTypeParam === "PROBLEM"
-        ? "problem"
-        : caseTypeParam === "SUGGESTION"
-        ? "suggestion"
-        : null;
+  const [isHelpModalOpen, setIsHelpModalOpen] = useState<boolean>(false);
 
-    if (!descriptionKey) {
-      return <p>{t("caseSubmission.helpModal.invalidCaseType")}</p>; // Handle null caseTypeParam
-    }
-
-    // *** IMPORTANT: Category Descriptions ***
-    // If category.problem/category.suggestion ALSO need translation,
-    // your API needs to return localized descriptions based on the current language (i18n.language).
-    // Or, you could try mapping keys if the descriptions are simple, e.g., category.descriptionKey_en, category.descriptionKey_bg
-    // For now, assuming the description itself is language-agnostic or already correct.
-
+  if (categoriesLoading) {
+    // return <LoadingModal message={t("caseSubmission.loadingForm")} />;
     return (
-      <div className="space-y-3 text-sm max-h-60 overflow-y-auto pr-2">
-        {relevantCategories.map((category) => {
-          const description = category[descriptionKey];
-          return (
-            <div key={category._id}>
-              {" "}
-              {/* Use _id for key */}
-              <strong className="font-semibold block mb-1">
-                {category.name}:{" "}
-                {/* Category name might also need translation if it comes from DB in one language */}
-              </strong>
-              {description ? (
-                <div dangerouslySetInnerHTML={{ __html: description }} />
-              ) : (
-                <p className="text-gray-500 italic">
-                  {t("caseSubmission.helpModal.noDescriptionAvailable")}
-                </p>
-              )}
-            </div>
-          );
-        })}
-      </div>
+      <div className="p-6 text-center">{t("caseSubmission.loadingForm")}</div>
     );
-  }, [selectedCategories, categoryList, caseTypeParam]);
+  }
 
-  // ===========================================================
-  // 3. EFFECTS (Side Effects, Data Fetching Triggers)
-  // ===========================================================
-
-  // --- Effect for Debouncing Username Input ---
-  useEffect(() => {
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
-    }
-    const trimmedUsername = usernameInput.trim();
-    // Clear results if input is empty
-    if (!trimmedUsername) {
-      setFetchedName("");
-      setFetchedCreatorId(null);
-      setNotFoundUsername(null);
-      setSearchedUsername(null); // Clear searched username too
-      return;
-    }
-
-    debounceTimerRef.current = setTimeout(() => {
-      console.log(`Debounced: Fetching user for username: ${trimmedUsername}`);
-      setSearchedUsername(trimmedUsername); // <-- STORE the username being queried
-      getUserByUsername({ variables: { username: trimmedUsername } });
-    }, DEBOUNCE_DELAY);
-
-    return () => {
-      // Cleanup
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
-    };
-  }, [usernameInput, getUserByUsername]); // This effect *should* depend on usernameInput
-
-  // --- Effect for Handling User Query Result ---
-  useEffect(() => {
-    // Don't process stale data if loading is true for a *new* search
-    if (userLoading) {
-      // Optional: You could clear the notFoundUsername here when loading starts
-      // setNotFoundUsername(null);
-      return;
-    }
-
-    // Handle network or GraphQL errors after loading finishes
-    if (userError) {
-      console.error("User query error:", userError);
-      setFetchedName("");
-      setFetchedCreatorId(null);
-      setNotFoundUsername(null); // Clear "not found" message on network error
-      return;
-    }
-
-    // Only process if query finished without network/GraphQL error (userData might be null/undefined)
-    // Check typeof to handle initial undefined state vs explicit null result
-    if (typeof userData !== "undefined") {
-      if (userData && userData.getLeanUserByUsername) {
-        // SUCCESS Case
-        setFetchedName(userData.getLeanUserByUsername.name);
-        setFetchedCreatorId(userData.getLeanUserByUsername._id);
-        setNotFoundUsername(null); // ** Clear "not found" message on success **
-      } else {
-        // FAILURE Case ("Not Found" response from server)
-        setFetchedName("");
-        setFetchedCreatorId(null);
-        // Set "not found" message only if a search was actually performed
-        // and the result corresponds to that search
-        if (searchedUsername) {
-          setNotFoundUsername(searchedUsername); // ** Use the searched username **
-        } else {
-          setNotFoundUsername(null); // Should already be null if searchedUsername is null
-        }
-      }
-    }
-    // No else needed - initial state or state after clearing is handled
-  }, [userData, userLoading, userError, searchedUsername]); // ** REMOVED usernameInput dependency **
-
-  // ===========================================================
-  // 4. CONDITIONAL RETURNS (Loading/Error States)
-  // ===========================================================
-
-  if (categoriesError)
+  if (categoriesError) {
     return (
-      <div className="p-6 text-red-600">
+      <div className="p-6 text-red-600 text-center">
         {t("caseSubmission.loadingCategoriesError", {
           message: categoriesError.message,
         })}
       </div>
     );
-  if (!caseTypeParam)
+  }
+  if (!caseTypeParam) {
     return (
-      <div className="p-6 text-red-600">{t("caseSubmission.invalidType")}</div>
-    );
-
-  // ===========================================================
-  // 5. EVENT HANDLERS & LOGIC HELPERS
-  // ===========================================================
-
-  // --- Helper to clear all validation/feedback states ---
-  const clearAllErrors = () => {
-    setSubmissionError(null); // General submission error (e.g., for category)
-    // We don't clear userError (network/GraphQL errors) here, as they might persist
-  };
-
-  const handleUsernameChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setNotFoundUsername(null); // Specific "user not found" feedback from search
-    setUsernameInput(event.target.value);
-  };
-
-  const toggleCategory = (categoryName: string): void => {
-    clearAllErrors(); // Clear errors when category changes
-    setSelectedCategories((prev) => {
-      if (prev.includes(categoryName)) {
-        return prev.filter((c) => c !== categoryName); // unselect
-      } else if (prev.length < MAX_SELECTED_CATEGORIES) {
-        return [...prev, categoryName]; // select new
-      } else {
-        return prev; // ignore if already 3 selected
-      }
-    });
-  };
-
-  // --- Dynamic Class Helpers ---
-  const getCategoryClass = (categoryName: string): string => {
-    const isSelected = selectedCategories.includes(categoryName);
-    const isDisabled =
-      !isSelected && selectedCategories.length >= MAX_SELECTED_CATEGORIES;
-    const commonClasses =
-      "px-3 py-1 border rounded-md h-9 text-sm transition-colors duration-200 cursor-pointer";
-    const styles = {
-      /* ... (your existing PROBLEM/SUGGESTION styles object) ... */
-      PROBLEM: {
-        selected: `bg-red-500 text-white border-red-500 hover:bg-red-600`,
-        unselected: `bg-white text-gray-700 border-gray-300 hover:bg-red-100 hover:border-red-300`,
-        disabled: `bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed opacity-60`,
-      },
-      SUGGESTION: {
-        selected: `bg-green-500 text-white border-green-500 hover:bg-green-600`,
-        unselected: `bg-white text-gray-700 border-gray-300 hover:bg-green-100 hover:border-green-300`,
-        disabled: `bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed opacity-60`,
-      },
-    };
-    const state = isSelected
-      ? "selected"
-      : isDisabled
-      ? "disabled"
-      : "unselected";
-    return `${commonClasses} ${styles[caseTypeParam][state]}`; // caseTypeParam is guaranteed non-null here
-  };
-
-  const getSendButtonClass = (): string => {
-    const commonClasses =
-      "text-white py-2 px-4 rounded-md cursor-pointer shadow-md font-medium transition-colors duration-200";
-    const styles = {
-      PROBLEM: `bg-red-600 hover:bg-red-700 active:bg-red-500`,
-      SUGGESTION: `bg-green-600 hover:bg-green-700 active:bg-green-500`,
-    };
-    // Disable button visually if submitting //or if creator isn't identified yet
-    const disabledClass =
-      isSubmitting || createCaseLoading //|| !fetchedCreatorId
-        ? "opacity-50 cursor-not-allowed"
-        : "";
-    return `${commonClasses} ${styles[caseTypeParam]} ${disabledClass}`; // caseTypeParam is guaranteed non-null here
-  };
-
-  // --- Modal Handlers ---
-  const openHelpModal = (): void => setIsHelpModalOpen(true);
-  const closeHelpModal = (): void => setIsHelpModalOpen(false);
-
-  // --- Form Submission Handler ---
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setSubmissionError(null);
-
-    // --- Validation ---
-    if (!fetchedCreatorId) {
-      setSubmissionError(t("caseSubmission.errors.submission.missingUsername"));
-      return;
-    }
-    if (!content.trim()) {
-      setSubmissionError(
-        t("caseSubmission.errors.submission.missingDescription")
-      );
-      return;
-    }
-    if (selectedCategories.length === 0) {
-      setSubmissionError(t("caseSubmission.errors.submission.missingCategory"));
-      return;
-    }
-    // caseTypeParam already validated for page render
-
-    setIsSubmitting(true);
-
-    // --- Prepare Attachments ---
-    let attachmentInputs: AttachmentInput[] = [];
-    try {
-      attachmentInputs = await Promise.all(
-        attachments.map(async (file): Promise<AttachmentInput> => {
-          const base64Data = await readFileAsBase64(file);
-          return { filename: file.name, file: base64Data };
-        })
-      );
-    } catch (fileReadError) {
-      console.error("Client: Error reading files to base64:", fileReadError);
-      setSubmissionError(
-        t("caseSubmission.errors.submission.fileProcessingError")
-      );
-      setIsSubmitting(false);
-      return;
-    }
-
-    // --- Find Category IDs ---
-    const categoryIds = findCategoryIds(selectedCategories, categoryList);
-    if (categoryIds.length !== selectedCategories.length) {
-      setSubmissionError(
-        t("caseSubmission.errors.submission.categoryProcessingError")
-      );
-      setIsSubmitting(false);
-      return;
-    }
-
-    // --- Prepare Final Input Object for Mutation ---
-    const input: CreateCaseInput = {
-      content: content.trim(),
-      type: caseTypeParam, // Non-null due to page check
-      priority: priority,
-      categories: categoryIds,
-      creator: fetchedCreatorId, // Use the ID fetched via username lookup
-      attachments: attachmentInputs,
-    };
-
-    console.log("------ Client: Sending Input for CreateCase ------");
-    console.log(
-      "Input:",
-      JSON.stringify(
-        { ...input, attachments: input.attachments?.map((a) => a.filename) },
-        null,
-        2
-      )
-    ); // Log without full base64
-    console.log("-----------------------------------------------");
-
-    // --- Execute Mutation ---
-    try {
-      const newCase = await executeCreateCase(input);
-      console.log("Case created successfully:", newCase);
-      alert("Сигналът е изпратен успешно!");
-
-      // --- Post-submission actions ---
-      setContent("");
-      setPriority("LOW");
-      setSelectedCategories([]);
-      setAttachments([]);
-      setUsernameInput(""); // Clear username input
-      setFetchedName(""); // Clear derived name
-      setFetchedCreatorId(null); // Clear creator ID
-      navigate("/"); // Navigate away
-    } catch (err) {
-      console.error("Submission catch block:", err);
-      const errorMsg =
-        createCaseError?.message ||
-        (err instanceof Error
-          ? err.message
-          : t("caseSubmission.errors.submission.unexpectedError"));
-      setSubmissionError(
-        t("caseSubmission.errors.submission.generalSubmissionError", {
-          message: errorMsg,
-        })
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  // ===========================================================
-  // 6. JSX RENDER
-  // ===========================================================
-  const showLoadingModal =
-    categoriesLoading || isSubmitting || createCaseLoading || userLoading;
-
-  if (showLoadingModal) {
-    return (
-      <LoadingModal
-        message={
-          categoriesLoading
-            ? t("caseSubmission.loadingForm") // Message during initial load
-            : t("caseSubmission.submittingCase") // Message during submission
-        }
-      />
+      <div className="p-6 text-red-600 text-center">
+        {t("caseSubmission.invalidType")}
+      </div>
     );
   }
+
+  const isOverallSubmittingOrLoading =
+    formState.isSubmittingForm ||
+    createCaseLoadingHook ||
+    formState.isUserLoading;
 
   return (
     <>
       <div className="min-h-screen p-6 grid grid-cols-1 md:grid-cols-2 gap-6 bg-stone-200">
-        {/* Header Row */}
-        <div className="col-span-1 md:col-span-2 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <h2 className="text-xl font-semibold text-gray-800">
-              {t("caseSubmission.title", {
-                type: t(
-                  `caseSubmission.caseType.${caseTypeParam.toLowerCase()}`
-                ), // e.g. caseType.problem or caseType.suggestion
-              })}
-            </h2>
-            <p className="text-sm text-gray-500">
-              {t("caseSubmission.subtitle")}
-            </p>
-          </div>
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={openHelpModal}
-              className="bg-white text-gray-700 border border-gray-300 py-2 px-4 rounded-md cursor-pointer shadow-md font-medium hover:bg-gray-200 active:bg-gray-300"
-            >
-              {t("caseSubmission.helpButton")}
-            </button>
-            <Link to="/">
-              <button className="bg-white text-gray-700 border border-gray-300 py-2 px-4 rounded-md cursor-pointer shadow-md font-medium hover:bg-gray-200 active:bg-gray-300">
-                {t("caseSubmission.backButton")}
-              </button>
-            </Link>
-            <button
-              type="submit"
-              form="case-form"
-              className={getSendButtonClass()}
-              disabled={isSubmitting || createCaseLoading} // Disable if submitting ( || !fetchedCreatorIdor creator not found)
-            >
-              {isSubmitting || createCaseLoading
-                ? t("caseSubmission.submittingButton")
-                : t("caseSubmission.submitButton")}
-            </button>
-          </div>
-        </div>
+        <CaseSubmissionHeader
+          caseTypeParam={caseTypeParam}
+          t={t} // Pass the main t function
+          onOpenHelpModal={() => setIsHelpModalOpen(true)}
+          submitButtonClassName={formState.getSubmitButtonClass(
+            createCaseLoadingHook
+          )}
+          isSubmitDisabled={isOverallSubmittingOrLoading}
+          isSubmittingText={t("caseSubmission.submittingButton")}
+          submitText={t("caseSubmission.submitButton")}
+        />
 
-        {/* Submission Error Display - Always rendered, uses opacity */}
         <div
-          className={`
-          col-span-1 md:col-span-2 p-3 rounded-md border
-          transition-opacity duration-300
-          ${
-            submissionError
-              ? "bg-red-100 border-red-400 text-red-700 opacity-100" // Visible styles
-              : "border-transparent text-transparent opacity-0" // Hidden: Make border & text transparent, opacity 0
-          }
-        `}
+          className={`col-span-1 md:col-span-2 p-3 rounded-md border transition-opacity duration-300 ${
+            formState.submissionError
+              ? "bg-red-100 border-red-400 text-red-700 opacity-100"
+              : "border-transparent text-transparent opacity-0"
+          }`}
           aria-live="polite"
         >
-          {/* Display error or non-breaking space to maintain height */}
-          {submissionError || "\u00A0"}
+          {formState.submissionError || "\u00A0"}
         </div>
 
-        {/* Form Content */}
-        <form id="case-form" className="contents" onSubmit={handleSubmit}>
-          {/* Left Panel */}
-          <div className="rounded-2xl shadow-md bg-white p-6 min-h-96">
-            {/* Removed the outer space-y-4 here, will apply spacing individually */}
-            <div className="space-y-4">
-              {" "}
-              {/* Re-added space-y-4 for overall spacing */}
-              {/* --- Row for Username and Name --- */}
-              <div className="flex flex-col md:flex-row md:gap-x-4 space-y-4 md:space-y-0">
-                {" "}
-                {/* Flex container for row */}
-                {/* Username Input Column (includes feedback) */}
-                <div className="flex-1">
-                  {" "}
-                  {/* Takes available space */}
-                  <label
-                    htmlFor="username"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    {t("caseSubmission.usernameLabel")}
-                  </label>
-                  <input
-                    type="text" // Ensure type="text"
-                    id="username" // Add id for label
-                    placeholder="emp___"
-                    className="w-full border border-gray-300 p-3 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                    name="username"
-                    aria-label={t("caseSubmission.usernameLabel")}
-                    value={usernameInput}
-                    onChange={handleUsernameChange} // Clears notFoundUsername state too
-                  />
-                  {/* Feedback Area below username input */}
-                  <div className="h-5 mt-1">
-                    {" "}
-                    {/* Fixed height container for feedback
-                    {userLoading && (
-                      <p className="text-sm text-gray-500 animate-pulse">
-                        Търсене...
-                      </p>
-                    )} */}
-                    {userError && (
-                      <p className="text-sm text-red-500">
-                        {t("caseSubmission.userSearchLoading")}
-                      </p>
-                    )}
-                    <p
-                      className={`text-sm text-orange-500 transition-opacity duration-200 ${
-                        notFoundUsername ? "opacity-100" : "opacity-0"
-                      }`}
-                    >
-                      {notFoundUsername
-                        ? t("caseSubmission.userNotFoundError", {
-                            username: notFoundUsername,
-                          })
-                        : "\u00A0"}
-                    </p>
-                  </div>
-                </div>
-                {/* Name Input Column */}
-                <div className="flex-1">
-                  {" "}
-                  {/* Takes available space */}
-                  <label
-                    htmlFor="fullname"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    {t("caseSubmission.fullNameLabel")}
-                  </label>
-                  <input
-                    type="text" // Ensure type="text"
-                    id="fullname" // Add id for label
-                    placeholder={t("caseSubmission.fullNamePlaceholder")}
-                    className="w-full border border-gray-300 p-3 rounded-md bg-gray-100 cursor-not-allowed focus:outline-none focus:ring-0" // Adjusted disabled style
-                    name="fullname"
-                    aria-label={t("caseSubmission.fullNameLabel")}
-                    value={fetchedName}
-                    disabled // Keep disabled
-                    readOnly // Good practice
-                  />
-                  {/* Optional: Add empty div for height consistency if needed */}
-                  <div className="h-5 mt-1"></div>
-                </div>
-              </div>
-              {/* Description Textarea */}
-              <div>
-                {" "}
-                {/* Added wrapper for spacing consistency */}
-                <label
-                  htmlFor="description"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  {t("caseSubmission.descriptionLabel")}
-                </label>
-                <textarea
-                  id="description"
-                  placeholder={t("caseSubmission.descriptionPlaceholder")}
-                  className="w-full h-40 border border-gray-300 p-3 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                  // required
-                  name="description"
-                  value={content}
-                  onChange={(e) => {
-                    clearAllErrors();
-                    setContent(e.target.value);
-                  }}
-                  maxLength={500}
-                  aria-label={t("caseSubmission.descriptionLabel")}
-                />
-              </div>
-              {/* File Input Section */}
-              <FileAttachmentBtn
-                attachments={attachments}
-                setAttachments={setAttachments}
-              />
-              {/* --- End File Input Section --- */}
-            </div>{" "}
-            {/* End space-y-4 */}
-          </div>
-          {/* End Left Panel */}
-
-          {/* Right Panel */}
-          <div className="rounded-2xl shadow-md bg-white p-6 min-h-96">
-            <div className="space-y-6">
-              {/* Priority */}
-              <div>
-                <p className="text-sm font-medium mb-3 text-gray-700">
-                  {t("caseSubmission.priorityLabel")}
-                </p>
-                <div className="flex flex-wrap gap-x-4 gap-y-2">
-                  {[
-                    {
-                      label: `${t("caseSubmission.priority.low")}`,
-                      value: "LOW",
-                      color: "#009b00",
-                    },
-                    {
-                      label: `${t("caseSubmission.priority.medium")}`,
-                      value: "MEDIUM",
-                      color: "#ad8600",
-                    },
-                    {
-                      label: `${t("caseSubmission.priority.high")}`,
-                      value: "HIGH",
-                      color: "#c30505",
-                    },
-                  ].map(({ label, value, color }) => (
-                    <label
-                      key={value}
-                      className="flex items-center gap-1.5 cursor-pointer hover:opacity-80"
-                    >
-                      <input
-                        type="radio"
-                        value={value}
-                        checked={priority === value}
-                        onChange={(e) => {
-                          clearAllErrors();
-                          setPriority(
-                            e.target.value as CreateCaseInput["priority"]
-                          );
-                        }}
-                        style={{ accentColor: color }}
-                        className="w-5 h-5 cursor-pointer"
-                        name="priority"
-                      />
-                      <span className="text-sm text-gray-700">{label}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-              {/* Categories */}
-              <div>
-                <p className="text-sm font-medium mb-3 text-gray-700">
-                  {t("caseSubmission.categoriesLabel", {
-                    maxSelect: MAX_SELECTED_CATEGORIES,
-                  })}
-                </p>
-                {categoryList.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {categoryList.map((category) => (
-                      <button
-                        key={category._id}
-                        type="button"
-                        onClick={() => toggleCategory(category.name)}
-                        className={`uppercase ${getCategoryClass(
-                          category.name
-                        )}`}
-                        disabled={
-                          !selectedCategories.includes(category.name) &&
-                          selectedCategories.length >= MAX_SELECTED_CATEGORIES
-                        }
-                        aria-pressed={selectedCategories.includes(
-                          category.name
-                        )}
-                      >
-                        {category.name}
-                      </button>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-gray-500 italic">
-                    {t("caseSubmission.categoryNoneFound")}
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
+        <form
+          id="case-form"
+          className="contents"
+          onSubmit={formState.handleSubmit}
+        >
+          <CaseSubmissionLeftPanel
+            t={t} // Pass t
+            usernameInput={formState.usernameInput}
+            handleUsernameChange={formState.handleUsernameChange}
+            isUserLoading={formState.isUserLoading}
+            userLookupError={formState.userLookupError}
+            notFoundUsername={formState.notFoundUsername}
+            fetchedName={formState.fetchedName}
+            content={formState.content}
+            onContentChange={formState.setContent} // Pass direct setter from hook
+            attachments={formState.attachments}
+            onAttachmentsChange={formState.setAttachments} // Pass direct setter from hook
+            clearAllFormErrors={formState.clearAllFormErrors}
+          />
+          <CaseSubmissionRightPanel
+            t={t} // Pass t
+            priority={formState.priority}
+            onPriorityChange={formState.setPriority} // Pass direct setter
+            categoryList={formCategories}
+            selectedCategories={formState.selectedCategories}
+            toggleCategory={formState.toggleCategory}
+            getCategoryClass={formState.getCategoryClass}
+            clearAllFormErrors={formState.clearAllFormErrors}
+          />
         </form>
       </div>
 
-      {/* Modal Component Rendering */}
       <HelpModal
         isOpen={isHelpModalOpen}
-        onClose={closeHelpModal}
+        onClose={() => setIsHelpModalOpen(false)}
         title={t("caseSubmission.helpModal.title")}
       >
-        {helpModalContent}
+        {formState.helpModalContent}
       </HelpModal>
+
+      {/* // Optional Global Loading Modal for Submission
+      // (formState.isSubmittingForm || createCaseLoadingHook) could trigger this
+      // if (formState.isSubmittingForm || createCaseLoadingHook) {
+      //   return <LoadingModal message={t("caseSubmission.submittingCase")} />;
+      // }
+      */}
     </>
   );
 };
 
-export default CaseSubmittion;
+export default CaseSubmission;

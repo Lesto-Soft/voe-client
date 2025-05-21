@@ -47,7 +47,7 @@ export interface IRating {
   _id: string;
   user: IUser;
   case: ICase;
-  rating: number;
+  score: number;
 }
 
 export interface IRole {

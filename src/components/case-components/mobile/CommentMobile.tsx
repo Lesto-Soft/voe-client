@@ -1,15 +1,15 @@
-import { IComment } from "../../db/interfaces";
-import UserLink from "../global/UserLink";
-import ShowDate from "../global/ShowDate";
-import EditButton from "../global/EditButton";
-import { admin_check } from "../../utils/rowStringCheckers";
+import { IComment } from "../../../db/interfaces";
+import UserLink from "../../global/UserLink";
+import ShowDate from "../../global/ShowDate";
+import EditButton from "../../global/EditButton";
+import { admin_check } from "../../../utils/rowStringCheckers";
 
 interface CommentProps {
   comment: IComment;
   me?: any;
 }
 
-const Comment: React.FC<CommentProps> = ({ comment, me }) => {
+const CommentMobile: React.FC<CommentProps> = ({ comment, me }) => {
   return (
     <div className="flex flex-row items-stretch gap-3 rounded p-3">
       {/* Left: Creator info, vertically centered */}
@@ -20,6 +20,14 @@ const Comment: React.FC<CommentProps> = ({ comment, me }) => {
             {comment.creator.position}
           </span>
         )}
+        <div className="ap-2 mb-1 flex flex-col justify-center items-center">
+          <ShowDate date={comment.date} />
+          {me &&
+            me.role &&
+            (me._id === comment.creator._id || admin_check(me.role.name)) && (
+              <EditButton />
+            )}
+        </div>
       </div>
       {/* Separator */}
       <div className="h-auto w-px bg-gray-200 mx-2" />
@@ -29,16 +37,8 @@ const Comment: React.FC<CommentProps> = ({ comment, me }) => {
           {comment.content}
         </div>
       </div>
-      <div className="ap-2 mb-1 flex flex-col justify-center items-center">
-        <ShowDate date={comment.date} />
-        {me &&
-          me.role &&
-          (me._id === comment.creator._id || admin_check(me.role.name)) && (
-            <EditButton />
-          )}
-      </div>
     </div>
   );
 };
 
-export default Comment;
+export default CommentMobile;

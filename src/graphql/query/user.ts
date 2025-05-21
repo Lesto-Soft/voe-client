@@ -66,6 +66,18 @@ export const GET_ME = gql`
     me {
       ...UserFragment
       avatar
+      managed_categories {
+        _id
+      }
+      expert_categories {
+        _id
+      }
+      answers {
+        _id
+      }
+      comments {
+        _id
+      }
     }
   }
   ${userFragment}

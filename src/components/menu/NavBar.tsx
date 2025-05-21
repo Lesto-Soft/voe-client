@@ -108,11 +108,11 @@ const NavBar = () => {
   }
 
   return (
-    <div className="bg-gradient-to-r from-gray-100 to-gray-200 shadow-md relative max-w-full">
+    <div className="bg-gradient-to-r from-gray-100 to-gray-200 shadow-md relative max-w-full h-[6rem]">
       <div className="flex items-center justify-between p-4 px-6 md:px-12">
         <div className="text-lg font-bold ">
           <h1 className="text-gray-800 text-xl md:text-2xl">{t("voe")}</h1>
-          <h3 className="text-gray-600 italic text-md md:text-md font-light mt-1 hidden md:block">
+          <h3 className="text-gray-600 italic text-md md:text-md font-light mt-1 hidden lg:block">
             {currentPage}
           </h3>
         </div>

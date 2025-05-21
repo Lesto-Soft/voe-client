@@ -15,7 +15,8 @@ const ApproveBtn: React.FC<{
   t: (word: string) => string;
   answer: IAnswer;
   me: any;
-}> = ({ approved, setApproved, t, answer, me }) => {
+  refetch: () => void;
+}> = ({ approved, setApproved, t, answer, me, refetch }) => {
   const [open, setOpen] = useState(false);
   const [needsFinance, setNeedsFinance] = useState(!!answer.needs_finance);
 
@@ -29,15 +30,15 @@ const ApproveBtn: React.FC<{
   const handleApprove = async () => {
     try {
       if (approved) {
-        unapproveAnswer(answer._id);
+        await unapproveAnswer(answer._id);
       } else {
-        await approveAnswer(answer._id, me._id, needsFinance);
+        await approveAnswer(answer._id, me.me._id, needsFinance);
       }
       setApproved((prev) => !prev);
     } catch (error) {
       console.error("Error approving answer:", error);
     } finally {
-      window.location.reload();
+      await refetch();
     }
   };
 
@@ -45,22 +46,20 @@ const ApproveBtn: React.FC<{
     <Dialog.Root open={open} onOpenChange={setOpen}>
       <Dialog.Trigger asChild>
         <button
-          className={`w-32 flex items-center px-2 py-1 rounded text-md text-center font-medium border transition hover:cursor-pointer ${
+          className={`w-26 hover:cursor-pointer flex items-center justify-center gap-2 px-2 py-1 rounded-lg text-xs font-medium shadow-md transition-all duration-200 ${
             !approved
-              ? "bg-green-100 text-green-700 border-green-200 hover:bg-green-200"
-              : "bg-red-100 text-red-500 border-red-200 hover:bg-red-200"
+              ? "bg-btnGreen text-white hover:bg-btnGreenHover focus:ring-2 focus:ring-green-300"
+              : "bg-btnRed text-white hover:bg-btnRedHover focus:ring-2 focus:ring-red-300"
           }`}
           type="button"
           title={approved ? t("unapprove") : t("approve")}
         >
           {!approved ? (
-            <HandThumbUpIcon className="h-5 w-5 text-btnGreenHover m-auto" />
+            <HandThumbUpIcon className="h-5 w-5 text-white" />
           ) : (
-            <HandThumbDownIcon className="h-5 w-5 text-btnRedHover m-auto" />
+            <HandThumbDownIcon className="h-5 w-5 text-white" />
           )}
-          <span className="text-gray-500 text-sm whitespace-nowrap m-auto">
-            {approved ? t("unapprove") : t("approve")}
-          </span>
+          <span>{approved ? t("unapprove") : t("approve")}</span>
         </button>
       </Dialog.Trigger>
       {loading || unapproveLoading ? <LoadingModal /> : null}
@@ -91,7 +90,7 @@ const ApproveBtn: React.FC<{
                 checked={needsFinance}
                 onCheckedChange={setNeedsFinance}
                 className={`${
-                  needsFinance ? "bg-green-500" : "bg-gray-300"
+                  needsFinance ? "bg-btnGreen" : "bg-gray-300"
                 } relative inline-flex h-6 w-11 items-center rounded-full transition-colors outline-none`}
                 id="needs-finance-switch"
               >
@@ -109,7 +108,7 @@ const ApproveBtn: React.FC<{
           <hr className="my-4 border-gray-200" />
           <div className="flex justify-end gap-2">
             <button
-              className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 text-gray-700"
+              className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 text-gray-700 hover:cursor-pointer"
               onClick={() => setOpen(false)}
               type="button"
             >
@@ -118,8 +117,8 @@ const ApproveBtn: React.FC<{
             <button
               className={`px-3 py-1 rounded ${
                 approved
-                  ? "bg-btnRed hover:bg-btnRedHover text-white"
-                  : "bg-btnGreen hover:bg-btnGreenHover text-white"
+                  ? "bg-btnRed hover:bg-btnRedHover text-white hover:cursor-pointer"
+                  : "bg-btnGreen hover:bg-btnGreenHover text-white hover:cursor-pointer"
               }`}
               onClick={() => {
                 setApproved((v) => !v);

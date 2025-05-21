@@ -17,10 +17,9 @@ import HelpModal from "../components/modals/HelpModal";
 import LoadingModal from "../components/modals/LoadingModal";
 import { GET_USER_BY_USERNAME } from "../graphql/query/user";
 import { ICategory } from "../db/interfaces";
+import FileAttachmentBtn from "../components/global/FileAttachmentBtn";
+import { readFileAsBase64 } from "../utils/attachment-handling";
 
-const MAX_FILES = 5;
-const MAX_FILE_SIZE_MB = 1;
-const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024; // 2MB in bytes
 const MAX_SELECTED_CATEGORIES = 3;
 // --- Interfaces & Types ---
 
@@ -60,25 +59,6 @@ interface UseGetActiveCategoriesReturn {
 }
 
 // --- Helper Functions (Ensure these are defined or imported) ---
-
-// Reads a File object and returns a Promise resolving with base64 string
-const readFileAsBase64 = (file: File): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result as string;
-      const commaIndex = result?.indexOf(",");
-      if (typeof result === "string" && commaIndex !== -1) {
-        const base64String = result.substring(commaIndex + 1);
-        resolve(base64String);
-      } else {
-        reject(new Error("Could not read file or extract base64 string."));
-      }
-    };
-    reader.onerror = (error) => reject(error);
-    reader.readAsDataURL(file);
-  });
-};
 
 // Finds category IDs based on selected names
 const findCategoryIds = (
@@ -139,7 +119,6 @@ const CaseSubmittion: React.FC = () => {
   // State for submission status and errors
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
-  const [fileError, setFileError] = useState<string | null>(null); // File-specific error state
 
   // State for help modal
   const [isHelpModalOpen, setIsHelpModalOpen] = useState<boolean>(false);
@@ -325,134 +304,12 @@ const CaseSubmittion: React.FC = () => {
   // --- Helper to clear all validation/feedback states ---
   const clearAllErrors = () => {
     setSubmissionError(null); // General submission error (e.g., for category)
-    setFileError(null); // Specific file error (e.g., size limit)
     // We don't clear userError (network/GraphQL errors) here, as they might persist
   };
 
   const handleUsernameChange = (event: ChangeEvent<HTMLInputElement>) => {
     setNotFoundUsername(null); // Specific "user not found" feedback from search
     setUsernameInput(event.target.value);
-  };
-  // Updated handler to check limits BEFORE adding files
-  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    clearAllErrors(); // Clear previous errors (includes setFileError(null))
-    const selectedFiles = event.target.files
-      ? Array.from(event.target.files)
-      : [];
-
-    if (selectedFiles.length === 0) {
-      if (event.target) event.target.value = ""; // Clear input value on cancel/empty select
-      return; // No files selected, nothing to do
-    }
-
-    let processingError: string | null = null; // Store the first critical error encountered
-
-    // Use setAttachments callback form to reliably access previous state
-    setAttachments((prevAttachments) => {
-      const currentCount = prevAttachments.length;
-      const availableSlots = MAX_FILES - currentCount;
-
-      // --- Check 1: Max file count ---
-      if (availableSlots <= 0) {
-        processingError = t("caseSubmission.errors.file.maxCountExceeded", {
-          max: MAX_FILES,
-        });
-        // Return previous state immediately, no need to process files
-        return prevAttachments;
-      }
-
-      let validFilesToAdd: File[] = [];
-      const oversizedFiles: string[] = [];
-      const duplicateFiles: string[] = [];
-      const countLimitedFiles: string[] = [];
-
-      // Create signatures of existing files for duplicate check
-      const existingFileSignatures = new Set(
-        prevAttachments.map((f) => `${f.name}-${f.size}-${f.lastModified}`)
-      );
-
-      // Process only as many selected files as there are available slots
-      for (let i = 0; i < selectedFiles.length; i++) {
-        const file = selectedFiles[i];
-        const signature = `${file.name}-${file.size}-${file.lastModified}`;
-
-        // --- Check 2: Individual file size ---
-        if (file.size > MAX_FILE_SIZE_BYTES) {
-          oversizedFiles.push(file.name);
-          continue; // Skip this file
-        }
-
-        // --- Check 3: Is count limit reached during processing? ---
-        if (validFilesToAdd.length >= availableSlots) {
-          countLimitedFiles.push(file.name);
-          continue; // Skip remaining files once slots are full
-        }
-
-        // --- Check 4: Duplicates ---
-        if (existingFileSignatures.has(signature)) {
-          duplicateFiles.push(file.name);
-          continue; // Skip this file
-        }
-
-        // If all checks pass, add to the list for this batch
-        validFilesToAdd.push(file);
-      }
-
-      // --- Set Feedback Messages (Prioritized) ---
-      if (oversizedFiles.length > 0) {
-        processingError = t("caseSubmission.errors.file.oversized", {
-          maxSize: MAX_FILE_SIZE_MB,
-          fileList: oversizedFiles.join(", "),
-        });
-        // Optionally append count limit message if applicable
-        if (countLimitedFiles.length > 0) {
-          processingError += ` ${t(
-            "caseSubmission.errors.file.oversizedAndMaxCount",
-            { max: MAX_FILES }
-          )}`;
-        }
-      } else if (countLimitedFiles.length > 0) {
-        // This message now implies files were skipped *only* due to the count limit
-        processingError = t("caseSubmission.errors.file.maxCountReached", {
-          max: MAX_FILES,
-          count: countLimitedFiles.length,
-        });
-      } else if (duplicateFiles.length > 0 && validFilesToAdd.length === 0) {
-        // Only duplicates were selected (and no size/count errors)
-        processingError = t("caseSubmission.errors.file.duplicatesSkipped", {
-          fileList: duplicateFiles.join(", "),
-        });
-      } else if (duplicateFiles.length > 0) {
-        // Some files were added, but some were duplicates (show as warning, not error)
-        console.warn(
-          t("caseSubmission.errors.file.duplicatesSomeSkipped", {
-            fileList: duplicateFiles.join(", "),
-          })
-        );
-      }
-
-      // Set the primary file error state if any error occurred
-      if (processingError) {
-        setFileError(processingError);
-      }
-
-      // Return the new state array
-      return [...prevAttachments, ...validFilesToAdd]; // Append valid files
-    });
-
-    // Clear the native file input value after processing in React state
-    // This allows selecting the same file again if it was removed/rejected
-    if (event.target) event.target.value = "";
-  };
-  const handleRemoveAttachment = (fileNameToRemove: string) => {
-    setFileError(null);
-    setAttachments((prevAttachments) =>
-      // Create a new array excluding the file with the matching name
-      prevAttachments.filter((file) => file.name !== fileNameToRemove)
-    );
-    // Note: Programmatically clearing the <input type="file"> value is
-    // unreliable across browsers and often not necessary. The user can
-    // always click "Choose Files" again to re-select.
   };
 
   const toggleCategory = (categoryName: string): void => {
@@ -807,101 +664,10 @@ const CaseSubmittion: React.FC = () => {
                 />
               </div>
               {/* File Input Section */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {/* Update label to show current count vs max */}
-                  {t("caseSubmission.attachmentsLabel", {
-                    count: attachments.length,
-                    max: MAX_FILES,
-                    maxSize: MAX_FILE_SIZE_MB,
-                  })}
-                </label>
-                {/* Styled Label acting as Button - Disable visually if max files reached */}
-                <label
-                  htmlFor="file-upload-input"
-                  className={`w-full text-center inline-block rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm ${
-                    attachments.length >= MAX_FILES
-                      ? "opacity-75 cursor-not-allowed" // Disabled style
-                      : "cursor-pointer hover:bg-gray-200 active:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2" // Enabled style
-                  }`}
-                  // Prevent triggering input if disabled (CSS should suffice, but JS backup)
-                  onClick={(e) => {
-                    if (attachments.length >= MAX_FILES) e.preventDefault();
-                  }}
-                >
-                  {t("caseSubmission.selectFilesButton")}
-                </label>
-                {/* Hidden Actual File Input - Disable if max files reached */}
-                <input
-                  id="file-upload-input"
-                  name="attachments"
-                  type="file"
-                  multiple
-                  onChange={handleFileChange}
-                  className="sr-only"
-                  disabled={attachments.length >= MAX_FILES} // HTML disabled attribute
-                  // Optional: Add accept attribute for client-side hint (doesn't enforce size)
-                  // accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt"
-                />
-
-                {/* Display File Errors */}
-                <div className="h-5 mt-1">
-                  {" "}
-                  {/* Reserve space */}
-                  <p
-                    className={`text-sm text-red-500 transition-opacity duration-200 ${
-                      fileError ? "opacity-100" : "opacity-0"
-                    }`}
-                  >
-                    {fileError || "\u00A0"}
-                  </p>
-                </div>
-
-                {/* Container for Selected Files List - Reserves space */}
-                <div className="mt-2 min-h-[3rem]">
-                  {" "}
-                  {/* Keeps minimum space */}
-                  {/* Conditionally render the list container *inside* */}
-                  <div
-                    className={`text-sm text-gray-600 space-y-1 h-20 overflow-y-auto rounded p-2 ${
-                      attachments.length === 0
-                        ? ""
-                        : "border border-gray-200 bg-gray-50"
-                    }`} // Added max-h, overflow, border, padding, bg
-                  >
-                    {attachments.length > 0 && (
-                      // Apply max-height and overflow to this inner div
-                      <ul className="list-none pl-1 space-y-1">
-                        {attachments.map((file) => (
-                          <li
-                            key={file.name + "-" + file.lastModified}
-                            className="flex justify-between items-center group p-1 rounded hover:bg-gray-200" // Hover effect on item
-                          >
-                            <span
-                              className="truncate pr-2 group-hover:underline"
-                              title={file.name}
-                            >
-                              {file.name}{" "}
-                              <span className="text-xs text-gray-500">
-                                ({(file.size / 1024 / 1024).toFixed(2)} MB)
-                              </span>
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveAttachment(file.name)}
-                              className="ml-2 px-1.5 py-0.5 text-red-500 hover:text-red-700 text-lg font-bold leading-none rounded focus:outline-none focus:ring-1 focus:ring-red-500 cursor-pointer"
-                              aria-label={`Remove ${file.name}`}
-                            >
-                              &times;
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                </div>
-                {/* End Container for Selected Files List */}
-              </div>
+              <FileAttachmentBtn
+                attachments={attachments}
+                setAttachments={setAttachments}
+              />
               {/* --- End File Input Section --- */}
             </div>{" "}
             {/* End space-y-4 */}

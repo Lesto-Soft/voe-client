@@ -23,3 +23,11 @@ export const CREATE_CASE = gql`
   }
   ${caseFragment}
 `;
+
+export const RATE_CASE = gql`
+  mutation Mutation($caseId: ID!, $userId: ID!, $score: Int!) {
+    createRating(caseId: $caseId, userId: $userId, score: $score) {
+      _id
+    }
+  }
+`;

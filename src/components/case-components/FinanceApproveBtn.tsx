@@ -8,7 +8,6 @@ import {
 import LoadingModal from "../modals/LoadingModal";
 import ErrorModal from "../modals/ErrorModal";
 import { IAnswer } from "../../db/interfaces";
-import Answer from "./Answer";
 
 const FinanceApproveBtn: React.FC<{
   approved: boolean;
@@ -16,7 +15,8 @@ const FinanceApproveBtn: React.FC<{
   t: (word: string) => string;
   answer: IAnswer;
   me: any;
-}> = ({ approved, setApproved, t, answer, me }) => {
+  refetch: () => void;
+}> = ({ approved, setApproved, t, answer, me, refetch }) => {
   const [open, setOpen] = useState(false);
   const { approveFinanceAnswer, loading, error } = useApproveFinanceAnswer();
   const {
@@ -28,15 +28,15 @@ const FinanceApproveBtn: React.FC<{
   const handleApprove = async () => {
     try {
       if (approved) {
-        await unapproveFinanceAnswer(answer._id); // Replace with actual answer ID
+        await unapproveFinanceAnswer(answer._id);
       } else {
-        await approveFinanceAnswer(answer._id, me._id); // Replace with actual answer ID and user ID
+        await approveFinanceAnswer(answer._id, me.me._id);
       }
       setApproved((prev) => !prev);
     } catch (error) {
       console.error("Error approving finance:", error);
     } finally {
-      window.location.reload();
+      await refetch();
     }
   };
 
@@ -44,22 +44,18 @@ const FinanceApproveBtn: React.FC<{
     <Dialog.Root open={open} onOpenChange={setOpen}>
       <Dialog.Trigger asChild>
         <button
-          className={`w-32 flex items-center px-2 py-1 rounded text-md text-center font-medium border transition hover:cursor-pointer ${
+          className={`w-26 hover:cursor-pointer flex items-center justify-center gap-2 px-2 py-1 rounded-lg text-xs font-medium shadow-md transition-all duration-200 ${
             !approved
-              ? "bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-200"
-              : "bg-red-100 text-red-700 border-red-200 hover:bg-red-200"
+              ? "bg-blue-500 text-white hover:bg-blue-600 focus:ring-2 focus:ring-blue-300"
+              : "bg-btnRed text-white hover:bg-btnRedHover focus:ring-2 focus:ring-red-300"
           }`}
           type="button"
           title={approved ? t("unapproveFinance") : t("finance")}
         >
           <CurrencyDollarIcon
-            className={`h-5 w-5 m-auto ${
-              approved ? "text-btnRedHover" : "text-blue-500"
-            }`}
+            className={`h-5 w-5 ${approved ? "text-white" : "text-white"}`}
           />
-          <span className="text-gray-500 text-sm whitespace-nowrap m-auto">
-            {approved ? t("unapprove") : t("finance")}
-          </span>
+          <span>{approved ? t("unapprove") : t("finance")}</span>
         </button>
       </Dialog.Trigger>
       {loading || unapproveLoading ? <LoadingModal /> : null}
@@ -80,9 +76,11 @@ const FinanceApproveBtn: React.FC<{
               : t("areYouSureApproveFinance") ||
                 "Сигурни ли сте, че искате да финансирате този отговор?"}
           </div>
+          <hr className="my-4 border-gray-200" />
+
           <div className="flex justify-end gap-2">
             <button
-              className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 text-gray-700"
+              className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 text-gray-700 hover:cursor-pointer"
               onClick={() => setOpen(false)}
               type="button"
             >
@@ -91,8 +89,8 @@ const FinanceApproveBtn: React.FC<{
             <button
               className={`px-3 py-1 rounded ${
                 approved
-                  ? "bg-red-600 hover:bg-red-700 text-white"
-                  : "bg-blue-600 hover:bg-blue-700 text-white"
+                  ? "bg-btnRed hover:bg-btnRedHover text-white hover:cursor-pointer"
+                  : "bg-blue-600 hover:bg-blue-700 text-white hover:cursor-pointer"
               }`}
               onClick={() => {
                 setApproved((v) => !v);

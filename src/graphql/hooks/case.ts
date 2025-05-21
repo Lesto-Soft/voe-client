@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from "@apollo/client";
-import { CREATE_CASE } from "../mutation/case";
+import { CREATE_CASE, RATE_CASE } from "../mutation/case";
 import {
   COUNT_CASES,
   GET_CASE_BY_CASE_NUMBER,
@@ -196,6 +196,29 @@ export const useCountCases = () => {
 
   return {
     count,
+    loading,
+    error,
+  };
+};
+
+export const useRateCase = () => {
+  const [rateCaseMutation, { data, loading, error }] = useMutation(RATE_CASE);
+
+  const rateCase = async (caseId: string, userId: string, score: number) => {
+    try {
+      const response = await rateCaseMutation({
+        variables: { caseId, userId, score },
+      });
+      return response.data.createRating;
+    } catch (err) {
+      console.error("Failed to rate case:", err);
+      throw err;
+    }
+  };
+
+  return {
+    rateCase,
+    data,
     loading,
     error,
   };

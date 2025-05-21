@@ -14,11 +14,13 @@ fragment CaseFragment on Case {
     type
     categories {
         _id
-        name
+        name     
     }
     content
     status  
     date
+    
+    
 }`;
 
 const caseHistoryFragment = `
@@ -102,6 +104,14 @@ export const GET_CASE_BY_CASE_NUMBER = gql`
   query GET_CASE_BY_CASE_NUMBER($caseNumber: Int!) {
     getCaseByNumber(case_number: $caseNumber) {
       ...CaseFragment
+      rating {
+        _id
+        score
+        user {
+          _id
+          name
+        }
+      }
       comments {
         ...CommentFragment
       }

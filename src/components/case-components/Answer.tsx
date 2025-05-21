@@ -1,6 +1,5 @@
 import { IAnswer, IComment } from "../../db/interfaces";
-import moment from "moment";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Comment from "./Comment";
 import ShowDate from "../global/ShowDate";
 import { useTranslation } from "react-i18next";
@@ -12,18 +11,32 @@ import ApproveBtn from "./ApproveBtn";
 import AnswerHistoryModal from "../modals/AnswerHistoryModal";
 import FinanceApproveBtn from "./FinanceApproveBtn";
 
-const Answer: React.FC<{ answer: IAnswer; me?: any }> = ({ answer, me }) => {
+const Answer: React.FC<{ answer: IAnswer; me?: any; refetch: () => void }> = ({
+  answer,
+  me,
+  refetch,
+}) => {
   const [approved, setApproved] = useState(!!answer.approved);
   const [financialApproved, setFinancialApproved] = useState(
     !!answer.financial_approved
   );
 
+  // Synchronize state with the updated answer prop
+  useEffect(() => {
+    setApproved(!!answer.approved);
+    setFinancialApproved(!!answer.financial_approved);
+  }, [answer]);
+
   const { t } = useTranslation("answer");
   return (
-    <div className="mx-auto my-8 px-4">
-      <div className="bg-white shadow rounded-lg p-6">
+    <div className="mx-auto my-8 px-4 min-w-full">
+      <div
+        className={`bg-white shadow rounded-lg p-6 ${
+          approved ? "border-2 border-btnGreenHover" : ""
+        }`}
+      >
         {/* Content + Creator Row */}
-        <div className="flex flex-col sm:flex-row gap-6 mb-6">
+        <div className="flex flex-col sm:flex-row gap-6 mb-3">
           {/* Creator at left */}
           <Creator creator={answer.creator} />
           {/* Content and actions at right */}
@@ -41,18 +54,8 @@ const Answer: React.FC<{ answer: IAnswer; me?: any }> = ({ answer, me }) => {
                         t={t}
                         answer={answer}
                         me={me}
+                        refetch={refetch}
                       />
-                      <div className="flex items-center gap-2  border border-gray-200 rounded px-2 py-0.5">
-                        <p className="whitespace-nowrap"> {t("approvedBy")} </p>
-                        {answer.approved ? (
-                          <UserLink user={answer.approved} type="case" />
-                        ) : (
-                          ""
-                        )}
-                        <p className="text-gray-500 text-xs ml-1 whitespace-nowrap text-center">
-                          {<ShowDate date={answer.approved_date} />}
-                        </p>
-                      </div>
                     </div>
                     {answer.needs_finance && (
                       <div className="flex items-center gap-2">
@@ -64,25 +67,8 @@ const Answer: React.FC<{ answer: IAnswer; me?: any }> = ({ answer, me }) => {
                           t={t}
                           answer={answer}
                           me={me}
+                          refetch={refetch}
                         />
-                        {answer.financial_approved && (
-                          <div className="flex items-center gap-2 border border-gray-200 rounded px-2 py-0.5">
-                            <p className="whitespace-nowrap">
-                              {t("financedBy")}
-                            </p>
-                            <UserLink
-                              user={answer.financial_approved}
-                              type="case"
-                            />
-                            <p className="text-gray-500 text-xs ml-1 whitespace-nowrap text-center">
-                              {answer.financial_approved_date && (
-                                <ShowDate
-                                  date={answer.financial_approved_date}
-                                />
-                              )}
-                            </p>
-                          </div>
-                        )}
                       </div>
                     )}
                   </div>
@@ -93,6 +79,7 @@ const Answer: React.FC<{ answer: IAnswer; me?: any }> = ({ answer, me }) => {
                     t={t}
                     answer={answer}
                     me={me}
+                    refetch={refetch}
                   />
                 )}
               </div>
@@ -103,6 +90,7 @@ const Answer: React.FC<{ answer: IAnswer; me?: any }> = ({ answer, me }) => {
                   <AnswerHistoryModal history={answer.history} />
                 )}
                 {me &&
+                  me.role &&
                   (me._id === answer.creator._id ||
                     admin_check(me.role.name)) && <EditButton />}
               </div>
@@ -120,6 +108,33 @@ const Answer: React.FC<{ answer: IAnswer; me?: any }> = ({ answer, me }) => {
                 } rounded p-3  text-gray-900 whitespace-pre-line w-full flex overflow-y-auto break-all`}
               >
                 {answer.content}
+              </div>
+            </div>
+            <div className="flex justify-between items-center gap-2 borderpx-2 py-0.5 italic text-gray-500 text-xs mt-1">
+              <div className="flex items-center gap-1">
+                {answer.approved && (
+                  <>
+                    <p className="whitespace-nowrap"> {t("approvedBy")} </p>
+                    <UserLink user={answer.approved} type="case" />
+                    {/* <ShowDate date={answer.approved_date} /> */}
+                  </>
+                )}
+
+                {/* <p className="whitespace-nowrap">{answer.approved?.name}</p> */}
+                {answer.approved_date && (
+                  <ShowDate date={answer.approved_date} />
+                )}
+              </div>
+              <div className="flex items-center gap-1">
+                {answer.financial_approved && (
+                  <>
+                    <p className="whitespace-nowrap">{t("financedBy")}</p>
+                    <UserLink user={answer.financial_approved} type="case" />
+                    {answer.financial_approved_date && (
+                      <ShowDate date={answer.financial_approved_date} />
+                    )}
+                  </>
+                )}
               </div>
             </div>
           </div>

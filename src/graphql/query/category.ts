@@ -50,3 +50,34 @@ export const GET_ACTIVE_CATEGORIES = gql`
   }
   ${categoryFragment}
 `;
+
+export const GET_CATEGORY_BY_ID = gql`
+  query GetCategoryById($_id: ID!) {
+    # This defines the variable for the operation
+    getCategoryById(_id: $_id) {
+      # This calls the field on the Query type, using its argument named '_id',
+      # and passes the operation variable $_id to it.
+      _id
+      name
+      problem
+      suggestion
+      experts {
+        _id
+        name
+      }
+      cases {
+        _id
+        case_number
+        content
+        date
+        priority
+        status
+        creator {
+          _id
+          name
+        }
+      }
+      archived
+    }
+  }
+`;

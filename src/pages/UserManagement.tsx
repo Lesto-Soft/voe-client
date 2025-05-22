@@ -373,7 +373,7 @@ const UserManagement: React.FC = () => {
           </button>
           <button
             onClick={openCreateModal}
-            className="w-full sm:w-auto flex flex-shrink-0 justify-center items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-green-500 text-white hover:bg-green-600 hover:cursor-pointer active:bg-green-700 active:shadow-inner disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full sm:w-[280px] flex flex-shrink-0 justify-center items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-green-500 text-white hover:bg-green-600 hover:cursor-pointer active:bg-green-700 active:shadow-inner disabled:cursor-not-allowed"
             disabled={
               createLoading || updateLoading //|| isLoadingTableData ||
               // isLoadingUserStatsOverallCounts || // Disable if any part of stats is loading

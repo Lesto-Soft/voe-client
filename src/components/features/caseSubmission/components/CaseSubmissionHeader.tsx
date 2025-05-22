@@ -1,16 +1,16 @@
-// src/features/caseSubmission/components/CaseSubmissionHeader.tsx
+// src/components/features/caseSubmission/components/CaseSubmissionHeader.tsx
 import React from "react";
-import { Link } from "react-router";
-import { TFunction } from "i18next"; // Import TFunction from i18next
+import { Link } from "react-router"; // Corrected import
+import { TFunction } from "i18next";
 
 interface CaseSubmissionHeaderProps {
   caseTypeParam: "PROBLEM" | "SUGGESTION";
-  t: TFunction<"caseSubmission", undefined>; // Expecting the namespaced t
+  t: TFunction<"caseSubmission", undefined>;
   onOpenHelpModal: () => void;
   submitButtonClassName: string;
   isSubmitDisabled: boolean;
-  isSubmittingText: string; // This will be the translated "Submitting..." text
-  submitText: string; // This will be the translated "Submit" text
+  isSubmittingText: string;
+  submitText: string;
 }
 
 const CaseSubmissionHeader: React.FC<CaseSubmissionHeaderProps> = ({
@@ -19,14 +19,13 @@ const CaseSubmissionHeader: React.FC<CaseSubmissionHeaderProps> = ({
   onOpenHelpModal,
   submitButtonClassName,
   isSubmitDisabled,
-  isSubmittingText, // Use this directly
-  submitText, // Use this directly
+  isSubmittingText,
+  submitText,
 }) => {
   return (
     <div className="col-span-1 md:col-span-2 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
       <div>
         <h2 className="text-xl font-semibold text-gray-800">
-          {/* Use keys directly as 't' is namespaced */}
           {t("caseSubmission.title", {
             type: t(`caseSubmission.caseType.${caseTypeParam.toLowerCase()}`),
           })}
@@ -51,7 +50,7 @@ const CaseSubmissionHeader: React.FC<CaseSubmissionHeaderProps> = ({
         </Link>
         <button
           type="submit"
-          form="case-form"
+          form="case-form" // Associates button with the form in CaseSubmissionPage
           className={submitButtonClassName}
           disabled={isSubmitDisabled}
         >

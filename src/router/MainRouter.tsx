@@ -1,6 +1,6 @@
 import { createBrowserRouter, Outlet, RouterProvider } from "react-router";
 import Home from "../pages/Home";
-import CaseSubmittion from "../pages/CaseSubmittion";
+import CaseSubmission from "../pages/CaseSubmission";
 import Dashboard from "../pages/Dashboard";
 import LoadingTestPage from "../pages/LoadingTestPage";
 import UserManagement from "../pages/UserManagement";
@@ -34,7 +34,7 @@ const mainRouter = createBrowserRouter([
   },
   {
     path: "/submit-case",
-    element: <CaseSubmittion />,
+    element: <CaseSubmission />,
   },
   {
     path: "/user-data/:userId",

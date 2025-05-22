@@ -1,4 +1,4 @@
-// src/features/caseSubmission/hooks/useCaseFormState.tsx
+// src/components/features/caseSubmission/hooks/useCaseFormState.tsx
 import React, {
   useState,
   useEffect,
@@ -7,20 +7,19 @@ import React, {
   ChangeEvent,
   FormEvent,
 } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router"; // Corrected import
 import { useLazyQuery, ApolloError } from "@apollo/client";
 import { useTranslation } from "react-i18next";
 import { TFunction } from "i18next";
-import { GET_USER_BY_USERNAME } from "../../../../graphql/query/user";
-import { readFileAsBase64 } from "../../../../utils/attachment-handling";
+import { GET_USER_BY_USERNAME } from "../../../../graphql/query/user"; // Adjust path
+import { readFileAsBase64 } from "../../../../utils/attachment-handling"; // Adjust path
 import {
   FormCategory,
-  FetchedUserInfo,
   CaseAttachmentInput,
   CreateCaseMutationInput,
   UserQueryResult,
   UserQueryVars,
-} from "../types";
+} from "../types"; // Adjust path
 
 const MAX_SELECTED_CATEGORIES = 3;
 const DEBOUNCE_DELAY = 500;
@@ -70,6 +69,7 @@ interface HookProps {
   executeCreateCase: (input: CreateCaseMutationInput) => Promise<any>;
   createCaseLoadingHook: boolean;
   createCaseErrorHook: ApolloError | undefined;
+  onSuccess?: (message?: string) => void;
 }
 
 export const useCaseFormState = ({
@@ -78,9 +78,10 @@ export const useCaseFormState = ({
   executeCreateCase,
   createCaseLoadingHook,
   createCaseErrorHook,
+  onSuccess,
 }: HookProps): UseCaseFormStateReturn => {
   const { t } = useTranslation("caseSubmission");
-  const navigate = useNavigate();
+  // const navigate = useNavigate(); // REMOVED: navigate will be handled by the page
 
   const [content, setContent] = useState<string>("");
   const [priority, setPriority] =
@@ -114,6 +115,7 @@ export const useCaseFormState = ({
   useEffect(() => {
     if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
     const trimmedUsername = usernameInput.trim();
+
     if (!trimmedUsername) {
       setFetchedName("");
       setFetchedCreatorId(null);
@@ -121,10 +123,12 @@ export const useCaseFormState = ({
       setSearchedUsername(null);
       return;
     }
+
     debounceTimerRef.current = setTimeout(() => {
       setSearchedUsername(trimmedUsername);
       getUserByUsernameQueryFn({ variables: { username: trimmedUsername } });
     }, DEBOUNCE_DELAY);
+
     return () => {
       if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
     };
@@ -132,15 +136,15 @@ export const useCaseFormState = ({
 
   useEffect(() => {
     if (isUserLoading) return;
+
     if (userLookupError) {
       console.error("User query error:", userLookupError);
       setFetchedName("");
       setFetchedCreatorId(null);
       setNotFoundUsername(null);
-      // Optionally set a general user search error message using `t` if needed
-      // setSubmissionError(t("caseSubmission.userSearchError", { message: userLookupError.message }));
       return;
     }
+
     if (typeof userLookupData !== "undefined") {
       if (userLookupData?.getLeanUserByUsername) {
         setFetchedName(userLookupData.getLeanUserByUsername.name);
@@ -150,7 +154,7 @@ export const useCaseFormState = ({
         setFetchedName("");
         setFetchedCreatorId(null);
         if (searchedUsername && usernameInput.trim() === searchedUsername) {
-          setNotFoundUsername(searchedUsername); // This will be used in caseSubmission.userNotFoundError", {username: notFoundUsername})
+          setNotFoundUsername(searchedUsername);
         } else {
           setNotFoundUsername(null);
         }
@@ -179,6 +183,7 @@ export const useCaseFormState = ({
     const isSelected = selectedCategories.includes(categoryName);
     const isDisabled =
       !isSelected && selectedCategories.length >= MAX_SELECTED_CATEGORIES;
+
     const common =
       "px-3 py-1 border rounded-md h-9 text-sm transition-colors duration-200 cursor-pointer";
     const styles = {
@@ -263,7 +268,7 @@ export const useCaseFormState = ({
     clearAllFormErrors();
 
     if (!caseTypeParam) {
-      setSubmissionError(t("caseSubmission.errors.submission.invalidCaseType")); // Assuming this key exists or use top-level invalidType
+      setSubmissionError(t("caseSubmission.errors.submission.invalidCaseType"));
       return;
     }
     if (!fetchedCreatorId) {
@@ -319,7 +324,11 @@ export const useCaseFormState = ({
 
     try {
       await executeCreateCase(input);
-      alert(t("caseSubmission.submissionSuccessAlert"));
+
+      if (onSuccess) {
+        onSuccess(t("caseSubmission.submissionSuccessAlert"));
+      }
+
       setContent("");
       setPriority("LOW");
       setSelectedCategories([]);
@@ -329,7 +338,9 @@ export const useCaseFormState = ({
       setFetchedCreatorId(null);
       setSearchedUsername(null);
       setNotFoundUsername(null);
-      navigate("/");
+      clearAllFormErrors();
+
+      // REMOVED: navigate("/");
     } catch (err) {
       console.error("Submission error caught by form:", err);
       const errorMsg =

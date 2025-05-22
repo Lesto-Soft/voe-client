@@ -1,6 +1,6 @@
 // src/pages/CaseSubmissionPage.tsx
 import React, { useState, useMemo } from "react";
-import { useLocation, Link } from "react-router"; // Corrected Link import
+import { useLocation, Link, useNavigate } from "react-router"; // Corrected Link import, ADDED useNavigate
 import { useTranslation } from "react-i18next";
 
 import { useGetActiveCategories } from "../graphql/hooks/category"; // Adjust path
@@ -12,14 +12,34 @@ import CaseSubmissionHeader from "../components/features/caseSubmission/componen
 import CaseSubmissionLeftPanel from "../components/features/caseSubmission/components/CaseSubmissionLeftPanel"; // Adjust path
 import CaseSubmissionRightPanel from "../components/features/caseSubmission/components/CaseSubmissionRightPanel"; // Adjust path
 import HelpModal from "../components/modals/HelpModal"; // Adjust path
+import SuccessConfirmationModal from "../components/modals/SuccessConfirmationModal";
 // import LoadingModal from "../components/modals/LoadingModal"; // Optional
 
-const CaseSubmission: React.FC = () => {
-  const { t } = useTranslation("caseSubmission"); // Add namespaces if needed
+const CaseSubmissionPage: React.FC = () => {
+  const { t } = useTranslation("caseSubmission");
   const { search } = useLocation();
+  const navigate = useNavigate(); // ADDED: useNavigate hook
+
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  const [successModalMessage, setSuccessModalMessage] = useState("");
+
+  const handleSubmissionSuccess = (message?: string) => {
+    setSuccessModalMessage(
+      message || t("caseSubmission.submissionSuccessAlert")
+    );
+    setIsSuccessModalOpen(true);
+    // Form reset will be handled by useCaseFormState
+    // Navigation will be handled by handleSuccessModalClose
+  };
+
+  // ADDED: Handler for when the success modal closes
+  const handleSuccessModalClose = () => {
+    setIsSuccessModalOpen(false);
+    navigate("/"); // Navigate to home page after modal closes
+  };
 
   const {
-    categories: categoriesDataFromHook, // Renamed to avoid conflict
+    categories: categoriesDataFromHook,
     loading: categoriesLoading,
     error: categoriesError,
   } = useGetActiveCategories();
@@ -36,7 +56,6 @@ const CaseSubmission: React.FC = () => {
     return type === "PROBLEM" || type === "SUGGESTION" ? type : null;
   }, [queryParams]);
 
-  // Adapt data for the form hook
   const formCategories = useMemo(
     (): FormCategory[] =>
       (categoriesDataFromHook || []).map((cat) => ({
@@ -54,12 +73,12 @@ const CaseSubmission: React.FC = () => {
     executeCreateCase,
     createCaseLoadingHook,
     createCaseErrorHook,
+    onSuccess: handleSubmissionSuccess,
   });
 
   const [isHelpModalOpen, setIsHelpModalOpen] = useState<boolean>(false);
 
   if (categoriesLoading) {
-    // return <LoadingModal message={t("caseSubmission.loadingForm")} />;
     return (
       <div className="p-6 text-center">{t("caseSubmission.loadingForm")}</div>
     );
@@ -92,7 +111,7 @@ const CaseSubmission: React.FC = () => {
       <div className="min-h-screen p-6 grid grid-cols-1 md:grid-cols-2 gap-6 bg-stone-200">
         <CaseSubmissionHeader
           caseTypeParam={caseTypeParam}
-          t={t} // Pass the main t function
+          t={t}
           onOpenHelpModal={() => setIsHelpModalOpen(true)}
           submitButtonClassName={formState.getSubmitButtonClass(
             createCaseLoadingHook
@@ -119,7 +138,7 @@ const CaseSubmission: React.FC = () => {
           onSubmit={formState.handleSubmit}
         >
           <CaseSubmissionLeftPanel
-            t={t} // Pass t
+            t={t}
             usernameInput={formState.usernameInput}
             handleUsernameChange={formState.handleUsernameChange}
             isUserLoading={formState.isUserLoading}
@@ -127,15 +146,15 @@ const CaseSubmission: React.FC = () => {
             notFoundUsername={formState.notFoundUsername}
             fetchedName={formState.fetchedName}
             content={formState.content}
-            onContentChange={formState.setContent} // Pass direct setter from hook
+            onContentChange={formState.setContent}
             attachments={formState.attachments}
-            onAttachmentsChange={formState.setAttachments} // Pass direct setter from hook
+            onAttachmentsChange={formState.setAttachments}
             clearAllFormErrors={formState.clearAllFormErrors}
           />
           <CaseSubmissionRightPanel
-            t={t} // Pass t
+            t={t}
             priority={formState.priority}
-            onPriorityChange={formState.setPriority} // Pass direct setter
+            onPriorityChange={formState.setPriority}
             categoryList={formCategories}
             selectedCategories={formState.selectedCategories}
             toggleCategory={formState.toggleCategory}
@@ -153,14 +172,14 @@ const CaseSubmission: React.FC = () => {
         {formState.helpModalContent}
       </HelpModal>
 
-      {/* // Optional Global Loading Modal for Submission
-      // (formState.isSubmittingForm || createCaseLoadingHook) could trigger this
-      // if (formState.isSubmittingForm || createCaseLoadingHook) {
-      //   return <LoadingModal message={t("caseSubmission.submittingCase")} />;
-      // }
-      */}
+      <SuccessConfirmationModal
+        isOpen={isSuccessModalOpen}
+        onClose={handleSuccessModalClose} // MODIFIED: Use the new handler
+        message={successModalMessage}
+        title={t("caseSubmission.successModalTitle", "Изпратено Успешно!")}
+      />
     </>
   );
 };
 
-export default CaseSubmission;
+export default CaseSubmissionPage;

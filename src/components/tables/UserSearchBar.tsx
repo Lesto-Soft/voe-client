@@ -36,7 +36,7 @@ const UserSearchBar: React.FC<UserSearchBarProps> = ({
             htmlFor="filterName"
             className="block text-sm font-medium text-gray-700 mb-1"
           >
-            Име
+            Име на потребител
           </label>
           <input
             type="text"

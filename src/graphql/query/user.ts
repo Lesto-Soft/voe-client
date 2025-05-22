@@ -63,6 +63,15 @@ export const GET_LEAN_USERS = gql`
     getLeanUsers(input: $input) {
       _id
       name
+      role {
+        _id
+      }
+      managed_categories {
+        _id
+      }
+      expert_categories {
+        _id
+      }
     }
   }
 `;

@@ -39,7 +39,8 @@ export interface IUser {
   avatar?: string;
   inbox?: string[];
   cases?: ICase[];
-  categories?: ICategory[];
+  expert_categories?: ICategory[];
+  managed_categories?: ICategory[];
   comments?: IComment[];
   answers?: IAnswer[];
   financialApprover?: boolean;

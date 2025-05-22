@@ -7,32 +7,43 @@ import {
   useCountCategories,
   useCreateCategory,
   useUpdateCategory,
-  useDeleteCategory, // Import the new hook
+  useDeleteCategory,
 } from "../graphql/hooks/category"; // Adjust path as needed
 import { useCountFilteredCases, useCountCases } from "../graphql/hooks/case"; // Adjust path as needed
 import {
   CreateCategoryInput,
   UpdateCategoryInput,
 } from "../graphql/mutation/category"; // Adjust path as needed
-import { ICategory, ICaseStatus as CaseStatus } from "../db/interfaces"; // Adjust path as needed
+import { ICategory, ICaseStatus as CaseStatus, IUser } from "../db/interfaces"; // Adjust path as needed, Added IUser
 import CategoryTable from "../components/features/categoryManagement/CategoryTable"; // Adjust path as needed
 import {
   useCategoryManagement,
   CategoryQueryApiParams,
 } from "../hooks/useCategoryManagement"; // Adjust path as needed
-// import LoadingModal from "../components/modals/LoadingModal"; // Adjust path as needed
 import CategoryFilters from "../components/features/categoryManagement/CategoryFilters"; // Adjust path as needed
 import CreateCategoryModal from "../components/modals/CreateCategoryModal"; // Adjust path as needed
 import CreateCategoryForm, {
   CategoryFormData,
 } from "../components/forms/CreateCategoryForm"; // Adjust path as needed
 import CategoryStats from "../components/features/categoryManagement/CategoryStats"; // Adjust path as needed
-import ConfirmActionDialog from "../components/modals/ConfirmActionDialog"; // Import the new dialog
+import ConfirmActionDialog from "../components/modals/ConfirmActionDialog";
 import SuccessConfirmationModal from "../components/modals/SuccessConfirmationModal";
+// Assuming you might need to fetch users for the CreateCategoryForm
+import { useQuery } from "@apollo/client";
+import { GET_LEAN_USERS } from "../graphql/query/user"; // Adjust path for GET_LEAN_USERS
+
+// Define a lean user type that includes the role ID, matching GET_LEAN_USERS
+interface ILeanUserForForm {
+  _id: string;
+  name: string;
+  role: { _id: string } | null;
+  // We don't need expert_categories or managed_categories for the form's assignable users list,
+  // only for the filters. The form filters by role ID.
+}
 
 const CategoryManagement: React.FC = () => {
   const {
-    currentPage, // UI current page (1-indexed)
+    currentPage,
     itemsPerPage,
     filterName,
     setFilterName,
@@ -42,11 +53,11 @@ const CategoryManagement: React.FC = () => {
     setFilterManagerIds,
     filterArchived,
     setFilterArchived,
-    filterCaseStatus, // This is your client-side case status filter state
+    filterCaseStatus,
     setFilterCaseStatus,
-    handlePageChange, // This function should set the currentPage state
+    handlePageChange,
     handleItemsPerPageChange,
-    currentQueryInput, // Contains backend filters (name, expert, etc.) + pagination
+    currentQueryInput,
   } = useCategoryManagement();
 
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
@@ -57,15 +68,27 @@ const CategoryManagement: React.FC = () => {
   const [showFilters, setShowFilters] = useState(true);
   const [isInitialAppLoadComplete, setIsInitialAppLoadComplete] =
     useState(false);
-
-  // State for delete confirmation
   const [showDeleteConfirmDialog, setShowDeleteConfirmDialog] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<ICategory | null>(
     null
   );
-
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [successModalMessage, setSuccessModalMessage] = useState("");
+
+  // ADDED: State to trigger refetch of users in CategorySearchBar
+  const [userFilterRefreshKey, setUserFilterRefreshKey] = useState(0);
+
+  // Fetch all lean users for the CreateCategoryForm dropdowns
+  // This list will be filtered by role within CreateCategoryForm/CategoryInputFields
+  const {
+    data: allUsersDataForForm,
+    loading: allUsersForFormLoading,
+    error: allUsersForFormError,
+    refetch: refetchAllUsersForForm, // Expose refetch in case it's needed, though primary refresh is for filters
+  } = useQuery<{ getLeanUsers: ILeanUserForForm[] }>(GET_LEAN_USERS, {
+    variables: { input: "" }, // Fetch all users
+    fetchPolicy: "cache-and-network", // Good for ensuring form has up-to-date users
+  });
 
   const categoryFiltersWithoutPagination = useMemo((): Omit<
     CategoryQueryApiParams,
@@ -345,7 +368,8 @@ const CategoryManagement: React.FC = () => {
       inProgressLoading ||
       awaitingFinanceLoading ||
       closedLoading ||
-      absoluteTotalCaseCountLoading,
+      absoluteTotalCaseCountLoading ||
+      allUsersForFormLoading,
     [
       categoriesListLoading,
       categoryCountLoadingForTable,
@@ -356,6 +380,7 @@ const CategoryManagement: React.FC = () => {
       awaitingFinanceLoading,
       closedLoading,
       absoluteTotalCaseCountLoading,
+      allUsersForFormLoading,
     ]
   );
 
@@ -369,7 +394,8 @@ const CategoryManagement: React.FC = () => {
       inProgressError ||
       awaitingFinanceError ||
       closedError ||
-      absoluteTotalCaseCountError,
+      absoluteTotalCaseCountError ||
+      allUsersForFormError,
     [
       categoriesListError,
       categoryCountErrorForTable,
@@ -380,6 +406,7 @@ const CategoryManagement: React.FC = () => {
       awaitingFinanceError,
       closedError,
       absoluteTotalCaseCountError,
+      allUsersForFormError,
     ]
   );
 
@@ -445,34 +472,32 @@ const CategoryManagement: React.FC = () => {
       archived: formData.archived,
     };
     try {
-      let successMessage = ""; // <-- Initialize success message variable
+      let successMessage = "";
       if (editingCategoryId) {
         await updateCategory(
           editingCategoryId,
           inputForMutation as UpdateCategoryInput
         );
-        successMessage = "Категорията е редактирана успешно!"; // <-- Set message for update
+        successMessage = "Категорията е редактирана успешно!";
       } else {
         await createCategory(inputForMutation as CreateCategoryInput);
-        successMessage = "Категорията е създадена успешно!"; // <-- Set message for create
+        successMessage = "Категорията е създадена успешно!";
       }
       await Promise.all([
         refetchCategoriesForTable(),
         refetchCategoryCountForTable(),
         refetchAllFilteredCategoriesForStats(),
+        refetchAllUsersForForm ? refetchAllUsersForForm() : Promise.resolve(),
       ]);
-      closeCategoryModal(); // This closes the CreateCategoryModal
-
+      closeCategoryModal();
       setSuccessModalMessage(successMessage);
       setIsSuccessModalOpen(true);
+      setUserFilterRefreshKey((prevKey) => prevKey + 1);
     } catch (err: any) {
       console.error(
         `Error during category ${editingCategoryId ? "update" : "create"}:`,
         err
       );
-      // The form itself also has a catch block, so re-throwing allows it to display the error.
-      // If you want this catch block to be the sole handler of the error UI,
-      // you might not re-throw and instead use a state to display the error here.
       throw err;
     }
   };
@@ -486,19 +511,20 @@ const CategoryManagement: React.FC = () => {
     if (!categoryToDelete) return;
     try {
       await deleteCategory(categoryToDelete._id);
-      // Consider using a toast notification library for better UX
-      // alert("Category deleted successfully!");
       setShowDeleteConfirmDialog(false);
       setCategoryToDelete(null);
       await Promise.all([
         refetchCategoriesForTable(),
         refetchCategoryCountForTable(),
         refetchAllFilteredCategoriesForStats(),
+        refetchAllUsersForForm ? refetchAllUsersForForm() : Promise.resolve(),
       ]);
+      setUserFilterRefreshKey((prevKey) => prevKey + 1);
+      setSuccessModalMessage("Категорията е изтрита успешно!");
+      setIsSuccessModalOpen(true);
     } catch (err: any) {
       console.error("Error deleting category:", err);
-      // alert(`Failed to delete category: ${err.message}`);
-      setShowDeleteConfirmDialog(false); // Close dialog even on error, or show error in dialog
+      setShowDeleteConfirmDialog(false);
       setCategoryToDelete(null);
     }
   };
@@ -508,12 +534,10 @@ const CategoryManagement: React.FC = () => {
     isCurrentlyLoadingPageData &&
     !pageDisplayError
   ) {
-    // Depending on your UI, a full page LoadingModal might be too much if skeletons are in place
-    // return <LoadingModal message={"Зареждане на страницата..."} />;
+    // Placeholder for loading state
   }
 
   if (pageDisplayError && !isCurrentlyLoadingPageData) {
-    // Show error only if not actively loading other parts
     const errorMessages = [
       categoriesListError?.message,
       categoryCountErrorForTable?.message,
@@ -524,6 +548,7 @@ const CategoryManagement: React.FC = () => {
       awaitingFinanceError?.message,
       closedError?.message,
       absoluteTotalCaseCountError?.message,
+      allUsersForFormError?.message,
     ]
       .filter(Boolean)
       .join("; ");
@@ -536,8 +561,7 @@ const CategoryManagement: React.FC = () => {
 
   const mutationInProgress =
     createCategoryLoading || updateCategoryLoading || deleteCategoryLoading;
-  const mutationError =
-    createCategoryErrorObj || updateCategoryErrorObj || deleteCategoryErrorObj;
+  const mutationError = createCategoryErrorObj || updateCategoryErrorObj;
 
   return (
     <div className="min-h-screen bg-gray-100 p-6 font-sans">
@@ -593,6 +617,7 @@ const CategoryManagement: React.FC = () => {
           setManagerIds={setFilterManagerIds}
           filterArchived={filterArchived}
           setFilterArchived={setFilterArchived}
+          refetchKey={userFilterRefreshKey}
         />
       </div>
 
@@ -610,11 +635,11 @@ const CategoryManagement: React.FC = () => {
         onPageChange={handlePageChange}
         onItemsPerPageChange={handleItemsPerPageChange}
         onEditCategory={openEditCategoryModal}
-        onDeleteCategory={triggerDeleteCategory} // Pass the new handler
+        onDeleteCategory={triggerDeleteCategory}
         currentQueryInput={currentQueryInput}
         createLoading={createCategoryLoading}
         updateLoading={updateCategoryLoading}
-        deleteLoading={deleteCategoryLoading} // Pass delete loading state
+        deleteLoading={deleteCategoryLoading}
       />
 
       <CreateCategoryModal
@@ -642,8 +667,10 @@ const CategoryManagement: React.FC = () => {
             submitButtonText={
               editingCategory ? "Запази промените" : "Създай категория"
             }
-            isSubmitting={createCategoryLoading || updateCategoryLoading} // Use the combined one without deleteLoading for form
+            isSubmitting={createCategoryLoading || updateCategoryLoading}
             onDirtyChange={setFormHasUnsavedChanges}
+            allUsersForForm={allUsersDataForForm?.getLeanUsers || []}
+            allUsersForFormLoading={allUsersForFormLoading}
           />
         )}
       </CreateCategoryModal>
@@ -666,9 +693,6 @@ const CategoryManagement: React.FC = () => {
         isOpen={isSuccessModalOpen}
         onClose={() => setIsSuccessModalOpen(false)}
         message={successModalMessage}
-        // Optional: customize title or duration
-        // title="Действието Успешно!"
-        // autoCloseDuration={3500}
       />
     </div>
   );

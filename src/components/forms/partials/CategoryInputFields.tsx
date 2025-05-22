@@ -1,17 +1,17 @@
 // src/components/forms/partials/CategoryInputFields.tsx
 import React, { useState, useRef, useEffect, useMemo } from "react";
-import { useLazyQuery } from "@apollo/client";
-import { GET_LEAN_USERS } from "../../../graphql/query/user"; // Adjust path if needed
 import { XMarkIcon } from "@heroicons/react/24/outline";
-import { IUser } from "../../../db/interfaces"; // Adjust path if needed
+// Removed IUser import as ILeanUserForForm is more specific here
 import TextEditor from "./TextEditor";
 
-interface IUserLean {
+// Define a lean user type that includes the role ID for the form, matching what parent passes
+interface ILeanUserForForm {
   _id: string;
   name: string;
+  role: { _id: string } | null; // Role can be null
 }
 
-// useDebounce function (as you provided)
+// useDebounce function (can be kept if client-side search term debouncing is still desired, though less critical now)
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
   useEffect(() => {
@@ -29,10 +29,10 @@ interface CategoryInputFieldsProps {
   name: string;
   setName: (value: string) => void;
   nameError: string | null;
-  problem: string; // This will be HTML string
-  setProblem: (value: string) => void; // Callback expects HTML string
-  suggestion: string; // This will be HTML string
-  setSuggestion: (value: string) => void; // Callback expects HTML string
+  problem: string;
+  setProblem: (value: string) => void;
+  suggestion: string;
+  setSuggestion: (value: string) => void;
   expertIds: string[];
   setExpertIds: (ids: string[]) => void;
   managerIds: string[];
@@ -40,18 +40,23 @@ interface CategoryInputFieldsProps {
   archived: boolean;
   setArchived: (isChecked: boolean) => void;
   errorPlaceholderClass: string;
-  initialExperts?: IUserLean[];
-  initialManagers?: IUserLean[];
+  initialExperts?: ILeanUserForForm[]; // Used for pre-selecting and displaying names
+  initialManagers?: ILeanUserForForm[]; // Used for pre-selecting and displaying names
+  allUsersForAssigning: ILeanUserForForm[]; // Users passed from parent
+  usersLoading: boolean; // Loading state for allUsersForAssigning
 }
+
+const EXPERT_ROLE_ID = "650000000000000000000002";
+const ADMIN_ROLE_ID = "650000000000000000000003";
 
 const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
   name,
   setName,
   nameError,
-  problem, // Expects HTML string from parent
-  setProblem, // Will be called with HTML string
-  suggestion, // Expects HTML string from parent
-  setSuggestion, // Will be called with HTML string
+  problem,
+  setProblem,
+  suggestion,
+  setSuggestion,
   expertIds,
   setExpertIds,
   managerIds,
@@ -61,32 +66,36 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
   errorPlaceholderClass,
   initialExperts = [],
   initialManagers = [],
+  allUsersForAssigning,
+  usersLoading,
 }) => {
   const t = (key: string) => key; // Placeholder for translations
 
-  // --- State & Logic for Experts Dropdown (remains the same) ---
+  // Filter allUsersForAssigning to get only those with Expert or Admin roles
+  const assignableUsers = useMemo(() => {
+    if (!allUsersForAssigning) return []; // Guard against undefined
+    return allUsersForAssigning.filter((user) => {
+      const userRoleId = user.role?._id;
+      return userRoleId === EXPERT_ROLE_ID || userRoleId === ADMIN_ROLE_ID;
+    });
+  }, [allUsersForAssigning]);
+
+  // State & Logic for Experts Dropdown
   const [isExpertDropdownVisible, setIsExpertDropdownVisible] = useState(false);
   const expertDisplayInputRef = useRef<HTMLInputElement>(null);
   const expertDropdownRef = useRef<HTMLDivElement>(null);
   const [expertSearchTerm, setExpertSearchTerm] = useState("");
-  const [serverFetchedExperts, setServerFetchedExperts] = useState<IUser[]>([]);
-  const debouncedExpertSearchTerm = useDebounce(expertSearchTerm, 300);
+  // const debouncedExpertSearchTerm = useDebounce(expertSearchTerm, 300); // Keep if needed for performance on large lists
 
-  const [fetchExperts, { loading: loadingExperts, error: expertsError }] =
-    useLazyQuery<{ getLeanUsers: IUser[] }>(GET_LEAN_USERS, {
-      onCompleted: (data) => setServerFetchedExperts(data?.getLeanUsers || []),
-      fetchPolicy: "network-only",
-    });
-
-  useEffect(() => {
-    if (isExpertDropdownVisible) {
-      const searchTermString =
-        typeof debouncedExpertSearchTerm === "string"
-          ? debouncedExpertSearchTerm
-          : "";
-      fetchExperts({ variables: { input: searchTermString } });
+  // Client-side filtering for expert dropdown from assignableUsers
+  const displayableExperts = useMemo(() => {
+    if (!expertSearchTerm.trim()) {
+      return assignableUsers; // Start with users already filtered by role
     }
-  }, [isExpertDropdownVisible, debouncedExpertSearchTerm, fetchExperts]);
+    return assignableUsers.filter((user) =>
+      user.name.toLowerCase().includes(expertSearchTerm.toLowerCase())
+    );
+  }, [assignableUsers, expertSearchTerm]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -103,25 +112,32 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Create a cache/map from allUsersForAssigning AND initialExperts/Managers for quick name lookups
+  const userNameCache = useMemo(() => {
+    const cache: Record<string, string> = {};
+    allUsersForAssigning.forEach((user) => {
+      cache[user._id] = user.name;
+    });
+    // Ensure initial experts/managers names are available if they were somehow not in allUsersForAssigning
+    // (though ideally allUsersForAssigning should be comprehensive)
+    initialExperts.forEach((user) => {
+      if (!cache[user._id] && user.name) cache[user._id] = user.name;
+    });
+    initialManagers.forEach((user) => {
+      if (!cache[user._id] && user.name) cache[user._id] = user.name;
+    });
+    return cache;
+  }, [allUsersForAssigning, initialExperts, initialManagers]);
+
   const selectedExpertNames = useMemo(() => {
-    const names: string[] = [];
-    const uniqueExpertsMap = new Map<string, string>();
-    initialExperts.forEach((expert) => {
-      if (expertIds.includes(expert._id))
-        uniqueExpertsMap.set(expert._id, expert.name);
-    });
-    serverFetchedExperts.forEach((expert) => {
-      if (expertIds.includes(expert._id) && !uniqueExpertsMap.has(expert._id))
-        uniqueExpertsMap.set(expert._id, expert.name);
-    });
-    expertIds.forEach((id) => {
-      if (uniqueExpertsMap.has(id)) names.push(uniqueExpertsMap.get(id)!);
-    });
     return (
-      names.join(", ") ||
-      (expertIds.length > 0 ? `${expertIds.length} selected` : "")
+      expertIds
+        .map((id) => userNameCache[id])
+        .filter((name) => !!name)
+        .join(", ") ||
+      (expertIds.length > 0 ? `${expertIds.length} ${t("избрани")}` : "")
     );
-  }, [expertIds, initialExperts, serverFetchedExperts]);
+  }, [expertIds, userNameCache, t]);
 
   const handleExpertToggle = (userId: string) =>
     setExpertIds(
@@ -130,42 +146,22 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
         : [...expertIds, userId]
     );
 
-  const combinedExpertsList = useMemo(() => {
-    const map = new Map<string, IUserLean | IUser>();
-    initialExperts.forEach((u) => map.set(u._id, u));
-    serverFetchedExperts.forEach((u) => {
-      if (!map.has(u._id)) map.set(u._id, u);
-    });
-    return Array.from(map.values());
-  }, [initialExperts, serverFetchedExperts]);
-  // --- End Experts Dropdown ---
-
-  // --- State & Logic for Managers Dropdown (remains the same) ---
+  // State & Logic for Managers Dropdown
   const [isManagerDropdownVisible, setIsManagerDropdownVisible] =
     useState(false);
   const managerDisplayInputRef = useRef<HTMLInputElement>(null);
   const managerDropdownRef = useRef<HTMLDivElement>(null);
   const [managerSearchTerm, setManagerSearchTerm] = useState("");
-  const [serverFetchedManagers, setServerFetchedManagers] = useState<IUser[]>(
-    []
-  );
-  const debouncedManagerSearchTerm = useDebounce(managerSearchTerm, 300);
+  // const debouncedManagerSearchTerm = useDebounce(managerSearchTerm, 300);
 
-  const [fetchManagers, { loading: loadingManagers, error: managersError }] =
-    useLazyQuery<{ getLeanUsers: IUser[] }>(GET_LEAN_USERS, {
-      onCompleted: (data) => setServerFetchedManagers(data?.getLeanUsers || []),
-      fetchPolicy: "network-only",
-    });
-
-  useEffect(() => {
-    if (isManagerDropdownVisible) {
-      const searchTermString =
-        typeof debouncedManagerSearchTerm === "string"
-          ? debouncedManagerSearchTerm
-          : "";
-      fetchManagers({ variables: { input: searchTermString } });
+  const displayableManagers = useMemo(() => {
+    if (!managerSearchTerm.trim()) {
+      return assignableUsers;
     }
-  }, [isManagerDropdownVisible, debouncedManagerSearchTerm, fetchManagers]);
+    return assignableUsers.filter((user) =>
+      user.name.toLowerCase().includes(managerSearchTerm.toLowerCase())
+    );
+  }, [assignableUsers, managerSearchTerm]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -183,27 +179,14 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
   }, []);
 
   const selectedManagerNames = useMemo(() => {
-    const names: string[] = [];
-    const uniqueManagersMap = new Map<string, string>();
-    initialManagers.forEach((manager) => {
-      if (managerIds.includes(manager._id))
-        uniqueManagersMap.set(manager._id, manager.name);
-    });
-    serverFetchedManagers.forEach((manager) => {
-      if (
-        managerIds.includes(manager._id) &&
-        !uniqueManagersMap.has(manager._id)
-      )
-        uniqueManagersMap.set(manager._id, manager.name);
-    });
-    managerIds.forEach((id) => {
-      if (uniqueManagersMap.has(id)) names.push(uniqueManagersMap.get(id)!);
-    });
     return (
-      names.join(", ") ||
-      (managerIds.length > 0 ? `${managerIds.length} selected` : "")
+      managerIds
+        .map((id) => userNameCache[id])
+        .filter((name) => !!name)
+        .join(", ") ||
+      (managerIds.length > 0 ? `${managerIds.length} ${t("избрани")}` : "")
     );
-  }, [managerIds, initialManagers, serverFetchedManagers]);
+  }, [managerIds, userNameCache, t]);
 
   const handleManagerToggle = (userId: string) =>
     setManagerIds(
@@ -212,20 +195,9 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
         : [...managerIds, userId]
     );
 
-  const combinedManagersList = useMemo(() => {
-    const map = new Map<string, IUserLean | IUser>();
-    initialManagers.forEach((u) => map.set(u._id, u));
-    serverFetchedManagers.forEach((u) => {
-      if (!map.has(u._id)) map.set(u._id, u);
-    });
-    return Array.from(map.values());
-  }, [initialManagers, serverFetchedManagers]);
-  // --- End Managers Dropdown ---
-
   return (
     <>
       {/* Row 1: Name | Archived */}
-      {/* Name Input */}
       <div>
         <label
           htmlFor="categoryName"
@@ -252,7 +224,6 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
         </p>
       </div>
 
-      {/* Archived Checkbox */}
       <div>
         <label className="mb-1 block text-sm font-medium text-transparent select-none">
           &nbsp;
@@ -275,8 +246,7 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
         <p className={`${errorPlaceholderClass}`}>&nbsp;</p>
       </div>
 
-      {/* Row 2: Experts | Managers (remains the same) */}
-      {/* Experts Filter */}
+      {/* Row 2: Experts | Managers */}
       <div className="relative">
         <label
           htmlFor="filterExpertsDisplayForm"
@@ -337,28 +307,20 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
                 )}
               </div>
             </div>
-            {loadingExperts && combinedExpertsList.length === 0 ? (
+            {usersLoading ? ( // Check the loading state from props
               <div className="px-3 py-2 text-sm text-gray-500">
                 {t("Зареждане...")}
               </div>
-            ) : expertsError ? (
-              <div className="px-3 py-2 text-sm text-red-600">
-                {t("Грешка")}: {expertsError.message}
-              </div>
-            ) : combinedExpertsList.length === 0 &&
-              !expertSearchTerm &&
-              !loadingExperts ? (
+            ) : displayableExperts.length === 0 ? (
               <div className="px-3 py-2 text-sm text-gray-500">
-                {t("Няма намерени потребители. Започнете да търсите.")}
-              </div>
-            ) : combinedExpertsList.length === 0 &&
-              expertSearchTerm &&
-              !loadingExperts ? (
-              <div className="px-3 py-2 text-sm text-gray-500">
-                {t("Няма намерени потребители за търсенето.")}
+                {t(
+                  expertSearchTerm
+                    ? "Няма намерени потребители за търсенето."
+                    : "Няма налични потребители с роля Експерт/Админ."
+                )}
               </div>
             ) : (
-              combinedExpertsList.map((user) => (
+              displayableExperts.map((user) => (
                 <label
                   key={user._id}
                   className="flex items-center px-3 py-2 cursor-pointer hover:bg-indigo-50"
@@ -380,7 +342,6 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
         <p className={`${errorPlaceholderClass}`}>&nbsp;</p>
       </div>
 
-      {/* Managers Filter (remains the same) */}
       <div className="relative">
         <label
           htmlFor="filterManagersDisplayForm"
@@ -441,28 +402,20 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
                 )}
               </div>
             </div>
-            {loadingManagers && combinedManagersList.length === 0 ? (
+            {usersLoading ? ( // Check the loading state from props
               <div className="px-3 py-2 text-sm text-gray-500">
                 {t("Зареждане...")}
               </div>
-            ) : managersError ? (
-              <div className="px-3 py-2 text-sm text-red-600">
-                {t("Грешка")}: {managersError.message}
-              </div>
-            ) : combinedManagersList.length === 0 &&
-              !managerSearchTerm &&
-              !loadingManagers ? (
+            ) : displayableManagers.length === 0 ? (
               <div className="px-3 py-2 text-sm text-gray-500">
-                {t("Няма намерени потребители. Започнете да търсите.")}
-              </div>
-            ) : combinedManagersList.length === 0 &&
-              managerSearchTerm &&
-              !loadingManagers ? (
-              <div className="px-3 py-2 text-sm text-gray-500">
-                {t("Няма намерени потребители за търсенето.")}
+                {t(
+                  managerSearchTerm
+                    ? "Няма намерени потребители за търсенето."
+                    : "Няма налични потребители с роля Експерт/Админ."
+                )}
               </div>
             ) : (
-              combinedManagersList.map((user) => (
+              displayableManagers.map((user) => (
                 <label
                   key={user._id}
                   className="flex items-center px-3 py-2 cursor-pointer hover:bg-indigo-50"
@@ -484,8 +437,7 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
         <p className={`${errorPlaceholderClass}`}>&nbsp;</p>
       </div>
 
-      {/* Row 3: Problem | Suggestion - REPLACED WITH TextEditor */}
-      {/* Problem TextEditor */}
+      {/* Row 3: Problem | Suggestion - Using TextEditor */}
       <div>
         <label
           htmlFor="categoryProblem"
@@ -494,17 +446,15 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
           {t("Проблем")}
         </label>
         <TextEditor
-          content={problem} // Pass existing HTML string
-          onUpdate={(html) => setProblem(html)} // Update state with new HTML
+          content={problem}
+          onUpdate={(html) => setProblem(html)}
           placeholder={t("Опишете проблема...")}
-          minHeight="120px" // Example height, adjust as needed
-          maxHeight="120px" // You can pass other props like wrapperClassName, editorClassName if needed
+          minHeight="120px"
+          maxHeight="120px"
         />
-        <p className={`${errorPlaceholderClass}`}>&nbsp;</p>{" "}
-        {/* For consistent spacing if you had errors */}
+        <p className={`${errorPlaceholderClass}`}>&nbsp;</p>
       </div>
 
-      {/* Suggestion TextEditor */}
       <div>
         <label
           htmlFor="categorySuggestion"
@@ -517,10 +467,9 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
           onUpdate={(html) => setSuggestion(html)}
           placeholder={t("Напишете предложение...")}
           minHeight="120px"
-          maxHeight="120px" // Content will scroll if it exceeds 300px
+          maxHeight="120px"
         />
-        <p className={`${errorPlaceholderClass}`}>&nbsp;</p>{" "}
-        {/* For consistent spacing */}
+        <p className={`${errorPlaceholderClass}`}>&nbsp;</p>
       </div>
     </>
   );

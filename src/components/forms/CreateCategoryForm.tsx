@@ -13,16 +13,24 @@ export interface CategoryFormData {
   archived?: boolean;
 }
 
+interface ILeanUserForForm {
+  _id: string;
+  name: string;
+  role: { _id: string } | null;
+}
+
 interface CreateCategoryFormProps {
   onSubmit: (
-    formData: CategoryFormData, // This is what the form itself produces
+    formData: CategoryFormData,
     editingCategoryId: string | null
   ) => Promise<void>;
   onClose: () => void;
   initialData: ICategory | null;
   submitButtonText?: string;
   isSubmitting?: boolean;
-  onDirtyChange?: (isDirty: boolean) => void; // For parent to know about unsaved changes
+  onDirtyChange?: (isDirty: boolean) => void;
+  allUsersForForm: ILeanUserForForm[];
+  allUsersForFormLoading: boolean;
 }
 
 const CreateCategoryForm: React.FC<CreateCategoryFormProps> = ({
@@ -32,6 +40,8 @@ const CreateCategoryForm: React.FC<CreateCategoryFormProps> = ({
   submitButtonText,
   isSubmitting = false,
   onDirtyChange,
+  allUsersForForm,
+  allUsersForFormLoading,
 }) => {
   const {
     name,
@@ -48,9 +58,8 @@ const CreateCategoryForm: React.FC<CreateCategoryFormProps> = ({
     setArchived,
     nameError,
     setNameError,
-    // isDirty, // We don't need to use isDirty directly here, it's handled by onDirtyChange prop
-    initialExpertObjects, // Pass this to CategoryInputFields
-    initialManagerObjects, // Pass this to CategoryInputFields
+    initialExpertObjects, // These are ILeanUser in useCreateCategoryFormState
+    initialManagerObjects, // These are ILeanUser in useCreateCategoryFormState
   } = useCreateCategoryFormState({ initialData, onDirtyChange });
 
   const [formSubmitError, setFormSubmitError] = useState<string | null>(null);
@@ -63,7 +72,6 @@ const CreateCategoryForm: React.FC<CreateCategoryFormProps> = ({
     const finalTrimmedName = name.trim();
     if (!finalTrimmedName) {
       setNameError("Името на категорията е задължително.");
-      // setFormSubmitError("Моля, коригирайте грешките във формата."); // Redundant if nameError is shown
       return;
     }
 
@@ -78,7 +86,6 @@ const CreateCategoryForm: React.FC<CreateCategoryFormProps> = ({
 
     try {
       await onSubmit(formDataObject, initialData?._id || null);
-      // onClose will be called by parent (CategoryManagement) upon successful submission
     } catch (error: any) {
       console.error("Error submitting category form:", error);
       setFormSubmitError(error.message || "Възникна грешка при запис.");
@@ -86,6 +93,14 @@ const CreateCategoryForm: React.FC<CreateCategoryFormProps> = ({
   };
 
   const errorPlaceholderClass = "mt-1 text-xs min-h-[1.2em]";
+
+  if (allUsersForFormLoading) {
+    return (
+      <div className="p-4 text-center">
+        Зареждане на потребители за форма...
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit} noValidate>
@@ -105,8 +120,10 @@ const CreateCategoryForm: React.FC<CreateCategoryFormProps> = ({
           archived={archived}
           setArchived={setArchived}
           errorPlaceholderClass={errorPlaceholderClass}
-          initialExperts={initialExpertObjects as IUser[]} // Pass down initial objects
-          initialManagers={initialManagerObjects as IUser[]} // Pass down initial objects
+          initialExperts={initialExpertObjects as ILeanUserForForm[]} // Cast to match expected type in CategoryInputFields
+          initialManagers={initialManagerObjects as ILeanUserForForm[]} // Cast to match
+          allUsersForAssigning={allUsersForForm}
+          usersLoading={allUsersForFormLoading}
         />
       </div>
 
@@ -119,7 +136,7 @@ const CreateCategoryForm: React.FC<CreateCategoryFormProps> = ({
       <div className="mt-8 text-center">
         <button
           type="submit"
-          disabled={isSubmitting}
+          disabled={isSubmitting || allUsersForFormLoading}
           className="rounded-md bg-green-600 px-8 py-2 text-sm font-semibold text-white shadow-sm hover:cursor-pointer hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isSubmitting
@@ -127,11 +144,8 @@ const CreateCategoryForm: React.FC<CreateCategoryFormProps> = ({
             : submitButtonText ||
               (initialData ? "Запази промените" : "Създай категория")}
         </button>
-        {/* Optional: Add a cancel button that calls onClose and respects unsaved changes via modal */}
-        {/* <button type="button" onClick={onClose} className="ml-4 ...">Отказ</button> */}
       </div>
     </form>
   );
 };
-
 export default CreateCategoryForm;

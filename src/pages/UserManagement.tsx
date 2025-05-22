@@ -23,6 +23,7 @@ import CreateUserModal from "../components/modals/CreateUserModal"; // Adjust pa
 import CreateUserForm from "../components/forms/CreateUserForm"; // Adjust path
 import LoadingModal from "../components/modals/LoadingModal"; // Adjust path
 import ConfirmActionDialog from "../components/modals/ConfirmActionDialog";
+import SuccessConfirmationModal from "../components/modals/SuccessConfirmationModal";
 
 // Page-Specific Imports
 import UserStats from "../components/features/userManagement/UserStats";
@@ -61,6 +62,9 @@ const UserManagement: React.FC = () => {
   // State for delete confirmation
   const [showUserDeleteConfirm, setShowUserDeleteConfirm] = useState(false);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
+
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  const [successModalMessage, setSuccessModalMessage] = useState("");
 
   const serverBaseUrl = import.meta.env.VITE_API_URL || "";
 
@@ -239,10 +243,13 @@ const UserManagement: React.FC = () => {
 
     const context = editingUser ? "редактиране" : "създаване";
     try {
+      let successMessage = ""; // <-- Initialize success message variable
       if (editingUserId) {
         await updateUser(editingUserId, finalInput as UpdateUserInput);
+        successMessage = "Потребителят е редактиран успешно!"; // <-- Set message for update
       } else {
         await createUser(finalInput as CreateUserInput);
+        successMessage = "Потребителят е създаден успешно!"; // <-- Set message for create
       }
       await Promise.all([
         refetchUsers(),
@@ -250,13 +257,19 @@ const UserManagement: React.FC = () => {
         refetchRoles ? refetchRoles() : Promise.resolve(),
       ]);
       setAvatarVersion(Date.now());
-      closeModal();
+      closeModal(); // This closes the CreateUserModal
+
+      // --- SHOW SUCCESS MODAL ---
+      setSuccessModalMessage(successMessage);
+      setIsSuccessModalOpen(true);
+      // --- END OF SHOW SUCCESS MODAL ---
     } catch (err: any) {
       console.error(`Error during user ${context}:`, err);
       const graphQLError = err.graphQLErrors?.[0]?.message;
       const networkError = err.networkError?.message;
       const message =
         graphQLError || networkError || err.message || "Неизвестна грешка";
+      // Consider replacing alert with a more integrated error display if not already planned
       alert(`Грешка при ${context}: ${message}`);
     }
   };
@@ -467,6 +480,15 @@ const UserManagement: React.FC = () => {
         }
         confirmButtonText="Изтрий потребител"
         isDestructiveAction={true}
+      />
+
+      <SuccessConfirmationModal
+        isOpen={isSuccessModalOpen}
+        onClose={() => setIsSuccessModalOpen(false)}
+        message={successModalMessage}
+        // You can customize title and autoCloseDuration if needed
+        // title="Операцията Успешна!"
+        // autoCloseDuration={3000}
       />
     </div>
   );

@@ -28,6 +28,7 @@ import CreateCategoryForm, {
 } from "../components/forms/CreateCategoryForm"; // Adjust path as needed
 import CategoryStats from "../components/features/categoryManagement/CategoryStats"; // Adjust path as needed
 import ConfirmActionDialog from "../components/modals/ConfirmActionDialog"; // Import the new dialog
+import SuccessConfirmationModal from "../components/modals/SuccessConfirmationModal";
 
 const CategoryManagement: React.FC = () => {
   const {
@@ -62,6 +63,9 @@ const CategoryManagement: React.FC = () => {
   const [categoryToDelete, setCategoryToDelete] = useState<ICategory | null>(
     null
   );
+
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  const [successModalMessage, setSuccessModalMessage] = useState("");
 
   const categoryFiltersWithoutPagination = useMemo((): Omit<
     CategoryQueryApiParams,
@@ -441,27 +445,34 @@ const CategoryManagement: React.FC = () => {
       archived: formData.archived,
     };
     try {
+      let successMessage = ""; // <-- Initialize success message variable
       if (editingCategoryId) {
         await updateCategory(
           editingCategoryId,
           inputForMutation as UpdateCategoryInput
         );
+        successMessage = "Категорията е редактирана успешно!"; // <-- Set message for update
       } else {
         await createCategory(inputForMutation as CreateCategoryInput);
+        successMessage = "Категорията е създадена успешно!"; // <-- Set message for create
       }
       await Promise.all([
         refetchCategoriesForTable(),
         refetchCategoryCountForTable(),
         refetchAllFilteredCategoriesForStats(),
       ]);
-      closeCategoryModal();
+      closeCategoryModal(); // This closes the CreateCategoryModal
+
+      setSuccessModalMessage(successMessage);
+      setIsSuccessModalOpen(true);
     } catch (err: any) {
       console.error(
         `Error during category ${editingCategoryId ? "update" : "create"}:`,
         err
       );
-      // It's often better to let the form handle displaying this error if it has a try/catch
-      // alert(`Error: ${err.message}`);
+      // The form itself also has a catch block, so re-throwing allows it to display the error.
+      // If you want this catch block to be the sole handler of the error UI,
+      // you might not re-throw and instead use a state to display the error here.
       throw err;
     }
   };
@@ -649,6 +660,15 @@ const CategoryManagement: React.FC = () => {
         }
         confirmButtonText="Изтрий"
         isDestructiveAction={true}
+      />
+
+      <SuccessConfirmationModal
+        isOpen={isSuccessModalOpen}
+        onClose={() => setIsSuccessModalOpen(false)}
+        message={successModalMessage}
+        // Optional: customize title or duration
+        // title="Действието Успешно!"
+        // autoCloseDuration={3500}
       />
     </div>
   );

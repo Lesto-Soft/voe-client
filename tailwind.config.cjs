@@ -9,6 +9,14 @@ export default {
           from: { opacity: "0" },
           to: { opacity: "1" },
         },
+        overlayHide: {
+          from: { opacity: "1" },
+          to: { opacity: "0" },
+        },
+        contentHide: {
+          from: { opacity: "1", transform: "translate(-50%, -50%) scale(1)" },
+          to: { opacity: "0", transform: "translate(-50%, -48%) scale(0.96)" },
+        },
         contentShow: {
           from: {
             opacity: "0",
@@ -18,8 +26,10 @@ export default {
         },
       },
       animation: {
-        overlayShow: "overlayShow 150ms cubic-bezier(0.16, 1, 0.3, 1)",
-        contentShow: "contentShow 150ms cubic-bezier(0.16, 1, 0.3, 1)",
+        overlayShow: "overlayShow 250ms cubic-bezier(0.16, 1, 0.3, 1)",
+        overlayHide: "overlayHide 250ms cubic-bezier(0.16, 1, 0.3, 1)",
+        contentShow: "contentShow 250ms cubic-bezier(0.16, 1, 0.3, 1)",
+        contentHide: "contentHide 250ms cubic-bezier(0.16, 1, 0.3, 1)",
       },
     },
   },

@@ -13,6 +13,7 @@ import { ChevronDownIcon, XMarkIcon } from "@heroicons/react/24/outline";
 interface ILeanUser {
   _id: string;
   name: string;
+  username: string;
   role: { _id: string } | null;
   managed_categories: { _id: string }[] | null;
   expert_categories: { _id: string }[] | null;
@@ -435,8 +436,11 @@ const CategorySearchBar: React.FC<CategorySearchBarProps> = ({
                       onChange={() => handleExpertToggle(user)} // Pass the function reference
                       className="form-checkbox h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
                     />
-                    <span className="ml-2 text-sm text-gray-800">
-                      {user.name}
+                    <span className="ml-2 text-sm flex justify-between items-center w-full">
+                      <span className="text-gray-800">{user.name}</span>{" "}
+                      <span className="font-semibold text-gray-500">
+                        {user.username}
+                      </span>{" "}
                     </span>
                   </label>
                 ))
@@ -559,8 +563,11 @@ const CategorySearchBar: React.FC<CategorySearchBarProps> = ({
                       onChange={() => handleManagerToggle(user)} // Pass the function reference
                       className="form-checkbox h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
                     />
-                    <span className="ml-2 text-sm text-gray-800">
-                      {user.name}
+                    <span className="ml-2 text-sm flex justify-between items-center w-full">
+                      <span className="text-gray-800">{user.name}</span>{" "}
+                      <span className="font-semibold text-gray-500">
+                        {user.username}
+                      </span>{" "}
                     </span>
                   </label>
                 ))

@@ -36,6 +36,7 @@ import { GET_LEAN_USERS } from "../graphql/query/user"; // Adjust path for GET_L
 interface ILeanUserForForm {
   _id: string;
   name: string;
+  username: string;
   role: { _id: string } | null;
   // We don't need expert_categories or managed_categories for the form's assignable users list,
   // only for the filters. The form filters by role ID.

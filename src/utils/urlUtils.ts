@@ -20,9 +20,12 @@ export function getUrlParams(params: URLSearchParams): UrlParamsInput {
     ? roleIdsParam.split(",").filter(Boolean)
     : undefined;
 
-  // --- ADDED: Parse financial_approver from URL ---
-  const financialApproverParam = params.get("financial_approver"); // Read the 'financial_approver' URL param
-  const financial = financialApproverParam === "true"; // Convert to boolean for React state
+  const financialApproverParam = params.get("financial_approver");
+  const financial = financialApproverParam === "true";
+
+  // --- ADDED: Parse is_manager from URL ---
+  const managerParam = params.get("is_manager"); // Read the 'is_manager' URL param
+  const manager = managerParam === "true"; // Convert to boolean for React state
 
   const parsed: UrlParamsInput = { page, perPage };
   if (name) parsed.name = name;
@@ -30,9 +33,8 @@ export function getUrlParams(params: URLSearchParams): UrlParamsInput {
   if (position) parsed.position = position;
   if (email) parsed.email = email;
   if (roleIds) parsed.roleIds = roleIds;
-  // --- ADDED: Assign parsed financial boolean ---
-  // The UrlParamsInput type expects a 'financial' key (from UserFiltersState)
-  parsed.financial = financial;
+  parsed.financial = financial; // The UrlParamsInput type expects a 'financial' key
+  parsed.manager = manager; // <-- ADDED: Assign parsed manager boolean
 
   return parsed;
 }
@@ -44,7 +46,7 @@ export function getUrlParams(params: URLSearchParams): UrlParamsInput {
  */
 export function setUrlParams(
   params: URLSearchParams,
-  state: StateForUrl // StateForUrl now has financial_approver?: string
+  state: StateForUrl // StateForUrl now has financial_approver?: string and is_manager?: string
 ): void {
   params.set("page", String(state.currentPage));
   params.set("perPage", String(state.itemsPerPage));
@@ -68,11 +70,17 @@ export function setUrlParams(
     params.delete("roleIds");
   }
 
-  // --- ADDED: Set financial_approver URL parameter ---
-  // 'state.financial_approver' comes from 'createStateForUrl' and is 'true' or undefined
   if (state.financial_approver === "true") {
     params.set("financial_approver", "true");
   } else {
-    params.delete("financial_approver"); // Remove param if not 'true' (i.e., if it's undefined)
+    params.delete("financial_approver");
+  }
+
+  // --- ADDED: Set is_manager URL parameter ---
+  // 'state.is_manager' comes from 'createStateForUrl' and is 'true' or undefined
+  if (state.is_manager === "true") {
+    params.set("is_manager", "true");
+  } else {
+    params.delete("is_manager"); // Remove param if not 'true' (i.e., if it's undefined)
   }
 }

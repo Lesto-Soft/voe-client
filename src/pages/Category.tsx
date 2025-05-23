@@ -1,5 +1,5 @@
 // src/pages/Category.tsx (or your preferred path)
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router"; // Ensure this is react-router-dom
 import { ICategory, ICase, IUser } from "../db/interfaces"; // Actual import path
 
@@ -14,29 +14,77 @@ import {
   XCircleIcon,
   InboxIcon,
   DocumentTextIcon,
+  ArrowDownCircleIcon,
 } from "@heroicons/react/24/outline";
+import { FlagIcon } from "@heroicons/react/24/solid"; // Added FlagIcon
 import { useGetCategoryById } from "../graphql/hooks/category"; // Actual import path
+
+// Import custom Link components
+import UserLink from "../components/global/UserLink";
+import CaseLink from "../components/global/CaseLink";
+
+const INITIAL_VISIBLE_CASES = 10;
+
+// Mock t function for CaseLink, replace with your actual i18n setup if available
+const t = (key: string, options?: any) => {
+  if (key === "details_for" && options?.caseId) {
+    return `Детайли за ${options.caseId}`;
+  }
+  return key;
+};
+
+// Style helper functions (can be moved to a separate file and imported)
+const getStatusStyle = (status: string) => {
+  switch (status.toUpperCase()) {
+    case "OPEN":
+      return { dotBgColor: "bg-green-500", textColor: "text-green-700" };
+    case "CLOSED":
+      return { dotBgColor: "bg-gray-400", textColor: "text-gray-600" };
+    case "IN_PROGRESS":
+      return { dotBgColor: "bg-yellow-500", textColor: "text-yellow-700" };
+    case "AWAITING_FINANCE":
+      return { dotBgColor: "bg-blue-500", textColor: "text-blue-700" };
+    default:
+      return { dotBgColor: "bg-gray-400", textColor: "text-gray-500" };
+  }
+};
+
+const getPriorityStyle = (priority: string) => {
+  switch (priority.toUpperCase()) {
+    case "LOW":
+      return "text-green-600";
+    case "HIGH":
+      return "text-red-600";
+    case "MEDIUM":
+      return "text-yellow-600";
+    default:
+      return "text-gray-500";
+  }
+};
 
 const Category: React.FC = () => {
   const { id: categoryIdFromParams } = useParams<{ id: string }>();
   const { loading, error, category } = useGetCategoryById(categoryIdFromParams);
+
+  const [visibleCasesCount, setVisibleCasesCount] = useState(
+    INITIAL_VISIBLE_CASES
+  );
+
+  useEffect(() => {
+    setVisibleCasesCount(INITIAL_VISIBLE_CASES);
+  }, [categoryIdFromParams]);
 
   useEffect(() => {
     if (!loading && categoryIdFromParams) {
       if (error) {
         console.error("CategoryPage - Error from hook:", error);
       }
-      // Silenced other logs for brevity, uncomment if needed during debugging
-      // if (!error && !category) {
-      //   console.warn(
-      //     `CategoryPage - Category with ID "${categoryIdFromParams}" not found or hook returned no data.`
-      //   );
-      // }
     }
   }, [loading, categoryIdFromParams, category, error]);
 
   const signalStats = useMemo(() => {
     if (!category || !category.cases) {
+      // This check is fine within useMemo as it affects the memoized value, not hook order
       return {
         totalSignals: 0,
         openSignals: 0,
@@ -49,16 +97,16 @@ const Category: React.FC = () => {
     const totalSignals = category.cases.length;
     const openSignals = category.cases.filter(
       (c: ICase) =>
-        c.status === "OPEN" ||
-        c.status === "IN_PROGRESS" ||
-        c.status === "AWAITING_FINANCE"
+        String(c.status).toUpperCase() === "OPEN" ||
+        String(c.status).toUpperCase() === "IN_PROGRESS" ||
+        String(c.status).toUpperCase() === "AWAITING_FINANCE"
     ).length;
     const closedSignals = category.cases.filter(
-      (c: ICase) => c.status === "CLOSED"
+      (c: ICase) => String(c.status).toUpperCase() === "CLOSED"
     ).length;
 
     const statusCounts = category.cases.reduce((acc, currCase) => {
-      const statusKey = String(currCase.status);
+      const statusKey = String(currCase.status).toUpperCase();
       acc[statusKey] = (acc[statusKey] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
@@ -92,13 +140,55 @@ const Category: React.FC = () => {
     };
   }, [category]);
 
-  // Common wrapper for loading/error/not-found states to ensure they also respect the calculated height
+  // Calculate totalPieValue based on signalStats. It must be defined before pieChartPaths.
+  const totalPieValue = signalStats.pieChartData.reduce(
+    (sum, segment) => sum + segment.value,
+    0
+  );
+
+  // Memoize the pie chart path elements. Moved BEFORE early returns.
+  const pieChartPaths = useMemo(() => {
+    if (!signalStats.pieChartData.length || totalPieValue === 0) {
+      return null;
+    }
+    let accumulatedPercentage = 0;
+    return signalStats.pieChartData.map((segment, index) => {
+      const percentage = (segment.value / totalPieValue) * 100;
+      if (percentage === 0) return null;
+
+      const startAngleDegrees = (accumulatedPercentage / 100) * 360;
+      let endAngleDegrees = ((accumulatedPercentage + percentage) / 100) * 360;
+      if (percentage === 100 && startAngleDegrees === 0)
+        endAngleDegrees = 359.999;
+
+      accumulatedPercentage += percentage;
+
+      const radius = 45;
+      const centerX = 50;
+      const centerY = 50;
+
+      const startAngleRad = (startAngleDegrees - 90) * (Math.PI / 180);
+      const endAngleRad = (endAngleDegrees - 90) * (Math.PI / 180);
+
+      const x1 = centerX + radius * Math.cos(startAngleRad);
+      const y1 = centerY + radius * Math.sin(startAngleRad);
+      const x2 = centerX + radius * Math.cos(endAngleRad);
+      const y2 = centerY + radius * Math.sin(endAngleRad);
+
+      const largeArcFlag = percentage > 50 ? 1 : 0;
+
+      const pathData = `M ${centerX},${centerY} L ${x1},${y1} A ${radius},${radius} 0 ${largeArcFlag},1 ${x2},${y2} Z`;
+
+      return (
+        <path key={`pie-segment-${index}`} d={pathData} fill={segment.color} />
+      );
+    });
+  }, [signalStats.pieChartData, totalPieValue]);
+
   const PageStatusWrapper: React.FC<{ children: React.ReactNode }> = ({
     children,
   }) => (
     <div className="flex items-center justify-center h-[calc(100vh-6rem)]">
-      {" "}
-      {/* Takes full calculated height */}
       {children}
     </div>
   );
@@ -145,6 +235,7 @@ const Category: React.FC = () => {
     );
   }
 
+  // Helper functions are defined after early returns, which is fine as they are not hooks
   const formatDate = (dateString?: string) => {
     if (!dateString) return "N/A";
     try {
@@ -160,7 +251,7 @@ const Category: React.FC = () => {
     }
   };
 
-  const formatPriority = (priority: string) => {
+  const translatePriority = (priority: string) => {
     const map: Record<string, string> = {
       LOW: "Нисък",
       MEDIUM: "Среден",
@@ -169,28 +260,28 @@ const Category: React.FC = () => {
     return map[priority.toUpperCase()] || priority;
   };
 
-  const formatStatus = (status: string | any) => {
-    const statusString = String(status);
+  const translateStatus = (status: string | any) => {
+    const statusString = String(status).toUpperCase();
     const map: Record<string, string> = {
       OPEN: "Отворен",
       IN_PROGRESS: "В процес",
       AWAITING_FINANCE: "Чака финанси",
       CLOSED: "Затворен",
     };
-    return map[statusString.toUpperCase()] || statusString;
+    return map[statusString] || statusString;
   };
 
-  const totalPieValue = signalStats.pieChartData.reduce(
-    (sum, segment) => sum + segment.value,
-    0
-  );
+  const handleLoadMoreCases = () => {
+    setVisibleCasesCount((prevCount) => prevCount + 10);
+  };
+
+  const currentlyVisibleCases = category.cases
+    ? category.cases.slice(0, visibleCasesCount)
+    : [];
 
   return (
-    // The outermost div of this component now has a calculated height.
     <div className="container mx-auto p-4 sm:p-6 bg-gray-50 flex flex-col h-[calc(100vh-6rem)]">
       <header className="bg-white shadow-md rounded-lg p-4 sm:p-6 mb-6">
-        {" "}
-        {/* This header takes its natural height */}
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">
           {category.name.toUpperCase()}
         </h1>
@@ -201,9 +292,7 @@ const Category: React.FC = () => {
         )}
       </header>
 
-      {/* This grid container will take the remaining vertical space due to flex-1 */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 overflow-hidden">
-        {/* Left Panel: Category Details */}
         <aside className="lg:col-span-3 bg-white rounded-lg shadow-lg flex flex-col overflow-hidden">
           <div className="p-6 space-y-6 overflow-y-auto flex-1">
             <div>
@@ -212,13 +301,10 @@ const Category: React.FC = () => {
                 Експерти
               </h3>
               {category.experts && category.experts.length > 0 ? (
-                <ul className="space-y-1 text-sm text-gray-600">
+                <ul className="space-y-2 text-sm text-gray-600">
                   {category.experts.map((expert: IUser) => (
-                    <li
-                      key={expert._id}
-                      className="p-1 hover:bg-indigo-50 rounded"
-                    >
-                      - {expert.name}
+                    <li key={expert._id}>
+                      <UserLink user={expert} type="table" />
                     </li>
                   ))}
                 </ul>
@@ -233,7 +319,7 @@ const Category: React.FC = () => {
               </h3>
               {category.suggestion ? (
                 <div
-                  className="text-sm text-gray-600 leading-relaxed prose prose-sm max-w-none" // Added prose classes for basic HTML styling
+                  className="text-sm text-gray-600 leading-relaxed prose prose-sm max-w-none"
                   dangerouslySetInnerHTML={{ __html: category.suggestion }}
                 />
               ) : (
@@ -247,7 +333,7 @@ const Category: React.FC = () => {
               </h3>
               {category.problem ? (
                 <div
-                  className="text-sm text-gray-600 leading-relaxed prose prose-sm max-w-none" // Added prose classes for basic HTML styling
+                  className="text-sm text-gray-600 leading-relaxed prose prose-sm max-w-none"
                   dangerouslySetInnerHTML={{ __html: category.problem }}
                 />
               ) : (
@@ -257,78 +343,100 @@ const Category: React.FC = () => {
           </div>
         </aside>
 
-        {/* Middle Panel: Signals List */}
         <main className="lg:col-span-6 bg-white rounded-lg shadow-lg flex flex-col overflow-hidden">
           <div className="overflow-y-auto flex-1">
             {category.cases && category.cases.length > 0 ? (
-              <ul className="divide-y divide-gray-200">
-                {category.cases.map((caseItem) => (
-                  <li
-                    key={caseItem._id}
-                    className="p-4 hover:bg-gray-50 transition-colors duration-150"
-                  >
-                    <div className="flex items-start space-x-3">
-                      <div
-                        className="flex-shrink-0 h-10 w-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm font-semibold"
-                        title={caseItem.creator.name}
+              <>
+                <ul className="divide-y divide-gray-200">
+                  {currentlyVisibleCases.map((caseItem) => {
+                    const statusStyle = getStatusStyle(String(caseItem.status));
+                    const priorityStyle = getPriorityStyle(
+                      String(caseItem.priority)
+                    );
+                    return (
+                      <li
+                        key={caseItem._id}
+                        className="p-4 hover:bg-gray-50 transition-colors duration-150"
                       >
-                        {caseItem.creator.avatar ? (
-                          <img
-                            src={caseItem.creator.avatar} // Ensure this path is correct or handle errors
-                            alt={caseItem.creator.name}
-                            className="h-full w-full rounded-full object-cover"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).style.display =
-                                "none"; /* Or show fallback */
-                            }}
-                          />
-                        ) : (
-                          caseItem.creator.name.substring(0, 1).toUpperCase()
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex justify-between items-start mb-1">
-                          <p
-                            className="text-base font-semibold text-indigo-700 hover:text-indigo-800 truncate"
-                            title={`Сигнал #${caseItem.case_number}`}
+                        <div className="flex items-start space-x-3">
+                          <div
+                            className="flex-shrink-0 h-10 w-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm font-semibold"
+                            title={caseItem.creator.name}
                           >
-                            Сигнал #{caseItem.case_number}
-                          </p>
-                          <p className="text-xs text-gray-500 whitespace-nowrap pl-2">
-                            {formatDate(caseItem.date)}
-                          </p>
+                            {caseItem.creator.avatar ? (
+                              <img
+                                src={caseItem.creator.avatar}
+                                alt={caseItem.creator.name}
+                                className="h-full w-full rounded-full object-cover"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).style.display =
+                                    "none";
+                                }}
+                              />
+                            ) : (
+                              caseItem.creator.name
+                                .substring(0, 1)
+                                .toUpperCase()
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            {/* Combined metadata line */}
+                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-600 mb-2">
+                              <div className="min-w-[80px] flex-shrink-0">
+                                <CaseLink
+                                  my_case={caseItem}
+                                  t={(key) =>
+                                    t(key, { caseId: caseItem.case_number })
+                                  }
+                                />
+                              </div>
+                              <span
+                                className={`flex items-center font-medium ${priorityStyle} flex-shrink-0`}
+                              >
+                                <FlagIcon className="h-4 w-4 mr-1 flex-shrink-0" />
+                                {translatePriority(String(caseItem.priority))}
+                              </span>
+                              <span className="flex items-center font-medium flex-shrink-0">
+                                <span
+                                  className={`h-2.5 w-2.5 rounded-full mr-1.5 flex-shrink-0 ${statusStyle.dotBgColor}`}
+                                />
+                                <span className={statusStyle.textColor}>
+                                  {translateStatus(String(caseItem.status))}
+                                </span>
+                              </span>
+                              <div className="flex items-center flex-shrink-0">
+                                <span className="mr-1">Ангажирал:</span>
+                                <UserLink
+                                  user={caseItem.creator}
+                                  type="table"
+                                />
+                              </div>
+                              <p className="text-xs text-gray-500 whitespace-nowrap ml-auto flex-shrink-0">
+                                {formatDate(caseItem.date)}
+                              </p>
+                            </div>
+                            <p className="text-sm text-gray-700 leading-relaxed line-clamp-4">
+                              {caseItem.content}
+                            </p>
+                          </div>
                         </div>
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-1 text-xs text-gray-600 mb-2">
-                          <span>
-                            Приоритет:{" "}
-                            <strong className="text-gray-800">
-                              {formatPriority(caseItem.priority)}
-                            </strong>
-                          </span>
-                          <span>
-                            Статус:{" "}
-                            <strong className="text-gray-800">
-                              {formatStatus(caseItem.status)}
-                            </strong>
-                          </span>
-                          <span
-                            className="sm:col-span-2 truncate"
-                            title={`Ангажирал: ${caseItem.creator.name}`}
-                          >
-                            Ангажирал:{" "}
-                            <strong className="text-gray-800">
-                              {caseItem.creator.name}
-                            </strong>
-                          </span>
-                        </div>
-                        <p className="text-sm text-gray-700 leading-relaxed line-clamp-4">
-                          {caseItem.content}
-                        </p>
-                      </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+                {category.cases &&
+                  visibleCasesCount < category.cases.length && (
+                    <div className="p-4 flex justify-center">
+                      <button
+                        onClick={handleLoadMoreCases}
+                        className="flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-150"
+                      >
+                        <ArrowDownCircleIcon className="h-5 w-5 mr-2" />
+                        Зареди още...
+                      </button>
                     </div>
-                  </li>
-                ))}
-              </ul>
+                  )}
+              </>
             ) : (
               <div className="flex flex-col items-center justify-center h-full p-10 text-center text-gray-500">
                 <InboxIcon className="h-20 w-20 mb-4 text-gray-400" />
@@ -341,7 +449,6 @@ const Category: React.FC = () => {
           </div>
         </main>
 
-        {/* Right Panel: Statistics */}
         <aside className="lg:col-span-3 bg-white rounded-lg shadow-lg flex flex-col overflow-hidden">
           <div className="p-6 space-y-6 overflow-y-auto flex-1">
             <h3 className="text-xl font-semibold text-gray-700 mb-0 flex items-center">
@@ -392,50 +499,8 @@ const Category: React.FC = () => {
               </h4>
               {signalStats.pieChartData.length > 0 && totalPieValue > 0 ? (
                 <div className="w-full">
-                  {/* Reverted Pie Chart SVG Logic */}
                   <svg viewBox="0 0 100 100" className="w-40 h-40 mx-auto">
-                    {(() => {
-                      let accumulatedPercentage = 0;
-                      return signalStats.pieChartData.map((segment, index) => {
-                        const percentage =
-                          totalPieValue > 0
-                            ? (segment.value / totalPieValue) * 100
-                            : 0;
-                        if (percentage === 0) return null;
-
-                        const startAngleDegrees =
-                          (accumulatedPercentage / 100) * 360;
-                        // Subtract a tiny amount from endAngle if it's exactly 360 to avoid full circle disappearing for single segment
-                        let endAngleDegrees =
-                          ((accumulatedPercentage + percentage) / 100) * 360;
-                        if (percentage === 100) endAngleDegrees -= 0.0001;
-
-                        accumulatedPercentage += percentage;
-
-                        const radius = 45; // Radius of the pie chart
-                        const centerX = 50;
-                        const centerY = 50;
-
-                        // Convert angles to radians for Math.cos/sin, and adjust for SVG coordinate system (0 degrees is right)
-                        const startAngleRad =
-                          (startAngleDegrees - 90) * (Math.PI / 180);
-                        const endAngleRad =
-                          (endAngleDegrees - 90) * (Math.PI / 180);
-
-                        const x1 = centerX + radius * Math.cos(startAngleRad);
-                        const y1 = centerY + radius * Math.sin(startAngleRad);
-                        const x2 = centerX + radius * Math.cos(endAngleRad);
-                        const y2 = centerY + radius * Math.sin(endAngleRad);
-
-                        const largeArcFlag = percentage > 50 ? 1 : 0;
-
-                        const pathData = `M ${centerX},${centerY} L ${x1},${y1} A ${radius},${radius} 0 ${largeArcFlag} 1 ${x2},${y2} Z`;
-
-                        return (
-                          <path key={index} d={pathData} fill={segment.color} />
-                        );
-                      });
-                    })()}
+                    {pieChartPaths} {/* Render the memoized paths */}
                   </svg>
                   <ul className="text-xs mt-4 space-y-1">
                     {signalStats.pieChartData.map((item) => (
@@ -448,7 +513,7 @@ const Category: React.FC = () => {
                             className="h-2.5 w-2.5 rounded-full mr-2"
                             style={{ backgroundColor: item.color }}
                           ></span>
-                          {formatStatus(item.label)}:
+                          {translateStatus(item.label)}:
                         </span>
                         <span>
                           {" "}

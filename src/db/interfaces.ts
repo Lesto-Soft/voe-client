@@ -62,7 +62,7 @@ export interface IRole {
 export interface IComment {
   _id: string;
   date: string;
-  content?: string;
+  content: string;
   case?: ICase;
   creator: IUser;
   answer?: IAnswer;

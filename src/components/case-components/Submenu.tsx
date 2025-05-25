@@ -104,35 +104,47 @@ const Submenu: React.FC<SubmenuProps> = ({ caseData, t, me, refetch }) => {
             <div className="text-center text-gray-500">{t("no_answers")}</div>
           ))}
 
-        {view === "comments" &&
-          (caseData.comments && caseData.comments.length > 0 ? (
-            <div>
-              <AddComment
-                caseId={caseData._id}
-                refetch={refetch}
-                t={t}
-                me={me}
-              />
-
-              {[...caseData.comments]
-                .sort(
-                  (a, b) =>
-                    new Date(b.date).getTime() - new Date(a.date).getTime()
-                )
-                .map((comment: IComment) => (
-                  <div className=" gap-4 mb-8" key={comment._id}>
-                    <div className="hidden lg:block ">
-                      <Comment comment={comment} me={me} />
+        {view === "comments" && (
+          <>
+            <AddComment
+              caseId={caseData._id}
+              t={t}
+              me={me}
+              caseNumber={caseData.case_number}
+            />
+            {caseData.comments && caseData.comments.length > 0 ? (
+              <>
+                {[...caseData.comments]
+                  .sort(
+                    (a, b) =>
+                      new Date(b.date).getTime() - new Date(a.date).getTime()
+                  )
+                  .map((comment: IComment) => (
+                    <div className=" gap-4 mb-8" key={comment._id}>
+                      <div className="hidden lg:block ">
+                        <Comment
+                          comment={comment}
+                          me={me}
+                          caseNumber={caseData.case_number}
+                        />
+                      </div>
+                      <div className="lg:hidden flex">
+                        <CommentMobile
+                          comment={comment}
+                          me={me}
+                          caseNumber={caseData.case_number}
+                        />
+                      </div>
                     </div>
-                    <div className="lg:hidden flex">
-                      <CommentMobile comment={comment} me={me} />
-                    </div>
-                  </div>
-                ))}
-            </div>
-          ) : (
-            <div className="text-center text-gray-500">{t("no_comments")}</div>
-          ))}
+                  ))}
+              </>
+            ) : (
+              <div className="text-center text-gray-500">
+                {t("no_comments")}
+              </div>
+            )}
+          </>
+        )}
 
         {view === "history" &&
           (caseData.history && caseData.history.length > 0 ? (

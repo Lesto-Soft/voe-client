@@ -3,15 +3,18 @@ import UserLink from "../../global/UserLink";
 import ShowDate from "../../global/ShowDate";
 import EditButton from "../../global/EditButton";
 import { admin_check } from "../../../utils/rowStringCheckers";
+import ImagePreviewModal from "../../modals/ImagePreviewModal";
+import { createFileUrl } from "../../../utils/fileUtils";
 
 interface CommentProps {
   comment: IComment;
   me?: any;
+  caseNumber: number;
 }
 
-const CommentMobile: React.FC<CommentProps> = ({ comment, me }) => {
+const CommentMobile: React.FC<CommentProps> = ({ comment, me, caseNumber }) => {
   return (
-    <div className="flex flex-row items-stretch gap-3 rounded p-3">
+    <div className="flex flex-row items-stretch gap-3 rounded p-3 w-full px-4">
       {/* Left: Creator info, vertically centered */}
       <div className="flex flex-col justify-center items-center">
         <UserLink user={comment.creator} type="case" />
@@ -25,7 +28,11 @@ const CommentMobile: React.FC<CommentProps> = ({ comment, me }) => {
           {me &&
             me.role &&
             (me._id === comment.creator._id || admin_check(me.role.name)) && (
-              <EditButton />
+              <EditButton
+                comment={comment}
+                currentAttachments={comment.attachments}
+                caseNumber={caseNumber}
+              />
             )}
         </div>
       </div>
@@ -36,6 +43,17 @@ const CommentMobile: React.FC<CommentProps> = ({ comment, me }) => {
         <div className="text-sm text-gray-800 whitespace-pre-line bg-gray-50 rounded p-3 max-h-32 overflow-y-auto">
           {comment.content}
         </div>
+        {comment.attachments && comment.attachments.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-2 mt-2">
+            {comment.attachments.map((file) => (
+              <ImagePreviewModal
+                key={file}
+                imageUrl={createFileUrl("comments", comment._id, file)}
+                fileName={file}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

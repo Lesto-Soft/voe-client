@@ -7,16 +7,21 @@ import { readFileAsBase64 } from "../../utils/attachment-handling";
 
 interface AddCommentProps {
   caseId: string;
-  refetch: () => void;
   t: (key: string) => string;
   me: any;
+  caseNumber: number;
 }
-const AddComment: React.FC<AddCommentProps> = ({ caseId, refetch, t, me }) => {
+const AddComment: React.FC<AddCommentProps> = ({
+  caseId,
+  t,
+  me,
+  caseNumber,
+}) => {
   const [attachments, setAttachments] = useState<File[]>([]); // Holds selected File objects
   const [fileError, setFileError] = useState<string | null>(null); // State for file error message
   const [content, setContent] = useState<string>(""); // Holds the content of the comment
   const [submissionError, setSubmissionError] = useState<string | null>(null);
-  const { createComment, loading, error } = useCreateComment();
+  const { createComment, loading, error } = useCreateComment(caseNumber);
 
   const submitComment = async (event: React.FormEvent) => {
     event.preventDefault(); // Prevent default form submission behavior
@@ -38,25 +43,17 @@ const AddComment: React.FC<AddCommentProps> = ({ caseId, refetch, t, me }) => {
       return;
     }
 
-    if (attachments.length > 0) {
-      const formData = new FormData();
-      attachments.forEach((file) => {
-        formData.append("attachments", file); // Append each file to the FormData object
+    try {
+      await createComment({
+        case: caseId,
+        attachments: attachmentInputs,
+        content,
+        creator: me._id,
       });
-      try {
-        await createComment({
-          case: caseId,
-          attachments: attachmentInputs,
-          content,
-          creator: me.me._id,
-        });
-        refetch(); // Refetch data after comment creation
-        setAttachments([]); // Clear attachments after submission
-      } catch (error) {
-        console.error("Error creating comment:", error);
-      }
-    } else {
-      setFileError(t("noFilesSelected")); // Set error message if no files are selected
+      setContent("");
+      setAttachments([]);
+    } catch (error) {
+      console.error("Error creating comment:", error);
     }
   };
 
@@ -78,7 +75,8 @@ const AddComment: React.FC<AddCommentProps> = ({ caseId, refetch, t, me }) => {
           <textarea
             className="border border-gray-300 rounded-lg p-2 w-full h-24 resize-none focus:outline-none focus:ring-2 focus:ring-btnRedHover"
             placeholder={t("writeComment")}
-            onChange={(e) => setContent(e.target.value)} // Update content state on change
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
           ></textarea>
           <FileAttachmentAnswer
             attachments={attachments}
@@ -109,7 +107,6 @@ const AddComment: React.FC<AddCommentProps> = ({ caseId, refetch, t, me }) => {
               <button
                 key={file.name + "-" + file.lastModified}
                 type="button"
-                onClick={() => handleRemoveAttachment(file.name)}
                 className="flex items-center gap-2 px-3 py-1 text-sm bg-gray-200 rounded-full hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400"
                 title={file.name}
               >
@@ -117,6 +114,7 @@ const AddComment: React.FC<AddCommentProps> = ({ caseId, refetch, t, me }) => {
                 <XMarkIcon
                   className="hover:cursor-pointer hover:text-btnRedHover h-5 w-5 text-btnRed font-bold"
                   style={{ verticalAlign: "middle" }}
+                  onClick={() => handleRemoveAttachment(file.name)}
                 />
               </button>
             ))}

@@ -15,12 +15,11 @@ const FileAttachmentAnswer: React.FC<FileAttachmentBtnProps> = ({
   setFileError,
 }) => {
   const { t } = useTranslation("caseSubmission"); // Assuming you have a translation function available
-
   return (
     <div className="">
       {/* Styled Label acting as Button - Disable visually if max files reached */}
       <label
-        htmlFor="file-upload-input"
+        htmlFor="file-upload-input-1"
         className={`h-24 flex items-center justify-center w-full text-center  rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm ${
           attachments.length >= MAX_FILES
             ? "opacity-75 cursor-not-allowed" // Disabled style
@@ -35,7 +34,7 @@ const FileAttachmentAnswer: React.FC<FileAttachmentBtnProps> = ({
       </label>
       {/* Hidden Actual File Input - Disable if max files reached */}
       <input
-        id="file-upload-input"
+        id="file-upload-input-1"
         name="attachments"
         type="file"
         multiple

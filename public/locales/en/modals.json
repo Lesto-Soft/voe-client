@@ -1,4 +1,14 @@
 {
   "loading": "Loading...",
-  "error": "Error"
+  "error": "Error",
+  "save": "Save",
+  "cancel": "Cancel",
+  "confirm": "Confirm",
+  "delete": "Delete",
+  "edit": "Edit",
+  "add": "Add",
+  "close": "Close",
+  "editComment": "Edit Comment",
+  "writeHere": "Write here...",
+  "editCommentInfo": "Edit the content or the attached files"
 }

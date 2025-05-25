@@ -3,13 +3,16 @@ import UserLink from "../global/UserLink";
 import ShowDate from "../global/ShowDate";
 import EditButton from "../global/EditButton";
 import { admin_check } from "../../utils/rowStringCheckers";
+import { createFileUrl } from "../../utils/fileUtils";
+import ImagePreviewModal from "../modals/ImagePreviewModal";
 
 interface CommentProps {
   comment: IComment;
   me?: any;
+  caseNumber: number;
 }
 
-const Comment: React.FC<CommentProps> = ({ comment, me }) => {
+const Comment: React.FC<CommentProps> = ({ comment, me, caseNumber }) => {
   return (
     <div className="flex flex-row items-stretch gap-3 rounded p-3">
       {/* Left: Creator info, vertically centered */}
@@ -28,14 +31,29 @@ const Comment: React.FC<CommentProps> = ({ comment, me }) => {
         <div className="text-sm text-gray-800 whitespace-pre-line bg-gray-50 rounded p-3 max-h-32 overflow-y-auto">
           {comment.content}
         </div>
+        {comment.attachments && comment.attachments.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-2">
+            {comment.attachments.map((file) => (
+              <ImagePreviewModal
+                key={file}
+                imageUrl={createFileUrl("comments", comment._id, file)}
+                fileName={file}
+              />
+            ))}
+          </div>
+        )}
       </div>
-      <div className="ap-2 mb-1 flex flex-col justify-center items-center">
-        <ShowDate date={comment.date} />
+      <div className="ap-2 mb-1 flex justify-center items-center">
         {me &&
           me.role &&
           (me._id === comment.creator._id || admin_check(me.role.name)) && (
-            <EditButton />
+            <EditButton
+              comment={comment}
+              currentAttachments={comment.attachments}
+              caseNumber={caseNumber}
+            />
           )}
+        <ShowDate date={comment.date} />
       </div>
     </div>
   );

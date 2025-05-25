@@ -12,7 +12,6 @@ const Case = () => {
   const { number } = useParams<{ number: string }>();
   const { me, loading: loadingMe, error: errorMe } = useGetMe();
 
-  console.log(me);
   if (!number) {
     return <div>Case number is required</div>;
   }
@@ -57,11 +56,11 @@ const Case = () => {
           className="flex-1 overflow-y-auto  py-8 "
           style={{ maxHeight: "calc(100vh - 6rem)" }}
         >
-          <Submenu caseData={c} t={t} me={me} refetch={refetch} />
+          <Submenu caseData={c} t={t} me={me.me} refetch={refetch} />
         </div>
       </div>
       <div className="lg:hidden block ">
-        <CaseMobileView c={c} me={me} refetch={refetch} t={t} />
+        <CaseMobileView c={c} me={me.me} refetch={refetch} t={t} />
       </div>
     </>
   );

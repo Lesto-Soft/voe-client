@@ -23,6 +23,7 @@ const FileAttachmentBtn: React.FC<FileAttachmentBtnProps> = ({
     // unreliable across browsers and often not necessary. The user can
     // always click "Choose Files" again to re-select.
   };
+  console.log(attachments);
 
   return (
     <div>

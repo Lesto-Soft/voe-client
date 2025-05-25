@@ -1,10 +1,10 @@
 // src/components/features/categoryManagement/CategoryStats.tsx
 import React from "react";
-import StatCard from "../../cards/StatCard";
+import StatCard from "../../cards/StatCard"; // Adjust path if necessary
 import {
   ICaseStatus as CaseStatus,
   CASE_STATUS_DISPLAY_ORDER,
-} from "../../../db/interfaces";
+} from "../../../db/interfaces"; // Adjust path if necessary
 import {
   ClipboardDocumentListIcon,
   FolderOpenIcon,
@@ -15,13 +15,13 @@ import {
 } from "@heroicons/react/24/solid";
 
 interface CategoryStatsProps {
-  totalCaseCount: number; // Filtered total cases for current categories
-  absoluteTotalCaseCountAllTime?: number | null; // Absolute total of all cases
+  totalCaseCount: number;
+  absoluteTotalCaseCountAllTime?: number | null;
   caseCountsByStatus: Record<CaseStatus | string, number>;
   activeCaseStatusFilter?: CaseStatus | string | null;
-  onCaseStatusCardClick?: (status: CaseStatus | string) => void;
-  isLoadingOverallCounts?: boolean; // For "Total Cases" card's numbers
-  isLoadingStatusSpecificCounts?: boolean; // For individual status card numbers
+  onCaseStatusCardClick?: (status: CaseStatus | string | null) => void; // Modified to accept null
+  isLoadingOverallCounts?: boolean;
+  isLoadingStatusSpecificCounts?: boolean;
 }
 
 const STATUS_APPEARANCE: Record<
@@ -31,22 +31,22 @@ const STATUS_APPEARANCE: Record<
   [CaseStatus.Open]: {
     icon: FolderOpenIcon,
     color: "text-green-500",
-    label: "Open",
+    label: "Отворен", // Translated
   },
   [CaseStatus.InProgress]: {
     icon: ClockIcon,
     color: "text-yellow-500",
-    label: "In Progress",
+    label: "В Процес", // Translated
   },
   [CaseStatus.AwaitingFinance]: {
     icon: CurrencyDollarIcon,
     color: "text-blue-500",
-    label: "Awaiting Finance",
+    label: "За Финансиране", // Translated
   },
   [CaseStatus.Closed]: {
     icon: ArchiveBoxXMarkIcon,
     color: "text-gray-500",
-    label: "Closed",
+    label: "Затворен", // Translated
   },
 };
 
@@ -60,55 +60,70 @@ const CategoryStats: React.FC<CategoryStatsProps> = ({
   isLoadingStatusSpecificCounts = false,
 }) => {
   const totalCasesTitle = "Общо Сигнали";
-
-  // Format the main total display string
   const totalDisplayAmount =
     absoluteTotalCaseCountAllTime !== undefined &&
     absoluteTotalCaseCountAllTime !== null
       ? `${totalCaseCount} (от ${absoluteTotalCaseCountAllTime})`
-      : `${totalCaseCount}`; // Fallback if absolute total isn't available
+      : `${totalCaseCount}`;
+
+  const isMainCardActive =
+    activeCaseStatusFilter === null || activeCaseStatusFilter === undefined;
+  // Ensure CASE_STATUS_DISPLAY_ORDER is treated as an array, even if it might be undefined/null from props
+  const displayOrder = Array.isArray(CASE_STATUS_DISPLAY_ORDER)
+    ? CASE_STATUS_DISPLAY_ORDER
+    : [];
+  const showDivider = displayOrder.length > 0;
 
   return (
-    <div className="flex flex-row flex-wrap gap-3">
+    <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-start">
       <StatCard
         amount={totalDisplayAmount}
         title={totalCasesTitle}
         icon={ClipboardDocumentListIcon}
         iconColor="text-slate-500"
-        isLoading={isLoadingOverallCounts} // Use specific loading for this card
-        // This card could also have an onClick to clear all filters if desired
+        isLoading={isLoadingOverallCounts}
+        expectsOutOfTextFormat={true}
+        isActive={isMainCardActive}
+        onClick={() => onCaseStatusCardClick && onCaseStatusCardClick(null)} // Pass null to deselect
+        className="w-full lg:w-52" // Responsive width
       />
-      {(CASE_STATUS_DISPLAY_ORDER || []).length > 0 && (
+
+      {showDivider && (
         <div
           aria-hidden="true"
-          className="self-stretch w-px mx-1 bg-gradient-to-b from-transparent via-gray-300 to-transparent"
+          className="hidden lg:block self-stretch w-px mx-1 bg-gradient-to-b from-transparent via-gray-300 to-transparent"
         ></div>
       )}
-      {(CASE_STATUS_DISPLAY_ORDER || []).map((status) => {
-        const appearance = STATUS_APPEARANCE[status] || {
-          icon: CubeTransparentIcon,
-          color: "text-gray-400",
-          label: status.toString(), // Fallback label,
-        };
-        const count = caseCountsByStatus[status] ?? 0;
 
-        return (
-          <StatCard
-            key={status}
-            amount={count}
-            title={appearance.label}
-            icon={appearance.icon}
-            iconColor={appearance.color}
-            onClick={
-              onCaseStatusCardClick
-                ? () => onCaseStatusCardClick(status)
-                : undefined
-            }
-            isActive={activeCaseStatusFilter === status}
-            isLoading={isLoadingStatusSpecificCounts} // Use specific loading for these cards
-          />
-        );
-      })}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 lg:flex lg:flex-row lg:flex-wrap lg:gap-3 lg:flex-1">
+        {displayOrder.map((status) => {
+          const appearance = STATUS_APPEARANCE[status] || {
+            icon: CubeTransparentIcon,
+            color: "text-gray-400",
+            label: status.toString(), // Fallback label
+          };
+          const count = caseCountsByStatus[status] ?? 0;
+
+          return (
+            <StatCard
+              key={status}
+              amount={count}
+              title={appearance.label} // Will use translated label
+              icon={appearance.icon}
+              iconColor={appearance.color}
+              onClick={
+                onCaseStatusCardClick
+                  ? () => onCaseStatusCardClick(status)
+                  : undefined
+              }
+              isActive={activeCaseStatusFilter === status}
+              isLoading={isLoadingStatusSpecificCounts}
+              expectsOutOfTextFormat={false}
+              className="w-full lg:w-45" // Responsive width
+            />
+          );
+        })}
+      </div>
     </div>
   );
 };

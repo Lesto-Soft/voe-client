@@ -33,19 +33,50 @@ const t = (key: string, options?: any) => {
   return key;
 };
 
+// Define status colors (hex values corresponding to Tailwind classes)
+// These will be used for both pie chart and can be referenced for status dots if needed directly.
+const STATUS_COLORS: Record<string, string> = {
+  OPEN: "#22C55E", // Tailwind green-500
+  CLOSED: "#9CA3AF", // Tailwind gray-400
+  IN_PROGRESS: "#EAB308", // Tailwind yellow-500
+  AWAITING_FINANCE: "#3B82F6", // Tailwind blue-500
+  DEFAULT: "#9CA3AF", // Default/fallback color (gray-400)
+};
+
 // Style helper functions (can be moved to a separate file and imported)
 const getStatusStyle = (status: string) => {
-  switch (status.toUpperCase()) {
+  const statusUpper = status.toUpperCase();
+  switch (statusUpper) {
     case "OPEN":
-      return { dotBgColor: "bg-green-500", textColor: "text-green-700" };
+      return {
+        dotBgColor: "bg-green-500",
+        textColor: "text-green-700",
+        hexColor: STATUS_COLORS.OPEN,
+      };
     case "CLOSED":
-      return { dotBgColor: "bg-gray-400", textColor: "text-gray-600" };
+      return {
+        dotBgColor: "bg-gray-400",
+        textColor: "text-gray-600",
+        hexColor: STATUS_COLORS.CLOSED,
+      };
     case "IN_PROGRESS":
-      return { dotBgColor: "bg-yellow-500", textColor: "text-yellow-700" };
+      return {
+        dotBgColor: "bg-yellow-500",
+        textColor: "text-yellow-700",
+        hexColor: STATUS_COLORS.IN_PROGRESS,
+      };
     case "AWAITING_FINANCE":
-      return { dotBgColor: "bg-blue-500", textColor: "text-blue-700" };
+      return {
+        dotBgColor: "bg-blue-500",
+        textColor: "text-blue-700",
+        hexColor: STATUS_COLORS.AWAITING_FINANCE,
+      };
     default:
-      return { dotBgColor: "bg-gray-400", textColor: "text-gray-500" };
+      return {
+        dotBgColor: "bg-gray-400",
+        textColor: "text-gray-500",
+        hexColor: STATUS_COLORS.DEFAULT,
+      };
   }
 };
 
@@ -84,7 +115,6 @@ const Category: React.FC = () => {
 
   const signalStats = useMemo(() => {
     if (!category || !category.cases) {
-      // This check is fine within useMemo as it affects the memoized value, not hook order
       return {
         totalSignals: 0,
         openSignals: 0,
@@ -111,20 +141,13 @@ const Category: React.FC = () => {
       return acc;
     }, {} as Record<string, number>);
 
-    const pieChartData = Object.entries(statusCounts).map(
-      ([label, value], index) => ({
-        label,
-        value,
-        color: [
-          "#FF6384",
-          "#36A2EB",
-          "#FFCE56",
-          "#4BC0C0",
-          "#9966FF",
-          "#FF9F40",
-        ][index % 6],
-      })
-    );
+    const pieChartData = Object.entries(statusCounts).map(([label, value]) => ({
+      // Removed index as it's not needed for color mapping anymore
+      label,
+      value,
+      // Use hexColor from getStatusStyle for consistency
+      color: getStatusStyle(label).hexColor,
+    }));
 
     const resolutionTimeInfo =
       totalSignals > 0 && closedSignals > 0
@@ -140,13 +163,11 @@ const Category: React.FC = () => {
     };
   }, [category]);
 
-  // Calculate totalPieValue based on signalStats. It must be defined before pieChartPaths.
   const totalPieValue = signalStats.pieChartData.reduce(
     (sum, segment) => sum + segment.value,
     0
   );
 
-  // Memoize the pie chart path elements. Moved BEFORE early returns.
   const pieChartPaths = useMemo(() => {
     if (!signalStats.pieChartData.length || totalPieValue === 0) {
       return null;
@@ -235,7 +256,6 @@ const Category: React.FC = () => {
     );
   }
 
-  // Helper functions are defined after early returns, which is fine as they are not hooks
   const formatDate = (dateString?: string) => {
     if (!dateString) return "N/A";
     try {
@@ -500,7 +520,7 @@ const Category: React.FC = () => {
               {signalStats.pieChartData.length > 0 && totalPieValue > 0 ? (
                 <div className="w-full">
                   <svg viewBox="0 0 100 100" className="w-40 h-40 mx-auto">
-                    {pieChartPaths} {/* Render the memoized paths */}
+                    {pieChartPaths}
                   </svg>
                   <ul className="text-xs mt-4 space-y-1">
                     {signalStats.pieChartData.map((item) => (

@@ -75,6 +75,7 @@ export const GET_CATEGORY_BY_ID = gql`
         creator {
           _id
           name
+          avatar
         }
       }
       archived

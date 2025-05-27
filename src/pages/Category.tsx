@@ -1,4 +1,4 @@
-// src/pages/Category.tsx (or your preferred path)
+// src/pages/Category.tsx
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router"; // Ensure this is react-router-dom
 import { ICategory, ICase, IUser } from "../db/interfaces"; // Actual import path
@@ -16,16 +16,16 @@ import {
   DocumentTextIcon,
   ArrowDownCircleIcon,
 } from "@heroicons/react/24/outline";
-import { FlagIcon } from "@heroicons/react/24/solid"; // Added FlagIcon
-import { useGetCategoryById } from "../graphql/hooks/category"; // Actual import path
+import { FlagIcon } from "@heroicons/react/24/solid";
+import { useGetCategoryById } from "../graphql/hooks/category";
 
 // Import custom Link components
 import UserLink from "../components/global/UserLink";
 import CaseLink from "../components/global/CaseLink";
+import UserAvatar from "../components/cards/UserAvatar"; // Adjusted path
 
 const INITIAL_VISIBLE_CASES = 10;
 
-// Mock t function for CaseLink, replace with your actual i18n setup if available
 const t = (key: string, options?: any) => {
   if (key === "details_for" && options?.caseId) {
     return `Детайли за ${options.caseId}`;
@@ -33,17 +33,14 @@ const t = (key: string, options?: any) => {
   return key;
 };
 
-// Define status colors (hex values corresponding to Tailwind classes)
-// These will be used for both pie chart and can be referenced for status dots if needed directly.
 const STATUS_COLORS: Record<string, string> = {
-  OPEN: "#22C55E", // Tailwind green-500
-  CLOSED: "#9CA3AF", // Tailwind gray-400
-  IN_PROGRESS: "#EAB308", // Tailwind yellow-500
-  AWAITING_FINANCE: "#3B82F6", // Tailwind blue-500
-  DEFAULT: "#9CA3AF", // Default/fallback color (gray-400)
+  OPEN: "#22C55E",
+  CLOSED: "#9CA3AF",
+  IN_PROGRESS: "#EAB308",
+  AWAITING_FINANCE: "#3B82F6",
+  DEFAULT: "#9CA3AF",
 };
 
-// Style helper functions (can be moved to a separate file and imported)
 const getStatusStyle = (status: string) => {
   const statusUpper = status.toUpperCase();
   switch (statusUpper) {
@@ -142,10 +139,8 @@ const Category: React.FC = () => {
     }, {} as Record<string, number>);
 
     const pieChartData = Object.entries(statusCounts).map(([label, value]) => ({
-      // Removed index as it's not needed for color mapping anymore
       label,
       value,
-      // Use hexColor from getStatusStyle for consistency
       color: getStatusStyle(label).hexColor,
     }));
 
@@ -373,35 +368,25 @@ const Category: React.FC = () => {
                     const priorityStyle = getPriorityStyle(
                       String(caseItem.priority)
                     );
+                    const serverBaseUrl = import.meta.env.VITE_API_URL || "";
+                    const creatorImageUrl = `${serverBaseUrl}/static/avatars/${caseItem.creator._id}/${caseItem.creator.avatar}`;
+
                     return (
                       <li
                         key={caseItem._id}
                         className="p-4 hover:bg-gray-50 transition-colors duration-150"
                       >
                         <div className="flex items-start space-x-3">
-                          <div
-                            className="flex-shrink-0 h-10 w-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm font-semibold"
-                            title={caseItem.creator.name}
-                          >
-                            {caseItem.creator.avatar ? (
-                              <img
-                                src={caseItem.creator.avatar}
-                                alt={caseItem.creator.name}
-                                className="h-full w-full rounded-full object-cover"
-                                onError={(e) => {
-                                  (e.target as HTMLImageElement).style.display =
-                                    "none";
-                                }}
-                              />
-                            ) : (
-                              caseItem.creator.name
-                                .substring(0, 1)
-                                .toUpperCase()
-                            )}
-                          </div>
+                          <UserAvatar
+                            name={caseItem.creator.name || "Unknown User"}
+                            imageUrl={creatorImageUrl}
+                            size={40}
+                          />
                           <div className="flex-1 min-w-0">
-                            {/* Combined metadata line */}
+                            {/* Combined metadata line - MODIFIED */}
                             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-600 mb-2">
+                              {" "}
+                              {/* MODIFIED: gap-x-3 */}
                               <div className="min-w-[80px] flex-shrink-0">
                                 <CaseLink
                                   my_case={caseItem}
@@ -411,12 +396,14 @@ const Category: React.FC = () => {
                                 />
                               </div>
                               <span
-                                className={`flex items-center font-medium ${priorityStyle} flex-shrink-0`}
+                                className={`flex items-center font-medium ${priorityStyle} flex-shrink-0 min-w-[100px]`}
                               >
                                 <FlagIcon className="h-4 w-4 mr-1 flex-shrink-0" />
                                 {translatePriority(String(caseItem.priority))}
                               </span>
-                              <span className="flex items-center font-medium flex-shrink-0">
+                              <span
+                                className={`flex items-center font-medium flex-shrink-0 min-w-[130px]`}
+                              >
                                 <span
                                   className={`h-2.5 w-2.5 rounded-full mr-1.5 flex-shrink-0 ${statusStyle.dotBgColor}`}
                                 />
@@ -424,14 +411,17 @@ const Category: React.FC = () => {
                                   {translateStatus(String(caseItem.status))}
                                 </span>
                               </span>
-                              <div className="flex items-center flex-shrink-0">
-                                <span className="mr-1">Ангажирал:</span>
+                              <div
+                                className={`flex items-center flex-shrink-0 font-medium min-w-[200px]`}
+                              >
+                                <span className="mr-1">Подател: </span>
                                 <UserLink
                                   user={caseItem.creator}
                                   type="table"
                                 />
                               </div>
-                              <p className="text-xs text-gray-500 whitespace-nowrap ml-auto flex-shrink-0">
+                              {/* Date - MODIFIED: removed ml-auto, added min-w */}
+                              <p className="text-xs text-gray-500 whitespace-nowrap flex-shrink-0 min-w-[140px]">
                                 {formatDate(caseItem.date)}
                               </p>
                             </div>

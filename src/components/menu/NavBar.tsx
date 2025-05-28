@@ -98,11 +98,21 @@ const NavBar = () => {
     "/analyses": t("analyses_desc"),
   };
 
-  // Handle dynamic /case/:number path for heading
+  // Handle dynamic /case/:number and category/:number path for heading
   let currentPage: string;
   if (/^\/case\/\d+/.test(location.pathname)) {
     const caseId = location.pathname.split("/").pop();
     currentPage = t("case_desc", { caseId });
+  } else if (/^\/category\/[^/]+$/.test(location.pathname)) {
+    const encodedCategoryName = location.pathname.split("/").pop();
+    if (encodedCategoryName) {
+      // Ensure it's not undefined or empty
+      const categoryName = decodeURIComponent(encodedCategoryName);
+      // Use the decoded categoryName in your translation function
+      currentPage = t("category_desc", { categoryName });
+    } else {
+      currentPage = "Проблем с името на категорията";
+    }
   } else {
     currentPage = pageNames[location.pathname] || "Страницата не е намерена";
   }

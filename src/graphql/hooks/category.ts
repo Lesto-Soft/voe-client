@@ -5,7 +5,7 @@ import {
   GET_ALL_LEAN_CATEGORIES,
   COUNT_CATEGORIES,
   COUNT_CATEGORIES_BY_EXACT_NAME,
-  GET_CATEGORY_BY_ID,
+  GET_CATEGORY_BY_NAME as GET_CATEGORY_BY_NAME,
 } from "../query/category";
 import { ICategory } from "../../db/interfaces";
 import {
@@ -102,13 +102,13 @@ export const useGetActiveCategories = () => {
     refetch,
   };
 };
-export const useGetCategoryById = (id: string | undefined) => {
-  console.log("[HOOK] Attempting to fetch category with input id:", id);
-  const { loading, error, data } = useQuery<{ getCategoryById: ICategory }>(
-    GET_CATEGORY_BY_ID,
+export const useGetCategoryByName = (name: string | undefined) => {
+  console.log("[HOOK] Attempting to fetch category with input name:", name);
+  const { loading, error, data } = useQuery<{ getCategoryByName: ICategory }>(
+    GET_CATEGORY_BY_NAME,
     {
-      variables: { _id: id }, // <--- THE FIX: Key matches the GraphQL query variable name $_id
-      skip: !id,
+      variables: { name: name }, // <--- THE FIX: Key matches the GraphQL query variable name $_id
+      skip: !name,
     }
   );
 
@@ -119,14 +119,14 @@ export const useGetCategoryById = (id: string | undefined) => {
       if (error) {
         console.error("[HOOK] Error:", JSON.stringify(error, null, 2)); // Stringify for more detail
       }
-      console.log("[HOOK] Category from data:", data?.getCategoryById);
+      console.log("[HOOK] Category from data:", data?.getCategoryByName);
     }
   }, [loading, data, error]);
 
   return {
     loading,
     error,
-    category: data?.getCategoryById,
+    category: data?.getCategoryByName,
   };
 };
 

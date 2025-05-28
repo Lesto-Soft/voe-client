@@ -51,17 +51,21 @@ export const GET_ACTIVE_CATEGORIES = gql`
   ${categoryFragment}
 `;
 
-export const GET_CATEGORY_BY_ID = gql`
-  query GetCategoryById($_id: ID!) {
+export const GET_CATEGORY_BY_NAME = gql`
+  query GetCategoryByName($name: String!) {
     # This defines the variable for the operation
-    getCategoryById(_id: $_id) {
-      # This calls the field on the Query type, using its argument named '_id',
-      # and passes the operation variable $_id to it.
+    getCategoryByName(name: $name) {
+      # This calls the field on the Query type, using its argument named 'name',
+      # and passes the operation variable $name to it.
       _id
       name
       problem
       suggestion
       experts {
+        _id
+        name
+      }
+      managers {
         _id
         name
       }

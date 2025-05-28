@@ -17,7 +17,7 @@ import {
   ArrowDownCircleIcon,
 } from "@heroicons/react/24/outline";
 import { FlagIcon } from "@heroicons/react/24/solid";
-import { useGetCategoryById } from "../graphql/hooks/category";
+import { useGetCategoryByName } from "../graphql/hooks/category";
 
 // Import custom Link components
 import UserLink from "../components/global/UserLink";
@@ -91,8 +91,10 @@ const getPriorityStyle = (priority: string) => {
 };
 
 const Category: React.FC = () => {
-  const { id: categoryIdFromParams } = useParams<{ id: string }>();
-  const { loading, error, category } = useGetCategoryById(categoryIdFromParams);
+  const { name: categoryNameFromParams } = useParams<{ name: string }>();
+  const { loading, error, category } = useGetCategoryByName(
+    categoryNameFromParams
+  );
 
   const [visibleCasesCount, setVisibleCasesCount] = useState(
     INITIAL_VISIBLE_CASES
@@ -100,15 +102,15 @@ const Category: React.FC = () => {
 
   useEffect(() => {
     setVisibleCasesCount(INITIAL_VISIBLE_CASES);
-  }, [categoryIdFromParams]);
+  }, [categoryNameFromParams]);
 
   useEffect(() => {
-    if (!loading && categoryIdFromParams) {
+    if (!loading && categoryNameFromParams) {
       if (error) {
         console.error("CategoryPage - Error from hook:", error);
       }
     }
-  }, [loading, categoryIdFromParams, category, error]);
+  }, [loading, categoryNameFromParams, category, error]);
 
   const signalStats = useMemo(() => {
     if (!category || !category.cases) {
@@ -239,7 +241,7 @@ const Category: React.FC = () => {
         <div className="p-6 text-gray-600 bg-gray-100 border border-gray-300 rounded-lg shadow-md text-center">
           <p className="font-semibold">Категорията не е намерена.</p>
           <p className="text-sm">
-            Уверете се, че ID ({categoryIdFromParams || "липсва"}) е валидно и
+            Уверете се, че ID ({categoryNameFromParams || "липсва"}) е валидно и
             данните са налични.
           </p>
           <p className="text-xs mt-2">
@@ -296,16 +298,17 @@ const Category: React.FC = () => {
 
   return (
     <div className="container mx-auto p-4 sm:p-6 bg-gray-50 flex flex-col h-[calc(100vh-6rem)]">
-      <header className="bg-white shadow-md rounded-lg p-4 sm:p-6 mb-6">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">
+      {category.archived && (
+        <header className="bg-white shadow-md rounded-lg p-4 sm:p-6 mb-6">
+          {/* <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">
           {category.name.toUpperCase()}
-        </h1>
-        {category.archived && (
+        </h1> */}
+
           <span className="ml-2 text-sm font-medium text-red-600 bg-red-100 px-2 py-0.5 rounded">
             (Архивирана)
           </span>
-        )}
-      </header>
+        </header>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 overflow-hidden">
         <aside className="lg:col-span-3 bg-white rounded-lg shadow-lg flex flex-col overflow-hidden">
@@ -325,6 +328,25 @@ const Category: React.FC = () => {
                 </ul>
               ) : (
                 <p className="text-sm text-gray-500">Няма посочени експерти.</p>
+              )}
+            </div>
+            <div>
+              <h3 className="text-xl font-semibold text-gray-700 mb-3 flex items-center">
+                <UserGroupIcon className="h-6 w-6 mr-2 text-blue-600" />
+                Мениджъри
+              </h3>
+              {category.managers && category.managers.length > 0 ? (
+                <ul className="space-y-2 text-sm text-gray-600">
+                  {category.managers.map((manager: IUser) => (
+                    <li key={manager._id}>
+                      <UserLink user={manager} type="table" />
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-sm text-gray-500">
+                  Няма посочени мениджъри.
+                </p>
               )}
             </div>
             <div>

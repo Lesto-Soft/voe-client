@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 
 // Define an interface for the component's props
 interface LoadingModalProps {
@@ -10,6 +11,7 @@ interface LoadingModalProps {
 const LoadingModal = ({
   message = "Loading...",
 }: LoadingModalProps): React.ReactElement | null => {
+  const { t } = useTranslation("modals");
   // Return type is React.ReactElement when rendering the modal
   return (
     // Modal Overlay: Fixed position, covers the entire screen, centers content, semi-transparent background, high z-index
@@ -25,7 +27,7 @@ const LoadingModal = ({
         <div className="mb-4 h-12 w-12 animate-spin rounded-full border-7 border-gray-500 border-t-transparent"></div>
         {/* Loading Message: Text styling */}
         <p id="loading-message" className="text-lg text-gray-700">
-          {message}
+          {t("loading") || message}
         </p>
       </div>
     </div>

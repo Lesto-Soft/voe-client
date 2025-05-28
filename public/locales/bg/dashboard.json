@@ -7,6 +7,7 @@
   "OPEN": "ОТВОРЕН",
   "CLOSED": "ЗАТВОРЕН",
   "IN_PROGRESS": "В ПРОЦЕС",
+  "AWAITING_FINANCE": "ФИНАНСИРАНЕ",
   "all": "Всички",
   "mine": "Мои",
   "expert": "Експертни",
@@ -40,5 +41,15 @@
   "no_more_actions": "Действия не са налични",
   "date": "Дата",
   "edit": "Редактиране",
-  "rating": "Оценка"
+  "rating": "Оценка",
+  "answers": "Отговори",
+  "comments": "Коментари",
+  "history": "История",
+  "no_answers": "Няма отговори",
+  "no_comments": "Няма коментари",
+  "no_history": "Няма история",
+  "send": "Изпрати",
+  "hideComment": "Скрий коментар",
+  "addComment": "Добави коментар",
+  "writeComment": "Напиши коментар..."
 }

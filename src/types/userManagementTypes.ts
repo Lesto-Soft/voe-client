@@ -13,6 +13,12 @@ export interface User {
   email: string;
   role: Role | null;
   avatar?: string | null;
+  financial_approver: boolean;
+  cases: string[];
+  answers: string[];
+  comments: string[];
+  expert_categories: string[];
+  managed_categories: string[];
 }
 
 // Interface for the filters state managed by the hook
@@ -22,6 +28,8 @@ export interface UserFiltersState {
   position?: string;
   email?: string;
   roleIds?: string[];
+  financial?: boolean;
+  manager?: boolean;
 }
 
 // Interface for pagination state
@@ -45,4 +53,6 @@ export interface StateForUrl {
   filterPosition?: string;
   filterEmail?: string;
   filterRoleIds?: string[];
+  financial_approver?: string;
+  is_manager?: string;
 }

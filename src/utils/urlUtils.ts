@@ -1,5 +1,5 @@
 // src/utils/urlUtils.ts
-import { UrlParamsInput, StateForUrl } from "../page/types/userManagementTypes"; // Adjust path if needed
+import { UrlParamsInput, StateForUrl } from "../types/userManagementTypes"; // Adjust path if needed
 
 /**
  * Parses URLSearchParams to extract filter values, page, and perPage.
@@ -20,12 +20,21 @@ export function getUrlParams(params: URLSearchParams): UrlParamsInput {
     ? roleIdsParam.split(",").filter(Boolean)
     : undefined;
 
+  const financialApproverParam = params.get("financial_approver");
+  const financial = financialApproverParam === "true";
+
+  // --- ADDED: Parse is_manager from URL ---
+  const managerParam = params.get("is_manager"); // Read the 'is_manager' URL param
+  const manager = managerParam === "true"; // Convert to boolean for React state
+
   const parsed: UrlParamsInput = { page, perPage };
   if (name) parsed.name = name;
   if (username) parsed.username = username;
   if (position) parsed.position = position;
   if (email) parsed.email = email;
   if (roleIds) parsed.roleIds = roleIds;
+  parsed.financial = financial; // The UrlParamsInput type expects a 'financial' key
+  parsed.manager = manager; // <-- ADDED: Assign parsed manager boolean
 
   return parsed;
 }
@@ -33,11 +42,11 @@ export function getUrlParams(params: URLSearchParams): UrlParamsInput {
 /**
  * Sets URL parameters based on the provided state.
  * @param params URLSearchParams object to modify.
- * @param state An object containing currentPage, itemsPerPage, and filter values.
+ * @param state An object containing currentPage, itemsPerPage, and filter values (StateForUrl type).
  */
 export function setUrlParams(
   params: URLSearchParams,
-  state: StateForUrl
+  state: StateForUrl // StateForUrl now has financial_approver?: string and is_manager?: string
 ): void {
   params.set("page", String(state.currentPage));
   params.set("perPage", String(state.itemsPerPage));
@@ -59,5 +68,19 @@ export function setUrlParams(
     params.set("roleIds", state.filterRoleIds.join(","));
   } else {
     params.delete("roleIds");
+  }
+
+  if (state.financial_approver === "true") {
+    params.set("financial_approver", "true");
+  } else {
+    params.delete("financial_approver");
+  }
+
+  // --- ADDED: Set is_manager URL parameter ---
+  // 'state.is_manager' comes from 'createStateForUrl' and is 'true' or undefined
+  if (state.is_manager === "true") {
+    params.set("is_manager", "true");
+  } else {
+    params.delete("is_manager"); // Remove param if not 'true' (i.e., if it's undefined)
   }
 }

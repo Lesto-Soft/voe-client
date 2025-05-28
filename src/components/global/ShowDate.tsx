@@ -7,10 +7,10 @@ const ShowDate = ({ date }: { date: string }) => {
 
   return (
     <div
-      className="sm:mt-0 text-sm text-gray-500 flex items-center gap-2 px-2 group relative hover:cursor-pointer"
+      className="w-36 whitespace-nowrap text-sm text-gray-500 flex items-center gap-2 px-2 group relative hover:cursor-pointer"
       onClick={() => setShowDate(!showDate)}
     >
-      <CalendarIcon className="h-4 w-4" />
+      <CalendarIcon className="!h-4 !w-4 min-w-[16px] min-h-[16px]" />
       {!showDate && <span>{moment(date).fromNow()}</span>}
       {showDate && <span>{moment(date).format("LLL")}</span>}
     </div>

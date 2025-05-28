@@ -14,11 +14,13 @@ fragment CaseFragment on Case {
     type
     categories {
         _id
-        name
+        name     
     }
     content
     status  
     date
+    
+    
 }`;
 
 const caseHistoryFragment = `
@@ -57,6 +59,13 @@ fragment AnswerFragment on Answer {
         _id
         name  
       }
+      approved_date
+      financial_approved{
+        _id
+        name  
+      }
+      financial_approved_date
+      needs_finance
       history {
         _id
         new_content
@@ -95,6 +104,14 @@ export const GET_CASE_BY_CASE_NUMBER = gql`
   query GET_CASE_BY_CASE_NUMBER($caseNumber: Int!) {
     getCaseByNumber(case_number: $caseNumber) {
       ...CaseFragment
+      rating {
+        _id
+        score
+        user {
+          _id
+          name
+        }
+      }
       comments {
         ...CommentFragment
       }
@@ -166,5 +183,11 @@ export const GET_USER_COMMENTED_CASES = gql`
 export const COUNT_CASES = gql`
   query COUNT_CASES {
     countCases
+  }
+`;
+
+export const COUNT_FILTERED_CASES = gql`
+  query CountFilteredCases($input: getAllInput) {
+    countFilteredCases(input: $input)
   }
 `;

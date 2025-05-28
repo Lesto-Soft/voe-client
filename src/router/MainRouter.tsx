@@ -1,17 +1,18 @@
 import { createBrowserRouter, Outlet, RouterProvider } from "react-router";
-import Home from "../page/Home";
-import CaseSubmittion from "../page/CaseSubmittion";
-import Dashboard from "../page/Dashboard";
-import LoadingTestPage from "../page/LoadingTestPage";
-import UserManagement from "../page/UserManagement";
+import Home from "../pages/Home";
+import CaseSubmission from "../pages/CaseSubmission";
+import Dashboard from "../pages/Dashboard";
+import LoadingTestPage from "../pages/LoadingTestPage";
+import UserManagement from "../pages/UserManagement";
 import NavBar from "../components/menu/NavBar";
-import Profile from "../page/Profile";
-import Analyses from "../page/Analyses";
-import NotFoundPage from "../page/NotFound";
-import UserData from "../page/UserData";
-import User from "../page/User";
-import Category from "../page/Category";
-import Case from "../page/Case";
+import Profile from "../pages/Profile";
+import Analyses from "../pages/Analyses";
+import NotFoundPage from "../pages/NotFound";
+import UserData from "../pages/UserData";
+import User from "../pages/User";
+import Category from "../pages/Category";
+import Case from "../pages/Case";
+import CategoryManagement from "../pages/CategoryManagement";
 
 const AppLayout = () => {
   return (
@@ -33,7 +34,7 @@ const mainRouter = createBrowserRouter([
   },
   {
     path: "/submit-case",
-    element: <CaseSubmittion />,
+    element: <CaseSubmission />,
   },
   {
     path: "/user-data/:userId",
@@ -53,6 +54,10 @@ const mainRouter = createBrowserRouter([
       {
         path: "/user-management",
         element: <UserManagement />,
+      },
+      {
+        path: "/category-management",
+        element: <CategoryManagement />,
       },
       {
         path: "/profile",

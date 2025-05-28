@@ -12,6 +12,7 @@ import {
   CreateUserInput,
   UPDATE_USER,
   UpdateUserInput,
+  DELETE_USER,
 } from "../mutation/user"; // Adjust path if needed
 
 // --- Define Input Types (These should match your GraphQL Schema!) ---
@@ -22,6 +23,8 @@ interface UserFiltersInput {
   position?: string;
   email?: string;
   roleIds?: string[];
+  financial_approver?: boolean; // Note: your build function adds if truthy
+  is_manager?: boolean; // <-- ADDED for manager filter
   itemsPerPage?: number;
   currentPage?: number; // Expecting the 0-based index here
   query?: string; // Include if your getAllInput still has/needs it
@@ -30,14 +33,16 @@ interface UserFiltersInput {
 
 export function buildUserQueryVariables(input: any) {
   const {
-    itemsPerPage = 10,
-    currentPage = 0,
+    itemsPerPage,
+    currentPage,
     query,
     name,
     username,
     position,
     email,
     roleIds,
+    financial_approver,
+    is_manager, // <-- Destructure is_manager
   } = input || {};
 
   const variables: any = {
@@ -52,6 +57,11 @@ export function buildUserQueryVariables(input: any) {
   if (position) variables.input.position = position;
   if (email) variables.input.email = email;
   if (roleIds && roleIds.length > 0) variables.input.roleIds = roleIds;
+  if (financial_approver)
+    variables.input.financial_approver = financial_approver;
+  if (is_manager === true) {
+    variables.input.is_manager = true;
+  }
 
   return variables;
 }
@@ -122,9 +132,28 @@ export const useUpdateUser = () => {
   return { updateUser, user: data?.updateUser, loading, error };
 };
 
+export const useDeleteUser = () => {
+  const [deleteUserMutation, { data, loading, error }] =
+    useMutation(DELETE_USER);
+  const deleteUser = async (id: string) => {
+    try {
+      console.log("[HOOK] Deleting user with ID:", id);
+      const response = await deleteUserMutation({ variables: { id } });
+      console.log("[HOOK PT2]");
+      return response.data?.deleteUser;
+    } catch (err) {
+      console.error("Failed to delete user:", err);
+      throw err;
+    }
+  };
+
+  return { deleteUser, user: data?.deleteUser, loading, error };
+};
+
 export const useGetUserByUsername = (username: string) => {
   const { loading, error, data } = useQuery(GET_USER_BY_USERNAME, {
     variables: { username },
+    skip: !username,
   });
   const user = data?.getLeanUserByUsername || null;
   return {

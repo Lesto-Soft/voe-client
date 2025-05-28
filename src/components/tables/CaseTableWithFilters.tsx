@@ -4,7 +4,6 @@ import CaseTable from "./CaseTable";
 import CaseSearchBar from "./CaseSearchBar";
 import Pagination from "./Pagination";
 import CaseTableSkeleton from "../skeletons/CaseTableSkeleton"; // Import the skeleton
-import { useTranslation } from "react-i18next";
 
 // Accepts a fetch hook as a prop
 type FetchHook = (input: any) => {

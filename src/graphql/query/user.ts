@@ -7,11 +7,17 @@ fragment UserFragment on User {
       name
       email
       position
+      financial_approver
       role {
         _id
         name
       }
-        avatar
+      avatar
+      cases {_id}
+      answers {_id}
+      comments {_id}
+      expert_categories {_id}
+      managed_categories {_id}
      
 }`;
 
@@ -57,6 +63,16 @@ export const GET_LEAN_USERS = gql`
     getLeanUsers(input: $input) {
       _id
       name
+      username
+      role {
+        _id
+      }
+      managed_categories {
+        _id
+      }
+      expert_categories {
+        _id
+      }
     }
   }
 `;
@@ -66,6 +82,18 @@ export const GET_ME = gql`
     me {
       ...UserFragment
       avatar
+      managed_categories {
+        _id
+      }
+      expert_categories {
+        _id
+      }
+      answers {
+        _id
+      }
+      comments {
+        _id
+      }
     }
   }
   ${userFragment}

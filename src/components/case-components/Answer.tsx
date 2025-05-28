@@ -1,181 +1,156 @@
 import { IAnswer, IComment } from "../../db/interfaces";
-import moment from "moment";
-import {
-  UserCircleIcon,
-  CheckCircleIcon,
-  XCircleIcon,
-  ClockIcon,
-} from "@heroicons/react/24/outline";
-import * as Dialog from "@radix-ui/react-dialog";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Comment from "./Comment";
-import UserLink from "../global/UserLink";
 import ShowDate from "../global/ShowDate";
 import { useTranslation } from "react-i18next";
 import EditButton from "../global/EditButton";
 import { admin_check } from "../../utils/rowStringCheckers";
+import Creator from "./Creator";
+import UserLink from "../global/UserLink";
+import ApproveBtn from "./ApproveBtn";
+import AnswerHistoryModal from "../modals/AnswerHistoryModal";
+import FinanceApproveBtn from "./FinanceApproveBtn";
 
-// Dummy AnswerHistoryModal for now (replace with your real modal if needed)
-const AnswerHistoryModal: React.FC<{
-  history?: any[];
-}> = ({ history }) => {
-  const { t } = useTranslation("history");
+const Answer: React.FC<{ answer: IAnswer; me?: any; refetch: () => void }> = ({
+  answer,
+  me,
+  refetch,
+}) => {
+  const [approved, setApproved] = useState(!!answer.approved);
+  const [financialApproved, setFinancialApproved] = useState(
+    !!answer.financial_approved
+  );
+
+  // Synchronize state with the updated answer prop
+  useEffect(() => {
+    setApproved(!!answer.approved);
+    setFinancialApproved(!!answer.financial_approved);
+  }, [answer]);
+
+  const { t } = useTranslation("answer");
   return (
-    <Dialog.Root>
-      <Dialog.Trigger asChild>
-        <button
-          className="flex items-center px-2 py-1 rounded bg-gray-100 hover:bg-gray-200 text-xs font-medium border border-gray-300 transition ml-2"
-          type="button"
-          title="История"
-        >
-          <ClockIcon className="h-4 w-4" />
-        </button>
-      </Dialog.Trigger>
-      <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-black/30 z-40" />
-        <Dialog.Content className="fixed z-50 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg p-6 w-full max-w-lg focus:outline-none">
-          <Dialog.Title className="text-lg font-bold mb-4">
-            История
-          </Dialog.Title>
-          <ul className="space-y-2 text-sm max-h-96 overflow-y-auto">
-            {history && history.length > 0 ? (
-              history.map((h: any) => (
-                <li key={h._id} className="text-gray-700 border-b pb-2">
-                  <div>
-                    <span className="font-semibold">
-                      {moment(h.date_change).format("LLL")}
-                    </span>
-                    {" – "}
-                    <span className="font-medium">{h.user?.name}</span>
-                  </div>
-                  <div className="ml-2">
-                    {h.old_content !== h.new_content && (
-                      <div>
-                        <div>
-                          <span className="text-gray-500">
-                            {t("old_content")}:{" "}
-                          </span>
-                          <span className="line-through text-btnRedHover font-bold">
-                            {h.old_content}
-                          </span>
-                        </div>
-                        <div>
-                          {" "}
-                          <span className="text-gray-500 ">
-                            {t("new_content")}:{" "}
-                          </span>
-                          <span className="text-btnGreenHover font-bold">
-                            {h.new_content}
-                          </span>
-                        </div>
+    <div className="mx-auto my-8 px-4 min-w-full">
+      <div
+        className={`bg-white shadow rounded-lg p-6 ${
+          approved ? "border-2 border-btnGreenHover" : ""
+        }`}
+      >
+        {/* Content + Creator Row */}
+        <div className="flex flex-col sm:flex-row gap-6 mb-3">
+          {/* Creator at left */}
+          <Creator creator={answer.creator} />
+          {/* Content and actions at right */}
+          <div className="flex-1 flex flex-col justify-end">
+            <div className="flex items-center mb-2 justify-between">
+              <div className="flex items-center">
+                {/* Approve/Unapprove Button */}
+
+                {approved ? (
+                  <div className="flex items-center  flex-col xs:flex-row sm:flex-row md:flex-row lg:flex-row xl:flex-row 2xl:flex-row md:flex-nowrap md:gap-2 xs:gap-2 gap-2">
+                    <div className="flex items-center gap-2">
+                      <ApproveBtn
+                        approved={approved}
+                        setApproved={setApproved}
+                        t={t}
+                        answer={answer}
+                        me={me}
+                        refetch={refetch}
+                      />
+                    </div>
+                    {answer.needs_finance && (
+                      <div className="flex items-center gap-2">
+                        {/* Divider for md+ screens only */}
+                        <hr className="h-8 border-l border-gray-300 mx-2 hidden md:block" />
+                        <FinanceApproveBtn
+                          approved={financialApproved}
+                          setApproved={setFinancialApproved}
+                          t={t}
+                          answer={answer}
+                          me={me}
+                          refetch={refetch}
+                        />
                       </div>
                     )}
                   </div>
-                </li>
-              ))
-            ) : (
-              <li className="text-gray-400 italic">Няма история</li>
-            )}
-          </ul>
-          <Dialog.Close asChild>
-            <button
-              className="mt-4 px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 transition"
-              type="button"
-            >
-              Затвори
-            </button>
-          </Dialog.Close>
-        </Dialog.Content>
-      </Dialog.Portal>
-    </Dialog.Root>
-  );
-};
-
-const Answer: React.FC<{ answer: IAnswer; me?: any }> = ({ answer, me }) => {
-  const [approved, setApproved] = useState(!!answer.approved);
-  const { t } = useTranslation("answer");
-  return (
-    <div className="mb-6 mt-5 bg-white px-6 py-4 shadow rounded-lg flex flex-col gap-4">
-      <div className="flex flex-row gap-6">
-        {/* Creator at left */}
-        <div className="flex flex-col items-center min-w-[100px]">
-          {answer.creator.avatar ? (
-            <img
-              src={answer.creator.avatar}
-              alt={answer.creator.name}
-              className="h-14 w-14 rounded-full object-cover border-2 border-gray-300 mb-2"
-            />
-          ) : (
-            <UserCircleIcon className="h-14 w-14 text-purple-400 mb-2" />
-          )}
-          <UserLink {...answer.creator} />
-          <span className="text-xs text-gray-400 italic mb-1">
-            {answer.creator.position}
-          </span>
-        </div>
-        {/* Content and actions at right */}
-        <div className="flex-1 flex flex-col justify-between">
-          <div className="flex items-center mb-2 justify-between">
-            <div className="flex items-center">
-              <span className="font-semibold text-gray-700 mr-2">
-                {t("answer")}
-              </span>
-              {/* Approve/Unapprove Button */}
-              <button
-                className={`w-26 ml-2 flex items-center px-2 py-1 rounded text-xs font-medium border transition hover:cursor-pointer ${
-                  approved
-                    ? "bg-green-100 text-green-700 border-green-200 hover:bg-green-200"
-                    : "bg-gray-100 text-gray-500 border-gray-200 hover:bg-gray-200"
-                }`}
-                onClick={() => setApproved((v) => !v)}
-                type="button"
-                title={approved ? "Отмени одобрението" : "Одобри"}
-              >
-                {approved ? (
-                  <>
-                    <CheckCircleIcon className="h-4 w-4 mr-1" />
-                    {t("approved")}
-                  </>
                 ) : (
+                  <ApproveBtn
+                    approved={approved}
+                    setApproved={setApproved}
+                    t={t}
+                    answer={answer}
+                    me={me}
+                    refetch={refetch}
+                  />
+                )}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <ShowDate date={answer.date} />
+                {answer.history && answer.history.length > 0 && (
+                  <AnswerHistoryModal history={answer.history} />
+                )}
+                {me &&
+                  me.role &&
+                  (me._id === answer.creator._id ||
+                    admin_check(me.role.name)) && <EditButton />}
+              </div>
+            </div>
+            <div className="mt-1 flex-1 flex">
+              <div
+                className={`${
+                  approved
+                    ? answer.needs_finance
+                      ? answer.financial_approved
+                        ? "bg-green-50"
+                        : "bg-blue-50"
+                      : "bg-green-50"
+                    : "bg-gray-50"
+                } rounded p-3  text-gray-900 whitespace-pre-line w-full flex overflow-y-auto break-all`}
+              >
+                {answer.content}
+              </div>
+            </div>
+            <div className="flex justify-between items-center gap-2 borderpx-2 py-0.5 italic text-gray-500 text-xs mt-1">
+              <div className="flex items-center gap-1">
+                {answer.approved && (
                   <>
-                    <XCircleIcon className="h-4 w-4 mr-1" />
-                    {t("unapproved")}
+                    <p className="whitespace-nowrap"> {t("approvedBy")} </p>
+                    <UserLink user={answer.approved} type="case" />
+                    {/* <ShowDate date={answer.approved_date} /> */}
                   </>
                 )}
-              </button>
-            </div>
-            <div className="flex items-center gap-2">
-              <ShowDate date={answer.date} />
-              {answer.history && answer.history.length > 0 && (
-                <AnswerHistoryModal history={answer.history} />
-              )}
-              {me &&
-                (me._id === answer.creator._id ||
-                  admin_check(me.role.name)) && <EditButton />}
-            </div>
-          </div>
-          <div className="mt-1 flex-1 flex">
-            <div
-              className={`${
-                approved ? "bg-green-50" : "bg-gray-50"
-              } rounded p-3 text-gray-900 whitespace-pre-line w-full flex max-h-48 overflow-y-auto`}
-            >
-              {answer.content}
+
+                {/* <p className="whitespace-nowrap">{answer.approved?.name}</p> */}
+                {answer.approved_date && (
+                  <ShowDate date={answer.approved_date} />
+                )}
+              </div>
+              <div className="flex items-center gap-1">
+                {answer.financial_approved && (
+                  <>
+                    <p className="whitespace-nowrap">{t("financedBy")}</p>
+                    <UserLink user={answer.financial_approved} type="case" />
+                    {answer.financial_approved_date && (
+                      <ShowDate date={answer.financial_approved_date} />
+                    )}
+                  </>
+                )}
+              </div>
             </div>
           </div>
         </div>
+        {/* Comments under the answer */}
+        {answer.comments && answer.comments.length > 0 && (
+          <div className="mt-3">
+            <hr className="my-2 border-gray-200" />
+            <div className="flex flex-col gap-2">
+              {answer.comments.map((comment: IComment) => (
+                <Comment key={comment._id} comment={comment} me={me} />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
-      {/* Comments under the answer */}
-      {answer.comments && answer.comments.length > 0 && (
-        <div className="mt-3">
-          <hr className="my-2 border-gray-200" />
-          <div className="flex flex-col gap-2">
-            {answer.comments.map((comment: IComment) => (
-              <Comment key={comment._id} comment={comment} me={me} />
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 };

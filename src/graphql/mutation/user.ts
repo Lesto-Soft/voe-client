@@ -9,6 +9,7 @@ const userFragment = `
     email
     avatar
     position
+    financial_approver
   }
 `;
 
@@ -32,6 +33,15 @@ export const UPDATE_USER = gql`
   ${userFragment}
 `;
 
+export const DELETE_USER = gql`
+  mutation DeleteUser($id: ID!) {
+    deleteUser(_id: $id) {
+      ...MutationUserFragment
+    }
+  }
+  ${userFragment}
+`;
+
 // Define the input type for the mutation
 export type AttachmentInput = {
   filename: string;
@@ -46,6 +56,7 @@ export type CreateUserInput = {
   role?: string | null; // ID of the role, allow null
   avatar?: AttachmentInput | null; // Optional avatar input
   position?: string | null; // Allow null
+  financial_approver?: boolean;
 };
 
 export type UpdateUserInput = {
@@ -56,4 +67,5 @@ export type UpdateUserInput = {
   role?: string | null; // ID of the role, allow null
   avatar?: AttachmentInput | null | undefined; //  Can be object, null (remove), or undefined
   position?: string | null; // Allow null
+  financial_approver?: boolean;
 };

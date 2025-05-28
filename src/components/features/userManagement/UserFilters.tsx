@@ -1,6 +1,6 @@
 // src/components/features/userManagement/UserFilters.tsx
 import React from "react";
-import UserSearchBar from "../../tables/UserSearchBar"; // Adjust path to your existing component
+import UserSearchBar from "../../tables/UserSearchBar"; // Adjusted path based on your provided UserSearchBar path
 
 interface UserFiltersProps {
   filterName: string;
@@ -11,10 +11,14 @@ interface UserFiltersProps {
   setFilterPosition: (value: string) => void;
   filterEmail: string;
   setFilterEmail: (value: string) => void;
+  filterFinancial: boolean;
+  setFilterFinancial: (value: boolean) => void;
+  filterManager: boolean; // <-- ADDED
+  setFilterManager: (value: boolean) => void; // <-- ADDED
 }
 
 const UserFilters: React.FC<UserFiltersProps> = (props) => {
-  // Pass the props directly to your existing UserSearchBar
+  // Pass all props, including the new manager filter props, to UserSearchBar
   return <UserSearchBar {...props} />;
 };
 

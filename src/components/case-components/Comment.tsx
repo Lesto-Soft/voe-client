@@ -13,8 +13,8 @@ const Comment: React.FC<CommentProps> = ({ comment, me }) => {
   return (
     <div className="flex flex-row items-stretch gap-3 rounded p-3">
       {/* Left: Creator info, vertically centered */}
-      <div className=" flex-col  justify-center">
-        <UserLink {...comment.creator} />
+      <div className="flex flex-col justify-center items-center">
+        <UserLink user={comment.creator} type="case" />
         {comment.creator.position && (
           <span className="text-xs text-gray-400 italic mt-1 text-center w-full block">
             {comment.creator.position}
@@ -29,9 +29,10 @@ const Comment: React.FC<CommentProps> = ({ comment, me }) => {
           {comment.content}
         </div>
       </div>
-      <div className=" justify-end gap-2 mb-1">
+      <div className="ap-2 mb-1 flex flex-col justify-center items-center">
         <ShowDate date={comment.date} />
         {me &&
+          me.role &&
           (me._id === comment.creator._id || admin_check(me.role.name)) && (
             <EditButton />
           )}

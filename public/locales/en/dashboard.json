@@ -7,6 +7,7 @@
   "OPEN": "OPEN",
   "CLOSED": "CLOSED",
   "IN_PROGRESS": "IN PROGRESS",
+  "AWAITING_FINANCE": "FINANCE",
   "all": "All",
   "mine": "Mine",
   "expert": "Expert",
@@ -40,5 +41,15 @@
   "no_more_actions": "No more actions available",
   "date": "Date",
   "edit": "Edit",
-  "rating": "Rating"
+  "rating": "Rating",
+  "answers": "Отговори",
+  "comments": "Коментари",
+  "history": "История",
+  "no_answers": "No answers",
+  "no_comments": "No comments",
+  "no_history": "No history",
+  "send": "Send",
+  "hideComment": "Hide comment",
+  "addComment": "Add comment",
+  "writeComment": "Write a comment..."
 }

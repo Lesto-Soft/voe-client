@@ -76,6 +76,7 @@ export const GET_CATEGORY_BY_NAME = gql`
         date
         priority
         status
+        type
         creator {
           _id
           name

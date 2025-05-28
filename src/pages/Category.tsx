@@ -384,7 +384,7 @@ const Category: React.FC = () => {
           <div className="overflow-y-auto flex-1">
             {category.cases && category.cases.length > 0 ? (
               <>
-                <ul className="divide-y divide-gray-200">
+                <ul className="divide-y-2 divide-gray-200">
                   {currentlyVisibleCases.map((caseItem) => {
                     const statusStyle = getStatusStyle(String(caseItem.status));
                     const priorityStyle = getPriorityStyle(
@@ -393,10 +393,24 @@ const Category: React.FC = () => {
                     const serverBaseUrl = import.meta.env.VITE_API_URL || "";
                     const creatorImageUrl = `${serverBaseUrl}/static/avatars/${caseItem.creator._id}/${caseItem.creator.avatar}`;
 
+                    // Determine the strip style (left border) based on caseItem.type
+                    let stripStyleClasses = "";
+                    if (caseItem.type === "PROBLEM") {
+                      // Red strip: border-l-4 for a 4px left border, border-red-500 for the color
+                      stripStyleClasses = "border-l-8 border-l-red-400";
+                    } else if (caseItem.type === "SUGGESTION") {
+                      // Green strip: border-l-4 for a 4px left border, border-green-500 for the color
+                      stripStyleClasses = "border-l-8 border-l-green-400";
+                    }
+                    // If no type matches, no extra border classes will be added.
+
                     return (
                       <li
                         key={caseItem._id}
-                        className="p-4 hover:bg-gray-50 transition-colors duration-150"
+                        // Added stripStyleClasses.
+                        // The existing p-4 will ensure content is padded away from this new border.
+                        // Using hover:bg-gray-100 for a slightly more noticeable hover over a potentially white background.
+                        className={`p-4 hover:bg-gray-100 transition-colors duration-150 ${stripStyleClasses}`}
                       >
                         <div className="flex items-start space-x-3">
                           <UserAvatar
@@ -405,10 +419,7 @@ const Category: React.FC = () => {
                             size={40}
                           />
                           <div className="flex-1 min-w-0">
-                            {/* Combined metadata line - MODIFIED */}
                             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-600 mb-2">
-                              {" "}
-                              {/* MODIFIED: gap-x-3 */}
                               <div className="min-w-[80px] flex-shrink-0">
                                 <CaseLink
                                   my_case={caseItem}
@@ -416,6 +427,12 @@ const Category: React.FC = () => {
                                     t(key, { caseId: caseItem.case_number })
                                   }
                                 />
+                                {/* You might still want to display caseItem.type text or an icon if the strip isn't prominent enough */}
+                                {/* For example:
+                                <span className={`ml-1 text-xs font-semibold ${caseItem.type === "PROBLEM" ? "text-red-700" : caseItem.type === "SUGGESTION" ? "text-green-700" : ""}`}>
+                                  {caseItem.type}
+                                </span>
+                                */}
                               </div>
                               <span
                                 className={`flex items-center font-medium ${priorityStyle} flex-shrink-0 min-w-[100px]`}
@@ -442,7 +459,6 @@ const Category: React.FC = () => {
                                   type="table"
                                 />
                               </div>
-                              {/* Date - MODIFIED: removed ml-auto, added min-w */}
                               <p className="text-xs text-gray-500 whitespace-nowrap flex-shrink-0 min-w-[140px]">
                                 {formatDate(caseItem.date)}
                               </p>
@@ -461,7 +477,7 @@ const Category: React.FC = () => {
                     <div className="p-4 flex justify-center">
                       <button
                         onClick={handleLoadMoreCases}
-                        className="flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-150"
+                        className="flex items-center px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-150"
                       >
                         <ArrowDownCircleIcon className="h-5 w-5 mr-2" />
                         Зареди още...

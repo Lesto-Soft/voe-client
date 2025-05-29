@@ -1,7 +1,8 @@
 // src/pages/Category.tsx
 import React, { useEffect, useMemo, useState, useRef } from "react";
-import { useParams } from "react-router";
-import { ICategory, ICase, IUser } from "../db/interfaces";
+import { useParams } from "react-router"; // Removed useLocation as it was for scroll logic
+import { ICategory, ICase, IUser, IAnswer } from "../db/interfaces"; // Added IAnswer
+import ShowDate from "../components/global/ShowDate";
 
 import {
   UserGroupIcon,
@@ -17,7 +18,6 @@ import {
   ArrowDownCircleIcon,
   ArrowPathIcon,
   BanknotesIcon,
-  // Consider adding an icon for the Resolution tab button if desired, e.g., CalendarDaysIcon or ScaleIcon
 } from "@heroicons/react/24/outline";
 import { FlagIcon } from "@heroicons/react/24/solid";
 import { useGetCategoryByName } from "../graphql/hooks/category";
@@ -44,17 +44,19 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 const TYPE_COLORS: Record<string, string> = {
-  PROBLEM: "#F87171", // Tailwind's red-400
-  SUGGESTION: "#4ADE80", // Tailwind's green-400
+  PROBLEM: "#F87171",
+  SUGGESTION: "#4ADE80",
 };
 
-// Define colors for resolution categories - you can adjust these
-const RESOLUTION_CATEGORY_COLORS: Record<string, string> = {
-  UNDER_1_DAY: "#A7F3D0", // e.g., Tailwind green-200
-  UNDER_5_DAYS: "#BAE6FD", // e.g., Tailwind sky-200
-  UNDER_10_DAYS: "#FDE68A", // e.g., Tailwind amber-200
-  OVER_10_DAYS: "#FECACA", // e.g., Tailwind red-200
-};
+const RESOLUTION_CATEGORY_CONFIG = [
+  // Renamed and structured for direct use
+  { label: "До 1 ден", key: "UNDER_1_DAY", color: "#A7F3D0" }, // Pastel Green
+  { label: "До 5 дни", key: "UNDER_5_DAYS", color: "#BAE6FD" }, // Pastel Blue
+  { label: "До 10 дни", key: "UNDER_10_DAYS", color: "#FDE68A" }, // Pastel Yellow
+  { label: "Над 10 дни", key: "OVER_10_DAYS", color: "#FECACA" }, // Pastel Red
+] as const; // Use 'as const' for stricter typing of keys
+
+type ResolutionCategoryKey = (typeof RESOLUTION_CATEGORY_CONFIG)[number]["key"];
 
 const getStatusStyle = (status: string) => {
   const statusUpper = status.toUpperCase();
@@ -124,31 +126,27 @@ const translateCaseType = (type: string) => {
   return map[type.toUpperCase()] || type;
 };
 
-// Helper for translating resolution categories for the legend (if needed, or use labels directly)
-const translateResolutionCategory = (categoryLabel: string) => {
-  // For now, labels are simple, so direct usage is fine.
-  // If more complex translation is needed, implement here.
-  return categoryLabel;
-};
+const translateResolutionCategory = (categoryLabel: string) => categoryLabel;
 
 const Category: React.FC = () => {
   const { name: categoryNameFromParams } = useParams<{ name: string }>();
   const { loading, error, category } = useGetCategoryByName(
     categoryNameFromParams
   );
+
   const [visibleCasesCount, setVisibleCasesCount] = useState(
     INITIAL_VISIBLE_CASES
   );
-  // MODIFIED: Added "resolution" to activeStatsView state
   const [activeStatsView, setActiveStatsView] = useState<
     "status" | "type" | "resolution"
   >("status");
 
-  const scrollableCasesListRef = useRef<HTMLDivElement>(null);
+  const scrollableCasesListRef = useRef<HTMLDivElement>(null); // Kept for case list, not for scroll restoration logic
 
+  // Reset states when category changes (scroll restoration logic removed)
   useEffect(() => {
     setVisibleCasesCount(INITIAL_VISIBLE_CASES);
-    setActiveStatsView("status"); // Default to status tab
+    setActiveStatsView("status");
   }, [categoryNameFromParams]);
 
   useEffect(() => {
@@ -165,12 +163,13 @@ const Category: React.FC = () => {
         inProgressSignals: 0,
         awaitingFinanceSignals: 0,
         closedSignals: 0,
-        resolutionTimeInfo: "Няма данни", // Default for resolution text
         statusPieChartData: [],
         problemCasesCount: 0,
         suggestionCasesCount: 0,
         typePieChartData: [],
-        resolutionPieChartData: [], // ADDED: For resolution pie chart
+        effectivelyResolvedCasesCount: 0,
+        unresolvedCasesCount: 0,
+        resolutionPieChartData: [],
       };
     }
 
@@ -184,7 +183,7 @@ const Category: React.FC = () => {
 
     const strictlyOpenSignals = statusCounts["OPEN"] || 0;
     const inProgressSignals = statusCounts["IN_PROGRESS"] || 0;
-    const awaitingFinanceSignals = statusCounts["AWAITING_FINANCE"] || 0;
+    const awaitingFinanceSignalsCount = statusCounts["AWAITING_FINANCE"] || 0;
     const closedSignalsCount = statusCounts["CLOSED"] || 0;
 
     const statusPieChartData = Object.entries(statusCounts).map(
@@ -195,273 +194,304 @@ const Category: React.FC = () => {
       })
     );
 
-    // MOVED: resolutionTimeInfo is now general, not tied only to closed signals for this context
-    const resolutionTimeInfo =
-      totalSignals > 0 ? "Данни за изчисление" : "Няма данни";
-
-    // ADDED: Placeholder for resolution pie chart data calculation
-    // This section will need to be replaced with actual logic based on case resolution times
-    const resolutionCategories = [
-      {
-        label: "До 1 ден",
-        key: "UNDER_1_DAY",
-        color: RESOLUTION_CATEGORY_COLORS.UNDER_1_DAY,
-      },
-      {
-        label: "До 5 дни",
-        key: "UNDER_5_DAYS",
-        color: RESOLUTION_CATEGORY_COLORS.UNDER_5_DAYS,
-      },
-      {
-        label: "До 10 дни",
-        key: "UNDER_10_DAYS",
-        color: RESOLUTION_CATEGORY_COLORS.UNDER_10_DAYS,
-      },
-      {
-        label: "Над 10 дни",
-        key: "OVER_10_DAYS",
-        color: RESOLUTION_CATEGORY_COLORS.OVER_10_DAYS,
-      },
-    ];
-
-    // Placeholder counts - replace with actual calculations
-    const calculatedResolutionCounts: Record<string, number> = {
-      UNDER_1_DAY:
-        category.cases.filter((c) => c.status === "CLOSED").length > 2 ? 2 : 0, // Example: 2 cases
-      UNDER_5_DAYS:
-        category.cases.filter((c) => c.status === "CLOSED").length > 5 ? 3 : 0, // Example: 3 cases
-      UNDER_10_DAYS:
-        category.cases.filter((c) => c.status === "CLOSED").length > 8 ? 1 : 0, // Example: 1 case
-      OVER_10_DAYS:
-        category.cases.filter((c) => c.status === "CLOSED").length > 10 ? 4 : 0, // Example: 4 cases
-    };
-
-    const resolutionPieChartData = resolutionCategories
-      .map((cat) => ({
-        label: cat.label,
-        value: calculatedResolutionCounts[cat.key] || 0,
-        color: cat.color,
-      }))
-      .filter((segment) => segment.value > 0); // Keep segments even if value is 0 for consistent legend, or filter if preferred
-
     let problemCasesCount = 0;
     let suggestionCasesCount = 0;
     category.cases.forEach((c) => {
       if (c.type === "PROBLEM") problemCasesCount++;
       else if (c.type === "SUGGESTION") suggestionCasesCount++;
     });
-
     const typePieChartData = [];
-    if (problemCasesCount > 0) {
+    if (problemCasesCount > 0)
       typePieChartData.push({
         label: "PROBLEM",
         value: problemCasesCount,
         color: TYPE_COLORS.PROBLEM,
       });
-    }
-    if (suggestionCasesCount > 0) {
+    if (suggestionCasesCount > 0)
       typePieChartData.push({
         label: "SUGGESTION",
         value: suggestionCasesCount,
         color: TYPE_COLORS.SUGGESTION,
       });
-    }
+
+    // Resolution Time Logic
+    const resolutionTimeCounts: Record<ResolutionCategoryKey, number> = {
+      UNDER_1_DAY: 0,
+      UNDER_5_DAYS: 0,
+      UNDER_10_DAYS: 0,
+      OVER_10_DAYS: 0,
+    };
+    let effectivelyResolvedCasesCount = 0;
+
+    category.cases.forEach((caseItem: ICase) => {
+      if (
+        caseItem.status === "CLOSED" ||
+        caseItem.status === "AWAITING_FINANCE"
+      ) {
+        effectivelyResolvedCasesCount++;
+
+        let resolvingAnswer: IAnswer | null = null;
+        let latestApprovedDateTime: number | null = null;
+
+        if (caseItem.answers && caseItem.answers.length > 0) {
+          caseItem.answers.forEach((answer: IAnswer) => {
+            // Ensure 'answer' is explicitly IAnswer
+            if (answer.approved) {
+              console.log(
+                "we found an approved answer for case:",
+                caseItem.case_number,
+                " the answer id is: ",
+                answer._id
+              );
+              try {
+                const currentApprovedDate = new Date(answer.date);
+                if (!isNaN(currentApprovedDate.getTime())) {
+                  if (
+                    latestApprovedDateTime === null ||
+                    currentApprovedDate.getTime() > latestApprovedDateTime
+                  ) {
+                    latestApprovedDateTime = currentApprovedDate.getTime();
+                    resolvingAnswer = answer; // resolvingAnswer is now IAnswer or remains null
+                  }
+                }
+              } catch (e) {
+                /* date parsing error */
+              }
+            }
+          });
+        }
+
+        if (resolvingAnswer) {
+          // At this point, TypeScript has narrowed resolvingAnswer from IAnswer | null to IAnswer.
+          // Let's log its type or try a type assertion for diagnostics:
+
+          // Diagnostic 1: Log the object at runtime (won't fix TS error but helps verify data)
+          // console.log("resolvingAnswer before accessing .date:", resolvingAnswer);
+
+          // Diagnostic 2: Explicit Type Assertion (use with caution, primarily for debugging)
+          const anAnswer = resolvingAnswer as IAnswer; // Tell TS to trust you that it's an IAnswer
+
+          // Now, try accessing 'date' on the asserted type or the original
+          // The error points here:
+          const answerDate = anAnswer.date; // Or use resolvingAnswer.date directly
+          // If anAnswer.date still errors, the issue might be more with IAnswer['date'] itself
+
+          if (answerDate && caseItem.date) {
+            try {
+              const caseStartDate = new Date(caseItem.date);
+              const resolutionActualEndDate = new Date(answerDate);
+
+              if (
+                !isNaN(caseStartDate.getTime()) &&
+                !isNaN(resolutionActualEndDate.getTime())
+              ) {
+                const diffTimeMs =
+                  resolutionActualEndDate.getTime() - caseStartDate.getTime();
+                if (diffTimeMs >= 0) {
+                  const diffDays = diffTimeMs / (1000 * 60 * 60 * 24);
+                  if (diffDays <= 1) resolutionTimeCounts.UNDER_1_DAY++;
+                  else if (diffDays <= 5) resolutionTimeCounts.UNDER_5_DAYS++;
+                  else if (diffDays <= 10) resolutionTimeCounts.UNDER_10_DAYS++;
+                  else resolutionTimeCounts.OVER_10_DAYS++;
+                }
+              }
+            } catch (e) {
+              /* date calculation error */
+            }
+          }
+        }
+      }
+    });
+
+    const resolutionPieChartData = RESOLUTION_CATEGORY_CONFIG.map(
+      (catConfig) => ({
+        label: catConfig.label,
+        value: resolutionTimeCounts[catConfig.key],
+        color: catConfig.color,
+      })
+    );
+
+    const unresolvedCasesCount = totalSignals - effectivelyResolvedCasesCount;
 
     return {
       totalSignals,
       strictlyOpenSignals,
       inProgressSignals,
-      awaitingFinanceSignals,
+      awaitingFinanceSignals: awaitingFinanceSignalsCount,
       closedSignals: closedSignalsCount,
-      resolutionTimeInfo,
       statusPieChartData,
       problemCasesCount,
       suggestionCasesCount,
       typePieChartData,
-      resolutionPieChartData, // ADDED
+      effectivelyResolvedCasesCount,
+      unresolvedCasesCount,
+      resolutionPieChartData,
     };
   }, [category]);
 
-  const totalStatusPieValue = useMemo(() => {
-    return signalStats.statusPieChartData.reduce(
-      (sum, segment) => sum + segment.value,
-      0
-    );
-  }, [signalStats.statusPieChartData]);
-
+  const totalStatusPieValue = useMemo(
+    () =>
+      signalStats.statusPieChartData.reduce(
+        (sum, segment) => sum + segment.value,
+        0
+      ),
+    [signalStats.statusPieChartData]
+  );
   const statusPieChartSegmentPaths = useMemo(() => {
     if (!signalStats.statusPieChartData.length || totalStatusPieValue === 0)
       return null;
-    // ... (pie chart logic - no changes here)
-    let accumulatedPercentage = 0;
-    return signalStats.statusPieChartData.map((segment, index) => {
-      const percentage = (segment.value / totalStatusPieValue) * 100;
-      if (percentage === 0) return null; // Do not render 0% segments
-      const startAngleDegrees = (accumulatedPercentage / 100) * 360;
-      let endAngleDegrees = ((accumulatedPercentage + percentage) / 100) * 360;
-      if (percentage === 100 && startAngleDegrees === 0)
-        endAngleDegrees = 359.999; // Full circle fix
-      accumulatedPercentage += percentage;
-      const radius = 45;
-      const centerX = 50;
-      const centerY = 50;
-      const startAngleRad = (startAngleDegrees - 90) * (Math.PI / 180);
-      const endAngleRad = (endAngleDegrees - 90) * (Math.PI / 180);
-      const x1 = centerX + radius * Math.cos(startAngleRad);
-      const y1 = centerY + radius * Math.sin(startAngleRad);
-      const x2 = centerX + radius * Math.cos(endAngleRad);
-      const y2 = centerY + radius * Math.sin(endAngleRad);
-      const largeArcFlag = percentage > 50 ? 1 : 0;
-      const pathData = `M ${centerX},${centerY} L ${x1},${y1} A ${radius},${radius} 0 ${largeArcFlag},1 ${x2},${y2} Z`;
-      return (
-        <path
-          key={`status-pie-segment-${index}`}
-          d={pathData}
-          fill={segment.color}
-        />
-      );
+    let acc = 0;
+    return signalStats.statusPieChartData.map((seg, i) => {
+      const perc = (seg.value / totalStatusPieValue) * 100;
+      if (perc === 0) return null;
+      const saDeg = (acc / 100) * 360;
+      let eaDeg = ((acc + perc) / 100) * 360;
+      if (perc === 100 && saDeg === 0) eaDeg = 359.999;
+      acc += perc;
+      const r = 45,
+        cx = 50,
+        cy = 50;
+      const saRad = (saDeg - 90) * (Math.PI / 180);
+      const eaRad = (eaDeg - 90) * (Math.PI / 180);
+      const x1 = cx + r * Math.cos(saRad);
+      const y1 = cy + r * Math.sin(saRad);
+      const x2 = cx + r * Math.cos(eaRad);
+      const y2 = cy + r * Math.sin(eaRad);
+      const laf = perc > 50 ? 1 : 0;
+      const pd = `M ${cx},${cy} L ${x1},${y1} A ${r},${r} 0 ${laf},1 ${x2},${y2} Z`;
+      return <path key={`st-pie-${i}`} d={pd} fill={seg.color} />;
     });
   }, [signalStats.statusPieChartData, totalStatusPieValue]);
 
-  const totalTypePieValue = useMemo(() => {
-    return signalStats.typePieChartData.reduce(
-      (sum, segment) => sum + segment.value,
-      0
-    );
-  }, [signalStats.typePieChartData]);
-
+  const totalTypePieValue = useMemo(
+    () =>
+      signalStats.typePieChartData.reduce(
+        (sum, segment) => sum + segment.value,
+        0
+      ),
+    [signalStats.typePieChartData]
+  );
   const typePieChartSegmentPaths = useMemo(() => {
     if (!signalStats.typePieChartData.length || totalTypePieValue === 0)
       return null;
-    // ... (pie chart logic - no changes here)
-    let accumulatedPercentage = 0;
-    return signalStats.typePieChartData.map((segment, index) => {
-      const percentage = (segment.value / totalTypePieValue) * 100;
-      if (percentage === 0) return null;
-      const startAngleDegrees = (accumulatedPercentage / 100) * 360;
-      let endAngleDegrees = ((accumulatedPercentage + percentage) / 100) * 360;
-      if (percentage === 100 && startAngleDegrees === 0)
-        endAngleDegrees = 359.999;
-      accumulatedPercentage += percentage;
-      const radius = 45;
-      const centerX = 50;
-      const centerY = 50;
-      const startAngleRad = (startAngleDegrees - 90) * (Math.PI / 180);
-      const endAngleRad = (endAngleDegrees - 90) * (Math.PI / 180);
-      const x1 = centerX + radius * Math.cos(startAngleRad);
-      const y1 = centerY + radius * Math.sin(startAngleRad);
-      const x2 = centerX + radius * Math.cos(endAngleRad);
-      const y2 = centerY + radius * Math.sin(endAngleRad);
-      const largeArcFlag = percentage > 50 ? 1 : 0;
-      const pathData = `M ${centerX},${centerY} L ${x1},${y1} A ${radius},${radius} 0 ${largeArcFlag},1 ${x2},${y2} Z`;
-      return (
-        <path
-          key={`type-pie-segment-${index}`}
-          d={pathData}
-          fill={segment.color}
-        />
-      );
+    let acc = 0;
+    return signalStats.typePieChartData.map((seg, i) => {
+      const perc = (seg.value / totalTypePieValue) * 100;
+      if (perc === 0) return null;
+      const saDeg = (acc / 100) * 360;
+      let eaDeg = ((acc + perc) / 100) * 360;
+      if (perc === 100 && saDeg === 0) eaDeg = 359.999;
+      acc += perc;
+      const r = 45,
+        cx = 50,
+        cy = 50;
+      const saRad = (saDeg - 90) * (Math.PI / 180);
+      const eaRad = (eaDeg - 90) * (Math.PI / 180);
+      const x1 = cx + r * Math.cos(saRad);
+      const y1 = cy + r * Math.sin(saRad);
+      const x2 = cx + r * Math.cos(eaRad);
+      const y2 = cy + r * Math.sin(eaRad);
+      const laf = perc > 50 ? 1 : 0;
+      const pd = `M ${cx},${cy} L ${x1},${y1} A ${r},${r} 0 ${laf},1 ${x2},${y2} Z`;
+      return <path key={`ty-pie-${i}`} d={pd} fill={seg.color} />;
     });
   }, [signalStats.typePieChartData, totalTypePieValue]);
 
-  // ADDED: useMemo hooks for Resolution Pie Chart
-  const totalResolutionPieValue = useMemo(() => {
-    return signalStats.resolutionPieChartData.reduce(
-      (sum, segment) => sum + segment.value,
-      0
-    );
-  }, [signalStats.resolutionPieChartData]);
-
+  const totalResolutionPieValue = useMemo(
+    () =>
+      signalStats.resolutionPieChartData.reduce(
+        (sum, segment) => sum + segment.value,
+        0
+      ),
+    [signalStats.resolutionPieChartData]
+  );
   const resolutionPieChartSegmentPaths = useMemo(() => {
     if (
       !signalStats.resolutionPieChartData.length ||
       totalResolutionPieValue === 0
     )
       return null;
-    let accumulatedPercentage = 0;
-    return signalStats.resolutionPieChartData.map((segment, index) => {
-      const percentage = (segment.value / totalResolutionPieValue) * 100;
-      if (percentage === 0 && totalResolutionPieValue > 0) return null; // Don't draw 0% if other segments exist
-      const startAngleDegrees = (accumulatedPercentage / 100) * 360;
-      let endAngleDegrees = ((accumulatedPercentage + percentage) / 100) * 360;
-      if (percentage === 100 && startAngleDegrees === 0)
-        endAngleDegrees = 359.999;
-      accumulatedPercentage += percentage;
-      const radius = 45;
-      const centerX = 50;
-      const centerY = 50;
-      const startAngleRad = (startAngleDegrees - 90) * (Math.PI / 180);
-      const endAngleRad = (endAngleDegrees - 90) * (Math.PI / 180);
-      const x1 = centerX + radius * Math.cos(startAngleRad);
-      const y1 = centerY + radius * Math.sin(startAngleRad);
-      const x2 = centerX + radius * Math.cos(endAngleRad);
-      const y2 = centerY + radius * Math.sin(endAngleRad);
-      const largeArcFlag = percentage > 50 ? 1 : 0;
-      const pathData = `M ${centerX},${centerY} L ${x1},${y1} A ${radius},${radius} 0 ${largeArcFlag},1 ${x2},${y2} Z`;
-      return (
-        <path
-          key={`resolution-pie-segment-${index}`}
-          d={pathData}
-          fill={segment.color}
-        />
-      );
+    let acc = 0;
+    return signalStats.resolutionPieChartData.map((seg, i) => {
+      const perc = (seg.value / totalResolutionPieValue) * 100;
+      // Decide if 0% segments should be drawn. If only one segment is 100%, it will be drawn.
+      // If you want to hide 0% segments when other segments exist:
+      if (
+        perc === 0 &&
+        totalResolutionPieValue > 0 &&
+        signalStats.resolutionPieChartData.filter((s) => s.value > 0).length > 0
+      )
+        return null;
+
+      const saDeg = (acc / 100) * 360;
+      let eaDeg = ((acc + perc) / 100) * 360;
+      if (
+        perc === 100 &&
+        saDeg === 0 &&
+        signalStats.resolutionPieChartData.length === 1
+      )
+        eaDeg = 359.999; // Full circle if it's the only segment
+      else if (eaDeg === saDeg && perc > 0) eaDeg = saDeg + 359.999; // Avoid zero-angle arc for single segment
+
+      acc += perc;
+      const r = 45,
+        cx = 50,
+        cy = 50;
+      const saRad = (saDeg - 90) * (Math.PI / 180);
+      const eaRad = (eaDeg - 90) * (Math.PI / 180);
+      const x1 = cx + r * Math.cos(saRad);
+      const y1 = cy + r * Math.sin(saRad);
+      const x2 = cx + r * Math.cos(eaRad);
+      const y2 = cy + r * Math.sin(eaRad);
+      const laf = perc > 50 ? 1 : 0;
+      const pd = `M ${cx},${cy} L ${x1},${y1} A ${r},${r} 0 ${laf},1 ${x2},${y2} Z`;
+      return <path key={`res-pie-${i}`} d={pd} fill={seg.color} />;
     });
   }, [signalStats.resolutionPieChartData, totalResolutionPieValue]);
 
-  // ... PageStatusWrapper, loading/error/no-category checks, formatDate, translatePriority, handleLoadMoreCases, currentlyVisibleCases remain the same ...
   const PageStatusWrapper: React.FC<{ children: React.ReactNode }> = ({
     children,
   }) => (
     <div className="flex items-center justify-center h-[calc(100vh-6rem)]">
-      {" "}
-      {children}{" "}
+      {children}
     </div>
   );
   if (loading) {
     return (
       <PageStatusWrapper>
-        {" "}
         <div className="p-6 text-center text-gray-700">
-          {" "}
-          Зареждане на данните за категорията...{" "}
-        </div>{" "}
+          Зареждане на данните за категорията...
+        </div>
       </PageStatusWrapper>
     );
   }
   if (error) {
     return (
       <PageStatusWrapper>
-        {" "}
         <div className="p-6 text-red-600 bg-red-100 border border-red-300 rounded-lg shadow-md text-center">
-          {" "}
-          <p className="font-semibold">Грешка при зареждане:</p>{" "}
-          <p className="text-sm">{error.message}</p>{" "}
+          <p className="font-semibold">Грешка при зареждане:</p>
+          <p className="text-sm">{error.message}</p>
           <p className="text-xs mt-2">
-            {" "}
-            Моля, проверете конзолата за повече детайли.{" "}
-          </p>{" "}
-        </div>{" "}
+            Моля, проверете конзолата за повече детайли.
+          </p>
+        </div>
       </PageStatusWrapper>
     );
   }
   if (!category) {
     return (
       <PageStatusWrapper>
-        {" "}
         <div className="p-6 text-gray-600 bg-gray-100 border border-gray-300 rounded-lg shadow-md text-center">
-          {" "}
-          <p className="font-semibold">Категорията не е намерена.</p>{" "}
+          <p className="font-semibold">Категорията не е намерена.</p>
           <p className="text-sm">
-            {" "}
             Уверете се, че името ({categoryNameFromParams || "липсва"}) е
-            валидно и данните са налични.{" "}
-          </p>{" "}
+            валидно и данните са налични.
+          </p>
           <p className="text-xs mt-2">
-            {" "}
             Ако заявката е изпълнена, но категорията не е намерена, проверете
-            конзолата.{" "}
-          </p>{" "}
-        </div>{" "}
+            конзолата.
+          </p>
+        </div>
       </PageStatusWrapper>
     );
   }
@@ -491,7 +521,7 @@ const Category: React.FC = () => {
   const handleLoadMoreCases = () => {
     setVisibleCasesCount((prevCount) => prevCount + 10);
   };
-  const currentlyVisibleCases = category.cases
+  const currentlyVisibleCases = category?.cases
     ? category.cases.slice(0, visibleCasesCount)
     : [];
 
@@ -506,7 +536,6 @@ const Category: React.FC = () => {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 overflow-hidden">
-        {/* CORRECTED: lg:col-span-3 for the left aside */}
         <aside className="lg:col-span-3 bg-white rounded-lg shadow-lg flex flex-col overflow-hidden">
           <div className="p-6 space-y-6 overflow-y-auto flex-1">
             <div className="grid grid-cols-1 gap-y-6 sm:grid-cols-2 sm:gap-y-0 sm:gap-x-6">
@@ -551,7 +580,6 @@ const Category: React.FC = () => {
             </div>
             <div>
               <h3 className="text-xl font-semibold text-gray-700 mb-3 flex items-center">
-                {/* User's latest version of icon color for Предложение */}
                 <LightBulbIcon className="h-6 w-6 mr-2 text-green-500" />
                 Предложение
               </h3>
@@ -582,7 +610,6 @@ const Category: React.FC = () => {
         </aside>
 
         <main className="lg:col-span-6 bg-white rounded-lg shadow-lg flex flex-col overflow-hidden">
-          {/* ... main content structure ... */}
           <div ref={scrollableCasesListRef} className="overflow-y-auto flex-1">
             {category.cases && category.cases.length > 0 ? (
               <>
@@ -645,9 +672,10 @@ const Category: React.FC = () => {
                                   type="table"
                                 />
                               </div>
-                              <p className="text-xs text-gray-500 whitespace-nowrap flex-shrink-0 min-w-[140px]">
-                                {formatDate(caseItem.date)}
-                              </p>
+                              <div className="text-xs text-gray-500 whitespace-nowrap flex-shrink-0 min-w-[160px]">
+                                {/* {formatDate(caseItem.date)} */}
+                                <ShowDate date={caseItem.date} />
+                              </div>
                             </div>
                             <p className="text-sm text-gray-700 leading-relaxed line-clamp-4">
                               {caseItem.content}
@@ -683,14 +711,12 @@ const Category: React.FC = () => {
           </div>
         </main>
 
-        {/* CORRECTED: lg:col-span-3 for the statistics aside */}
         <aside className="lg:col-span-3 bg-white rounded-lg shadow-lg flex flex-col overflow-hidden">
           <div className="p-6 space-y-6 overflow-y-auto flex-1">
             <h3 className="text-xl font-semibold text-gray-700 mb-3 flex items-center">
-              <ChartPieIcon className="h-6 w-6 mr-2 text-teal-600" />
-              Статистика
+              <ChartPieIcon className="h-6 w-6 mr-2 text-teal-600" /> Статистика
             </h3>
-
+            {/* Overall total signals - this remains above the tabs */}
             <div className="space-y-3 text-sm text-gray-600">
               <p className="flex items-center justify-between">
                 <span className="flex items-center">
@@ -702,49 +728,43 @@ const Category: React.FC = () => {
                 </strong>
               </p>
             </div>
-
-            {/* MODIFIED: Added "Resolution" tab button */}
             <div className="mt-4">
               <div className="flex border-b border-gray-200">
                 <button
                   onClick={() => setActiveStatsView("status")}
-                  className={`flex-1 py-2 px-1 text-center text-sm font-medium focus:outline-none transition-colors duration-150
-                    ${
-                      activeStatsView === "status"
-                        ? "border-b-2 border-indigo-500 text-indigo-600"
-                        : "text-gray-500 hover:text-gray-700 hover:border-gray-300 border-b-2 border-transparent"
-                    }`}
+                  className={`flex-1 py-2 px-1 text-center text-sm font-medium focus:outline-none transition-colors duration-150 ${
+                    activeStatsView === "status"
+                      ? "border-b-2 border-indigo-500 text-indigo-600"
+                      : "text-gray-500 hover:text-gray-700 hover:border-gray-300 border-b-2 border-transparent"
+                  }`}
                 >
                   По Статус
                 </button>
                 <button
                   onClick={() => setActiveStatsView("type")}
-                  className={`flex-1 py-2 px-1 text-center text-sm font-medium focus:outline-none transition-colors duration-150
-                    ${
-                      activeStatsView === "type"
-                        ? "border-b-2 border-indigo-500 text-indigo-600"
-                        : "text-gray-500 hover:text-gray-700 hover:border-gray-300 border-b-2 border-transparent"
-                    }`}
+                  className={`flex-1 py-2 px-1 text-center text-sm font-medium focus:outline-none transition-colors duration-150 ${
+                    activeStatsView === "type"
+                      ? "border-b-2 border-indigo-500 text-indigo-600"
+                      : "text-gray-500 hover:text-gray-700 hover:border-gray-300 border-b-2 border-transparent"
+                  }`}
                 >
                   По Тип
                 </button>
                 <button
                   onClick={() => setActiveStatsView("resolution")}
-                  className={`flex-1 py-2 px-1 text-center text-sm font-medium focus:outline-none transition-colors duration-150
-                    ${
-                      activeStatsView === "resolution"
-                        ? "border-b-2 border-indigo-500 text-indigo-600"
-                        : "text-gray-500 hover:text-gray-700 hover:border-gray-300 border-b-2 border-transparent"
-                    }`}
+                  className={`flex-1 py-2 px-1 text-center text-sm font-medium focus:outline-none transition-colors duration-150 ${
+                    activeStatsView === "resolution"
+                      ? "border-b-2 border-indigo-500 text-indigo-600"
+                      : "text-gray-500 hover:text-gray-700 hover:border-gray-300 border-b-2 border-transparent"
+                  }`}
                 >
                   По Време
                 </button>
               </div>
             </div>
-
+            {/* Status Tab Content */}
             {activeStatsView === "status" && (
               <div className="mt-3">
-                {/* MODIFIED: Removed Resolution line from here, min-h-40 remains */}
                 <div className="space-y-3 text-sm text-gray-600 mb-4 min-h-40">
                   <p className="flex items-center justify-between">
                     <span className="flex items-center">
@@ -783,7 +803,6 @@ const Category: React.FC = () => {
                     </strong>
                   </p>
                 </div>
-
                 <h4 className="text-md font-semibold text-gray-700 mb-3">
                   Разпределение по Статус
                 </h4>
@@ -827,7 +846,7 @@ const Category: React.FC = () => {
                 )}
               </div>
             )}
-
+            {/* Type Tab Content */}
             {activeStatsView === "type" && (
               <div className="mt-3">
                 <div
@@ -852,8 +871,7 @@ const Category: React.FC = () => {
                       </p>
                       <p className="flex items-center justify-between">
                         <span className="flex items-center">
-                          <LightBulbIcon className="h-5 w-5 mr-2 text-green-500" />{" "}
-                          {/* Consistent with left panel */}
+                          <LightBulbIcon className="h-5 w-5 mr-2 text-green-500" />
                           {translateCaseType("SUGGESTION")}:
                         </span>
                         <strong className="text-gray-800 text-base">
@@ -867,7 +885,6 @@ const Category: React.FC = () => {
                     </p>
                   )}
                 </div>
-
                 <h4 className="text-md font-semibold text-gray-700 mb-3">
                   Разпределение по Тип
                 </h4>
@@ -911,62 +928,75 @@ const Category: React.FC = () => {
                 )}
               </div>
             )}
-
-            {/* ADDED: Resolution Tab Content */}
+            {/* Resolution Tab Content - MODIFIED */}
             {activeStatsView === "resolution" && (
               <div className="mt-3">
                 <div className="space-y-3 text-sm text-gray-600 mb-4 min-h-40">
                   <p className="flex items-center justify-between">
                     <span className="flex items-center">
-                      <ClockIcon className="h-5 w-5 mr-2 text-orange-500" />
-                      Средно време за затваряне:
+                      <CheckCircleIcon className="h-5 w-5 mr-2 text-green-500" />
+                      Приключени (за графиката):
                     </span>
-                    <strong className="text-gray-800 text-xs">
-                      {signalStats.resolutionTimeInfo}
+                    <strong className="text-gray-800 text-base">
+                      {signalStats.effectivelyResolvedCasesCount}
                     </strong>
                   </p>
-                  {/* You can add more specific resolution time text stats here if needed */}
+                  <p className="flex items-center justify-between">
+                    <span className="flex items-center">
+                      <ClockIcon className="h-5 w-5 mr-2 text-orange-500" />В
+                      изчакване/други:
+                    </span>
+                    <strong className="text-gray-800 text-base">
+                      {signalStats.unresolvedCasesCount}
+                    </strong>
+                  </p>
                 </div>
 
                 <h4 className="text-md font-semibold text-gray-700 mb-3">
-                  (Примерно) Разпределение по Време
+                  Разпределение по Време на Резолюция
                 </h4>
-                {signalStats.resolutionPieChartData.length > 0 &&
+                {/* Render pie chart only if there are resolved cases to show */}
+                {signalStats.effectivelyResolvedCasesCount > 0 &&
+                signalStats.resolutionPieChartData.length > 0 &&
                 totalResolutionPieValue > 0 ? (
                   <div className="w-full">
                     <svg viewBox="0 0 100 100" className="w-40 h-40 mx-auto">
                       {resolutionPieChartSegmentPaths}
                     </svg>
                     <ul className="text-xs mt-4 space-y-1">
-                      {signalStats.resolutionPieChartData.map((item) => (
-                        <li
-                          key={item.label}
-                          className="flex items-center justify-between px-2"
-                        >
-                          <span className="flex items-center">
-                            <span
-                              className="h-2.5 w-2.5 rounded-full mr-2"
-                              style={{ backgroundColor: item.color }}
-                            />
-                            {translateResolutionCategory(item.label)}:
-                          </span>
-                          <span>
-                            {item.value} (
-                            {totalResolutionPieValue > 0
-                              ? (
-                                  (item.value / totalResolutionPieValue) *
-                                  100
-                                ).toFixed(1)
-                              : 0}
-                            %)
-                          </span>
-                        </li>
-                      ))}
+                      {signalStats.resolutionPieChartData.map(
+                        (item) =>
+                          // Only render legend items that have a value, or all if you prefer
+                          item.value > 0 && (
+                            <li
+                              key={item.label}
+                              className="flex items-center justify-between px-2"
+                            >
+                              <span className="flex items-center">
+                                <span
+                                  className="h-2.5 w-2.5 rounded-full mr-2"
+                                  style={{ backgroundColor: item.color }}
+                                />
+                                {translateResolutionCategory(item.label)}:
+                              </span>
+                              <span>
+                                {item.value} (
+                                {totalResolutionPieValue > 0
+                                  ? (
+                                      (item.value / totalResolutionPieValue) *
+                                      100
+                                    ).toFixed(1)
+                                  : 0}
+                                %)
+                              </span>
+                            </li>
+                          )
+                      )}
                     </ul>
                   </div>
                 ) : (
                   <p className="text-sm text-gray-500 text-center py-4">
-                    Няма данни за диаграмата по резолюция.
+                    Няма данни за диаграмата по време на резолюция.
                   </p>
                 )}
               </div>

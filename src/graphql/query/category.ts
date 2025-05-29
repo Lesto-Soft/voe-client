@@ -82,6 +82,14 @@ export const GET_CATEGORY_BY_NAME = gql`
           name
           avatar
         }
+        answers {
+          _id
+          date
+          approved_date
+          approved {
+            _id
+          }
+        }
       }
       archived
     }

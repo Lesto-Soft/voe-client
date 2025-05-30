@@ -31,7 +31,7 @@ const ShowDate = ({ date }: { date: string }) => {
       className="w-36 whitespace-nowrap text-sm text-gray-500 flex items-center gap-2 px-2 group relative hover:cursor-pointer"
       onClick={() => setShowDate(!showDate)}
     >
-      <CalendarIcon className="!h-4 !w-4 min-w-[16px] min-h-[16px]" />
+      <CalendarIcon className="!h-4 !w-4 min-w-4 min-h-4" />
       {!showDate && <span>{moment(date).fromNow()}</span>}
       {showDate && <span>{moment(date).format("lll")}</span>}
     </div>

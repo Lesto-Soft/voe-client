@@ -84,6 +84,7 @@ export interface IAnswer {
   financial_approved_date?: string;
   needs_finance?: boolean;
   history?: IAnswerHistory[];
+  case_number?: number;
 }
 
 export interface IAnswerHistory {

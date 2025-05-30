@@ -56,8 +56,6 @@ const UserManagement: React.FC = () => {
     currentQueryInput, // This now includes is_manager: true if filterManager is true
   } = useUserManagement();
 
-  console.log("CURRENT QUERY INPUT: ", currentQueryInput);
-
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [avatarVersion, setAvatarVersion] = useState(Date.now());

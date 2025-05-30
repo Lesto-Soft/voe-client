@@ -1,10 +1,11 @@
 import { IComment } from "../../../db/interfaces";
 import UserLink from "../../global/UserLink";
 import ShowDate from "../../global/ShowDate";
-import EditButton from "../../global/EditButton";
+import EditButton from "../../global/EditCommentButton";
 import { admin_check } from "../../../utils/rowStringCheckers";
 import ImagePreviewModal from "../../modals/ImagePreviewModal";
 import { createFileUrl } from "../../../utils/fileUtils";
+import DeleteModal from "../../modals/DeleteModal";
 
 interface CommentProps {
   comment: IComment;
@@ -28,11 +29,20 @@ const CommentMobile: React.FC<CommentProps> = ({ comment, me, caseNumber }) => {
           {me &&
             me.role &&
             (me._id === comment.creator._id || admin_check(me.role.name)) && (
-              <EditButton
-                comment={comment}
-                currentAttachments={comment.attachments}
-                caseNumber={caseNumber}
-              />
+              <div className="flex items-center gap-2 mt-2">
+                <EditButton
+                  comment={comment}
+                  currentAttachments={comment.attachments}
+                  caseNumber={caseNumber}
+                />
+                <DeleteModal
+                  title="Delete Comment"
+                  content="Are you sure you want to delete this comment? This action cannot be undone."
+                  onDelete={() => {
+                    // Implement delete logic here
+                  }}
+                />
+              </div>
             )}
         </div>
       </div>

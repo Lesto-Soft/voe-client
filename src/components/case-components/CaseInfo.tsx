@@ -12,10 +12,11 @@ import { useTranslation } from "react-i18next";
 import Creator from "./Creator";
 import CaseRating from "./Rating";
 import ShowDate from "../global/ShowDate";
+import ImagePreviewModal from "../modals/ImagePreviewModal";
+import { createFileUrl } from "../../utils/fileUtils";
 
 interface ICaseInfoProps {
   content: string;
-  case_number: number;
   caseId: string;
   type: string;
   priority: string;
@@ -26,11 +27,11 @@ interface ICaseInfoProps {
   date?: string;
   me: any;
   refetch: () => void;
+  attachments?: string[];
 }
 
 const CaseInfo: React.FC<ICaseInfoProps> = ({
   content,
-  case_number,
   caseId,
   type,
   priority,
@@ -41,6 +42,7 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
   date,
   me,
   refetch,
+  attachments = [],
 }) => {
   const { t } = useTranslation("dashboard");
   const statusStyle = getStatusStyle(status);
@@ -49,7 +51,7 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
 
   return (
     <div
-      className="sticky top-0 self-start flex flex-col gap-4 w-1/5 min-w-[18rem] bg-white rounded-lg shadow-md p-4"
+      className="sticky top-0 self-start flex flex-col gap-4 w-1/5 min-w-[18rem] bg-white shadow-md p-4"
       style={{ minHeight: "calc(100vh - 6rem)" }}
     >
       <div className="flex justify-center">
@@ -66,6 +68,18 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
           {content}
         </div>
       </div>
+
+      {attachments && attachments.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-2">
+          {attachments.map((file) => (
+            <ImagePreviewModal
+              key={file}
+              imageUrl={createFileUrl("cases", caseId, file)}
+              fileName={file}
+            />
+          ))}
+        </div>
+      )}
       {/* Priority and Type row */}
       <div className="flex gap-2">
         <div className={`${caseBoxClasses} ${priorityStyle} flex-1`}>

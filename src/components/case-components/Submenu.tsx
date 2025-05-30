@@ -12,6 +12,7 @@ import Comment from "./Comment";
 import Answer from "./Answer";
 import CommentMobile from "./mobile/CommentMobile";
 import AddComment from "./AddComment";
+import AddAnswer from "./AddAnswer";
 
 interface SubmenuProps {
   caseData: ICase;
@@ -87,15 +88,33 @@ const Submenu: React.FC<SubmenuProps> = ({ caseData, t, me, refetch }) => {
         {view === "answers" &&
           (caseData.answers && caseData.answers.length > 0 ? (
             <>
+              <AddAnswer
+                caseNumber={caseData.case_number}
+                caseId={caseData._id}
+                t={t}
+                me={me}
+              />
               {[...caseData.answers] // Create a shallow copy of the array
                 .sort((a, b) => (b.approved ? 1 : 0) - (a.approved ? 1 : 0)) // Sort approved answers to the top
                 .map((answer: IAnswer) => (
                   <div key={answer._id}>
                     <div className="flex lg:hidden flex-col gap-4 mb-8">
-                      <AnswerMobile answer={answer} me={me} refetch={refetch} />
+                      <AnswerMobile
+                        answer={answer}
+                        me={me}
+                        refetch={refetch}
+                        caseNumber={caseData.case_number}
+                        status={caseData.status}
+                      />
                     </div>
                     <div className="hidden lg:flex flex-col gap-4 mb-8">
-                      <Answer answer={answer} me={me} refetch={refetch} />
+                      <Answer
+                        answer={answer}
+                        me={me}
+                        refetch={refetch}
+                        caseNumber={caseData.case_number}
+                        status={caseData.status}
+                      />
                     </div>
                   </div>
                 ))}

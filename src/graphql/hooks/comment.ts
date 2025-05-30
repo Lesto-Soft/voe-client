@@ -1,5 +1,9 @@
 import { useMutation, useQuery } from "@apollo/client";
-import { ADD_COMMENT, UPDATE_COMMENT } from "../mutation/comment";
+import {
+  ADD_COMMENT,
+  DELETE_COMMENT,
+  UPDATE_COMMENT,
+} from "../mutation/comment";
 import { GET_CASE_BY_CASE_NUMBER } from "../query/case";
 import { AttachmentInput } from "./case";
 
@@ -68,4 +72,30 @@ export const useUpdateComment = (caseNumber: number) => {
   };
 
   return { updateComment, data, loading, error };
+};
+
+export const useDeleteComment = (caseNumber: number) => {
+  const [deleteCommentMutation, { data, loading, error }] = useMutation(
+    DELETE_COMMENT,
+    {
+      refetchQueries: [
+        { query: GET_CASE_BY_CASE_NUMBER, variables: { caseNumber } },
+      ],
+      awaitRefetchQueries: true,
+    }
+  );
+
+  const deleteComment = async (id: string) => {
+    try {
+      const { data } = await deleteCommentMutation({
+        variables: { id },
+      });
+      return data.deleteComment;
+    } catch (error) {
+      console.error("Error deleting comment:", error);
+      throw error;
+    }
+  };
+
+  return { deleteComment, data, loading, error };
 };

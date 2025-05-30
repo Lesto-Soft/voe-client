@@ -30,7 +30,7 @@ const FinanceApproveBtn: React.FC<{
       if (approved) {
         await unapproveFinanceAnswer(answer._id);
       } else {
-        await approveFinanceAnswer(answer._id, me.me._id);
+        await approveFinanceAnswer(answer._id, me._id);
       }
       setApproved((prev) => !prev);
     } catch (error) {

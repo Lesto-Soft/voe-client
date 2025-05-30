@@ -65,7 +65,6 @@ function setFiltersToParams(params: URLSearchParams, filters: any) {
 
 const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
   fetchHook,
-  clearFiltersSignal,
   filter,
   t,
 }) => {
@@ -290,11 +289,8 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
 
   // Effect to trigger refetch when debounced values or pagination changes
   useEffect(() => {
-    // The fetchHook is already called with the latest buildInput based on its dependencies.
-    // If your hook doesn't automatically refetch on input change, uncomment the refetch call.
-    // refetch({ input: buildInput() });
-    console.log("Fetching with input:", buildInput()); // Log the input being used
-  }, [buildInput, refetch]); // Depend on buildInput which depends on debounced values
+    buildInput();
+  }, [buildInput, refetch]);
 
   if (error) return <div>Error: {error.message}</div>;
 

@@ -19,8 +19,7 @@ fragment CaseFragment on Case {
     content
     status  
     date
-    
-    
+    attachments 
 }`;
 
 const caseHistoryFragment = `
@@ -50,6 +49,7 @@ fragment AnswerFragment on Answer {
       _id
       content
       date
+      attachments
       creator {
         _id
         name

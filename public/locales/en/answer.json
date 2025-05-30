@@ -17,5 +17,12 @@
   "isFinanceNeeded": "Financing needed?",
   "yes": "Yes",
   "no": "No",
-  "financedBy": "Financed by"
+  "financedBy": "Financed by",
+  "no_answers": "No answers",
+  "no_comments": "No comments",
+  "no_history": "No history",
+  "send": "Send",
+  "hideComment": "Hide comment",
+  "addComment": "Comment",
+  "writeComment": "Write a comment..."
 }

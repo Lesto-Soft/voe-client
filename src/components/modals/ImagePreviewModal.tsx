@@ -28,7 +28,12 @@ const ImagePreviewModal: React.FC<ImagePreviewProps> = ({
           type="button"
           title="Preview Image"
         >
-          <span className="truncate">{fileName}</span>
+          <span
+            className="truncate max-w-32 overflow-hidden whitespace-nowrap"
+            title={fileName}
+          >
+            {fileName}
+          </span>
         </button>
       </Dialog.Trigger>
       <Dialog.Portal>
@@ -37,14 +42,19 @@ const ImagePreviewModal: React.FC<ImagePreviewProps> = ({
         </Dialog.Title>
         <Dialog.Overlay className="fixed inset-0 bg-black/50" />
         <Dialog.Content className="fixed top-1/2 left-1/2 w-[90%] max-w-lg -translate-x-1/2 -translate-y-1/2 p-4 bg-white rounded-lg shadow-lg">
-          <div className="flex justify-between items-center ">
+          <div className="flex justify-between items-center">
             <ArrowDownTrayIcon
               className="h-6 w-6 text-gray-500 hover:text-gray-700 hover:cursor-pointer"
               onClick={handleDownload}
               title="Download Image"
             />
             <Dialog.Title className="text-center text-lg font-medium text-gray-900">
-              {fileName}
+              <span
+                className="truncate max-w-60 overflow-hidden whitespace-nowrap inline-block align-bottom"
+                title={fileName}
+              >
+                {fileName}
+              </span>
             </Dialog.Title>
             <Dialog.Close asChild>
               <button

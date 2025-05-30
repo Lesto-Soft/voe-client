@@ -2,9 +2,12 @@ import { useMutation, useQuery } from "@apollo/client";
 import {
   APPROVE_ANSWER,
   APPROVE_ANSWER_FINANCE,
+  CREATE_ANSWER,
   UNAPPROVE_ANSWER,
   UNAPPROVE_ANSWER_FINANCE,
+  UPDATE_ANSWER,
 } from "../mutation/answer";
+import { GET_CASE_BY_CASE_NUMBER } from "../query/case";
 
 export const useApproveAnswer = () => {
   const [approveAnswerMutation, { data, loading, error }] =
@@ -104,6 +107,68 @@ export const useUnapproveFinanceAnswer = () => {
 
   return {
     unapproveFinanceAnswer,
+    data,
+    loading,
+    error,
+  };
+};
+
+export const useCreateAnswer = (caseNumber: number) => {
+  const [createAnswerMutation, { data, loading, error }] = useMutation(
+    CREATE_ANSWER,
+    {
+      refetchQueries: [
+        { query: GET_CASE_BY_CASE_NUMBER, variables: { caseNumber } },
+      ],
+      awaitRefetchQueries: true,
+    }
+  );
+
+  const createAnswer = async (input: any) => {
+    try {
+      const response = await createAnswerMutation({
+        variables: { input: { ...input } },
+      });
+      return response.data.createAnswer;
+    } catch (err) {
+      console.error("Failed to create answer:", err);
+      throw err;
+    }
+  };
+
+  return {
+    createAnswer,
+    data,
+    loading,
+    error,
+  };
+};
+
+export const useUpdateAnswer = (caseNumber: number) => {
+  const [updateAnswerMutation, { data, loading, error }] = useMutation(
+    UPDATE_ANSWER,
+    {
+      refetchQueries: [
+        { query: GET_CASE_BY_CASE_NUMBER, variables: { caseNumber } },
+      ],
+      awaitRefetchQueries: true,
+    }
+  );
+
+  const updateAnswer = async (input: any, answerId: string, userId: string) => {
+    try {
+      const response = await updateAnswerMutation({
+        variables: { input: { ...input }, userId, answerId },
+      });
+      return response.data.updateAnswer;
+    } catch (err) {
+      console.error("Failed to update answer:", err);
+      throw err;
+    }
+  };
+
+  return {
+    updateAnswer,
     data,
     loading,
     error,

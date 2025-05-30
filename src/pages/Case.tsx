@@ -39,7 +39,6 @@ const Case = () => {
         {/* CaseInfo is static, not sticky, not scrollable */}
         <CaseInfo
           content={c.content}
-          case_number={c.case_number}
           caseId={c._id}
           type={c.type}
           priority={c.priority}
@@ -50,6 +49,7 @@ const Case = () => {
           date={c.date}
           me={me.me}
           refetch={refetch}
+          attachments={c.attachments}
         />
         {/* Only this right side is scrollable */}
         <div

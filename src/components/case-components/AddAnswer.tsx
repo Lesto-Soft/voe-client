@@ -4,31 +4,24 @@ import FileAttachmentAnswer from "../global/FileAttachmentAnswer";
 import { PaperAirplaneIcon, XMarkIcon } from "@heroicons/react/24/solid";
 import { AttachmentInput } from "../../graphql/mutation/user";
 import { readFileAsBase64 } from "../../utils/attachment-handling";
+import { useCreateAnswer } from "../../graphql/hooks/answer";
 
-interface AddCommentProps {
+interface AddAnswerProps {
   caseId?: string;
   t: (key: string) => string;
   me: any;
   caseNumber: number;
-  answerId?: string;
 }
-const AddComment: React.FC<AddCommentProps> = ({
-  caseId,
-  t,
-  me,
-  caseNumber,
-  answerId,
-}) => {
-  const [attachments, setAttachments] = useState<File[]>([]); // Holds selected File objects
-  const [fileError, setFileError] = useState<string | null>(null); // State for file error message
-  const [content, setContent] = useState<string>(""); // Holds the content of the comment
+const AddAnswer: React.FC<AddAnswerProps> = ({ caseId, t, me, caseNumber }) => {
+  const [attachments, setAttachments] = useState<File[]>([]);
+  const [fileError, setFileError] = useState<string | null>(null);
+  const [content, setContent] = useState<string>("");
   const [submissionError, setSubmissionError] = useState<string | null>(null);
-  const { createComment, loading, error } = useCreateComment(caseNumber);
+  const { createAnswer, data, loading, error } = useCreateAnswer(caseNumber);
 
-  const submitComment = async (event: React.FormEvent) => {
-    event.preventDefault(); // Prevent default form submission behavior
+  const submitAnswer = async (event: React.FormEvent) => {
+    event.preventDefault();
 
-    // --- Prepare Attachments ---
     let attachmentInputs: AttachmentInput[] = [];
     try {
       attachmentInputs = await Promise.all(
@@ -46,25 +39,17 @@ const AddComment: React.FC<AddCommentProps> = ({
     }
 
     try {
-      if (caseId) {
-        await createComment({
-          case: caseId,
-          attachments: attachmentInputs,
-          content,
-          creator: me._id,
-        });
-      } else {
-        await createComment({
-          answer: answerId,
-          attachments: attachmentInputs,
-          content,
-          creator: me._id,
-        });
-      }
+      await createAnswer({
+        case: caseId,
+        attachments: attachmentInputs,
+        content,
+        creator: me._id,
+      });
+
       setContent("");
       setAttachments([]);
     } catch (error) {
-      console.error("Error creating comment:", error);
+      console.error("Error creating answer:", error);
     }
   };
 
@@ -91,7 +76,7 @@ const AddComment: React.FC<AddCommentProps> = ({
             setFileError={setFileError}
           />
           <button
-            onClick={submitComment}
+            onClick={submitAnswer}
             className="hover:cursor-pointer h-24 rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-200"
           >
             <PaperAirplaneIcon className="h-8 w-8" />
@@ -149,4 +134,4 @@ const AddComment: React.FC<AddCommentProps> = ({
   );
 };
 
-export default AddComment;
+export default AddAnswer;

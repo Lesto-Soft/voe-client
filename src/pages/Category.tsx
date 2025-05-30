@@ -538,14 +538,27 @@ const Category: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 overflow-hidden">
         <aside className="lg:col-span-3 bg-white rounded-lg shadow-lg flex flex-col overflow-hidden">
           <div className="p-6 space-y-6 overflow-y-auto flex-1">
+            {/* This is the grid containing Experts and Managers sections */}
             <div className="grid grid-cols-1 gap-y-6 sm:grid-cols-2 sm:gap-y-0 sm:gap-x-6">
-              <div>
+              {/* == EXPERTS SECTION == */}
+              {/* Before: */}
+              {/* <div> */}
+              {/* After: */}
+              <div className="min-h-52">
+                {" "}
+                {/* Added min-h-52 */}
                 <h3 className="text-xl font-semibold text-gray-700 mb-3 flex items-center">
                   <UserGroupIcon className="h-6 w-6 mr-2 text-indigo-600" />
                   Експерти
                 </h3>
                 {category.experts && category.experts.length > 0 ? (
-                  <ul className="space-y-2 text-sm text-gray-600">
+                  <ul
+                    className={`space-y-2 text-sm text-gray-600 ${
+                      category.experts.length > 5
+                        ? "max-h-37 overflow-y-auto"
+                        : ""
+                    }`}
+                  >
                     {category.experts.map((expert: IUser) => (
                       <li key={expert._id}>
                         <UserLink user={expert} type="table" />
@@ -558,13 +571,21 @@ const Category: React.FC = () => {
                   </p>
                 )}
               </div>
-              <div>
+
+              {/* == MANAGERS SECTION == */}
+              <div className="min-h-52">
                 <h3 className="text-xl font-semibold text-gray-700 mb-3 flex items-center">
                   <UserGroupIcon className="h-6 w-6 mr-2 text-blue-600" />
                   Мениджъри
                 </h3>
                 {category.managers && category.managers.length > 0 ? (
-                  <ul className="space-y-2 text-sm text-gray-600">
+                  <ul
+                    className={`space-y-2 text-sm text-gray-600 ${
+                      category.managers.length > 5
+                        ? "max-h-37 overflow-y-auto"
+                        : ""
+                    }`}
+                  >
                     {category.managers.map((manager: IUser) => (
                       <li key={manager._id}>
                         <UserLink user={manager} type="table" />
@@ -577,7 +598,9 @@ const Category: React.FC = () => {
                   </p>
                 )}
               </div>
-            </div>
+            </div>{" "}
+            {/* End of the sm:grid-cols-2 div */}
+            {/* Suggestion Section (Предложение) */}
             <div>
               <h3 className="text-xl font-semibold text-gray-700 mb-3 flex items-center">
                 <LightBulbIcon className="h-6 w-6 mr-2 text-green-500" />
@@ -592,6 +615,7 @@ const Category: React.FC = () => {
                 <p className="text-sm text-gray-500">Няма информация.</p>
               )}
             </div>
+            {/* Problem Section (Проблем) */}
             <div>
               <h3 className="text-xl font-semibold text-gray-700 mb-3 flex items-center">
                 <ExclamationTriangleIcon className="h-6 w-6 mr-2 text-red-600" />
@@ -613,7 +637,7 @@ const Category: React.FC = () => {
           <div ref={scrollableCasesListRef} className="overflow-y-auto flex-1">
             {category.cases && category.cases.length > 0 ? (
               <>
-                <ul className="divide-y-2 divide-gray-200">
+                <ul className="divide-y-3 divide-gray-200">
                   {currentlyVisibleCases.map((caseItem) => {
                     const statusStyle = getStatusStyle(String(caseItem.status));
                     const priorityStyle = getPriorityStyle(

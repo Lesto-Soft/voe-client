@@ -1,7 +1,7 @@
 // src/pages/Category.tsx
 import React, { useEffect, useMemo, useState, useRef } from "react";
-import { useParams } from "react-router"; // Removed useLocation as it was for scroll logic
-import { ICategory, ICase, IUser, IAnswer } from "../db/interfaces"; // Added IAnswer
+import { useParams } from "react-router";
+import { ICategory, ICase, IUser, IAnswer } from "../db/interfaces";
 import ShowDate from "../components/global/ShowDate";
 
 import {
@@ -49,12 +49,11 @@ const TYPE_COLORS: Record<string, string> = {
 };
 
 const RESOLUTION_CATEGORY_CONFIG = [
-  // Renamed and structured for direct use
-  { label: "До 1 ден", key: "UNDER_1_DAY", color: "#A7F3D0" }, // Pastel Green
-  { label: "До 5 дни", key: "UNDER_5_DAYS", color: "#BAE6FD" }, // Pastel Blue
-  { label: "До 10 дни", key: "UNDER_10_DAYS", color: "#FDE68A" }, // Pastel Yellow
-  { label: "Над 10 дни", key: "OVER_10_DAYS", color: "#FECACA" }, // Pastel Red
-] as const; // Use 'as const' for stricter typing of keys
+  { label: "До 1 ден", key: "UNDER_1_DAY", color: "#A7F3D0" },
+  { label: "До 5 дни", key: "UNDER_5_DAYS", color: "#BAE6FD" },
+  { label: "До 10 дни", key: "UNDER_10_DAYS", color: "#FDE68A" },
+  { label: "Над 10 дни", key: "OVER_10_DAYS", color: "#FECACA" },
+] as const;
 
 type ResolutionCategoryKey = (typeof RESOLUTION_CATEGORY_CONFIG)[number]["key"];
 
@@ -141,12 +140,20 @@ const Category: React.FC = () => {
     "status" | "type" | "resolution"
   >("status");
 
-  const scrollableCasesListRef = useRef<HTMLDivElement>(null); // Kept for case list, not for scroll restoration logic
+  const [activePersonnelTab, setActivePersonnelTab] = useState<
+    "experts" | "managers"
+  >("experts");
+  const [activeInfoTab, setActiveInfoTab] = useState<"suggestion" | "problem">(
+    "suggestion"
+  );
 
-  // Reset states when category changes (scroll restoration logic removed)
+  const scrollableCasesListRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     setVisibleCasesCount(INITIAL_VISIBLE_CASES);
     setActiveStatsView("status");
+    setActivePersonnelTab("experts");
+    setActiveInfoTab("suggestion");
   }, [categoryNameFromParams]);
 
   useEffect(() => {
@@ -214,7 +221,6 @@ const Category: React.FC = () => {
         color: TYPE_COLORS.SUGGESTION,
       });
 
-    // Resolution Time Logic
     const resolutionTimeCounts: Record<ResolutionCategoryKey, number> = {
       UNDER_1_DAY: 0,
       UNDER_5_DAYS: 0,
@@ -229,13 +235,11 @@ const Category: React.FC = () => {
         caseItem.status === "AWAITING_FINANCE"
       ) {
         effectivelyResolvedCasesCount++;
-
         let resolvingAnswer: IAnswer | null = null;
         let latestApprovedDateTime: number | null = null;
 
         if (caseItem.answers && caseItem.answers.length > 0) {
           caseItem.answers.forEach((answer: IAnswer) => {
-            // Ensure 'answer' is explicitly IAnswer
             if (answer.approved) {
               console.log(
                 "we found an approved answer for case:",
@@ -251,7 +255,7 @@ const Category: React.FC = () => {
                     currentApprovedDate.getTime() > latestApprovedDateTime
                   ) {
                     latestApprovedDateTime = currentApprovedDate.getTime();
-                    resolvingAnswer = answer; // resolvingAnswer is now IAnswer or remains null
+                    resolvingAnswer = answer;
                   }
                 }
               } catch (e) {
@@ -262,25 +266,12 @@ const Category: React.FC = () => {
         }
 
         if (resolvingAnswer) {
-          // At this point, TypeScript has narrowed resolvingAnswer from IAnswer | null to IAnswer.
-          // Let's log its type or try a type assertion for diagnostics:
-
-          // Diagnostic 1: Log the object at runtime (won't fix TS error but helps verify data)
-          // console.log("resolvingAnswer before accessing .date:", resolvingAnswer);
-
-          // Diagnostic 2: Explicit Type Assertion (use with caution, primarily for debugging)
-          const anAnswer = resolvingAnswer as IAnswer; // Tell TS to trust you that it's an IAnswer
-
-          // Now, try accessing 'date' on the asserted type or the original
-          // The error points here:
-          const answerDate = anAnswer.date; // Or use resolvingAnswer.date directly
-          // If anAnswer.date still errors, the issue might be more with IAnswer['date'] itself
-
+          const anAnswer = resolvingAnswer as IAnswer;
+          const answerDate = anAnswer.date;
           if (answerDate && caseItem.date) {
             try {
               const caseStartDate = new Date(caseItem.date);
               const resolutionActualEndDate = new Date(answerDate);
-
               if (
                 !isNaN(caseStartDate.getTime()) &&
                 !isNaN(resolutionActualEndDate.getTime())
@@ -310,7 +301,6 @@ const Category: React.FC = () => {
         color: catConfig.color,
       })
     );
-
     const unresolvedCasesCount = totalSignals - effectivelyResolvedCasesCount;
 
     return {
@@ -414,8 +404,6 @@ const Category: React.FC = () => {
     let acc = 0;
     return signalStats.resolutionPieChartData.map((seg, i) => {
       const perc = (seg.value / totalResolutionPieValue) * 100;
-      // Decide if 0% segments should be drawn. If only one segment is 100%, it will be drawn.
-      // If you want to hide 0% segments when other segments exist:
       if (
         perc === 0 &&
         totalResolutionPieValue > 0 &&
@@ -430,8 +418,8 @@ const Category: React.FC = () => {
         saDeg === 0 &&
         signalStats.resolutionPieChartData.length === 1
       )
-        eaDeg = 359.999; // Full circle if it's the only segment
-      else if (eaDeg === saDeg && perc > 0) eaDeg = saDeg + 359.999; // Avoid zero-angle arc for single segment
+        eaDeg = 359.999;
+      else if (eaDeg === saDeg && perc > 0) eaDeg = saDeg + 359.999;
 
       acc += perc;
       const r = 45,
@@ -456,6 +444,7 @@ const Category: React.FC = () => {
       {children}
     </div>
   );
+
   if (loading) {
     return (
       <PageStatusWrapper>
@@ -538,97 +527,136 @@ const Category: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 overflow-hidden">
         <aside className="lg:col-span-3 bg-white rounded-lg shadow-lg flex flex-col overflow-hidden">
           <div className="p-6 space-y-6 overflow-y-auto flex-1">
-            {/* This is the grid containing Experts and Managers sections */}
-            <div className="grid grid-cols-1 gap-y-6 sm:grid-cols-2 sm:gap-y-0 sm:gap-x-6">
-              {/* == EXPERTS SECTION == */}
-              {/* Before: */}
-              {/* <div> */}
-              {/* After: */}
-              <div className="min-h-52">
-                {" "}
-                {/* Added min-h-52 */}
-                <h3 className="text-xl font-semibold text-gray-700 mb-3 flex items-center">
-                  <UserGroupIcon className="h-6 w-6 mr-2 text-indigo-600" />
+            {/* Personnel Tabs (Experts/Managers) */}
+            <div>
+              <div className="flex border-b border-gray-200">
+                <button
+                  onClick={() => setActivePersonnelTab("experts")}
+                  className={`flex-1 py-2 px-1 text-center text-sm font-medium focus:outline-none transition-colors duration-150 flex items-center justify-center ${
+                    activePersonnelTab === "experts"
+                      ? "border-b-2 border-indigo-500 text-indigo-600"
+                      : "text-gray-500 hover:text-gray-700 hover:border-gray-300 border-b-2 border-transparent"
+                  }`}
+                >
+                  <UserGroupIcon className="h-5 w-5 mr-1.5 text-indigo-600" />
                   Експерти
-                </h3>
-                {category.experts && category.experts.length > 0 ? (
-                  <ul
-                    className={`space-y-2 text-sm text-gray-600 ${
-                      category.experts.length > 5
-                        ? "max-h-37 overflow-y-auto"
-                        : ""
-                    }`}
-                  >
-                    {category.experts.map((expert: IUser) => (
-                      <li key={expert._id}>
-                        <UserLink user={expert} type="table" />
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-sm text-gray-500">
-                    Няма посочени експерти.
-                  </p>
-                )}
-              </div>
-
-              {/* == MANAGERS SECTION == */}
-              <div className="min-h-52">
-                <h3 className="text-xl font-semibold text-gray-700 mb-3 flex items-center">
-                  <UserGroupIcon className="h-6 w-6 mr-2 text-blue-600" />
+                </button>
+                <button
+                  onClick={() => setActivePersonnelTab("managers")}
+                  className={`flex-1 py-2 px-1 text-center text-sm font-medium focus:outline-none transition-colors duration-150 flex items-center justify-center ${
+                    activePersonnelTab === "managers"
+                      ? "border-b-2 border-indigo-500 text-indigo-600"
+                      : "text-gray-500 hover:text-gray-700 hover:border-gray-300 border-b-2 border-transparent"
+                  }`}
+                >
+                  <UserGroupIcon className="h-5 w-5 mr-1.5 text-blue-600" />
                   Мениджъри
-                </h3>
-                {category.managers && category.managers.length > 0 ? (
-                  <ul
-                    className={`space-y-2 text-sm text-gray-600 ${
-                      category.managers.length > 5
-                        ? "max-h-37 overflow-y-auto"
-                        : ""
-                    }`}
-                  >
-                    {category.managers.map((manager: IUser) => (
-                      <li key={manager._id}>
-                        <UserLink user={manager} type="table" />
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-sm text-gray-500">
-                    Няма посочени мениджъри.
-                  </p>
+                </button>
+              </div>
+              <div className="mt-4 text-center bg-gray-50 rounded-sm border border-gray-300">
+                {activePersonnelTab === "experts" && (
+                  <div>
+                    {category.experts && category.experts.length > 0 ? (
+                      <ul
+                        className={`space-y-2 text-sm text-gray-600 ${
+                          category.experts.length > 5
+                            ? "max-h-37 overflow-y-auto"
+                            : ""
+                        }`}
+                      >
+                        {category.experts.map((expert: IUser) => (
+                          <li key={expert._id}>
+                            <UserLink user={expert} type="table" />
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-sm text-gray-500 ">
+                        Няма посочени експерти.
+                      </p>
+                    )}
+                  </div>
+                )}
+                {activePersonnelTab === "managers" && (
+                  <div>
+                    {category.managers && category.managers.length > 0 ? (
+                      <ul
+                        className={`space-y-2 text-sm text-gray-600 ${
+                          category.managers.length > 5
+                            ? "max-h-37 overflow-y-auto"
+                            : ""
+                        }`}
+                      >
+                        {category.managers.map((manager: IUser) => (
+                          <li key={manager._id}>
+                            <UserLink user={manager} type="table" />
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-sm text-gray-500">
+                        Няма посочени мениджъри.
+                      </p>
+                    )}
+                  </div>
                 )}
               </div>
-            </div>{" "}
-            {/* End of the sm:grid-cols-2 div */}
-            {/* Suggestion Section (Предложение) */}
-            <div>
-              <h3 className="text-xl font-semibold text-gray-700 mb-3 flex items-center">
-                <LightBulbIcon className="h-6 w-6 mr-2 text-green-500" />
-                Предложение
-              </h3>
-              {category.suggestion ? (
-                <div
-                  className="text-sm text-gray-600 leading-relaxed prose prose-sm max-w-none"
-                  dangerouslySetInnerHTML={{ __html: category.suggestion }}
-                />
-              ) : (
-                <p className="text-sm text-gray-500">Няма информация.</p>
-              )}
             </div>
-            {/* Problem Section (Проблем) */}
+
+            {/* Info Tabs (Suggestion/Problem) */}
             <div>
-              <h3 className="text-xl font-semibold text-gray-700 mb-3 flex items-center">
-                <ExclamationTriangleIcon className="h-6 w-6 mr-2 text-red-600" />
-                Проблем
-              </h3>
-              {category.problem ? (
-                <div
-                  className="text-sm text-gray-600 leading-relaxed prose prose-sm max-w-none"
-                  dangerouslySetInnerHTML={{ __html: category.problem }}
-                />
-              ) : (
-                <p className="text-sm text-gray-500">Няма информация.</p>
-              )}
+              <div className="flex border-b border-gray-200">
+                <button
+                  onClick={() => setActiveInfoTab("suggestion")}
+                  className={`flex-1 py-2 px-1 text-center text-sm font-medium focus:outline-none transition-colors duration-150 flex items-center justify-center ${
+                    activeInfoTab === "suggestion"
+                      ? "border-b-2 border-indigo-500 text-indigo-600"
+                      : "text-gray-500 hover:text-gray-700 hover:border-gray-300 border-b-2 border-transparent"
+                  }`}
+                >
+                  <LightBulbIcon className="h-5 w-5 mr-1.5 text-green-500" />
+                  Предложение
+                </button>
+                <button
+                  onClick={() => setActiveInfoTab("problem")}
+                  className={`flex-1 py-2 px-1 text-center text-sm font-medium focus:outline-none transition-colors duration-150 flex items-center justify-center ${
+                    activeInfoTab === "problem"
+                      ? "border-b-2 border-indigo-500 text-indigo-600"
+                      : "text-gray-500 hover:text-gray-700 hover:border-gray-300 border-b-2 border-transparent"
+                  }`}
+                >
+                  <ExclamationTriangleIcon className="h-5 w-5 mr-1.5 text-red-600" />
+                  Проблем
+                </button>
+              </div>
+              <div className="mt-4">
+                {activeInfoTab === "suggestion" && (
+                  <div>
+                    {category.suggestion ? (
+                      <div
+                        className="text-sm text-gray-600 leading-relaxed prose prose-sm max-w-none"
+                        dangerouslySetInnerHTML={{
+                          __html: category.suggestion,
+                        }}
+                      />
+                    ) : (
+                      <p className="text-sm text-gray-500">Няма информация.</p>
+                    )}
+                  </div>
+                )}
+                {activeInfoTab === "problem" && (
+                  <div>
+                    {category.problem ? (
+                      <div
+                        className="text-sm text-gray-600 leading-relaxed prose prose-sm max-w-none"
+                        dangerouslySetInnerHTML={{ __html: category.problem }}
+                      />
+                    ) : (
+                      <p className="text-sm text-gray-500">Няма информация.</p>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </aside>
@@ -672,13 +700,13 @@ const Category: React.FC = () => {
                                 />
                               </div>
                               <span
-                                className={`flex items-center font-medium ${priorityStyle} flex-shrink-0 min-w-[100px]`}
+                                className={`flex items-center font-medium ${priorityStyle} flex-shrink-0 min-w-[80px]`}
                               >
                                 <FlagIcon className="h-4 w-4 mr-1 flex-shrink-0" />
                                 {translatePriority(String(caseItem.priority))}
                               </span>
                               <span
-                                className={`flex items-center font-medium flex-shrink-0 min-w-[130px]`}
+                                className={`flex items-center font-medium flex-shrink-0 min-w-[120px]`}
                               >
                                 <span
                                   className={`h-2.5 w-2.5 rounded-full mr-1.5 flex-shrink-0 ${statusStyle.dotBgColor}`}
@@ -697,7 +725,6 @@ const Category: React.FC = () => {
                                 />
                               </div>
                               <div className="text-xs text-gray-500 whitespace-nowrap flex-shrink-0 min-w-[160px]">
-                                {/* {formatDate(caseItem.date)} */}
                                 <ShowDate date={caseItem.date} />
                               </div>
                             </div>
@@ -736,11 +763,10 @@ const Category: React.FC = () => {
         </main>
 
         <aside className="lg:col-span-3 bg-white rounded-lg shadow-lg flex flex-col overflow-hidden">
-          <div className="p-6 space-y-6 overflow-y-auto flex-1">
+          <div className="p-6 space-y-3 overflow-y-auto flex-1">
             <h3 className="text-xl font-semibold text-gray-700 mb-3 flex items-center">
               <ChartPieIcon className="h-6 w-6 mr-2 text-teal-600" /> Статистика
             </h3>
-            {/* Overall total signals - this remains above the tabs */}
             <div className="space-y-3 text-sm text-gray-600">
               <p className="flex items-center justify-between">
                 <span className="flex items-center">
@@ -786,10 +812,9 @@ const Category: React.FC = () => {
                 </button>
               </div>
             </div>
-            {/* Status Tab Content */}
             {activeStatsView === "status" && (
               <div className="mt-3">
-                <div className="space-y-3 text-sm text-gray-600 mb-4 min-h-40">
+                <div className="space-y-3 text-sm text-gray-600 mb-2 min-h-35">
                   <p className="flex items-center justify-between">
                     <span className="flex items-center">
                       <CheckCircleIcon className="h-5 w-5 mr-2 text-green-500" />
@@ -870,11 +895,10 @@ const Category: React.FC = () => {
                 )}
               </div>
             )}
-            {/* Type Tab Content */}
             {activeStatsView === "type" && (
               <div className="mt-3">
                 <div
-                  className={`space-y-3 text-sm text-gray-600 mb-4 min-h-40 ${
+                  className={`space-y-3 text-sm text-gray-600 mb-2 min-h-35 ${
                     signalStats.problemCasesCount === 0 &&
                     signalStats.suggestionCasesCount === 0
                       ? "flex items-center justify-center"
@@ -952,10 +976,9 @@ const Category: React.FC = () => {
                 )}
               </div>
             )}
-            {/* Resolution Tab Content - MODIFIED */}
             {activeStatsView === "resolution" && (
               <div className="mt-3">
-                <div className="space-y-3 text-sm text-gray-600 mb-4 min-h-40">
+                <div className="space-y-3 text-sm text-gray-600 mb-2 min-h-35">
                   <p className="flex items-center justify-between">
                     <span className="flex items-center">
                       <CheckCircleIcon className="h-5 w-5 mr-2 text-green-500" />
@@ -979,7 +1002,6 @@ const Category: React.FC = () => {
                 <h4 className="text-md font-semibold text-gray-700 mb-3">
                   Разпределение по Време на Резолюция
                 </h4>
-                {/* Render pie chart only if there are resolved cases to show */}
                 {signalStats.effectivelyResolvedCasesCount > 0 &&
                 signalStats.resolutionPieChartData.length > 0 &&
                 totalResolutionPieValue > 0 ? (
@@ -990,8 +1012,7 @@ const Category: React.FC = () => {
                     <ul className="text-xs mt-4 space-y-1">
                       {signalStats.resolutionPieChartData.map(
                         (item) =>
-                          // Only render legend items that have a value, or all if you prefer
-                          item.value > 0 && (
+                          item.value > 0 && ( // Only render legend items that have a value
                             <li
                               key={item.label}
                               className="flex items-center justify-between px-2"

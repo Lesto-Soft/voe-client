@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import Comment from "./Comment";
 import ShowDate from "../global/ShowDate";
 import { useTranslation } from "react-i18next";
-import EditButton from "../global/EditCommentButton";
 import { admin_check } from "../../utils/rowStringCheckers";
 import Creator from "./Creator";
 import UserLink from "../global/UserLink";
@@ -14,6 +13,8 @@ import { createFileUrl } from "../../utils/fileUtils";
 import ImagePreviewModal from "../modals/ImagePreviewModal";
 import AddComment from "./AddComment";
 import EditAnswerBtn from "../global/EditAnswerButton";
+import { useDeleteAnswer } from "../../graphql/hooks/answer";
+import DeleteModal from "../modals/DeleteModal";
 
 const Answer: React.FC<{
   answer: IAnswer;
@@ -27,8 +28,7 @@ const Answer: React.FC<{
     !!answer.financial_approved
   );
   const [showCommentBox, setShowCommentBox] = useState(false);
-  const [commentText, setCommentText] = useState("");
-  const [submitting, setSubmitting] = useState(false);
+  const { deleteAnswer, error, loading } = useDeleteAnswer(caseNumber);
 
   // Synchronize state with the updated answer prop
   useEffect(() => {
@@ -100,7 +100,6 @@ const Answer: React.FC<{
               </div>
 
               <div className="flex items-center gap-2">
-                <ShowDate date={answer.date} />
                 {answer.history && answer.history.length > 0 && (
                   <AnswerHistoryModal history={answer.history} />
                 )}
@@ -116,13 +115,22 @@ const Answer: React.FC<{
                   me.role &&
                   (me._id === answer.creator._id ||
                     admin_check(me.role.name)) && (
-                    <EditAnswerBtn
-                      answer={answer}
-                      caseNumber={caseNumber}
-                      me={me}
-                      currentAttachments={answer.attachments || []}
-                    />
+                    <>
+                      <EditAnswerBtn
+                        answer={answer}
+                        caseNumber={caseNumber}
+                        me={me}
+                        currentAttachments={answer.attachments || []}
+                      />
+
+                      <DeleteModal
+                        title="deleteAnswer"
+                        content="deleteAnswerInfo"
+                        onDelete={() => deleteAnswer(answer._id.toString())}
+                      />
+                    </>
                   )}
+                <ShowDate date={answer.date} />
               </div>
             </div>
             <div className="mt-1 flex-1 flex">

@@ -3,6 +3,7 @@ import {
   APPROVE_ANSWER,
   APPROVE_ANSWER_FINANCE,
   CREATE_ANSWER,
+  DELETE_ANSWER,
   UNAPPROVE_ANSWER,
   UNAPPROVE_ANSWER_FINANCE,
   UPDATE_ANSWER,
@@ -169,6 +170,37 @@ export const useUpdateAnswer = (caseNumber: number) => {
 
   return {
     updateAnswer,
+    data,
+    loading,
+    error,
+  };
+};
+
+export const useDeleteAnswer = (caseNumber: number) => {
+  const [deleteAnswerMutation, { data, loading, error }] = useMutation(
+    DELETE_ANSWER,
+    {
+      refetchQueries: [
+        { query: GET_CASE_BY_CASE_NUMBER, variables: { caseNumber } },
+      ],
+      awaitRefetchQueries: true,
+    }
+  );
+
+  const deleteAnswer = async (answerId: string) => {
+    try {
+      const response = await deleteAnswerMutation({
+        variables: { deleteAnswerId: answerId },
+      });
+      return response.data.deleteAnswer;
+    } catch (err) {
+      console.error("Failed to delete answer:", err);
+      throw err;
+    }
+  };
+
+  return {
+    deleteAnswer,
     data,
     loading,
     error,

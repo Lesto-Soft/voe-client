@@ -85,43 +85,46 @@ const Submenu: React.FC<SubmenuProps> = ({ caseData, t, me, refetch }) => {
       {/* Comments/answers and other scrollable content will go here */}
       {/* Section content */}
       <div>
-        {view === "answers" &&
-          (caseData.answers && caseData.answers.length > 0 ? (
-            <>
-              <AddAnswer
-                caseNumber={caseData.case_number}
-                caseId={caseData._id}
-                t={t}
-                me={me}
-              />
-              {[...caseData.answers] // Create a shallow copy of the array
-                .sort((a, b) => (b.approved ? 1 : 0) - (a.approved ? 1 : 0)) // Sort approved answers to the top
-                .map((answer: IAnswer) => (
-                  <div key={answer._id}>
-                    <div className="flex lg:hidden flex-col gap-4 mb-8">
-                      <AnswerMobile
-                        answer={answer}
-                        me={me}
-                        refetch={refetch}
-                        caseNumber={caseData.case_number}
-                        status={caseData.status}
-                      />
+        {view === "answers" && (
+          <>
+            <AddAnswer
+              caseNumber={caseData.case_number}
+              caseId={caseData._id}
+              t={t}
+              me={me}
+            />
+            {caseData.answers && caseData.answers.length > 0 ? (
+              <>
+                {[...caseData.answers] // Create a shallow copy of the array
+                  .sort((a, b) => (b.approved ? 1 : 0) - (a.approved ? 1 : 0)) // Sort approved answers to the top
+                  .map((answer: IAnswer) => (
+                    <div key={answer._id}>
+                      <div className="flex lg:hidden flex-col gap-4 mb-8">
+                        <AnswerMobile
+                          answer={answer}
+                          me={me}
+                          refetch={refetch}
+                          caseNumber={caseData.case_number}
+                          status={caseData.status}
+                        />
+                      </div>
+                      <div className="hidden lg:flex flex-col gap-4 mb-8">
+                        <Answer
+                          answer={answer}
+                          me={me}
+                          refetch={refetch}
+                          caseNumber={caseData.case_number}
+                          status={caseData.status}
+                        />
+                      </div>
                     </div>
-                    <div className="hidden lg:flex flex-col gap-4 mb-8">
-                      <Answer
-                        answer={answer}
-                        me={me}
-                        refetch={refetch}
-                        caseNumber={caseData.case_number}
-                        status={caseData.status}
-                      />
-                    </div>
-                  </div>
-                ))}
-            </>
-          ) : (
-            <div className="text-center text-gray-500">{t("no_answers")}</div>
-          ))}
+                  ))}
+              </>
+            ) : (
+              <div className="text-center text-gray-500">{t("no_answers")}</div>
+            )}
+          </>
+        )}
 
         {view === "comments" && (
           <>

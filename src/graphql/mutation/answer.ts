@@ -51,3 +51,11 @@ export const UPDATE_ANSWER = gql`
     }
   }
 `;
+
+export const DELETE_ANSWER = gql`
+  mutation Mutation($deleteAnswerId: ID!) {
+    deleteAnswer(id: $deleteAnswerId) {
+      _id
+    }
+  }
+`;

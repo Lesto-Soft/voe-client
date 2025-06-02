@@ -553,16 +553,19 @@ const Category: React.FC = () => {
                   Мениджъри
                 </button>
               </div>
-              <div className="mt-4 text-center bg-gray-50 rounded-sm border border-gray-300">
+              {/* Main panel container with fixed height and flex properties for centering */}
+              <div className="mt-4 bg-gray-50 rounded-sm border border-gray-300 h-37 flex flex-col justify-center items-center text-center">
                 {activePersonnelTab === "experts" && (
-                  <div>
+                  // Inner wrapper takes full width
+                  <div className="w-full">
                     {category.experts && category.experts.length > 0 ? (
                       <ul
-                        className={`space-y-2 text-sm text-gray-600 ${
-                          category.experts.length > 5
-                            ? "max-h-37 overflow-y-auto"
+                        className={`w-full space-y-2 text-sm text-gray-600 ${
+                          // Added w-full
+                          category.experts.length > 5 // Your condition for scrolling
+                            ? "max-h-37 overflow-y-auto" // Corrected: Use max-h-37 for the ul
                             : ""
-                        }`}
+                        } px-1 py-1`} // Optional: Added small padding inside the UL, adjust as needed
                       >
                         {category.experts.map((expert: IUser) => (
                           <li key={expert._id}>
@@ -571,21 +574,23 @@ const Category: React.FC = () => {
                         ))}
                       </ul>
                     ) : (
-                      <p className="text-sm text-gray-500 ">
+                      <p className="text-sm text-gray-500">
                         Няма посочени експерти.
                       </p>
                     )}
                   </div>
                 )}
                 {activePersonnelTab === "managers" && (
-                  <div>
+                  // Inner wrapper takes full width
+                  <div className="w-full">
                     {category.managers && category.managers.length > 0 ? (
                       <ul
-                        className={`space-y-2 text-sm text-gray-600 ${
-                          category.managers.length > 5
-                            ? "max-h-37 overflow-y-auto"
+                        className={`w-full space-y-2 text-sm text-gray-600 ${
+                          // Added w-full
+                          category.managers.length > 5 // Your condition for scrolling
+                            ? "max-h-37 overflow-y-auto" // Corrected: Use max-h-37 for the ul
                             : ""
-                        }`}
+                        } px-1 py-1`} // Optional: Added small padding inside the UL, adjust as needed
                       >
                         {category.managers.map((manager: IUser) => (
                           <li key={manager._id}>

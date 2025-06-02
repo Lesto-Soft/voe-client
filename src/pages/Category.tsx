@@ -7,7 +7,7 @@ import React, {
   useLayoutEffect,
 } from "react";
 import { useParams } from "react-router";
-import { ICategory, ICase, IUser, IAnswer } from "../db/interfaces";
+import { /*ICategory,*/ ICase, IUser, IAnswer } from "../db/interfaces";
 import ShowDate from "../components/global/ShowDate";
 
 import {
@@ -373,6 +373,7 @@ const Category: React.FC = () => {
         effectivelyResolvedCasesCount: 0,
         unresolvedCasesCount: 0,
         resolutionPieChartData: [],
+        averageResolutionTime: 0,
       };
     }
 
@@ -424,6 +425,7 @@ const Category: React.FC = () => {
       OVER_10_DAYS: 0,
     };
     let effectivelyResolvedCasesCount = 0;
+    let totalResolutionTimeInDays = 0;
 
     category.cases.forEach((caseItem: ICase) => {
       if (
@@ -470,6 +472,7 @@ const Category: React.FC = () => {
                   resolutionActualEndDate.getTime() - caseStartDate.getTime();
                 if (diffTimeMs >= 0) {
                   const diffDays = diffTimeMs / (1000 * 60 * 60 * 24);
+                  totalResolutionTimeInDays += diffDays;
                   if (diffDays <= 1) resolutionTimeCounts.UNDER_1_DAY++;
                   else if (diffDays <= 5) resolutionTimeCounts.UNDER_5_DAYS++;
                   else if (diffDays <= 10) resolutionTimeCounts.UNDER_10_DAYS++;
@@ -493,6 +496,11 @@ const Category: React.FC = () => {
     );
     const unresolvedCasesCount = totalSignals - effectivelyResolvedCasesCount;
 
+    const averageResolutionTime =
+      effectivelyResolvedCasesCount > 0
+        ? totalResolutionTimeInDays / effectivelyResolvedCasesCount
+        : 0;
+
     return {
       totalSignals,
       strictlyOpenSignals,
@@ -506,6 +514,7 @@ const Category: React.FC = () => {
       effectivelyResolvedCasesCount,
       unresolvedCasesCount,
       resolutionPieChartData,
+      averageResolutionTime,
     };
   }, [category]);
 
@@ -1214,6 +1223,17 @@ const Category: React.FC = () => {
                       {signalStats.unresolvedCasesCount}
                     </strong>
                   </p>
+                  {signalStats.effectivelyResolvedCasesCount > 0 && (
+                    <p className="flex items-center justify-between mt-1">
+                      <span className="flex items-center">
+                        <DocumentTextIcon className="h-5 w-5 mr-2 text-purple-500" />
+                        Средно време за резолюция:
+                      </span>
+                      <strong className="text-gray-800 text-base">
+                        {signalStats.averageResolutionTime.toFixed(2)} дни
+                      </strong>
+                    </p>
+                  )}
                 </div>
 
                 <h4 className="text-md font-semibold text-gray-700 mb-3">

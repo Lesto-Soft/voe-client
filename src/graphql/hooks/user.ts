@@ -23,7 +23,8 @@ interface UserFiltersInput {
   position?: string;
   email?: string;
   roleIds?: string[];
-  financial_approver: boolean;
+  financial_approver?: boolean; // Note: your build function adds if truthy
+  is_manager?: boolean; // <-- ADDED for manager filter
   itemsPerPage?: number;
   currentPage?: number; // Expecting the 0-based index here
   query?: string; // Include if your getAllInput still has/needs it
@@ -41,6 +42,7 @@ export function buildUserQueryVariables(input: any) {
     email,
     roleIds,
     financial_approver,
+    is_manager, // <-- Destructure is_manager
   } = input || {};
 
   const variables: any = {
@@ -57,6 +59,9 @@ export function buildUserQueryVariables(input: any) {
   if (roleIds && roleIds.length > 0) variables.input.roleIds = roleIds;
   if (financial_approver)
     variables.input.financial_approver = financial_approver;
+  if (is_manager === true) {
+    variables.input.is_manager = true;
+  }
 
   return variables;
 }
@@ -148,6 +153,7 @@ export const useDeleteUser = () => {
 export const useGetUserByUsername = (username: string) => {
   const { loading, error, data } = useQuery(GET_USER_BY_USERNAME, {
     variables: { username },
+    skip: !username,
   });
   const user = data?.getLeanUserByUsername || null;
   return {

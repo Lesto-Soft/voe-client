@@ -8,6 +8,7 @@ import TextEditor from "./TextEditor";
 interface ILeanUserForForm {
   _id: string;
   name: string;
+  username: string;
   role: { _id: string } | null; // Role can be null
 }
 
@@ -331,8 +332,11 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
                     onChange={() => handleExpertToggle(user._id)}
                     className="form-checkbox h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
                   />
-                  <span className="ml-2 text-sm text-gray-800">
-                    {user.name}
+                  <span className="ml-2 text-sm flex justify-between items-center w-full">
+                    <span className="text-gray-800">{user.name}</span>{" "}
+                    <span className="font-semibold text-gray-500">
+                      {user.username}
+                    </span>{" "}
                   </span>
                 </label>
               ))
@@ -426,8 +430,11 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
                     onChange={() => handleManagerToggle(user._id)}
                     className="form-checkbox h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
                   />
-                  <span className="ml-2 text-sm text-gray-800">
-                    {user.name}
+                  <span className="ml-2 text-sm flex justify-between items-center w-full">
+                    <span className="text-gray-800">{user.name}</span>{" "}
+                    <span className="font-semibold text-gray-500">
+                      {user.username}
+                    </span>{" "}
                   </span>
                 </label>
               ))

@@ -16,6 +16,7 @@ export interface CategoryFormData {
 interface ILeanUserForForm {
   _id: string;
   name: string;
+  username: string;
   role: { _id: string } | null;
 }
 

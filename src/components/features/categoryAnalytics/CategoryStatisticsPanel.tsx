@@ -18,15 +18,16 @@ import {
   translateStatus,
   translateCaseType,
   translateResolutionCategory,
-  RESOLUTION_CATEGORY_CONFIG,
 } from "../../../utils/categoryDisplayUtils"; // Adjust path
 
 interface CategoryStatisticsPanelProps {
   signalStats: SignalStats | undefined | null;
   activeStatsView: "status" | "type" | "resolution";
   setActiveStatsView: (view: "status" | "type" | "resolution") => void;
-  isLoading?: boolean; // For showing a loading state for the panel
+  isLoading?: boolean;
 }
+
+const TEXT_STATS_AREA_HEIGHT = "h-28"; // Tailwind class for height: 7rem or 112px
 
 const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
   signalStats,
@@ -42,13 +43,12 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
     const totalValue = pieData.reduce((sum, item) => sum + item.value, 0);
 
     if (isLoading) {
-      // Loading state for individual pie chart area
       return (
+        // Keep skeleton as is
         <div className="animate-pulse">
-          <div className="h-6 bg-gray-200 rounded w-3/4 mb-3"></div>{" "}
-          {/* Title placeholder */}
+          <div className="h-6 bg-gray-200 rounded w-3/4 mb-3"></div>
           <div className="flex justify-center mb-3">
-            <div className="h-32 w-32 sm:h-36 sm:w-36 lg:h-40 lg:w-40 bg-gray-200 rounded-full"></div>
+            <div className="h-32 w-32 sm:h-36 sm:w-36 lg:h-40 lg:h-40 bg-gray-200 rounded-full"></div>
           </div>
           <div className="space-y-1">
             {[...Array(3)].map((_, i) => (
@@ -112,28 +112,19 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
   };
 
   if (isLoading && !signalStats) {
-    // Main loading state for the whole panel
+    // Keep skeleton as is
     return (
       <aside className="lg:col-span-3 bg-white rounded-lg shadow-lg flex flex-col overflow-hidden">
         <div className="p-6 space-y-3 overflow-y-auto flex-1 animate-pulse custom-scrollbar">
-          <div className="h-7 bg-gray-200 rounded w-1/2 mb-4"></div>{" "}
-          {/* Stats title */}
-          <div className="h-5 bg-gray-200 rounded w-full mb-3"></div>{" "}
-          {/* Total signals */}
-          <div className="h-9 bg-gray-200 rounded w-full mb-4"></div>{" "}
-          {/* Tabs */}
-          <div className="h-6 bg-gray-200 rounded w-3/4 mb-3"></div>{" "}
-          {/* Pie chart title */}
+          <div className="h-7 bg-gray-200 rounded w-1/2 mb-4"></div>
+          <div className={`h-5 bg-gray-200 rounded w-full mb-3`}></div>
+          <div className="h-9 bg-gray-200 rounded w-full mb-4"></div>
+          <div
+            className={`${TEXT_STATS_AREA_HEIGHT} bg-gray-200 rounded w-full mb-3`}
+          ></div>
+          <div className="h-6 bg-gray-200 rounded w-3/4 mb-3"></div>
           <div className="flex justify-center mb-3">
             <div className="h-40 w-40 bg-gray-200 rounded-full"></div>
-          </div>
-          <div className="space-y-1">
-            {[...Array(3)].map((_, i) => (
-              <div
-                key={i}
-                className="h-4 bg-gray-200 rounded w-full mb-1"
-              ></div>
-            ))}
           </div>
         </div>
       </aside>
@@ -141,8 +132,7 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
   }
 
   if (!signalStats) {
-    // This can happen if category exists but has no cases, or if signalStats is null for other reasons
-    // The main page should ideally handle "category not found" or major errors before reaching here.
+    // Keep "no stats" as is
     return (
       <aside className="lg:col-span-3 bg-white rounded-lg shadow-lg flex flex-col overflow-hidden">
         <div className="p-6 space-y-3 overflow-y-auto flex-1 custom-scrollbar">
@@ -173,7 +163,6 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
           </p>
         </div>
 
-        {/* Tabs for Stats View */}
         <div className="mt-2">
           <div className="flex border-b border-gray-200 text-xs sm:text-sm">
             {(
@@ -198,13 +187,13 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
           </div>
         </div>
 
-        {/* Content based on activeStatsView */}
         <div className="mt-3">
           {activeStatsView === "status" && (
             <div className="space-y-2">
-              <div className="space-y-1 text-sm text-gray-600 mb-3 min-h-[calc(4*1.75rem)]">
-                {" "}
-                {/* Approx 4 lines */}
+              {/* This container already aligns content to top by default */}
+              <div
+                className={`space-y-1 text-sm text-gray-600 mb-3 ${TEXT_STATS_AREA_HEIGHT}`}
+              >
                 <p className="flex items-center justify-between">
                   <span className="flex items-center">
                     <CheckCircleIcon className="h-5 w-5 mr-2 text-green-500 flex-shrink-0" />
@@ -252,18 +241,19 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
 
           {activeStatsView === "type" && (
             <div className="space-y-2">
+              {/* MODIFIED: Removed flex flex-col justify-center. items-center for no-data case can be handled differently if needed. */}
               <div
-                className={`space-y-1 text-sm text-gray-600 mb-3 min-h-[calc(2*1.75rem)] ${
+                className={`space-y-1 text-sm text-gray-600 mb-3 ${TEXT_STATS_AREA_HEIGHT} ${
                   signalStats.problemCasesCount === 0 &&
                   signalStats.suggestionCasesCount === 0
-                    ? "flex items-center justify-center"
+                    ? "pt-4 text-center"
                     : ""
                 }`}
               >
                 {signalStats.problemCasesCount > 0 ||
                 signalStats.suggestionCasesCount > 0 ? (
                   <>
-                    <p className="flex items-center justify-between">
+                    <p className="flex items-center justify-between w-full">
                       <span className="flex items-center">
                         <ExclamationTriangleIcon className="h-5 w-5 mr-2 text-red-500 flex-shrink-0" />
                         {translateCaseType("PROBLEM")}:
@@ -272,7 +262,7 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
                         {signalStats.problemCasesCount}
                       </strong>
                     </p>
-                    <p className="flex items-center justify-between">
+                    <p className="flex items-center justify-between w-full">
                       <span className="flex items-center">
                         <LightBulbIcon className="h-5 w-5 mr-2 text-green-500 flex-shrink-0" />
                         {translateCaseType("SUGGESTION")}:
@@ -283,6 +273,7 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
                     </p>
                   </>
                 ) : (
+                  // If no data, center this specific paragraph horizontally. Added pt-4 for some spacing.
                   <p className="text-gray-500">
                     Няма данни за типовете сигнали.
                   </p>
@@ -298,7 +289,10 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
 
           {activeStatsView === "resolution" && (
             <div className="space-y-2">
-              <div className="space-y-1 text-sm text-gray-600 mb-3 min-h-[calc(3*1.75rem)]">
+              {/* This container already aligns content to top by default */}
+              <div
+                className={`space-y-1 text-sm text-gray-600 mb-3 ${TEXT_STATS_AREA_HEIGHT}`}
+              >
                 <p className="flex items-center justify-between">
                   <span className="flex items-center">
                     <CheckCircleIcon className="h-5 w-5 mr-2 text-green-500 flex-shrink-0" />

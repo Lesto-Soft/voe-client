@@ -263,19 +263,9 @@ const Category: React.FC = () => {
           if (storedStateJSON) {
             const storedState = JSON.parse(storedStateJSON);
             if (typeof storedState.scrollTop === "number") {
-              // We expect visibleCasesCount (from state) to be the restored count already.
-              // The list should have rendered with this many items.
               scrollableCasesListRef.current.scrollTop = storedState.scrollTop;
               scrollRestoredForCurrentCategoryInstanceRef.current = true;
-            } else {
-              // console.log(
-              //   `[Restore Scroll LayoutEffect] No valid scrollTop in stored state for ${categoryNameFromParams}.`
-              // );
             }
-          } else {
-            // console.log(
-            //   `[Restore Scroll LayoutEffect] No stored JSON state found for ${categoryNameFromParams}.`
-            // );
           }
         } catch (e) {
           console.error(
@@ -284,73 +274,34 @@ const Category: React.FC = () => {
           );
         }
       }
-    } else {
-      // Conditional logging for why restoration might be skipped
-      /* Good for debugging, but commented out for production
-      if (!category)
-        console.log(
-          `[Restore Scroll LayoutEffect] Skipped: Category data not yet available for ${categoryNameFromParams}.`
-        );
-      if (loading)
-        console.log(
-          `[Restore Scroll LayoutEffect] Skipped: Still loading for ${categoryNameFromParams}.`
-        );
-      if (!scrollableCasesListRef.current)
-        console.log(
-          `[Restore Scroll LayoutEffect] Skipped: Scrollable ref not available for ${categoryNameFromParams}.`
-        );
-      if (scrollRestoredForCurrentCategoryInstanceRef.current)
-        console.log(
-          `[Restore Scroll LayoutEffect] Skipped: Scroll already restored for this instance of ${categoryNameFromParams}.`
-        );
-      if (!(visibleCasesCount > 0))
-        console.log(
-          `[Restore Scroll LayoutEffect] Skipped: visibleCasesCount is not > 0 for ${categoryNameFromParams}.`
-        );
-        */
     }
-  }, [category, loading, categoryNameFromParams, visibleCasesCount]); // visibleCasesCount is important here
+  }, [category, loading, categoryNameFromParams, visibleCasesCount]);
 
   // PoC: Save on Wheel (Debounced)
   useEffect(() => {
     const scrollDiv = scrollableCasesListRef.current;
-    let debounceTimer: number | undefined; // For storing the debounce timeout ID
+    let debounceTimer: number | undefined;
 
     const handleDebouncedWheelSave = () => {
-      clearTimeout(debounceTimer); // Clear any existing timer
+      clearTimeout(debounceTimer);
       debounceTimer = window.setTimeout(() => {
-        // console.log(
-        //   `[PoC Wheel Save Debounced] Triggered for ${categoryNameFromParams}.`
-        // );
-        // Make sure saveDataToSessionStorage is defined in the component scope
         saveDataToSessionStorage("WheelPoC");
-      }, 500); // Debounce for 500ms (adjust as needed)
+      }, 500);
     };
 
     if (scrollDiv) {
       scrollDiv.addEventListener("wheel", handleDebouncedWheelSave, {
-        passive: true, // Improves scroll performance
+        passive: true,
       });
-      // console.log(
-      //   `[PoC Wheel Save] Added wheel listener for ${categoryNameFromParams}.`
-      // );
     }
 
-    // Cleanup function
     return () => {
       if (scrollDiv) {
         scrollDiv.removeEventListener("wheel", handleDebouncedWheelSave);
-        // console.log(
-        //   `[PoC Wheel Save] Removed wheel listener for ${categoryNameFromParams}.`
-        // );
       }
-      clearTimeout(debounceTimer); // Clear the timer on cleanup
+      clearTimeout(debounceTimer);
     };
-  }, [categoryNameFromParams, saveDataToSessionStorage]); // Add saveDataToSessionStorage to dependencies if it's not stable (e.g., recreated on every render)
-  // However, if saveDataToSessionStorage is stable (defined outside or memoized),
-  // then only categoryNameFromParams is needed for rebinding when the category changes.
-  // Given your current structure, `categoryNameFromParams` is appropriate as `saveDataToSessionStorage`
-  // relies on `categoryNameFromParams` from the component scope.
+  }, [categoryNameFromParams, saveDataToSessionStorage]);
 
   useEffect(() => {
     if (!loading && categoryNameFromParams && error) {
@@ -693,33 +644,21 @@ const Category: React.FC = () => {
     return map[priority.toUpperCase()] || priority;
   };
   const handleLoadMoreCases = () => {
-    // Capture current scrollTop *before* new items potentially alter scrollHeight
     const currentScrollTop = scrollableCasesListRef.current
       ? scrollableCasesListRef.current.scrollTop
       : 0;
 
     setVisibleCasesCount((prevCount: number) => {
       const newCount = prevCount + 10;
-      // console.log(
-      //   `[Load More] Updating visibleCasesCount from ${prevCount} to ${newCount} for ${categoryNameFromParams}.`
-      // );
-
-      // visibleCasesCountRef.current will be updated by its own useEffect after this state change and re-render.
-      // To ensure the count for *this specific "Load More" action* is immediately reflected in storage:
       if (categoryNameFromParams) {
         const key = getStorageKey(categoryNameFromParams);
         if (key) {
           try {
-            // We want to save the *newCount* and the scrollTop *before* new items were added.
             const stateToSave = {
               scrollTop: currentScrollTop,
               count: newCount,
             };
             sessionStorage.setItem(key, JSON.stringify(stateToSave));
-            // console.log(
-            //   `[Load More] Aggressively saved state for ${categoryNameFromParams}:`,
-            //   stateToSave
-            // );
           } catch (e) {
             console.error(
               `[Load More] Error aggressively saving state for ${categoryNameFromParams}:`,
@@ -774,22 +713,15 @@ const Category: React.FC = () => {
                   Мениджъри
                 </button>
               </div>
-              {/* Main panel container with fixed height and flex properties for centering */}
-              <div className="mt-4 bg-gray-50 rounded-sm border border-gray-300 h-37 flex flex-col justify-center items-center text-center">
+              <div className="mt-4 bg-gray-50 rounded-sm border border-gray-300 min-h-20 lg:h-37 flex flex-col justify-center items-center text-center">
                 {activePersonnelTab === "experts" && (
-                  // Inner wrapper takes full width
-                  <div className="w-full">
+                  <div className="w-full h-full flex flex-col justify-center">
                     {category.experts && category.experts.length > 0 ? (
                       <ul
-                        className={`w-full space-y-2 text-sm text-gray-600 ${
-                          // Added w-full
-                          category.experts.length > 5 // Your condition for scrolling
-                            ? "max-h-37 overflow-y-auto" // Corrected: Use max-h-37 for the ul
-                            : ""
-                        } px-1 py-1`} // Optional: Added small padding inside the UL, adjust as needed
+                        className={`w-full flex flex-wrap gap-2 text-sm text-gray-600 overflow-y-auto max-h-32 lg:max-h-[calc(theme(space.37)-theme(space.2))] px-1 py-1 justify-center items-center`}
                       >
                         {category.experts.map((expert: IUser) => (
-                          <li key={expert._id}>
+                          <li key={expert._id} className="flex">
                             <UserLink user={expert} type="table" />
                           </li>
                         ))}
@@ -802,19 +734,13 @@ const Category: React.FC = () => {
                   </div>
                 )}
                 {activePersonnelTab === "managers" && (
-                  // Inner wrapper takes full width
-                  <div className="w-full">
+                  <div className="w-full h-full flex flex-col justify-center">
                     {category.managers && category.managers.length > 0 ? (
                       <ul
-                        className={`w-full space-y-2 text-sm text-gray-600 ${
-                          // Added w-full
-                          category.managers.length > 5 // Your condition for scrolling
-                            ? "max-h-37 overflow-y-auto" // Corrected: Use max-h-37 for the ul
-                            : ""
-                        } px-1 py-1`} // Optional: Added small padding inside the UL, adjust as needed
+                        className={`w-full flex flex-wrap gap-2 text-sm text-gray-600 overflow-y-auto max-h-32 lg:max-h-[calc(theme(space.37)-theme(space.2))] px-1 py-1 justify-center items-center`}
                       >
                         {category.managers.map((manager: IUser) => (
-                          <li key={manager._id}>
+                          <li key={manager._id} className="flex">
                             <UserLink user={manager} type="table" />
                           </li>
                         ))}
@@ -909,15 +835,15 @@ const Category: React.FC = () => {
                         key={caseItem._id}
                         className={`p-4 hover:bg-gray-100 transition-colors duration-150 ${stripStyleClasses}`}
                       >
-                        <div className="flex items-start space-x-3">
+                        <div className="flex items-start space-x-2 sm:space-x-3">
                           <UserAvatar
                             name={caseItem.creator.name || "Unknown User"}
                             imageUrl={creatorImageUrl}
                             size={40}
                           />
                           <div className="flex-1 min-w-0">
-                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-600 mb-2">
-                              <div className="min-w-[80px] flex-shrink-0">
+                            <div className="flex flex-wrap items-center gap-x-2 lg:gap-x-3 gap-y-1 text-xs text-gray-600 mb-2">
+                              <div className="lg:min-w-[80px] lg:flex-shrink-0">
                                 <CaseLink
                                   my_case={caseItem}
                                   t={(key) =>
@@ -926,13 +852,13 @@ const Category: React.FC = () => {
                                 />
                               </div>
                               <span
-                                className={`flex items-center font-medium ${priorityStyle} flex-shrink-0 min-w-[80px]`}
+                                className={`flex items-center font-medium ${priorityStyle} lg:flex-shrink-0 lg:min-w-[80px]`}
                               >
                                 <FlagIcon className="h-4 w-4 mr-1 flex-shrink-0" />
                                 {translatePriority(String(caseItem.priority))}
                               </span>
                               <span
-                                className={`flex items-center font-medium flex-shrink-0 min-w-[120px]`}
+                                className={`flex items-center font-medium lg:flex-shrink-0 lg:min-w-[120px]`}
                               >
                                 <span
                                   className={`h-2.5 w-2.5 rounded-full mr-1.5 flex-shrink-0 ${statusStyle.dotBgColor}`}
@@ -942,7 +868,7 @@ const Category: React.FC = () => {
                                 </span>
                               </span>
                               <div
-                                className={`flex items-center flex-shrink-0 font-medium min-w-[200px]`}
+                                className={`flex items-center font-medium lg:flex-shrink-0 lg:min-w-[200px]`}
                               >
                                 <span className="mr-1">Подател: </span>
                                 <UserLink
@@ -950,7 +876,7 @@ const Category: React.FC = () => {
                                   type="table"
                                 />
                               </div>
-                              <div className="text-xs text-gray-500 whitespace-nowrap flex-shrink-0 min-w-[160px]">
+                              <div className="text-xs text-gray-500 lg:whitespace-nowrap lg:flex-shrink-0 lg:min-w-[160px]">
                                 <ShowDate date={caseItem.date} />
                               </div>
                             </div>
@@ -1084,7 +1010,10 @@ const Category: React.FC = () => {
                 {signalStats.statusPieChartData.length > 0 &&
                 totalStatusPieValue > 0 ? (
                   <div className="w-full">
-                    <svg viewBox="0 0 100 100" className="w-40 h-40 mx-auto">
+                    <svg
+                      viewBox="0 0 100 100"
+                      className="w-32 h-32 sm:w-36 sm:h-36 lg:w-40 lg:h-40 mx-auto"
+                    >
                       {statusPieChartSegmentPaths}
                     </svg>
                     <ul className="text-xs mt-4 space-y-1">
@@ -1165,7 +1094,10 @@ const Category: React.FC = () => {
                 {signalStats.typePieChartData.length > 0 &&
                 totalTypePieValue > 0 ? (
                   <div className="w-full">
-                    <svg viewBox="0 0 100 100" className="w-40 h-40 mx-auto">
+                    <svg
+                      viewBox="0 0 100 100"
+                      className="w-32 h-32 sm:w-36 sm:h-36 lg:w-40 lg:h-40 mx-auto"
+                    >
                       {typePieChartSegmentPaths}
                     </svg>
                     <ul className="text-xs mt-4 space-y-1">
@@ -1243,13 +1175,16 @@ const Category: React.FC = () => {
                 signalStats.resolutionPieChartData.length > 0 &&
                 totalResolutionPieValue > 0 ? (
                   <div className="w-full">
-                    <svg viewBox="0 0 100 100" className="w-40 h-40 mx-auto">
+                    <svg
+                      viewBox="0 0 100 100"
+                      className="w-32 h-32 sm:w-36 sm:h-36 lg:w-40 lg:h-40 mx-auto"
+                    >
                       {resolutionPieChartSegmentPaths}
                     </svg>
                     <ul className="text-xs mt-4 space-y-1">
                       {signalStats.resolutionPieChartData.map(
                         (item) =>
-                          item.value > 0 && ( // Only render legend items that have a value
+                          item.value > 0 && (
                             <li
                               key={item.label}
                               className="flex items-center justify-between px-2"

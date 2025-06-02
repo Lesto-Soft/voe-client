@@ -1,5 +1,11 @@
 // src/pages/Category.tsx
-import React, { useEffect, useMemo, useState, useRef } from "react";
+import React, {
+  useEffect,
+  useMemo,
+  useState,
+  useRef,
+  useLayoutEffect,
+} from "react";
 import { useParams } from "react-router";
 import { ICategory, ICase, IUser, IAnswer } from "../db/interfaces";
 import ShowDate from "../components/global/ShowDate";
@@ -27,6 +33,10 @@ import CaseLink from "../components/global/CaseLink";
 import UserAvatar from "../components/cards/UserAvatar";
 
 const INITIAL_VISIBLE_CASES = 10;
+const SESSION_STORAGE_PREFIX = "categoryScrollState_";
+
+const getStorageKey = (categoryName: string | undefined): string | null =>
+  categoryName ? `${SESSION_STORAGE_PREFIX}${categoryName}` : null;
 
 const t = (key: string, options?: any) => {
   if (key === "details_for" && options?.caseId) {
@@ -133,13 +143,40 @@ const Category: React.FC = () => {
     categoryNameFromParams
   );
 
-  const [visibleCasesCount, setVisibleCasesCount] = useState(
-    INITIAL_VISIBLE_CASES
-  );
+  const [visibleCasesCount, setVisibleCasesCount] = useState(() => {
+    const key = getStorageKey(categoryNameFromParams);
+    if (key) {
+      try {
+        const storedStateJSON = sessionStorage.getItem(key);
+        if (storedStateJSON) {
+          const storedState = JSON.parse(storedStateJSON);
+          if (typeof storedState.count === "number" && storedState.count > 0) {
+            console.log(
+              `[Initial State] Restored visibleCasesCount for ${categoryNameFromParams} to ${storedState.count}`
+            );
+            return storedState.count;
+          }
+        }
+      } catch (e) {
+        console.error(
+          "[Initial State] Error reading count from sessionStorage:",
+          e
+        );
+      }
+    }
+    console.log(
+      `[Initial State] Using INITIAL_VISIBLE_CASES for ${categoryNameFromParams}`
+    );
+    return INITIAL_VISIBLE_CASES;
+  });
+
+  const visibleCasesCountRef = useRef(visibleCasesCount);
+  const scrollableCasesListRef = useRef<HTMLDivElement>(null);
+  const scrollRestoredForCurrentCategoryInstanceRef = useRef<boolean>(false);
+
   const [activeStatsView, setActiveStatsView] = useState<
     "status" | "type" | "resolution"
   >("status");
-
   const [activePersonnelTab, setActivePersonnelTab] = useState<
     "experts" | "managers"
   >("experts");
@@ -147,13 +184,245 @@ const Category: React.FC = () => {
     "suggestion"
   );
 
-  const scrollableCasesListRef = useRef<HTMLDivElement>(null);
-
+  // Keep visibleCasesCountRef updated with the latest state value
   useEffect(() => {
-    setVisibleCasesCount(INITIAL_VISIBLE_CASES);
+    visibleCasesCountRef.current = visibleCasesCount;
+  }, [visibleCasesCount]);
+
+  // Centralized save function
+  const saveDataToSessionStorage = (source: string) => {
+    if (scrollableCasesListRef.current && categoryNameFromParams) {
+      const key = getStorageKey(categoryNameFromParams);
+      if (key) {
+        const stateToSave = {
+          scrollTop: scrollableCasesListRef.current.scrollTop,
+          count: visibleCasesCountRef.current, // Always use the ref for the most current count
+        };
+        try {
+          sessionStorage.setItem(key, JSON.stringify(stateToSave));
+          console.log(
+            `[SaveData - ${source}] Saved for ${categoryNameFromParams}:`,
+            stateToSave
+          );
+        } catch (e) {
+          console.error(
+            `[SaveData - ${source}] Error saving state for ${categoryNameFromParams}:`,
+            e
+          );
+        }
+      }
+    } else {
+      // console.log(`[SaveData - ${source}] Skipped: scrollable ref or categoryNameFromParams missing.`);
+    }
+  };
+
+  // Effect for initializing/resetting state when categoryNameFromParams changes
+  useEffect(() => {
+    console.log(
+      `[Category Change Effect] Initializing for: ${categoryNameFromParams}.`
+    );
+    const key = getStorageKey(categoryNameFromParams);
+    let initialCount = INITIAL_VISIBLE_CASES;
+    if (key) {
+      try {
+        const storedStateJSON = sessionStorage.getItem(key);
+        if (storedStateJSON) {
+          const storedState = JSON.parse(storedStateJSON);
+          if (typeof storedState.count === "number" && storedState.count > 0) {
+            initialCount = storedState.count;
+            console.log(
+              `[Category Change Effect] Restored count for ${categoryNameFromParams} to: ${initialCount}`
+            );
+          }
+        }
+      } catch (e) {
+        console.error(
+          `[Category Change Effect] Error reading count for ${categoryNameFromParams}:`,
+          e
+        );
+      }
+    }
+    setVisibleCasesCount(initialCount); // This will trigger a re-render
+
+    // Reset other view-specific states
     setActiveStatsView("status");
     setActivePersonnelTab("experts");
     setActiveInfoTab("suggestion");
+
+    // Reset scroll position to top for the new category
+    if (scrollableCasesListRef.current) {
+      scrollableCasesListRef.current.scrollTop = 0;
+      console.log(
+        `[Category Change Effect] scrollTop reset to 0 for ${categoryNameFromParams}.`
+      );
+    }
+    // Mark that scroll has not yet been restored for this new category instance
+    scrollRestoredForCurrentCategoryInstanceRef.current = false;
+    console.log(
+      `[Category Change Effect] scrollRestored flag set to false for ${categoryNameFromParams}.`
+    );
+  }, [categoryNameFromParams]);
+
+  // Final Save: Effect to SAVE scroll state on UNMOUNT or when CATEGORY changes
+  useEffect(() => {
+    const categoryNameForCleanup = categoryNameFromParams; // Capture for closure
+    return () => {
+      // This cleanup runs when categoryNameFromParams changes (for the old category) or on unmount
+      console.log(
+        `[Final Save Cleanup] Triggered for category: ${categoryNameForCleanup}.`
+      );
+      saveDataToSessionStorage("FinalSaveCleanup");
+    };
+  }, [categoryNameFromParams]); // Only depends on categoryNameFromParams
+
+  // Scroll Restoration Logic
+  useLayoutEffect(() => {
+    console.log(
+      `[Restore Scroll LayoutEffect] Evaluating for ${categoryNameFromParams}. ScrollRestoredFlag: ${scrollRestoredForCurrentCategoryInstanceRef.current}, VisibleCountInState: ${visibleCasesCount}`
+    );
+    if (
+      category && // Ensure category data is loaded
+      !loading && // Ensure not in a loading state
+      scrollableCasesListRef.current &&
+      !scrollRestoredForCurrentCategoryInstanceRef.current &&
+      visibleCasesCount > 0 // Make sure there's content based on the count
+    ) {
+      const key = getStorageKey(categoryNameFromParams);
+      if (key) {
+        try {
+          const storedStateJSON = sessionStorage.getItem(key);
+          if (storedStateJSON) {
+            const storedState = JSON.parse(storedStateJSON);
+            if (typeof storedState.scrollTop === "number") {
+              // We expect visibleCasesCount (from state) to be the restored count already.
+              // The list should have rendered with this many items.
+              console.log(
+                `[Restore Scroll LayoutEffect] Attempting for ${categoryNameFromParams} to scrollTop: ${storedState.scrollTop}. Stored count was: ${storedState.count}. Current visibleCasesCount: ${visibleCasesCount}. scrollHeight: ${scrollableCasesListRef.current.scrollHeight}, clientHeight: ${scrollableCasesListRef.current.clientHeight}`
+              );
+              scrollableCasesListRef.current.scrollTop = storedState.scrollTop;
+              scrollRestoredForCurrentCategoryInstanceRef.current = true;
+              console.log(
+                `[Restore Scroll LayoutEffect] scrollRestored flag set to true for ${categoryNameFromParams}.`
+              );
+            } else {
+              console.log(
+                `[Restore Scroll LayoutEffect] No valid scrollTop in stored state for ${categoryNameFromParams}.`
+              );
+            }
+          } else {
+            console.log(
+              `[Restore Scroll LayoutEffect] No stored JSON state found for ${categoryNameFromParams}.`
+            );
+          }
+        } catch (e) {
+          console.error(
+            "[Restore Scroll LayoutEffect] Error restoring scroll position:",
+            e
+          );
+        }
+      }
+    } else {
+      // Conditional logging for why restoration might be skipped
+      if (!category)
+        console.log(
+          `[Restore Scroll LayoutEffect] Skipped: Category data not yet available for ${categoryNameFromParams}.`
+        );
+      if (loading)
+        console.log(
+          `[Restore Scroll LayoutEffect] Skipped: Still loading for ${categoryNameFromParams}.`
+        );
+      if (!scrollableCasesListRef.current)
+        console.log(
+          `[Restore Scroll LayoutEffect] Skipped: Scrollable ref not available for ${categoryNameFromParams}.`
+        );
+      if (scrollRestoredForCurrentCategoryInstanceRef.current)
+        console.log(
+          `[Restore Scroll LayoutEffect] Skipped: Scroll already restored for this instance of ${categoryNameFromParams}.`
+        );
+      if (!(visibleCasesCount > 0))
+        console.log(
+          `[Restore Scroll LayoutEffect] Skipped: visibleCasesCount is not > 0 for ${categoryNameFromParams}.`
+        );
+    }
+  }, [category, loading, categoryNameFromParams, visibleCasesCount]); // visibleCasesCount is important here
+
+  // PoC: Save on Wheel (Debounced)
+  useEffect(() => {
+    const scrollDiv = scrollableCasesListRef.current;
+    let debounceTimer: number | undefined; // For storing the debounce timeout ID
+
+    const handleDebouncedWheelSave = () => {
+      clearTimeout(debounceTimer); // Clear any existing timer
+      debounceTimer = window.setTimeout(() => {
+        console.log(
+          `[PoC Wheel Save Debounced] Triggered for ${categoryNameFromParams}.`
+        );
+        // Make sure saveDataToSessionStorage is defined in the component scope
+        saveDataToSessionStorage("WheelPoC");
+      }, 500); // Debounce for 500ms (adjust as needed)
+    };
+
+    if (scrollDiv) {
+      scrollDiv.addEventListener("wheel", handleDebouncedWheelSave, {
+        passive: true, // Improves scroll performance
+      });
+      console.log(
+        `[PoC Wheel Save] Added wheel listener for ${categoryNameFromParams}.`
+      );
+    }
+
+    // Cleanup function
+    return () => {
+      if (scrollDiv) {
+        scrollDiv.removeEventListener("wheel", handleDebouncedWheelSave);
+        console.log(
+          `[PoC Wheel Save] Removed wheel listener for ${categoryNameFromParams}.`
+        );
+      }
+      clearTimeout(debounceTimer); // Clear the timer on cleanup
+    };
+  }, [categoryNameFromParams, saveDataToSessionStorage]); // Add saveDataToSessionStorage to dependencies if it's not stable (e.g., recreated on every render)
+  // However, if saveDataToSessionStorage is stable (defined outside or memoized),
+  // then only categoryNameFromParams is needed for rebinding when the category changes.
+  // Given your current structure, `categoryNameFromParams` is appropriate as `saveDataToSessionStorage`
+  // relies on `categoryNameFromParams` from the component scope.
+
+  // PoC: Save on Click (Example: on the main scrollable area or specific links)
+  useEffect(() => {
+    const scrollDiv = scrollableCasesListRef.current; // Target clicks within the scrollable area
+
+    // More targeted click save:
+    // const handleClickSave = (event: MouseEvent) => {
+    //   // Check if the click target is a navigation link or something specific
+    //   if ((event.target as HTMLElement).closest('a[href^="/"]') || (event.target as HTMLElement).closest('[data-save-scroll-on-click]')) {
+    //     console.log(`[PoC Click Save] Targeted click detected on ${categoryNameFromParams}.`);
+    //     saveDataToSessionStorage("ClickPoC_Targeted");
+    //   }
+    // };
+
+    // For a simpler PoC, saving on any click inside the scrollable area (might be too broad)
+    const handleSimpleClickInScrollArea = () => {
+      console.log(
+        `[PoC Click Save] Click in scroll area for ${categoryNameFromParams}.`
+      );
+      saveDataToSessionStorage("ClickPoC_ScrollArea");
+    };
+
+    if (scrollDiv) {
+      scrollDiv.addEventListener("click", handleSimpleClickInScrollArea);
+      console.log(
+        `[PoC Click Save] Added click listener to scroll area for ${categoryNameFromParams}.`
+      );
+    }
+
+    return () => {
+      if (scrollDiv) {
+        scrollDiv.removeEventListener("click", handleSimpleClickInScrollArea);
+        console.log(
+          `[PoC Click Save] Removed click listener from scroll area for ${categoryNameFromParams}.`
+        );
+      }
+    };
   }, [categoryNameFromParams]);
 
   useEffect(() => {
@@ -508,7 +777,43 @@ const Category: React.FC = () => {
     return map[priority.toUpperCase()] || priority;
   };
   const handleLoadMoreCases = () => {
-    setVisibleCasesCount((prevCount) => prevCount + 10);
+    // Capture current scrollTop *before* new items potentially alter scrollHeight
+    const currentScrollTop = scrollableCasesListRef.current
+      ? scrollableCasesListRef.current.scrollTop
+      : 0;
+
+    setVisibleCasesCount((prevCount: number) => {
+      const newCount = prevCount + 10;
+      console.log(
+        `[Load More] Updating visibleCasesCount from ${prevCount} to ${newCount} for ${categoryNameFromParams}.`
+      );
+
+      // visibleCasesCountRef.current will be updated by its own useEffect after this state change and re-render.
+      // To ensure the count for *this specific "Load More" action* is immediately reflected in storage:
+      if (categoryNameFromParams) {
+        const key = getStorageKey(categoryNameFromParams);
+        if (key) {
+          try {
+            // We want to save the *newCount* and the scrollTop *before* new items were added.
+            const stateToSave = {
+              scrollTop: currentScrollTop,
+              count: newCount,
+            };
+            sessionStorage.setItem(key, JSON.stringify(stateToSave));
+            console.log(
+              `[Load More] Aggressively saved state for ${categoryNameFromParams}:`,
+              stateToSave
+            );
+          } catch (e) {
+            console.error(
+              `[Load More] Error aggressively saving state for ${categoryNameFromParams}:`,
+              e
+            );
+          }
+        }
+      }
+      return newCount;
+    });
   };
   const currentlyVisibleCases = category?.cases
     ? category.cases.slice(0, visibleCasesCount)

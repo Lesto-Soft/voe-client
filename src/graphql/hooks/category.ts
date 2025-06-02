@@ -103,7 +103,7 @@ export const useGetActiveCategories = () => {
   };
 };
 export const useGetCategoryByName = (name: string | undefined) => {
-  console.log("[HOOK] Attempting to fetch category with input name:", name);
+  // console.log("[HOOK] Attempting to fetch category with input name:", name);
   const { loading, error, data } = useQuery<{ getCategoryByName: ICategory }>(
     GET_CATEGORY_BY_NAME,
     {
@@ -115,11 +115,9 @@ export const useGetCategoryByName = (name: string | undefined) => {
   // For debugging the hook's output
   useEffect(() => {
     if (!loading) {
-      console.log("[HOOK] Data:", data);
       if (error) {
         console.error("[HOOK] Error:", JSON.stringify(error, null, 2)); // Stringify for more detail
       }
-      console.log("[HOOK] Category from data:", data?.getCategoryByName);
     }
   }, [loading, data, error]);
 

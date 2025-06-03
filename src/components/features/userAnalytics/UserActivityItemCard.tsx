@@ -199,7 +199,7 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
                   <div className="flex flex-wrap gap-1 items-center">
                     <span className="text-gray-400">в:</span>
                     {(item as ICase).categories?.slice(0, 2).map((cat) => (
-                      <CategoryLink key={cat._id} category={cat} />
+                      <CategoryLink key={cat._id} {...cat} />
                     ))}
                     {(item as ICase).categories!.length > 2 && (
                       <span className="text-xs text-gray-500 ml-1">...</span>

@@ -141,7 +141,7 @@ const UserInformationPanel: React.FC<UserInformationPanelProps> = ({
               <ul className="space-y-1">
                 {user.expert_categories.map((category: ICategory) => (
                   <li key={category._id} className="text-sm text-gray-700 pl-7">
-                    <CategoryLink category={category} />
+                    <CategoryLink {...category} />
                   </li>
                 ))}
               </ul>
@@ -161,7 +161,7 @@ const UserInformationPanel: React.FC<UserInformationPanelProps> = ({
               <ul className="space-y-1">
                 {user.managed_categories.map((category: ICategory) => (
                   <li key={category._id} className="text-sm text-gray-700 pl-7">
-                    <CategoryLink category={category} />
+                    <CategoryLink {...category} />
                   </li>
                 ))}
               </ul>

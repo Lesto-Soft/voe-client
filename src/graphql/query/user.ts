@@ -37,6 +37,56 @@ export const GET_USERS = gql`
   ${userFragment}
 `;
 
+export const GET_USER_BY_ID = gql`
+  query GetUserByID($_id: ID!) {
+    getUserById(_id: $_id) {
+      _id
+      username
+      name
+      email
+      position
+      financial_approver
+      role {
+        _id
+        name
+      }
+      avatar
+      cases {
+        _id
+        content
+        date
+        status
+        type
+        categories {
+          _id
+          name
+        }
+      }
+      answers {
+        _id
+        content
+        date
+        approved {
+          _id
+        }
+      }
+      comments {
+        _id
+        content
+        date
+      }
+      expert_categories {
+        _id
+        name
+      }
+      managed_categories {
+        _id
+        name
+      }
+    }
+  }
+`;
+
 export const GET_USER_BY_USERNAME = gql`
   query GetUserByUsername($username: String!) {
     getLeanUserByUsername(username: $username) {

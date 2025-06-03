@@ -285,7 +285,7 @@ const CategoryTable: React.FC<CategoryTableProps> = ({
                         items={category.experts || []}
                         itemTypeLabel="Експерт"
                         parentContextName={category.name}
-                        baseLinkPath="/user-data/" // Example path
+                        baseLinkPath="/user/" // Example path
                         isContextInactive={!!isInactive}
                       />
                     </td>
@@ -296,7 +296,7 @@ const CategoryTable: React.FC<CategoryTableProps> = ({
                         items={category.managers || []}
                         itemTypeLabel="Мениджър"
                         parentContextName={category.name}
-                        baseLinkPath="/user-data/" // Example path
+                        baseLinkPath="/user/" // Example path
                         isContextInactive={!!isInactive}
                       />
                     </td>

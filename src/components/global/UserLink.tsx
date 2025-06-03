@@ -14,6 +14,7 @@ const UserLink: React.FC<{ user: IUser; type: keyof typeof types }> = ({
 }) => {
   return (
     <Link
+      // TODO to={`/user/${user.username}`}
       to={`/user/${user._id}`}
       className={getCreatorBadgeClasses(types[type])}
     >

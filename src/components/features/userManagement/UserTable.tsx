@@ -188,7 +188,7 @@ const UserTable: React.FC<UserTableProps> = ({
                         {" "}
                         {/* Changed to justify-start */}
                         <Link
-                          to={`/user-data/${user._id}`}
+                          to={`/user/${user._id}`}
                           className={`max-w-75 inline-block px-2 py-0.5 rounded-md font-medium transition-colors duration-150 ease-in-out text-left hover:cursor-pointer ${
                             // Adjusted max-w
                             isInactive

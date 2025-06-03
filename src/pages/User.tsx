@@ -76,6 +76,16 @@ const User: React.FC = () => {
     );
   }
 
+  const activityCounts = {
+    cases: userStats?.totalSignals || 0,
+    answers: userStats?.totalAnswers || 0,
+    comments: userStats?.totalComments || 0,
+    all:
+      (userStats?.totalSignals || 0) +
+      (userStats?.totalAnswers || 0) +
+      (userStats?.totalComments || 0),
+  };
+
   // ---- Main Content Rendering ----
   return (
     <div className="container min-w-full mx-auto p-2 sm:p-6 bg-gray-50 flex flex-col h-[calc(100vh-6rem)]">
@@ -90,7 +100,11 @@ const User: React.FC = () => {
         />
 
         {/* Main Content: User Activity Feed/List */}
-        <UserActivityList user={user} isLoading={userLoading && !!user} />
+        <UserActivityList
+          user={user}
+          isLoading={userLoading && !!user}
+          counts={activityCounts} // Pass the counts
+        />
 
         {/* Right Sidebar: User Statistics */}
         <UserStatisticsPanel

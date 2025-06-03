@@ -53,6 +53,7 @@ export const GET_USER_BY_ID = gql`
       avatar
       cases {
         _id
+        case_number
         content
         date
         status
@@ -69,11 +70,26 @@ export const GET_USER_BY_ID = gql`
         approved {
           _id
         }
+        case {
+          _id
+          case_number
+        }
       }
       comments {
         _id
         content
         date
+        case {
+          _id
+          case_number
+        }
+        answer {
+          _id
+          case {
+            _id
+            case_number
+          }
+        }
       }
       expert_categories {
         _id

@@ -1,8 +1,19 @@
+// src/pages/User.tsx
 import React from "react";
-import { useParams } from "react-router"; // Assuming you use react-router-dom
-import { useGetUserById } from "../graphql/hooks/user";
+import { useParams } from "react-router"; // Ensure using react-router-dom
+import { useGetUserById } from "../graphql/hooks/user"; // Adjust path as needed
+import { IUser } from "../db/interfaces"; // Adjust path as needed
 
-const User = () => {
+// Hooks
+import useUserActivityStats from "../hooks/useUserActivityStats"; // Adjust path
+
+// UI Components
+import PageStatusDisplay from "../components/global/PageStatusDisplay"; // Adjust path
+import UserInformationPanel from "../components/features/userAnalytics/UserInformationPanel"; // Adjust path
+import UserActivityList from "../components/features/userAnalytics/UserActivityList"; // Adjust path
+import UserStatisticsPanel from "../components/features/userAnalytics/UserStatisticsPanel"; // Adjust path
+
+const User: React.FC = () => {
   const { id: userIdFromParams } = useParams<{ id: string }>();
 
   const {
@@ -11,175 +22,88 @@ const User = () => {
     user,
   } = useGetUserById(userIdFromParams);
 
-  console.log(
-    "[HOOK] Attempting to fetch user with input id:",
-    userIdFromParams
-  );
-  console.log("[HOOK] User data:", user);
-  console.log("[HOOK] User loading:", userLoading);
-  console.log("[HOOK] User error:", userError);
+  const userStats = useUserActivityStats(user);
+
+  // Get server base URL for images (used in UserInformationPanel for avatar)
+  const serverBaseUrl = import.meta.env.VITE_API_URL || "";
+
+  // Original console logs for debugging hook values (can be removed in production)
+  // console.log("[HOOK] Attempting to fetch user with input id:", userIdFromParams);
+  // console.log("[HOOK] User data:", user);
+  // console.log("[HOOK] User loading:", userLoading);
+  // console.log("[HOOK] User error:", userError);
+  // console.log("[STATS_HOOK] User stats:", userStats);
 
   if (userIdFromParams === undefined) {
-    return <div>User ID not found in URL.</div>;
+    return (
+      <PageStatusDisplay
+        notFound // Or a more specific error/info message
+        message="User ID не е намерен в URL адреса."
+        height="h-screen" // Full screen for this fundamental error
+      />
+    );
   }
 
-  if (userLoading) return <p>Loading user data...</p>;
-  if (userError) return <p>Error loading user data: {userError.message}</p>;
-  if (!user) return <p>No user found with ID: {userIdFromParams}</p>;
+  // ---- Page Status Handling ----
+  if (userLoading && !user) {
+    // Initial full page load scenario
+    return (
+      <PageStatusDisplay
+        loading
+        message="Зареждане на потребителски данни..."
+        height="h-[calc(100vh-6rem)]" // Assuming a header of approx 6rem
+      />
+    );
+  }
 
+  if (userError) {
+    return (
+      <PageStatusDisplay
+        error={{ message: userError.message }}
+        message={`Грешка при зареждане на потребител с ID: ${userIdFromParams}.`}
+        height="h-[calc(100vh-6rem)]"
+      />
+    );
+  }
+
+  if (!user) {
+    return (
+      <PageStatusDisplay
+        notFound
+        message={`Потребител с ID: ${userIdFromParams} не е намерен.`}
+        height="h-[calc(100vh-6rem)]"
+      />
+    );
+  }
+
+  // ---- Main Content Rendering ----
   return (
-    <div>
-      <h1>User Details</h1>
-      <p>
-        Displaying data for User ID: <strong>{userIdFromParams}</strong>
-      </p>
+    <div className="container min-w-full mx-auto p-2 sm:p-6 bg-gray-50 flex flex-col h-[calc(100vh-6rem)]">
+      {/* Optional: A page title like <h1 className="text-2xl font-bold text-gray-800 mb-4">Потребителски Анализ</h1> */}
 
-      {/* Basic User Info */}
-      <h2>Basic Information</h2>
-      <p>
-        <strong>ID:</strong> {user._id}
-      </p>
-      <p>
-        <strong>Name:</strong> {user.name}
-      </p>
-      <p>
-        <strong>Username:</strong> {user.username}
-      </p>
-      <p>
-        <strong>Email:</strong> {user.email}
-      </p>
-      <p>
-        <strong>Position:</strong> {user.position || "N/A"}
-      </p>
-      <p>
-        <strong>Role:</strong> {user.role?.name || "N/A"}
-      </p>
-      <p>
-        <strong>Financial Approver:</strong>{" "}
-        {user.financial_approver ? "Yes" : "No"}
-      </p>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 overflow-hidden">
+        {/* Left Sidebar: User Information */}
+        <UserInformationPanel
+          user={user}
+          isLoading={userLoading && !!user} // Show skeleton if user object exists but might be updating
+          serverBaseUrl={serverBaseUrl}
+        />
 
-      {/* Avatar */}
-      {user.avatar && ( // Assuming avatar is a URL string or null
-        <div>
-          <h2>Avatar</h2>
-          {/* If user.avatar is an object with a URL property, adjust accordingly.
-            For example: <img src={user.avatar.url} alt={`${user.name}'s avatar`} width="100" />
-          */}
-          <img
-            src={String(user.avatar)}
-            alt={`${user.name}'s avatar`}
-            width="100"
-            onError={(e) => (e.currentTarget.style.display = "none")}
-          />
-          {/* Added onError to hide if the image fails to load or if avatar is not a direct URL */}
-        </div>
-      )}
+        {/* Main Content: User Activity Feed/List */}
+        <UserActivityList user={user} isLoading={userLoading && !!user} />
 
-      {/* Expert Categories */}
-      {user.expert_categories && user.expert_categories.length > 0 && (
-        <div>
-          <h2>Expert In Categories</h2>
-          <ul>
-            {user.expert_categories.map((category) => (
-              <li key={category._id}>{category.name}</li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {/* Managed Categories */}
-      {user.managed_categories && user.managed_categories.length > 0 && (
-        <div>
-          <h2>Manages Categories</h2>
-          <ul>
-            {user.managed_categories.map((category) => (
-              <li key={category._id}>{category.name}</li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {/* Cases */}
-      {user.cases && user.cases.length > 0 && (
-        <div>
-          <h2>Cases ({user.cases.length})</h2>
-          {/* You might want to display only a few or link to a separate cases page */}
-          <ul>
-            {user.cases.slice(0, 5).map(
-              (
-                caseItem // Displaying first 5 cases as an example
-              ) => (
-                <li key={caseItem._id}>
-                  <strong>ID:</strong> {caseItem._id} <br />
-                  <strong>Type:</strong> {caseItem.type} <br />
-                  <strong>Status:</strong> {caseItem.status} <br />
-                  <strong>Content:</strong> {caseItem.content.substring(0, 100)}
-                  ... <br />
-                  <strong>Date:</strong> {caseItem.date}
-                </li>
-              )
-            )}
-            {user.cases.length > 5 && (
-              <li>And {user.cases.length - 5} more...</li>
-            )}
-          </ul>
-        </div>
-      )}
-
-      {/* Answers */}
-      {user.answers && user.answers.length > 0 && (
-        <div>
-          <h2>Answers ({user.answers.length})</h2>
-          <ul>
-            {user.answers.slice(0, 5).map(
-              (
-                answer // Displaying first 5 answers
-              ) => (
-                <li key={answer._id}>
-                  <strong>ID:</strong> {answer._id} <br />
-                  <strong>Content:</strong> {answer.content?.substring(0, 100)}
-                  ... <br />
-                  <strong>Date:</strong> {answer.date} <br />
-                  <strong>Approved:</strong>{" "}
-                  {answer.approved
-                    ? `Yes (ID: ${answer.approved._id})`
-                    : "No/Pending"}
-                </li>
-              )
-            )}
-            {user.answers.length > 5 && (
-              <li>And {user.answers.length - 5} more...</li>
-            )}
-          </ul>
-        </div>
-      )}
-
-      {/* Comments */}
-      {user.comments && user.comments.length > 0 && (
-        <div>
-          <h2>Comments ({user.comments.length})</h2>
-          <ul>
-            {user.comments.slice(0, 5).map(
-              (
-                comment // Displaying first 5 comments
-              ) => (
-                <li key={comment._id}>
-                  <strong>ID:</strong> {comment._id} <br />
-                  <strong>Content:</strong> {comment.content?.substring(0, 100)}
-                  ... <br />
-                  <strong>Date:</strong> {comment.date}
-                </li>
-              )
-            )}
-            {user.comments.length > 5 && (
-              <li>And {user.comments.length - 5} more...</li>
-            )}
-          </ul>
-        </div>
-      )}
+        {/* Right Sidebar: User Statistics */}
+        <UserStatisticsPanel
+          userStats={userStats}
+          userName={user.name} // Pass userName for display in panel title
+          isLoading={userLoading && !!user}
+        />
+      </div>
     </div>
   );
 };
 
+// If your router expects 'User' and you renamed the component to 'UserPage'
+// export { UserPage as User };
+// If filename is User.tsx and component is UserPage, then this is fine:
 export default User;

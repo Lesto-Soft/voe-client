@@ -5,12 +5,13 @@ import { PencilSquareIcon, TrashIcon } from "@heroicons/react/24/solid"; // Or y
 import UserAvatar from "../../cards/UserAvatar"; // Adjust path
 import UserTableSkeleton from "../../skeletons/UserTableSkeleton"; // Adjust path
 import Pagination from "../../tables/Pagination"; // Adjust path
-import { User } from "../../../types/userManagementTypes"; // Adjust path
 import { capitalizeFirstLetter } from "../../../utils/stringUtils"; // Adjust path
 import { isNullOrEmptyArray } from "../../../utils/arrayUtils"; // Ensure this path is correct
+import UserLink from "../../global/UserLink";
+import { IUser } from "../../../db/interfaces";
 
 interface UserTableProps {
-  users: User[];
+  users: IUser[];
   isLoadingUsers: boolean;
   usersError?: any;
   totalUserCount: number;
@@ -18,8 +19,8 @@ interface UserTableProps {
   itemsPerPage: number;
   onPageChange: (page: number) => void;
   onItemsPerPageChange: (size: number) => void;
-  onEditUser: (user: User) => void;
-  onDeleteUser: (user: User) => void; // New prop
+  onEditUser: (user: IUser) => void;
+  onDeleteUser: (user: IUser) => void; // New prop
   serverBaseUrl: string;
   avatarVersion: number;
   currentQueryInput: any; // Consider more specific type
@@ -44,9 +45,9 @@ const UserTable: React.FC<UserTableProps> = ({
   serverBaseUrl,
   avatarVersion,
   currentQueryInput,
-  createLoading,
-  updateLoading,
-  deleteUserLoading, // Destructure new prop
+  // createLoading,
+  // updateLoading,
+  // deleteUserLoading, // Destructure new prop
 }) => {
   const [showSkeleton, setShowSkeleton] = useState(true);
   const skeletonTimerRef = useRef<number | null>(null);
@@ -185,21 +186,7 @@ const UserTable: React.FC<UserTableProps> = ({
                     </td>
                     <td className={`${columnWidths.name} px-3 py-4 text-sm`}>
                       <div className="flex items-center justify-start flex-row">
-                        {" "}
-                        {/* Changed to justify-start */}
-                        <Link
-                          to={`/user/${user._id}`}
-                          className={`max-w-75 inline-block px-2 py-0.5 rounded-md font-medium transition-colors duration-150 ease-in-out text-left hover:cursor-pointer ${
-                            // Adjusted max-w
-                            isInactive
-                              ? "bg-purple-50 text-purple-400 hover:bg-purple-100 border border-purple-100 opacity-75" // pointer-events-none"
-                              : "bg-purple-100 text-purple-800 hover:bg-purple-200 border border-purple-200"
-                          } truncate`}
-                          title={user.name}
-                          //onClick={(e) => isInactive && e.preventDefault()}
-                        >
-                          {user.name}
-                        </Link>
+                        <UserLink user={user} type="table" />
                       </div>
                     </td>
                     <td
@@ -261,7 +248,8 @@ const UserTable: React.FC<UserTableProps> = ({
                             ></span> /* Placeholder with same dimensions */
                           )}
                           {/* Manager Badge or Placeholder */}
-                          {user.managed_categories?.length > 0 ? (
+                          {user.managed_categories &&
+                          user.managed_categories?.length > 0 ? (
                             <Link
                               to={`/category-management?page=1&itemsPerPage=10&managers=${user._id}`}
                               className={`inline-flex items-center justify-center px-1.5 py-0.5 text-xs rounded font-medium text-center align-middle w-6 h-5 ${

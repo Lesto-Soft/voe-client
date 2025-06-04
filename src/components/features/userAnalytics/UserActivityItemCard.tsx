@@ -11,13 +11,21 @@ import {
   ClockIcon,
   LinkIcon,
 } from "@heroicons/react/24/outline";
+import { FlagIcon } from "@heroicons/react/24/solid"; // Use solid FlagIcon as in CaseInfo
 import {
-  getStatusStyle as getStatusStyleUtil,
+  // Utilities from categoryDisplayUtils for translations
   translateStatus as translateStatusUtil,
   translateCaseType as translateCaseTypeUtil,
-  // tForCaseLink is NOT directly used here for CaseLink's t-prop anymore
-  // because CaseLink expects a simpler t function.
+  translatePriority as translatePriorityUtil,
 } from "../../../utils/categoryDisplayUtils"; // Adjust path
+
+// Import new style helpers
+import {
+  getStatusStyle as getStatusStyleFromHelper,
+  getPriorityStyle as getPriorityStyleFromHelper,
+  getTypeBadgeStyle as getTypeBadgeStyleFromHelper,
+} from "../../../utils/style-helpers"; // Adjust path to your style-helpers.ts
+
 import CategoryLink from "../../global/CategoryLink";
 
 type ActivityItem = ICase | IAnswer | IComment;
@@ -51,16 +59,17 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
     <span
       key="actor"
       className="font-medium text-gray-800 truncate group-hover:text-blue-600 transition-colors"
+      title={actor.name}
     >
       {actor.name}
     </span>
-  ); // Added truncate
+  );
 
   if (activityType === "case" && "case_number" in item) {
     const caseItem = item as ICase;
     icon = <DocumentTextIcon className="h-5 w-5 text-blue-500" />;
     titleFragments.push(
-      <span key="action" className="ml-1">
+      <span key="action" className="ml-1 whitespace-nowrap">
         създаде сигнал
       </span>
     );
@@ -69,14 +78,17 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
     const answerItem = item as IAnswer;
     icon = <ChatBubbleLeftRightIcon className="h-5 w-5 text-green-500" />;
     titleFragments.push(
-      <span key="action" className="ml-1">
+      <span key="action" className="ml-1 whitespace-nowrap">
         написа отговор
       </span>
     );
     if (answerItem.case && answerItem.case.case_number) {
       caseToLinkForDisplay = answerItem.case;
       titleFragments.push(
-        <span key="preposition" className="ml-1 text-gray-500">
+        <span
+          key="preposition"
+          className="ml-1 text-gray-500 whitespace-nowrap"
+        >
           по
         </span>
       );
@@ -84,38 +96,43 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
   } else if (activityType === "comment" && "content" in item) {
     const commentItem = item as IComment;
     icon = <ChatBubbleLeftEllipsisIcon className="h-5 w-5 text-purple-500" />;
-
     if (
       commentItem.answer &&
       commentItem.answer.case &&
       commentItem.answer.case.case_number
     ) {
       titleFragments.push(
-        <span key="action" className="ml-1 text-gray-700">
+        <span key="action" className="ml-1 text-gray-700 whitespace-nowrap">
           написа коментар по отговор
         </span>
-      ); // Ensure consistent coloring
+      );
       caseToLinkForDisplay = commentItem.answer.case;
       titleFragments.push(
-        <span key="preposition" className="ml-1 text-gray-500">
+        <span
+          key="preposition"
+          className="ml-1 text-gray-500 whitespace-nowrap"
+        >
           към
         </span>
       );
     } else if (commentItem.case && commentItem.case.case_number) {
       titleFragments.push(
-        <span key="action" className="ml-1 text-gray-700">
+        <span key="action" className="ml-1 text-gray-700 whitespace-nowrap">
           написа коментар
         </span>
       );
       caseToLinkForDisplay = commentItem.case;
       titleFragments.push(
-        <span key="preposition" className="ml-1 text-gray-500">
+        <span
+          key="preposition"
+          className="ml-1 text-gray-500 whitespace-nowrap"
+        >
           по
         </span>
       );
     } else {
       titleFragments.push(
-        <span key="action" className="ml-1 text-gray-700">
+        <span key="action" className="ml-1 text-gray-700 whitespace-nowrap">
           написа коментар
         </span>
       );
@@ -128,6 +145,29 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
     );
   }
 
+  function tFunctionForCaseLinkProp(key: string): string {
+    if (key === "details_for") {
+      return "Детайли за";
+    }
+    return key;
+  }
+
+  // Prepare styles for case-specific details if activityType is "case"
+  let statusStyleFromHelper,
+    typeBadgeClassesFromHelper,
+    priorityTextColorClassFromHelper;
+  if (activityType === "case" && "status" in item) {
+    statusStyleFromHelper = getStatusStyleFromHelper(item.status as string);
+    typeBadgeClassesFromHelper = getTypeBadgeStyleFromHelper(
+      item.type as string
+    );
+    if ((item as ICase).priority) {
+      priorityTextColorClassFromHelper = getPriorityStyleFromHelper(
+        (item as ICase).priority
+      );
+    }
+  }
+
   return (
     <div className="p-3 sm:p-4 border-b border-gray-100 hover:bg-gray-50 group transition-colors duration-150">
       <div className="flex items-start space-x-2 sm:space-x-3">
@@ -135,82 +175,113 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
           {icon || <LinkIcon className="h-5 w-5 text-gray-400" />}
         </div>
         <div className="flex-1 min-w-0">
-          {" "}
-          {/* Added min-w-0 here to help with truncation inside */}
-          {/* Top line: Action Title, CaseLink, and Date */}
+          {/* ... (Top line with title, CaseLink, and Date remains the same) ... */}
           <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between text-sm mb-1">
-            {/* Left part: Title fragments and CaseLink */}
             <div className="flex items-baseline gap-x-1.5 min-w-0 mr-2">
-              {" "}
-              {/* min-w-0 allows inner truncation */}
               <span className="text-gray-700 flex items-baseline gap-x-1 flex-shrink min-w-0">
-                {" "}
-                {/* Allow this to shrink and truncate */}
-                {/* Actor name and action - wrap for potential truncation if too long */}
                 {titleFragments.map((frag, index) => (
                   <React.Fragment key={index}>{frag}</React.Fragment>
                 ))}
               </span>
               {caseToLinkForDisplay && caseToLinkForDisplay.case_number && (
                 <div className="w-[70px] flex-shrink-0">
-                  {" "}
-                  {/* Fixed width for CaseLink wrapper. Adjust w-[70px] as needed */}
                   <CaseLink
                     my_case={caseToLinkForDisplay as ICase}
-                    t={tFunctionForCaseLinkProp} // Assuming this is defined as in previous fix
+                    t={tFunctionForCaseLinkProp}
                   />
                 </div>
               )}
             </div>
-
-            {/* Right part: Date */}
             {date && (
               <span className="text-xs text-gray-400 whitespace-nowrap flex-shrink-0 mt-1 sm:mt-0 self-start sm:self-baseline">
                 <ShowDate date={date} />
               </span>
             )}
           </div>
-          {/* Content Preview */}
+
           {contentPreview && (
             <p className="text-sm text-gray-600 leading-relaxed line-clamp-2 sm:line-clamp-3">
               {contentPreview}
             </p>
           )}
-          {/* Case-specific details */}
-          {activityType === "case" && "status" in item && (
-            // ... (this part remains the same) ...
-            <div className="mt-2 flex flex-wrap gap-x-2 gap-y-1 text-xs items-center">
-              <span
-                className={`px-1.5 py-0.5 rounded-full font-medium ${
-                  getStatusStyleUtil(item.status as string).textColor
-                } ${getStatusStyleUtil(
-                  item.status as string
-                ).dotBgColor.replace("bg-", "bg-opacity-20 bg-")}`}
-              >
-                {translateStatusUtil(item.status as string)}
-              </span>
-              <span
-                className={`px-1.5 py-0.5 rounded-full font-medium text-gray-600 bg-gray-100 border`}
-              >
-                {translateCaseTypeUtil(item.type)}
-              </span>
-              {(item as ICase).categories &&
-                (item as ICase).categories!.length > 0 && (
-                  <div className="flex flex-wrap gap-1 items-center">
-                    <span className="text-gray-400">в:</span>
-                    {(item as ICase).categories?.slice(0, 2).map((cat) => (
-                      <CategoryLink key={cat._id} {...cat} />
-                    ))}
-                    {(item as ICase).categories!.length > 2 && (
-                      <span className="text-xs text-gray-500 ml-1">...</span>
-                    )}
+
+          {/* === MODIFIED Case-specific details section starts here === */}
+          {activityType === "case" &&
+            "status" in item &&
+            "type" in item &&
+            statusStyleFromHelper &&
+            typeBadgeClassesFromHelper && (
+              <div className="mt-2 text-xs">
+                {/* Main container for both lines */}
+                {/* Line 1: Status, Type, Priority - Evenly Spaced */}
+                <div className="flex items-center justify-around sm:justify-start sm:gap-x-3 mb-1.5">
+                  {/* justify-around for small, gap for larger */}
+                  {/* Status Display */}
+                  <div className="flex-shrink-0">
+                    {/* Wrapper to help with spacing if needed */}
+                    <span className="inline-flex items-center">
+                      <span
+                        className={`h-2 w-2 rounded-full mr-1.5 ${statusStyleFromHelper.dotBgColor}`}
+                      />
+                      <span
+                        className={`${statusStyleFromHelper.textColor} font-medium`}
+                      >
+                        {translateStatusUtil(item.status as string)}
+                      </span>
+                    </span>
                   </div>
-                )}
-            </div>
-          )}
-          {/* Answer-specific details */}
+                  {/* Type Badge */}
+                  <div className="flex-shrink-0">
+                    {/* Wrapper to help with spacing */}
+                    <span
+                      className={`inline-flex items-center px-2 py-0.5 rounded-full font-medium ${typeBadgeClassesFromHelper}`}
+                    >
+                      {translateCaseTypeUtil(item.type as string)}
+                    </span>
+                  </div>
+                  {/* Priority Badge/Text */}
+                  {"priority" in item &&
+                    item.priority &&
+                    priorityTextColorClassFromHelper && (
+                      <div className="flex-shrink-0">
+                        {/* Wrapper to help with spacing */}
+                        <span
+                          className={`inline-flex items-center px-2 py-0.5 rounded-full font-medium ${priorityTextColorClassFromHelper}`}
+                        >
+                          <FlagIcon className="h-3.5 w-3.5 mr-1 flex-shrink-0" />
+                          {translatePriorityUtil(item.priority)}
+                        </span>
+                      </div>
+                    )}
+                </div>
+                {/* Line 2: Categories */}
+                {"categories" in item &&
+                  item.categories &&
+                  item.categories.length > 0 && (
+                    <div className="mt-1 flex flex-wrap gap-1 items-center">
+                      {/* Added mt-1 for slight space from line above */}
+                      <span className="text-gray-500 mr-1">в:</span>
+                      {/* Added margin to "в:" */}
+                      {item.categories?.slice(0, 3).map(
+                        (
+                          cat // Show up to 3 categories
+                        ) => (
+                          <CategoryLink key={cat._id} {...cat} />
+                        )
+                      )}
+                      {item.categories.length > 3 && (
+                        <span className="text-xs text-gray-500 ml-0.5">
+                          ...
+                        </span>
+                      )}
+                    </div>
+                  )}
+              </div>
+            )}
+          {/* === MODIFIED Case-specific details section ends here === */}
+
+          {/* Answer-specific details (remains the same) */}
           {activityType === "answer" && "approved" in item && (
-            // ... (this part remains the same) ...
             <div className="mt-2 text-xs">
               {(item as IAnswer).approved ? (
                 <span className="inline-flex items-center px-2 py-0.5 rounded-full font-medium text-green-700 bg-green-100 border border-green-200">
@@ -227,15 +298,6 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
       </div>
     </div>
   );
-  // Ensure tFunctionForCaseLinkProp is defined if you haven't moved it outside
-  // or ensure it's correctly passed if it's a prop.
-  // For this example, assuming it's defined in this component's scope as before:
-  function tFunctionForCaseLinkProp(key: string): string {
-    if (key === "details_for") {
-      return "Детайли за";
-    }
-    return key;
-  }
 };
 
 export default UserActivityItemCard;

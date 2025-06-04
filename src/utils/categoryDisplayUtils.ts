@@ -98,7 +98,7 @@ export const translateStatus = (status: string | any): string => {
   const map: Record<string, string> = {
     OPEN: "Отворен",
     IN_PROGRESS: "В процес",
-    AWAITING_FINANCE: "Чака финанси",
+    AWAITING_FINANCE: "Финанси",
     CLOSED: "Затворен",
   };
   return map[statusString] || statusString;
@@ -107,8 +107,8 @@ export const translateStatus = (status: string | any): string => {
 export const translateCaseType = (type: string): string => {
   const typeUpper = String(type).toUpperCase();
   const map: Record<string, string> = {
-    PROBLEM: "Проблеми",
-    SUGGESTION: "Предложения",
+    PROBLEM: "Проблем",
+    SUGGESTION: "Подобрение",
   };
   return map[typeUpper] || typeUpper;
 };

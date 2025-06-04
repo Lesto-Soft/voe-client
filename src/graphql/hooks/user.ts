@@ -8,6 +8,7 @@ import {
   COUNT_USERS_BY_EXACT_EMAIL,
   COUNT_USERS_BY_EXACT_USERNAME,
   GET_USER_BY_ID,
+  GET_FULL_USER_BY_USERNAME,
 } from "../query/user"; // Adjust path if needed
 import {
   CREATE_USER,
@@ -98,6 +99,31 @@ export const useCountUsers = (input: any) => {
     loading,
     error,
     refetch,
+  };
+};
+
+export const useGetFullUserByUsername = (username: string | undefined) => {
+  const { loading, error, data } = useQuery<{ getFullUserByUsername: IUser }>(
+    GET_FULL_USER_BY_USERNAME,
+    {
+      variables: { username: username },
+      skip: !username, // Skip the query if username is undefined or null
+    }
+  );
+
+  // For debugging the hook's output
+  useEffect(() => {
+    if (!loading) {
+      if (error) {
+        console.error("[HOOK] Error:", JSON.stringify(error, null, 2)); // Stringify for more detail
+      }
+    }
+  }, [loading, data, error]);
+
+  return {
+    loading,
+    error,
+    user: data?.getFullUserByUsername,
   };
 };
 

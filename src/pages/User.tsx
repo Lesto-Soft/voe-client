@@ -1,7 +1,10 @@
 // src/pages/User.tsx
 import React from "react";
 import { useParams } from "react-router"; // Ensure using react-router-dom
-import { useGetUserById } from "../graphql/hooks/user"; // Adjust path as needed
+import {
+  useGetUserById,
+  useGetFullUserByUsername,
+} from "../graphql/hooks/user"; // Adjust path as needed
 import { IUser } from "../db/interfaces"; // Adjust path as needed
 
 // Hooks
@@ -14,24 +17,26 @@ import UserActivityList from "../components/features/userAnalytics/UserActivityL
 import UserStatisticsPanel from "../components/features/userAnalytics/UserStatisticsPanel"; // Adjust path
 
 const User: React.FC = () => {
-  const { id: userIdFromParams } = useParams<{ id: string }>();
+  const { username: userUsernameFromParams } = useParams<{
+    username: string;
+  }>();
 
   const {
     loading: userLoading,
     error: userError,
     user,
-  } = useGetUserById(userIdFromParams);
+  } = useGetFullUserByUsername(userUsernameFromParams);
 
   const userStats = useUserActivityStats(user);
 
   // Get server base URL for images (used in UserInformationPanel for avatar)
   const serverBaseUrl = import.meta.env.VITE_API_URL || "";
 
-  if (userIdFromParams === undefined) {
+  if (userUsernameFromParams === undefined) {
     return (
       <PageStatusDisplay
         notFound // Or a more specific error/info message
-        message="User ID не е намерен в URL адреса."
+        message="User Username не е намерен в URL адреса."
         height="h-screen" // Full screen for this fundamental error
       />
     );
@@ -53,7 +58,7 @@ const User: React.FC = () => {
     return (
       <PageStatusDisplay
         error={{ message: userError.message }}
-        message={`Грешка при зареждане на потребител с ID: ${userIdFromParams}.`}
+        message={`Грешка при зареждане на потребител с ID: ${userUsernameFromParams}.`}
         height="h-[calc(100vh-6rem)]"
       />
     );
@@ -63,7 +68,7 @@ const User: React.FC = () => {
     return (
       <PageStatusDisplay
         notFound
-        message={`Потребител с ID: ${userIdFromParams} не е намерен.`}
+        message={`Потребител с Username: ${userUsernameFromParams} не е намерен.`}
         height="h-[calc(100vh-6rem)]"
       />
     );
@@ -95,7 +100,7 @@ const User: React.FC = () => {
           user={user}
           isLoading={userLoading && !!user}
           counts={activityCounts}
-          userId={userIdFromParams} // Pass userId for scroll persistence
+          userId={userUsernameFromParams} // Pass userId for scroll persistence
         />
 
         {/* Right Sidebar: User Statistics */}

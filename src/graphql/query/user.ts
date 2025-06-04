@@ -21,25 +21,8 @@ fragment UserFragment on User {
      
 }`;
 
-export const COUNT_USERS = gql`
-  query CountUsers($input: getUserFiltersInput) {
-    countUsers(input: $input)
-  }
-`;
-
-export const GET_USERS = gql`
-  query GetAllUsers($input: getUserFiltersInput) {
-    getAllUsers(input: $input) {
-      ...UserFragment
-      avatar
-    }
-  }
-  ${userFragment}
-`;
-
-export const GET_USER_BY_ID = gql`
-  query GetUserByID($_id: ID!) {
-    getUserById(_id: $_id) {
+const fullUserFragment = `
+fragment FullUserFragment on User {
       _id
       username
       name
@@ -105,8 +88,40 @@ export const GET_USER_BY_ID = gql`
         _id
         name
       }
+}`;
+
+export const COUNT_USERS = gql`
+  query CountUsers($input: getUserFiltersInput) {
+    countUsers(input: $input)
+  }
+`;
+
+export const GET_USERS = gql`
+  query GetAllUsers($input: getUserFiltersInput) {
+    getAllUsers(input: $input) {
+      ...UserFragment
+      avatar
     }
   }
+  ${userFragment}
+`;
+
+export const GET_FULL_USER_BY_USERNAME = gql`
+  query GetFullUserByUsername($username: String!) {
+    getFullUserByUsername(username: $username) {
+      ...FullUserFragment
+    }
+  }
+  ${fullUserFragment}
+`;
+
+export const GET_USER_BY_ID = gql`
+  query GetUserByID($_id: ID!) {
+    getUserById(_id: $_id) {
+      ...FullUserFragment
+    }
+  }
+  ${fullUserFragment}
 `;
 
 export const GET_USER_BY_USERNAME = gql`

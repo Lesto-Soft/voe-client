@@ -8,7 +8,7 @@ fragment CaseFragment on Case {
       _id
       name
       position
-      
+      username
     }
     priority
     type
@@ -53,16 +53,19 @@ fragment AnswerFragment on Answer {
       creator {
         _id
         name
+        username
         position
       }
       approved{
         _id
-        name  
+        name
+        username
       }
       approved_date
       financial_approved{
         _id
-        name  
+        name
+        username
       }
       financial_approved_date
       needs_finance
@@ -79,6 +82,7 @@ const commentFragment = `
  fragment CommentFragment on Comment {
         _id
         creator {
+          username
           name
           position
           _id

@@ -63,7 +63,7 @@ const mainRouter = createBrowserRouter([
         element: <Analyses />,
       },
       {
-        path: "/user/:id",
+        path: "/user/:username",
         element: <User />,
       },
       {

@@ -122,7 +122,7 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
           Разпределение сигнали по категории
         </h4>
         <div className="w-36 h-36 sm:w-40 sm:w-40 lg:w-44 lg:h-44 mx-auto mb-3">
-          <PieChart data={signalsByCategoryChartData} size={100} />
+          <PieChart data={signalsByCategoryChartData} size={200} />
         </div>
         <ul className="text-xs space-y-1 max-h-40 overflow-y-auto custom-scrollbar pr-1">
           {signalsByCategoryChartData.map((item) => (

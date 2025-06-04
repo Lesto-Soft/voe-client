@@ -1,4 +1,3 @@
-// src/hooks/useCategorySignalStats.ts
 import { useMemo } from "react";
 import { ICategory, ICase } from "../db/interfaces"; // Adjust path as needed
 import {
@@ -7,6 +6,8 @@ import {
   calculateResolutionStats,
   ResolutionCategoryKey,
   RESOLUTION_CATEGORY_CONFIG,
+  translateStatus, // Import the translation function for status
+  translateCaseType, // Import the translation function for case type
 } from "../utils/categoryDisplayUtils"; // Adjust path as needed
 
 export interface SignalStats {
@@ -29,6 +30,8 @@ export interface SignalStats {
   averageResolutionTime: number;
   resolutionTimeCounts: Record<ResolutionCategoryKey, number>;
 }
+
+// Removed local labelTranslations object as we'll use functions from categoryDisplayUtils
 
 const useCategorySignalStats = (
   category: ICategory | undefined | null
@@ -60,8 +63,9 @@ const useCategorySignalStats = (
 
     const totalSignals = category.cases.length;
 
+    // Status counts are based on English keys for logic
     const statusCounts = category.cases.reduce((acc, currCase) => {
-      const statusKey = String(currCase.status).toUpperCase();
+      const statusKey = String(currCase.status).toUpperCase(); // Keep as English for keys
       acc[statusKey] = (acc[statusKey] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
@@ -72,36 +76,42 @@ const useCategorySignalStats = (
     const closedSignalsCount = statusCounts["CLOSED"] || 0;
 
     const statusPieChartData = Object.entries(statusCounts)
-      .map(([label, value]) => ({
-        label, // Raw status string like "OPEN"
+      .map(([statusKey, value]) => ({
+        label: translateStatus(statusKey), // Use translateStatus for display label
         value,
-        color: getStatusStyle(label).hexColor,
+        color: getStatusStyle(statusKey).hexColor, // getStatusStyle likely expects English key
       }))
       .filter((item) => item.value > 0);
 
     let problemCasesCount = 0;
     let suggestionCasesCount = 0;
     category.cases.forEach((c: ICase) => {
-      if (String(c.type).toUpperCase() === "PROBLEM") problemCasesCount++;
-      else if (String(c.type).toUpperCase() === "SUGGESTION")
-        suggestionCasesCount++;
+      const caseTypeKey = String(c.type).toUpperCase(); // Keep as English for keys
+      if (caseTypeKey === "PROBLEM") problemCasesCount++;
+      else if (caseTypeKey === "SUGGESTION") suggestionCasesCount++;
     });
 
     const typePieChartData = [];
     if (problemCasesCount > 0)
       typePieChartData.push({
-        label: "PROBLEM",
+        label: translateCaseType("PROBLEM"), // Use translateCaseType
         value: problemCasesCount,
         color: TYPE_COLORS.PROBLEM,
       });
     if (suggestionCasesCount > 0)
       typePieChartData.push({
-        label: "SUGGESTION",
+        label: translateCaseType("SUGGESTION"), // Use translateCaseType
         value: suggestionCasesCount,
         color: TYPE_COLORS.SUGGESTION,
       });
 
     const resolutionData = calculateResolutionStats(category.cases);
+
+    // resolutionPieChartData directly uses labels from RESOLUTION_CATEGORY_CONFIG,
+    // which are already in Bulgarian as per your categoryDisplayUtils.ts
+    const resolutionPieChartData = resolutionData.resolutionPieChartData.filter(
+      (item) => item.value > 0
+    );
 
     return {
       totalSignals,
@@ -116,11 +126,9 @@ const useCategorySignalStats = (
       effectivelyResolvedCasesCount:
         resolutionData.effectivelyResolvedCasesCount,
       unresolvedCasesCount: resolutionData.unresolvedCasesCount,
-      resolutionPieChartData: resolutionData.resolutionPieChartData.filter(
-        (item) => item.value > 0
-      ),
+      resolutionPieChartData,
       averageResolutionTime: resolutionData.averageResolutionTime,
-      resolutionTimeCounts: resolutionData.resolutionTimeCounts,
+      resolutionTimeCounts: resolutionData.resolutionTimeCounts, // Keys remain English
     };
   }, [category]);
 

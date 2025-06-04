@@ -80,7 +80,7 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
       <div className="w-full">
         <h4 className="text-md font-semibold text-gray-700 mb-3">{title}</h4>
         <div className="w-32 h-32 sm:w-36 sm:w-36 lg:w-40 lg:h-40 mx-auto mb-3">
-          <PieChart data={pieData} size={100} />
+          <PieChart data={pieData} size={200} />
         </div>
         <ul className="text-xs space-y-1">
           {pieData.map((item) => (

@@ -113,6 +113,14 @@ const NavBar = () => {
     } else {
       currentPage = "Проблем с името на категорията";
     }
+  } else if (/^\/user\/[^/]+$/.test(location.pathname)) {
+    const userId = location.pathname.split("/").pop();
+    if (userId) {
+      // Use the decoded categoryName in your translation function
+      currentPage = t("user_desc", { userId });
+    } else {
+      currentPage = "Проблем с потребителя";
+    }
   } else {
     currentPage = pageNames[location.pathname] || "Страницата не е намерена";
   }

@@ -71,9 +71,14 @@ export const GET_USER_BY_ID = gql`
         approved {
           _id
         }
+        needs_finance
+        financial_approved {
+          _id
+        }
         case {
           _id
           case_number
+          status
         }
       }
       comments {

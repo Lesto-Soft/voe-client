@@ -10,6 +10,8 @@ import {
   CheckBadgeIcon,
   ClockIcon,
   LinkIcon,
+  XCircleIcon,
+  InformationCircleIcon,
 } from "@heroicons/react/24/outline";
 import { FlagIcon } from "@heroicons/react/24/solid"; // Use solid FlagIcon as in CaseInfo
 import {
@@ -280,20 +282,76 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
             )}
           {/* === MODIFIED Case-specific details section ends here === */}
 
-          {/* Answer-specific details (remains the same) */}
-          {activityType === "answer" && "approved" in item && (
-            <div className="mt-2 text-xs">
-              {(item as IAnswer).approved ? (
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full font-medium text-green-700 bg-green-100 border border-green-200">
-                  <CheckBadgeIcon className="h-4 w-4 mr-1" /> Одобрен
-                </span>
-              ) : (
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full font-medium text-yellow-700 bg-yellow-100 border border-yellow-200">
-                  <ClockIcon className="h-4 w-4 mr-1" /> Чака одобрение
-                </span>
-              )}
-            </div>
-          )}
+          {/* Answer-specific details */}
+          {activityType === "answer" &&
+            item && // Ensure item itself is not null/undefined
+            "approved" in item && // Check for optional 'approved' property
+            item.case && // Ensure 'case' object exists
+            typeof item.case.status === "string" && ( // Ensure 'case.status' exists and is a string
+              <div className="mt-2 text-xs">
+                {(() => {
+                  // Cast to IAnswer for type safety if 'item' is more generic initially.
+                  // If 'item' is already strongly typed as IAnswer, casting might be redundant
+                  // but doesn't hurt for clarity within this block.
+                  const answerItem = item as IAnswer;
+
+                  // Check if the answer has been editorially/expert approved
+                  const isExpertApproved = !!answerItem.approved;
+                  const caseStatus = answerItem.case.status;
+
+                  // Scenario 4: Expert approved, and the case itself is "AWAITING_FINANCE".
+                  // This implies this answer is the one leading to the case's AWAITING_FINANCE status.
+                  if (isExpertApproved && caseStatus === "AWAITING_FINANCE") {
+                    return (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full font-medium text-blue-700 bg-blue-100 border border-blue-200">
+                        <InformationCircleIcon className="h-4 w-4 mr-1" />{" "}
+                        {/* Icon indicates status/info */}
+                        Чака финанси
+                      </span>
+                    );
+                  }
+                  // Scenario 3 (and general expert approved cases not awaiting finance):
+                  // Answer is expert approved, and the case is not "AWAITING_FINANCE".
+                  // This includes when caseStatus is "CLOSED" (implying this answer was used) or any other open status.
+                  else if (isExpertApproved) {
+                    return (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full font-medium text-green-700 bg-green-100 border border-green-200">
+                        <CheckBadgeIcon className="h-4 w-4 mr-1" />
+                        Одобрен
+                      </span>
+                    );
+                  }
+                  // Scenario 1: Answer is NOT expert approved, but the case has already moved to "CLOSED" or "AWAITING_FINANCE".
+                  // This implies this specific answer was not the one the case proceeded with.
+                  else if (
+                    !isExpertApproved &&
+                    (caseStatus === "CLOSED" ||
+                      caseStatus === "AWAITING_FINANCE")
+                  ) {
+                    return (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full font-medium text-red-700 bg-red-100 border border-red-200">
+                        <XCircleIcon className="h-4 w-4 mr-1" />
+                        Неодобрен
+                      </span>
+                    );
+                  }
+                  // Scenario 2 (and general not expert approved, case still open):
+                  // Answer is NOT expert approved, and the case is in a status other than "CLOSED" or "AWAITING_FINANCE".
+                  // This means the answer is still pending expert/editorial review.
+                  else if (!isExpertApproved) {
+                    return (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full font-medium text-yellow-700 bg-yellow-100 border border-yellow-200">
+                        <ClockIcon className="h-4 w-4 mr-1" />
+                        Чака одобрение
+                      </span>
+                    );
+                  }
+
+                  // Fallback, should ideally not be reached if the logic covers all states of isExpertApproved
+                  return null;
+                })()}
+              </div>
+            )}
         </div>
       </div>
     </div>

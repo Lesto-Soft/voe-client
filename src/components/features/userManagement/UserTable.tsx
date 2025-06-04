@@ -200,18 +200,6 @@ const UserTable: React.FC<UserTableProps> = ({
                         >
                           {user.name}
                         </Link>
-                        {user.financial_approver ? (
-                          <span
-                            className={`ml-1 inline-block px-1.5 py-0.5 text-xs rounded font-medium transition-colors duration-150 ease-in-out text-center align-middle ${
-                              isInactive
-                                ? "bg-green-50 text-green-500 border border-green-100 opacity-75"
-                                : "bg-green-100 text-green-700 border border-green-200"
-                            }`}
-                            title="Financial Approver"
-                          >
-                            $
-                          </span>
-                        ) : null}
                       </div>
                     </td>
                     <td
@@ -232,23 +220,70 @@ const UserTable: React.FC<UserTableProps> = ({
                     <td
                       className={`${columnWidths.role} px-3 py-4 whitespace-nowrap text-sm`}
                     >
-                      <span className={isInactive ? "opacity-70" : ""}>
-                        {capitalizeFirstLetter(user.role?.name) || "-"}
-                      </span>
-                      {user.managed_categories?.length > 0 ? (
-                        <Link
-                          to={`/category-management?page=1&itemsPerPage=10&managers=${user._id}`}
-                          className={`ml-1 inline-block px-1.5 py-0.5 text-xs rounded font-medium transition-colors duration-150 ease-in-out text-center align-middle ${
-                            isInactive
-                              ? "bg-blue-50 text-blue-500 hover:bg-blue-100 border border-blue-100 opacity-75" // pointer-events-none"
-                              : "bg-blue-100 text-blue-700 hover:bg-blue-200 border border-blue-200"
-                          }`}
-                          title="Менажира категории"
-                          // onClick={(e) => isInactive && e.preventDefault()}
+                      <div className="flex items-center justify-between w-full">
+                        {" "}
+                        {/* Main flex container for role name and badges block */}
+                        {/* Role Name - takes available space on the left */}
+                        <span
+                          className={`${
+                            isInactive ? "opacity-70" : ""
+                          } truncate`}
+                          // Adjust the max-width calculation based on the total width of the badges container
+                          // Example: Each badge/placeholder is w-6 (1.5rem). space-x-1 is 0.25rem. Total ~3.25rem to 3.5rem.
+                          style={{ maxWidth: "calc(100% - 3.5rem)" }}
+                          title={capitalizeFirstLetter(user.role?.name) || "-"}
                         >
-                          M
-                        </Link>
-                      ) : null}
+                          {capitalizeFirstLetter(user.role?.name) || "-"}
+                        </span>
+                        {/* Container for both badges - this group will be on the right */}
+                        <div className="flex items-center flex-shrink-0 space-x-1">
+                          {" "}
+                          {/* flex-shrink-0 prevents this container from shrinking */}
+                          {/* Financial Approver Badge or Placeholder */}
+                          {user.financial_approver ? (
+                            <span
+                              className={`inline-flex items-center justify-center px-1.5 py-0.5 text-xs rounded font-medium text-center align-middle w-6 h-5 ${
+                                /* Fixed width and height */ ""
+                              }
+            ${
+              isInactive
+                ? "bg-green-50 text-green-500 border border-green-100 opacity-75"
+                : "bg-green-100 text-green-700 border border-green-200"
+            }`}
+                              title="Financial Approver"
+                            >
+                              $
+                            </span>
+                          ) : (
+                            <span
+                              className="inline-block w-6 h-5"
+                              aria-hidden="true"
+                            ></span> /* Placeholder with same dimensions */
+                          )}
+                          {/* Manager Badge or Placeholder */}
+                          {user.managed_categories?.length > 0 ? (
+                            <Link
+                              to={`/category-management?page=1&itemsPerPage=10&managers=${user._id}`}
+                              className={`inline-flex items-center justify-center px-1.5 py-0.5 text-xs rounded font-medium text-center align-middle w-6 h-5 ${
+                                /* Fixed width and height */ ""
+                              }
+            ${
+              isInactive
+                ? "bg-blue-50 text-blue-500 hover:bg-blue-100 border border-blue-100 opacity-75"
+                : "bg-blue-100 text-blue-700 hover:bg-blue-200 border border-blue-200"
+            }`}
+                              title="Менажира категории"
+                            >
+                              M
+                            </Link>
+                          ) : (
+                            <span
+                              className="inline-block w-6 h-5"
+                              aria-hidden="true"
+                            ></span> /* Placeholder with same dimensions */
+                          )}
+                        </div>
+                      </div>
                     </td>
                     <td
                       className={`${columnWidths.edit} px-3 py-4 whitespace-nowrap text-center`}

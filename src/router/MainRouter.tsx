@@ -72,7 +72,7 @@ const mainRouter = createBrowserRouter([
         element: <User />,
       },
       {
-        path: "/category/:id",
+        path: "/category/:name",
         element: <Category />,
       },
       {

@@ -264,7 +264,7 @@ const CategoryTable: React.FC<CategoryTableProps> = ({
                       className={`${columnWidths.name} px-3 py-4 whitespace-nowrap`}
                     >
                       <Link
-                        to={`/category/${category._id}`} // Ensure Link leads somewhere meaningful or remove if not needed
+                        to={`/category/${category.name}`} // Ensure Link leads somewhere meaningful or remove if not needed
                         className={`inline-block px-3 py-1 rounded-lg text-sm font-semibold transition-colors duration-150 ease-in-out ${
                           isInactive
                             ? "bg-gray-200 text-gray-500" // cursor-not-allowed" // Made inactive link look more disabled

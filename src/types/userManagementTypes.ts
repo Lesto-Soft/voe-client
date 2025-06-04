@@ -29,6 +29,7 @@ export interface UserFiltersState {
   email?: string;
   roleIds?: string[];
   financial?: boolean;
+  manager?: boolean;
 }
 
 // Interface for pagination state
@@ -53,4 +54,5 @@ export interface StateForUrl {
   filterEmail?: string;
   filterRoleIds?: string[];
   financial_approver?: string;
+  is_manager?: string;
 }

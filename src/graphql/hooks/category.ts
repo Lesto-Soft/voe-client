@@ -1,9 +1,11 @@
 import { useQuery, useMutation } from "@apollo/client";
+import { useEffect } from "react";
 import {
   GET_ACTIVE_CATEGORIES,
   GET_ALL_LEAN_CATEGORIES,
   COUNT_CATEGORIES,
   COUNT_CATEGORIES_BY_EXACT_NAME,
+  GET_CATEGORY_BY_NAME as GET_CATEGORY_BY_NAME,
 } from "../query/category";
 import { ICategory } from "../../db/interfaces";
 import {
@@ -100,9 +102,33 @@ export const useGetActiveCategories = () => {
     refetch,
   };
 };
+export const useGetCategoryByName = (name: string | undefined) => {
+  // console.log("[HOOK] Attempting to fetch category with input name:", name);
+  const { loading, error, data } = useQuery<{ getCategoryByName: ICategory }>(
+    GET_CATEGORY_BY_NAME,
+    {
+      variables: { name: name }, // <--- THE FIX: Key matches the GraphQL query variable name $_id
+      skip: !name,
+    }
+  );
+
+  // For debugging the hook's output
+  useEffect(() => {
+    if (!loading) {
+      if (error) {
+        console.error("[HOOK] Error:", JSON.stringify(error, null, 2)); // Stringify for more detail
+      }
+    }
+  }, [loading, data, error]);
+
+  return {
+    loading,
+    error,
+    category: data?.getCategoryByName,
+  };
+};
 
 // Category Mutations
-
 export const useCreateCategory = () => {
   const [createCategoryMutation, { data, loading, error }] =
     useMutation(CREATE_CATEGORY);

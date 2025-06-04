@@ -31,6 +31,7 @@ import UserFilters from "../components/features/userManagement/UserFilters";
 import UserTable from "../components/features/userManagement/UserTable";
 import { useUserManagement } from "../hooks/useUserManagement"; // Adjust path
 import { Role, User } from "../types/userManagementTypes"; // Adjust path
+import { IUser } from "../db/interfaces";
 
 const UserManagement: React.FC = () => {
   const {
@@ -59,13 +60,13 @@ const UserManagement: React.FC = () => {
   console.log("CURRENT QUERY INPUT: ", currentQueryInput);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [editingUser, setEditingUser] = useState<IUser | null>(null);
   const [avatarVersion, setAvatarVersion] = useState(Date.now());
   const [showFilters, setShowFilters] = useState(true);
 
   // State for delete confirmation
   const [showUserDeleteConfirm, setShowUserDeleteConfirm] = useState(false);
-  const [userToDelete, setUserToDelete] = useState<User | null>(null);
+  const [userToDelete, setUserToDelete] = useState<IUser | null>(null);
 
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [successModalMessage, setSuccessModalMessage] = useState("");
@@ -149,8 +150,8 @@ const UserManagement: React.FC = () => {
     refetch: refetchRoles,
   } = useGetRoles();
 
-  const usersForTable: User[] = usersDataForTable || [];
-  const allUsersForDynamicRoleCount: User[] = usersForRoleCountsData || [];
+  const usersForTable: IUser[] = usersDataForTable || [];
+  const allUsersForDynamicRoleCount: IUser[] = usersForRoleCountsData || [];
   const roles: Role[] = rolesData?.getAllLeanRoles || [];
 
   const [isDynamicRoleDataStale, setIsDynamicRoleDataStale] = useState(false);
@@ -210,7 +211,7 @@ const UserManagement: React.FC = () => {
     setEditingUser(null);
     setIsModalOpen(true);
   };
-  const openEditModal = (userToEdit: User) => {
+  const openEditModal = (userToEdit: IUser) => {
     setEditingUser(userToEdit);
     setIsModalOpen(true);
   };
@@ -283,7 +284,7 @@ const UserManagement: React.FC = () => {
     }
   };
 
-  const triggerDeleteUser = (user: User) => {
+  const triggerDeleteUser = (user: IUser) => {
     setUserToDelete(user);
     setShowUserDeleteConfirm(true);
   };

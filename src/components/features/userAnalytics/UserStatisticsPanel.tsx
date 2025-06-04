@@ -28,9 +28,9 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
     value: string | number | undefined;
     iconColorClass?: string;
   }> = ({ icon: Icon, label, value, iconColorClass = "text-gray-500" }) => (
-    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-md border border-gray-200">
+    <div className="flex items-center justify-between p-1 ">
       <div className="flex items-center">
-        <Icon className={`h-6 w-6 mr-2.5 ${iconColorClass}`} />
+        <Icon className={`h-5 w-5 mr-2 ${iconColorClass}`} />
         <span className="text-sm text-gray-700">{label}:</span>
       </div>
       <strong className="text-gray-800 text-base font-semibold">
@@ -46,12 +46,9 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
           <div className="h-7 bg-gray-300 rounded w-3/4 mb-4"></div>{" "}
           {/* Title */}
           <div className="space-y-3">
-            <div className="h-12 bg-gray-200 rounded-md"></div>{" "}
-            {/* Stat item */}
-            <div className="h-12 bg-gray-200 rounded-md"></div>{" "}
-            {/* Stat item */}
-            <div className="h-12 bg-gray-200 rounded-md"></div>{" "}
-            {/* Stat item */}
+            <div className="h-5 rounded-md"></div> {/* Stat item */}
+            <div className="h-5 rounded-md"></div> {/* Stat item */}
+            <div className="h-5 rounded-md"></div> {/* Stat item */}
           </div>
           <hr className="my-4 border-gray-200" />
           <div className="h-6 bg-gray-300 rounded w-1/2 mb-3"></div>{" "}
@@ -78,7 +75,8 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
         <div className="p-6">
           <h3 className="text-lg font-semibold text-gray-700 mb-3 flex items-center">
             <ChartPieIcon className="h-6 w-6 mr-2 text-teal-600" />
-            Статистика {userName && `за ${userName}`}
+            Статистика
+            {/* Статистика {userName && `за ${userName}`} */}
           </h3>
           <p className="text-sm text-gray-500">
             Няма налична статистика за този потребител.
@@ -156,11 +154,11 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
         <h3 className="text-lg font-semibold text-gray-800 flex items-center">
           <ChartPieIcon className="h-6 w-6 mr-2 text-teal-600" />
           Статистика{" "}
-          {userName && <span className="truncate ml-1">за {userName}</span>}
+          {/* {userName && <span className="truncate ml-1">за {userName}</span>} */}
         </h3>
 
         {/* Key Counts */}
-        <div className="space-y-2.5">
+        <div className="space-y-1">
           <StatItem
             icon={DocumentTextIcon}
             label="Сигнали"
@@ -184,7 +182,7 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
         <hr className="my-3 border-gray-200" />
 
         {/* Placeholder for "Response Time" details */}
-        <div>
+        {/* <div>
           <h4 className="text-md font-semibold text-gray-700 mb-2 flex items-center">
             <ClockIcon className="h-5 w-5 mr-2 text-orange-500" />
             Време за реакция при отговори
@@ -197,7 +195,7 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
           </div>
         </div>
 
-        <hr className="my-3 border-gray-200" />
+        <hr className="my-3 border-gray-200" /> */}
 
         {/* Signals by Category Pie Chart */}
         {renderPieChartSection()}

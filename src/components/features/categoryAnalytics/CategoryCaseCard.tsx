@@ -5,24 +5,31 @@ import UserAvatar from "../../../components/cards/UserAvatar"; // Adjust path as
 import CaseLink from "../../../components/global/CaseLink"; // Adjust path as needed
 import UserLink from "../../../components/global/UserLink"; // Adjust path as needed
 import ShowDate from "../../../components/global/ShowDate"; // Adjust path as needed
-import { FlagIcon } from "@heroicons/react/24/solid";
-import { StatusStyle, tForCaseLink } from "../../../utils/categoryDisplayUtils"; // Adjust path
+import { FlagIcon as SolidFlagIcon } from "@heroicons/react/24/solid"; // Use solid as per CaseInfo
+
+// Import style helpers from your file
+import {
+  getStatusStyle as getStatusStyleFromHelper,
+  getPriorityStyle as getPriorityStyleFromHelper,
+  getTypeBadgeStyle as getTypeBadgeStyleFromHelper,
+} from "../../../utils/style-helpers"; // Adjust path to your style-helpers.ts
+
+// Import translation helpers and tForCaseLink from categoryDisplayUtils
+import {
+  translateStatus,
+  translatePriority,
+  translateCaseType,
+  tForCaseLink, // For CaseLink's title
+} from "../../../utils/categoryDisplayUtils"; // Adjust path
 
 interface CategoryCaseCardProps {
   caseItem: ICase;
-  statusStyle: StatusStyle;
-  priorityStyleClass: string; // The direct Tailwind class string for priority
-  translatedPriority: string;
-  translatedStatus: string;
   serverBaseUrl: string;
+  // Props like statusStyle, priorityStyleClass, translatedPriority, translatedStatus are no longer needed
 }
 
 const CategoryCaseCard: React.FC<CategoryCaseCardProps> = ({
   caseItem,
-  statusStyle,
-  priorityStyleClass,
-  translatedPriority,
-  translatedStatus,
   serverBaseUrl,
 }) => {
   const creatorImageUrl = `${serverBaseUrl}/static/avatars/${caseItem.creator._id}/${caseItem.creator.avatar}`;
@@ -34,6 +41,26 @@ const CategoryCaseCard: React.FC<CategoryCaseCardProps> = ({
     stripStyleClasses = "border-l-8 border-l-green-400";
   }
 
+  // Prepare styles and translated text internally
+  const statusStyle = getStatusStyleFromHelper(caseItem.status as string);
+  const translatedStatusText = translateStatus(caseItem.status as string);
+
+  const typeBadgeClasses = getTypeBadgeStyleFromHelper(caseItem.type as string);
+  const translatedTypeText = translateCaseType(caseItem.type as string);
+
+  const priorityStyleClass = getPriorityStyleFromHelper(
+    caseItem.priority as string
+  );
+  const translatedPriorityText = translatePriority(caseItem.priority as string);
+
+  // This t function is for the CaseLink title, as per previous discussions
+  const tFunctionForCaseLinkTitle = (key: string): string => {
+    if (key === "details_for") {
+      return "Детайли за"; // CaseLink will append the case number
+    }
+    return key;
+  };
+
   return (
     <li
       className={`p-4 hover:bg-gray-100 rounded-l-sm transition-colors duration-150 ${stripStyleClasses}`}
@@ -42,45 +69,58 @@ const CategoryCaseCard: React.FC<CategoryCaseCardProps> = ({
         <UserAvatar
           name={caseItem.creator.name || "Unknown User"}
           imageUrl={creatorImageUrl}
-          size={40} // Corresponds to h-10 w-10
+          size={40}
         />
         <div className="flex-1 min-w-0">
-          <div className="flex flex-wrap items-center gap-x-2 lg:gap-x-3 gap-y-1 text-xs text-gray-600 mb-2">
-            <div className="lg:min-w-[80px] lg:flex-shrink-0">
+          {/* Main info line: CaseLink, Status, Type, Priority, Creator, Date */}
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-gray-600 mb-2">
+            {/* Changed to items-center */}
+            {/* Case Link (no change to this specific element's structure) */}
+            <div className="flex-shrink-0">
               <CaseLink
-                my_case={caseItem}
-                // The tForCaseLink function is specific for "Детайли за {caseId}"
-                t={(key) => tForCaseLink(key, { caseId: caseItem.case_number })}
+                my_case={caseItem} // Or caseToLinkForDisplay if in UserActivityItemCard
+                t={tFunctionForCaseLinkTitle} // Or tFunctionForCaseLinkProp
               />
             </div>
+            {/* Status Display (now styled more like a badge) */}
             <span
-              className={`flex items-center font-medium ${priorityStyleClass} lg:flex-shrink-0 lg:min-w-[80px]`}
-            >
-              <FlagIcon className="h-4 w-4 mr-1 flex-shrink-0" />
-              {translatedPriority}
-            </span>
-            <span
-              className={`flex items-center font-medium lg:flex-shrink-0 lg:min-w-[120px]`}
+              className={`inline-flex items-center py-0.5 rounded-full font-medium ${statusStyle.textColor} `}
             >
               <span
-                className={`h-2.5 w-2.5 rounded-full mr-1.5 flex-shrink-0 ${statusStyle.dotBgColor}`}
+                className={`h-2 w-2 rounded-full mr-1.5 ${statusStyle.dotBgColor}`}
                 aria-hidden="true"
               />
-              <span className={statusStyle.textColor}>{translatedStatus}</span>
+              <span>{translatedStatusText}</span>
             </span>
-            <div
-              className={`flex items-center font-medium text-gray-600 lg:flex-shrink-0 lg:min-w-[150px] sm:min-w-[120px]`} // Adjusted min-width
+            {/* Type Badge (already styled as a badge, ensure consistent py-0.5) */}
+            <span
+              className={`inline-flex items-center px-2 py-0.5 rounded-full font-medium text-xs ${typeBadgeClasses} flex-shrink-0`}
             >
-              <span className="mr-1 whitespace-nowrap">Подател:</span>
+              {translatedTypeText}
+            </span>
+            {/* Priority Display (already styled as a badge, ensure consistent py-0.5) */}
+            {caseItem.priority &&
+              priorityStyleClass && ( // Ensure priorityStyleClass is also checked if it's prepared conditionally
+                <span
+                  className={`inline-flex items-center py-0.5 rounded-full font-medium ${priorityStyleClass}`}
+                >
+                  <SolidFlagIcon className="h-3.5 w-3.5 mr-1 flex-shrink-0" />
+                  {translatedPriorityText}
+                </span>
+              )}
+            {/* Creator (no change to this specific element's structure) */}
+            <div className="flex items-center text-gray-600 flex-shrink-0">
+              <span className="mr-1 text-gray-500">от:</span>
               <UserLink user={caseItem.creator} type="table" />
             </div>
-            <div className="text-xs text-gray-500 lg:whitespace-nowrap lg:flex-shrink-0 lg:min-w-[140px] sm:min-w-[110px]">
-              {" "}
-              {/* Adjusted min-width */}
+            {/* Date (no change to this specific element's structure) */}
+            <div className="text-gray-500 whitespace-nowrap flex-shrink-0">
               <ShowDate date={caseItem.date} />
             </div>
           </div>
-          <p className="text-sm text-gray-700 leading-relaxed line-clamp-4">
+
+          {/* Content Preview */}
+          <p className="text-sm text-gray-700 leading-relaxed line-clamp-3 sm:line-clamp-4">
             {caseItem.content}
           </p>
         </div>

@@ -6,6 +6,7 @@ import { useCreateUserFormState } from "./hooks/useCreateUserFormState"; // Impo
 import UserInputFields from "./partials/UserInputFields"; // Import sub-components
 import PasswordFields from "./partials/PasswordFields";
 import AvatarUploadSection from "./partials/AvatarUploadSection";
+import { IUser } from "../../db/interfaces";
 
 // Interface for the final avatar data structure expected by parent onSubmit
 interface AvatarInputData {
@@ -20,7 +21,7 @@ interface CreateUserFormProps {
     avatarData: AvatarInputData | null | undefined
   ) => void;
   onClose: () => void; // Keep onClose if the form itself needs to trigger closing
-  initialData: User | null;
+  initialData: IUser | null;
   submitButtonText: string;
   roles: Role[];
   rolesLoading: boolean;

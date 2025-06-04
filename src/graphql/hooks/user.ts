@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useQuery, useMutation, ApolloError } from "@apollo/client";
 import {
   GET_USERS,
@@ -6,6 +7,8 @@ import {
   GET_USER_BY_USERNAME,
   COUNT_USERS_BY_EXACT_EMAIL,
   COUNT_USERS_BY_EXACT_USERNAME,
+  GET_USER_BY_ID,
+  GET_FULL_USER_BY_USERNAME,
 } from "../query/user"; // Adjust path if needed
 import {
   CREATE_USER,
@@ -14,6 +17,7 @@ import {
   UpdateUserInput,
   DELETE_USER,
 } from "../mutation/user"; // Adjust path if needed
+import { IUser } from "../../db/interfaces";
 
 // --- Define Input Types (These should match your GraphQL Schema!) ---
 // Interface for the filters used in UserManagementPage
@@ -95,6 +99,57 @@ export const useCountUsers = (input: any) => {
     loading,
     error,
     refetch,
+  };
+};
+
+export const useGetFullUserByUsername = (username: string | undefined) => {
+  const { loading, error, data } = useQuery<{ getFullUserByUsername: IUser }>(
+    GET_FULL_USER_BY_USERNAME,
+    {
+      variables: { username: username },
+      skip: !username, // Skip the query if username is undefined or null
+    }
+  );
+
+  // For debugging the hook's output
+  useEffect(() => {
+    if (!loading) {
+      if (error) {
+        console.error("[HOOK] Error:", JSON.stringify(error, null, 2)); // Stringify for more detail
+      }
+    }
+  }, [loading, data, error]);
+
+  return {
+    loading,
+    error,
+    user: data?.getFullUserByUsername,
+  };
+};
+
+export const useGetUserById = (id: string | undefined) => {
+  // console.log("[HOOK] Attempting to fetch user with input id:", id);
+  const { loading, error, data } = useQuery<{ getUserById: IUser }>(
+    GET_USER_BY_ID,
+    {
+      variables: { _id: id },
+      skip: !id, // Skip the query if id is undefined or null
+    }
+  );
+
+  // For debugging the hook's output
+  useEffect(() => {
+    if (!loading) {
+      if (error) {
+        console.error("[HOOK] Error:", JSON.stringify(error, null, 2)); // Stringify for more detail
+      }
+    }
+  }, [loading, data, error]);
+
+  return {
+    loading,
+    error,
+    user: data?.getUserById,
   };
 };
 

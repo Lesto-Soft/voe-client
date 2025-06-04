@@ -9,10 +9,12 @@ fragment CategoryFragment on Category {
       experts {
         _id
         name
+        username
       }
       managers {
         _id
         name
+        username
       }
       cases {
         _id
@@ -64,10 +66,12 @@ export const GET_CATEGORY_BY_NAME = gql`
       experts {
         _id
         name
+        username
       }
       managers {
         _id
         name
+        username
       }
       cases {
         _id
@@ -81,6 +85,7 @@ export const GET_CATEGORY_BY_NAME = gql`
           _id
           name
           avatar
+          username
         }
         answers {
           _id

@@ -35,7 +35,7 @@ export interface IUser {
   name: string;
   email?: string;
   position?: string;
-  role?: string;
+  role?: IRole; // was string before - TODO check if we break anywhere
   avatar?: string;
   inbox?: string[];
   cases?: ICase[];
@@ -43,7 +43,7 @@ export interface IUser {
   managed_categories?: ICategory[];
   comments?: IComment[];
   answers?: IAnswer[];
-  financialApprover?: boolean;
+  financial_approver?: boolean;
 }
 
 export interface IRating {

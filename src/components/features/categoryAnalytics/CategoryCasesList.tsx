@@ -2,13 +2,6 @@
 import React from "react";
 import { ICase } from "../../../db/interfaces"; // Adjust path
 import CategoryCaseCard from "./CategoryCaseCard"; // Adjust path
-import {
-  getStatusStyle as getStatusStyleUtil,
-  getPriorityStyle as getPriorityStyleUtil,
-  translatePriority as translatePriorityUtil,
-  translateStatus as translateStatusUtil,
-  StatusStyle,
-} from "../../../utils/categoryDisplayUtils"; // Adjust path
 import { ArrowDownCircleIcon, InboxIcon } from "@heroicons/react/24/outline";
 
 interface CategoryCasesListProps {
@@ -88,30 +81,12 @@ const CategoryCasesList: React.FC<CategoryCasesListProps> = ({
         className="overflow-y-auto flex-1 custom-scrollbar"
       >
         <ul className="divide-y-3 divide-gray-200">
-          {" "}
           {/* Slightly thinner divider */}
           {casesToDisplay.map((caseItem) => {
-            const statusStyle: StatusStyle = getStatusStyleUtil(
-              caseItem.status as string
-            );
-            const priorityStyleClass: string = getPriorityStyleUtil(
-              caseItem.priority
-            );
-            const translatedPriorityStr: string = translatePriorityUtil(
-              caseItem.priority
-            );
-            const translatedStatusStr: string = translateStatusUtil(
-              caseItem.status as string
-            );
-
             return (
               <CategoryCaseCard
                 key={caseItem._id}
                 caseItem={caseItem}
-                statusStyle={statusStyle}
-                priorityStyleClass={priorityStyleClass}
-                translatedPriority={translatedPriorityStr}
-                translatedStatus={translatedStatusStr}
                 serverBaseUrl={serverBaseUrl}
               />
             );

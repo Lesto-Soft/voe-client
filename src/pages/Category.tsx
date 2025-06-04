@@ -37,7 +37,7 @@ const Category: React.FC = () => {
   >("status");
   const [activePersonnelTab, setActivePersonnelTab] = useState<
     "experts" | "managers"
-  >("experts");
+  >("managers");
   const [activeInfoTab, setActiveInfoTab] = useState<"suggestion" | "problem">(
     "suggestion"
   );
@@ -45,7 +45,7 @@ const Category: React.FC = () => {
   // Reset tab states when category changes to provide a fresh view
   useEffect(() => {
     setActiveStatsView("status");
-    setActivePersonnelTab("experts");
+    setActivePersonnelTab("managers");
     setActiveInfoTab("suggestion");
   }, [categoryNameFromParams]);
 

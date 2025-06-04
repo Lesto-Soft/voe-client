@@ -27,13 +27,6 @@ const User: React.FC = () => {
   // Get server base URL for images (used in UserInformationPanel for avatar)
   const serverBaseUrl = import.meta.env.VITE_API_URL || "";
 
-  // Original console logs for debugging hook values (can be removed in production)
-  // console.log("[HOOK] Attempting to fetch user with input id:", userIdFromParams);
-  // console.log("[HOOK] User data:", user);
-  // console.log("[HOOK] User loading:", userLoading);
-  // console.log("[HOOK] User error:", userError);
-  // console.log("[STATS_HOOK] User stats:", userStats);
-
   if (userIdFromParams === undefined) {
     return (
       <PageStatusDisplay
@@ -89,8 +82,6 @@ const User: React.FC = () => {
   // ---- Main Content Rendering ----
   return (
     <div className="container min-w-full mx-auto p-2 sm:p-6 bg-gray-50 flex flex-col h-[calc(100vh-6rem)]">
-      {/* Optional: A page title like <h1 className="text-2xl font-bold text-gray-800 mb-4">Потребителски Анализ</h1> */}
-
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 overflow-hidden">
         {/* Left Sidebar: User Information */}
         <UserInformationPanel
@@ -103,7 +94,8 @@ const User: React.FC = () => {
         <UserActivityList
           user={user}
           isLoading={userLoading && !!user}
-          counts={activityCounts} // Pass the counts
+          counts={activityCounts}
+          userId={userIdFromParams} // Pass userId for scroll persistence
         />
 
         {/* Right Sidebar: User Statistics */}
@@ -117,7 +109,4 @@ const User: React.FC = () => {
   );
 };
 
-// If your router expects 'User' and you renamed the component to 'UserPage'
-// export { UserPage as User };
-// If filename is User.tsx and component is UserPage, then this is fine:
 export default User;

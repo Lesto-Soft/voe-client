@@ -19,8 +19,6 @@ fragment CaseFragment on Case {
     content
     status  
     date
-    
-    
 }`;
 
 const caseHistoryFragment = `
@@ -99,6 +97,15 @@ export const GET_CASES = gql`
         ...CaseFragment
       }
       count
+    }
+  }
+  ${caseFragment}
+`;
+
+export const GET_ANALYTITCS_DATA_CASES = gql`
+  query GET_ANALYTITCS_DATA_CASES {
+    getAnalyticsDataCases {
+      ...CaseFragment
     }
   }
   ${caseFragment}

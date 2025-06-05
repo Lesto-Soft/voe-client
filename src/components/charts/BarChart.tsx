@@ -87,13 +87,14 @@ const BarChart: React.FC<BarChartProps> = ({
   }
 
   const plotWidth = Math.max(0, svgContainerWidth - marginLeft - marginRight);
-  const plotHeight = Math.max(0, chartHeight - marginTop - marginBottom); // Recalculated with new marginBottom
+  const plotHeight = Math.max(0, chartHeight - marginTop - marginBottom);
   const maxValue = Math.max(
     1,
     ...data.map((d) => Math.max(d[dataKeyY1] || 0, d[dataKeyY2] || 0))
   );
   const numDataPoints = data.length;
 
+  // These calculations determine how bars fit within the plotWidth
   const groupAvailableWidth =
     plotWidth > 0 && numDataPoints > 0 ? plotWidth / numDataPoints : 0;
   const groupPaddingRatio = 0.2;
@@ -215,10 +216,9 @@ const BarChart: React.FC<BarChartProps> = ({
       <div className="w-full overflow-x-auto">
         <svg
           ref={svgRef}
-          width={Math.max(
-            svgContainerWidth > 0 ? svgContainerWidth : 300,
-            numDataPoints * 110 // MODIFIED: Increased min width per data point
-          )}
+          // MODIFIED: SVG width should primarily be driven by its container's width.
+          // Fallback to 300px if container width isn't available yet.
+          width={svgContainerWidth > 0 ? svgContainerWidth : 300}
           height={chartHeight}
           onMouseMove={handleMouseMove}
           onMouseLeave={handleMouseLeaveChart}

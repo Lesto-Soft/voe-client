@@ -90,6 +90,7 @@ export const useGetAnalyticsDataCases = () => {
   console.log("useGetAnalyticsDataCases called");
   const { loading, error, data } = useQuery(GET_ANALYTITCS_DATA_CASES);
   const cases = data?.getAnalyticsDataCases || 0;
+  console.log("useGetAnalyticsDataCases data:", cases[315]);
 
   return {
     cases,

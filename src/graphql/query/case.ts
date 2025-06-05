@@ -106,6 +106,7 @@ export const GET_ANALYTITCS_DATA_CASES = gql`
   query GET_ANALYTITCS_DATA_CASES {
     getAnalyticsDataCases {
       ...CaseFragment
+      calculatedRating
     }
   }
   ${caseFragment}

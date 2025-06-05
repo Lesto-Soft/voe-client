@@ -4,10 +4,10 @@ import PieChart, { PieSegmentData } from "../components/charts/PieChart"; // Adj
 import BarChart from "../components/charts/BarChart"; // Corrected import for default export
 
 // --- Interfaces ---
-import { ICase, ICategory } from "../db/interfaces"; // Assuming ICategory is also needed and exported
+import { ICase, ICategory } from "../db/interfaces"; // Assuming ICase includes calculatedRating?: number | null;
 
 // --- Component Type Definitions ---
-type ViewMode = "all" | "monthly" | "weekly" | "custom";
+type ViewMode = "all" | "yearly" | "monthly" | "weekly" | "custom"; // Added "yearly"
 
 // --- Constants ---
 const priorityTranslations: Record<string, string> = {
@@ -28,9 +28,9 @@ const CATEGORY_COLORS = [
   "#F15C80",
 ];
 const PRIORITY_COLORS: Record<string, string> = {
-  HIGH: "#F87171", // Tailwind Red-400
-  MEDIUM: "#FCD34D", // Tailwind Amber-300
-  LOW: "#60A5FA", // Tailwind Blue-400
+  HIGH: "#F87171",
+  MEDIUM: "#FCD34D",
+  LOW: "#60A5FA",
 };
 const MONTH_NAMES = [
   "Януари",
@@ -46,8 +46,8 @@ const MONTH_NAMES = [
   "Ноември",
   "Декември",
 ];
-// MODIFIED: Using full day names for the Bar Chart X-axis
-const DAY_NAMES = [
+const DAY_NAMES_FULL = [
+  // Used for weekly and custom (weekday summary) bar charts
   "Понеделник",
   "Вторник",
   "Сряда",
@@ -61,9 +61,8 @@ const DAY_NAMES = [
 const getWeekOfYear = (date: Date): number => {
   const target = new Date(date.valueOf());
   target.setHours(0, 0, 0, 0);
-  // Sunday - Saturday : 0 - 6
-  target.setDate(target.getDate() + 3 - ((target.getDay() + 6) % 7)); // Set to Thursday of the week
-  const firstThursday = new Date(target.getFullYear(), 0, 4); // First Thursday of the year
+  target.setDate(target.getDate() + 3 - ((target.getDay() + 6) % 7));
+  const firstThursday = new Date(target.getFullYear(), 0, 4);
   return (
     1 +
     Math.round(
@@ -80,11 +79,11 @@ const getStartAndEndOfWeek = (
   year: number
 ): { start: Date; end: Date } => {
   const simple = new Date(Date.UTC(year, 0, 1 + (weekNumber - 1) * 7));
-  const dayOfWeek = simple.getUTCDay(); // Sunday = 0, Monday = 1, ...
-  const isoDayOfWeek = dayOfWeek === 0 ? 7 : dayOfWeek; // Monday = 1, Sunday = 7 (ISO)
+  const dayOfWeek = simple.getUTCDay();
+  const isoDayOfWeek = dayOfWeek === 0 ? 7 : dayOfWeek;
 
   const start = new Date(simple);
-  start.setUTCDate(simple.getUTCDate() - isoDayOfWeek + 1); // Set to Monday
+  start.setUTCDate(simple.getUTCDate() - isoDayOfWeek + 1);
   start.setUTCHours(0, 0, 0, 0);
 
   const end = new Date(start);
@@ -92,6 +91,11 @@ const getStartAndEndOfWeek = (
   end.setUTCHours(23, 59, 59, 999);
 
   return { start, end };
+};
+
+const getDaysInMonth = (year: number, month: number): number => {
+  // month is 1-indexed
+  return new Date(year, month, 0).getDate();
 };
 
 // --- PieLegend Sub-Component ---
@@ -149,56 +153,73 @@ const Analyses = () => {
   const [customEndDate, setCustomEndDate] = useState<Date | null>(null);
 
   const uniqueYears = useMemo(() => {
-    if (!allCases) return [new Date().getFullYear()];
-    const years = new Set(
+    if (!allCases || allCases.length === 0) return [new Date().getFullYear()];
+    const yearsSet = new Set(
       allCases.map((c: ICase) => new Date(c.date).getFullYear())
     );
-    return Array.from(years).sort((a, b) => b - a);
+    const yearsArray = Array.from<number>(yearsSet);
+    return yearsArray.sort((a, b) => b - a);
   }, [allCases]);
 
   useEffect(() => {
     if (uniqueYears.length > 0 && !uniqueYears.includes(currentYear)) {
       setCurrentYear(uniqueYears[0]);
     }
-  }, [uniqueYears, currentYear]);
+    // Reset month/week if year changes and the current month/week might be invalid for new year (e.g. Feb 29)
+    // For simplicity, just ensuring currentMonth is valid. More complex logic could reset week.
+    if (viewMode === "monthly" || viewMode === "weekly") {
+      // No specific reset needed for month here unless Feb 29th-like issues are critical for week display
+    }
+  }, [uniqueYears, currentYear, viewMode]);
 
   const { startDateForPies, endDateForPies, isAllTimePies } = useMemo(() => {
     let sDate: Date | null = null,
       eDate: Date | null = null;
     let allTime = false;
-    if (viewMode === "all") {
-      allTime = true;
-    } else if (viewMode === "monthly") {
-      sDate = new Date(currentYear, currentMonth - 1, 1, 0, 0, 0, 0);
-      eDate = new Date(currentYear, currentMonth, 0, 23, 59, 59, 999);
-    } else if (viewMode === "weekly") {
-      ({ start: sDate, end: eDate } = getStartAndEndOfWeek(
-        currentWeek,
-        currentYear
-      ));
-    } else if (viewMode === "custom" && customStartDate && customEndDate) {
-      sDate = new Date(customStartDate);
-      sDate.setHours(0, 0, 0, 0);
-      eDate = new Date(customEndDate);
-      eDate.setHours(23, 59, 59, 999);
-    } else {
-      if (viewMode === "custom") {
-        return {
-          startDateForPies: null,
-          endDateForPies: null,
-          isAllTimePies: false,
-        };
-      }
-      sDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-      eDate = new Date(
-        new Date().getFullYear(),
-        new Date().getMonth() + 1,
-        0,
-        23,
-        59,
-        59,
-        999
-      );
+
+    switch (viewMode) {
+      case "all":
+        allTime = true;
+        break;
+      case "yearly":
+        sDate = new Date(currentYear, 0, 1, 0, 0, 0, 0); // Jan 1st
+        eDate = new Date(currentYear, 11, 31, 23, 59, 59, 999); // Dec 31st
+        break;
+      case "monthly":
+        sDate = new Date(currentYear, currentMonth - 1, 1, 0, 0, 0, 0);
+        eDate = new Date(currentYear, currentMonth, 0, 23, 59, 59, 999); // Last day of month
+        break;
+      case "weekly":
+        ({ start: sDate, end: eDate } = getStartAndEndOfWeek(
+          currentWeek,
+          currentYear
+        ));
+        break;
+      case "custom":
+        if (customStartDate && customEndDate) {
+          sDate = new Date(customStartDate);
+          sDate.setHours(0, 0, 0, 0);
+          eDate = new Date(customEndDate);
+          eDate.setHours(23, 59, 59, 999);
+        } else {
+          return {
+            startDateForPies: null,
+            endDateForPies: null,
+            isAllTimePies: false,
+          };
+        }
+        break;
+      default: // Should not happen
+        sDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+        eDate = new Date(
+          new Date().getFullYear(),
+          new Date().getMonth() + 1,
+          0,
+          23,
+          59,
+          59,
+          999
+        );
     }
     return {
       startDateForPies: sDate,
@@ -264,7 +285,8 @@ const Analyses = () => {
           problems: counts.problems,
           suggestions: counts.suggestions,
         }));
-    } else if (viewMode === "monthly") {
+    } else if (viewMode === "yearly") {
+      // NEW "Yearly" Tab Logic for Bar Chart
       chartTitle = `Сравнение по месеци (${currentYear})`;
       const yearCases = allCases.filter(
         (c) => new Date(c.date).getFullYear() === currentYear
@@ -274,7 +296,7 @@ const Analyses = () => {
           (c) => new Date(c.date).getMonth() === index
         );
         return {
-          periodLabel: monthName, // MODIFIED: Use full month name
+          periodLabel: monthName, // Full month name
           problems: monthCases.filter((c) => c.type.toUpperCase() === "PROBLEM")
             .length,
           suggestions: monthCases.filter(
@@ -282,6 +304,35 @@ const Analyses = () => {
           ).length,
         };
       });
+    } else if (viewMode === "monthly") {
+      // MODIFIED "Monthly" Tab Logic for Bar Chart
+      chartTitle = `Сравнение по дни (${
+        MONTH_NAMES[currentMonth - 1]
+      } ${currentYear})`;
+      const monthCases = allCases.filter((c) => {
+        const caseDate = new Date(c.date);
+        return (
+          caseDate.getFullYear() === currentYear &&
+          caseDate.getMonth() === currentMonth - 1
+        );
+      });
+      const daysInSelectedMonth = getDaysInMonth(currentYear, currentMonth);
+      const dailyData = Array.from({ length: daysInSelectedMonth }, (_, i) => ({
+        periodLabel: (i + 1).toString(), // Day number as label
+        problems: 0,
+        suggestions: 0,
+      }));
+      monthCases.forEach((c) => {
+        const dayOfMonth = new Date(c.date).getDate(); // 1-31
+        if (dailyData[dayOfMonth - 1]) {
+          // dayOfMonth is 1-indexed, array is 0-indexed
+          if (c.type.toUpperCase() === "PROBLEM")
+            dailyData[dayOfMonth - 1].problems++;
+          else if (c.type.toUpperCase() === "SUGGESTION")
+            dailyData[dayOfMonth - 1].suggestions++;
+        }
+      });
+      data = dailyData;
     } else if (viewMode === "weekly") {
       chartTitle = `Сравнение по дни (Седмица ${currentWeek}, ${currentYear})`;
       const { start, end } = getStartAndEndOfWeek(currentWeek, currentYear);
@@ -289,13 +340,12 @@ const Analyses = () => {
         const d = new Date(c.date);
         return d >= start && d <= end;
       });
-      // DAY_NAMES is now the full day names array
-      data = DAY_NAMES.map((dayName, index) => {
+      data = DAY_NAMES_FULL.map((dayName, index) => {
         const dayCases = weekCases.filter(
           (c) => (new Date(c.date).getUTCDay() + 6) % 7 === index
         );
         return {
-          periodLabel: dayName, // Will use full day name
+          periodLabel: dayName,
           problems: dayCases.filter((c) => c.type.toUpperCase() === "PROBLEM")
             .length,
           suggestions: dayCases.filter(
@@ -306,44 +356,39 @@ const Analyses = () => {
     } else if (viewMode === "custom" && startDateForPies && endDateForPies) {
       const startD = startDateForPies;
       const endD = endDateForPies;
-
       chartTitle = `Общо случаи по ден от седмицата (${startD.toLocaleDateString(
         "bg-BG"
       )} - ${endD.toLocaleDateString("bg-BG")})`;
-
       const rangeCases = allCases.filter((c) => {
         const d = new Date(c.date);
         return d >= startD && d <= endD;
       });
-      // DAY_NAMES is now the full day names array
-      const weekdaySummary = DAY_NAMES.map((name) => ({
-        periodLabel: name, // Will use full day name
+      const weekdaySummary = DAY_NAMES_FULL.map((name) => ({
+        periodLabel: name,
         problems: 0,
         suggestions: 0,
       }));
-
       rangeCases.forEach((c) => {
         const caseDate = new Date(c.date);
         const dayIndex = (caseDate.getUTCDay() + 6) % 7;
-
         if (weekdaySummary[dayIndex]) {
-          if (c.type.toUpperCase() === "PROBLEM") {
+          if (c.type.toUpperCase() === "PROBLEM")
             weekdaySummary[dayIndex].problems++;
-          } else if (c.type.toUpperCase() === "SUGGESTION") {
+          else if (c.type.toUpperCase() === "SUGGESTION")
             weekdaySummary[dayIndex].suggestions++;
-          }
         }
       });
       data = weekdaySummary;
     } else {
       chartTitle = "Моля изберете период";
-      if (viewMode === "custom") {
-        // DAY_NAMES is now the full day names array
-        data = DAY_NAMES.map((name) => ({
-          periodLabel: name, // Will use full day name
-          problems: 0,
-          suggestions: 0,
-        }));
+      if (
+        viewMode === "custom" ||
+        viewMode === "monthly" ||
+        viewMode === "weekly" ||
+        viewMode === "yearly"
+      ) {
+        // Provide empty structure for these views if dates/selections are incomplete
+        data = []; // Or some default empty structure like DAY_NAMES_FULL.map(...) for consistency
       }
     }
     return {
@@ -364,6 +409,7 @@ const Analyses = () => {
   ]);
 
   const categoryPieData: PieSegmentData[] = useMemo(() => {
+    /* ... (remains the same) ... */
     if (!filteredCasesForPieCharts || filteredCasesForPieCharts.length === 0)
       return [];
     const counts: { [key: string]: number } = {};
@@ -382,6 +428,7 @@ const Analyses = () => {
   }, [filteredCasesForPieCharts]);
 
   const priorityPieData: PieSegmentData[] = useMemo(() => {
+    /* ... (remains the same) ... */
     if (!filteredCasesForPieCharts || filteredCasesForPieCharts.length === 0)
       return [];
     const counts: { [key: string]: number } = { HIGH: 0, MEDIUM: 0, LOW: 0 };
@@ -401,10 +448,56 @@ const Analyses = () => {
       }));
   }, [filteredCasesForPieCharts]);
 
+  const averageRatingData = useMemo(() => {
+    /* ... (remains the same) ... */
+    if (!filteredCasesForPieCharts || filteredCasesForPieCharts.length === 0) {
+      return { average: null, count: 0 };
+    }
+    let totalSumOfAverageRatings = 0;
+    let countOfCasesWithRatings = 0;
+    filteredCasesForPieCharts.forEach((caseItem: ICase) => {
+      if (
+        caseItem.calculatedRating !== null &&
+        caseItem.calculatedRating !== undefined &&
+        typeof caseItem.calculatedRating === "number" &&
+        !isNaN(caseItem.calculatedRating)
+      ) {
+        totalSumOfAverageRatings += caseItem.calculatedRating;
+        countOfCasesWithRatings++;
+      }
+    });
+    if (countOfCasesWithRatings === 0) {
+      return { average: null, count: 0 };
+    }
+    return {
+      average: totalSumOfAverageRatings / countOfCasesWithRatings,
+      count: countOfCasesWithRatings,
+    };
+  }, [filteredCasesForPieCharts]);
+
+  const periodCaseSummary = useMemo(() => {
+    /* ... (remains the same) ... */
+    if (!filteredCasesForPieCharts) {
+      return { totalCases: 0, problems: 0, suggestions: 0 };
+    }
+    const totalCases = filteredCasesForPieCharts.length;
+    let problemCount = 0;
+    let suggestionCount = 0;
+    filteredCasesForPieCharts.forEach((caseItem: ICase) => {
+      if (caseItem.type.toUpperCase() === "PROBLEM") {
+        problemCount++;
+      } else if (caseItem.type.toUpperCase() === "SUGGESTION") {
+        suggestionCount++;
+      }
+    });
+    return { totalCases, problems: problemCount, suggestions: suggestionCount };
+  }, [filteredCasesForPieCharts]);
+
   const handleDateInputChange = (
     e: React.ChangeEvent<HTMLInputElement>,
     type: "start" | "end"
   ) => {
+    /* ... (remains the same) ... */
     const dateValue = e.target.value ? new Date(e.target.value) : null;
     if (type === "start") {
       setCustomStartDate(dateValue);
@@ -434,11 +527,11 @@ const Analyses = () => {
       }
     }
 
-    // This displayedPeriod in renderDateControls is for the top bar, not the chart itself.
-    // The chart title and labels are handled by barChartDisplayData.
     let displayedPeriod = "Зареждане...";
     if (viewMode === "all") {
       displayedPeriod = "Всички данни";
+    } else if (viewMode === "yearly" && currentYear) {
+      displayedPeriod = `Година ${currentYear}`;
     } else if (viewMode === "monthly" && startDateForPies) {
       displayedPeriod = `${
         MONTH_NAMES[startDateForPies.getMonth()]
@@ -455,7 +548,10 @@ const Analyses = () => {
 
     return (
       <div className="flex flex-wrap gap-x-3 gap-y-2 items-center p-3 bg-gray-50 border-b border-gray-200 h-16">
-        {(viewMode === "monthly" || viewMode === "weekly") && (
+        {/* Year selector: Shown for 'yearly', 'monthly', and 'weekly' */}
+        {(viewMode === "yearly" ||
+          viewMode === "monthly" ||
+          viewMode === "weekly") && (
           <select
             value={currentYear}
             onChange={(e) => setCurrentYear(parseInt(e.target.value))}
@@ -463,11 +559,13 @@ const Analyses = () => {
           >
             {uniqueYears.map((year) => (
               <option key={year} value={year}>
-                {year}
+                {" "}
+                {year}{" "}
               </option>
             ))}
           </select>
         )}
+        {/* Month selector: Shown only for 'monthly' */}
         {viewMode === "monthly" && (
           <select
             value={currentMonth}
@@ -476,12 +574,13 @@ const Analyses = () => {
           >
             {MONTH_NAMES.map((name, index) => (
               <option key={index + 1} value={index + 1}>
-                {name}
+                {" "}
+                {name}{" "}
               </option>
             ))}
           </select>
         )}
-        {viewMode === "weekly" && (
+        {viewMode === "weekly" /* ... (remains the same) ... */ && (
           <div className="flex items-center gap-1">
             <span className="text-sm text-gray-600">Седмица:</span>
             <input
@@ -516,7 +615,7 @@ const Analyses = () => {
                       month: "2-digit",
                     })})`;
                   } catch {
-                    return "";
+                    return " (грешка)";
                   }
                 }
                 return "";
@@ -524,7 +623,7 @@ const Analyses = () => {
             </span>
           </div>
         )}
-        {viewMode === "custom" && (
+        {viewMode === "custom" /* ... (remains the same) ... */ && (
           <>
             <input
               type="date"
@@ -555,7 +654,7 @@ const Analyses = () => {
         <div
           className="text-sm text-gray-700 ml-auto font-medium bg-sky-100 px-2 py-1 rounded whitespace-nowrap overflow-hidden text-ellipsis"
           style={{ maxWidth: "300px" }}
-          title={displayedPeriod} // Use the calculated displayedPeriod for the title
+          title={displayedPeriod}
         >
           {displayedPeriod}
         </div>
@@ -565,20 +664,23 @@ const Analyses = () => {
 
   if (analyticsDataLoading)
     return (
-      <div className="flex items-center justify-center h-full">
-        <p>Зареждане на аналитични данни...</p>
+      <div className="flex items-center justify-center h-full min-h-[calc(100vh-200px)]">
+        {" "}
+        <p>Зареждане на аналитични данни...</p>{" "}
       </div>
     );
   if (analyticsDataError)
     return (
-      <div className="flex items-center justify-center h-full">
-        <p>Грешка при зареждане на данни: {analyticsDataError.message}</p>
+      <div className="flex items-center justify-center h-full min-h-[calc(100vh-200px)]">
+        {" "}
+        <p>Грешка при зареждане на данни: {analyticsDataError.message}</p>{" "}
       </div>
     );
-  if (!allCases)
+  if (!allCases || allCases.length === 0)
     return (
-      <div className="flex items-center justify-center h-full">
-        <p>Няма налични данни за анализ.</p>
+      <div className="flex items-center justify-center h-full min-h-[calc(100vh-200px)]">
+        {" "}
+        <p>Няма налични данни за анализ.</p>{" "}
       </div>
     );
 
@@ -586,24 +688,25 @@ const Analyses = () => {
     <div className="p-2 md:p-5 bg-gray-100 min-h-full">
       <div className="mb-4 bg-white rounded-md shadow-md">
         <div className="flex space-x-0 border-b border-gray-200">
-          {(["all", "weekly", "monthly", "custom"] as ViewMode[]).map(
+          {(["all", "yearly", "monthly", "weekly", "custom"] as ViewMode[]).map(
             (mode) => (
               <button
                 key={mode}
-                className={`px-3 py-2 sm:px-4 sm:py-2.5 text-xs sm:text-sm font-medium focus:outline-none -mb-px border-b-2
-                                  ${
-                                    viewMode === mode
-                                      ? "border-sky-500 text-sky-600"
-                                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                                  }`}
+                className={`px-3 py-2 sm:px-4 sm:py-2.5 text-xs sm:text-sm font-medium focus:outline-none -mb-px border-b-2 ${
+                  viewMode === mode
+                    ? "border-sky-500 text-sky-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                }`}
                 onClick={() => setViewMode(mode)}
               >
                 {mode === "all"
                   ? "Всички"
-                  : mode === "weekly"
-                  ? "Седмични"
+                  : mode === "yearly"
+                  ? "Годишни"
                   : mode === "monthly"
                   ? "Месечни"
+                  : mode === "weekly"
+                  ? "Седмични"
                   : "Период"}
               </button>
             )
@@ -613,10 +716,12 @@ const Analyses = () => {
         {viewMode === "all" && (
           <div className="flex flex-wrap gap-x-3 gap-y-2 items-center p-3 bg-gray-50 border-b border-gray-200 h-16">
             <span className="text-sm text-gray-700 font-medium">
-              Показване на обобщени данни по години
+              {" "}
+              Показване на обобщени данни по години{" "}
             </span>
             <div className="text-sm text-gray-700 ml-auto font-medium bg-sky-100 px-2 py-1 rounded">
-              Избрано: Всички данни
+              {" "}
+              Избрано: Всички данни{" "}
             </div>
           </div>
         )}
@@ -629,39 +734,110 @@ const Analyses = () => {
           dataKeyY2="suggestions"
           labelY1="Проблеми"
           labelY2="Предложения"
-          title={barChartDisplayData.title} // This title is for the chart itself
+          title={barChartDisplayData.title}
           colorY1={barChartDisplayData.colorY1}
           colorY2={barChartDisplayData.colorY2}
         />
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div className="bg-white p-3 sm:p-4 rounded-lg shadow-md flex flex-col justify-center items-center min-h-[150px]">
+          <h2 className="text-base sm:text-lg font-semibold text-center mb-2 text-gray-800">
+            {" "}
+            Общо сигнали{" "}
+          </h2>
+          <p className="text-4xl font-bold text-gray-700">
+            {" "}
+            {periodCaseSummary.totalCases}{" "}
+          </p>
+          <div className="flex space-x-3 mt-2 text-center">
+            <p className="text-xs sm:text-sm">
+              {" "}
+              <span
+                style={{ color: PRIORITY_COLORS.HIGH }}
+                className="font-semibold block"
+              >
+                Проблеми
+              </span>{" "}
+              <span
+                style={{ color: PRIORITY_COLORS.HIGH }}
+                className="font-bold text-lg"
+              >
+                {periodCaseSummary.problems}
+              </span>{" "}
+            </p>
+            <p className="text-xs sm:text-sm">
+              {" "}
+              <span
+                style={{ color: "#22C55E" }}
+                className="font-semibold block"
+              >
+                Предложения
+              </span>{" "}
+              <span style={{ color: "#22C55E" }} className="font-bold text-lg">
+                {periodCaseSummary.suggestions}
+              </span>{" "}
+            </p>
+          </div>
+          <p className="text-xs text-gray-400 mt-1.5">за избрания период</p>
+        </div>
+
         <div className="bg-white p-3 sm:p-4 rounded-lg shadow-md">
           <h2 className="text-base sm:text-lg font-semibold text-center mb-3 text-gray-800">
-            Разпределение на категории
+            {" "}
+            Разпределение на категории{" "}
           </h2>
           <div className="flex flex-col xl:flex-row items-center xl:items-start gap-3 sm:gap-4">
             <div className="flex-shrink-0 mx-auto">
+              {" "}
               <PieChart
                 data={categoryPieData.length > 0 ? categoryPieData : []}
                 size={180}
-              />
+              />{" "}
             </div>
             <PieLegend data={categoryPieData} />
           </div>
         </div>
         <div className="bg-white p-3 sm:p-4 rounded-lg shadow-md">
           <h2 className="text-base sm:text-lg font-semibold text-center mb-3 text-gray-800">
-            Разпределение на приоритети
+            {" "}
+            Разпределение на приоритети{" "}
           </h2>
           <div className="flex flex-col xl:flex-row items-center xl:items-start gap-3 sm:gap-4">
             <div className="flex-shrink-0 mx-auto">
+              {" "}
               <PieChart
                 data={priorityPieData.length > 0 ? priorityPieData : []}
                 size={180}
-              />
+              />{" "}
             </div>
             <PieLegend data={priorityPieData} />
           </div>
+        </div>
+        <div className="bg-white p-3 sm:p-4 rounded-lg shadow-md flex flex-col justify-center items-center min-h-[150px]">
+          <h2 className="text-base sm:text-lg font-semibold text-center mb-2 text-gray-800">
+            {" "}
+            Среден рейтинг{" "}
+          </h2>
+          {averageRatingData.average !== null ? (
+            <>
+              {" "}
+              <p className="text-4xl font-bold text-sky-600">
+                {" "}
+                {averageRatingData.average.toFixed(2)}{" "}
+                <span className="text-lg font-normal text-gray-500 ml-1">
+                  / 5
+                </span>{" "}
+              </p>{" "}
+              <p className="text-sm text-gray-600 mt-1">
+                {" "}
+                (от {averageRatingData.count}{" "}
+                {averageRatingData.count === 1 ? "оценка" : "оценки"}){" "}
+              </p>{" "}
+            </>
+          ) : (
+            <p className="text-xl text-gray-500">Няма оценки</p>
+          )}
+          <p className="text-xs text-gray-400 mt-1">за избрания период</p>
         </div>
       </div>
     </div>

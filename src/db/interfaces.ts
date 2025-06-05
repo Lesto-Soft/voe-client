@@ -15,6 +15,7 @@ export interface ICase {
   readBy?: IUser[];
   history?: ICaseHistory[];
   last_update?: string;
+  calculatedRating?: number | null;
 }
 
 export interface ICategory {

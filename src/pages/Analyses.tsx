@@ -31,7 +31,7 @@ const CATEGORY_COLORS = [
 const PRIORITY_COLORS: Record<string, string> = {
   HIGH: "#F87171",
   MEDIUM: "#FCD34D",
-  LOW: "#60A5FA",
+  LOW: "#76c554",
 };
 const TYPE_COLORS = {
   PROBLEM: PRIORITY_COLORS.HIGH, // Or a specific red like "#EF4444"
@@ -625,7 +625,7 @@ const Analyses = () => {
     }
 
     return (
-      <div className="flex flex-wrap gap-x-3 gap-y-2 items-center p-3 bg-gray-50 border-b border-gray-200 h-16">
+      <div className="flex flex-wrap gap-x-3 gap-y-2 items-center p-3 bg-gray-50 border-b border-gray-200 min-h-16">
         {/* Year selector: Now shown for 'yearly', 'monthly', and 'weekly' */}
         {(viewMode === "yearly" ||
           viewMode === "monthly" ||
@@ -656,7 +656,7 @@ const Analyses = () => {
             ))}
           </select>
         )}
-        {viewMode === "weekly" /* ... (remains the same) ... */ && (
+        {viewMode === "weekly" && (
           <div className="flex items-center gap-1">
             <span className="text-sm text-gray-600">Седмица:</span>
             <input
@@ -699,7 +699,7 @@ const Analyses = () => {
             </span>
           </div>
         )}
-        {viewMode === "custom" /* ... (remains the same) ... */ && (
+        {viewMode === "custom" && (
           <>
             <input
               type="date"
@@ -727,12 +727,38 @@ const Analyses = () => {
             />
           </>
         )}
+
         <div
-          className="text-sm text-gray-700 ml-auto font-medium bg-sky-100 px-2 py-1 rounded whitespace-nowrap overflow-hidden text-ellipsis"
+          className="text-sm text-gray-700 font-medium bg-sky-100 px-2 py-1 rounded whitespace-nowrap overflow-hidden text-ellipsis"
           style={{ maxWidth: "300px" }}
           title={displayedPeriod}
         >
           {displayedPeriod}
+        </div>
+
+        {/* Toggle buttons moved here */}
+        <div className="flex items-center space-x-2 ml-auto">
+          <span className="text-sm font-medium text-gray-600">Покажи по:</span>
+          <button
+            onClick={() => setBarChartMode("type")}
+            className={`px-3 py-1.5 text-xs sm:text-sm rounded-md focus:outline-none ${
+              barChartMode === "type"
+                ? "bg-sky-600 text-white shadow-sm"
+                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+            }`}
+          >
+            Тип
+          </button>
+          <button
+            onClick={() => setBarChartMode("priority")}
+            className={`px-3 py-1.5 text-xs sm:text-sm rounded-md focus:outline-none ${
+              barChartMode === "priority"
+                ? "bg-sky-600 text-white shadow-sm"
+                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+            }`}
+          >
+            Приоритет
+          </button>
         </div>
       </div>
     );
@@ -789,46 +815,51 @@ const Analyses = () => {
         {/* Date controls: "all" mode doesn't have them, "yearly" has only year, etc. */}
         {viewMode !== "all" && renderDateControls()}
         {viewMode === "all" && (
-          <div className="flex flex-wrap gap-x-3 gap-y-2 items-center p-3 bg-gray-50 border-b border-gray-200 h-16">
+          <div className="flex flex-wrap gap-x-3 gap-y-2 items-center p-3 bg-gray-50 border-b border-gray-200 min-h-16">
             <span className="text-sm text-gray-700 font-medium">
               Показване на обобщени данни по години
             </span>
-            <div className="text-sm text-gray-700 ml-auto font-medium bg-sky-100 px-2 py-1 rounded">
-              Избрано: Всички данни
+
+            <div className="text-sm text-gray-700 font-medium bg-sky-100 px-2 py-1 rounded">
+              Всички данни
+            </div>
+
+            {/* Toggle buttons for "all" mode */}
+            <div className="flex items-center space-x-2 ml-auto">
+              <span className="text-sm font-medium text-gray-600">
+                Покажи по:
+              </span>
+              <button
+                onClick={() => setBarChartMode("type")}
+                className={`px-3 py-1.5 text-xs sm:text-sm rounded-md focus:outline-none ${
+                  barChartMode === "type"
+                    ? "bg-sky-600 text-white shadow-sm"
+                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                }`}
+              >
+                Тип
+              </button>
+              <button
+                onClick={() => setBarChartMode("priority")}
+                className={`px-3 py-1.5 text-xs sm:text-sm rounded-md focus:outline-none ${
+                  barChartMode === "priority"
+                    ? "bg-sky-600 text-white shadow-sm"
+                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                }`}
+              >
+                Приоритет
+              </button>
             </div>
           </div>
         )}
       </div>
 
-      {/* Bar Chart Section with Toggle */}
-      <div className="mb-5 bg-white p-4 rounded-lg shadow-md">
-        <div className="flex justify-center items-center space-x-2 mb-4 border-b pb-3">
-          <span className="text-sm font-medium text-gray-600">Покажи по:</span>
-          <button
-            onClick={() => setBarChartMode("type")}
-            className={`px-4 py-1.5 text-xs sm:text-sm rounded-md focus:outline-none ${
-              barChartMode === "type"
-                ? "bg-sky-600 text-white shadow-sm"
-                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-            }`}
-          >
-            Тип
-          </button>
-          <button
-            onClick={() => setBarChartMode("priority")}
-            className={`px-4 py-1.5 text-xs sm:text-sm rounded-md focus:outline-none ${
-              barChartMode === "priority"
-                ? "bg-sky-600 text-white shadow-sm"
-                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-            }`}
-          >
-            Приоритет
-          </button>
-        </div>
+      {/* Bar Chart Section */}
+      <div className="mb-5 bg-white rounded-lg shadow-md">
         <BarChart
           data={barChartDisplayData.data}
           dataKeyX={barChartDisplayData.dataKeyX}
-          series={barChartDisplayData.seriesConfig} // Pass the new seriesConfig
+          series={barChartDisplayData.seriesConfig}
           title={barChartDisplayData.title}
         />
       </div>
@@ -924,20 +955,6 @@ const Analyses = () => {
 
         <div className="bg-white p-3 sm:p-4 rounded-lg shadow-md">
           <h2 className="text-base sm:text-lg font-semibold text-center mb-3 text-gray-800">
-            Разпределение на категории
-          </h2>
-          <div className="flex flex-col xl:flex-row items-center xl:items-start gap-3 sm:gap-4">
-            <div className="flex-shrink-0 mx-auto">
-              <PieChart
-                data={categoryPieData.length > 0 ? categoryPieData : []}
-                size={180}
-              />
-            </div>
-            <PieLegend data={categoryPieData} />
-          </div>
-        </div>
-        <div className="bg-white p-3 sm:p-4 rounded-lg shadow-md">
-          <h2 className="text-base sm:text-lg font-semibold text-center mb-3 text-gray-800">
             {barChartMode === "type"
               ? "Разпределение на приоритети"
               : "Разпределение на типове"}
@@ -962,6 +979,22 @@ const Analyses = () => {
             />
           </div>
         </div>
+
+        <div className="bg-white p-3 sm:p-4 rounded-lg shadow-md">
+          <h2 className="text-base sm:text-lg font-semibold text-center mb-3 text-gray-800">
+            Разпределение на категории
+          </h2>
+          <div className="flex flex-col xl:flex-row items-center xl:items-start gap-3 sm:gap-4">
+            <div className="flex-shrink-0 mx-auto">
+              <PieChart
+                data={categoryPieData.length > 0 ? categoryPieData : []}
+                size={180}
+              />
+            </div>
+            <PieLegend data={categoryPieData} />
+          </div>
+        </div>
+
         <div className="bg-white p-3 sm:p-4 rounded-lg shadow-md flex flex-col justify-center items-center min-h-[150px]">
           <h2 className="text-base sm:text-lg font-semibold text-center mb-2 text-gray-800">
             Среден рейтинг

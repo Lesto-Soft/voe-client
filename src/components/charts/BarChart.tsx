@@ -71,13 +71,13 @@ const BarChart: React.FC<BarChartProps> = ({
     return (
       <div
         ref={containerRef}
-        className="w-full p-4 border rounded-lg shadow-sm bg-white"
+        className="w-full p-4 rounded-lg shadow-sm bg-white"
       >
         <p className="text-sm font-semibold mb-1 text-center text-gray-700">
           {title}
         </p>
         <div className="h-[220px] flex items-center justify-center text-gray-500">
-          Няма данни{" "}
+          Няма данни
           {(!series || series.length === 0) && "или конфигурация на сериите"}.
         </div>
       </div>
@@ -213,7 +213,6 @@ const BarChart: React.FC<BarChartProps> = ({
           <g transform={`translate(${marginLeft}, ${marginTop})`}>
             {yTicks.map((tick) => (
               <g key={`y-tick-${tick.value}-${tick.yPos}`}>
-                {" "}
                 <line
                   x1={0}
                   y1={tick.yPos}
@@ -221,7 +220,7 @@ const BarChart: React.FC<BarChartProps> = ({
                   y2={tick.yPos}
                   stroke="#e5e7eb"
                   strokeDasharray="2,2"
-                />{" "}
+                />
                 <text
                   x={-5}
                   y={tick.yPos + 3}
@@ -229,9 +228,8 @@ const BarChart: React.FC<BarChartProps> = ({
                   textAnchor="end"
                   fill="gray"
                 >
-                  {" "}
-                  {tick.value}{" "}
-                </text>{" "}
+                  {tick.value}
+                </text>
               </g>
             ))}
             {plotWidth > 0 &&

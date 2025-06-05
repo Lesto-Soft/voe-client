@@ -34,9 +34,12 @@ const PRIORITY_COLORS: Record<string, string> = {
   LOW: "#76c554",
 };
 const TYPE_COLORS = {
-  PROBLEM: PRIORITY_COLORS.HIGH, // Or a specific red like "#EF4444"
+  PROBLEM: "#DE4444", // Or a specific red like "#EF4444"
   SUGGESTION: "#22C55E", // Specific green
 };
+// Define a type for the keys of TYPE_COLORS
+type TypeColorKey = keyof typeof TYPE_COLORS; // Will be "PROBLEM" | "SUGGESTION"
+
 const MONTH_NAMES = [
   "Януари",
   "Февруари",
@@ -153,24 +156,54 @@ const Analyses = () => {
   const [customEndDate, setCustomEndDate] = useState<Date | null>(null);
 
   const uniqueYears = useMemo(() => {
-    /* ... (remains the same, ensure robust typing) ... */
-    if (!allCases || allCases.length === 0) return [new Date().getFullYear()];
-    const yearsSet = new Set(
-      allCases.map((c: ICase) => new Date(c.date).getFullYear())
+    if (!allCases || allCases.length === 0) {
+      return [new Date().getFullYear()];
+    }
+
+    // Step 1: Map to years.
+    // It's crucial that mappedValues gets a proper type.
+    // Explicitly typing the return of the map callback AND mappedValues itself.
+    const mappedValues: (number | undefined)[] = allCases.map(
+      (c: ICase): number | undefined => {
+        // Explicit return type for map callback
+        if (c.date == null) {
+          // Handles null and undefined for c.date
+          return undefined;
+        }
+        const dateObj = new Date(c.date);
+        if (isNaN(dateObj.getTime())) {
+          // Check if date is valid
+          return undefined;
+        }
+        return dateObj.getFullYear();
+      }
     );
-    const yearsArray = Array.from<number>(yearsSet);
+
+    // Step 2: Filter out undefined values and ensure all remaining are actual numbers.
+    // Explicitly type 'year' in the filter callback if TS can't infer it.
+    const validNumericYears: number[] = mappedValues.filter(
+      (year: number | undefined): year is number => {
+        // Explicitly type 'year' here
+        return typeof year === "number" && !isNaN(year);
+      }
+    );
+
+    // Step 3: Create the Set from the cleaned array of numbers.
+    const yearsSet: Set<number> = new Set(validNumericYears);
+
+    // Step 4: Convert the Set<number> back to an array.
+    const yearsArray: number[] = [...yearsSet];
+
     return yearsArray.sort((a, b) => b - a);
   }, [allCases]);
 
   useEffect(() => {
-    /* ... (remains the same) ... */
     if (uniqueYears.length > 0 && !uniqueYears.includes(currentYear)) {
       setCurrentYear(uniqueYears[0]);
     }
   }, [uniqueYears, currentYear, viewMode]);
 
   const { startDateForPies, endDateForPies, isAllTimePies } = useMemo(() => {
-    /* ... (remains the same) ... */
     let sDate: Date | null = null,
       eDate: Date | null = null;
     let allTime = false;
@@ -233,7 +266,6 @@ const Analyses = () => {
   ]);
 
   const filteredCasesForPieCharts = useMemo(() => {
-    /* ... (remains the same) ... */
     if (!allCases) return [];
     if (isAllTimePies) return allCases;
     if (!startDateForPies || !endDateForPies) return [];
@@ -328,7 +360,7 @@ const Analyses = () => {
         if (!yearlyDataAggregated[year]) {
           yearlyDataAggregated[year] = aggregateCases(
             allCases.filter(
-              (cs) => new Date(cs.date).getFullYear().toString() === year
+              (cs: ICase) => new Date(cs.date).getFullYear().toString() === year
             )
           );
         }
@@ -344,11 +376,11 @@ const Analyses = () => {
         barChartMode === "type" ? "по тип" : "по приоритет"
       })`;
       const yearCases = allCases.filter(
-        (c) => new Date(c.date).getFullYear() === currentYear
+        (c: ICase) => new Date(c.date).getFullYear() === currentYear
       );
       dataForChart = MONTH_NAMES.map((monthName, index) => {
         const monthCases = yearCases.filter(
-          (c) => new Date(c.date).getMonth() === index
+          (c: ICase) => new Date(c.date).getMonth() === index
         );
         return {
           periodLabel: monthName,
@@ -361,7 +393,7 @@ const Analyses = () => {
       } ${currentYear}) (${
         barChartMode === "type" ? "по тип" : "по приоритет"
       })`;
-      const monthCasesFiltered = allCases.filter((c) => {
+      const monthCasesFiltered = allCases.filter((c: ICase) => {
         const caseDate = new Date(c.date);
         return (
           caseDate.getFullYear() === currentYear &&
@@ -372,7 +404,7 @@ const Analyses = () => {
       dataForChart = Array.from({ length: daysInSelectedMonth }, (_, i) => {
         const dayNumber = i + 1;
         const dayCases = monthCasesFiltered.filter(
-          (c) => new Date(c.date).getDate() === dayNumber
+          (c: ICase) => new Date(c.date).getDate() === dayNumber
         );
         return {
           periodLabel: dayNumber.toString(),
@@ -384,13 +416,13 @@ const Analyses = () => {
         barChartMode === "type" ? "по тип" : "по приоритет"
       })`;
       const { start, end } = getStartAndEndOfWeek(currentWeek, currentYear);
-      const weekCasesFiltered = allCases.filter((c) => {
+      const weekCasesFiltered = allCases.filter((c: ICase) => {
         const d = new Date(c.date);
         return d >= start && d <= end;
       });
       dataForChart = DAY_NAMES_FULL.map((dayName, index) => {
         const dayCases = weekCasesFiltered.filter(
-          (c) => (new Date(c.date).getUTCDay() + 6) % 7 === index
+          (c: ICase) => (new Date(c.date).getUTCDay() + 6) % 7 === index
         );
         return { periodLabel: dayName, ...aggregateCases(dayCases) };
       });
@@ -402,13 +434,14 @@ const Analyses = () => {
       )} - ${endD.toLocaleDateString("bg-BG")}) (${
         barChartMode === "type" ? "по тип" : "по приоритет"
       })`;
-      const rangeCasesFiltered = allCases.filter((c) => {
+      const rangeCasesFiltered = allCases.filter((c: ICase) => {
         const d = new Date(c.date);
         return d >= startD && d <= endD;
       });
       dataForChart = DAY_NAMES_FULL.map((name) => {
         const dayCases = rangeCasesFiltered.filter(
-          (c) => DAY_NAMES_FULL[(new Date(c.date).getUTCDay() + 6) % 7] === name
+          (c: ICase) =>
+            DAY_NAMES_FULL[(new Date(c.date).getUTCDay() + 6) % 7] === name
         );
         return { periodLabel: name, ...aggregateCases(dayCases) };
       });
@@ -441,7 +474,6 @@ const Analyses = () => {
   ]);
 
   const categoryPieData: PieSegmentData[] = useMemo(() => {
-    /* ... (remains the same) ... */
     if (!filteredCasesForPieCharts || filteredCasesForPieCharts.length === 0)
       return [];
     const counts: { [key: string]: number } = {};
@@ -460,7 +492,6 @@ const Analyses = () => {
   }, [filteredCasesForPieCharts]);
 
   const priorityPieData: PieSegmentData[] = useMemo(() => {
-    /* ... (remains the same) ... */
     if (!filteredCasesForPieCharts || filteredCasesForPieCharts.length === 0)
       return [];
     const counts: { [key: string]: number } = { HIGH: 0, MEDIUM: 0, LOW: 0 };
@@ -481,7 +512,6 @@ const Analyses = () => {
   }, [filteredCasesForPieCharts]);
 
   const averageRatingData = useMemo(() => {
-    /* ... (remains the same) ... */
     if (!filteredCasesForPieCharts || filteredCasesForPieCharts.length === 0) {
       return { average: null, count: 0 };
     }
@@ -554,20 +584,27 @@ const Analyses = () => {
   const typePieData: PieSegmentData[] = useMemo(() => {
     if (!filteredCasesForPieCharts || filteredCasesForPieCharts.length === 0)
       return [];
-    const counts: { [key: string]: number } = { PROBLEM: 0, SUGGESTION: 0 };
+
+    // Use the specific key type for counts
+    const counts: Record<TypeColorKey, number> = { PROBLEM: 0, SUGGESTION: 0 };
+
     filteredCasesForPieCharts.forEach((c: ICase) => {
-      const typeKey = c.type.toUpperCase();
-      if (counts.hasOwnProperty(typeKey)) {
-        counts[typeKey]++;
+      const caseTypeUpper = c.type.toUpperCase();
+      // Check if the uppercased type is one of the valid keys
+      if (caseTypeUpper === "PROBLEM" || caseTypeUpper === "SUGGESTION") {
+        counts[caseTypeUpper]++; // Access is safe as caseTypeUpper is now a TypeColorKey
       }
     });
-    return (Object.keys(counts) as Array<string>)
-      .filter((tKey) => counts[tKey] > 0)
-      .sort((aKey, bKey) => counts[bKey] - counts[aKey])
-      .map((tKey) => ({
+
+    // Assert that Object.keys returns an array of TypeColorKey
+    return (Object.keys(counts) as TypeColorKey[])
+      .filter((tKey) => counts[tKey] > 0) // counts[tKey] is safe
+      .sort((aKey, bKey) => counts[bKey] - counts[aKey]) // Access is safe
+      .map((tKey: TypeColorKey) => ({
+        // tKey is now strongly typed as "PROBLEM" | "SUGGESTION"
         label: tKey === "PROBLEM" ? "Проблеми" : "Предложения",
         value: counts[tKey],
-        color: TYPE_COLORS[tKey] || "#CCCCCC",
+        color: TYPE_COLORS[tKey] || "#CCCCCC", // Access to TYPE_COLORS is now type-safe
       }));
   }, [filteredCasesForPieCharts]);
 
@@ -575,7 +612,6 @@ const Analyses = () => {
     e: React.ChangeEvent<HTMLInputElement>,
     type: "start" | "end"
   ) => {
-    /* ... (remains the same) ... */
     const dateValue = e.target.value ? new Date(e.target.value) : null;
     if (type === "start") {
       setCustomStartDate(dateValue);
@@ -997,7 +1033,7 @@ const Analyses = () => {
 
         <div className="bg-white p-3 sm:p-4 rounded-lg shadow-md flex flex-col justify-center items-center min-h-[150px]">
           <h2 className="text-base sm:text-lg font-semibold text-center mb-2 text-gray-800">
-            Среден рейтинг
+            Среден рейтинг на сигнал
           </h2>
           {averageRatingData.average !== null ? (
             <>
@@ -1008,7 +1044,7 @@ const Analyses = () => {
                 </span>
               </p>
               <p className="text-sm text-gray-600 mt-1">
-                (от {averageRatingData.count}
+                (от {averageRatingData.count}{" "}
                 {averageRatingData.count === 1 ? "оценка" : "оценки"})
               </p>
             </>

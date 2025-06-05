@@ -67,23 +67,6 @@ const BarChart: React.FC<BarChartProps> = ({
     }
   }, []);
 
-  if (!data || data.length === 0 || !series || series.length === 0) {
-    return (
-      <div
-        ref={containerRef}
-        className="w-full p-4 rounded-lg shadow-sm bg-white"
-      >
-        <p className="text-sm font-semibold mb-1 text-center text-gray-700">
-          {title}
-        </p>
-        <div className="h-[220px] flex items-center justify-center text-gray-500">
-          Няма данни
-          {(!series || series.length === 0) && "или конфигурация на сериите"}.
-        </div>
-      </div>
-    );
-  }
-
   const plotWidth = Math.max(0, svgContainerWidth - marginLeft - marginRight);
   const plotHeight = Math.max(0, chartHeight - marginTop - marginBottom);
 
@@ -202,117 +185,141 @@ const BarChart: React.FC<BarChartProps> = ({
           </div>
         ))}
       </div>
-      <div className="w-full overflow-x-auto">
-        <svg
-          ref={svgRef}
-          width={svgContainerWidth > 0 ? svgContainerWidth : 300}
-          height={chartHeight}
-          onMouseMove={handleMouseMove}
-          onMouseLeave={handleMouseLeaveChart}
-        >
-          <g transform={`translate(${marginLeft}, ${marginTop})`}>
-            {yTicks.map((tick) => (
-              <g key={`y-tick-${tick.value}-${tick.yPos}`}>
-                <line
-                  x1={0}
-                  y1={tick.yPos}
-                  x2={plotWidth}
-                  y2={tick.yPos}
-                  stroke="#e5e7eb"
-                  strokeDasharray="2,2"
-                />
-                <text
-                  x={-5}
-                  y={tick.yPos + 3}
-                  fontSize="16px"
-                  textAnchor="end"
-                  fill="gray"
-                >
-                  {tick.value}
-                </text>
-              </g>
-            ))}
-            {plotWidth > 0 &&
-              numDataPoints > 1 &&
-              Array.from({ length: numDataPoints - 1 }).map((_, i) => {
-                const xPosition = (i + 1) * groupAvailableWidth;
-                return (
-                  <line
-                    key={`v-sep-${i}`}
-                    x1={xPosition}
-                    y1={0}
-                    x2={xPosition}
-                    y2={plotHeight}
-                    stroke="#e0e0e0"
-                    strokeWidth="1"
-                  />
-                );
-              })}
-            <line
-              x1={0}
-              y1={plotHeight}
-              x2={plotWidth}
-              y2={plotHeight}
-              stroke="gray"
-            />
-
-            {plotWidth > 0 &&
-              numDataPoints > 0 &&
-              data.map((item, groupIndex) => {
-                const groupXStartOuter = groupIndex * groupAvailableWidth; // Start of the entire group's allocated space
-                const groupBarsXStart =
-                  groupXStartOuter +
-                  (groupAvailableWidth * groupPaddingRatio) / 2; // Actual start for drawing bars after left padding
-
-                return (
-                  <g
-                    key={`group-${groupIndex}-${item[dataKeyX]}`}
-                    className="bar-group"
-                  >
-                    {series.map((s, barIndex) => {
-                      const val = item[s.dataKey] || 0;
-                      const barHeight =
-                        maxValue > 0
-                          ? Math.max(0, (val / maxValue) * plotHeight)
-                          : 0;
-                      const barX =
-                        groupBarsXStart +
-                        barIndex * (calculatedBarWidth + individualBarPadding);
-
-                      return (
-                        <rect
-                          key={s.dataKey}
-                          x={barX}
-                          y={plotHeight - barHeight}
-                          width={
-                            calculatedBarWidth > 0 ? calculatedBarWidth : 0
-                          }
-                          height={barHeight}
-                          fill={s.color}
-                          onMouseEnter={(e) => handleBarMouseEnter(e, item)}
-                          className="cursor-pointer transition-opacity hover:opacity-80"
-                        />
-                      );
-                    })}
+      {/* Chart Area or No Data Message Wrapper */}
+      <div style={{ height: `${chartHeight}px` }} className="w-full">
+        {!data || data.length === 0 || !series || series.length === 0 ? (
+          // "No Data" Message
+          <div className="w-full h-full flex items-center justify-center text-gray-500">
+            Няма данни
+            {(!series || series.length === 0) && "или конфигурация на сериите"}.
+          </div>
+        ) : (
+          // Chart SVG and its original wrapper
+          <div className="w-full h-full overflow-x-auto">
+            {" "}
+            {/* Added h-full to fill the fixed-height parent */}
+            <svg
+              ref={svgRef}
+              width={svgContainerWidth > 0 ? svgContainerWidth : 300} // Retains original width logic
+              height={chartHeight} // Retains original height logic
+              onMouseMove={handleMouseMove}
+              onMouseLeave={handleMouseLeaveChart}
+            >
+              {/* All your existing SVG content ( <g transform...>, yTicks mapping, data mapping for bars, etc.) goes here.
+                  Ensure this content is identical to what was previously inside the SVG element.
+              */}
+              <g transform={`translate(${marginLeft}, ${marginTop})`}>
+                {/* Y-axis Ticks and Grid Lines */}
+                {yTicks.map((tick) => (
+                  <g key={`y-tick-${tick.value}-${tick.yPos}`}>
+                    <line
+                      x1={0}
+                      y1={tick.yPos}
+                      x2={plotWidth}
+                      y2={tick.yPos}
+                      stroke="#e5e7eb"
+                      strokeDasharray="2,2"
+                    />
                     <text
-                      x={
-                        groupBarsXStart +
-                        barAreaWidth / 2 -
-                        (groupAvailableWidth * groupPaddingRatio) / 2
-                      }
-                      y={plotHeight + 25}
-                      fontSize="18px"
-                      fontWeight="normal"
-                      textAnchor="middle"
-                      fill="#555555"
+                      x={-5}
+                      y={tick.yPos + 3}
+                      fontSize="16px"
+                      textAnchor="end"
+                      fill="gray"
                     >
-                      {item[dataKeyX]}
+                      {tick.value}
                     </text>
                   </g>
-                );
-              })}
-          </g>
-        </svg>
+                ))}
+
+                {/* Vertical Separator Lines (Copied from original) */}
+                {plotWidth > 0 &&
+                  numDataPoints > 1 &&
+                  Array.from({ length: numDataPoints - 1 }).map((_, i) => {
+                    const xPosition = (i + 1) * groupAvailableWidth;
+                    return (
+                      <line
+                        key={`v-sep-${i}`}
+                        x1={xPosition}
+                        y1={0}
+                        x2={xPosition}
+                        y2={plotHeight}
+                        stroke="#e0e0e0"
+                        strokeWidth="1"
+                      />
+                    );
+                  })}
+
+                {/* X-axis Line (Copied from original) */}
+                <line
+                  x1={0}
+                  y1={plotHeight}
+                  x2={plotWidth}
+                  y2={plotHeight}
+                  stroke="gray"
+                />
+
+                {/* Bars and X-axis Labels (Copied from original) */}
+                {plotWidth > 0 &&
+                  numDataPoints > 0 &&
+                  data.map((item, groupIndex) => {
+                    const groupXStartOuter = groupIndex * groupAvailableWidth;
+                    const groupBarsXStart =
+                      groupXStartOuter +
+                      (groupAvailableWidth * groupPaddingRatio) / 2;
+
+                    return (
+                      <g
+                        key={`group-${groupIndex}-${item[dataKeyX]}`}
+                        className="bar-group"
+                      >
+                        {series.map((s, barIndex) => {
+                          const val = item[s.dataKey] || 0;
+                          const barHeight =
+                            maxValue > 0
+                              ? Math.max(0, (val / maxValue) * plotHeight)
+                              : 0;
+                          const barX =
+                            groupBarsXStart +
+                            barIndex *
+                              (calculatedBarWidth + individualBarPadding);
+
+                          return (
+                            <rect
+                              key={s.dataKey}
+                              x={barX}
+                              y={plotHeight - barHeight}
+                              width={
+                                calculatedBarWidth > 0 ? calculatedBarWidth : 0
+                              }
+                              height={barHeight}
+                              fill={s.color}
+                              onMouseEnter={(e) => handleBarMouseEnter(e, item)}
+                              className="cursor-pointer transition-opacity hover:opacity-80"
+                            />
+                          );
+                        })}
+                        <text
+                          x={
+                            groupBarsXStart +
+                            barAreaWidth / 2 -
+                            (groupAvailableWidth * groupPaddingRatio) / 2
+                          }
+                          y={plotHeight + 25}
+                          fontSize="18px"
+                          fontWeight="normal"
+                          textAnchor="middle"
+                          fill="#555555"
+                        >
+                          {item[dataKeyX]}
+                        </text>
+                      </g>
+                    );
+                  })}
+              </g>
+            </svg>
+          </div>
+        )}
       </div>
       {tooltipData.visible && tooltipData.contentHtml && (
         <div

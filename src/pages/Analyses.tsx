@@ -508,21 +508,67 @@ const Analyses = () => {
   }, [filteredCasesForPieCharts]);
 
   const periodCaseSummary = useMemo(() => {
-    /* ... (remains the same) ... */
     if (!filteredCasesForPieCharts) {
-      return { totalCases: 0, problems: 0, suggestions: 0 };
+      return barChartMode === "type"
+        ? { totalCases: 0, problems: 0, suggestions: 0 }
+        : { totalCases: 0, high: 0, medium: 0, low: 0 };
     }
+
     const totalCases = filteredCasesForPieCharts.length;
-    let problemCount = 0;
-    let suggestionCount = 0;
-    filteredCasesForPieCharts.forEach((caseItem: ICase) => {
-      if (caseItem.type.toUpperCase() === "PROBLEM") {
-        problemCount++;
-      } else if (caseItem.type.toUpperCase() === "SUGGESTION") {
-        suggestionCount++;
+
+    if (barChartMode === "type") {
+      let problemCount = 0;
+      let suggestionCount = 0;
+      filteredCasesForPieCharts.forEach((caseItem: ICase) => {
+        if (caseItem.type.toUpperCase() === "PROBLEM") {
+          problemCount++;
+        } else if (caseItem.type.toUpperCase() === "SUGGESTION") {
+          suggestionCount++;
+        }
+      });
+      return {
+        totalCases,
+        problems: problemCount,
+        suggestions: suggestionCount,
+      };
+    } else {
+      // Priority mode
+      let highCount = 0;
+      let mediumCount = 0;
+      let lowCount = 0;
+      filteredCasesForPieCharts.forEach((caseItem: ICase) => {
+        const priority = caseItem.priority.toUpperCase();
+        if (priority === "HIGH") highCount++;
+        else if (priority === "MEDIUM") mediumCount++;
+        else if (priority === "LOW") lowCount++;
+      });
+      return {
+        totalCases,
+        high: highCount,
+        medium: mediumCount,
+        low: lowCount,
+      };
+    }
+  }, [filteredCasesForPieCharts, barChartMode]);
+
+  const typePieData: PieSegmentData[] = useMemo(() => {
+    if (!filteredCasesForPieCharts || filteredCasesForPieCharts.length === 0)
+      return [];
+    const counts: { [key: string]: number } = { PROBLEM: 0, SUGGESTION: 0 };
+    filteredCasesForPieCharts.forEach((c: ICase) => {
+      const typeKey = c.type.toUpperCase();
+      if (counts.hasOwnProperty(typeKey)) {
+        counts[typeKey]++;
       }
     });
-    return { totalCases, problems: problemCount, suggestions: suggestionCount };
+    return (Object.keys(counts) as Array<string>)
+      .filter((tKey) => counts[tKey] > 0)
+      .sort((aKey, bKey) => counts[bKey] - counts[aKey])
+      .map((tKey) => ({
+        label: tKey === "PROBLEM" ? "Проблеми" : "Предложения",
+        value: counts[tKey],
+        color: TYPE_COLORS[tKey] || "#CCCCCC",
+      }));
   }, [filteredCasesForPieCharts]);
 
   const handleDateInputChange = (
@@ -796,33 +842,83 @@ const Analyses = () => {
           <p className="text-4xl font-bold text-gray-700">
             {periodCaseSummary.totalCases}
           </p>
-          <div className="flex space-x-3 mt-2 text-center">
-            <p className="text-xs sm:text-sm">
-              <span
-                style={{ color: PRIORITY_COLORS.HIGH }}
-                className="font-semibold block"
-              >
-                Проблеми
-              </span>
-              <span
-                style={{ color: PRIORITY_COLORS.HIGH }}
-                className="font-bold text-lg"
-              >
-                {periodCaseSummary.problems}
-              </span>
-            </p>
-            <p className="text-xs sm:text-sm">
-              <span
-                style={{ color: "#22C55E" }}
-                className="font-semibold block"
-              >
-                Предложения
-              </span>
-              <span style={{ color: "#22C55E" }} className="font-bold text-lg">
-                {periodCaseSummary.suggestions}
-              </span>
-            </p>
-          </div>
+          {barChartMode === "type" ? (
+            <div className="flex space-x-3 mt-2 text-center">
+              <p className="text-xs sm:text-sm">
+                <span
+                  style={{ color: PRIORITY_COLORS.HIGH }}
+                  className="font-semibold block"
+                >
+                  Проблеми
+                </span>
+                <span
+                  style={{ color: PRIORITY_COLORS.HIGH }}
+                  className="font-bold text-lg"
+                >
+                  {(periodCaseSummary as any).problems}
+                </span>
+              </p>
+              <p className="text-xs sm:text-sm">
+                <span
+                  style={{ color: "#22C55E" }}
+                  className="font-semibold block"
+                >
+                  Предложения
+                </span>
+                <span
+                  style={{ color: "#22C55E" }}
+                  className="font-bold text-lg"
+                >
+                  {(periodCaseSummary as any).suggestions}
+                </span>
+              </p>
+            </div>
+          ) : (
+            <div className="flex space-x-2 mt-2 text-center">
+              <p className="text-xs sm:text-sm">
+                <span
+                  style={{ color: PRIORITY_COLORS.HIGH }}
+                  className="font-semibold block"
+                >
+                  Висок
+                </span>
+                <span
+                  style={{ color: PRIORITY_COLORS.HIGH }}
+                  className="font-bold text-lg"
+                >
+                  {(periodCaseSummary as any).high}
+                </span>
+              </p>
+              <p className="text-xs sm:text-sm">
+                <span
+                  style={{ color: PRIORITY_COLORS.MEDIUM }}
+                  className="font-semibold block"
+                >
+                  Среден
+                </span>
+                <span
+                  style={{ color: PRIORITY_COLORS.MEDIUM }}
+                  className="font-bold text-lg"
+                >
+                  {(periodCaseSummary as any).medium}
+                </span>
+              </p>
+              <p className="text-xs sm:text-sm">
+                <span
+                  style={{ color: PRIORITY_COLORS.LOW }}
+                  className="font-semibold block"
+                >
+                  Нисък
+                </span>
+                <span
+                  style={{ color: PRIORITY_COLORS.LOW }}
+                  className="font-bold text-lg"
+                >
+                  {(periodCaseSummary as any).low}
+                </span>
+              </p>
+            </div>
+          )}
           <p className="text-xs text-gray-400 mt-1.5">за избрания период</p>
         </div>
 
@@ -842,16 +938,28 @@ const Analyses = () => {
         </div>
         <div className="bg-white p-3 sm:p-4 rounded-lg shadow-md">
           <h2 className="text-base sm:text-lg font-semibold text-center mb-3 text-gray-800">
-            Разпределение на приоритети
+            {barChartMode === "type"
+              ? "Разпределение на приоритети"
+              : "Разпределение на типове"}
           </h2>
           <div className="flex flex-col xl:flex-row items-center xl:items-start gap-3 sm:gap-4">
             <div className="flex-shrink-0 mx-auto">
               <PieChart
-                data={priorityPieData.length > 0 ? priorityPieData : []}
+                data={
+                  barChartMode === "type"
+                    ? priorityPieData.length > 0
+                      ? priorityPieData
+                      : []
+                    : typePieData.length > 0
+                    ? typePieData
+                    : []
+                }
                 size={180}
               />
             </div>
-            <PieLegend data={priorityPieData} />
+            <PieLegend
+              data={barChartMode === "type" ? priorityPieData : typePieData}
+            />
           </div>
         </div>
         <div className="bg-white p-3 sm:p-4 rounded-lg shadow-md flex flex-col justify-center items-center min-h-[150px]">

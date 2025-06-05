@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useGetAnalyticsDataCases } from "../graphql/hooks/case"; // Adjust path as needed
 import PieChart, { PieSegmentData } from "../components/charts/PieChart"; // Adjust path as needed
-import BarChart from "../components/charts/BarChart"; // Corrected import for default export
+import BarChart, { BarSeriesConfig } from "../components/charts/BarChart"; // Import BarChart and BarSeriesConfig
 
 // --- Interfaces ---
 import { ICase, ICategory } from "../db/interfaces"; // Assuming ICase includes calculatedRating?: number | null;
 
 // --- Component Type Definitions ---
-type ViewMode = "all" | "yearly" | "monthly" | "weekly" | "custom"; // Added "yearly"
+type ViewMode = "all" | "yearly" | "monthly" | "weekly" | "custom";
+type BarChartDisplayMode = "type" | "priority"; // For the new toggle
 
 // --- Constants ---
 const priorityTranslations: Record<string, string> = {
@@ -32,6 +33,10 @@ const PRIORITY_COLORS: Record<string, string> = {
   MEDIUM: "#FCD34D",
   LOW: "#60A5FA",
 };
+const TYPE_COLORS = {
+  PROBLEM: PRIORITY_COLORS.HIGH, // Or a specific red like "#EF4444"
+  SUGGESTION: "#22C55E", // Specific green
+};
 const MONTH_NAMES = [
   "Януари",
   "Февруари",
@@ -47,7 +52,6 @@ const MONTH_NAMES = [
   "Декември",
 ];
 const DAY_NAMES_FULL = [
-  // Used for weekly and custom (weekday summary) bar charts
   "Понеделник",
   "Вторник",
   "Сряда",
@@ -57,8 +61,9 @@ const DAY_NAMES_FULL = [
   "Неделя",
 ];
 
-// --- Date Helper Functions ---
+// --- Date Helper Functions (getWeekOfYear, getStartAndEndOfWeek, getDaysInMonth) ---
 const getWeekOfYear = (date: Date): number => {
+  /* ... (implementation from your last version) ... */
   const target = new Date(date.valueOf());
   target.setHours(0, 0, 0, 0);
   target.setDate(target.getDate() + 3 - ((target.getDay() + 6) % 7));
@@ -73,32 +78,26 @@ const getWeekOfYear = (date: Date): number => {
     )
   );
 };
-
 const getStartAndEndOfWeek = (
   weekNumber: number,
   year: number
 ): { start: Date; end: Date } => {
+  /* ... (implementation from your last version) ... */
   const simple = new Date(Date.UTC(year, 0, 1 + (weekNumber - 1) * 7));
   const dayOfWeek = simple.getUTCDay();
   const isoDayOfWeek = dayOfWeek === 0 ? 7 : dayOfWeek;
-
   const start = new Date(simple);
   start.setUTCDate(simple.getUTCDate() - isoDayOfWeek + 1);
   start.setUTCHours(0, 0, 0, 0);
-
   const end = new Date(start);
   end.setUTCDate(start.getUTCDate() + 6);
   end.setUTCHours(23, 59, 59, 999);
-
   return { start, end };
 };
+const getDaysInMonth = (year: number, month: number): number =>
+  new Date(year, month, 0).getDate();
 
-const getDaysInMonth = (year: number, month: number): number => {
-  // month is 1-indexed
-  return new Date(year, month, 0).getDate();
-};
-
-// --- PieLegend Sub-Component ---
+// --- PieLegend Sub-Component (remains the same) ---
 const PieLegend = ({ data }: { data: PieSegmentData[] }) => {
   const total = data.reduce((sum, item) => sum + item.value, 0);
   if (total === 0 && data.length === 0) {
@@ -127,7 +126,7 @@ const PieLegend = ({ data }: { data: PieSegmentData[] }) => {
               </span>
             </div>
             <span className="font-medium text-gray-700 whitespace-nowrap ml-2">
-              {item.value}{" "}
+              {item.value}
               <span className="text-gray-500">
                 ({((item.value / total) * 100).toFixed(1)}%)
               </span>
@@ -146,13 +145,15 @@ const Analyses = () => {
     cases: allCases,
   } = useGetAnalyticsDataCases();
   const [viewMode, setViewMode] = useState<ViewMode>("all");
+  const [barChartMode, setBarChartMode] = useState<BarChartDisplayMode>("type"); // NEW state for bar chart toggle
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
-  const [currentMonth, setCurrentMonth] = useState(new Date().getMonth() + 1); // 1-12
+  const [currentMonth, setCurrentMonth] = useState(new Date().getMonth() + 1);
   const [currentWeek, setCurrentWeek] = useState(getWeekOfYear(new Date()));
   const [customStartDate, setCustomStartDate] = useState<Date | null>(null);
   const [customEndDate, setCustomEndDate] = useState<Date | null>(null);
 
   const uniqueYears = useMemo(() => {
+    /* ... (remains the same, ensure robust typing) ... */
     if (!allCases || allCases.length === 0) return [new Date().getFullYear()];
     const yearsSet = new Set(
       allCases.map((c: ICase) => new Date(c.date).getFullYear())
@@ -162,32 +163,28 @@ const Analyses = () => {
   }, [allCases]);
 
   useEffect(() => {
+    /* ... (remains the same) ... */
     if (uniqueYears.length > 0 && !uniqueYears.includes(currentYear)) {
       setCurrentYear(uniqueYears[0]);
-    }
-    // Reset month/week if year changes and the current month/week might be invalid for new year (e.g. Feb 29)
-    // For simplicity, just ensuring currentMonth is valid. More complex logic could reset week.
-    if (viewMode === "monthly" || viewMode === "weekly") {
-      // No specific reset needed for month here unless Feb 29th-like issues are critical for week display
     }
   }, [uniqueYears, currentYear, viewMode]);
 
   const { startDateForPies, endDateForPies, isAllTimePies } = useMemo(() => {
+    /* ... (remains the same) ... */
     let sDate: Date | null = null,
       eDate: Date | null = null;
     let allTime = false;
-
     switch (viewMode) {
       case "all":
         allTime = true;
         break;
       case "yearly":
-        sDate = new Date(currentYear, 0, 1, 0, 0, 0, 0); // Jan 1st
-        eDate = new Date(currentYear, 11, 31, 23, 59, 59, 999); // Dec 31st
+        sDate = new Date(currentYear, 0, 1, 0, 0, 0, 0);
+        eDate = new Date(currentYear, 11, 31, 23, 59, 59, 999);
         break;
       case "monthly":
         sDate = new Date(currentYear, currentMonth - 1, 1, 0, 0, 0, 0);
-        eDate = new Date(currentYear, currentMonth, 0, 23, 59, 59, 999); // Last day of month
+        eDate = new Date(currentYear, currentMonth, 0, 23, 59, 59, 999);
         break;
       case "weekly":
         ({ start: sDate, end: eDate } = getStartAndEndOfWeek(
@@ -209,7 +206,7 @@ const Analyses = () => {
           };
         }
         break;
-      default: // Should not happen
+      default:
         sDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
         eDate = new Date(
           new Date().getFullYear(),
@@ -236,6 +233,7 @@ const Analyses = () => {
   ]);
 
   const filteredCasesForPieCharts = useMemo(() => {
+    /* ... (remains the same) ... */
     if (!allCases) return [];
     if (isAllTimePies) return allCases;
     if (!startDateForPies || !endDateForPies) return [];
@@ -245,71 +243,125 @@ const Analyses = () => {
     });
   }, [allCases, startDateForPies, endDateForPies, isAllTimePies]);
 
+  // --- MODIFIED: barChartDisplayData Hook ---
   const barChartDisplayData = useMemo(() => {
-    const problemColor = PRIORITY_COLORS.HIGH;
-    const suggestionColor = "#22C55E";
-
     if (!allCases || allCases.length === 0) {
       return {
         data: [],
         dataKeyX: "periodLabel",
         title: "Няма данни",
-        colorY1: problemColor,
-        colorY2: suggestionColor,
+        seriesConfig: [],
       };
     }
 
     let chartTitle = "";
-    let data: Array<{
-      periodLabel: string;
-      problems: number;
-      suggestions: number;
-    }> = [];
+    let dataForChart: Array<any> = []; // Will hold { periodLabel, ...counts }
+    let seriesConfig: BarSeriesConfig[] = [];
+
+    // Define series configurations
+    const typeSeries: BarSeriesConfig[] = [
+      { dataKey: "problems", label: "Проблеми", color: TYPE_COLORS.PROBLEM },
+      {
+        dataKey: "suggestions",
+        label: "Предложения",
+        color: TYPE_COLORS.SUGGESTION,
+      },
+    ];
+    const prioritySeries: BarSeriesConfig[] = [
+      {
+        dataKey: "highPriority",
+        label: priorityTranslations.HIGH,
+        color: PRIORITY_COLORS.HIGH,
+      },
+      {
+        dataKey: "mediumPriority",
+        label: priorityTranslations.MEDIUM,
+        color: PRIORITY_COLORS.MEDIUM,
+      },
+      {
+        dataKey: "lowPriority",
+        label: priorityTranslations.LOW,
+        color: PRIORITY_COLORS.LOW,
+      },
+    ];
+
+    if (barChartMode === "type") {
+      seriesConfig = typeSeries;
+    } else {
+      // barChartMode === 'priority'
+      seriesConfig = prioritySeries;
+    }
+
+    const aggregateCases = (casesToAggregate: ICase[]) => {
+      if (barChartMode === "type") {
+        return {
+          problems: casesToAggregate.filter(
+            (c) => c.type.toUpperCase() === "PROBLEM"
+          ).length,
+          suggestions: casesToAggregate.filter(
+            (c) => c.type.toUpperCase() === "SUGGESTION"
+          ).length,
+        };
+      } else {
+        // 'priority'
+        return {
+          highPriority: casesToAggregate.filter(
+            (c) => c.priority.toUpperCase() === "HIGH"
+          ).length,
+          mediumPriority: casesToAggregate.filter(
+            (c) => c.priority.toUpperCase() === "MEDIUM"
+          ).length,
+          lowPriority: casesToAggregate.filter(
+            (c) => c.priority.toUpperCase() === "LOW"
+          ).length,
+        };
+      }
+    };
 
     if (viewMode === "all") {
-      chartTitle = `Общо случаи по години`;
-      const yearlyData: {
-        [year: string]: { problems: number; suggestions: number };
-      } = {};
+      chartTitle = `Общо случаи по години (${
+        barChartMode === "type" ? "по тип" : "по приоритет"
+      })`;
+      const yearlyDataAggregated: { [year: string]: any } = {};
       allCases.forEach((c: ICase) => {
         const year = new Date(c.date).getFullYear().toString();
-        yearlyData[year] = yearlyData[year] || { problems: 0, suggestions: 0 };
-        if (c.type.toUpperCase() === "PROBLEM") yearlyData[year].problems++;
-        else if (c.type.toUpperCase() === "SUGGESTION")
-          yearlyData[year].suggestions++;
+        if (!yearlyDataAggregated[year]) {
+          yearlyDataAggregated[year] = aggregateCases(
+            allCases.filter(
+              (cs) => new Date(cs.date).getFullYear().toString() === year
+            )
+          );
+        }
       });
-      data = Object.entries(yearlyData)
-        .sort(([yearA], [yearB]) => parseInt(yearA) - parseInt(yearB))
-        .map(([year, counts]) => ({
+      dataForChart = Object.keys(yearlyDataAggregated)
+        .map((year) => ({
           periodLabel: year,
-          problems: counts.problems,
-          suggestions: counts.suggestions,
-        }));
+          ...yearlyDataAggregated[year],
+        }))
+        .sort((a, b) => parseInt(a.periodLabel) - parseInt(b.periodLabel));
     } else if (viewMode === "yearly") {
-      // NEW "Yearly" Tab Logic for Bar Chart
-      chartTitle = `Сравнение по месеци (${currentYear})`;
+      chartTitle = `Сравнение по месеци (${currentYear}) (${
+        barChartMode === "type" ? "по тип" : "по приоритет"
+      })`;
       const yearCases = allCases.filter(
         (c) => new Date(c.date).getFullYear() === currentYear
       );
-      data = MONTH_NAMES.map((monthName, index) => {
+      dataForChart = MONTH_NAMES.map((monthName, index) => {
         const monthCases = yearCases.filter(
           (c) => new Date(c.date).getMonth() === index
         );
         return {
-          periodLabel: monthName, // Full month name
-          problems: monthCases.filter((c) => c.type.toUpperCase() === "PROBLEM")
-            .length,
-          suggestions: monthCases.filter(
-            (c) => c.type.toUpperCase() === "SUGGESTION"
-          ).length,
+          periodLabel: monthName,
+          ...aggregateCases(monthCases),
         };
       });
     } else if (viewMode === "monthly") {
-      // MODIFIED "Monthly" Tab Logic for Bar Chart
       chartTitle = `Сравнение по дни (${
         MONTH_NAMES[currentMonth - 1]
-      } ${currentYear})`;
-      const monthCases = allCases.filter((c) => {
+      } ${currentYear}) (${
+        barChartMode === "type" ? "по тип" : "по приоритет"
+      })`;
+      const monthCasesFiltered = allCases.filter((c) => {
         const caseDate = new Date(c.date);
         return (
           caseDate.getFullYear() === currentYear &&
@@ -317,68 +369,49 @@ const Analyses = () => {
         );
       });
       const daysInSelectedMonth = getDaysInMonth(currentYear, currentMonth);
-      const dailyData = Array.from({ length: daysInSelectedMonth }, (_, i) => ({
-        periodLabel: (i + 1).toString(), // Day number as label
-        problems: 0,
-        suggestions: 0,
-      }));
-      monthCases.forEach((c) => {
-        const dayOfMonth = new Date(c.date).getDate(); // 1-31
-        if (dailyData[dayOfMonth - 1]) {
-          // dayOfMonth is 1-indexed, array is 0-indexed
-          if (c.type.toUpperCase() === "PROBLEM")
-            dailyData[dayOfMonth - 1].problems++;
-          else if (c.type.toUpperCase() === "SUGGESTION")
-            dailyData[dayOfMonth - 1].suggestions++;
-        }
+      dataForChart = Array.from({ length: daysInSelectedMonth }, (_, i) => {
+        const dayNumber = i + 1;
+        const dayCases = monthCasesFiltered.filter(
+          (c) => new Date(c.date).getDate() === dayNumber
+        );
+        return {
+          periodLabel: dayNumber.toString(),
+          ...aggregateCases(dayCases),
+        };
       });
-      data = dailyData;
     } else if (viewMode === "weekly") {
-      chartTitle = `Сравнение по дни (Седмица ${currentWeek}, ${currentYear})`;
+      chartTitle = `Сравнение по дни (Седмица ${currentWeek}, ${currentYear}) (${
+        barChartMode === "type" ? "по тип" : "по приоритет"
+      })`;
       const { start, end } = getStartAndEndOfWeek(currentWeek, currentYear);
-      const weekCases = allCases.filter((c) => {
+      const weekCasesFiltered = allCases.filter((c) => {
         const d = new Date(c.date);
         return d >= start && d <= end;
       });
-      data = DAY_NAMES_FULL.map((dayName, index) => {
-        const dayCases = weekCases.filter(
+      dataForChart = DAY_NAMES_FULL.map((dayName, index) => {
+        const dayCases = weekCasesFiltered.filter(
           (c) => (new Date(c.date).getUTCDay() + 6) % 7 === index
         );
-        return {
-          periodLabel: dayName,
-          problems: dayCases.filter((c) => c.type.toUpperCase() === "PROBLEM")
-            .length,
-          suggestions: dayCases.filter(
-            (c) => c.type.toUpperCase() === "SUGGESTION"
-          ).length,
-        };
+        return { periodLabel: dayName, ...aggregateCases(dayCases) };
       });
     } else if (viewMode === "custom" && startDateForPies && endDateForPies) {
       const startD = startDateForPies;
       const endD = endDateForPies;
-      chartTitle = `Общо случаи по ден от седмицата (${startD.toLocaleDateString(
+      chartTitle = `Общо по ден от седмицата (${startD.toLocaleDateString(
         "bg-BG"
-      )} - ${endD.toLocaleDateString("bg-BG")})`;
-      const rangeCases = allCases.filter((c) => {
+      )} - ${endD.toLocaleDateString("bg-BG")}) (${
+        barChartMode === "type" ? "по тип" : "по приоритет"
+      })`;
+      const rangeCasesFiltered = allCases.filter((c) => {
         const d = new Date(c.date);
         return d >= startD && d <= endD;
       });
-      const weekdaySummary = DAY_NAMES_FULL.map((name) => ({
-        periodLabel: name,
-        problems: 0,
-        suggestions: 0,
-      }));
-      rangeCases.forEach((c) => {
-        const caseDate = new Date(c.date);
-        const dayIndex = (caseDate.getUTCDay() + 6) % 7;
-        if (weekdaySummary[dayIndex]) {
-          if (c.type.toUpperCase() === "PROBLEM")
-            weekdaySummary[dayIndex].problems++;
-          else if (c.type.toUpperCase() === "SUGGESTION")
-            weekdaySummary[dayIndex].suggestions++;
-        }
+      dataForChart = DAY_NAMES_FULL.map((name) => {
+        const dayCases = rangeCasesFiltered.filter(
+          (c) => DAY_NAMES_FULL[(new Date(c.date).getUTCDay() + 6) % 7] === name
+        );
+        return { periodLabel: name, ...aggregateCases(dayCases) };
       });
-      data = weekdaySummary;
     } else {
       chartTitle = "Моля изберете период";
       if (
@@ -387,20 +420,19 @@ const Analyses = () => {
         viewMode === "weekly" ||
         viewMode === "yearly"
       ) {
-        // Provide empty structure for these views if dates/selections are incomplete
-        data = []; // Or some default empty structure like DAY_NAMES_FULL.map(...) for consistency
+        dataForChart = [];
       }
     }
     return {
-      data,
+      data: dataForChart,
       dataKeyX: "periodLabel",
       title: chartTitle,
-      colorY1: problemColor,
-      colorY2: suggestionColor,
+      seriesConfig,
     };
   }, [
     allCases,
     viewMode,
+    barChartMode,
     currentYear,
     currentMonth,
     currentWeek,
@@ -548,7 +580,7 @@ const Analyses = () => {
 
     return (
       <div className="flex flex-wrap gap-x-3 gap-y-2 items-center p-3 bg-gray-50 border-b border-gray-200 h-16">
-        {/* Year selector: Shown for 'yearly', 'monthly', and 'weekly' */}
+        {/* Year selector: Now shown for 'yearly', 'monthly', and 'weekly' */}
         {(viewMode === "yearly" ||
           viewMode === "monthly" ||
           viewMode === "weekly") && (
@@ -559,8 +591,7 @@ const Analyses = () => {
           >
             {uniqueYears.map((year) => (
               <option key={year} value={year}>
-                {" "}
-                {year}{" "}
+                {year}
               </option>
             ))}
           </select>
@@ -574,8 +605,7 @@ const Analyses = () => {
           >
             {MONTH_NAMES.map((name, index) => (
               <option key={index + 1} value={index + 1}>
-                {" "}
-                {name}{" "}
+                {name}
               </option>
             ))}
           </select>
@@ -665,22 +695,19 @@ const Analyses = () => {
   if (analyticsDataLoading)
     return (
       <div className="flex items-center justify-center h-full min-h-[calc(100vh-200px)]">
-        {" "}
-        <p>Зареждане на аналитични данни...</p>{" "}
+        <p>Зареждане на аналитични данни...</p>
       </div>
     );
   if (analyticsDataError)
     return (
       <div className="flex items-center justify-center h-full min-h-[calc(100vh-200px)]">
-        {" "}
-        <p>Грешка при зареждане на данни: {analyticsDataError.message}</p>{" "}
+        <p>Грешка при зареждане на данни: {analyticsDataError.message}</p>
       </div>
     );
   if (!allCases || allCases.length === 0)
     return (
       <div className="flex items-center justify-center h-full min-h-[calc(100vh-200px)]">
-        {" "}
-        <p>Няма налични данни за анализ.</p>{" "}
+        <p>Няма налични данни за анализ.</p>
       </div>
     );
 
@@ -688,6 +715,7 @@ const Analyses = () => {
     <div className="p-2 md:p-5 bg-gray-100 min-h-full">
       <div className="mb-4 bg-white rounded-md shadow-md">
         <div className="flex space-x-0 border-b border-gray-200">
+          {/* Added "yearly" to tabs */}
           {(["all", "yearly", "monthly", "weekly", "custom"] as ViewMode[]).map(
             (mode) => (
               <button
@@ -712,70 +740,87 @@ const Analyses = () => {
             )
           )}
         </div>
+        {/* Date controls: "all" mode doesn't have them, "yearly" has only year, etc. */}
         {viewMode !== "all" && renderDateControls()}
         {viewMode === "all" && (
           <div className="flex flex-wrap gap-x-3 gap-y-2 items-center p-3 bg-gray-50 border-b border-gray-200 h-16">
             <span className="text-sm text-gray-700 font-medium">
-              {" "}
-              Показване на обобщени данни по години{" "}
+              Показване на обобщени данни по години
             </span>
             <div className="text-sm text-gray-700 ml-auto font-medium bg-sky-100 px-2 py-1 rounded">
-              {" "}
-              Избрано: Всички данни{" "}
+              Избрано: Всички данни
             </div>
           </div>
         )}
       </div>
-      <div className="mb-5">
+
+      {/* Bar Chart Section with Toggle */}
+      <div className="mb-5 bg-white p-4 rounded-lg shadow-md">
+        <div className="flex justify-center items-center space-x-2 mb-4 border-b pb-3">
+          <span className="text-sm font-medium text-gray-600">Покажи по:</span>
+          <button
+            onClick={() => setBarChartMode("type")}
+            className={`px-4 py-1.5 text-xs sm:text-sm rounded-md focus:outline-none ${
+              barChartMode === "type"
+                ? "bg-sky-600 text-white shadow-sm"
+                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+            }`}
+          >
+            Тип
+          </button>
+          <button
+            onClick={() => setBarChartMode("priority")}
+            className={`px-4 py-1.5 text-xs sm:text-sm rounded-md focus:outline-none ${
+              barChartMode === "priority"
+                ? "bg-sky-600 text-white shadow-sm"
+                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+            }`}
+          >
+            Приоритет
+          </button>
+        </div>
         <BarChart
           data={barChartDisplayData.data}
           dataKeyX={barChartDisplayData.dataKeyX}
-          dataKeyY1="problems"
-          dataKeyY2="suggestions"
-          labelY1="Проблеми"
-          labelY2="Предложения"
+          series={barChartDisplayData.seriesConfig} // Pass the new seriesConfig
           title={barChartDisplayData.title}
-          colorY1={barChartDisplayData.colorY1}
-          colorY2={barChartDisplayData.colorY2}
         />
       </div>
+
+      {/* Summary Cards Section */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         <div className="bg-white p-3 sm:p-4 rounded-lg shadow-md flex flex-col justify-center items-center min-h-[150px]">
           <h2 className="text-base sm:text-lg font-semibold text-center mb-2 text-gray-800">
-            {" "}
-            Общо сигнали{" "}
+            Общо сигнали
           </h2>
           <p className="text-4xl font-bold text-gray-700">
-            {" "}
-            {periodCaseSummary.totalCases}{" "}
+            {periodCaseSummary.totalCases}
           </p>
           <div className="flex space-x-3 mt-2 text-center">
             <p className="text-xs sm:text-sm">
-              {" "}
               <span
                 style={{ color: PRIORITY_COLORS.HIGH }}
                 className="font-semibold block"
               >
                 Проблеми
-              </span>{" "}
+              </span>
               <span
                 style={{ color: PRIORITY_COLORS.HIGH }}
                 className="font-bold text-lg"
               >
                 {periodCaseSummary.problems}
-              </span>{" "}
+              </span>
             </p>
             <p className="text-xs sm:text-sm">
-              {" "}
               <span
                 style={{ color: "#22C55E" }}
                 className="font-semibold block"
               >
                 Предложения
-              </span>{" "}
+              </span>
               <span style={{ color: "#22C55E" }} className="font-bold text-lg">
                 {periodCaseSummary.suggestions}
-              </span>{" "}
+              </span>
             </p>
           </div>
           <p className="text-xs text-gray-400 mt-1.5">за избрания период</p>
@@ -783,56 +828,48 @@ const Analyses = () => {
 
         <div className="bg-white p-3 sm:p-4 rounded-lg shadow-md">
           <h2 className="text-base sm:text-lg font-semibold text-center mb-3 text-gray-800">
-            {" "}
-            Разпределение на категории{" "}
+            Разпределение на категории
           </h2>
           <div className="flex flex-col xl:flex-row items-center xl:items-start gap-3 sm:gap-4">
             <div className="flex-shrink-0 mx-auto">
-              {" "}
               <PieChart
                 data={categoryPieData.length > 0 ? categoryPieData : []}
                 size={180}
-              />{" "}
+              />
             </div>
             <PieLegend data={categoryPieData} />
           </div>
         </div>
         <div className="bg-white p-3 sm:p-4 rounded-lg shadow-md">
           <h2 className="text-base sm:text-lg font-semibold text-center mb-3 text-gray-800">
-            {" "}
-            Разпределение на приоритети{" "}
+            Разпределение на приоритети
           </h2>
           <div className="flex flex-col xl:flex-row items-center xl:items-start gap-3 sm:gap-4">
             <div className="flex-shrink-0 mx-auto">
-              {" "}
               <PieChart
                 data={priorityPieData.length > 0 ? priorityPieData : []}
                 size={180}
-              />{" "}
+              />
             </div>
             <PieLegend data={priorityPieData} />
           </div>
         </div>
         <div className="bg-white p-3 sm:p-4 rounded-lg shadow-md flex flex-col justify-center items-center min-h-[150px]">
           <h2 className="text-base sm:text-lg font-semibold text-center mb-2 text-gray-800">
-            {" "}
-            Среден рейтинг{" "}
+            Среден рейтинг
           </h2>
           {averageRatingData.average !== null ? (
             <>
-              {" "}
               <p className="text-4xl font-bold text-sky-600">
-                {" "}
-                {averageRatingData.average.toFixed(2)}{" "}
+                {averageRatingData.average.toFixed(2)}
                 <span className="text-lg font-normal text-gray-500 ml-1">
                   / 5
-                </span>{" "}
-              </p>{" "}
+                </span>
+              </p>
               <p className="text-sm text-gray-600 mt-1">
-                {" "}
-                (от {averageRatingData.count}{" "}
-                {averageRatingData.count === 1 ? "оценка" : "оценки"}){" "}
-              </p>{" "}
+                (от {averageRatingData.count}
+                {averageRatingData.count === 1 ? "оценка" : "оценки"})
+              </p>
             </>
           ) : (
             <p className="text-xl text-gray-500">Няма оценки</p>

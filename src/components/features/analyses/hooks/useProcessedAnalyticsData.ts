@@ -5,8 +5,7 @@ import {
   getDaysInMonth,
   getStartAndEndOfWeek,
 } from "../../../../utils/dateUtils";
-import { BarChartDisplayMode, ViewMode, TopUserStat } from "../types";
-// import { PieSegmentData } from "../../../charts/PieChart";
+import { BarChartDisplayMode, ViewMode } from "../types"; // TopUserStat is no longer used
 import { BarSeriesConfig } from "../../../charts/BarChart";
 import {
   DAY_NAMES_FULL,
@@ -30,35 +29,44 @@ interface AnalyticsFilters {
   isAllTimePies: boolean;
 }
 
-// --- HELPER FUNCTION ---
-const findTopUser = (
+// We'll use this type for the new ranked lists.
+// We can formally add this to the types/index.ts file in the next step.
+type RankedUser = {
+  user: IUser;
+  count: number;
+};
+
+// --- NEW HELPER FUNCTION ---
+const getRankedUsers = (
   cases: ICase[],
   getUserArray: (c: ICase) => (IUser | null | undefined)[]
-): TopUserStat => {
-  if (!cases || cases.length === 0) return null;
+): RankedUser[] => {
+  if (!cases || cases.length === 0) return [];
 
   const userCounts = new Map<string, { user: IUser; count: number }>();
 
   cases.forEach((caseItem) => {
     const users = getUserArray(caseItem);
     users.forEach((user) => {
+      // Ensure user and user._id exist to count them
       if (user && user._id && user.name) {
-        if (userCounts.has(user._id)) {
-          userCounts.get(user._id)!.count++;
+        const existing = userCounts.get(user._id);
+        if (existing) {
+          existing.count++;
         } else {
+          // If the user object is encountered for the first time, store it.
           userCounts.set(user._id, { user, count: 1 });
         }
       }
     });
   });
 
-  if (userCounts.size === 0) return null;
+  if (userCounts.size === 0) return [];
 
-  const topStat = [...userCounts.values()].reduce((max, current) =>
-    current.count > max.count ? current : max
-  );
+  // Convert map to array and sort by count descending
+  const rankedList = [...userCounts.values()].sort((a, b) => b.count - a.count);
 
-  return topStat;
+  return rankedList;
 };
 
 // --- THE HOOK ---
@@ -87,40 +95,40 @@ export const useProcessedAnalyticsData = (
     });
   }, [allCases, startDateForPies, endDateForPies, isAllTimePies]);
 
-  // --- Top User Calculations (with fix) ---
-  const topSignalGiver = useMemo(
-    (): TopUserStat =>
-      findTopUser(filteredCasesForPieCharts, (c) =>
+  // --- MODIFIED: Top User Calculations (now returns ranked lists) ---
+  const rankedSignalGivers = useMemo(
+    (): RankedUser[] =>
+      getRankedUsers(filteredCasesForPieCharts, (c) =>
         c.creator ? [c.creator] : []
       ),
     [filteredCasesForPieCharts]
   );
 
-  const topSolutionGiver = useMemo(
-    (): TopUserStat =>
-      findTopUser(filteredCasesForPieCharts, (c) =>
+  const rankedSolutionGivers = useMemo(
+    (): RankedUser[] =>
+      getRankedUsers(filteredCasesForPieCharts, (c) =>
         (c.answers || []).map((a) => a.creator)
-      ), // <-- FIX APPLIED
+      ),
     [filteredCasesForPieCharts]
   );
 
-  const topApprover = useMemo(
-    (): TopUserStat =>
-      findTopUser(filteredCasesForPieCharts, (c) =>
-        (c.answers || []).map((a) => a.approved).filter((u) => u)
-      ), // <-- FIX APPLIED
+  const rankedApprovers = useMemo(
+    (): RankedUser[] =>
+      getRankedUsers(filteredCasesForPieCharts, (c) =>
+        (c.answers || []).map((a) => a.approved).filter((u): u is IUser => !!u)
+      ),
     [filteredCasesForPieCharts]
   );
 
-  const topRater = useMemo(
-    (): TopUserStat =>
-      findTopUser(filteredCasesForPieCharts, (c) =>
+  const rankedRaters = useMemo(
+    (): RankedUser[] =>
+      getRankedUsers(filteredCasesForPieCharts, (c) =>
         (c.rating || []).map((r) => r.user)
-      ), // <-- FIX APPLIED
+      ),
     [filteredCasesForPieCharts]
   );
 
-  // --- Existing Data Processing ... (the rest of the file is unchanged) ---
+  // --- The rest of the data processing remains unchanged ---
   const barChartDisplayData = useMemo(() => {
     // ... no changes here
     if (!allCases || allCases.length === 0) {
@@ -416,9 +424,10 @@ export const useProcessedAnalyticsData = (
     typePieData,
     averageRatingData,
     periodCaseSummary,
-    topSignalGiver,
-    topSolutionGiver,
-    topApprover,
-    topRater,
+    // MODIFIED: Export ranked lists instead of single top users
+    rankedSignalGivers,
+    rankedSolutionGivers,
+    rankedApprovers,
+    rankedRaters,
   };
 };

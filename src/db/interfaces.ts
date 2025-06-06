@@ -122,3 +122,29 @@ export const CASE_STATUS_DISPLAY_ORDER: ICaseStatus[] = [
   ICaseStatus.AwaitingFinance,
   ICaseStatus.Closed,
 ];
+
+export interface IMe {
+  _id: string;
+  username: string;
+  name: string;
+  email?: string;
+  position?: string;
+  role: IRole;
+  avatar?: string;
+  cases?: ICase[];
+  expert_categories?: ICategory[];
+  managed_categories: ICategory[];
+  comments?: IComment[];
+  answers?: IAnswer[];
+  financial_approver?: boolean;
+}
+
+export enum CaseType {
+  Problem = "PROBLEM",
+  Suggestion = "SUGGESTION",
+}
+export enum CasePriority {
+  Low = "LOW",
+  Medium = "MEDIUM",
+  High = "HIGH",
+}

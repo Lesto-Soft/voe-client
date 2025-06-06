@@ -6,7 +6,6 @@ import {
   useUserCases,
   useUserCommentedCases,
 } from "../graphql/hooks/case";
-import { useGetMe } from "../graphql/hooks/user";
 import CaseTableWithFilters from "../components/tables/CaseTableWithFilters";
 import {
   ListBulletIcon,
@@ -20,6 +19,7 @@ import {
 import { useLocation, useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
 import LoadingModal from "../components/modals/LoadingModal";
+import { useCurrentUser } from "../context/UserContext";
 
 function withUserIdHook(
   hook: (userId: string, input: any) => any,
@@ -44,8 +44,8 @@ const Dashboard = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [clearFiltersSignal, setClearFiltersSignal] = useState(0);
-  const { me, error: meError, loading: meLoading } = useGetMe();
   const [fitler, setFilter] = useState(true);
+  const currentUser = useCurrentUser();
 
   const submenu = useMemo(
     () => [
@@ -92,16 +92,16 @@ const Dashboard = () => {
 
   const getCasesByUserCategoriesWithUser = withUserIdHook(
     useGetCasesByUserCategories,
-    me?.me?._id
+    currentUser._id
   );
-  const getUserCasesWithUser = withUserIdHook(useUserCases, me?.me?._id);
+  const getUserCasesWithUser = withUserIdHook(useUserCases, currentUser._id);
   const getUserAnsweredCasesWithUser = withUserIdHook(
     useUserAnsweredCases,
-    me?.me?._id
+    currentUser._id
   );
   const getUserCommentedCasesWithUser = withUserIdHook(
     useUserCommentedCases,
-    me?.me?._id
+    currentUser._id
   );
 
   const submenuWithHooks = useMemo(() => {
@@ -122,9 +122,6 @@ const Dashboard = () => {
   useEffect(() => {
     setClearFiltersSignal((s) => s + 1);
   }, [screenKey]);
-
-  if (meLoading) return <LoadingModal />;
-  if (meError) return <div>Error: {meError.message}</div>;
 
   return (
     <div className="flex flex-col flex-1 min-h-0 h-full">

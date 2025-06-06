@@ -1,11 +1,11 @@
-import React from "react";
+import React, { JSX, useLayoutEffect } from "react";
 import {
   ChatBubbleBottomCenterTextIcon,
   ChatBubbleLeftEllipsisIcon,
   ClockIcon,
 } from "@heroicons/react/24/solid";
 import { useState } from "react";
-import { IAnswer, ICase, IComment } from "../../db/interfaces";
+import { IAnswer, ICase, ICategory, IComment } from "../../db/interfaces";
 import AnswerMobile from "./mobile/AnswerMobile";
 import CaseHistoryContent from "./CaseHistoryContent";
 import Comment from "./Comment";
@@ -13,6 +13,9 @@ import Answer from "./Answer";
 import CommentMobile from "./mobile/CommentMobile";
 import AddComment from "./AddComment";
 import AddAnswer from "./AddAnswer";
+import { checkNormal } from "../../utils/rightUtils";
+
+const LOCAL_STORAGE_KEY = "case-submenu-view";
 
 interface SubmenuProps {
   caseData: ICase;
@@ -20,12 +23,30 @@ interface SubmenuProps {
   me: any;
   refetch: () => void;
 }
-
 const Submenu: React.FC<SubmenuProps> = ({ caseData, t, me, refetch }) => {
-  const [view, setView] = useState<"answers" | "comments" | "history">(
-    "answers"
+  const [view, setView] = useState<"answers" | "comments" | "history">(() => {
+    // Try to get the last selected view from sessionStorage
+    const stored = sessionStorage.getItem(LOCAL_STORAGE_KEY);
+    if (stored === "answers" || stored === "comments" || stored === "history") {
+      return stored;
+    }
+    return "answers";
+  });
+
+  const expertCategoryIds = (me.expert_categories || []).map(
+    (cat: { _id: string }) => cat._id
+  );
+  const caseCategoryIdsInThisCase = (caseData.categories || []).map(
+    (cat: ICategory) => cat._id
   );
 
+  const isExpertForCase = expertCategoryIds.some((expertId: string) =>
+    caseCategoryIdsInThisCase.includes(expertId)
+  );
+  // Update sessionStorage whenever view changes
+  useLayoutEffect(() => {
+    sessionStorage.setItem(LOCAL_STORAGE_KEY, view);
+  }, [view]);
   const submenu = [
     {
       key: "answers",
@@ -58,7 +79,6 @@ const Submenu: React.FC<SubmenuProps> = ({ caseData, t, me, refetch }) => {
       icon: <ClockIcon className="h-5 w-5 mr-2" />,
     },
   ];
-
   return (
     <>
       <div className="flex justify-center gap-2 mb-6 mt-5 lg:mt-0">
@@ -96,29 +116,44 @@ const Submenu: React.FC<SubmenuProps> = ({ caseData, t, me, refetch }) => {
             {caseData.answers && caseData.answers.length > 0 ? (
               <>
                 {[...caseData.answers] // Create a shallow copy of the array
-                  .sort((a, b) => (b.approved ? 1 : 0) - (a.approved ? 1 : 0)) // Sort approved answers to the top
-                  .map((answer: IAnswer) => (
-                    <div key={answer._id}>
-                      <div className="flex lg:hidden flex-col gap-4 mb-8">
-                        <AnswerMobile
-                          answer={answer}
-                          me={me}
-                          refetch={refetch}
-                          caseNumber={caseData.case_number}
-                          status={caseData.status}
-                        />
+                  .sort((a, b) => {
+                    // Approved answers first
+                    if (a.approved && !b.approved) return -1;
+                    if (!a.approved && b.approved) return 1;
+                    // If both are approved or both are not approved, sort by date (newest first)
+                    const dateA = new Date(a.date).getTime();
+                    const dateB = new Date(b.date).getTime();
+                    return dateB - dateA;
+                  })
+                  .map((answer: IAnswer) => {
+                    const showThisAnswer =
+                      answer.approved || // Rule 1: Always show if approved
+                      (!checkNormal(me.role._id) && isExpertForCase); // Rule 2: For unapproved, user must be non-normal AND an expert for this case
+
+                    return showThisAnswer ? (
+                      <div key={answer._id}>
+                        <div className="flex lg:hidden flex-col gap-4 mb-8">
+                          <AnswerMobile
+                            answer={answer}
+                            me={me}
+                            refetch={refetch}
+                            caseNumber={caseData.case_number}
+                            status={caseData.status}
+                          />
+                        </div>
+                        <div className="hidden lg:flex flex-col gap-4 mb-8">
+                          <Answer
+                            answer={answer}
+                            me={me}
+                            refetch={refetch}
+                            caseNumber={caseData.case_number}
+                            status={caseData.status}
+                            caseCategories={caseData.categories}
+                          />
+                        </div>
                       </div>
-                      <div className="hidden lg:flex flex-col gap-4 mb-8">
-                        <Answer
-                          answer={answer}
-                          me={me}
-                          refetch={refetch}
-                          caseNumber={caseData.case_number}
-                          status={caseData.status}
-                        />
-                      </div>
-                    </div>
-                  ))}
+                    ) : null; // React handles null by rendering nothing, which is what we want.
+                  })}
               </>
             ) : (
               <div className="text-center text-gray-500">{t("no_answers")}</div>

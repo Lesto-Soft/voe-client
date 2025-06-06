@@ -101,8 +101,8 @@ export const GET_CASES = gql`
 `;
 
 export const GET_CASE_BY_CASE_NUMBER = gql`
-  query GET_CASE_BY_CASE_NUMBER($caseNumber: Int!) {
-    getCaseByNumber(case_number: $caseNumber) {
+  query GET_CASE_BY_CASE_NUMBER($caseNumber: Int!, $roleId: String) {
+    getCaseByNumber(case_number: $caseNumber, roleId: $roleId) {
       ...CaseFragment
       rating {
         _id
@@ -189,5 +189,13 @@ export const COUNT_CASES = gql`
 export const COUNT_FILTERED_CASES = gql`
   query CountFilteredCases($input: getAllInput) {
     countFilteredCases(input: $input)
+  }
+`;
+
+export const UPDATE_CASE = gql`
+  mutation UpdateCase($caseId: ID!, $userId: ID!, $input: updateCaseInput!) {
+    updateCase(caseId: $caseId, userId: $userId, input: $input) {
+      _id
+    }
   }
 `;

@@ -18,9 +18,9 @@ export const getStatusStyle = (status: string) => {
 export const getPriorityStyle = (priority: string) => {
   switch (priority) {
     case "LOW":
-      return "text-green-600";
+      return "text-btnGreenHover";
     case "HIGH":
-      return "text-red-600";
+      return "text-btnRedHover";
     case "MEDIUM":
       return "text-yellow-600";
     default:

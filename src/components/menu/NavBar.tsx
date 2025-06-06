@@ -1,4 +1,4 @@
-import React, { useState, useTransition } from "react";
+import React, { useState } from "react";
 import { useLocation } from "react-router";
 import { Link } from "react-router";
 import {
@@ -11,12 +11,12 @@ import {
   UserIcon,
   ArrowRightCircleIcon,
 } from "@heroicons/react/24/solid";
-import { useGetMe } from "../../graphql/hooks/user";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { dev_endpoint } from "../../db/config";
 import axios from "axios";
 import MobileMenu from "./MobileMenu";
 import { useTranslation } from "react-i18next";
+import { IMe } from "../../db/interfaces";
 
 export interface NavLinkProps {
   to: string;
@@ -54,17 +54,13 @@ const NavLink: React.FC<NavLinkProps> = ({
   );
 };
 
-const NavBar = () => {
+const NavBar: React.FC<{ me: IMe }> = ({ me }) => {
+  console.log(me);
   const location = useLocation();
-  const { me, error, loading } = useGetMe();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { t } = useTranslation("menu");
 
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error.message}</div>;
-  if (!me || !me.me) return <div>Неуспешно зареждане на потребител.</div>;
-
-  const initials = me.me.name
+  const initials = me.name
     .split(" ")
     .map((word: string) => word[0])
     .join("");
@@ -142,9 +138,9 @@ const NavBar = () => {
             <div className="relative">
               <DropdownMenu.Trigger asChild className="focus:outline-none">
                 <button className="flex items-center justify-center w-12 h-12 bg-white text-white rounded-full shadow-lg overflow-hidden">
-                  {!me.me.avatar ? (
+                  {!me.avatar ? (
                     <img
-                      src={`${dev_endpoint}/static/avatars/${me.me.avatar}`}
+                      src={`${dev_endpoint}/static/avatars/${me.avatar}`}
                       alt="User Avatar"
                       className="w-full h-full object-cover hover:cursor-pointer"
                       onError={(e) => {

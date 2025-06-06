@@ -13,17 +13,29 @@ import User from "../pages/User";
 import Category from "../pages/Category";
 import Case from "../pages/Case";
 import CategoryManagement from "../pages/CategoryManagement";
+import { useGetMe } from "../graphql/hooks/user";
+import { IMe } from "../db/interfaces";
+import { UserProvider } from "../context/UserContext";
 
 const AppLayout = () => {
+  const { me, error, loading } = useGetMe();
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error.message}</div>;
+  if (!me || !me.me) return <div>Неуспешно зареждане на потребител.</div>;
+  const currentUserData: IMe = me.me;
+
   return (
-    <div className="w-full min-h-screen flex flex-col">
-      <div>
-        <NavBar />
+    <UserProvider value={currentUserData}>
+      <div className="w-full min-h-screen flex flex-col">
+        <div>
+          <NavBar me={currentUserData} />
+        </div>
+        <div className="flex-1 flex flex-col w-full min-h-0">
+          <Outlet />
+        </div>
       </div>
-      <div className="flex-1 flex flex-col w-full min-h-0">
-        <Outlet />
-      </div>
-    </div>
+    </UserProvider>
   );
 };
 

@@ -72,7 +72,7 @@ const EditAnswerBtn: React.FC<EditButtonProps> = ({
         me._id
       );
     } catch (error) {
-      console.error("Error updating comment:", error);
+      console.error("Error updating answer:", error);
     }
   };
 

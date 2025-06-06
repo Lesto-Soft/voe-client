@@ -6,6 +6,7 @@ import { admin_check } from "../../../utils/rowStringCheckers";
 import ImagePreviewModal from "../../modals/ImagePreviewModal";
 import { createFileUrl } from "../../../utils/fileUtils";
 import DeleteModal from "../../modals/DeleteModal";
+import { useDeleteComment } from "../../../graphql/hooks/comment";
 
 interface CommentProps {
   comment: IComment;
@@ -14,6 +15,8 @@ interface CommentProps {
 }
 
 const CommentMobile: React.FC<CommentProps> = ({ comment, me, caseNumber }) => {
+  const { deleteComment, error, loading } = useDeleteComment(caseNumber);
+
   return (
     <div className="flex flex-row items-stretch gap-3 rounded p-3 w-full px-4">
       {/* Left: Creator info, vertically centered */}
@@ -38,9 +41,7 @@ const CommentMobile: React.FC<CommentProps> = ({ comment, me, caseNumber }) => {
                 <DeleteModal
                   title="Delete Comment"
                   content="Are you sure you want to delete this comment? This action cannot be undone."
-                  onDelete={() => {
-                    // Implement delete logic here
-                  }}
+                  onDelete={() => deleteComment(comment._id)}
                 />
               </div>
             )}

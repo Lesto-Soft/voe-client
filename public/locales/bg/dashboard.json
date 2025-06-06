@@ -51,5 +51,8 @@
   "send": "Изпрати",
   "hideComment": "Скрий коментар",
   "addComment": "Добави коментар",
-  "writeComment": "Напиши коментар..."
+  "writeComment": "Напиши коментар...",
+  "content": "Съдържание",
+  "attachments": "Прикачени файлове",
+  "writeAnswer": "Напиши отговор..."
 }

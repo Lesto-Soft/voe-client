@@ -26,9 +26,9 @@ export const getDifferences = (oldText: string, newText: string) => {
   // Handle regular differences
   return diff.map((part, index) => {
     const className = part.added
-      ? "text-green-500 font-bold" // Highlight added parts in green
+      ? "text-btnGreenHover font-bold" // Highlight added parts in green
       : part.removed
-      ? "text-red-500 line-through" // Cross out removed parts
+      ? "text-btnRedHover line-through" // Cross out removed parts
       : "text-gray-700"; // Unchanged parts
 
     return (

@@ -1,4 +1,4 @@
-import { IAnswer, IComment } from "../../db/interfaces";
+import { IAnswer, ICategory, IComment, IMe } from "../../db/interfaces";
 import { useState, useEffect } from "react";
 import Comment from "./Comment";
 import ShowDate from "../global/ShowDate";
@@ -18,25 +18,52 @@ import DeleteModal from "../modals/DeleteModal";
 
 const Answer: React.FC<{
   answer: IAnswer;
-  me?: any;
+  me: IMe;
   refetch: () => void;
   caseNumber: number;
   status?: string;
-}> = ({ answer, me, refetch, caseNumber, status }) => {
+  caseCategories: ICategory[];
+}> = ({ answer, me, refetch, caseNumber, status, caseCategories }) => {
+  const { t } = useTranslation("answer");
   const [approved, setApproved] = useState(!!answer.approved);
   const [financialApproved, setFinancialApproved] = useState(
     !!answer.financial_approved
   );
   const [showCommentBox, setShowCommentBox] = useState(false);
+  const isCreator = me._id === answer.creator._id;
+
+  // 1. Determine if the current user is a manager for any of the case's categories
+  const managedCategoryIds = me?.managed_categories.map(
+    (cat: ICategory) => cat._id
+  );
+  const caseCategoryIdsForThisCase = caseCategories.map((cat) => cat._id);
+  const isCategoryManagerForCase = managedCategoryIds.some(
+    (managedId: string) => caseCategoryIdsForThisCase.includes(managedId)
+  );
+  // 2. Updated condition for being able to interact with general approval
+  const canInteractWithGeneralApproval = !isCreator && isCategoryManagerForCase;
   const { deleteAnswer, error, loading } = useDeleteAnswer(caseNumber);
+
+  // 3. Conditions for when approval/unapproval actions are contextually allowed
+  const canApproveNow =
+    !approved && status !== "CLOSED" && status !== "AWAITING_FINANCE";
+  const canUnapproveNow = approved; // If it's approved, the button allows unapproving
+
+  // 4. Final visibility for the general ApproveBtn
+  const showApproveBtn =
+    canInteractWithGeneralApproval && (canApproveNow || canUnapproveNow);
+
+  // 5. FinanceApproveBtn visibility logic (remains unchanged by this new requirement)
+  const showFinanceApproveBtn =
+    me?.financial_approver === true && // User has the specific financial approver permission
+    answer.needs_finance === true && // Answer is flagged as needing finance
+    approved === true;
 
   // Synchronize state with the updated answer prop
   useEffect(() => {
     setApproved(!!answer.approved);
     setFinancialApproved(!!answer.financial_approved);
   }, [answer]);
-
-  const { t } = useTranslation("answer");
 
   return (
     <div className="my-8 px-4 min-w-full">
@@ -55,27 +82,36 @@ const Answer: React.FC<{
           <div className="flex-1 flex flex-col justify-end">
             <div className="flex items-center mb-2 justify-between">
               <div className="flex items-center">
-                {/* Approve/Unapprove Button */}
-
-                {approved ? (
-                  <div className="flex items-center  flex-col xs:flex-row sm:flex-row md:flex-row lg:flex-row xl:flex-row 2xl:flex-row md:flex-nowrap md:gap-2 xs:gap-2 gap-2">
-                    <div className="flex items-center gap-2">
-                      <ApproveBtn
-                        approved={approved}
-                        setApproved={setApproved}
-                        t={t}
-                        answer={answer}
-                        me={me}
-                        refetch={refetch}
-                      />
-                    </div>
-                    {answer.needs_finance && (
+                {" "}
+                {/* Main container for this section */}
+                {/* Only render the button group if at least one button is supposed to be visible */}
+                {(showApproveBtn || showFinanceApproveBtn) && (
+                  <div className="flex items-center flex-col xs:flex-row sm:flex-row md:flex-row lg:flex-row xl:flex-row 2xl:flex-row md:flex-nowrap md:gap-2 xs:gap-2 gap-2">
+                    {/* General Approve/Unapprove Button */}
+                    {showApproveBtn && (
                       <div className="flex items-center gap-2">
-                        {/* Divider for md+ screens only */}
-                        <hr className="h-8 border-l border-gray-300 mx-2 hidden md:block" />
+                        <ApproveBtn
+                          approved={approved} // Current general approval status of the answer
+                          setApproved={setApproved} // Function to toggle general approval
+                          t={t}
+                          answer={answer}
+                          me={me}
+                          refetch={refetch}
+                        />
+                      </div>
+                    )}
+
+                    {/* Divider: Show only if both ApproveBtn and FinanceApproveBtn are visible */}
+                    {showApproveBtn && showFinanceApproveBtn && (
+                      <hr className="h-8 border-l border-gray-300 mx-2 hidden md:block" />
+                    )}
+
+                    {/* Finance Approve/Unapprove Button */}
+                    {showFinanceApproveBtn && (
+                      <div className="flex items-center gap-2">
                         <FinanceApproveBtn
-                          approved={financialApproved}
-                          setApproved={setFinancialApproved}
+                          approved={financialApproved} // Current financial approval status of the answer
+                          setApproved={setFinancialApproved} // Function to toggle financial approval
                           t={t}
                           answer={answer}
                           me={me}
@@ -84,18 +120,6 @@ const Answer: React.FC<{
                       </div>
                     )}
                   </div>
-                ) : (
-                  status !== "CLOSED" &&
-                  status !== "AWAITING_FINANCE" && (
-                    <ApproveBtn
-                      approved={approved}
-                      setApproved={setApproved}
-                      t={t}
-                      answer={answer}
-                      me={me}
-                      refetch={refetch}
-                    />
-                  )
                 )}
               </div>
 
@@ -103,14 +127,6 @@ const Answer: React.FC<{
                 {answer.history && answer.history.length > 0 && (
                   <AnswerHistoryModal history={answer.history} />
                 )}
-                {/* {me &&
-                  me.role &&
-                  (me._id === answer.creator._id ||
-                    admin_check(me.role.name)) && <EditButton 
-                      currentAttachments={answer.attachments || []}
-                      caseNumber={answer.case_number}
-                      comment={answer}
-                    />} */}
                 {me &&
                   me.role &&
                   (me._id === answer.creator._id ||

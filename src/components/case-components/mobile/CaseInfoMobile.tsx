@@ -15,7 +15,6 @@ import ShowDate from "../../global/ShowDate";
 
 interface ICaseInfoProps {
   content: string;
-  case_number: number;
   caseId: string;
   type: string;
   priority: string;
@@ -30,7 +29,6 @@ interface ICaseInfoProps {
 
 const CaseInfoMobile: React.FC<ICaseInfoProps> = ({
   content,
-  case_number,
   caseId,
   type,
   priority,

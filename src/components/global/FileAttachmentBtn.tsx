@@ -16,14 +16,9 @@ const FileAttachmentBtn: React.FC<FileAttachmentBtnProps> = ({
   const handleRemoveAttachment = (fileNameToRemove: string) => {
     setFileError(null);
     setAttachments((prevAttachments) =>
-      // Create a new array excluding the file with the matching name
       prevAttachments.filter((file) => file.name !== fileNameToRemove)
     );
-    // Note: Programmatically clearing the <input type="file"> value is
-    // unreliable across browsers and often not necessary. The user can
-    // always click "Choose Files" again to re-select.
   };
-  console.log(attachments);
 
   return (
     <div>

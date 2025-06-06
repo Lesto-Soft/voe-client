@@ -9,6 +9,7 @@ import {
   GET_USER_ANSWERED_CASES,
   GET_USER_CASES,
   GET_USER_COMMENTED_CASES,
+  UPDATE_CASE,
 } from "../query/case";
 
 export type AttachmentInput = {
@@ -23,6 +24,14 @@ export type CreateCaseInput = {
   attachments?: AttachmentInput[];
   categories: string[];
   creator: string;
+};
+
+export type UpdateCaseInput = {
+  content: string;
+  priority: "LOW" | "MEDIUM" | "HIGH";
+  attachments?: AttachmentInput[];
+  categories: string[];
+  type: "PROBLEM" | "SUGGESTION";
 };
 
 // Define a more specific type for the data returned by the query
@@ -85,9 +94,9 @@ export const useGetAllCases = (input: any) => {
   };
 };
 
-export const useGetCaseByCaseNumber = (caseNumber: number) => {
+export const useGetCaseByCaseNumber = (caseNumber: number, roleId: string) => {
   const { loading, error, data, refetch } = useQuery(GET_CASE_BY_CASE_NUMBER, {
-    variables: { caseNumber },
+    variables: { caseNumber, roleId },
   });
   const caseData = data?.getCaseByNumber || null;
   return {
@@ -267,5 +276,40 @@ export const useCountFilteredCases = (
     loading,
     error,
     refetch,
+  };
+};
+
+export const useUpdateCase = (caseNumber: number) => {
+  const [updateCaseMutation, { data, loading, error }] = useMutation(
+    UPDATE_CASE,
+    {
+      refetchQueries: [
+        { query: GET_CASE_BY_CASE_NUMBER, variables: { caseNumber } },
+      ],
+      awaitRefetchQueries: true,
+    }
+  );
+
+  const updateCase = async (
+    caseId: string,
+    userId: string,
+    input: UpdateCaseInput
+  ) => {
+    try {
+      const response = await updateCaseMutation({
+        variables: { caseId, userId, input },
+      });
+      return response.data.updateCase;
+    } catch (err) {
+      console.error("Failed to update case:", err);
+      throw err;
+    }
+  };
+
+  return {
+    updateCase,
+    data,
+    loading,
+    error,
   };
 };

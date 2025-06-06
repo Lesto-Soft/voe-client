@@ -11,7 +11,7 @@ const CaseHistoryContent: React.FC<{ history: ICaseHistory[] }> = ({
   const { t } = useTranslation("history");
 
   return (
-    <ul className="space-y-2 text-sm max-h-96 overflow-y-auto">
+    <ul className="space-y-2 text-sm overflow-y-auto">
       {history.map((h) => (
         <li key={h._id} className="text-gray-700 border-b pb-2">
           <div>

@@ -1,19 +1,21 @@
 // src/components/features/userAnalytics/UserActivityList.tsx
-import React, { useMemo } from "react";
-import { IUser, ICase, IAnswer, IComment } from "../../../db/interfaces"; // Adjust path
-import UserActivityItemCard from "./UserActivityItemCard"; // Adjust path
+import React, { useMemo, useEffect } from "react"; // 1. Import useEffect
+import { IUser, ICase, IAnswer, IComment } from "../../../db/interfaces";
+import UserActivityItemCard from "./UserActivityItemCard";
 import { InboxIcon, ArrowDownCircleIcon } from "@heroicons/react/24/outline";
-import useUserActivityScrollPersistence from "../../../hooks/useUserActivityScrollPersistence"; // Adjust path
+import useUserActivityScrollPersistence from "../../../hooks/useUserActivityScrollPersistence";
+import DateRangeSelector from "./DateRangeSelector"; // 2. Import the new component
 
 interface CombinedActivity {
   id: string;
   date: string;
   item: ICase | IAnswer | IComment;
-  activityType: "case" | "answer" | "comment"; // Union of literal types
+  activityType: "case" | "answer" | "comment";
 }
 
 type ActivityTab = "all" | "cases" | "answers" | "comments";
 
+// 3. Update the props interface
 interface UserActivityListProps {
   user: IUser | undefined | null;
   isLoading?: boolean;
@@ -23,7 +25,12 @@ interface UserActivityListProps {
     comments: number;
     all: number;
   };
-  userId?: string; // Add userId prop for the hook
+  userId?: string;
+  dateRange: { startDate: Date | null; endDate: Date | null };
+  onDateRangeChange: (range: {
+    startDate: Date | null;
+    endDate: Date | null;
+  }) => void;
 }
 
 const UserActivityList: React.FC<UserActivityListProps> = ({
@@ -31,8 +38,9 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
   isLoading,
   counts,
   userId,
+  dateRange, // Destructure new props
+  onDateRangeChange, // Destructure new props
 }) => {
-  // Determine if data is ready for scroll persistence
   const isDataReady = !isLoading && !!user;
 
   const {
@@ -41,100 +49,92 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
     scrollableActivityListRef,
     handleTabChange,
     handleLoadMoreItems,
+    resetScrollAndVisibleCount,
   } = useUserActivityScrollPersistence(userId, isDataReady);
 
+  // 4. ADD EFFECT TO RESET SCROLL ON DATE CHANGE
+  // This improves user experience by resetting the view when the data fundamentally changes.
+
+  useEffect(() => {
+    if (resetScrollAndVisibleCount) {
+      resetScrollAndVisibleCount();
+    }
+  }, [dateRange, resetScrollAndVisibleCount]);
+
+  // 5. ADD FILTERING LOGIC TO MEMOIZED ACTIVITIES
   const allActivities = useMemo((): CombinedActivity[] => {
     if (!user) return [];
+
+    // Helper function for date filtering
+    const isInDateRange = (itemDateStr: string) => {
+      if (!dateRange.startDate || !dateRange.endDate) return true; // No filter applied
+      const itemDate = new Date(itemDateStr);
+      return itemDate >= dateRange.startDate && itemDate <= dateRange.endDate;
+    };
+
     const activities: CombinedActivity[] = [];
 
     if (user.cases) {
-      user.cases.forEach((caseItem) =>
-        activities.push({
-          id: `case-${caseItem._id}`,
-          date: caseItem.date,
-          item: caseItem,
-          activityType: "case" as "case",
-        })
-      );
+      user.cases
+        .filter((c) => isInDateRange(c.date)) // Filter by date
+        .forEach((caseItem) =>
+          activities.push({
+            id: `case-${caseItem._id}`,
+            date: caseItem.date,
+            item: caseItem,
+            activityType: "case",
+          })
+        );
     }
 
     if (user.answers) {
-      user.answers.forEach((answerItem) =>
-        activities.push({
-          id: `answer-${answerItem._id}`,
-          date: answerItem.date,
-          item: answerItem,
-          activityType: "answer" as "answer",
-        })
-      );
+      user.answers
+        .filter((a) => isInDateRange(a.date)) // Filter by date
+        .forEach((answerItem) =>
+          activities.push({
+            id: `answer-${answerItem._id}`,
+            date: answerItem.date,
+            item: answerItem,
+            activityType: "answer",
+          })
+        );
     }
 
     if (user.comments) {
-      user.comments.forEach((commentItem) =>
-        activities.push({
-          id: `comment-${commentItem._id}`,
-          date: commentItem.date,
-          item: commentItem,
-          activityType: "comment" as "comment",
-        })
-      );
+      user.comments
+        .filter((c) => isInDateRange(c.date)) // Filter by date
+        .forEach((commentItem) =>
+          activities.push({
+            id: `comment-${commentItem._id}`,
+            date: commentItem.date,
+            item: commentItem,
+            activityType: "comment",
+          })
+        );
     }
 
     return activities.sort(
       (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
     );
-  }, [user]);
+  }, [user, dateRange]); // Add dateRange to the dependency array
 
+  // This will now automatically be filtered because it's derived from `allActivities`
   const activitiesToDisplay = useMemo((): CombinedActivity[] => {
-    if (!user) return [];
-
-    let baseActivities: CombinedActivity[] = [];
+    let baseActivities: CombinedActivity[];
 
     switch (activeTab) {
       case "cases":
-        baseActivities =
-          user.cases
-            ?.map(
-              (item): CombinedActivity => ({
-                id: `case-${item._id}`,
-                date: item.date,
-                item,
-                activityType: "case" as "case",
-              })
-            )
-            .sort(
-              (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-            ) || [];
+        baseActivities = allActivities.filter((a) => a.activityType === "case");
         break;
       case "answers":
-        baseActivities =
-          user.answers
-            ?.map(
-              (item): CombinedActivity => ({
-                id: `answer-${item._id}`,
-                date: item.date,
-                item,
-                activityType: "answer" as "answer",
-              })
-            )
-            .sort(
-              (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-            ) || [];
+        baseActivities = allActivities.filter(
+          (a) => a.activityType === "answer"
+        );
         break;
       case "comments":
-        baseActivities =
-          user.comments
-            ?.map(
-              (item): CombinedActivity => ({
-                id: `comment-${item._id}`,
-                date: item.date,
-                item,
-                activityType: "comment" as "comment",
-              })
-            )
-            .sort(
-              (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-            ) || [];
+        baseActivities = allActivities.filter(
+          (a) => a.activityType === "comment"
+        );
         break;
       case "all":
       default:
@@ -142,9 +142,8 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
         break;
     }
 
-    // Apply visible count limit
     return baseActivities.slice(0, visibleCounts[activeTab]);
-  }, [user, activeTab, allActivities, visibleCounts]);
+  }, [activeTab, allActivities, visibleCounts]);
 
   const tabs: { key: ActivityTab; label: string; count: number }[] = [
     { key: "all", label: "Всички", count: counts.all },
@@ -153,15 +152,15 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
     { key: "comments", label: "Коментари", count: counts.comments },
   ];
 
-  // Get the total count for the current tab to determine if we can load more
+  // Logic for `getCurrentTabTotalCount` and `canLoadMore` should now use the filtered `allActivities`
   const getCurrentTabTotalCount = (): number => {
     switch (activeTab) {
       case "cases":
-        return user?.cases?.length || 0;
+        return allActivities.filter((a) => a.activityType === "case").length;
       case "answers":
-        return user?.answers?.length || 0;
+        return allActivities.filter((a) => a.activityType === "answer").length;
       case "comments":
-        return user?.comments?.length || 0;
+        return allActivities.filter((a) => a.activityType === "comment").length;
       case "all":
       default:
         return allActivities.length;
@@ -201,6 +200,11 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
   return (
     <div className="lg:col-span-6 bg-white rounded-lg shadow-lg flex flex-col overflow-hidden max-h-full">
       <div className="p-3 sm:p-4 border-b border-gray-200">
+        {/* 6. RENDER THE DATE SELECTOR COMPONENT */}
+        <DateRangeSelector
+          dateRange={dateRange}
+          onDateRangeChange={onDateRangeChange}
+        />
         <div className="flex space-x-1 sm:space-x-2 overflow-x-auto pb-1 custom-scrollbar-xs">
           {tabs.map((tab) => (
             <button

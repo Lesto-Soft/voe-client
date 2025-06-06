@@ -18,19 +18,22 @@ interface TabScrollStates {
 const INITIAL_VISIBLE_COUNT = 10;
 const LOAD_MORE_INCREMENT = 10;
 
+// Helper for initial state to avoid repetition
+const getInitialTabStates = () => ({
+  all: { scrollTop: 0, visibleCount: INITIAL_VISIBLE_COUNT },
+  cases: { scrollTop: 0, visibleCount: INITIAL_VISIBLE_COUNT },
+  answers: { scrollTop: 0, visibleCount: INITIAL_VISIBLE_COUNT },
+  comments: { scrollTop: 0, visibleCount: INITIAL_VISIBLE_COUNT },
+});
+
 const useUserActivityScrollPersistence = (
   userId?: string,
   isDataReady: boolean = false
 ) => {
   const [activeTab, setActiveTab] = useState<ActivityTab>("all");
-
-  // Store scroll states for each tab
-  const [tabScrollStates, setTabScrollStates] = useState<TabScrollStates>({
-    all: { scrollTop: 0, visibleCount: INITIAL_VISIBLE_COUNT },
-    cases: { scrollTop: 0, visibleCount: INITIAL_VISIBLE_COUNT },
-    answers: { scrollTop: 0, visibleCount: INITIAL_VISIBLE_COUNT },
-    comments: { scrollTop: 0, visibleCount: INITIAL_VISIBLE_COUNT },
-  });
+  const [tabScrollStates, setTabScrollStates] = useState<TabScrollStates>(
+    getInitialTabStates()
+  );
 
   const scrollableActivityListRef = useRef<HTMLDivElement>(null);
   const isRestoringScroll = useRef(false);
@@ -236,6 +239,17 @@ const useUserActivityScrollPersistence = (
     });
   }, [activeTab, userId, getStorageKeys]);
 
+  // 1. ADD THE RESET FUNCTION
+  const resetScrollAndVisibleCount = useCallback(() => {
+    // Reset the state to its initial values
+    setTabScrollStates(getInitialTabStates());
+    // Also reset the scroll position of the div element itself
+    if (scrollableActivityListRef.current) {
+      scrollableActivityListRef.current.scrollTop = 0;
+    }
+    // We could also clear the sessionStorage here if desired, but resetting the state is sufficient for UX.
+  }, []); // Empty dependency array as it has no external dependencies
+
   // Create visible counts object for backward compatibility
   const visibleCounts = {
     all: tabScrollStates.all.visibleCount,
@@ -244,13 +258,14 @@ const useUserActivityScrollPersistence = (
     comments: tabScrollStates.comments.visibleCount,
   };
 
+  // 2. EXPORT THE NEW FUNCTION
   return {
     activeTab,
     visibleCounts,
     scrollableActivityListRef,
     handleTabChange,
     handleLoadMoreItems,
-    // Expose tab scroll states if needed for debugging
+    resetScrollAndVisibleCount, // Export the function
     tabScrollStates,
   };
 };

@@ -78,3 +78,37 @@ export const getDaysInMonth = (year: number, month: number): number => {
   // By passing 0 as the day for the *next* month, it rolls back to the last day of the target month.
   return new Date(year, month, 0).getDate();
 };
+
+/**
+ * Returns the start of a given date (00:00:00).
+ * @param date - The date to modify.
+ * @returns A new Date object set to the beginning of the day.
+ */
+export const startOfDay = (date: Date): Date => {
+  const newDate = new Date(date);
+  newDate.setHours(0, 0, 0, 0);
+  return newDate;
+};
+
+/**
+ * Returns the end of a given date (23:59:59.999).
+ * @param date - The date to modify.
+ * @returns A new Date object set to the end of the day.
+ */
+export const endOfDay = (date: Date): Date => {
+  const newDate = new Date(date);
+  newDate.setHours(23, 59, 59, 999);
+  return newDate;
+};
+
+/**
+ * Subtracts a specified number of days from a date.
+ * @param date - The date to subtract from.
+ * @param days - The number of days to subtract.
+ * @returns A new Date object representing the result.
+ */
+export const subDays = (date: Date, days: number): Date => {
+  const newDate = new Date(date);
+  newDate.setDate(newDate.getDate() - days);
+  return newDate;
+};

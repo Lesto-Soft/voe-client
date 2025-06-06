@@ -1,10 +1,7 @@
 // src/pages/User.tsx
-import React from "react";
+import React, { useState } from "react";
 import { useParams } from "react-router"; // Ensure using react-router-dom
-import {
-  useGetUserById,
-  useGetFullUserByUsername,
-} from "../graphql/hooks/user"; // Adjust path as needed
+import { useGetFullUserByUsername } from "../graphql/hooks/user"; // Adjust path as needed
 import { IUser } from "../db/interfaces"; // Adjust path as needed
 
 // Hooks
@@ -21,13 +18,27 @@ const User: React.FC = () => {
     username: string;
   }>();
 
+  // 1. ADD STATE FOR THE DATE RANGE
+  const [dateRange, setDateRange] = useState<{
+    startDate: Date | null;
+    endDate: Date | null;
+  }>({
+    startDate: null,
+    endDate: null,
+  });
+
   const {
     loading: userLoading,
     error: userError,
     user,
   } = useGetFullUserByUsername(userUsernameFromParams);
 
-  const userStats = useUserActivityStats(user);
+  // 2. PASS THE DATE RANGE TO THE STATS HOOK
+  const userStats = useUserActivityStats(
+    user,
+    dateRange.startDate,
+    dateRange.endDate
+  );
 
   // Get server base URL for images (used in UserInformationPanel for avatar)
   const serverBaseUrl = import.meta.env.VITE_API_URL || "";
@@ -74,6 +85,8 @@ const User: React.FC = () => {
     );
   }
 
+  // 3. UPDATE ACTIVITY COUNTS TO USE THE FILTERED STATS
+  // This ensures the numbers in the tabs (e.g., "Сигнали (19)") are accurate for the selected period.
   const activityCounts = {
     cases: userStats?.totalSignals || 0,
     answers: userStats?.totalAnswers || 0,
@@ -95,12 +108,14 @@ const User: React.FC = () => {
           serverBaseUrl={serverBaseUrl}
         />
 
-        {/* Main Content: User Activity Feed/List */}
+        {/* 4. PASS DATE PROPS TO THE ACTIVITY LIST */}
         <UserActivityList
           user={user}
           isLoading={userLoading && !!user}
           counts={activityCounts}
-          userId={userUsernameFromParams} // Pass userId for scroll persistence
+          userId={userUsernameFromParams}
+          dateRange={dateRange}
+          onDateRangeChange={setDateRange}
         />
 
         {/* Right Sidebar: User Statistics */}

@@ -1,8 +1,12 @@
 // src/components/features/userAnalytics/UserActivityList.tsx
-import React, { useMemo, useEffect } from "react"; // 1. Import useEffect
+import React, { useMemo, useEffect, useState } from "react"; // 1. Import useEffect
 import { IUser, ICase, IAnswer, IComment } from "../../../db/interfaces";
 import UserActivityItemCard from "./UserActivityItemCard";
-import { InboxIcon, ArrowDownCircleIcon } from "@heroicons/react/24/outline";
+import {
+  InboxIcon,
+  ArrowDownCircleIcon,
+  CalendarDaysIcon,
+} from "@heroicons/react/24/outline";
 import useUserActivityScrollPersistence from "../../../hooks/useUserActivityScrollPersistence";
 import DateRangeSelector from "./DateRangeSelector"; // 2. Import the new component
 
@@ -41,6 +45,8 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
   dateRange, // Destructure new props
   onDateRangeChange, // Destructure new props
 }) => {
+  // 3. ADD STATE FOR THE FILTER VISIBILITY
+  const [isDateFilterVisible, setIsDateFilterVisible] = useState(false);
   const isDataReady = !isLoading && !!user;
 
   const {
@@ -64,19 +70,15 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
   // 5. ADD FILTERING LOGIC TO MEMOIZED ACTIVITIES
   const allActivities = useMemo((): CombinedActivity[] => {
     if (!user) return [];
-
-    // Helper function for date filtering
     const isInDateRange = (itemDateStr: string) => {
-      if (!dateRange.startDate || !dateRange.endDate) return true; // No filter applied
+      if (!dateRange.startDate || !dateRange.endDate) return true;
       const itemDate = new Date(itemDateStr);
       return itemDate >= dateRange.startDate && itemDate <= dateRange.endDate;
     };
-
     const activities: CombinedActivity[] = [];
-
     if (user.cases) {
       user.cases
-        .filter((c) => isInDateRange(c.date)) // Filter by date
+        .filter((c) => isInDateRange(c.date))
         .forEach((caseItem) =>
           activities.push({
             id: `case-${caseItem._id}`,
@@ -86,10 +88,9 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
           })
         );
     }
-
     if (user.answers) {
       user.answers
-        .filter((a) => isInDateRange(a.date)) // Filter by date
+        .filter((a) => isInDateRange(a.date))
         .forEach((answerItem) =>
           activities.push({
             id: `answer-${answerItem._id}`,
@@ -99,10 +100,9 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
           })
         );
     }
-
     if (user.comments) {
       user.comments
-        .filter((c) => isInDateRange(c.date)) // Filter by date
+        .filter((c) => isInDateRange(c.date))
         .forEach((commentItem) =>
           activities.push({
             id: `comment-${commentItem._id}`,
@@ -112,16 +112,14 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
           })
         );
     }
-
     return activities.sort(
       (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
     );
-  }, [user, dateRange]); // Add dateRange to the dependency array
+  }, [user, dateRange]);
 
   // This will now automatically be filtered because it's derived from `allActivities`
   const activitiesToDisplay = useMemo((): CombinedActivity[] => {
     let baseActivities: CombinedActivity[];
-
     switch (activeTab) {
       case "cases":
         baseActivities = allActivities.filter((a) => a.activityType === "case");
@@ -141,7 +139,6 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
         baseActivities = allActivities;
         break;
     }
-
     return baseActivities.slice(0, visibleCounts[activeTab]);
   }, [activeTab, allActivities, visibleCounts]);
 
@@ -200,27 +197,46 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
   return (
     <div className="lg:col-span-6 bg-white rounded-lg shadow-lg flex flex-col overflow-hidden max-h-full">
       <div className="p-3 sm:p-4 border-b border-gray-200">
-        {/* 6. RENDER THE DATE SELECTOR COMPONENT */}
-        <DateRangeSelector
-          dateRange={dateRange}
-          onDateRangeChange={onDateRangeChange}
-        />
-        <div className="flex space-x-1 sm:space-x-2 overflow-x-auto pb-1 custom-scrollbar-xs">
-          {tabs.map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => handleTabChange(tab.key)}
-              className={`px-3 py-1.5 text-xs sm:text-sm font-medium rounded-md whitespace-nowrap transition-colors duration-150 focus:outline-none
-                ${
+        {/* 4. UPDATE THE LAYOUT FOR TABS AND THE NEW TOGGLE BUTTON */}
+        <div className="flex items-center justify-between mb-2">
+          {/* Container for the tabs */}
+          <div className="flex space-x-1 sm:space-x-2 overflow-x-auto pb-1 custom-scrollbar-xs">
+            {tabs.map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => handleTabChange(tab.key)}
+                className={`px-3 py-1.5 text-xs sm:text-sm font-medium rounded-md whitespace-nowrap transition-colors duration-150 focus:outline-none ${
                   activeTab === tab.key
                     ? "bg-indigo-600 text-white shadow-sm"
                     : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                 }`}
-            >
-              {tab.label} ({tab.count})
-            </button>
-          ))}
+              >
+                {tab.label} ({tab.count})
+              </button>
+            ))}
+          </div>
+
+          {/* The new button to toggle the date filter */}
+          <button
+            onClick={() => setIsDateFilterVisible((prev) => !prev)}
+            title="Filter by date"
+            className={`p-2 rounded-md transition-colors duration-150 ml-2 ${
+              isDateFilterVisible
+                ? "bg-indigo-100 text-indigo-600"
+                : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+            }`}
+          >
+            <CalendarDaysIcon className="h-5 w-5" />
+          </button>
         </div>
+
+        {/* 5. CONDITIONALLY RENDER THE DATE SELECTOR BELOW THE TABS */}
+        {isDateFilterVisible && (
+          <DateRangeSelector
+            dateRange={dateRange}
+            onDateRangeChange={onDateRangeChange}
+          />
+        )}
       </div>
 
       <div

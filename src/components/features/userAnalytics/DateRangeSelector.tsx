@@ -1,5 +1,5 @@
 // src/components/features/userAnalytics/DateRangeSelector.tsx
-import React from "react";
+import React, { useState, useEffect } from "react"; // 1. Import useState and useEffect from "react";
 import { startOfDay, endOfDay, subDays } from "../../../utils/dateUtils";
 
 interface DateRangeSelectorProps {
@@ -11,9 +11,9 @@ interface DateRangeSelectorProps {
 }
 
 const presets = [
-  { label: "Last 7 Days", days: 6 },
-  { label: "Last 30 Days", days: 29 },
-  { label: "Last 90 Days", days: 89 },
+  { label: "7 Дни", days: 6 },
+  { label: "30 Дни", days: 29 },
+  { label: "90 Дни", days: 89 },
 ];
 
 // Helper to format date for the input element (YYYY-MM-DD)
@@ -26,14 +26,22 @@ const DateRangeSelector: React.FC<DateRangeSelectorProps> = ({
   dateRange,
   onDateRangeChange,
 }) => {
-  const handlePresetClick = (days: number) => {
+  // 2. ADD STATE TO TRACK THE ACTIVE PRESET
+  // Initialize with "All Time" as the default.
+  const [activePreset, setActivePreset] = useState<string | null>("All Time");
+
+  const handlePresetClick = (preset: { label: string; days: number }) => {
+    // Set the active preset label
+    setActivePreset(preset.label);
     onDateRangeChange({
-      startDate: startOfDay(subDays(new Date(), days)),
+      startDate: startOfDay(subDays(new Date(), preset.days)),
       endDate: endOfDay(new Date()),
     });
   };
 
   const handleAllTimeClick = () => {
+    // Set the active preset to "All Time"
+    setActivePreset("All Time");
     onDateRangeChange({ startDate: null, endDate: null });
   };
 
@@ -41,6 +49,8 @@ const DateRangeSelector: React.FC<DateRangeSelectorProps> = ({
     e: React.ChangeEvent<HTMLInputElement>,
     type: "start" | "end"
   ) => {
+    // A custom date change means no preset is active
+    setActivePreset(null);
     const valueAsDate = e.target.value ? new Date(e.target.value) : null;
     if (type === "start") {
       onDateRangeChange({
@@ -62,36 +72,38 @@ const DateRangeSelector: React.FC<DateRangeSelectorProps> = ({
         : "bg-gray-100 text-gray-700 hover:bg-gray-200"
     }`;
 
-  const isAllTimeActive = !dateRange.startDate && !dateRange.endDate;
+  // This component doesn't know about "isAllTimeActive" directly anymore,
+  // it relies on the `activePreset` state.
 
   return (
-    <div className="mb-3 space-y-2">
-      <div className="flex items-center space-x-1 sm:space-x-2 overflow-x-auto pb-1 custom-scrollbar-xs">
+    <div className="flex flex-row justify-between border-t pt-1 border-gray-200">
+      <div className="flex items-center justify-center space-x-1 sm:space-x-2 overflow-x-auto custom-scrollbar-xs">
+        {/* 3. UPDATE THE ACTIVE CHECK FOR THE BUTTONS */}
         <button
           onClick={handleAllTimeClick}
-          className={getButtonClass(isAllTimeActive)}
+          className={getButtonClass(activePreset === "All Time")}
         >
-          All Time
+          Целия период
         </button>
         {presets.map((preset) => (
           <button
             key={preset.label}
-            onClick={() => handlePresetClick(preset.days)}
-            className={getButtonClass(false)} // Active state for presets can be complex, skipping for now
+            onClick={() => handlePresetClick(preset)}
+            className={getButtonClass(activePreset === preset.label)}
           >
             {preset.label}
           </button>
         ))}
       </div>
       <div className="flex items-center gap-x-2 text-sm">
-        <span className="text-gray-600">From:</span>
+        <span className="text-gray-600">От:</span>
         <input
           type="date"
           value={toInputFormat(dateRange.startDate)}
           onChange={(e) => handleDateInputChange(e, "start")}
           className="p-1.5 border border-gray-300 rounded bg-white text-sm shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
         />
-        <span className="text-gray-600">To:</span>
+        <span className="text-gray-600">До:</span>
         <input
           type="date"
           value={toInputFormat(dateRange.endDate)}

@@ -2,21 +2,22 @@
 import React, { useState, useRef, useEffect } from "react";
 
 interface BarDataPoint {
-  [key: string]: any; // Allows arbitrary properties, e.g., periodLabel, problems, low, medium, high
+  [key: string]: any;
 }
 
 export interface BarSeriesConfig {
-  // Exporting for use in Analyses.tsx
-  dataKey: string; // e.g., 'problems', 'lowPriority'
-  label: string; // e.g., 'Проблеми', 'Нисък Приоритет'
+  dataKey: string;
+  label: string;
   color: string;
 }
 
 interface BarChartProps {
   data: BarDataPoint[];
-  dataKeyX: string; // Key for the X-axis label in each data point
-  series: BarSeriesConfig[]; // Array defining the series to plot
+  dataKeyX: string;
+  series: BarSeriesConfig[];
   title: string;
+  // --- NEW: Add prop for rendering style ---
+  barStyle?: "grouped" | "stacked";
 }
 
 interface TooltipData {
@@ -29,8 +30,10 @@ interface TooltipData {
 const BarChart: React.FC<BarChartProps> = ({
   data,
   dataKeyX,
-  series, // New prop
+  series,
   title,
+  // --- NEW: Default to 'grouped' for backward compatibility ---
+  barStyle = "grouped",
 }) => {
   const [tooltipData, setTooltipData] = useState<TooltipData>({
     visible: false,
@@ -45,8 +48,8 @@ const BarChart: React.FC<BarChartProps> = ({
   const chartHeight = 220;
   const marginTop = 20;
   const marginRight = 20;
-  const marginBottom = 45; // For X-axis labels
-  const marginLeft = 35; // For Y-axis labels
+  const marginBottom = 45;
+  const marginLeft = 35;
 
   useEffect(() => {
     const currentContainerRef = containerRef.current;
@@ -70,26 +73,34 @@ const BarChart: React.FC<BarChartProps> = ({
   const plotWidth = Math.max(0, svgContainerWidth - marginLeft - marginRight);
   const plotHeight = Math.max(0, chartHeight - marginTop - marginBottom);
 
-  // Calculate maxValue across all series
-  const maxValue = Math.max(
-    1,
-    ...data.map((d) => Math.max(...series.map((s) => d[s.dataKey] || 0)))
-  );
+  // --- MODIFIED: Calculate maxValue based on barStyle ---
+  const maxValue =
+    barStyle === "stacked"
+      ? Math.max(
+          1,
+          ...data.map((d) =>
+            series.reduce((sum, s) => sum + (d[s.dataKey] || 0), 0)
+          )
+        )
+      : Math.max(
+          1,
+          ...data.map((d) => Math.max(...series.map((s) => d[s.dataKey] || 0)))
+        );
+  // --------------------------------------------------------
+
   const numDataPoints = data.length;
   const numBarsInGroup = series.length;
 
-  // Calculate widths for bars and groups
+  // --- Bar width calculations (adjusted slightly for clarity) ---
   const groupAvailableWidth =
     plotWidth > 0 && numDataPoints > 0 ? plotWidth / numDataPoints : 0;
-  const groupPaddingRatio = 0.2; // Padding on each side of the group of bars
-  const barAreaWidth = groupAvailableWidth * (1 - groupPaddingRatio); // Total width available for bars within a group
+  const groupPaddingRatio = 0.2;
+  const barAreaWidth = groupAvailableWidth * (1 - groupPaddingRatio);
 
-  // Padding between individual bars within a group
+  // Grouped Style Calculations
   const individualBarPadding =
     numBarsInGroup > 1 ? Math.max(1, barAreaWidth * 0.05) : 0;
-
-  // Width of each individual bar
-  const calculatedBarWidth =
+  const groupedBarWidth =
     numBarsInGroup > 0
       ? Math.max(
           1,
@@ -97,6 +108,9 @@ const BarChart: React.FC<BarChartProps> = ({
             numBarsInGroup
         )
       : 0;
+
+  // Stacked Style Calculation (it's simpler, one bar per group)
+  const stackedBarWidth = Math.max(1, barAreaWidth);
 
   let yTickValues: number[] = [];
   if (maxValue > 0 && plotHeight > 0) {
@@ -171,9 +185,9 @@ const BarChart: React.FC<BarChartProps> = ({
         .bar-chart-tooltip.visible { opacity: 1; transform: translate(-50%, calc(-100% - 18px)); }
       `}</style>
       <p className="text-sm font-semibold mb-1 text-center text-gray-700">
-        {title}
+        {title ? title : "Няма дефиниран период"}
       </p>
-      {/* Legend now generated from series prop */}
+
       <div className="flex justify-center flex-wrap gap-x-3 gap-y-1 mb-3 text-xs">
         {series.map((s) => (
           <div key={s.dataKey} className="flex items-center">
@@ -185,31 +199,24 @@ const BarChart: React.FC<BarChartProps> = ({
           </div>
         ))}
       </div>
-      {/* Chart Area or No Data Message Wrapper */}
+
       <div style={{ height: `${chartHeight}px` }} className="w-full">
         {!data || data.length === 0 || !series || series.length === 0 ? (
-          // "No Data" Message
           <div className="w-full h-full flex items-center justify-center text-gray-500">
             Няма данни
             {(!series || series.length === 0) && "или конфигурация на сериите"}.
           </div>
         ) : (
-          // Chart SVG and its original wrapper
           <div className="w-full h-full overflow-x-auto">
-            {" "}
-            {/* Added h-full to fill the fixed-height parent */}
             <svg
               ref={svgRef}
-              width={svgContainerWidth > 0 ? svgContainerWidth : 300} // Retains original width logic
-              height={chartHeight} // Retains original height logic
+              width={svgContainerWidth > 0 ? svgContainerWidth : 300}
+              height={chartHeight}
               onMouseMove={handleMouseMove}
               onMouseLeave={handleMouseLeaveChart}
             >
-              {/* All your existing SVG content ( <g transform...>, yTicks mapping, data mapping for bars, etc.) goes here.
-                  Ensure this content is identical to what was previously inside the SVG element.
-              */}
               <g transform={`translate(${marginLeft}, ${marginTop})`}>
-                {/* Y-axis Ticks and Grid Lines */}
+                {/* Y-axis Ticks and Grid Lines (remain the same) */}
                 {yTicks.map((tick) => (
                   <g key={`y-tick-${tick.value}-${tick.yPos}`}>
                     <line
@@ -232,7 +239,7 @@ const BarChart: React.FC<BarChartProps> = ({
                   </g>
                 ))}
 
-                {/* Vertical Separator Lines (Copied from original) */}
+                {/* Vertical Separator Lines */}
                 {plotWidth > 0 &&
                   numDataPoints > 1 &&
                   Array.from({ length: numDataPoints - 1 }).map((_, i) => {
@@ -250,7 +257,7 @@ const BarChart: React.FC<BarChartProps> = ({
                     );
                   })}
 
-                {/* X-axis Line (Copied from original) */}
+                {/* X-axis Line */}
                 <line
                   x1={0}
                   y1={plotHeight}
@@ -259,15 +266,65 @@ const BarChart: React.FC<BarChartProps> = ({
                   stroke="gray"
                 />
 
-                {/* Bars and X-axis Labels (Copied from original) */}
+                {/* --- MODIFIED: Conditional Rendering for Bars --- */}
                 {plotWidth > 0 &&
                   numDataPoints > 0 &&
                   data.map((item, groupIndex) => {
                     const groupXStartOuter = groupIndex * groupAvailableWidth;
-                    const groupBarsXStart =
+                    const groupContentXStart =
                       groupXStartOuter +
                       (groupAvailableWidth * groupPaddingRatio) / 2;
 
+                    // --- STACKED BAR RENDERING LOGIC ---
+                    if (barStyle === "stacked") {
+                      let cumulativeHeight = 0; // Track height for stacking
+                      return (
+                        <g
+                          key={`stack-group-${groupIndex}`}
+                          className="bar-stack"
+                          onMouseEnter={(e) => handleBarMouseEnter(e, item)}
+                        >
+                          {series.map((s) => {
+                            const val = item[s.dataKey] || 0;
+                            if (val === 0) return null;
+
+                            const barHeight =
+                              maxValue > 0
+                                ? Math.max(0, (val / maxValue) * plotHeight)
+                                : 0;
+                            const barY =
+                              plotHeight - barHeight - cumulativeHeight;
+                            cumulativeHeight += barHeight; // Add to stack
+
+                            return (
+                              <rect
+                                key={s.dataKey}
+                                x={groupContentXStart}
+                                y={barY}
+                                width={
+                                  stackedBarWidth > 0 ? stackedBarWidth : 0
+                                }
+                                height={barHeight}
+                                fill={s.color}
+                                className="cursor-pointer transition-opacity hover:opacity-80"
+                              />
+                            );
+                          })}
+                          <text
+                            x={groupXStartOuter + groupAvailableWidth / 2}
+                            y={plotHeight + 25}
+                            fontSize="18px"
+                            fontWeight="normal"
+                            textAnchor="middle"
+                            fill="#555555"
+                          >
+                            {item[dataKeyX]}
+                          </text>
+                        </g>
+                      );
+                    }
+
+                    // --- GROUPED BAR RENDERING LOGIC (Original) ---
                     return (
                       <g
                         key={`group-${groupIndex}-${item[dataKeyX]}`}
@@ -280,18 +337,15 @@ const BarChart: React.FC<BarChartProps> = ({
                               ? Math.max(0, (val / maxValue) * plotHeight)
                               : 0;
                           const barX =
-                            groupBarsXStart +
-                            barIndex *
-                              (calculatedBarWidth + individualBarPadding);
+                            groupContentXStart +
+                            barIndex * (groupedBarWidth + individualBarPadding);
 
                           return (
                             <rect
                               key={s.dataKey}
                               x={barX}
                               y={plotHeight - barHeight}
-                              width={
-                                calculatedBarWidth > 0 ? calculatedBarWidth : 0
-                              }
+                              width={groupedBarWidth > 0 ? groupedBarWidth : 0}
                               height={barHeight}
                               fill={s.color}
                               onMouseEnter={(e) => handleBarMouseEnter(e, item)}
@@ -300,11 +354,7 @@ const BarChart: React.FC<BarChartProps> = ({
                           );
                         })}
                         <text
-                          x={
-                            groupBarsXStart +
-                            barAreaWidth / 2 -
-                            (groupAvailableWidth * groupPaddingRatio) / 2
-                          }
+                          x={groupXStartOuter + groupAvailableWidth / 2}
                           y={plotHeight + 25}
                           fontSize="18px"
                           fontWeight="normal"

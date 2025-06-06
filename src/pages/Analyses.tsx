@@ -14,14 +14,14 @@ import BarChart from "../components/charts/BarChart";
 import DistributionChartCard from "../components/features/analyses/components/DistributionChartCard";
 import SummaryCard from "../components/features/analyses/components/SummaryCard";
 import TopUserCard from "../components/features/analyses/components/TopUserCard";
-import { PodiumModal } from "../components/features/analyses/modals/PodiumModal"; // <-- NEW: Import the modal
+import { PodiumModal } from "../components/features/analyses/modals/PodiumModal";
 
 // Constants and Types
 import {
   PRIORITY_COLORS,
   TYPE_COLORS,
 } from "../components/features/analyses/constants";
-import { RankedUser } from "../components/features/analyses/types"; // <-- NEW: Import the new type
+import { RankedUser } from "../components/features/analyses/types";
 
 const Analyses: React.FC = () => {
   // 1. Fetch raw data
@@ -34,7 +34,7 @@ const Analyses: React.FC = () => {
   // 2. Manage all filter states
   const filters = useAnalysesFilters(allCases);
 
-  // 3. Get all processed data (MODIFIED)
+  // 3. Get all processed data
   const {
     barChartDisplayData,
     categoryPieData,
@@ -42,15 +42,19 @@ const Analyses: React.FC = () => {
     typePieData,
     averageRatingData,
     periodCaseSummary,
-    rankedSignalGivers, // <-- MODIFIED
-    rankedSolutionGivers, // <-- MODIFIED
-    rankedApprovers, // <-- MODIFIED
-    rankedRaters, // <-- MODIFIED
+    rankedSignalGivers,
+    rankedSolutionGivers,
+    rankedApprovers,
+    rankedRaters,
   } = useProcessedAnalyticsData(allCases, filters);
 
-  // --- NEW: State for toggling between Case and User stats ---
+  // --- NEW: State for toggling the bar chart style ---
+  const [barChartStyle, setBarChartStyle] = useState<"grouped" | "stacked">(
+    "grouped"
+  );
+  // --------------------------------------------------
+
   const [activeStatView, setActiveStatView] = useState<"case" | "user">("case");
-  // --- NEW: State for managing the podium modal ---
   const [podiumState, setPodiumState] = useState<{
     title: string;
     users: RankedUser[];
@@ -84,15 +88,22 @@ const Analyses: React.FC = () => {
     <>
       <div className="p-2 md:p-5 bg-gray-100 min-h-full space-y-5">
         <div className="bg-white rounded-md shadow-md">
-          <AnalysesControls {...filters} />
+          {/* --- MODIFIED: Pass new props to AnalysesControls --- */}
+          <AnalysesControls
+            {...filters}
+            barChartStyle={barChartStyle}
+            setBarChartStyle={setBarChartStyle}
+          />
         </div>
 
         <div className="bg-white rounded-lg shadow-md">
+          {/* --- MODIFIED: Pass new prop to BarChart --- */}
           <BarChart
             data={barChartDisplayData.data}
             dataKeyX={barChartDisplayData.dataKeyX}
             series={barChartDisplayData.seriesConfig}
             title={barChartDisplayData.title}
+            barStyle={barChartStyle} // <-- Pass the style
           />
         </div>
 
@@ -248,7 +259,7 @@ const Analyses: React.FC = () => {
               </SummaryCard>
             </div>
           ) : (
-            // User Leaderboard View (MODIFIED)
+            // User Leaderboard View
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
               <TopUserCard
                 title="Най-активен подател на сигнали"
@@ -299,7 +310,6 @@ const Analyses: React.FC = () => {
         </div>
       </div>
 
-      {/* NEW: Render the Podium Modal */}
       <PodiumModal
         isOpen={!!podiumState}
         onClose={() => setPodiumState(null)}

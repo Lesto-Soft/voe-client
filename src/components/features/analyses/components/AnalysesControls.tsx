@@ -3,12 +3,20 @@ import React from "react";
 import { ViewMode, BarChartDisplayMode } from "../types";
 import { MONTH_NAMES } from "../constants";
 import { getStartAndEndOfWeek } from "../../../../utils/dateUtils";
+import {
+  ViewColumnsIcon,
+  Square3Stack3DIcon,
+} from "@heroicons/react/24/outline";
 
 interface AnalysesControlsProps {
   viewMode: ViewMode;
   setViewMode: (mode: ViewMode) => void;
   barChartMode: BarChartDisplayMode;
   setBarChartMode: (mode: BarChartDisplayMode) => void;
+  // --- NEW: Add props for the new toggle ---
+  barChartStyle: "grouped" | "stacked";
+  setBarChartStyle: (style: "grouped" | "stacked") => void;
+  // -----------------------------------------
   currentYear: number;
   setCurrentYear: (year: number) => void;
   uniqueYears: number[];
@@ -32,6 +40,10 @@ const AnalysesControls: React.FC<AnalysesControlsProps> = (props) => {
     setViewMode,
     barChartMode,
     setBarChartMode,
+    // --- NEW: Destructure the new props ---
+    barChartStyle,
+    setBarChartStyle,
+    // ------------------------------------
     currentYear,
     setCurrentYear,
     uniqueYears,
@@ -45,6 +57,68 @@ const AnalysesControls: React.FC<AnalysesControlsProps> = (props) => {
     startDateForPies,
     endDateForPies,
   } = props;
+
+  // This is a shared part of the UI for toggles, let's create a helper component/function for it
+  const renderToggles = () => (
+    <div className="flex items-center space-x-4 ml-auto">
+      {/* === REPLACE THIS ENTIRE BLOCK === */}
+      <div className="flex items-center space-x-2">
+        <span className="text-sm font-medium text-gray-600">
+          Стил на графиката:
+        </span>
+        <button
+          type="button"
+          onClick={() => setBarChartStyle("grouped")}
+          title="Групиран" // Tooltip for accessibility
+          className={`p-1.5 rounded-md focus:outline-none focus:ring-1 focus:ring-sky-500 transition-colors ${
+            barChartStyle === "grouped"
+              ? "bg-sky-600 text-white shadow-sm"
+              : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+          }`}
+        >
+          <ViewColumnsIcon className="h-5 w-5" aria-hidden="true" />
+        </button>
+        <button
+          type="button"
+          onClick={() => setBarChartStyle("stacked")}
+          title="Натрупан" // Tooltip for accessibility
+          className={`p-1.5 rounded-md focus:outline-none focus:ring-1 focus:ring-sky-500 transition-colors ${
+            barChartStyle === "stacked"
+              ? "bg-sky-600 text-white shadow-sm"
+              : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+          }`}
+        >
+          <Square3Stack3DIcon className="h-5 w-5" aria-hidden="true" />
+        </button>
+      </div>
+      {/* === END OF REPLACEMENT === */}
+
+      {/* This part for "Покажи по:" remains the same */}
+      <div className="flex items-center space-x-2">
+        <span className="text-sm font-medium text-gray-600">Покажи по:</span>
+        <button
+          onClick={() => setBarChartMode("type")}
+          className={`px-3 py-1.5 text-xs sm:text-sm rounded-md focus:outline-none ${
+            barChartMode === "type"
+              ? "bg-sky-600 text-white shadow-sm"
+              : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+          }`}
+        >
+          Тип
+        </button>
+        <button
+          onClick={() => setBarChartMode("priority")}
+          className={`px-3 py-1.5 text-xs sm:text-sm rounded-md focus:outline-none ${
+            barChartMode === "priority"
+              ? "bg-sky-600 text-white shadow-sm"
+              : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+          }`}
+        >
+          Приоритет
+        </button>
+      </div>
+    </div>
+  );
 
   const renderDateControls = () => {
     let weekDateRangeStr = "";
@@ -174,30 +248,8 @@ const AnalysesControls: React.FC<AnalysesControlsProps> = (props) => {
           {displayedPeriod}
         </div>
 
-        {/* Bar Chart Mode Toggle */}
-        <div className="flex items-center space-x-2 ml-auto">
-          <span className="text-sm font-medium text-gray-600">Покажи по:</span>
-          <button
-            onClick={() => setBarChartMode("type")}
-            className={`px-3 py-1.5 text-xs sm:text-sm rounded-md focus:outline-none ${
-              barChartMode === "type"
-                ? "bg-sky-600 text-white shadow-sm"
-                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-            }`}
-          >
-            Тип
-          </button>
-          <button
-            onClick={() => setBarChartMode("priority")}
-            className={`px-3 py-1.5 text-xs sm:text-sm rounded-md focus:outline-none ${
-              barChartMode === "priority"
-                ? "bg-sky-600 text-white shadow-sm"
-                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-            }`}
-          >
-            Приоритет
-          </button>
-        </div>
+        {/* --- MODIFIED: Use the new renderToggles function --- */}
+        {renderToggles()}
       </div>
     );
   };
@@ -229,39 +281,15 @@ const AnalysesControls: React.FC<AnalysesControlsProps> = (props) => {
           )
         )}
       </div>
-      {/* The `renderDateControls` now also includes the toggle, making the logic simpler.
-          The bar for 'all' mode is slightly different and handled separately in the original file,
-          so we can replicate that behavior. A small conditional here is cleaner than a complex prop. */}
+
+      {/* Simplified rendering logic */}
       {viewMode === "all" ? (
         <div className="flex flex-wrap gap-x-3 gap-y-2 items-center p-3 bg-gray-50 border-b border-gray-200 min-h-16">
           <div className="text-sm text-gray-700 font-medium bg-sky-100 px-2 py-1 rounded">
             Всички данни
           </div>
-          <div className="flex items-center space-x-2 ml-auto">
-            <span className="text-sm font-medium text-gray-600">
-              Покажи по:
-            </span>
-            <button
-              onClick={() => setBarChartMode("type")}
-              className={`px-3 py-1.5 text-xs sm:text-sm rounded-md focus:outline-none ${
-                barChartMode === "type"
-                  ? "bg-sky-600 text-white shadow-sm"
-                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-              }`}
-            >
-              Тип
-            </button>
-            <button
-              onClick={() => setBarChartMode("priority")}
-              className={`px-3 py-1.5 text-xs sm:text-sm rounded-md focus:outline-none ${
-                barChartMode === "priority"
-                  ? "bg-sky-600 text-white shadow-sm"
-                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-              }`}
-            >
-              Приоритет
-            </button>
-          </div>
+          {/* --- MODIFIED: Use the new renderToggles function --- */}
+          {renderToggles()}
         </div>
       ) : (
         renderDateControls()

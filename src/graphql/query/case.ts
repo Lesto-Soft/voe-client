@@ -14,7 +14,7 @@ fragment CaseFragment on Case {
     type
     categories {
         _id
-        name     
+        name
     }
     content
     status  
@@ -107,6 +107,31 @@ export const GET_ANALYTITCS_DATA_CASES = gql`
     getAnalyticsDataCases {
       ...CaseFragment
       calculatedRating
+      answers {
+        _id
+        approved {
+          _id
+          name
+          username
+          avatar
+        }
+        creator {
+          _id
+          name
+          username
+          avatar
+        }
+      }
+      rating {
+        _id
+        score
+        user {
+          _id
+          name
+          username
+          avatar
+        }
+      }
     }
   }
   ${caseFragment}

@@ -1,12 +1,12 @@
 // components/features/analyses/hooks/useProcessedAnalyticsData.ts
 import { useMemo } from "react";
-import { ICase, ICategory } from "../../../../db/interfaces";
+import { ICase, ICategory, IUser } from "../../../../db/interfaces";
 import {
   getDaysInMonth,
   getStartAndEndOfWeek,
 } from "../../../../utils/dateUtils";
-import { BarChartDisplayMode, ViewMode } from "../types";
-import { PieSegmentData } from "../../../charts/PieChart";
+import { BarChartDisplayMode, ViewMode, TopUserStat } from "../types";
+// import { PieSegmentData } from "../../../charts/PieChart";
 import { BarSeriesConfig } from "../../../charts/BarChart";
 import {
   DAY_NAMES_FULL,
@@ -18,7 +18,7 @@ import {
   CATEGORY_COLORS,
 } from "../constants";
 
-// Define the shape of the filters object this hook will receive
+// --- TYPE DEFINITIONS ---
 interface AnalyticsFilters {
   viewMode: ViewMode;
   barChartMode: BarChartDisplayMode;
@@ -30,6 +30,38 @@ interface AnalyticsFilters {
   isAllTimePies: boolean;
 }
 
+// --- HELPER FUNCTION ---
+const findTopUser = (
+  cases: ICase[],
+  getUserArray: (c: ICase) => (IUser | null | undefined)[]
+): TopUserStat => {
+  if (!cases || cases.length === 0) return null;
+
+  const userCounts = new Map<string, { user: IUser; count: number }>();
+
+  cases.forEach((caseItem) => {
+    const users = getUserArray(caseItem);
+    users.forEach((user) => {
+      if (user && user._id && user.name) {
+        if (userCounts.has(user._id)) {
+          userCounts.get(user._id)!.count++;
+        } else {
+          userCounts.set(user._id, { user, count: 1 });
+        }
+      }
+    });
+  });
+
+  if (userCounts.size === 0) return null;
+
+  const topStat = [...userCounts.values()].reduce((max, current) =>
+    current.count > max.count ? current : max
+  );
+
+  return topStat;
+};
+
+// --- THE HOOK ---
 export const useProcessedAnalyticsData = (
   allCases: ICase[] | undefined,
   filters: AnalyticsFilters
@@ -45,7 +77,6 @@ export const useProcessedAnalyticsData = (
     isAllTimePies,
   } = filters;
 
-  // --- Intermediate Memo: Filter cases based on the selected global date range ---
   const filteredCasesForPieCharts = useMemo(() => {
     if (!allCases) return [];
     if (isAllTimePies) return allCases;
@@ -56,8 +87,42 @@ export const useProcessedAnalyticsData = (
     });
   }, [allCases, startDateForPies, endDateForPies, isAllTimePies]);
 
-  // --- Memo for Bar Chart Data ---
+  // --- Top User Calculations (with fix) ---
+  const topSignalGiver = useMemo(
+    (): TopUserStat =>
+      findTopUser(filteredCasesForPieCharts, (c) =>
+        c.creator ? [c.creator] : []
+      ),
+    [filteredCasesForPieCharts]
+  );
+
+  const topSolutionGiver = useMemo(
+    (): TopUserStat =>
+      findTopUser(filteredCasesForPieCharts, (c) =>
+        (c.answers || []).map((a) => a.creator)
+      ), // <-- FIX APPLIED
+    [filteredCasesForPieCharts]
+  );
+
+  const topApprover = useMemo(
+    (): TopUserStat =>
+      findTopUser(filteredCasesForPieCharts, (c) =>
+        (c.answers || []).map((a) => a.approved).filter((u) => u)
+      ), // <-- FIX APPLIED
+    [filteredCasesForPieCharts]
+  );
+
+  const topRater = useMemo(
+    (): TopUserStat =>
+      findTopUser(filteredCasesForPieCharts, (c) =>
+        (c.rating || []).map((r) => r.user)
+      ), // <-- FIX APPLIED
+    [filteredCasesForPieCharts]
+  );
+
+  // --- Existing Data Processing ... (the rest of the file is unchanged) ---
   const barChartDisplayData = useMemo(() => {
+    // ... no changes here
     if (!allCases || allCases.length === 0) {
       return {
         data: [],
@@ -231,13 +296,13 @@ export const useProcessedAnalyticsData = (
     endDateForPies,
   ]);
 
-  // --- Memo for Category Pie Chart ---
-  const categoryPieData: PieSegmentData[] = useMemo(() => {
+  const categoryPieData = useMemo(() => {
+    // ... no changes here
     if (!filteredCasesForPieCharts || filteredCasesForPieCharts.length === 0)
       return [];
     const counts: { [key: string]: number } = {};
     filteredCasesForPieCharts.forEach((c: ICase) => {
-      c.categories.forEach((cat: ICategory) => {
+      (c.categories || []).forEach((cat: ICategory) => {
         counts[cat.name] = (counts[cat.name] || 0) + 1;
       });
     });
@@ -250,8 +315,8 @@ export const useProcessedAnalyticsData = (
       }));
   }, [filteredCasesForPieCharts]);
 
-  // --- Memo for Priority Pie Chart ---
-  const priorityPieData: PieSegmentData[] = useMemo(() => {
+  const priorityPieData = useMemo(() => {
+    // ... no changes here
     if (!filteredCasesForPieCharts || filteredCasesForPieCharts.length === 0)
       return [];
     const counts: { [key: string]: number } = { HIGH: 0, MEDIUM: 0, LOW: 0 };
@@ -270,8 +335,8 @@ export const useProcessedAnalyticsData = (
       }));
   }, [filteredCasesForPieCharts]);
 
-  // --- Memo for Type Pie Chart ---
-  const typePieData: PieSegmentData[] = useMemo(() => {
+  const typePieData = useMemo(() => {
+    // ... no changes here
     if (!filteredCasesForPieCharts || filteredCasesForPieCharts.length === 0)
       return [];
     const counts: Record<TypeColorKey, number> = { PROBLEM: 0, SUGGESTION: 0 };
@@ -290,8 +355,8 @@ export const useProcessedAnalyticsData = (
       }));
   }, [filteredCasesForPieCharts]);
 
-  // --- Memo for Average Rating ---
   const averageRatingData = useMemo(() => {
+    // ... no changes here
     if (!filteredCasesForPieCharts || filteredCasesForPieCharts.length === 0) {
       return { average: null, count: 0 };
     }
@@ -313,8 +378,8 @@ export const useProcessedAnalyticsData = (
     };
   }, [filteredCasesForPieCharts]);
 
-  // --- Memo for Period Summary Stats ---
   const periodCaseSummary = useMemo(() => {
+    // ... no changes here
     const totalCases = filteredCasesForPieCharts.length;
     if (barChartMode === "type") {
       const problemCount = filteredCasesForPieCharts.filter(
@@ -326,7 +391,6 @@ export const useProcessedAnalyticsData = (
         suggestions: totalCases - problemCount,
       };
     } else {
-      // 'priority'
       const highCount = filteredCasesForPieCharts.filter(
         (c) => c.priority.toUpperCase() === "HIGH"
       ).length;
@@ -345,7 +409,6 @@ export const useProcessedAnalyticsData = (
     }
   }, [filteredCasesForPieCharts, barChartMode]);
 
-  // --- Return all processed data ---
   return {
     barChartDisplayData,
     categoryPieData,
@@ -353,6 +416,9 @@ export const useProcessedAnalyticsData = (
     typePieData,
     averageRatingData,
     periodCaseSummary,
-    filteredCasesForPieCharts, // Exposing this can be useful for debugging or other components
+    topSignalGiver,
+    topSolutionGiver,
+    topApprover,
+    topRater,
   };
 };

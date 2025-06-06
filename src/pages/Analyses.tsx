@@ -13,6 +13,7 @@ import AnalysesControls from "../components/features/analyses/components/Analyse
 import BarChart from "../components/charts/BarChart";
 import DistributionChartCard from "../components/features/analyses/components/DistributionChartCard";
 import SummaryCard from "../components/features/analyses/components/SummaryCard";
+import TopUserCard from "../components/features/analyses/components/TopUserCard"; // <-- Import the new card
 
 // Constants (only those needed for rendering logic within this component)
 import {
@@ -31,7 +32,7 @@ const Analyses: React.FC = () => {
   // 2. Manage all filter states and interactions with our custom hook
   const filters = useAnalysesFilters(allCases);
 
-  // 3. Get all processed chart and summary data from our second hook
+  // 3. Get all processed data from our second hook
   const {
     barChartDisplayData,
     categoryPieData,
@@ -39,6 +40,11 @@ const Analyses: React.FC = () => {
     typePieData,
     averageRatingData,
     periodCaseSummary,
+    // De-structure the new top user stats
+    topSignalGiver,
+    topSolutionGiver,
+    topApprover,
+    topRater,
   } = useProcessedAnalyticsData(allCases, filters);
 
   // --- Render Loading/Error/Empty States ---
@@ -66,12 +72,12 @@ const Analyses: React.FC = () => {
 
   // --- Main Render ---
   return (
-    <div className="p-2 md:p-5 bg-gray-100 min-h-full">
-      <div className="mb-4 bg-white rounded-md shadow-md">
+    <div className="p-2 md:p-5 bg-gray-100 min-h-full space-y-5">
+      <div className="bg-white rounded-md shadow-md">
         <AnalysesControls {...filters} />
       </div>
 
-      <div className="mb-5 bg-white rounded-lg shadow-md">
+      <div className="bg-white rounded-lg shadow-md">
         <BarChart
           data={barChartDisplayData.data}
           dataKeyX={barChartDisplayData.dataKeyX}
@@ -80,6 +86,7 @@ const Analyses: React.FC = () => {
         />
       </div>
 
+      {/* Case Statistics Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         <SummaryCard title="Общо сигнали" footerText="за избрания период">
           <p className="text-4xl font-bold text-gray-700">
@@ -201,6 +208,32 @@ const Analyses: React.FC = () => {
             <p className="text-xl text-gray-500 mt-4">Няма оценки</p>
           )}
         </SummaryCard>
+      </div>
+
+      {/* NEW: User Leaderboard Row */}
+      <div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <TopUserCard
+            title="Най-активен сигнализатор"
+            stat={topSignalGiver}
+            actionText="сигнала"
+          />
+          <TopUserCard
+            title="Най-активен решаващ"
+            stat={topSolutionGiver}
+            actionText="решения"
+          />
+          <TopUserCard
+            title="Най-активен одобрител"
+            stat={topApprover}
+            actionText="одобрения"
+          />
+          <TopUserCard
+            title="Най-активен оценяващ"
+            stat={topRater}
+            actionText="оценки"
+          />
+        </div>
       </div>
     </div>
   );

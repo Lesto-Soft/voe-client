@@ -31,6 +31,9 @@ import PersonnelInfoPanel from "../components/features/categoryAnalytics/Personn
 import CategoryCasesList from "../components/features/categoryAnalytics/CategoryCasesList"; // Adjust path
 import CategoryStatisticsPanel from "../components/features/categoryAnalytics/CategoryStatisticsPanel"; // Adjust path
 
+// Constants
+import { ROLES } from "../utils/GLOBAL_PARAMETERS";
+
 // Define a lean user type that includes the role ID, matching GET_LEAN_USERS
 interface ILeanUserForForm {
   _id: string;
@@ -38,9 +41,6 @@ interface ILeanUserForForm {
   username: string;
   role: { _id: string } | null;
 }
-
-const ADMIN_ROLE_ID = "650000000000000000000003";
-const EXPERT_ROLE_ID = "650000000000000000000002";
 
 const Category: React.FC = () => {
   const { name: categoryNameFromParams } = useParams<{ name: string }>();
@@ -81,11 +81,11 @@ const Category: React.FC = () => {
   const canEdit = useMemo(() => {
     if (!currentUser || !category) return false;
     // Rule 1: Admin can edit
-    if (currentUser.role?._id === ADMIN_ROLE_ID) {
+    if (currentUser.role?._id === ROLES.ADMIN) {
       return true;
     }
     // Rule 2: Expert who manages this category can edit
-    if (currentUser.role?._id === EXPERT_ROLE_ID) {
+    if (currentUser.role?._id === ROLES.EXPERT) {
       return (
         //currentUser.managed_categories?.some((mc) => mc._id === category._id) ??
         category.managers?.some((manager) => manager._id === currentUser._id) ??

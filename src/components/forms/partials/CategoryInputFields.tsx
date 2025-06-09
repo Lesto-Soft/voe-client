@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect, useMemo } from "react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 // Removed IUser import as ILeanUserForForm is more specific here
 import TextEditor from "./TextEditor";
+import { ROLES } from "../../../utils/GLOBAL_PARAMETERS";
 
 // Define a lean user type that includes the role ID for the form, matching what parent passes
 interface ILeanUserForForm {
@@ -47,9 +48,6 @@ interface CategoryInputFieldsProps {
   usersLoading: boolean; // Loading state for allUsersForAssigning
 }
 
-const EXPERT_ROLE_ID = "650000000000000000000002";
-const ADMIN_ROLE_ID = "650000000000000000000003";
-
 const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
   name,
   setName,
@@ -77,7 +75,7 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
     if (!allUsersForAssigning) return []; // Guard against undefined
     return allUsersForAssigning.filter((user) => {
       const userRoleId = user.role?._id;
-      return userRoleId === EXPERT_ROLE_ID || userRoleId === ADMIN_ROLE_ID;
+      return userRoleId === ROLES.EXPERT || userRoleId === ROLES.ADMIN;
     });
   }, [allUsersForAssigning]);
 

@@ -21,7 +21,8 @@ import UserModal from "../components/modals/UserModal"; // <-- Use renamed modal
 import UserForm from "../components/forms/UserForm"; // <-- Use renamed form
 import SuccessConfirmationModal from "../components/modals/SuccessConfirmationModal";
 
-const ADMIN_ROLE_ID = "650000000000000000000003";
+// Constants
+import { ROLES } from "../utils/GLOBAL_PARAMETERS";
 
 const User: React.FC = () => {
   const { username: userUsernameFromParams } = useParams<{
@@ -169,7 +170,7 @@ const User: React.FC = () => {
       (userStats?.totalComments || 0),
   };
 
-  const isAdmin = currentUser?.role._id === ADMIN_ROLE_ID;
+  const isAdmin = currentUser?.role._id === ROLES.ADMIN;
 
   return (
     <>

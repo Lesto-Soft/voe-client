@@ -12,8 +12,7 @@ import {
   PencilSquareIcon, // <-- Import Pencil Icon
 } from "@heroicons/react/24/outline";
 import { useCurrentUser } from "../../../context/UserContext";
-
-const ADMIN_ROLE_ID = "650000000000000000000003";
+import { ROLES } from "../../../utils/GLOBAL_PARAMETERS";
 
 interface UserInformationPanelProps {
   user: IUser | undefined | null;
@@ -74,7 +73,7 @@ const UserInformationPanel: React.FC<UserInformationPanelProps> = ({
   }
 
   // --- NEW: Permission Logic ---
-  const isAdmin = currentUser?.role?._id === ADMIN_ROLE_ID;
+  const isAdmin = currentUser?.role?._id === ROLES.ADMIN;
   const isSelf = currentUser?._id === user?._id;
   const canEdit = isAdmin || isSelf;
 

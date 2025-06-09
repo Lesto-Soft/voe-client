@@ -33,8 +33,7 @@ import UserStats from "../components/features/userManagement/UserStats";
 import UserFilters from "../components/features/userManagement/UserFilters";
 import UserTable from "../components/features/userManagement/UserTable";
 import { useUserManagement } from "../hooks/useUserManagement"; // Adjust path
-
-const ADMIN_ROLE_ID = "650000000000000000000003"; // <-- NEW: Admin ID constant
+import { ROLES } from "../utils/GLOBAL_PARAMETERS";
 
 const UserManagement: React.FC = () => {
   const {
@@ -62,7 +61,7 @@ const UserManagement: React.FC = () => {
 
   // --- NEW: Get current user and determine if they are an admin ---
   const currentUser = useCurrentUser() as IMe | undefined;
-  const isAdmin = currentUser?.role?._id === ADMIN_ROLE_ID;
+  const isAdmin = currentUser?.role?._id === ROLES.ADMIN;
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<IUser | null>(null);

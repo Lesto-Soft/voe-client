@@ -3,6 +3,7 @@ import { CREATE_CASE, RATE_CASE } from "../mutation/case";
 import {
   COUNT_CASES,
   COUNT_FILTERED_CASES,
+  GET_ANALYTITCS_DATA_CASES,
   GET_CASE_BY_CASE_NUMBER,
   GET_CASES,
   GET_CASES_BY_USER_CATEGORIES,
@@ -91,6 +92,20 @@ export const useGetAllCases = (input: any) => {
     loading,
     error,
     refetch,
+  };
+};
+
+export const useGetAnalyticsDataCases = () => {
+  console.log("useGetAnalyticsDataCases called");
+  const { loading, error, data } = useQuery(GET_ANALYTITCS_DATA_CASES);
+  const cases = data?.getAnalyticsDataCases || 0;
+  console.log("useGetAnalyticsDataCases data 315:", cases[315]);
+  console.log("useGetAnalyticsDataCases data:", cases);
+
+  return {
+    cases,
+    loading,
+    error,
   };
 };
 

@@ -21,6 +21,75 @@ fragment UserFragment on User {
      
 }`;
 
+const fullUserFragment = `
+fragment FullUserFragment on User {
+      _id
+      username
+      name
+      email
+      position
+      financial_approver
+      role {
+        _id
+        name
+      }
+      avatar
+      cases {
+        _id
+        case_number
+        content
+        date
+        status
+        type
+        priority
+        categories {
+          _id
+          name
+        }
+      }
+      answers {
+        _id
+        content
+        date
+        approved {
+          _id
+        }
+        needs_finance
+        financial_approved {
+          _id
+        }
+        case {
+          _id
+          case_number
+          status
+        }
+      }
+      comments {
+        _id
+        content
+        date
+        case {
+          _id
+          case_number
+        }
+        answer {
+          _id
+          case {
+            _id
+            case_number
+          }
+        }
+      }
+      expert_categories {
+        _id
+        name
+      }
+      managed_categories {
+        _id
+        name
+      }
+}`;
+
 export const COUNT_USERS = gql`
   query CountUsers($input: getUserFiltersInput) {
     countUsers(input: $input)
@@ -35,6 +104,24 @@ export const GET_USERS = gql`
     }
   }
   ${userFragment}
+`;
+
+export const GET_FULL_USER_BY_USERNAME = gql`
+  query GetFullUserByUsername($username: String!) {
+    getFullUserByUsername(username: $username) {
+      ...FullUserFragment
+    }
+  }
+  ${fullUserFragment}
+`;
+
+export const GET_USER_BY_ID = gql`
+  query GetUserByID($_id: ID!) {
+    getUserById(_id: $_id) {
+      ...FullUserFragment
+    }
+  }
+  ${fullUserFragment}
 `;
 
 export const GET_USER_BY_USERNAME = gql`

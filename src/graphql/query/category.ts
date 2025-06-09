@@ -9,10 +9,12 @@ fragment CategoryFragment on Category {
       experts {
         _id
         name
+        username
       }
       managers {
         _id
         name
+        username
       }
       cases {
         _id
@@ -49,4 +51,52 @@ export const GET_ACTIVE_CATEGORIES = gql`
     }
   }
   ${categoryFragment}
+`;
+
+export const GET_CATEGORY_BY_NAME = gql`
+  query GetCategoryByName($name: String!) {
+    # This defines the variable for the operation
+    getCategoryByName(name: $name) {
+      # This calls the field on the Query type, using its argument named 'name',
+      # and passes the operation variable $name to it.
+      _id
+      name
+      problem
+      suggestion
+      experts {
+        _id
+        name
+        username
+      }
+      managers {
+        _id
+        name
+        username
+      }
+      cases {
+        _id
+        case_number
+        content
+        date
+        priority
+        status
+        type
+        creator {
+          _id
+          name
+          avatar
+          username
+        }
+        answers {
+          _id
+          date
+          approved_date
+          approved {
+            _id
+          }
+        }
+      }
+      archived
+    }
+  }
 `;

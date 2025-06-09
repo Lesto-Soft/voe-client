@@ -8,13 +8,13 @@ fragment CaseFragment on Case {
       _id
       name
       position
-      
+      username
     }
     priority
     type
     categories {
         _id
-        name     
+        name
     }
     content
     status  
@@ -53,16 +53,19 @@ fragment AnswerFragment on Answer {
       creator {
         _id
         name
+        username
         position
       }
       approved{
         _id
-        name  
+        name
+        username
       }
       approved_date
       financial_approved{
         _id
-        name  
+        name
+        username
       }
       financial_approved_date
       needs_finance
@@ -79,6 +82,7 @@ const commentFragment = `
  fragment CommentFragment on Comment {
         _id
         creator {
+          username
           name
           position
           _id
@@ -95,6 +99,41 @@ export const GET_CASES = gql`
         ...CaseFragment
       }
       count
+    }
+  }
+  ${caseFragment}
+`;
+
+export const GET_ANALYTITCS_DATA_CASES = gql`
+  query GET_ANALYTITCS_DATA_CASES {
+    getAnalyticsDataCases {
+      ...CaseFragment
+      calculatedRating
+      answers {
+        _id
+        approved {
+          _id
+          name
+          username
+          avatar
+        }
+        creator {
+          _id
+          name
+          username
+          avatar
+        }
+      }
+      rating {
+        _id
+        score
+        user {
+          _id
+          name
+          username
+          avatar
+        }
+      }
     }
   }
   ${caseFragment}

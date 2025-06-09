@@ -6,13 +6,14 @@ import {
   useCountUsersByExactEmail,
 } from "../../../graphql/hooks/user"; // Adjust path
 import { Role, User } from "../../../types/userManagementTypes"; // Adjust path
+import { IUser } from "../../../db/interfaces";
 
 // Helper function
 const isValidEmailFormat = (emailToTest: string): boolean =>
   emailToTest === "" || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailToTest);
 
 interface UseCreateUserFormStateProps {
-  initialData: User | null;
+  initialData: IUser | null;
   serverBaseUrl: string;
 }
 

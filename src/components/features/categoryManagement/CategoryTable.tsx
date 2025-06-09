@@ -2,16 +2,25 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
   ICategory,
+  IUser,
   ICaseStatus as CaseStatus,
   CASE_STATUS_DISPLAY_ORDER,
 } from "../../../db/interfaces"; // Adjust path
-import { Link } from "react-router"; // Corrected import for React Router v5/v6
-import { PencilSquareIcon, TrashIcon } from "@heroicons/react/24/solid"; // Or your preferred variant
-import Pagination from "../../tables/Pagination"; // Adjust path
-import CategoryTableSkeleton from "../../skeletons/CategoryTableSkeleton"; // Adjust path
-import TruncatedListWithDialog from "./TruncatedListWithDialog"; // Adjust path
-import { isNullOrEmptyArray } from "../../../utils/arrayUtils"; // Adjust path
+// Removed: import { Link } from "react-router"; // Original Link from react-router
+import { PencilSquareIcon, TrashIcon } from "@heroicons/react/24/solid";
+import Pagination from "../../tables/Pagination";
+import CategoryTableSkeleton from "../../skeletons/CategoryTableSkeleton";
+import TruncatedListWithDialog from "./TruncatedListWithDialog";
+import { isNullOrEmptyArray } from "../../../utils/arrayUtils";
 
+// Import your custom Link components (ensure paths are correct)
+import CategoryLink from "../../global/CategoryLink";
+// UserLink is used within TruncatedListWithDialog, so direct import here might not be needed unless used elsewhere
+
+// If other general Links are still needed (e.g., for dashboard links)
+import { Link } from "react-router"; // Or "react-router"
+
+// ... (rest of the constants and helper functions: BASE_STATUS_BUTTON_STYLE, CASE_STATUS_STYLES_CLICKABLE, etc. remain unchanged)
 const BASE_STATUS_BUTTON_STYLE =
   "px-1.5 py-0.5 text-xs font-semibold rounded border transition-colors duration-150";
 
@@ -45,12 +54,10 @@ const getStatusLabel = (status: CaseStatus): string => {
     case CaseStatus.Closed:
       return "Closed";
     default:
-      // This ensures that if a new status is added and not handled, TypeScript will complain.
       const exhaustiveCheck: never = status;
       return String(exhaustiveCheck);
   }
 };
-
 interface CategoryTableProps {
   categories: ICategory[];
   isLoadingCategories: boolean;
@@ -61,11 +68,11 @@ interface CategoryTableProps {
   onPageChange: (page: number) => void;
   onItemsPerPageChange: (size: number) => void;
   onEditCategory: (category: ICategory) => void;
-  onDeleteCategory: (category: ICategory) => void; // New prop
-  currentQueryInput: any; // Consider defining a more specific type if possible
+  onDeleteCategory: (category: ICategory) => void;
+  currentQueryInput: any;
   createLoading: boolean;
   updateLoading: boolean;
-  deleteLoading?: boolean; // New prop
+  deleteLoading?: boolean;
 }
 
 const MIN_SKELETON_TIME = 250;
@@ -82,9 +89,9 @@ const CategoryTable: React.FC<CategoryTableProps> = ({
   onEditCategory,
   onDeleteCategory,
   currentQueryInput,
-  createLoading,
-  updateLoading,
-  deleteLoading,
+  // createLoading,
+  // updateLoading,
+  // deleteLoading,
 }) => {
   const [showSkeleton, setShowSkeleton] = useState(true);
   const skeletonTimerRef = useRef<number | null>(null);
@@ -116,9 +123,8 @@ const CategoryTable: React.FC<CategoryTableProps> = ({
   };
 
   if (showSkeleton && isLoadingCategories)
-    return <CategoryTableSkeleton rows={itemsPerPage} />; // Show skeleton only if truly loading
+    return <CategoryTableSkeleton rows={itemsPerPage} />;
   if (!isLoadingCategories && categoriesError)
-    // Show error if not loading but error exists
     return (
       <div className="p-6 text-red-600 bg-white rounded-lg shadow-md text-center">
         Грешка при зареждане: {categoriesError.message || "Неизвестна грешка"}
@@ -131,6 +137,7 @@ const CategoryTable: React.FC<CategoryTableProps> = ({
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200 table-fixed">
             <thead className="bg-gray-500 sticky top-0 z-10">
+              {/* ... table headers ... */}
               <tr>
                 <th
                   scope="col"
@@ -167,18 +174,17 @@ const CategoryTable: React.FC<CategoryTableProps> = ({
                   className={`${columnWidths.edit} hidden md:table-cell px-3 py-4 text-center text-sm font-semibold text-white uppercase tracking-wide relative`}
                 >
                   <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-px bg-gray-400"></span>
-                  Действия{" "}
-                  {/* Changed from "Редактирай" to "Действия" as it now includes delete */}
+                  Действия
                 </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200 text-gray-700">
               {categories.map((category) => {
-                const isInactive = category.archived;
+                const isInactive = !!category.archived;
                 let rowClasses =
-                  "hover:bg-gray-100 transition-colors duration-150"; // Added transition
+                  "hover:bg-gray-100 transition-colors duration-150";
                 const inactiveClasses =
-                  "bg-gray-50 text-gray-400 hover:bg-gray-100"; // Still allow hover on inactive for consistency
+                  "bg-gray-50 text-gray-400 hover:bg-gray-100";
 
                 if (isInactive) {
                   rowClasses = inactiveClasses;
@@ -263,47 +269,43 @@ const CategoryTable: React.FC<CategoryTableProps> = ({
                     <td
                       className={`${columnWidths.name} px-3 py-4 whitespace-nowrap`}
                     >
-                      <Link
-                        to={`/category/${category._id}`} // Ensure Link leads somewhere meaningful or remove if not needed
-                        className={`inline-block px-3 py-1 rounded-lg text-sm font-semibold transition-colors duration-150 ease-in-out ${
-                          isInactive
-                            ? "bg-gray-200 text-gray-500" // cursor-not-allowed" // Made inactive link look more disabled
-                            : "bg-sky-100 text-sky-800 hover:bg-sky-200 border border-sky-200 cursor-pointer"
-                        }`}
-                        title={
-                          isInactive
-                            ? `${category.name} (Архивирана)`
-                            : category.name
-                        }
-                        // onClick={(e) => isInactive && e.preventDefault()} // Prevent navigation for inactive categories
-                      >
-                        {category.name}
-                      </Link>
+                      {/*
+                        IMPORTANT: For CategoryLink to work with JSX <CategoryLink category={...} />,
+                        its definition MUST be: const CategoryLink = ({ category }: { category: ICategory }) => { ... }
+                        If its definition is literally (category: ICategory), you'd use {CategoryLink(category)}
+
+                        LIMITATIONS with verbatim CategoryLink:
+                        - No conditional inactive styling (will always be sky blue).
+                        - No custom 'title' prop (original title logic lost).
+                        - No 'onClick' prop forwarding (cannot prevent navigation for inactive).
+                        - Styling (padding, font size) is fixed by CategoryLink (text-xs).
+                      */}
+                      <CategoryLink {...category} />
                     </td>
                     <td className={`${columnWidths.experts} px-3 py-4 text-sm`}>
                       <TruncatedListWithDialog
-                        items={category.experts || []}
+                        items={(category.experts as IUser[]) || []}
                         itemTypeLabel="Експерт"
                         parentContextName={category.name}
-                        baseLinkPath="/user-data/" // Example path
-                        isContextInactive={!!isInactive}
+                        baseLinkPath="/user/" // This prop is not directly used if UserLink hardcodes its path
+                        isContextInactive={isInactive}
                       />
                     </td>
                     <td
                       className={`${columnWidths.managers} px-3 py-4 text-sm`}
                     >
                       <TruncatedListWithDialog
-                        items={category.managers || []}
+                        items={(category.managers as IUser[]) || []}
                         itemTypeLabel="Мениджър"
                         parentContextName={category.name}
-                        baseLinkPath="/user-data/" // Example path
-                        isContextInactive={!!isInactive}
+                        baseLinkPath="/user/"
+                        isContextInactive={isInactive}
                       />
                     </td>
                     <td
                       className={`${columnWidths.signalAmount.replace(
                         "px-2",
-                        "" // Allow internal padding of signalAmountDisplay to control spacing
+                        ""
                       )} py-2 text-center`}
                     >
                       {signalAmountDisplay}
@@ -319,20 +321,13 @@ const CategoryTable: React.FC<CategoryTableProps> = ({
                         <button
                           onClick={() => onEditCategory(category)}
                           className={`${
-                            isInactive ? "opacity-50" : "" // pointer-events-none" : ""
+                            isInactive ? "opacity-50" : "" // Basic inactive visual cue
                           } ${
-                            // Pointer-events-none for inactive
                             canDeleteCategory ? "w-10" : "w-20"
                           } inline-flex justify-center items-center rounded bg-sky-100 p-1.5 text-sky-700 border border-sky-200 hover:border-sky-300 transition-all duration-150 ease-in-out hover:cursor-pointer hover:bg-sky-200 hover:text-sky-800 active:bg-sky-300 active:scale-[0.96] disabled:bg-gray-100 disabled:text-gray-400 disabled:opacity-70 disabled:cursor-not-allowed disabled:scale-100`}
                           aria-label={`Редактирай ${category.name}`}
                           title={`Редактирай ${category.name}`}
-                          // disabled={
-                          //   isInactive ||
-                          //   createLoading ||
-                          //   updateLoading ||
-                          //   deleteLoading ||
-                          //   isLoadingCategories
-                          // }
+                          // disabled={isInactive} // Consider disabling the button itself if category is inactive
                         >
                           <PencilSquareIcon className="h-5 w-5" />
                         </button>
@@ -341,17 +336,11 @@ const CategoryTable: React.FC<CategoryTableProps> = ({
                           <button
                             onClick={() => onDeleteCategory(category)}
                             className={`${
-                              isInactive ? "opacity-50" : "" //pointer-events-none" : "" // Pointer-events-none for inactive
+                              isInactive ? "opacity-50" : "" // Basic inactive visual cue
                             } w-10 inline-flex justify-center items-center rounded bg-red-100 p-1.5 text-red-700 border border-red-200 hover:border-red-300 transition-all duration-150 ease-in-out hover:cursor-pointer hover:bg-red-200 hover:text-red-800 active:bg-red-300 active:scale-[0.96] disabled:bg-gray-100 disabled:text-gray-400 disabled:opacity-70 disabled:cursor-not-allowed disabled:scale-100`}
                             aria-label={`Изтрий ${category.name}`}
                             title={`Изтрий ${category.name}`}
-                            // disabled={
-                            //   isInactive ||
-                            //   createLoading ||
-                            //   updateLoading ||
-                            //   deleteLoading ||
-                            //   isLoadingCategories
-                            // }
+                            // disabled={isInactive} // Consider disabling
                           >
                             <TrashIcon className="h-5 w-5" />
                           </button>

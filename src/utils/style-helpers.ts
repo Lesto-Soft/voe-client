@@ -39,3 +39,16 @@ export const getTypeBadgeStyle = (type: string) => {
       return "bg-gray-100 text-gray-800";
   }
 };
+
+export const customInputStyles = `
+  .custom-number-input,
+  .custom-number-input::-webkit-inner-spin-button,
+  .custom-number-input::-webkit-outer-spin-button {
+    cursor: pointer;
+  }
+
+  .custom-date-input,
+  .custom-date-input::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+  }
+`;

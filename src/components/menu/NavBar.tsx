@@ -93,11 +93,31 @@ const NavBar: React.FC<{ me: IMe }> = ({ me }) => {
     "/analyses": t("analyses_desc"),
   };
 
-  // Handle dynamic /case/:number path for heading
+  // Handle dynamic /case/:number and category/:number path for heading
   let currentPage: string;
   if (/^\/case\/\d+/.test(location.pathname)) {
     const caseId = location.pathname.split("/").pop();
     currentPage = t("case_desc", { caseId });
+  } else if (/^\/category\/[^/]+$/.test(location.pathname)) {
+    const encodedCategoryName = location.pathname.split("/").pop();
+    if (encodedCategoryName) {
+      // Ensure it's not undefined or empty
+      const categoryName = decodeURIComponent(encodedCategoryName);
+      // Use the decoded categoryName in your translation function
+      currentPage = t("category_desc", { categoryName });
+    } else {
+      currentPage = "Проблем с името на категорията";
+    }
+  } else if (/^\/user\/[^/]+$/.test(location.pathname)) {
+    console.log("User path detected:", location.pathname);
+    const username = location.pathname.split("/").pop();
+    console.log("EMP:", username);
+    if (username) {
+      // Use the decoded categoryName in your translation function
+      currentPage = t("user_desc", { username });
+    } else {
+      currentPage = "Проблем с потребителя";
+    }
   } else {
     currentPage = pageNames[location.pathname] || "Страницата не е намерена";
   }

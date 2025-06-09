@@ -8,7 +8,6 @@ import NavBar from "../components/menu/NavBar";
 import Profile from "../pages/Profile";
 import Analyses from "../pages/Analyses";
 import NotFoundPage from "../pages/NotFound";
-import UserData from "../pages/UserData";
 import User from "../pages/User";
 import Category from "../pages/Category";
 import Case from "../pages/Case";
@@ -49,10 +48,6 @@ const mainRouter = createBrowserRouter([
     element: <CaseSubmission />,
   },
   {
-    path: "/user-data/:userId",
-    element: <UserData />,
-  },
-  {
     path: "/loading",
     element: <LoadingTestPage />,
   },
@@ -80,11 +75,11 @@ const mainRouter = createBrowserRouter([
         element: <Analyses />,
       },
       {
-        path: "/user/:id",
+        path: "/user/:username",
         element: <User />,
       },
       {
-        path: "/category/:id",
+        path: "/category/:name",
         element: <Category />,
       },
       {

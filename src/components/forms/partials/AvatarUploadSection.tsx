@@ -1,5 +1,5 @@
 // src/components/forms/partials/AvatarUploadSection.tsx
-import React, { useRef } from "react";
+import React, { RefObject } from "react";
 import UserAvatar from "../../cards/UserAvatar"; // Adjust path
 
 interface AvatarUploadSectionProps {
@@ -11,6 +11,8 @@ interface AvatarUploadSectionProps {
   onAvatarClick: () => void;
   onRemoveAvatar: () => void;
   errorPlaceholderClass: string;
+  avatarError: string | null;
+  fileInputRef: RefObject<HTMLInputElement | null>; // Accept the ref from the parent
   // Add t function if needed for button text/labels
 }
 
@@ -23,9 +25,9 @@ const AvatarUploadSection: React.FC<AvatarUploadSectionProps> = ({
   onAvatarClick,
   onRemoveAvatar,
   errorPlaceholderClass,
+  avatarError,
+  fileInputRef,
 }) => {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
   const handleAvatarAreaClick = () => {
     fileInputRef.current?.click();
     onAvatarClick(); // Notify parent if needed (e.g., for analytics)
@@ -90,13 +92,20 @@ const AvatarUploadSection: React.FC<AvatarUploadSectionProps> = ({
             </button>
           )}
           {isRemovingAvatar && (
-            <span className="text-xs text-red-600">
+            <span className="text-xs text-red-600 py-1">
               Аватарът ще бъде премахнат.
             </span>
           )}
         </div>
       </div>
-      <p className={`${errorPlaceholderClass}`}>&nbsp;</p>
+      {/* Display error or placeholder */}
+      <div className={`${errorPlaceholderClass}`}>
+        {avatarError ? (
+          <p className="text-red-600">{avatarError}</p>
+        ) : (
+          <p>&nbsp;</p> // Keep the placeholder for layout stability
+        )}
+      </div>
     </div>
   );
 };

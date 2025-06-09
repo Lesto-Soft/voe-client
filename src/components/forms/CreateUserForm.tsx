@@ -8,6 +8,9 @@ import PasswordFields from "./partials/PasswordFields";
 import AvatarUploadSection from "./partials/AvatarUploadSection";
 import { IUser } from "../../db/interfaces";
 
+const MAX_AVATAR_SIZE_MB = 3;
+const MAX_AVATAR_SIZE_BYTES = MAX_AVATAR_SIZE_MB * 1024 * 1024;
+
 // Interface for the final avatar data structure expected by parent onSubmit
 interface AvatarInputData {
   filename: string;
@@ -104,6 +107,7 @@ const CreateUserForm: React.FC<CreateUserFormProps> = ({
   const [isCropModalOpen, setIsCropModalOpen] = useState(false);
   const [imageToCrop, setImageToCrop] = useState<string | null>(null);
   const [formSubmitError, setFormSubmitError] = useState<string | null>(null); // For general submit errors
+  const [avatarError, setAvatarError] = useState<string | null>(null);
 
   // --- Refs ---
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -112,17 +116,31 @@ const CreateUserForm: React.FC<CreateUserFormProps> = ({
 
   // --- Avatar Handling Logic specific to triggering the modal ---
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    // Always clear previous avatar errors when a new file is chosen
+    setAvatarError(null);
+
     const file = event.target.files?.[0];
-    if (file) {
-      cropCompletedRef.current = false; // Reset flag on new file select
-      handleSetOriginalFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImageToCrop(reader.result as string);
-        setIsCropModalOpen(true);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    // File size validation ---
+    if (file.size > MAX_AVATAR_SIZE_BYTES) {
+      setAvatarError(
+        `Файлът е твърде голям. Максималният размер е ${MAX_AVATAR_SIZE_MB}MB.`
+      );
+      // Reset the file input so the user can try again
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+      return; // Stop further processing
     }
+    cropCompletedRef.current = false;
+    handleSetOriginalFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImageToCrop(reader.result as string);
+      setIsCropModalOpen(true);
+    };
+    reader.readAsDataURL(file);
   };
 
   // Callback when cropping is complete (or cancelled within the modal)
@@ -164,7 +182,9 @@ const CreateUserForm: React.FC<CreateUserFormProps> = ({
   };
 
   const handleRemoveAvatar = () => {
-    cropCompletedRef.current = false; // Reset flag if removing
+    // Clear any avatar errors when removing
+    setAvatarError(null);
+    cropCompletedRef.current = false;
     handleSetIsRemovingAvatar(true);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
@@ -275,6 +295,7 @@ const CreateUserForm: React.FC<CreateUserFormProps> = ({
               "_"
             )}`
           : "cropped_avatar.png";
+
         avatarInputData = { filename, file: base64String };
       } catch (error) {
         setFormSubmitError(
@@ -314,7 +335,7 @@ const CreateUserForm: React.FC<CreateUserFormProps> = ({
   const overallLoading =
     (isCheckingUsername && !!username.trim()) ||
     (isCheckingEmail && !!email.trim() && isEmailFormatCurrentlyValid);
-  const errorPlaceholderClass = "mt-1 text-xs min-h-[1.2em]";
+  const errorPlaceholderClass = "mt-1 text-xs min-h-[2.4em]";
 
   return (
     <>
@@ -375,6 +396,8 @@ const CreateUserForm: React.FC<CreateUserFormProps> = ({
             onAvatarClick={handleAvatarClick}
             onRemoveAvatar={handleRemoveAvatar}
             errorPlaceholderClass={errorPlaceholderClass}
+            avatarError={avatarError}
+            fileInputRef={fileInputRef} // Pass the ref down
           />
 
           <PasswordFields

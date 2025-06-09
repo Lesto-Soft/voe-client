@@ -24,7 +24,7 @@ const TopUserCard: React.FC<TopUserCardProps> = ({
       {stat && onPodiumClick && (
         <button
           onClick={onPodiumClick}
-          className="absolute top-2 right-2 p-1.5 rounded-full text-gray-400 hover:bg-yellow-100 hover:text-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 transition-colors"
+          className="hover:cursor-pointer absolute top-2 right-2 p-1.5 rounded-full text-gray-400 hover:bg-yellow-100 hover:text-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 transition-colors"
           title="Виж пълната класация"
         >
           {/* The usage remains the same, but it now renders the imported icon */}

@@ -181,7 +181,7 @@ const UserInformationPanel: React.FC<UserInformationPanelProps> = ({
                 {hasManagedCategories && (
                   <button
                     onClick={() => setActiveCategoryRoleTab("manages")}
-                    className={`flex-1 py-2 px-1 text-center text-sm font-medium focus:outline-none transition-colors duration-150 flex items-center justify-center ${
+                    className={`hover:cursor-pointer flex-1 py-2 px-1 text-center text-sm font-medium focus:outline-none transition-colors duration-150 flex items-center justify-center ${
                       activeCategoryRoleTab === "manages"
                         ? "border-b-2 border-purple-500 text-purple-600"
                         : "text-gray-500 hover:text-gray-700 hover:border-gray-300 border-b-2 border-transparent"
@@ -195,7 +195,7 @@ const UserInformationPanel: React.FC<UserInformationPanelProps> = ({
                 {hasExpertCategories && (
                   <button
                     onClick={() => setActiveCategoryRoleTab("expertIn")}
-                    className={`flex-1 py-2 px-1 text-center text-sm font-medium focus:outline-none transition-colors duration-150 flex items-center justify-center ${
+                    className={`hover:cursor-pointer flex-1 py-2 px-1 text-center text-sm font-medium focus:outline-none transition-colors duration-150 flex items-center justify-center ${
                       activeCategoryRoleTab === "expertIn"
                         ? "border-b-2 border-teal-500 text-teal-600"
                         : "text-gray-500 hover:text-gray-700 hover:border-gray-300 border-b-2 border-transparent"

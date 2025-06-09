@@ -76,7 +76,7 @@ export const PodiumModal: React.FC<PodiumModalProps> = ({
           <h2 className="text-xl font-bold text-gray-800">{title}</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-700 transition"
+            className="hover:cursor-pointer text-gray-400 hover:text-gray-700 transition"
           >
             <XMarkIcon />
           </button>

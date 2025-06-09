@@ -7,6 +7,7 @@ import {
   ViewColumnsIcon,
   Square3Stack3DIcon,
 } from "@heroicons/react/24/outline";
+import { customInputStyles } from "../../../../utils/style-helpers";
 
 interface AnalysesControlsProps {
   viewMode: ViewMode;
@@ -70,7 +71,7 @@ const AnalysesControls: React.FC<AnalysesControlsProps> = (props) => {
           type="button"
           onClick={() => setBarChartStyle("grouped")}
           title="Групиран" // Tooltip for accessibility
-          className={`p-1.5 rounded-md focus:outline-none focus:ring-1 focus:ring-sky-500 transition-colors ${
+          className={`hover:cursor-pointer p-1.5 rounded-md focus:outline-none focus:ring-1 focus:ring-sky-500 transition-colors ${
             barChartStyle === "grouped"
               ? "bg-sky-600 text-white shadow-sm"
               : "bg-gray-200 text-gray-700 hover:bg-gray-300"
@@ -82,7 +83,7 @@ const AnalysesControls: React.FC<AnalysesControlsProps> = (props) => {
           type="button"
           onClick={() => setBarChartStyle("stacked")}
           title="Натрупан" // Tooltip for accessibility
-          className={`p-1.5 rounded-md focus:outline-none focus:ring-1 focus:ring-sky-500 transition-colors ${
+          className={`hover:cursor-pointer p-1.5 rounded-md focus:outline-none focus:ring-1 focus:ring-sky-500 transition-colors ${
             barChartStyle === "stacked"
               ? "bg-sky-600 text-white shadow-sm"
               : "bg-gray-200 text-gray-700 hover:bg-gray-300"
@@ -98,7 +99,7 @@ const AnalysesControls: React.FC<AnalysesControlsProps> = (props) => {
         <span className="text-sm font-medium text-gray-600">Покажи по:</span>
         <button
           onClick={() => setBarChartMode("type")}
-          className={`px-3 py-1.5 text-xs sm:text-sm rounded-md focus:outline-none ${
+          className={`hover:cursor-pointer px-3 py-1.5 text-xs sm:text-sm rounded-md focus:outline-none ${
             barChartMode === "type"
               ? "bg-sky-600 text-white shadow-sm"
               : "bg-gray-200 text-gray-700 hover:bg-gray-300"
@@ -108,7 +109,7 @@ const AnalysesControls: React.FC<AnalysesControlsProps> = (props) => {
         </button>
         <button
           onClick={() => setBarChartMode("priority")}
-          className={`px-3 py-1.5 text-xs sm:text-sm rounded-md focus:outline-none ${
+          className={`hover:cursor-pointer px-3 py-1.5 text-xs sm:text-sm rounded-md focus:outline-none ${
             barChartMode === "priority"
               ? "bg-sky-600 text-white shadow-sm"
               : "bg-gray-200 text-gray-700 hover:bg-gray-300"
@@ -166,7 +167,7 @@ const AnalysesControls: React.FC<AnalysesControlsProps> = (props) => {
           <select
             value={currentYear}
             onChange={(e) => setCurrentYear(parseInt(e.target.value))}
-            className="p-2 border border-gray-300 rounded bg-white text-sm shadow-sm focus:ring-sky-500 focus:border-sky-500"
+            className="hover:cursor-pointer p-2 border border-gray-300 rounded bg-white text-sm shadow-sm focus:ring-sky-500 focus:border-sky-500"
           >
             {uniqueYears.map((year) => (
               <option key={year} value={year}>
@@ -180,7 +181,7 @@ const AnalysesControls: React.FC<AnalysesControlsProps> = (props) => {
           <select
             value={currentMonth}
             onChange={(e) => setCurrentMonth(parseInt(e.target.value))}
-            className="p-2 border border-gray-300 rounded bg-white text-sm shadow-sm focus:ring-sky-500 focus:border-sky-500"
+            className="hover:cursor-pointer p-2 border border-gray-300 rounded bg-white text-sm shadow-sm focus:ring-sky-500 focus:border-sky-500"
           >
             {MONTH_NAMES.map((name, index) => (
               <option key={index + 1} value={index + 1}>
@@ -201,7 +202,7 @@ const AnalysesControls: React.FC<AnalysesControlsProps> = (props) => {
                   Math.max(1, Math.min(53, parseInt(e.target.value) || 1))
                 )
               }
-              className="p-2 border border-gray-300 rounded bg-white text-sm w-16 shadow-sm focus:ring-sky-500 focus:border-sky-500"
+              className="custom-number-input p-2 border border-gray-300 rounded bg-white text-sm w-16 shadow-sm focus:ring-sky-500 focus:border-sky-500"
               min="1"
               max="53"
             />
@@ -221,7 +222,7 @@ const AnalysesControls: React.FC<AnalysesControlsProps> = (props) => {
                   : ""
               }
               onChange={(e) => handleDateInputChange(e, "start")}
-              className="p-2 border border-gray-300 rounded bg-white text-sm shadow-sm focus:ring-sky-500 focus:border-sky-500"
+              className="custom-date-input p-2 border border-gray-300 rounded bg-white text-sm shadow-sm focus:ring-sky-500 focus:border-sky-500"
             />
             <span className="text-gray-500">-</span>
             <input
@@ -235,7 +236,7 @@ const AnalysesControls: React.FC<AnalysesControlsProps> = (props) => {
                   ? customStartDate.toISOString().split("T")[0]
                   : undefined
               }
-              className="p-2 border border-gray-300 rounded bg-white text-sm shadow-sm focus:ring-sky-500 focus:border-sky-500"
+              className="custom-date-input p-2 border border-gray-300 rounded bg-white text-sm shadow-sm focus:ring-sky-500 focus:border-sky-500"
             />
           </>
         )}
@@ -256,12 +257,13 @@ const AnalysesControls: React.FC<AnalysesControlsProps> = (props) => {
 
   return (
     <>
+      <style>{customInputStyles}</style>
       <div className="flex space-x-0 border-b border-gray-200">
         {(["all", "yearly", "monthly", "weekly", "custom"] as ViewMode[]).map(
           (mode) => (
             <button
               key={mode}
-              className={`px-3 py-2 sm:px-4 sm:py-2.5 text-xs sm:text-sm font-medium focus:outline-none -mb-px border-b-2 ${
+              className={`hover:cursor-pointer px-3 py-2 sm:px-4 sm:py-2.5 text-xs sm:text-sm font-medium focus:outline-none -mb-px border-b-2 ${
                 viewMode === mode
                   ? "border-sky-500 text-sky-600"
                   : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"

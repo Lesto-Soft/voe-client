@@ -205,7 +205,7 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
               <button
                 key={tab.key}
                 onClick={() => handleTabChange(tab.key)}
-                className={`px-3 py-1.5 text-xs sm:text-sm font-medium rounded-md whitespace-nowrap transition-colors duration-150 focus:outline-none ${
+                className={`hover:cursor-pointer px-3 py-1.5 text-xs sm:text-sm font-medium rounded-md whitespace-nowrap transition-colors duration-150 focus:outline-none ${
                   activeTab === tab.key
                     ? "bg-indigo-600 text-white shadow-sm"
                     : "bg-gray-100 text-gray-700 hover:bg-gray-200"
@@ -220,7 +220,7 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
           <button
             onClick={() => setIsDateFilterVisible((prev) => !prev)}
             title="Filter by date"
-            className={`p-2 rounded-md transition-colors duration-150 ml-2 ${
+            className={`hover:cursor-pointer p-2 rounded-md transition-colors duration-150 ml-2 ${
               isDateFilterVisible
                 ? "bg-indigo-100 text-indigo-600"
                 : "bg-gray-100 text-gray-500 hover:bg-gray-200"

@@ -55,6 +55,7 @@ const AvatarUploadSection: React.FC<AvatarUploadSectionProps> = ({
           type="file"
           accept="image/*"
           ref={fileInputRef}
+          className="hover:cursor-pointer"
           onChange={onFileChange}
           style={{ display: "none" }}
           name="avatarFile" // Optional: Useful if submitting without JS
@@ -75,7 +76,7 @@ const AvatarUploadSection: React.FC<AvatarUploadSectionProps> = ({
           <button
             type="button"
             onClick={() => handleButtonClick("upload")}
-            className="rounded bg-blue-500 px-3 py-1 text-xs text-white shadow-sm hover:bg-blue-600"
+            className="hover:cursor-pointer rounded bg-blue-500 px-3 py-1 text-xs text-white shadow-sm hover:bg-blue-600"
           >
             {avatarPreview ? "Смени" : "Качи"} Аватар
           </button>
@@ -83,7 +84,7 @@ const AvatarUploadSection: React.FC<AvatarUploadSectionProps> = ({
             <button
               type="button"
               onClick={() => handleButtonClick("remove")}
-              className="rounded bg-red-100 px-3 py-1 text-xs text-red-700 shadow-sm hover:bg-red-200"
+              className="hover:cursor-pointer rounded bg-red-100 px-3 py-1 text-xs text-red-700 shadow-sm hover:bg-red-200"
             >
               Премахни Аватар
             </button>

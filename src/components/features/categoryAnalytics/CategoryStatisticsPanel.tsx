@@ -175,7 +175,7 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
               <button
                 key={tab.key}
                 onClick={() => setActiveStatsView(tab.key)}
-                className={`flex-1 py-2 px-1 text-center font-medium focus:outline-none transition-colors duration-150 whitespace-nowrap ${
+                className={`hover:cursor-pointer flex-1 py-2 px-1 text-center font-medium focus:outline-none transition-colors duration-150 whitespace-nowrap ${
                   activeStatsView === tab.key
                     ? "border-b-2 border-indigo-500 text-indigo-600"
                     : "text-gray-500 hover:text-gray-700 hover:border-gray-300 border-b-2 border-transparent"

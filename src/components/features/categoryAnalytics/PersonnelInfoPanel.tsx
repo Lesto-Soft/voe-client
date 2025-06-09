@@ -82,7 +82,7 @@ const PersonnelInfoPanel: React.FC<PersonnelInfoPanelProps> = ({
           <div className="flex border-b border-gray-200">
             <button
               onClick={() => setActivePersonnelTab("managers")}
-              className={`flex-1 py-2 px-1 text-center text-sm font-medium focus:outline-none transition-colors duration-150 flex items-center justify-center ${
+              className={`hover:cursor-pointer flex-1 py-2 px-1 text-center text-sm font-medium focus:outline-none transition-colors duration-150 flex items-center justify-center ${
                 activePersonnelTab === "managers"
                   ? "border-b-2 border-purple-500 text-purple-600" // Changed color for managers
                   : "text-gray-500 hover:text-gray-700 hover:border-gray-300 border-b-2 border-transparent"
@@ -93,7 +93,7 @@ const PersonnelInfoPanel: React.FC<PersonnelInfoPanelProps> = ({
             </button>
             <button
               onClick={() => setActivePersonnelTab("experts")}
-              className={`flex-1 py-2 px-1 text-center text-sm font-medium focus:outline-none transition-colors duration-150 flex items-center justify-center ${
+              className={`hover:cursor-pointer flex-1 py-2 px-1 text-center text-sm font-medium focus:outline-none transition-colors duration-150 flex items-center justify-center ${
                 activePersonnelTab === "experts"
                   ? "border-b-2 border-teal-500 text-teal-600" // Changed color for experts
                   : "text-gray-500 hover:text-gray-700 hover:border-gray-300 border-b-2 border-transparent"
@@ -117,9 +117,9 @@ const PersonnelInfoPanel: React.FC<PersonnelInfoPanelProps> = ({
           <div className="flex border-b border-gray-200">
             <button
               onClick={() => setActiveInfoTab("suggestion")}
-              className={`flex-1 py-2 px-1 text-center text-sm font-medium focus:outline-none transition-colors duration-150 flex items-center justify-center ${
+              className={`hover:cursor-pointer flex-1 py-2 px-1 text-center text-sm font-medium focus:outline-none transition-colors duration-150 flex items-center justify-center ${
                 activeInfoTab === "suggestion"
-                  ? "border-b-2 border-indigo-500 text-indigo-600"
+                  ? "border-b-2 border-green-500 text-green-600"
                   : "text-gray-500 hover:text-gray-700 hover:border-gray-300 border-b-2 border-transparent"
               }`}
             >
@@ -128,9 +128,9 @@ const PersonnelInfoPanel: React.FC<PersonnelInfoPanelProps> = ({
             </button>
             <button
               onClick={() => setActiveInfoTab("problem")}
-              className={`flex-1 py-2 px-1 text-center text-sm font-medium focus:outline-none transition-colors duration-150 flex items-center justify-center ${
+              className={`hover:cursor-pointer flex-1 py-2 px-1 text-center text-sm font-medium focus:outline-none transition-colors duration-150 flex items-center justify-center ${
                 activeInfoTab === "problem"
-                  ? "border-b-2 border-indigo-500 text-indigo-600"
+                  ? "border-b-2 border-red-500 text-red-600"
                   : "text-gray-500 hover:text-gray-700 hover:border-gray-300 border-b-2 border-transparent"
               }`}
             >

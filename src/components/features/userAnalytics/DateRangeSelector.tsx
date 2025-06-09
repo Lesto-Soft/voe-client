@@ -1,6 +1,7 @@
 // src/components/features/userAnalytics/DateRangeSelector.tsx
 import React, { useState, useEffect } from "react"; // 1. Import useState and useEffect from "react";
 import { startOfDay, endOfDay, subDays } from "../../../utils/dateUtils";
+import { customInputStyles } from "../../../utils/style-helpers";
 
 interface DateRangeSelectorProps {
   dateRange: { startDate: Date | null; endDate: Date | null };
@@ -66,7 +67,7 @@ const DateRangeSelector: React.FC<DateRangeSelectorProps> = ({
   };
 
   const getButtonClass = (isActive: boolean) =>
-    `px-3 py-1 text-xs sm:text-sm font-medium rounded-md whitespace-nowrap transition-colors duration-150 focus:outline-none ${
+    `hover:cursor-pointer px-3 py-1 text-xs sm:text-sm font-medium rounded-md whitespace-nowrap transition-colors duration-150 focus:outline-none ${
       isActive
         ? "bg-indigo-600 text-white shadow-sm"
         : "bg-gray-100 text-gray-700 hover:bg-gray-200"
@@ -76,43 +77,46 @@ const DateRangeSelector: React.FC<DateRangeSelectorProps> = ({
   // it relies on the `activePreset` state.
 
   return (
-    <div className="flex flex-row justify-between border-t pt-1 border-gray-200">
-      <div className="flex items-center justify-center space-x-1 sm:space-x-2 overflow-x-auto custom-scrollbar-xs">
-        {/* 3. UPDATE THE ACTIVE CHECK FOR THE BUTTONS */}
-        <button
-          onClick={handleAllTimeClick}
-          className={getButtonClass(activePreset === "All Time")}
-        >
-          Целия период
-        </button>
-        {presets.map((preset) => (
+    <>
+      <style>{customInputStyles}</style>
+      <div className="flex flex-row justify-between border-t pt-1 border-gray-200">
+        <div className="flex items-center justify-center space-x-1 sm:space-x-2 overflow-x-auto custom-scrollbar-xs">
+          {/* 3. UPDATE THE ACTIVE CHECK FOR THE BUTTONS */}
           <button
-            key={preset.label}
-            onClick={() => handlePresetClick(preset)}
-            className={getButtonClass(activePreset === preset.label)}
+            onClick={handleAllTimeClick}
+            className={getButtonClass(activePreset === "All Time")}
           >
-            {preset.label}
+            Целия период
           </button>
-        ))}
+          {presets.map((preset) => (
+            <button
+              key={preset.label}
+              onClick={() => handlePresetClick(preset)}
+              className={getButtonClass(activePreset === preset.label)}
+            >
+              {preset.label}
+            </button>
+          ))}
+        </div>
+        <div className="flex items-center gap-x-2 text-sm">
+          <span className="text-gray-600">От:</span>
+          <input
+            type="date"
+            value={toInputFormat(dateRange.startDate)}
+            onChange={(e) => handleDateInputChange(e, "start")}
+            className="custom-date-input p-1.5 border border-gray-300 rounded bg-white text-sm shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+          />
+          <span className="text-gray-600">До:</span>
+          <input
+            type="date"
+            value={toInputFormat(dateRange.endDate)}
+            onChange={(e) => handleDateInputChange(e, "end")}
+            min={toInputFormat(dateRange.startDate)}
+            className="custom-date-input p-1.5 border border-gray-300 rounded bg-white text-sm shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+          />
+        </div>
       </div>
-      <div className="flex items-center gap-x-2 text-sm">
-        <span className="text-gray-600">От:</span>
-        <input
-          type="date"
-          value={toInputFormat(dateRange.startDate)}
-          onChange={(e) => handleDateInputChange(e, "start")}
-          className="p-1.5 border border-gray-300 rounded bg-white text-sm shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-        />
-        <span className="text-gray-600">До:</span>
-        <input
-          type="date"
-          value={toInputFormat(dateRange.endDate)}
-          onChange={(e) => handleDateInputChange(e, "end")}
-          min={toInputFormat(dateRange.startDate)}
-          className="p-1.5 border border-gray-300 rounded bg-white text-sm shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-        />
-      </div>
-    </div>
+    </>
   );
 };
 

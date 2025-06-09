@@ -113,7 +113,7 @@ const Analyses: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setActiveStatView("case")}
-                className={`px-4 py-2 text-sm font-medium ${
+                className={`hover:cursor-pointer px-4 py-2 text-sm font-medium ${
                   activeStatView === "case"
                     ? "bg-sky-600 text-white z-10 ring-1 ring-sky-500"
                     : "bg-white text-gray-900 hover:bg-gray-100"
@@ -124,7 +124,7 @@ const Analyses: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setActiveStatView("user")}
-                className={`px-4 py-2 text-sm font-medium ${
+                className={`hover:cursor-pointer px-4 py-2 text-sm font-medium ${
                   activeStatView === "user"
                     ? "bg-sky-600 text-white z-10 ring-1 ring-sky-500"
                     : "bg-white text-gray-900 hover:bg-gray-100"

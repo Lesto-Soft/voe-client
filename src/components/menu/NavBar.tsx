@@ -55,7 +55,6 @@ const NavLink: React.FC<NavLinkProps> = ({
 };
 
 const NavBar: React.FC<{ me: IMe }> = ({ me }) => {
-  console.log(me);
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { t } = useTranslation("menu");
@@ -138,9 +137,9 @@ const NavBar: React.FC<{ me: IMe }> = ({ me }) => {
             <div className="relative">
               <DropdownMenu.Trigger asChild className="focus:outline-none">
                 <button className="flex items-center justify-center w-12 h-12 bg-white text-white rounded-full shadow-lg overflow-hidden">
-                  {!me.avatar ? (
+                  {me.avatar ? (
                     <img
-                      src={`${dev_endpoint}/static/avatars/${me.avatar}`}
+                      src={`${dev_endpoint}/static/avatars/${me._id}/${me.avatar}`}
                       alt="User Avatar"
                       className="w-full h-full object-cover hover:cursor-pointer"
                       onError={(e) => {

@@ -9,6 +9,7 @@ import CaseInfo from "../components/case-components/CaseInfo"; // Unified CaseIn
 import Submenu from "../components/case-components/Submenu";
 import { ICase } from "../db/interfaces"; // Ensure ICase type is imported
 import { useCurrentUser } from "../context/UserContext";
+import { determineUserRightsForCase } from "../utils/rightUtils";
 
 const Case = () => {
   const { t } = useTranslation("dashboard");
@@ -60,6 +61,13 @@ const Case = () => {
   }
 
   const c = caseData as ICase;
+  const userRights = determineUserRightsForCase(currentUser, c);
+
+  if (!userRights || userRights.length === 0) {
+    return (
+      <div>You do not have the necessary permissions to view this case.</div>
+    );
+  }
 
   return (
     <div className="flex flex-col lg:flex-row bg-gray-50">
@@ -87,6 +95,7 @@ const Case = () => {
           refetch={refetch}
           attachments={c.attachments}
           caseNumber={c.case_number}
+          rights={userRights}
         />
       </div>
 
@@ -98,7 +107,13 @@ const Case = () => {
                   "
       >
         <div className="lg:py-8">
-          <Submenu caseData={c} t={t} me={currentUser} refetch={refetch} />
+          <Submenu
+            caseData={c}
+            t={t}
+            me={currentUser}
+            refetch={refetch}
+            userRights={userRights}
+          />
         </div>
       </div>
     </div>

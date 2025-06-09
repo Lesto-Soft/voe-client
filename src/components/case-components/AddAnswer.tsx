@@ -294,16 +294,24 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
 
       {/* Submission Error Display */}
       {/* This uses conditional rendering for the error message for clarity and accessibility */}
-      {submissionError && (
+      {
         <div
-          id="submission-error-display"
-          className="mx-5 mt-3 p-3 rounded-md border bg-red-100 border-red-400 text-red-700"
-          role="alert" // Important for accessibility
-          aria-live="assertive"
+          id="submission-error-display" // Ensure this ID is unique if multiple instances on one page or use aria-describedby on textarea
+          className={`mx-5 mt-3 col-span-1 md:col-span-2 p-3 rounded-md border
+         transition-opacity duration-300
+         ${
+           submissionError
+             ? "bg-red-100 border-red-400 text-red-700 opacity-100" // Visible styles
+             : "border-transparent text-transparent opacity-0 h-0 p-0 overflow-hidden" // Hidden and collapse space
+         }`}
+          aria-live="polite"
+          role="alert"
         >
+          {/* Display error or non-breaking space to maintain height when not fully collapsed */}
           {submissionError}
         </div>
-      )}
+      }
+
       {/* Optional: Success Message Display */}
       {showSuccess && (
         <div

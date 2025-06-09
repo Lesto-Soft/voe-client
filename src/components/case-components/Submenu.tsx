@@ -1,4 +1,4 @@
-import React, { JSX, useLayoutEffect } from "react";
+import React, { use, useLayoutEffect } from "react";
 import {
   ChatBubbleBottomCenterTextIcon,
   ChatBubbleLeftEllipsisIcon,
@@ -14,16 +14,24 @@ import CommentMobile from "./mobile/CommentMobile";
 import AddComment from "./AddComment";
 import AddAnswer from "./AddAnswer";
 import { checkNormal } from "../../utils/rightUtils";
+import { USER_RIGHTS } from "../../utils/GLOBAL_PARAMETERS";
 
 const LOCAL_STORAGE_KEY = "case-submenu-view";
 
 interface SubmenuProps {
   caseData: ICase;
-  t: (key: string, options?: Record<string, any>) => string; // Updated type for t
+  t: (key: string, options?: Record<string, any>) => string;
   me: any;
   refetch: () => void;
+  userRights: string[];
 }
-const Submenu: React.FC<SubmenuProps> = ({ caseData, t, me, refetch }) => {
+const Submenu: React.FC<SubmenuProps> = ({
+  caseData,
+  t,
+  me,
+  refetch,
+  userRights,
+}) => {
   const [view, setView] = useState<"answers" | "comments" | "history">(() => {
     // Try to get the last selected view from sessionStorage
     const stored = sessionStorage.getItem(LOCAL_STORAGE_KEY);
@@ -43,10 +51,16 @@ const Submenu: React.FC<SubmenuProps> = ({ caseData, t, me, refetch }) => {
   const isExpertForCase = expertCategoryIds.some((expertId: string) =>
     caseCategoryIdsInThisCase.includes(expertId)
   );
-  // Update sessionStorage whenever view changes
+
   useLayoutEffect(() => {
     sessionStorage.setItem(LOCAL_STORAGE_KEY, view);
   }, [view]);
+
+  const isCreatorAndNothingElse =
+    userRights.length === 1 && userRights.includes("creator");
+
+  console.log(isCreatorAndNothingElse);
+
   const submenu = [
     {
       key: "answers",
@@ -79,6 +93,10 @@ const Submenu: React.FC<SubmenuProps> = ({ caseData, t, me, refetch }) => {
       icon: <ClockIcon className="h-5 w-5 mr-2" />,
     },
   ];
+  if (isCreatorAndNothingElse) {
+    submenu.splice(2, 2);
+  }
+
   return (
     <>
       <div className="flex justify-center gap-2 mb-6 mt-5 lg:mt-0">
@@ -107,12 +125,15 @@ const Submenu: React.FC<SubmenuProps> = ({ caseData, t, me, refetch }) => {
       <div>
         {view === "answers" && (
           <>
-            <AddAnswer
-              caseNumber={caseData.case_number}
-              caseId={caseData._id}
-              t={t}
-              me={me}
-            />
+            {userRights.includes(USER_RIGHTS.EXPERT) ||
+            userRights.includes(USER_RIGHTS.MANAGER) ? (
+              <AddAnswer
+                caseNumber={caseData.case_number}
+                caseId={caseData._id}
+                t={t}
+                me={me}
+              />
+            ) : null}
             {caseData.answers && caseData.answers.length > 0 ? (
               <>
                 {[...caseData.answers] // Create a shallow copy of the array
@@ -127,9 +148,9 @@ const Submenu: React.FC<SubmenuProps> = ({ caseData, t, me, refetch }) => {
                   })
                   .map((answer: IAnswer) => {
                     const showThisAnswer =
-                      answer.approved || // Rule 1: Always show if approved
-                      (!checkNormal(me.role._id) && isExpertForCase); // Rule 2: For unapproved, user must be non-normal AND an expert for this case
-
+                      answer.approved ||
+                      userRights.includes(USER_RIGHTS.EXPERT) ||
+                      userRights.includes(USER_RIGHTS.MANAGER);
                     return showThisAnswer ? (
                       <div key={answer._id}>
                         <div className="flex lg:hidden flex-col gap-4 mb-8">

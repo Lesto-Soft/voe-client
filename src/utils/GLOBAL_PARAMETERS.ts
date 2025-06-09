@@ -30,3 +30,9 @@ export const CASE_PRIORITY = {
   MEDIUM: "MEDIUM",
   HIGH: "HIGH",
 };
+
+export const USER_RIGHTS = {
+  CREATOR: "creator",
+  MANAGER: "manager",
+  EXPERT: "expert",
+};

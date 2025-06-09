@@ -2,9 +2,9 @@ export interface ICase {
   _id: string;
   content: string;
   date: string;
-  type: string;
+  type: CaseType;
   attachments?: string[];
-  priority: string;
+  priority: CasePriority;
   status: ICaseStatus | string;
   case_number: number;
   categories: ICategory[];

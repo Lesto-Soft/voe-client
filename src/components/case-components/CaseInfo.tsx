@@ -17,8 +17,7 @@ import ImagePreviewModal from "../modals/ImagePreviewModal";
 import { createFileUrl } from "../../utils/fileUtils";
 import FullScreenContentDialog from "../modals/ContentDialog";
 import EditCaseDialog from "../modals/EditCaseDialog";
-import { checkCaseEditPermission } from "../../utils/rightUtils";
-import { CASE_STATUS } from "../../utils/GLOBAL_PARAMETERS";
+import { CASE_STATUS, USER_RIGHTS } from "../../utils/GLOBAL_PARAMETERS";
 
 interface ICaseInfoProps {
   content: string;
@@ -34,6 +33,7 @@ interface ICaseInfoProps {
   caseNumber: number;
   refetch: () => void;
   attachments?: string[];
+  rights: string[];
 }
 
 const CaseInfo: React.FC<ICaseInfoProps> = ({
@@ -50,6 +50,7 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
   caseNumber,
   refetch,
   attachments = [],
+  rights = [],
 }) => {
   const { t } = useTranslation("dashboard");
   const statusStyle = getStatusStyle(status);
@@ -82,12 +83,7 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
           </h3>
           {/* FullScreenContentDialog: Show only on desktop, or style differently for mobile if needed */}
           <div className="hidden lg:block">
-            {checkCaseEditPermission(
-              creator._id,
-              me._id,
-              categories.map((cat) => cat._id),
-              me.managed_categories.map((cat: ICategory) => cat._id)
-            ) &&
+            {rights.includes(USER_RIGHTS.CREATOR) &&
               status !== CASE_STATUS.AWAITING_FINANCE &&
               status !== CASE_STATUS.CLOSED && (
                 <EditCaseDialog

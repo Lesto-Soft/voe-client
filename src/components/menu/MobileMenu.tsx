@@ -11,6 +11,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { NavLinkProps } from "./NavBar";
 import { IMe } from "../../db/interfaces";
+import { ROLES } from "../../utils/GLOBAL_PARAMETERS";
 
 const MobileNavLink: React.FC<NavLinkProps> = ({
   to,
@@ -52,6 +53,9 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
 }) => {
   const { t } = useTranslation("menu");
 
+  const isAdmin = me.role._id === ROLES.ADMIN;
+  const isManagerExpert =
+    me.role._id === ROLES.EXPERT && me.managed_categories.length > 0;
   return (
     <div
       className={`
@@ -65,28 +69,32 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
       `}
     >
       <div className="flex flex-col space-y-1 p-4">
-        <MobileNavLink
-          to="/user-management"
-          icon={<UsersIcon className="h-6 w-6" />}
-          label={t("accounts")}
-          onClick={onLinkClick}
-        />
-        <MobileNavLink
-          to="/category-management"
-          icon={<TagIcon className="h-6 w-6" />}
-          label={t("categories")}
-          onClick={onLinkClick}
-        />
+        {(isAdmin || isManagerExpert) && (
+          <>
+            <MobileNavLink
+              to="/user-management"
+              icon={<UsersIcon className="h-6 w-6" />}
+              label={t("accounts")}
+              onClick={onLinkClick}
+            />
+            <MobileNavLink
+              to="/category-management"
+              icon={<TagIcon className="h-6 w-6" />}
+              label={t("categories")}
+              onClick={onLinkClick}
+            />
+            <MobileNavLink
+              to="/analyses"
+              icon={<ChartPieIcon className="h-6 w-6" />}
+              label={t("analyses")}
+              onClick={onLinkClick}
+            />
+          </>
+        )}
         <MobileNavLink
           to="/dashboard"
           icon={<ClipboardDocumentListIcon className="h-6 w-6" />}
           label={t("dashboard")}
-          onClick={onLinkClick}
-        />
-        <MobileNavLink
-          to="/analyses"
-          icon={<ChartPieIcon className="h-6 w-6" />}
-          label={t("analyses")}
           onClick={onLinkClick}
         />
         <MobileNavLink

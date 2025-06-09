@@ -17,6 +17,7 @@ import axios from "axios";
 import MobileMenu from "./MobileMenu";
 import { useTranslation } from "react-i18next";
 import { IMe } from "../../db/interfaces";
+import { ROLES } from "../../utils/GLOBAL_PARAMETERS";
 
 export interface NavLinkProps {
   to: string;
@@ -125,6 +126,10 @@ const NavBar: React.FC<{ me: IMe }> = ({ me }) => {
     currentPage = pageNames[location.pathname] || "Страницата не е намерена";
   }
 
+  const isAdmin = me.role._id === ROLES.ADMIN;
+  const isManagerExpert =
+    me.role._id === ROLES.EXPERT && me.managed_categories.length > 0;
+
   return (
     <div className="bg-gradient-to-r from-gray-100 to-gray-200 shadow-md relative max-w-full h-[6rem]">
       <div className="flex items-center justify-between p-4 px-6 md:px-12">
@@ -136,25 +141,29 @@ const NavBar: React.FC<{ me: IMe }> = ({ me }) => {
         </div>
 
         <div className="hidden md:flex space-x-4 items-center">
-          <NavLink
-            to="/user-management"
-            icon={<UsersIcon className="h-6 w-6" />}
-            label={t("accounts")}
-          />
-          <NavLink
-            to="/category-management"
-            icon={<TagIcon className="h-6 w-6" />}
-            label={t("categories")}
-          />
+          {(isAdmin || isManagerExpert) && (
+            <>
+              <NavLink
+                to="/user-management"
+                icon={<UsersIcon className="h-6 w-6" />}
+                label={t("accounts")}
+              />
+              <NavLink
+                to="/category-management"
+                icon={<TagIcon className="h-6 w-6" />}
+                label={t("categories")}
+              />
+              <NavLink
+                to="/analyses"
+                icon={<ChartPieIcon className="h-6 w-6" />}
+                label={t("analyses")}
+              />
+            </>
+          )}
           <NavLink
             to="/dashboard"
             icon={<ClipboardDocumentListIcon className="h-6 w-6" />}
             label={t("dashboard")}
-          />
-          <NavLink
-            to="/analyses"
-            icon={<ChartPieIcon className="h-6 w-6" />}
-            label={t("analyses")}
           />
           <DropdownMenu.Root
             open={isDropdownOpen}

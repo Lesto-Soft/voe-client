@@ -21,10 +21,10 @@ import {
   CategoryQueryApiParams,
 } from "../hooks/useCategoryManagement"; // Adjust path as needed
 import CategoryFilters from "../components/features/categoryManagement/CategoryFilters"; // Adjust path as needed
-import CreateCategoryModal from "../components/modals/CreateCategoryModal"; // Adjust path as needed
-import CreateCategoryForm, {
+import CategoryModal from "../components/modals/CategoryModal"; // Adjust path as needed
+import CategoryForm, {
   CategoryFormData,
-} from "../components/forms/CreateCategoryForm"; // Adjust path as needed
+} from "../components/forms/CategoryForm"; // Adjust path as needed
 import CategoryStats from "../components/features/categoryManagement/CategoryStats"; // Adjust path as needed
 import ConfirmActionDialog from "../components/modals/ConfirmActionDialog";
 import SuccessConfirmationModal from "../components/modals/SuccessConfirmationModal";
@@ -643,7 +643,7 @@ const CategoryManagement: React.FC = () => {
         deleteLoading={deleteCategoryLoading}
       />
 
-      <CreateCategoryModal
+      <CategoryModal
         isOpen={isCategoryModalOpen}
         onClose={closeCategoryModal}
         title={
@@ -660,7 +660,7 @@ const CategoryManagement: React.FC = () => {
           </div>
         )}
         {!(createCategoryLoading || updateCategoryLoading) && (
-          <CreateCategoryForm
+          <CategoryForm
             key={editingCategory ? editingCategory._id : "create-new-category"}
             onSubmit={handleCategoryFormSubmit}
             onClose={closeCategoryModal}
@@ -674,7 +674,7 @@ const CategoryManagement: React.FC = () => {
             allUsersForFormLoading={allUsersForFormLoading}
           />
         )}
-      </CreateCategoryModal>
+      </CategoryModal>
 
       <ConfirmActionDialog
         isOpen={showDeleteConfirmDialog}

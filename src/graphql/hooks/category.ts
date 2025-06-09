@@ -104,13 +104,12 @@ export const useGetActiveCategories = () => {
 };
 export const useGetCategoryByName = (name: string | undefined) => {
   // console.log("[HOOK] Attempting to fetch category with input name:", name);
-  const { loading, error, data } = useQuery<{ getCategoryByName: ICategory }>(
-    GET_CATEGORY_BY_NAME,
-    {
-      variables: { name: name }, // <--- THE FIX: Key matches the GraphQL query variable name $_id
-      skip: !name,
-    }
-  );
+  const { loading, error, data, refetch } = useQuery<{
+    getCategoryByName: ICategory;
+  }>(GET_CATEGORY_BY_NAME, {
+    variables: { name: name }, // <--- THE FIX: Key matches the GraphQL query variable name $_id
+    skip: !name,
+  });
 
   // For debugging the hook's output
   useEffect(() => {
@@ -119,12 +118,13 @@ export const useGetCategoryByName = (name: string | undefined) => {
         console.error("[HOOK] Error:", JSON.stringify(error, null, 2)); // Stringify for more detail
       }
     }
-  }, [loading, data, error]);
+  }, [loading, data, error, refetch]);
 
   return {
     loading,
     error,
     category: data?.getCategoryByName,
+    refetch,
   };
 };
 

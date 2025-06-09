@@ -12,7 +12,7 @@ interface ModalProps {
   hasUnsavedChanges?: boolean;
 }
 
-const CreateCategoryModal: React.FC<ModalProps> = ({
+const CategoryModal: React.FC<ModalProps> = ({
   isOpen,
   onClose,
   title,
@@ -111,4 +111,4 @@ const CreateCategoryModal: React.FC<ModalProps> = ({
   );
 };
 
-export default CreateCategoryModal;
+export default CategoryModal;

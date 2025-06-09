@@ -1,7 +1,8 @@
-// src/components/forms/CreateCategoryForm.tsx
+// src/components/forms/CategoryForm.tsx
+// NOTE: This file was renamed from CreateCategoryForm.tsx
 import React, { useState, useEffect } from "react";
-import { ICategory, IUser } from "../../db/interfaces"; // Adjust path
-import { useCreateCategoryFormState } from "./hooks/useCreateCategoryFormState"; // Adjust path
+import { ICategory } from "../../db/interfaces"; // Adjust path
+import { useCategoryFormState } from "./hooks/useCategoryFormState"; // Adjust path
 import CategoryInputFields from "./partials/CategoryInputFields"; // Adjust path
 
 export interface CategoryFormData {
@@ -20,7 +21,8 @@ interface ILeanUserForForm {
   role: { _id: string } | null;
 }
 
-interface CreateCategoryFormProps {
+// Interface name updated
+interface CategoryFormProps {
   onSubmit: (
     formData: CategoryFormData,
     editingCategoryId: string | null
@@ -34,7 +36,8 @@ interface CreateCategoryFormProps {
   allUsersForFormLoading: boolean;
 }
 
-const CreateCategoryForm: React.FC<CreateCategoryFormProps> = ({
+// Component name updated
+const CategoryForm: React.FC<CategoryFormProps> = ({
   onSubmit,
   onClose,
   initialData = null,
@@ -59,9 +62,9 @@ const CreateCategoryForm: React.FC<CreateCategoryFormProps> = ({
     setArchived,
     nameError,
     setNameError,
-    initialExpertObjects, // These are ILeanUser in useCreateCategoryFormState
-    initialManagerObjects, // These are ILeanUser in useCreateCategoryFormState
-  } = useCreateCategoryFormState({ initialData, onDirtyChange });
+    initialExpertObjects,
+    initialManagerObjects,
+  } = useCategoryFormState({ initialData, onDirtyChange });
 
   const [formSubmitError, setFormSubmitError] = useState<string | null>(null);
 
@@ -121,8 +124,8 @@ const CreateCategoryForm: React.FC<CreateCategoryFormProps> = ({
           archived={archived}
           setArchived={setArchived}
           errorPlaceholderClass={errorPlaceholderClass}
-          initialExperts={initialExpertObjects as ILeanUserForForm[]} // Cast to match expected type in CategoryInputFields
-          initialManagers={initialManagerObjects as ILeanUserForForm[]} // Cast to match
+          initialExperts={initialExpertObjects as ILeanUserForForm[]}
+          initialManagers={initialManagerObjects as ILeanUserForForm[]}
           allUsersForAssigning={allUsersForForm}
           usersLoading={allUsersForFormLoading}
         />
@@ -149,4 +152,5 @@ const CreateCategoryForm: React.FC<CreateCategoryFormProps> = ({
     </form>
   );
 };
-export default CreateCategoryForm;
+// Export name updated
+export default CategoryForm;

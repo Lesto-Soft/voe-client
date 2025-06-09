@@ -6,8 +6,12 @@ import {
   UserGroupIcon,
   LightBulbIcon,
   ExclamationTriangleIcon,
-  TagIcon, // Added for Category Name
+  TagIcon,
+  PencilSquareIcon, // --- NEW: Import edit icon ---
 } from "@heroicons/react/24/outline";
+
+// Note: No need for useCurrentUser or role checks here.
+// All permission logic is handled in the parent `Category.tsx` page.
 
 interface PersonnelInfoPanelProps {
   category: ICategory | undefined | null;
@@ -15,6 +19,9 @@ interface PersonnelInfoPanelProps {
   setActivePersonnelTab: (tab: "experts" | "managers") => void;
   activeInfoTab: "suggestion" | "problem";
   setActiveInfoTab: (tab: "suggestion" | "problem") => void;
+  // --- NEW: Props for editing functionality ---
+  canEdit: boolean;
+  onEditClick: () => void;
 }
 
 const PersonnelInfoPanel: React.FC<PersonnelInfoPanelProps> = ({
@@ -23,16 +30,16 @@ const PersonnelInfoPanel: React.FC<PersonnelInfoPanelProps> = ({
   setActivePersonnelTab,
   activeInfoTab,
   setActiveInfoTab,
+  // --- NEW: Destructure new props ---
+  canEdit,
+  onEditClick,
 }) => {
   if (!category) {
-    // Skeleton remains the same
+    // Skeleton remains the same, no changes needed here.
     return (
       <aside className="lg:col-span-3 bg-white rounded-lg shadow-lg flex flex-col overflow-hidden">
         <div className="p-6 space-y-4 animate-pulse">
-          {" "}
-          {/* Adjusted space-y */}
-          <div className="h-7 bg-gray-300 rounded w-3/4 mb-3"></div>{" "}
-          {/* For Category Name */}
+          <div className="h-7 bg-gray-300 rounded w-3/4 mb-3"></div>
           <div className="h-10 bg-gray-300 rounded w-full mb-4"></div>
           <div className="h-32 bg-gray-300 rounded w-full mb-6"></div>
           <div className="h-10 bg-gray-300 rounded w-full mb-4"></div>
@@ -69,22 +76,36 @@ const PersonnelInfoPanel: React.FC<PersonnelInfoPanelProps> = ({
       <div className="p-6 space-y-6 overflow-y-auto flex-1 custom-scrollbar">
         {/* Category Name Display */}
         <div className="mb-4 pb-3 border-b border-gray-200">
-          <h1 className="text-xl font-bold text-gray-800 flex items-center">
-            <TagIcon className="h-6 w-6 mr-2 text-gray-500 flex-shrink-0" />
-            <span className="truncate" title={category.name}>
-              {category.name}
-            </span>
-          </h1>
+          <div className="flex justify-between items-start gap-2">
+            <h1 className="text-xl font-bold text-gray-800 flex items-center min-w-0">
+              <TagIcon className="h-6 w-6 mr-2 text-gray-500 flex-shrink-0" />
+              <span className="truncate" title={category.name}>
+                {category.name}
+              </span>
+            </h1>
+
+            {/* --- NEW: Conditionally rendered Edit Button --- */}
+            {canEdit && (
+              <button
+                onClick={onEditClick}
+                className="hover:cursor-pointer flex-shrink-0 p-2 rounded-md text-gray-500 hover:bg-gray-100 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+                title="Редактирай категория"
+              >
+                <PencilSquareIcon className="h-6 w-6" />
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Personnel Tabs (Managers/Experts) */}
         <div>
+          {/* ... The rest of the component remains unchanged ... */}
           <div className="flex border-b border-gray-200">
             <button
               onClick={() => setActivePersonnelTab("managers")}
               className={`hover:cursor-pointer flex-1 py-2 px-1 text-center text-sm font-medium focus:outline-none transition-colors duration-150 flex items-center justify-center ${
                 activePersonnelTab === "managers"
-                  ? "border-b-2 border-purple-500 text-purple-600" // Changed color for managers
+                  ? "border-b-2 border-purple-500 text-purple-600"
                   : "text-gray-500 hover:text-gray-700 hover:border-gray-300 border-b-2 border-transparent"
               }`}
             >
@@ -95,7 +116,7 @@ const PersonnelInfoPanel: React.FC<PersonnelInfoPanelProps> = ({
               onClick={() => setActivePersonnelTab("experts")}
               className={`hover:cursor-pointer flex-1 py-2 px-1 text-center text-sm font-medium focus:outline-none transition-colors duration-150 flex items-center justify-center ${
                 activePersonnelTab === "experts"
-                  ? "border-b-2 border-teal-500 text-teal-600" // Changed color for experts
+                  ? "border-b-2 border-teal-500 text-teal-600"
                   : "text-gray-500 hover:text-gray-700 hover:border-gray-300 border-b-2 border-transparent"
               }`}
             >

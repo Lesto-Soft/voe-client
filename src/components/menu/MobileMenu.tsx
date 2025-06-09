@@ -10,6 +10,7 @@ import {
 } from "@heroicons/react/24/solid";
 import { useTranslation } from "react-i18next";
 import { NavLinkProps } from "./NavBar";
+import { IMe } from "../../db/interfaces";
 
 const MobileNavLink: React.FC<NavLinkProps> = ({
   to,
@@ -40,12 +41,14 @@ interface MobileMenuProps {
   isOpen: boolean;
   handleSignOut: () => void;
   onLinkClick: () => void; // Function to close the menu
+  me: IMe;
 }
 
 const MobileMenu: React.FC<MobileMenuProps> = ({
   isOpen,
   handleSignOut,
   onLinkClick,
+  me,
 }) => {
   const { t } = useTranslation("menu");
 
@@ -87,7 +90,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
           onClick={onLinkClick}
         />
         <MobileNavLink
-          to="/profile"
+          to={`/user/${me.username}`}
           icon={<UserIcon className="h-6 w-6" />} // Add icon if desired
           label={t("profile")}
           onClick={onLinkClick}

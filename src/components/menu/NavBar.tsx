@@ -22,7 +22,7 @@ export interface NavLinkProps {
   to: string;
   icon?: React.ReactNode;
   label: string;
-  onClick?: () => void; // Add this line
+  onClick?: () => void;
   dropdown?: boolean;
 }
 
@@ -30,6 +30,7 @@ const NavLink: React.FC<NavLinkProps> = ({
   to,
   icon,
   label,
+  onClick,
   dropdown = false,
 }) => {
   const location = useLocation();
@@ -38,6 +39,7 @@ const NavLink: React.FC<NavLinkProps> = ({
   return (
     <Link
       to={to}
+      onClick={onClick}
       className={`${
         dropdown
           ? "space-x-2 p-2 text-gray-700 rounded-lg w-full text-left transition duration-300 hover:scale-105  hover:text-btnRedHover flex  "
@@ -57,6 +59,7 @@ const NavLink: React.FC<NavLinkProps> = ({
 const NavBar: React.FC<{ me: IMe }> = ({ me }) => {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const { t } = useTranslation("menu");
 
   const initials = me.name
@@ -153,7 +156,10 @@ const NavBar: React.FC<{ me: IMe }> = ({ me }) => {
             icon={<ChartPieIcon className="h-6 w-6" />}
             label={t("analyses")}
           />
-          <DropdownMenu.Root>
+          <DropdownMenu.Root
+            open={isDropdownOpen}
+            onOpenChange={setIsDropdownOpen}
+          >
             <div className="relative">
               <DropdownMenu.Trigger asChild className="focus:outline-none">
                 <button className="flex items-center justify-center w-12 h-12 bg-white text-white rounded-full shadow-lg overflow-hidden">
@@ -176,10 +182,11 @@ const NavBar: React.FC<{ me: IMe }> = ({ me }) => {
               <DropdownMenu.Content className="absolute right-0 mt-2 bg-white rounded-md shadow-lg p-2 w-32 z-10">
                 <DropdownMenu.Item asChild>
                   <NavLink
-                    to="/profile"
+                    to={`/user/${me.username}`}
                     dropdown={true}
                     label={t("profile")}
                     icon={<UserIcon className="h-6 w-6" />}
+                    onClick={() => setIsDropdownOpen(false)}
                   />
                 </DropdownMenu.Item>
                 <DropdownMenu.Item asChild className="focus:outline-none">
@@ -214,6 +221,7 @@ const NavBar: React.FC<{ me: IMe }> = ({ me }) => {
         isOpen={isMenuOpen}
         handleSignOut={handleSignOut}
         onLinkClick={closeMobileMenu}
+        me={me}
       />
     </div>
   );

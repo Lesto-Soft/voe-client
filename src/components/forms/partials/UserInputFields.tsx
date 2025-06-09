@@ -1,8 +1,7 @@
-// src/components/forms/partials/UserInputFields.tsx
 import React from "react";
 import { InformationCircleIcon } from "@heroicons/react/20/solid";
-import * as Tooltip from "@radix-ui/react-tooltip"; // Import Radix UI Tooltip
-import { Role } from "../../../types/userManagementTypes"; // Adjust path
+import * as Tooltip from "@radix-ui/react-tooltip";
+import { Role } from "../../../types/userManagementTypes";
 
 interface UserInputFieldsProps {
   username: string;
@@ -27,6 +26,9 @@ interface UserInputFieldsProps {
   financialApprover: boolean;
   setFinancialApprover: (value: boolean) => void;
   errorPlaceholderClass: string;
+  // --- NEW PROPS ---
+  isEditing: boolean;
+  isAdmin: boolean;
 }
 
 const UserInputFields: React.FC<UserInputFieldsProps> = ({
@@ -52,14 +54,22 @@ const UserInputFields: React.FC<UserInputFieldsProps> = ({
   financialApprover,
   setFinancialApprover,
   errorPlaceholderClass,
+  // --- NEW PROPS ---
+  isEditing,
+  isAdmin,
 }) => {
   const roleChangeWarningText =
     "ВНИМАНИЕ: Промяна на ролята ОТ Админ или Експерт КЪМ Нормален или Напуснал, ЩЕ ПРЕМАХНЕ потребителя от категориите, за които е експерт и/или мениджър.";
 
+  // --- NEW: Logic to disable fields ---
+  const canEditSensitiveFields = isAdmin;
+  // Username cannot be changed after creation, except by an admin.
+  const isUsernameDisabled = isEditing && !isAdmin;
+
+  const disabledClasses =
+    "disabled:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-70";
+
   return (
-    // Tooltip.Provider should ideally be higher up in your component tree,
-    // e.g., wrapping your entire form or application.
-    // If it's not, you can wrap the fragment here for this component to work.
     <Tooltip.Provider delayDuration={300}>
       <>
         {/* Username Input */}
@@ -76,17 +86,20 @@ const UserInputFields: React.FC<UserInputFieldsProps> = ({
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             required
+            disabled={isUsernameDisabled}
             className={`w-full rounded-md border p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
               usernameError || usernameHookError
                 ? "border-red-500"
                 : "border-gray-300"
-            } ${isCheckingUsername ? "opacity-70 animate-pulse" : ""}`}
+            } ${
+              isCheckingUsername ? "opacity-70 animate-pulse" : ""
+            } ${disabledClasses}`}
           />
           <p
             className={`${errorPlaceholderClass} ${
               usernameError || usernameHookError
                 ? "text-red-500"
-                : "text-blue-500" // Or remove text-blue-500 if no positive message
+                : "text-blue-500"
             }`}
           >
             {isCheckingUsername ? (
@@ -116,7 +129,7 @@ const UserInputFields: React.FC<UserInputFieldsProps> = ({
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
             required
-            className="w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            className={`w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${disabledClasses}`}
           />
           <p className={`${errorPlaceholderClass}`}>&nbsp;</p>
         </div>
@@ -144,11 +157,11 @@ const UserInputFields: React.FC<UserInputFieldsProps> = ({
               isEmailFormatCurrentlyValid
                 ? "opacity-70 animate-pulse"
                 : ""
-            }`}
+            } ${disabledClasses}`}
           />
           <p
             className={`${errorPlaceholderClass} ${
-              emailError || emailHookError ? "text-red-500" : "text-blue-500" // Or remove text-blue-500
+              emailError || emailHookError ? "text-red-500" : "text-blue-500"
             }`}
           >
             {isCheckingEmail &&
@@ -179,7 +192,7 @@ const UserInputFields: React.FC<UserInputFieldsProps> = ({
             id="position"
             value={position}
             onChange={(e) => setPosition(e.target.value)}
-            className="w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            className={`w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${disabledClasses}`}
           />
           <p className={`${errorPlaceholderClass}`}>&nbsp;</p>
         </div>
@@ -190,8 +203,6 @@ const UserInputFields: React.FC<UserInputFieldsProps> = ({
             {/* Role Input */}
             <div>
               <div className="flex items-center mb-1 space-x-1">
-                {" "}
-                {/* Group label and icon */}
                 <label
                   htmlFor="role"
                   className="block text-sm font-medium text-gray-700"
@@ -227,7 +238,8 @@ const UserInputFields: React.FC<UserInputFieldsProps> = ({
                 value={roleId}
                 onChange={(e) => setRoleId(e.target.value)}
                 required
-                className="w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                disabled={!canEditSensitiveFields}
+                className={`w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${disabledClasses}`}
               >
                 <option value="">Изберете роля</option>
                 {roles.map((r) => (
@@ -236,14 +248,13 @@ const UserInputFields: React.FC<UserInputFieldsProps> = ({
                   </option>
                 ))}
               </select>
-              <p className={`${errorPlaceholderClass}`}>&nbsp;</p>{" "}
-              {/* Spacing below select */}
+              <p className={`${errorPlaceholderClass}`}>&nbsp;</p>
             </div>
 
             {/* Financial Approver Checkbox */}
             <div>
               <label className="mb-1 block text-sm font-medium text-transparent select-none">
-                &nbsp; {/* Placeholder for alignment with Role label+icon */}
+                &nbsp;
               </label>
               <div className="flex items-center h-10">
                 <input
@@ -252,7 +263,8 @@ const UserInputFields: React.FC<UserInputFieldsProps> = ({
                   name="financial_approver"
                   checked={financialApprover}
                   onChange={(e) => setFinancialApprover(e.target.checked)}
-                  className="h-5 w-5 rounded border-gray-300 text-blue-600 shadow-sm focus:ring-blue-500"
+                  disabled={!canEditSensitiveFields}
+                  className={`h-5 w-5 rounded border-gray-300 text-blue-600 shadow-sm focus:ring-blue-500 ${disabledClasses}`}
                 />
                 <label
                   htmlFor="financial_approver"
@@ -261,8 +273,7 @@ const UserInputFields: React.FC<UserInputFieldsProps> = ({
                   Финансов Одобрител
                 </label>
               </div>
-              <p className={`${errorPlaceholderClass}`}>&nbsp;</p>{" "}
-              {/* For consistent bottom spacing */}
+              <p className={`${errorPlaceholderClass}`}>&nbsp;</p>
             </div>
           </div>
         </div>

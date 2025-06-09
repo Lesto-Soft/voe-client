@@ -1,9 +1,8 @@
-// src/components/forms/CreateUserForm.tsx
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Role, User } from "../../types/userManagementTypes"; // Adjust path
+import { Role } from "../../types/userManagementTypes";
 import ImageCropModal from "../modals/ImageCropModal";
-import { useCreateUserFormState } from "./hooks/useCreateUserFormState"; // Import the new hook
-import UserInputFields from "./partials/UserInputFields"; // Import sub-components
+import { useUserFormState } from "./hooks/useUserFormState"; // <-- Use renamed hook
+import UserInputFields from "./partials/UserInputFields";
 import PasswordFields from "./partials/PasswordFields";
 import AvatarUploadSection from "./partials/AvatarUploadSection";
 import { IUser } from "../../db/interfaces";
@@ -11,28 +10,27 @@ import { IUser } from "../../db/interfaces";
 const MAX_AVATAR_SIZE_MB = 3;
 const MAX_AVATAR_SIZE_BYTES = MAX_AVATAR_SIZE_MB * 1024 * 1024;
 
-// Interface for the final avatar data structure expected by parent onSubmit
 interface AvatarInputData {
   filename: string;
   file: string; // base64 string
 }
 
-interface CreateUserFormProps {
+interface UserFormProps {
   onSubmit: (
     formData: any,
     editingUserId: string | null,
     avatarData: AvatarInputData | null | undefined
   ) => void;
-  onClose: () => void; // Keep onClose if the form itself needs to trigger closing
+  onClose: () => void;
   initialData: IUser | null;
   submitButtonText: string;
   roles: Role[];
   rolesLoading: boolean;
   rolesError: any;
-  // Add t function if needed for submit button text etc.
+  // --- NEW PROPS ---
+  isAdmin: boolean;
 }
 
-// Helper: Convert Blob to Base64 (Move to utils if used elsewhere)
 const blobToBase64 = (blob: Blob): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -46,22 +44,23 @@ const blobToBase64 = (blob: Blob): Promise<string> => {
   });
 };
 
-// Helper: Check email format (Move to utils)
 const isValidEmailFormat = (emailToTest: string): boolean =>
   /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailToTest);
 
-const CreateUserForm: React.FC<CreateUserFormProps> = ({
+const UserForm: React.FC<UserFormProps> = ({
   onSubmit,
   onClose,
   initialData = null,
-  submitButtonText = "Създай",
+  submitButtonText = "Запази",
   roles = [],
-  rolesLoading: propsRolesLoading = false, // Renamed to avoid conflict if needed
+  rolesLoading: propsRolesLoading = false,
   rolesError: propsRolesError = null,
+  // --- NEW PROP ---
+  isAdmin,
 }) => {
   const serverBaseUrl = import.meta.env.VITE_API_URL || "";
+  const isEditing = !!initialData;
 
-  // --- Use the custom hook for state and logic ---
   const {
     username,
     setUsername,
@@ -81,8 +80,8 @@ const CreateUserForm: React.FC<CreateUserFormProps> = ({
     setConfirmNewPassword,
     roleId,
     setRoleId,
-    financialApprover, // Get from hook
-    setFinancialApprover, // Get from hook
+    financialApprover,
+    setFinancialApprover,
     usernameError,
     setUsernameError,
     emailError,
@@ -101,37 +100,29 @@ const CreateUserForm: React.FC<CreateUserFormProps> = ({
     handleSetIsRemovingAvatar,
     trimmedDebouncedEmail,
     isEmailFormatCurrentlyValid,
-  } = useCreateUserFormState({ initialData, serverBaseUrl });
+  } = useUserFormState({ initialData, serverBaseUrl });
 
-  // --- State specific to this component (Modal) ---
   const [isCropModalOpen, setIsCropModalOpen] = useState(false);
   const [imageToCrop, setImageToCrop] = useState<string | null>(null);
-  const [formSubmitError, setFormSubmitError] = useState<string | null>(null); // For general submit errors
+  const [formSubmitError, setFormSubmitError] = useState<string | null>(null);
   const [avatarError, setAvatarError] = useState<string | null>(null);
 
-  // --- Refs ---
   const fileInputRef = useRef<HTMLInputElement>(null);
-  // Ref to track if crop was completed successfully before modal close
   const cropCompletedRef = useRef<boolean>(false);
 
-  // --- Avatar Handling Logic specific to triggering the modal ---
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    // Always clear previous avatar errors when a new file is chosen
     setAvatarError(null);
-
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // File size validation ---
     if (file.size > MAX_AVATAR_SIZE_BYTES) {
       setAvatarError(
         `Файлът е твърде голям. Максималният размер е ${MAX_AVATAR_SIZE_MB}MB.`
       );
-      // Reset the file input so the user can try again
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
-      return; // Stop further processing
+      return;
     }
     cropCompletedRef.current = false;
     handleSetOriginalFile(file);
@@ -143,7 +134,6 @@ const CreateUserForm: React.FC<CreateUserFormProps> = ({
     reader.readAsDataURL(file);
   };
 
-  // Callback when cropping is complete (or cancelled within the modal)
   const handleCropComplete = useCallback(
     (croppedBlob: Blob | null) => {
       setImageToCrop(null);
@@ -151,15 +141,11 @@ const CreateUserForm: React.FC<CreateUserFormProps> = ({
       handleSetCroppedBlob(croppedBlob);
 
       if (croppedBlob) {
-        // Crop was successful
-        cropCompletedRef.current = true; // Set flag for successful crop
+        cropCompletedRef.current = true;
         const blobUrl = URL.createObjectURL(croppedBlob);
         handleSetAvatarPreview(blobUrl);
-        console.log("[CreateUserForm] Crop successful, blob set, flag set.");
       } else {
-        // Crop was cancelled within the modal
-        cropCompletedRef.current = false; // Ensure flag is false on cancel
-        console.log("[CreateUserForm] Crop cancelled/failed in modal.");
+        cropCompletedRef.current = false;
         if (fileInputRef.current) fileInputRef.current.value = "";
         handleSetOriginalFile(null);
       }
@@ -167,7 +153,6 @@ const CreateUserForm: React.FC<CreateUserFormProps> = ({
     [handleSetCroppedBlob, handleSetAvatarPreview, handleSetOriginalFile]
   );
 
-  // Effect to clean up Blob URLs created for preview
   useEffect(() => {
     const currentPreview = avatarPreview;
     return () => {
@@ -177,12 +162,7 @@ const CreateUserForm: React.FC<CreateUserFormProps> = ({
     };
   }, [avatarPreview]);
 
-  const handleAvatarClick = () => {
-    // Passed to AvatarUploadSection
-  };
-
   const handleRemoveAvatar = () => {
-    // Clear any avatar errors when removing
     setAvatarError(null);
     cropCompletedRef.current = false;
     handleSetIsRemovingAvatar(true);
@@ -191,31 +171,16 @@ const CreateUserForm: React.FC<CreateUserFormProps> = ({
     }
   };
 
-  // Handler for when the modal is closed via backdrop click or Esc key
   const handleModalClose = useCallback(() => {
-    console.log(
-      "[CreateUserForm] Modal onClose triggered. Crop completed flag:",
-      cropCompletedRef.current
-    );
-    // Only reset if the crop wasn't successfully completed before closing
     if (!cropCompletedRef.current) {
-      console.log(
-        "[CreateUserForm] Modal onClose: Resetting state because crop was not completed."
-      );
       setImageToCrop(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
-      handleSetOriginalFile(null); // Clear original file state
-    } else {
-      console.log(
-        "[CreateUserForm] Modal onClose: Crop completed flag is true, not resetting state."
-      );
+      handleSetOriginalFile(null);
     }
-    // Always close the modal visually and reset the flag for the next cycle
     setIsCropModalOpen(false);
     cropCompletedRef.current = false;
-  }, [handleSetOriginalFile]); // Dependency is only the setter
+  }, [handleSetOriginalFile]);
 
-  // --- Form Submission ---
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setFormSubmitError(null);
@@ -224,7 +189,6 @@ const CreateUserForm: React.FC<CreateUserFormProps> = ({
     const finalTrimmedUsername = username.trim();
     const finalTrimmedEmail = email.trim();
 
-    // Perform final synchronous checks
     if (!finalTrimmedUsername) {
       setUsernameError("Потребителското име е задължително.");
       canSubmit = false;
@@ -253,7 +217,6 @@ const CreateUserForm: React.FC<CreateUserFormProps> = ({
       canSubmit = false;
     }
 
-    // Password checks
     if (!initialData && !password) {
       setFormSubmitError("Паролата е задължителна при създаване!");
       canSubmit = false;
@@ -273,14 +236,13 @@ const CreateUserForm: React.FC<CreateUserFormProps> = ({
       return;
     }
 
-    // Prepare data for parent onSubmit
     const formDataObject: any = {
       username: finalTrimmedUsername,
       name: fullName.trim(),
       email: finalTrimmedEmail || null,
       position: position.trim() || null,
       role: roleId || null,
-      financial_approver: financialApprover, // Add to form data
+      financial_approver: financialApprover,
     };
     if (!initialData) formDataObject.password = password;
     else if (newPassword) formDataObject.password = newPassword;
@@ -309,19 +271,9 @@ const CreateUserForm: React.FC<CreateUserFormProps> = ({
       avatarInputData = null;
     }
 
-    console.log("[CreateUserForm] handleSubmit - Preparing to submit:", {
-      isEditing: !!initialData,
-      finalCroppedBlobExists: !!finalCroppedBlob,
-      originalAvatarFileName: originalAvatarFile?.name,
-      isRemovingAvatar: isRemovingAvatar,
-      calculatedAvatarInputData: avatarInputData,
-      formDataObject: formDataObject,
-    });
-
     onSubmit(formDataObject, initialData?._id || null, avatarInputData);
   };
 
-  // --- Render ---
   if (propsRolesLoading)
     return <div className="p-4 text-center">Зареждане на роли...</div>;
   if (propsRolesError)
@@ -378,13 +330,15 @@ const CreateUserForm: React.FC<CreateUserFormProps> = ({
               setFormSubmitError(null);
             }}
             roles={roles}
-            financialApprover={financialApprover} // Pass to UserInputFields
+            financialApprover={financialApprover}
             setFinancialApprover={(v) => {
-              // Pass to UserInputFields
               setFinancialApprover(v);
               setFormSubmitError(null);
             }}
             errorPlaceholderClass={errorPlaceholderClass}
+            // --- PASS NEW PROPS ---
+            isEditing={isEditing}
+            isAdmin={isAdmin}
           />
 
           <AvatarUploadSection
@@ -393,15 +347,15 @@ const CreateUserForm: React.FC<CreateUserFormProps> = ({
             avatarPreview={avatarPreview}
             isRemovingAvatar={isRemovingAvatar}
             onFileChange={handleFileChange}
-            onAvatarClick={handleAvatarClick}
+            onAvatarClick={() => {}}
             onRemoveAvatar={handleRemoveAvatar}
             errorPlaceholderClass={errorPlaceholderClass}
             avatarError={avatarError}
-            fileInputRef={fileInputRef} // Pass the ref down
+            fileInputRef={fileInputRef}
           />
 
           <PasswordFields
-            isEditing={!!initialData}
+            isEditing={isEditing}
             password={password}
             setPassword={(v) => {
               setPassword(v);
@@ -426,14 +380,12 @@ const CreateUserForm: React.FC<CreateUserFormProps> = ({
           />
         </div>
 
-        {/* General Form Submission Error Display */}
         {formSubmitError && (
           <div className="mt-6 p-3 text-sm text-red-700 bg-red-100 rounded-md text-center">
             {formSubmitError}
           </div>
         )}
 
-        {/* Submit Button */}
         <div className="mt-8 text-center">
           <button
             type="submit"
@@ -445,10 +397,9 @@ const CreateUserForm: React.FC<CreateUserFormProps> = ({
         </div>
       </form>
 
-      {/* Image Crop Modal */}
       <ImageCropModal
         isOpen={isCropModalOpen}
-        onClose={handleModalClose} // Use the ref-based handler
+        onClose={handleModalClose}
         imageSrc={imageToCrop}
         onCropComplete={handleCropComplete}
       />
@@ -456,4 +407,4 @@ const CreateUserForm: React.FC<CreateUserFormProps> = ({
   );
 };
 
-export default CreateUserForm;
+export default UserForm;

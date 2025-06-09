@@ -1,24 +1,39 @@
-// src/pages/User.tsx
 import React, { useState } from "react";
-import { useParams } from "react-router"; // Ensure using react-router-dom
-import { useGetFullUserByUsername } from "../graphql/hooks/user"; // Adjust path as needed
-import { IUser } from "../db/interfaces"; // Adjust path as needed
+import { useParams } from "react-router";
+import {
+  useGetFullUserByUsername,
+  useUpdateUser, // <-- Import hook for updating
+} from "../graphql/hooks/user";
+import { useGetRoles } from "../graphql/hooks/role"; // <-- Import hook for roles
+import { IUser, IMe } from "../db/interfaces";
+import { AttachmentInput, UpdateUserInput } from "../graphql/mutation/user";
 
 // Hooks
-import useUserActivityStats from "../hooks/useUserActivityStats"; // Adjust path
+import useUserActivityStats from "../hooks/useUserActivityStats";
+import { useCurrentUser } from "../context/UserContext"; // <-- Import current user hook
 
 // UI Components
-import PageStatusDisplay from "../components/global/PageStatusDisplay"; // Adjust path
-import UserInformationPanel from "../components/features/userAnalytics/UserInformationPanel"; // Adjust path
-import UserActivityList from "../components/features/userAnalytics/UserActivityList"; // Adjust path
-import UserStatisticsPanel from "../components/features/userAnalytics/UserStatisticsPanel"; // Adjust path
+import PageStatusDisplay from "../components/global/PageStatusDisplay";
+import UserInformationPanel from "../components/features/userAnalytics/UserInformationPanel";
+import UserActivityList from "../components/features/userAnalytics/UserActivityList";
+import UserStatisticsPanel from "../components/features/userAnalytics/UserStatisticsPanel";
+import UserModal from "../components/modals/UserModal"; // <-- Use renamed modal
+import UserForm from "../components/forms/UserForm"; // <-- Use renamed form
+import SuccessConfirmationModal from "../components/modals/SuccessConfirmationModal";
+
+const ADMIN_ROLE_ID = "650000000000000000000003";
 
 const User: React.FC = () => {
   const { username: userUsernameFromParams } = useParams<{
     username: string;
   }>();
 
-  // 1. ADD STATE FOR THE DATE RANGE
+  // --- NEW: State for Modals and Data ---
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  const [successModalMessage, setSuccessModalMessage] = useState("");
+  const [avatarVersion, setAvatarVersion] = useState(Date.now());
+
   const [dateRange, setDateRange] = useState<{
     startDate: Date | null;
     endDate: Date | null;
@@ -27,40 +42,99 @@ const User: React.FC = () => {
     endDate: null,
   });
 
+  const currentUser = useCurrentUser() as IMe | undefined;
+
+  // --- GraphQL Hooks ---
   const {
     loading: userLoading,
     error: userError,
     user,
+    refetch: refetchUser, // <-- Get refetch function
   } = useGetFullUserByUsername(userUsernameFromParams);
 
-  // 2. PASS THE DATE RANGE TO THE STATS HOOK
+  const {
+    updateUser,
+    loading: updateLoading,
+    error: updateError,
+  } = useUpdateUser();
+
+  const {
+    roles: rolesData,
+    loading: rolesLoading,
+    error: rolesError,
+  } = useGetRoles();
+
   const userStats = useUserActivityStats(
     user,
     dateRange.startDate,
     dateRange.endDate
   );
 
-  // Get server base URL for images (used in UserInformationPanel for avatar)
   const serverBaseUrl = import.meta.env.VITE_API_URL || "";
+
+  // --- NEW: Edit Modal Handlers ---
+  const openEditModal = () => setIsEditModalOpen(true);
+  const closeEditModal = () => setIsEditModalOpen(false);
+
+  // --- NEW: Form Submit Handler ---
+  const handleFormSubmit = async (
+    formData: any,
+    editingUserId: string | null,
+    avatarData: AttachmentInput | null | undefined
+  ) => {
+    if (!editingUserId) return; // Should not happen in this context
+
+    const finalInput: Partial<UpdateUserInput> = {
+      username: formData.username,
+      name: formData.name,
+      email: formData.email,
+      position: formData.position,
+      role: formData.role,
+      financial_approver: formData.financial_approver,
+      ...(formData.password && { password: formData.password }),
+      ...(avatarData !== undefined && { avatar: avatarData }),
+    };
+
+    // Clean up undefined values
+    Object.keys(finalInput).forEach((key) => {
+      if (finalInput[key as keyof typeof finalInput] === undefined)
+        delete finalInput[key as keyof typeof finalInput];
+    });
+
+    try {
+      await updateUser(editingUserId, finalInput as UpdateUserInput);
+      await refetchUser(); // Refetch user data to show changes
+      setAvatarVersion(Date.now()); // Force avatar refresh
+      closeEditModal();
+
+      setSuccessModalMessage("Потребителят е редактиран успешно!");
+      setIsSuccessModalOpen(true);
+    } catch (err: any) {
+      console.error("Error during user update:", err);
+      const graphQLError = err.graphQLErrors?.[0]?.message;
+      const networkError = err.networkError?.message;
+      const message =
+        graphQLError || networkError || err.message || "Неизвестна грешка";
+      alert(`Грешка при редактиране: ${message}`);
+    }
+  };
 
   if (userUsernameFromParams === undefined) {
     return (
       <PageStatusDisplay
-        notFound // Or a more specific error/info message
+        notFound
         message="User Username не е намерен в URL адреса."
-        height="h-screen" // Full screen for this fundamental error
+        height="h-screen"
       />
     );
   }
 
-  // ---- Page Status Handling ----
   if (userLoading && !user) {
-    // Initial full page load scenario
     return (
       <PageStatusDisplay
         loading
         message="Зареждане на потребителски данни..."
-        height="h-[calc(100vh-6rem)]" // Assuming a header of approx 6rem
+        height="h-[calc(100vh-6rem)]"
       />
     );
   }
@@ -85,8 +159,6 @@ const User: React.FC = () => {
     );
   }
 
-  // 3. UPDATE ACTIVITY COUNTS TO USE THE FILTERED STATS
-  // This ensures the numbers in the tabs (e.g., "Сигнали (19)") are accurate for the selected period.
   const activityCounts = {
     cases: userStats?.totalSignals || 0,
     answers: userStats?.totalAnswers || 0,
@@ -97,35 +169,69 @@ const User: React.FC = () => {
       (userStats?.totalComments || 0),
   };
 
-  // ---- Main Content Rendering ----
+  const isAdmin = currentUser?.role._id === ADMIN_ROLE_ID;
+
   return (
-    <div className="container min-w-full mx-auto p-2 sm:p-6 bg-gray-50 flex flex-col h-[calc(100vh-6rem)]">
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 overflow-hidden">
-        {/* Left Sidebar: User Information */}
-        <UserInformationPanel
-          user={user}
-          isLoading={userLoading && !!user} // Show skeleton if user object exists but might be updating
-          serverBaseUrl={serverBaseUrl}
-        />
+    <>
+      <div className="container min-w-full mx-auto p-2 sm:p-6 bg-gray-50 flex flex-col h-[calc(100vh-6rem)]">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 overflow-hidden">
+          <UserInformationPanel
+            user={user}
+            isLoading={userLoading && !!user}
+            serverBaseUrl={serverBaseUrl}
+            onEditUser={openEditModal} // <-- Pass handler
+          />
 
-        {/* 4. PASS DATE PROPS TO THE ACTIVITY LIST */}
-        <UserActivityList
-          user={user}
-          isLoading={userLoading && !!user}
-          counts={activityCounts}
-          userId={userUsernameFromParams}
-          dateRange={dateRange}
-          onDateRangeChange={setDateRange}
-        />
+          <UserActivityList
+            user={user}
+            isLoading={userLoading && !!user}
+            counts={activityCounts}
+            userId={userUsernameFromParams}
+            dateRange={dateRange}
+            onDateRangeChange={setDateRange}
+          />
 
-        {/* Right Sidebar: User Statistics */}
-        <UserStatisticsPanel
-          userStats={userStats}
-          userName={user.name} // Pass userName for display in panel title
-          isLoading={userLoading && !!user}
-        />
+          <UserStatisticsPanel
+            userStats={userStats}
+            userName={user.name}
+            isLoading={userLoading && !!user}
+          />
+        </div>
       </div>
-    </div>
+
+      {/* --- NEW: Render Modal for Editing --- */}
+      <UserModal
+        isOpen={isEditModalOpen}
+        onClose={closeEditModal}
+        title="Редактирай потребител"
+      >
+        {updateLoading && <div className="p-4 text-center">Изпращане...</div>}
+        {updateError && !updateLoading && (
+          <div className="p-4 mb-4 text-center text-red-600 bg-red-100 rounded-md">
+            Грешка при запис: {updateError?.message || "Неизвестна грешка"}
+          </div>
+        )}
+        {!updateLoading && (
+          <UserForm
+            key={user._id} // Use user ID as key to re-mount on user change
+            onSubmit={handleFormSubmit}
+            onClose={closeEditModal}
+            initialData={user}
+            submitButtonText={"Запази"}
+            roles={rolesData?.getAllLeanRoles || []}
+            rolesLoading={rolesLoading}
+            rolesError={rolesError}
+            isAdmin={isAdmin} // <-- Pass permission flag
+          />
+        )}
+      </UserModal>
+
+      <SuccessConfirmationModal
+        isOpen={isSuccessModalOpen}
+        onClose={() => setIsSuccessModalOpen(false)}
+        message={successModalMessage}
+      />
+    </>
   );
 };
 

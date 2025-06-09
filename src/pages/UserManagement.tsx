@@ -1,4 +1,3 @@
-// src/page/UserManagement.tsx
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import { ChevronUpIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
 import { PlusIcon as PlusIconSolid } from "@heroicons/react/20/solid";
@@ -18,10 +17,14 @@ import {
 } from "../graphql/mutation/user"; // Adjust path
 import { useGetRoles } from "../graphql/hooks/role"; // Adjust path
 
+// Context & Interfaces
+import { useCurrentUser } from "../context/UserContext"; // <-- NEW: Import current user hook
+import { IMe, IUser } from "../db/interfaces"; // <-- NEW: Import IMe
+import { Role } from "../types/userManagementTypes"; // Adjust path
+
 // Shared Components
-import CreateUserModal from "../components/modals/CreateUserModal"; // Adjust path
-import CreateUserForm from "../components/forms/CreateUserForm"; // Adjust path
-import LoadingModal from "../components/modals/LoadingModal"; // Adjust path
+import UserModal from "../components/modals/UserModal"; // Using renamed modal
+import UserForm from "../components/forms/UserForm"; // Using renamed form
 import ConfirmActionDialog from "../components/modals/ConfirmActionDialog";
 import SuccessConfirmationModal from "../components/modals/SuccessConfirmationModal";
 
@@ -30,8 +33,8 @@ import UserStats from "../components/features/userManagement/UserStats";
 import UserFilters from "../components/features/userManagement/UserFilters";
 import UserTable from "../components/features/userManagement/UserTable";
 import { useUserManagement } from "../hooks/useUserManagement"; // Adjust path
-import { Role, User } from "../types/userManagementTypes"; // Adjust path
-import { IUser } from "../db/interfaces";
+
+const ADMIN_ROLE_ID = "650000000000000000000003"; // <-- NEW: Admin ID constant
 
 const UserManagement: React.FC = () => {
   const {
@@ -48,99 +51,80 @@ const UserManagement: React.FC = () => {
     filterRoleIds,
     filterFinancial,
     setFilterFinancial,
-    filterManager, // <-- ADDED: Get from hook
-    setFilterManager, // <-- ADDED: Get from hook
+    filterManager,
+    setFilterManager,
     setFilterRoleIds,
     handlePageChange,
     handleItemsPerPageChange,
     handleRoleFilterToggle,
-    currentQueryInput, // This now includes is_manager: true if filterManager is true
+    currentQueryInput,
   } = useUserManagement();
+
+  // --- NEW: Get current user and determine if they are an admin ---
+  const currentUser = useCurrentUser() as IMe | undefined;
+  const isAdmin = currentUser?.role?._id === ADMIN_ROLE_ID;
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<IUser | null>(null);
   const [avatarVersion, setAvatarVersion] = useState(Date.now());
   const [showFilters, setShowFilters] = useState(true);
-
-  // State for delete confirmation
   const [showUserDeleteConfirm, setShowUserDeleteConfirm] = useState(false);
   const [userToDelete, setUserToDelete] = useState<IUser | null>(null);
-
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [successModalMessage, setSuccessModalMessage] = useState("");
 
   const serverBaseUrl = import.meta.env.VITE_API_URL || "";
 
-  // Fetch for the main UserTable (paginated and fully filtered including manager filter)
   const {
     users: usersDataForTable,
     loading: usersLoading,
     error: usersError,
     refetch: refetchUsers,
-  } = useGetAllUsers(currentQueryInput); // currentQueryInput from hook now includes manager filter
+  } = useGetAllUsers(currentQueryInput);
 
-  // Count for the main UserTable (based on all current filters including manager filter)
   const {
     count: filteredUserCountForTableDisplay,
     loading: countLoading,
     error: countError,
     refetch: refetchUserCount,
-  } = useCountUsers(currentQueryInput); // currentQueryInput from hook now includes manager filter
+  } = useCountUsers(currentQueryInput);
 
   const textAttributeFiltersOnlyInput = useMemo(() => {
-    const {
-      name,
-      username,
-      position,
-      email,
-      financial_approver,
-      is_manager,
-    } = // Added is_manager here
-      currentQueryInput; // Use currentQueryInput as base to reflect all active filters for consistency if needed
+    const { name, username, position, email, financial_approver, is_manager } =
+      currentQueryInput;
     const filters: any = {};
     if (name) filters.name = name;
     if (username) filters.username = username;
     if (position) filters.position = position;
     if (email) filters.email = email;
-
-    // These boolean filters are usually for the main query.
-    // If usersForRoleCountsData needs to be filtered by these as well, include them.
-    // Otherwise, if usersForRoleCountsData is ONLY for text-filtered counts before role selection,
-    // you might not need financial_approver or is_manager here.
-    // Based on your existing code, financial_approver IS included. So, is_manager should also be.
     if (typeof financial_approver === "boolean") {
       filters.financial_approver = financial_approver;
     }
     if (typeof is_manager === "boolean") {
-      // <-- ADDED for consistency with financial_approver
       filters.is_manager = is_manager;
     }
-
     return filters;
   }, [
     currentQueryInput.name,
     currentQueryInput.username,
     currentQueryInput.position,
     currentQueryInput.email,
-    currentQueryInput.financial_approver, // from currentQueryInput
-    currentQueryInput.is_manager, // from currentQueryInput <-- ADDED
+    currentQueryInput.financial_approver,
+    currentQueryInput.is_manager,
   ]);
 
-  // Fetch ALL users (once) for client-side filtering for UserStats' dynamic role counts
   const {
     users: usersForRoleCountsData,
     loading: loadingUsersForRoleCounts,
     error: errorUsersForRoleCounts,
-  } = useGetAllUsers(textAttributeFiltersOnlyInput); // This now potentially includes is_manager
+  } = useGetAllUsers(textAttributeFiltersOnlyInput);
 
-  // Count of ALL users (for the "(от X)" part of "Общо Потребители")
   const {
     count: absoluteTotalUserCountValue,
     loading: absoluteTotalCountLoading,
     error: absoluteTotalCountError,
-  } = useCountUsers({}); // This should remain unfiltered
+  } = useCountUsers({});
 
-  // Fetch all role definitions
   const {
     roles: rolesData,
     error: rolesErrorHook,
@@ -223,10 +207,6 @@ const UserManagement: React.FC = () => {
     editingUserId: string | null,
     avatarData: AttachmentInput | null | undefined
   ) => {
-    // formData now includes financial_approver from CreateUserForm
-    // It does NOT include manager status directly unless you add a field for it in CreateUserForm
-    // Manager status is derived from managed_categories.length > 0
-    // If you need to set managed_categories during user creation/update, that field should be in CreateUserForm
     const finalInput: Partial<CreateUserInput | UpdateUserInput> = {
       username: formData.username,
       name: formData.name,
@@ -234,7 +214,6 @@ const UserManagement: React.FC = () => {
       position: formData.position,
       role: formData.role,
       financial_approver: formData.financial_approver,
-      // managed_categories should be handled by CreateUserForm if it's editable there
       ...(formData.managed_categories && {
         managed_categories: formData.managed_categories,
       }),
@@ -269,7 +248,6 @@ const UserManagement: React.FC = () => {
       ]);
       setAvatarVersion(Date.now());
       closeModal();
-
       setSuccessModalMessage(successMessage);
       setIsSuccessModalOpen(true);
     } catch (err: any) {
@@ -323,7 +301,6 @@ const UserManagement: React.FC = () => {
 
   const isLoadingUserStatsOverallCounts =
     countLoading || absoluteTotalCountLoading;
-
   const isLoadingUserStatsRoleDefinitionsAndCounts =
     rolesLoadingHook || loadingUsersForRoleCounts || isDynamicRoleDataStale;
 
@@ -404,8 +381,8 @@ const UserManagement: React.FC = () => {
           setFilterEmail={setFilterEmail}
           filterFinancial={filterFinancial}
           setFilterFinancial={setFilterFinancial}
-          filterManager={filterManager} // <-- Pass prop
-          setFilterManager={setFilterManager} // <-- Pass prop
+          filterManager={filterManager}
+          setFilterManager={setFilterManager}
         />
       </div>
 
@@ -422,13 +399,13 @@ const UserManagement: React.FC = () => {
         onDeleteUser={triggerDeleteUser}
         serverBaseUrl={serverBaseUrl}
         avatarVersion={avatarVersion}
-        currentQueryInput={currentQueryInput} // This now includes manager filter implicitly
+        currentQueryInput={currentQueryInput}
         createLoading={createLoading}
         updateLoading={updateLoading}
         deleteUserLoading={deleteUserLoading}
       />
 
-      <CreateUserModal
+      <UserModal
         isOpen={isModalOpen}
         onClose={closeModal}
         title={editingUser ? "Редактирай потребител" : "Създай нов потребител"}
@@ -445,7 +422,7 @@ const UserManagement: React.FC = () => {
           </div>
         )}
         {!(createLoading || updateLoading) && (
-          <CreateUserForm
+          <UserForm
             key={editingUser ? editingUser._id : "create-new-user"}
             onSubmit={handleFormSubmit}
             onClose={closeModal}
@@ -454,10 +431,11 @@ const UserManagement: React.FC = () => {
             roles={roles}
             rolesLoading={rolesLoadingHook}
             rolesError={rolesErrorHook}
-            // If you want to edit managed_categories in the form, pass it to/from CreateUserForm
+            isAdmin={true} // we assume that whoever can see this page should have admin rights
+            //isAdmin={isAdmin} // <-- MODIFIED: Pass the isAdmin flag
           />
         )}
-      </CreateUserModal>
+      </UserModal>
 
       <ConfirmActionDialog
         isOpen={showUserDeleteConfirm}

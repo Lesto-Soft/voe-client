@@ -103,13 +103,12 @@ export const useCountUsers = (input: any) => {
 };
 
 export const useGetFullUserByUsername = (username: string | undefined) => {
-  const { loading, error, data } = useQuery<{ getFullUserByUsername: IUser }>(
-    GET_FULL_USER_BY_USERNAME,
-    {
-      variables: { username: username },
-      skip: !username, // Skip the query if username is undefined or null
-    }
-  );
+  const { loading, error, data, refetch } = useQuery<{
+    getFullUserByUsername: IUser;
+  }>(GET_FULL_USER_BY_USERNAME, {
+    variables: { username: username },
+    skip: !username, // Skip the query if username is undefined or null
+  });
 
   // For debugging the hook's output
   useEffect(() => {
@@ -118,12 +117,13 @@ export const useGetFullUserByUsername = (username: string | undefined) => {
         console.error("[HOOK] Error:", JSON.stringify(error, null, 2)); // Stringify for more detail
       }
     }
-  }, [loading, data, error]);
+  }, [loading, data, error, refetch]);
 
   return {
     loading,
     error,
     user: data?.getFullUserByUsername,
+    refetch,
   };
 };
 

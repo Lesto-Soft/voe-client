@@ -1,8 +1,7 @@
-// src/components/features/userAnalytics/UserInformationPanel.tsx
-import React, { useState, useEffect } from "react"; // Added useEffect
-import { IUser, ICategory } from "../../../db/interfaces"; // Adjust path as needed
-import UserAvatar from "../../../components/cards/UserAvatar"; // Adjust path as needed
-import CategoryLink from "../../../components/global/CategoryLink"; // Adjust path as needed
+import React, { useState, useEffect } from "react";
+import { IUser, ICategory, IMe } from "../../../db/interfaces";
+import UserAvatar from "../../../components/cards/UserAvatar";
+import CategoryLink from "../../../components/global/CategoryLink";
 import {
   AtSymbolIcon,
   BriefcaseIcon,
@@ -10,24 +9,32 @@ import {
   CurrencyDollarIcon,
   AcademicCapIcon,
   CogIcon,
+  PencilSquareIcon, // <-- Import Pencil Icon
 } from "@heroicons/react/24/outline";
+import { useCurrentUser } from "../../../context/UserContext";
+
+const ADMIN_ROLE_ID = "650000000000000000000003";
 
 interface UserInformationPanelProps {
   user: IUser | undefined | null;
   isLoading?: boolean;
   serverBaseUrl: string;
+  // --- NEW PROP ---
+  onEditUser: () => void;
 }
 
-type CategoryRoleTab = "manages" | "expertIn"; // Changed default priority
+type CategoryRoleTab = "manages" | "expertIn";
 
 const UserInformationPanel: React.FC<UserInformationPanelProps> = ({
   user,
   isLoading,
   serverBaseUrl,
+  // --- NEW PROP ---
+  onEditUser,
 }) => {
-  // Default to 'manages', will be adjusted by useEffect if needed
   const [activeCategoryRoleTab, setActiveCategoryRoleTab] =
     useState<CategoryRoleTab>("manages");
+  const currentUser = useCurrentUser() as IMe | undefined;
 
   useEffect(() => {
     if (user) {
@@ -36,8 +43,6 @@ const UserInformationPanel: React.FC<UserInformationPanelProps> = ({
       } else if (user.expert_categories && user.expert_categories.length > 0) {
         setActiveCategoryRoleTab("expertIn");
       }
-      // If neither, it will stick to the initial useState value or the last valid one.
-      // Or you could set a specific default if both are empty, though the section might not render.
     }
   }, [user]);
 
@@ -67,6 +72,11 @@ const UserInformationPanel: React.FC<UserInformationPanelProps> = ({
       </aside>
     );
   }
+
+  // --- NEW: Permission Logic ---
+  const isAdmin = currentUser?.role?._id === ADMIN_ROLE_ID;
+  const isSelf = currentUser?._id === user?._id;
+  const canEdit = isAdmin || isSelf;
 
   const avatarUrl = user.avatar
     ? `${serverBaseUrl}/static/avatars/${user._id}/${user.avatar}`
@@ -127,7 +137,17 @@ const UserInformationPanel: React.FC<UserInformationPanelProps> = ({
   return (
     <aside className="lg:col-span-3 bg-white rounded-lg shadow-lg flex flex-col overflow-hidden">
       <div className="p-6 space-y-4 overflow-y-auto custom-scrollbar">
-        <div className="flex flex-col items-center text-center space-y-2">
+        {/* --- MODIFIED: Added Edit Button --- */}
+        <div className="relative flex flex-col items-center text-center space-y-2">
+          {canEdit && (
+            <button
+              onClick={onEditUser}
+              className="hover:cursor-pointer absolute top-0 right-0 p-1 text-gray-500 rounded-md hover:bg-gray-100 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+              title="Редактирай потребител"
+            >
+              <PencilSquareIcon className="h-6 w-6" />
+            </button>
+          )}
           <UserAvatar name={user.name} imageUrl={avatarUrl} size={96} />
           <h1 className="text-xl font-bold text-gray-800">{user.name}</h1>
           {user.username && (
@@ -172,12 +192,11 @@ const UserInformationPanel: React.FC<UserInformationPanelProps> = ({
           />
         </div>
 
-        {(hasManagedCategories || hasExpertCategories) && ( // Show section only if there's at least one type of category role
+        {(hasManagedCategories || hasExpertCategories) && (
           <>
             <hr className="my-4 border-gray-200" />
             <div>
               <div className="flex border-b border-gray-200">
-                {/* Manages Categories Tab - Rendered First */}
                 {hasManagedCategories && (
                   <button
                     onClick={() => setActiveCategoryRoleTab("manages")}
@@ -191,7 +210,6 @@ const UserInformationPanel: React.FC<UserInformationPanelProps> = ({
                     Управлява
                   </button>
                 )}
-                {/* Expert In Categories Tab - Rendered Second */}
                 {hasExpertCategories && (
                   <button
                     onClick={() => setActiveCategoryRoleTab("expertIn")}

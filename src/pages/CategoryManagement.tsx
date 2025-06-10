@@ -32,6 +32,10 @@ import SuccessConfirmationModal from "../components/modals/SuccessConfirmationMo
 import { useQuery } from "@apollo/client";
 import { GET_LEAN_USERS } from "../graphql/query/user"; // Adjust path for GET_LEAN_USERS
 
+import { useCurrentUser } from "../context/UserContext"; // <-- NEW: Import current user hook
+import { IMe } from "../db/interfaces"; // <-- NEW: Import IMe
+import { ROLES } from "../utils/GLOBAL_PARAMETERS";
+
 // Define a lean user type that includes the role ID, matching GET_LEAN_USERS
 interface ILeanUserForForm {
   _id: string;
@@ -60,6 +64,10 @@ const CategoryManagement: React.FC = () => {
     handleItemsPerPageChange,
     currentQueryInput,
   } = useCategoryManagement();
+
+  // --- NEW: Get current user and determine if they are an admin ---
+  const currentUser = useCurrentUser() as IMe | undefined;
+  const isAdmin = currentUser?.role?._id === ROLES.ADMIN;
 
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<ICategory | null>(
@@ -590,15 +598,17 @@ const CategoryManagement: React.FC = () => {
             )}
             Филтри
           </button>
-          <button
-            type="button"
-            onClick={openCreateCategoryModal}
-            className="w-full sm:w-[280px] flex flex-shrink-0 justify-center items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-green-500 text-white hover:bg-green-600 hover:cursor-pointer active:bg-green-700 active:shadow-inner disabled:cursor-not-allowed"
-            disabled={mutationInProgress || isCurrentlyLoadingPageData}
-          >
-            <PlusIconSolid className="h-5 w-5 mr-1" />
-            Създай Категория
-          </button>
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={openCreateCategoryModal}
+              className="w-full sm:w-[280px] flex flex-shrink-0 justify-center items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-green-500 text-white hover:bg-green-600 hover:cursor-pointer active:bg-green-700 active:shadow-inner disabled:cursor-not-allowed"
+              disabled={mutationInProgress || isCurrentlyLoadingPageData}
+            >
+              <PlusIconSolid className="h-5 w-5 mr-1" />
+              Създай Категория
+            </button>
+          )}
         </div>
       </div>
 

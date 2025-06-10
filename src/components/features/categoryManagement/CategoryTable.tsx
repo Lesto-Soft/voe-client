@@ -171,7 +171,7 @@ const CategoryTable: React.FC<CategoryTableProps> = ({
                 </th>
                 <th
                   scope="col"
-                  className={`${columnWidths.edit} hidden md:table-cell px-3 py-4 text-center text-sm font-semibold text-white uppercase tracking-wide relative`}
+                  className={`${columnWidths.edit} md:table-cell px-3 py-4 text-center text-sm font-semibold text-white uppercase tracking-wide relative`}
                 >
                   <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-px bg-gray-400"></span>
                   Действия
@@ -211,7 +211,7 @@ const CategoryTable: React.FC<CategoryTableProps> = ({
                     <Link
                       to={`/dashboard?perPage=10&page=1&categoryIds=${category._id}`}
                       className={TOTAL_CASES_BUTTON_STYLE_CLICKABLE}
-                      title={`View all ${totalCases} cases for ${category.name}`}
+                      title={`Вижте всички ${totalCases} сигнали за ${category.name}`}
                     >
                       {totalCases}
                     </Link>
@@ -226,16 +226,16 @@ const CategoryTable: React.FC<CategoryTableProps> = ({
                         <Link
                           to={`/dashboard?perPage=10&page=1&categoryIds=${category._id}&status=${status}`}
                           className={CASE_STATUS_STYLES_CLICKABLE[status]}
-                          title={`View ${count} ${getStatusLabel(
+                          title={`Вижте ${count} ${getStatusLabel(
                             status
-                          )} cases for ${category.name}`}
+                          )} сигнали за ${category.name}`}
                         >
                           {count}
                         </Link>
                       ) : (
                         <span
                           className={CASE_STATUS_STYLES_ZERO[status]}
-                          title={`${getStatusLabel(status)} cases`}
+                          title={`${getStatusLabel(status)} сигнали`}
                         >
                           {count}
                         </span>

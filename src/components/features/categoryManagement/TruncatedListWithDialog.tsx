@@ -38,7 +38,7 @@ const listContainerClass =
   "space-y-2.5 space-x-1.5 max-h-[60vh] overflow-y-auto pr-3 mr-1";
 
 function getPlural(count: number, singular: string, plural?: string): string {
-  const effectivePlural = plural ?? `${singular}s`;
+  const effectivePlural = plural ?? `${singular}и`;
   return count === 1 ? singular : effectivePlural;
 }
 
@@ -64,8 +64,8 @@ function TruncatedListWithDialog({
     itemTypeLabelPlural
   );
   const dialogTitle = parentContextName
-    ? `All ${effectivePluralLabel} for ${parentContextName}`
-    : `All ${effectivePluralLabel}`;
+    ? `Всички ${effectivePluralLabel} за ${parentContextName}`
+    : `Всички ${effectivePluralLabel}`;
 
   const renderItemTag = (item: IUser, isInline: boolean) => {
     const userItem = item;
@@ -136,8 +136,8 @@ function TruncatedListWithDialog({
             className={`relative ${
               isContextInactive ? "cursor-default" : "cursor-pointer"
             }`}
-            title={`View all ${totalItems} ${effectivePluralLabel}`}
-            aria-label={`View all ${totalItems} ${effectivePluralLabel}`}
+            title={`Вижте всички ${totalItems} ${effectivePluralLabel}`}
+            aria-label={`Вижте всички ${totalItems} ${effectivePluralLabel}`}
           >
             <div className="flex flex-wrap items-start gap-x-2 gap-y-1">
               {itemsToDisplayInline.map((item) => renderItemTag(item, true))}
@@ -149,7 +149,7 @@ function TruncatedListWithDialog({
                   : "text-purple-600 hover:text-purple-800 group-hover:underline"
               }`}
             >
-              View all {totalItems}...
+              Вижте всички {totalItems}...
             </div>
           </div>
         </Dialog.Trigger>
@@ -163,9 +163,9 @@ function TruncatedListWithDialog({
         <Dialog.Overlay className={overlayClass} />
         <Dialog.Content className={contentClass}>
           <Dialog.Title className={titleClass}>{dialogTitle}</Dialog.Title>
-          <Dialog.Description className={descriptionClass}>
+          {/* <Dialog.Description className={descriptionClass}>
             Click on a name to view details.
-          </Dialog.Description>
+          </Dialog.Description> */}
           <div className={listContainerClass}>
             {items.map((item) => {
               const userItem = item;

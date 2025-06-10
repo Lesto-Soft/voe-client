@@ -10,7 +10,7 @@ const FormHeader = ({ subtitleKey }: { subtitleKey: string }) => {
   return (
     <div className="mb-6 w-full text-center">
       {" "}
-      <h1 className="lg:text-5xl text-4xl font-extrabold font-main text-gray-800 uppercase w-full drop-shadow-lg">
+      <h1 className="lg:text-5xl text-4xl font-extrabold text-gray-800 uppercase w-full drop-shadow-lg">
         {" "}
         {t("home.title")}
       </h1>

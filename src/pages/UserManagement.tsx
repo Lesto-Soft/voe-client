@@ -326,7 +326,7 @@ const UserManagement: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6 font-sans">
+    <div className="min-h-screen bg-gray-100 p-6">
       <div className="mb-6 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
         <UserStats
           filteredUserCount={filteredUserCountForTableDisplay ?? 0}

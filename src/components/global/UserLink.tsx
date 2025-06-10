@@ -6,7 +6,7 @@ const types = {
   table: "md:w-40 max-w-40",
 };
 const getCreatorBadgeClasses = (type: string) =>
-  `${type} inline-block px-2 py-0.5 rounded-md text-xs font-medium transition-colors duration-150 ease-in-out text-left hover:cursor-pointer bg-purple-100 text-purple-800 hover:bg-purple-200 border border-purple-200`;
+  `${type} inline-block px-2 py-0.5 rounded-md text-xs font-bold transition-colors duration-150 ease-in-out text-left hover:cursor-pointer bg-purple-100 text-purple-800 hover:bg-purple-200 border border-purple-200`;
 
 const UserLink: React.FC<{ user: IUser; type: keyof typeof types }> = ({
   user,

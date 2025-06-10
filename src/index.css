@@ -1,3 +1,126 @@
+/* --- Mulish Font Faces --- */
+
+/* Extra-Light */
+@font-face {
+  font-family: "Mulish";
+  src: url("/fonts/Mulish-ExtraLight.ttf") format("truetype");
+  font-weight: 200;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Mulish";
+  src: url("/fonts/Mulish-ExtraLightItalic.ttf") format("truetype");
+  font-weight: 200;
+  font-style: italic;
+}
+
+/* Light */
+@font-face {
+  font-family: "Mulish";
+  src: url("/fonts/Mulish-Light.ttf") format("truetype");
+  font-weight: 300;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Mulish";
+  src: url("/fonts/Mulish-LightItalic.ttf") format("truetype");
+  font-weight: 300;
+  font-style: italic;
+}
+
+/* Regular */
+@font-face {
+  font-family: "Mulish";
+  src: url("/fonts/Mulish-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+}
+
+/* Italic (Regular Italic) */
+@font-face {
+  font-family: "Mulish";
+  src: url("/fonts/Mulish-Italic.ttf") format("truetype");
+  font-weight: 400;
+  font-style: italic;
+}
+
+/* Medium */
+@font-face {
+  font-family: "Mulish";
+  src: url("/fonts/Mulish-Medium.ttf") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Mulish";
+  src: url("/fonts/Mulish-MediumItalic.ttf") format("truetype");
+  font-weight: 500;
+  font-style: italic;
+}
+
+/* Semi-Bold */
+@font-face {
+  font-family: "Mulish";
+  src: url("/fonts/Mulish-SemiBold.ttf") format("truetype");
+  font-weight: 600;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Mulish";
+  src: url("/fonts/Mulish-SemiBoldItalic.ttf") format("truetype");
+  font-weight: 600;
+  font-style: italic;
+}
+
+/* Bold */
+@font-face {
+  font-family: "Mulish";
+  src: url("/fonts/Mulish-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Mulish";
+  src: url("/fonts/Mulish-BoldItalic.ttf") format("truetype");
+  font-weight: 700;
+  font-style: italic;
+}
+
+/* Extra-Bold */
+@font-face {
+  font-family: "Mulish";
+  src: url("/fonts/Mulish-ExtraBold.ttf") format("truetype");
+  font-weight: 800;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Mulish";
+  src: url("/fonts/Mulish-ExtraBoldItalic.ttf") format("truetype");
+  font-weight: 800;
+  font-style: italic;
+}
+
+/* Black */
+@font-face {
+  font-family: "Mulish";
+  src: url("/fonts/Mulish-Black.ttf") format("truetype");
+  font-weight: 900;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Mulish";
+  src: url("/fonts/Mulish-BlackItalic.ttf") format("truetype");
+  font-weight: 900;
+  font-style: italic;
+}
+
 @import "tailwindcss";
 
 @tailwind utilities;
@@ -23,6 +146,8 @@ body,
   box-sizing: border-box;
   background-color: #f4f4f4;
   overflow-x: hidden;
+  font-family: "Mulish", sans-serif;
+  font-weight: 500;
 }
 
 /* TextEditorSpecific.css */

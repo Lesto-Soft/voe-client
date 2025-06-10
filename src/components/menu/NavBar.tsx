@@ -56,7 +56,7 @@ const NavLink: React.FC<NavLinkProps> = ({
       }`}
     >
       {icon}
-      <span className="text-sm font-medium">{label}</span>
+      <span className="text-sm font-semibold">{label}</span>
     </Link>
   );
 };
@@ -138,7 +138,7 @@ const NavBar: React.FC<{ me: IMe }> = ({ me }) => {
             <h1 className="text-gray-800 text-xl font-semibold md:text-2xl truncate">
               {t("voe")}
             </h1>
-            <h3 className="text-gray-600 italic text-md md:text-md font-normal mt-1 hidden lg:block truncate">
+            <h3 className="text-gray-600 text-md md:text-md font-normal mt-1 hidden lg:block truncate">
               {currentPage}
             </h3>
           </div>

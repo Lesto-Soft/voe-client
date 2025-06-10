@@ -573,7 +573,7 @@ const CategoryManagement: React.FC = () => {
   const mutationError = createCategoryErrorObj || updateCategoryErrorObj;
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6 font-sans">
+    <div className="min-h-screen bg-gray-100 p-6">
       <div className="mb-6 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
         <CategoryStats
           totalCaseCount={totalCaseCountForStats ?? 0}

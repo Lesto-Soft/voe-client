@@ -19,7 +19,7 @@ const UserLink: React.FC<{ user: IUser; type: keyof typeof types }> = ({
       className={getCreatorBadgeClasses(types[type])}
     >
       {type === "table" && (
-        <span className="md:hidden text-center w-full block">
+        <span className="md:hidden text-center w-full block" title={user.name}>
           {user.name
             .split(" ")
             .map((w) => w[0])
@@ -30,7 +30,8 @@ const UserLink: React.FC<{ user: IUser; type: keyof typeof types }> = ({
       <p
         className={`${
           type === "table" ? "hidden md:block" : ""
-        }  text-center w-full break-words whitespace-pre-line`}
+        }  text-center w-full truncate`}
+        // }  text-center w-full break-words whitespace-pre-line`}
         title={user.name}
       >
         {user.name}

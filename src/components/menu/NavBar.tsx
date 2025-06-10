@@ -147,13 +147,13 @@ const NavBar: React.FC<{ me: IMe }> = ({ me }) => {
           <div className="flex items-center gap-2 mr-2">
             <button
               title="Подобрение"
-              className="hover:cursor-pointer p-2 bg-green-500 text-white rounded-md shadow-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75 transition-transform transform hover:scale-110"
+              className="hover:cursor-pointer p-2 bg-green-600 text-white rounded-md shadow-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75 transition-transform transform hover:scale-110"
             >
               <LightBulbIcon className="h-5 w-5" />
             </button>
             <button
               title="Проблем"
-              className="hover:cursor-pointer p-2 bg-red-500 text-white rounded-md shadow-lg hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-opacity-75 transition-transform transform hover:scale-110"
+              className="hover:cursor-pointer p-2 bg-red-600 text-white rounded-md shadow-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-opacity-75 transition-transform transform hover:scale-110"
             >
               <ExclamationTriangleIcon className="h-5 w-5" />
             </button>

@@ -10,6 +10,7 @@ import Submenu from "../components/case-components/Submenu";
 import { ICase } from "../db/interfaces"; // Ensure ICase type is imported
 import { useCurrentUser } from "../context/UserContext";
 import { determineUserRightsForCase } from "../utils/rightUtils";
+import { ROLES } from "../utils/GLOBAL_PARAMETERS";
 
 const Case = () => {
   const { t } = useTranslation("dashboard");
@@ -63,7 +64,10 @@ const Case = () => {
   const c = caseData as ICase;
   const userRights = determineUserRightsForCase(currentUser, c);
 
-  if (!userRights || userRights.length === 0) {
+  if (
+    !userRights ||
+    (userRights.length === 0 && currentUser.role?._id !== ROLES.ADMIN)
+  ) {
     return (
       <div>You do not have the necessary permissions to view this case.</div>
     );

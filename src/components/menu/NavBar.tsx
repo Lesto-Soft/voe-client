@@ -10,7 +10,9 @@ import {
   XMarkIcon,
   UserIcon,
   ArrowRightCircleIcon,
-  ChevronDownIcon, // Import the arrow icon
+  ChevronDownIcon,
+  LightBulbIcon,
+  ExclamationTriangleIcon,
 } from "@heroicons/react/24/solid";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { dev_endpoint } from "../../db/config";
@@ -59,8 +61,6 @@ const NavLink: React.FC<NavLinkProps> = ({
   );
 };
 
-// Assuming me.role is an object like { _id: string, name: string }
-// and me.position is a string. Adjust the IMe interface as necessary.
 const NavBar: React.FC<{ me: IMe }> = ({ me }) => {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -130,14 +130,34 @@ const NavBar: React.FC<{ me: IMe }> = ({ me }) => {
 
   return (
     <div className="bg-gradient-to-r from-gray-100 to-gray-200 shadow-md relative max-w-full h-[6rem]">
-      <div className="flex items-center justify-between p-4 px-6 md:px-12">
-        <div className="text-lg font-bold flex-1 min-w-0">
-          <h1 className="text-gray-800 text-xl md:text-2xl truncate">
-            {t("voe")}
-          </h1>
-          <h3 className="text-gray-600 italic text-md md:text-md font-light mt-1 hidden lg:block truncate">
-            {currentPage}
-          </h3>
+      <div className="flex items-center justify-between p-4 px-4 md:px-1 lg:px-12">
+        {/* MODIFIED: Flex container for title and new buttons */}
+        <div className="flex items-center gap-4 flex-1 min-w-0">
+          {/* Title and Subtitle Container */}
+          <div className="flex-shrink min-w-0">
+            <h1 className="text-gray-800 text-xl font-semibold md:text-2xl truncate">
+              {t("voe")}
+            </h1>
+            <h3 className="text-gray-600 italic text-md md:text-md font-normal mt-1 hidden lg:block truncate">
+              {currentPage}
+            </h3>
+          </div>
+
+          {/* NEW: Buttons Container */}
+          <div className="flex items-center gap-2 mr-2">
+            <button
+              title="Подобрение"
+              className="hover:cursor-pointer p-2 bg-green-500 text-white rounded-md shadow-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75 transition-transform transform hover:scale-110"
+            >
+              <LightBulbIcon className="h-5 w-5" />
+            </button>
+            <button
+              title="Проблем"
+              className="hover:cursor-pointer p-2 bg-red-500 text-white rounded-md shadow-lg hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-opacity-75 transition-transform transform hover:scale-110"
+            >
+              <ExclamationTriangleIcon className="h-5 w-5" />
+            </button>
+          </div>
         </div>
 
         <div className="hidden md:flex space-x-4 items-center">

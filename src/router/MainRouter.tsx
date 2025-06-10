@@ -15,6 +15,8 @@ import CategoryManagement from "../pages/CategoryManagement";
 import { useGetMe } from "../graphql/hooks/user";
 import { IMe } from "../db/interfaces";
 import { UserProvider } from "../context/UserContext";
+import ProtectedRoute from "../components/auth/ProtectedRoute";
+import { ROLES } from "../utils/GLOBAL_PARAMETERS";
 
 const AppLayout = () => {
   const { me, error, loading } = useGetMe();
@@ -60,11 +62,19 @@ const mainRouter = createBrowserRouter([
       },
       {
         path: "/user-management",
-        element: <UserManagement />,
+        element: (
+          <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.EXPERT]}>
+            <UserManagement />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "/category-management",
-        element: <CategoryManagement />,
+        element: (
+          <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.EXPERT]}>
+            <CategoryManagement />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "/profile",
@@ -86,11 +96,11 @@ const mainRouter = createBrowserRouter([
         path: "/case/:number",
         element: <Case />,
       },
+      {
+        path: "*",
+        element: <NotFoundPage />,
+      },
     ],
-  },
-  {
-    path: "*",
-    element: <NotFoundPage />,
   },
 ]);
 

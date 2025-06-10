@@ -83,18 +83,18 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
               label={t("categories")}
               onClick={onLinkClick}
             />
-            <MobileNavLink
-              to="/analyses"
-              icon={<ChartPieIcon className="h-6 w-6" />}
-              label={t("analyses")}
-              onClick={onLinkClick}
-            />
           </>
         )}
         <MobileNavLink
           to="/dashboard"
           icon={<ClipboardDocumentListIcon className="h-6 w-6" />}
           label={t("dashboard")}
+          onClick={onLinkClick}
+        />
+        <MobileNavLink
+          to="/analyses"
+          icon={<ChartPieIcon className="h-6 w-6" />}
+          label={t("analyses")}
           onClick={onLinkClick}
         />
         <MobileNavLink

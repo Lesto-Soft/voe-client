@@ -153,17 +153,17 @@ const NavBar: React.FC<{ me: IMe }> = ({ me }) => {
                 icon={<TagIcon className="h-6 w-6" />}
                 label={t("categories")}
               />
-              <NavLink
-                to="/analyses"
-                icon={<ChartPieIcon className="h-6 w-6" />}
-                label={t("analyses")}
-              />
             </>
           )}
           <NavLink
             to="/dashboard"
             icon={<ClipboardDocumentListIcon className="h-6 w-6" />}
             label={t("dashboard")}
+          />
+          <NavLink
+            to="/analyses"
+            icon={<ChartPieIcon className="h-6 w-6" />}
+            label={t("analyses")}
           />
           {/* Fixed dropdown container with relative positioning */}
           <div className="relative">
@@ -191,12 +191,15 @@ const NavBar: React.FC<{ me: IMe }> = ({ me }) => {
                     )}
                   </div>
                   {/* User Name and Username */}
-                  <div className="text-left max-w-32 hidden lg:block">
-                    <p className="font-bold text-sm text-gray-800 truncate">
+                  <div
+                    className="text-left max-w-32 hidden lg:block"
+                    title={me.name}
+                  >
+                    <p className="font-bold text-xs text-gray-800 truncate">
                       {me.name}
                     </p>
                     <p className="text-xs text-gray-600 truncate">
-                      @{me.username}
+                      {me.username}
                     </p>
                   </div>
                   {/* Animated Dropdown Arrow */}
@@ -209,7 +212,7 @@ const NavBar: React.FC<{ me: IMe }> = ({ me }) => {
               </DropdownMenu.Trigger>
 
               <DropdownMenu.Content
-                className="bg-white rounded-md shadow-lg p-2 w-64 z-10"
+                className="bg-white rounded-md shadow-lg p-2 w-56 z-10"
                 align="end"
                 side="bottom"
                 sideOffset={8}
@@ -221,9 +224,9 @@ const NavBar: React.FC<{ me: IMe }> = ({ me }) => {
                       {me.position || "N/A"}
                     </p>
                     <p className="text-xs text-gray-500">
-                      Роля:{" "}
-                      <span className="font-semibold">
+                      <span>
                         {" " + capitalizeFirstLetter(me.role.name) || "N/A"}
+                        {me.managed_categories.length > 0 && " (Мениджър)"}
                       </span>
                     </p>
                   </div>

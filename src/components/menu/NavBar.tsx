@@ -22,6 +22,8 @@ import { useTranslation } from "react-i18next";
 import { IMe } from "../../db/interfaces";
 import { ROLES } from "../../utils/GLOBAL_PARAMETERS";
 import { capitalizeFirstLetter } from "../../utils/stringUtils";
+import { useGetActiveCategories } from "../../graphql/hooks/category";
+import CaseDialog from "../modals/CaseDialog";
 
 export interface NavLinkProps {
   to: string;
@@ -66,6 +68,12 @@ const NavBar: React.FC<{ me: IMe }> = ({ me }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const { t } = useTranslation("menu");
+
+  const {
+    categories: categoriesDataFromHook,
+    loading: categoriesLoading,
+    error: categoriesError,
+  } = useGetActiveCategories();
 
   const initials = me.name
     .split(" ")
@@ -143,20 +151,41 @@ const NavBar: React.FC<{ me: IMe }> = ({ me }) => {
             </h3>
           </div>
 
-          {/* NEW: Buttons Container */}
+          {/* NEW: Buttons Container with Dialogs */}
           <div className="flex items-center gap-2 mr-2">
-            <button
-              title="Подобрение"
-              className="hover:cursor-pointer p-2 bg-green-600 text-white rounded-md shadow-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75 transition-transform transform hover:scale-110"
-            >
-              <LightBulbIcon className="h-5 w-5" />
-            </button>
-            <button
-              title="Проблем"
-              className="hover:cursor-pointer p-2 bg-red-600 text-white rounded-md shadow-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-opacity-75 transition-transform transform hover:scale-110"
-            >
-              <ExclamationTriangleIcon className="h-5 w-5" />
-            </button>
+            {!categoriesLoading && !categoriesError && (
+              <>
+                {/* Suggestion Button wrapped in CaseDialog */}
+                <CaseDialog
+                  mode="create"
+                  caseType="SUGGESTION"
+                  me={me}
+                  availableCategories={categoriesDataFromHook || []}
+                >
+                  <button
+                    title={t("suggestion", "Подобрение")}
+                    className="hover:cursor-pointer p-2 bg-green-600 text-white rounded-md shadow-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75 transition-transform transform hover:scale-110"
+                  >
+                    <LightBulbIcon className="h-5 w-5" />
+                  </button>
+                </CaseDialog>
+
+                {/* Problem Button wrapped in CaseDialog */}
+                <CaseDialog
+                  mode="create"
+                  caseType="PROBLEM"
+                  me={me}
+                  availableCategories={categoriesDataFromHook || []}
+                >
+                  <button
+                    title={t("problem", "Проблем")}
+                    className="hover:cursor-pointer p-2 bg-red-600 text-white rounded-md shadow-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-opacity-75 transition-transform transform hover:scale-110"
+                  >
+                    <ExclamationTriangleIcon className="h-5 w-5" />
+                  </button>
+                </CaseDialog>
+              </>
+            )}
           </div>
         </div>
 

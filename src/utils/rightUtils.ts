@@ -1,4 +1,5 @@
 import { ICase, IMe, IUser } from "../db/interfaces";
+import { ROLES } from "./GLOBAL_PARAMETERS";
 
 export const checkNormal = (userRoleId: string): boolean => {
   if (!userRoleId) return false;
@@ -44,6 +45,12 @@ export const determineUserRightsForCase = (
 
   if (isExpert) {
     rights.push("expert");
+  }
+
+  const isAdmin = currentUser.role?._id === ROLES.ADMIN;
+
+  if (isAdmin) {
+    rights.push("admin");
   }
 
   return rights;

@@ -18,6 +18,9 @@ import { createFileUrl } from "../../utils/fileUtils";
 import FullScreenContentDialog from "../modals/ContentDialog";
 import EditCaseDialog from "../modals/EditCaseDialog";
 import { CASE_STATUS, USER_RIGHTS } from "../../utils/GLOBAL_PARAMETERS";
+import CaseDialog from "../modals/CaseDialog";
+import { PencilSquareIcon } from "@heroicons/react/24/outline";
+import { useGetActiveCategories } from "../../graphql/hooks/category";
 
 interface ICaseInfoProps {
   content: string;
@@ -34,6 +37,7 @@ interface ICaseInfoProps {
   refetch: () => void;
   attachments?: string[];
   rights: string[];
+  availableCategories: ICategory[];
 }
 
 const CaseInfo: React.FC<ICaseInfoProps> = ({
@@ -51,6 +55,7 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
   refetch,
   attachments = [],
   rights = [],
+  availableCategories,
 }) => {
   const { t } = useTranslation("dashboard");
   const statusStyle = getStatusStyle(status);
@@ -65,6 +70,13 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
     categories, // Pass the array of ICategory objects
     attachments,
   };
+
+  const {
+    categories: categoriesDataFromHook,
+    loading: categoriesLoading,
+    error: categoriesError,
+  } = useGetActiveCategories();
+
   return (
     // This root div will fill its parent. The parent in Case.tsx handles stickiness, width, and height for desktop.
     <div className="flex flex-col gap-4 bg-white shadow-md p-4 rounded-lg w-full h-full lg:overflow-y-auto custom-scrollbar">
@@ -82,16 +94,42 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
             {t("content")}
           </h3>
           {/* FullScreenContentDialog: Show only on desktop, or style differently for mobile if needed */}
-          <div className="hidden lg:block">
-            {rights.includes(USER_RIGHTS.CREATOR) &&
+          <div className="hidden lg:flex lg:gap-2">
+            {(rights.includes(USER_RIGHTS.CREATOR) ||
+              rights.includes(USER_RIGHTS.ADMIN)) &&
               status !== CASE_STATUS.AWAITING_FINANCE &&
               status !== CASE_STATUS.CLOSED && (
-                <EditCaseDialog
+                // <EditCaseDialog
+                //   caseId={caseId}
+                //   caseNumber={caseNumber}
+                //   initialData={caseInitialDataForEdit}
+                //   me={me}
+                // />
+                <CaseDialog
+                  mode="edit"
                   caseId={caseId}
                   caseNumber={caseNumber}
-                  initialData={caseInitialDataForEdit}
+                  initialData={{
+                    content: caseInitialDataForEdit.content,
+                    priority: caseInitialDataForEdit.priority,
+                    type: caseInitialDataForEdit.type,
+                    categories: caseInitialDataForEdit.categories,
+                    attachments: caseInitialDataForEdit.attachments.map(
+                      (a) => a
+                    ),
+                  }}
                   me={me}
-                />
+                  availableCategories={categoriesDataFromHook || []}
+                >
+                  {/* This is the trigger button */}
+                  <button
+                    type="button"
+                    title="Edit case"
+                    className="p-1 rounded hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  >
+                    <PencilSquareIcon className="h-5 w-5 text-gray-500" />
+                  </button>
+                </CaseDialog>
               )}
             <FullScreenContentDialog content={content} />
           </div>

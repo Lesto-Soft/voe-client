@@ -35,4 +35,5 @@ export const USER_RIGHTS = {
   CREATOR: "creator",
   MANAGER: "manager",
   EXPERT: "expert",
+  ADMIN: "admin",
 };

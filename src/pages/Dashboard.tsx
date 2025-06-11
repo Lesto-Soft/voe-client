@@ -22,6 +22,8 @@ import { useLocation, useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
 import LoadingModal from "../components/modals/LoadingModal";
 import { useCurrentUser } from "../context/UserContext";
+import { ROLES } from "../utils/GLOBAL_PARAMETERS";
+// roles are ROLES.NORMAL, ROLES.EXPERT, ROLES.ADMIN
 
 function withUserIdHook(
   hook: (userId: string, input: any) => any,
@@ -48,8 +50,9 @@ const Dashboard = () => {
   const [clearFiltersSignal, setClearFiltersSignal] = useState(0);
   const [fitler, setFilter] = useState(true);
   const currentUser = useCurrentUser();
+  console.log("Current User: ", currentUser);
 
-  const submenu = useMemo(
+  const allSubmenus = useMemo(
     () => [
       {
         label: t("all"),
@@ -91,6 +94,33 @@ const Dashboard = () => {
     [t]
   );
 
+  // Filter submenus based on user role and managed categories
+  const submenu = useMemo(() => {
+    const userRole = currentUser?.role?._id;
+    const hasManagedCategories = currentUser?.managed_categories?.length > 0;
+
+    if (userRole === ROLES.NORMAL) {
+      // Normal users can only see "all" tab
+      return [allSubmenus[0]]; // Only "all" submenu
+    } else if (userRole === ROLES.EXPERT && !hasManagedCategories) {
+      // Expert users without managed categories see all except "managed"
+      return allSubmenus.filter((item) => item.hookKey !== "managed");
+    } else if (userRole === ROLES.EXPERT && hasManagedCategories) {
+      // Expert users with managed categories can see all
+      return allSubmenus;
+    } else if (userRole === ROLES.ADMIN) {
+      // Admin users can see all
+      return allSubmenus;
+    }
+
+    // Default fallback - show only "all" tab
+    return [allSubmenus[0]];
+  }, [
+    allSubmenus,
+    currentUser?.role?._id,
+    currentUser?.managed_categories?.length,
+  ]);
+
   const searchParams = new URLSearchParams(location.search);
   const screenKey = searchParams.get("screen") || "all";
   const selectedHookIdx =
@@ -118,11 +148,31 @@ const Dashboard = () => {
 
   const submenuWithHooks = useMemo(() => {
     const updatedSubmenu = [...submenu];
-    updatedSubmenu[1].hook = getUserCasesWithUser;
-    updatedSubmenu[2].hook = getCasesByUserManagedCategoriesWithUser;
-    updatedSubmenu[3].hook = getCasesByUserCategoriesWithUser;
-    updatedSubmenu[4].hook = getUserAnsweredCasesWithUser;
-    updatedSubmenu[5].hook = getUserCommentedCasesWithUser;
+
+    // Only update hooks for items that exist in the filtered submenu
+    updatedSubmenu.forEach((item, index) => {
+      switch (item.hookKey) {
+        case "mine":
+          updatedSubmenu[index].hook = getUserCasesWithUser;
+          break;
+        case "managed":
+          updatedSubmenu[index].hook = getCasesByUserManagedCategoriesWithUser;
+          break;
+        case "expert":
+          updatedSubmenu[index].hook = getCasesByUserCategoriesWithUser;
+          break;
+        case "answered":
+          updatedSubmenu[index].hook = getUserAnsweredCasesWithUser;
+          break;
+        case "commented":
+          updatedSubmenu[index].hook = getUserCommentedCasesWithUser;
+          break;
+        default:
+          // "all" hook is already set in allSubmenus
+          break;
+      }
+    });
+
     return updatedSubmenu;
   }, [
     submenu,
@@ -136,6 +186,20 @@ const Dashboard = () => {
   useEffect(() => {
     setClearFiltersSignal((s) => s + 1);
   }, [screenKey]);
+
+  // Check if current screenKey is valid for the filtered submenu
+  useEffect(() => {
+    const isValidScreen = submenu.some((item) => item.hookKey === screenKey);
+    if (!isValidScreen) {
+      // Redirect to "all" tab if current screen is not available for this user
+      const params = new URLSearchParams(location.search);
+      params.set("screen", "all");
+      params.set("page", "1");
+      navigate(`${location.pathname}?${params.toString()}`, {
+        replace: true,
+      });
+    }
+  }, [submenu, screenKey, location.pathname, location.search, navigate]);
 
   return (
     <div className="flex flex-col flex-1 min-h-0 h-full">

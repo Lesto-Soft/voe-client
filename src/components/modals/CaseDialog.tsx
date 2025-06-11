@@ -55,6 +55,21 @@ type CaseDialogProps = {
 // --- START: Style definitions ---
 const MAX_SELECTED_CATEGORIES = 3;
 
+const typeOptions = [
+  {
+    value: "PROBLEM",
+    color: "#c30505", // Red
+    bgText: "Проблем",
+    Icon: ExclamationTriangleIcon,
+  },
+  {
+    value: "SUGGESTION",
+    color: "#009b00", // Green
+    bgText: "Предложение",
+    Icon: LightBulbIcon,
+  },
+];
+
 const priorityOptions = [
   { labelKey: "priority.low", value: "LOW", color: "#009b00", bgText: "Нисък" },
   {
@@ -176,6 +191,10 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
 
   const handlePriorityChange = (priority: "LOW" | "MEDIUM" | "HIGH") => {
     setFormData((prev) => ({ ...prev, priority }));
+  };
+
+  const handleTypeChange = (type: "PROBLEM" | "SUGGESTION") => {
+    setFormData((prev) => ({ ...prev, type }));
   };
 
   const toggleCategory = (categoryId: string) => {
@@ -302,7 +321,7 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
                     setFormData((p) => ({ ...p, content: e.target.value }))
                   }
                   rows={5}
-                  className="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 "
+                  className="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                   placeholder={getBulgarianText(
                     "caseSubmission:caseSubmission.descriptionPlaceholder",
                     t,
@@ -311,36 +330,44 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
                 />
               </div>
 
-              {/* <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div>
-                  <label
-                    htmlFor="type"
-                    className="block text-sm font-medium text-gray-700 mb-2"
-                  >
-                    {getBulgarianText("type", t, "Тип")}
-                  </label>
-                  <select
-                    id="type"
-                    name="type"
-                    value={formData.type}
-                    onChange={(e) =>
-                      setFormData((p) => ({
-                        ...p,
-                        type: e.target.value as "PROBLEM" | "SUGGESTION",
-                      }))
-                    }
-                    className="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-100 cursor-not-allowed"
-                    disabled
-                  >
-                    <option value={CASE_TYPE.PROBLEM}>
-                      {getBulgarianText(CASE_TYPE.PROBLEM, t, "Проблем")}
-                    </option>
-                    <option value={CASE_TYPE.SUGGESTION}>
-                      {getBulgarianText(CASE_TYPE.SUGGESTION, t, "Предложение")}
-                    </option>
-                  </select>
-                </div>
+              {/* REFORMATTED & CHANGED: Grid layout for inputs */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-6">
+                {/* ADDED: Conditionally render Case Type input ONLY in 'edit' mode */}
+                {props.mode === "edit" && (
+                  <div>
+                    <p className="text-sm font-medium mb-3 text-gray-700">
+                      {getBulgarianText("type", t, "Тип на сигнала")}
+                    </p>
+                    <div className="flex flex-wrap gap-x-6 gap-y-2 p-3 rounded-lg items-center">
+                      {typeOptions.map(({ value, color, bgText, Icon }) => (
+                        <label
+                          key={value}
+                          className="flex items-center gap-2 cursor-pointer hover:opacity-80"
+                        >
+                          <input
+                            type="radio"
+                            value={value}
+                            checked={formData.type === value}
+                            onChange={() =>
+                              handleTypeChange(
+                                value as "PROBLEM" | "SUGGESTION"
+                              )
+                            }
+                            style={{ accentColor: color }}
+                            className="w-5 h-5 cursor-pointer"
+                            name="type"
+                          />
+                          <Icon className="h-5 w-5" style={{ color }} />
+                          <span className="text-sm text-gray-700 font-semibold">
+                            {bgText}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
+                {/* Priority Input (remains visible in both modes) */}
                 <div>
                   <p className="text-sm font-medium mb-3 text-gray-700">
                     {getBulgarianText(
@@ -349,35 +376,31 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
                       "Приоритет"
                     )}
                   </p>
-                  <div className="flex flex-wrap gap-x-6 gap-y-2">
-                    {priorityOptions.map(
-                      ({ labelKey, value, color, bgText }) => (
-                        <label
-                          key={value}
-                          className="flex items-center gap-2 cursor-pointer hover:opacity-80"
-                        >
-                          <input
-                            type="radio"
-                            value={value}
-                            checked={formData.priority === value}
-                            onChange={() =>
-                              handlePriorityChange(
-                                value as "LOW" | "MEDIUM" | "HIGH"
-                              )
-                            }
-                            style={{ accentColor: color }}
-                            className="w-5 h-5 cursor-pointer"
-                            name="priority"
-                          />
-                          <span className="text-sm text-gray-700">
-                            {bgText}
-                          </span>
-                        </label>
-                      )
-                    )}
+                  <div className="flex flex-wrap gap-x-6 gap-y-2 p-3 rounded-lg items-center">
+                    {priorityOptions.map(({ value, color, bgText }) => (
+                      <label
+                        key={value}
+                        className="flex items-center gap-2 cursor-pointer hover:opacity-80"
+                      >
+                        <input
+                          type="radio"
+                          value={value}
+                          checked={formData.priority === value}
+                          onChange={() =>
+                            handlePriorityChange(
+                              value as "LOW" | "MEDIUM" | "HIGH"
+                            )
+                          }
+                          style={{ accentColor: color }}
+                          className="w-5 h-5 cursor-pointer"
+                          name="priority"
+                        />
+                        <span className="text-sm text-gray-700">{bgText}</span>
+                      </label>
+                    ))}
                   </div>
                 </div>
-              </div> */}
+              </div>
 
               <div>
                 <p className="text-sm font-medium mb-3 text-gray-700">

@@ -103,6 +103,18 @@ const getCategoryClass = (
   return baseClass;
 };
 
+// ADDED: Style definition for the submit button based on case type
+const getSubmitButtonClass = (caseType: "PROBLEM" | "SUGGESTION") => {
+  const baseClasses =
+    "px-6 py-2 rounded-md border border-transparent text-white font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed transition-colors duration-200";
+
+  if (caseType === "SUGGESTION") {
+    return `${baseClasses} bg-green-600 hover:bg-green-700 focus:ring-green-500 disabled:bg-green-400`;
+  }
+  // Default to PROBLEM
+  return `${baseClasses} bg-red-600 hover:bg-red-700 focus:ring-red-500 disabled:bg-red-400`;
+};
+
 // Bulgarian text fallbacks
 const getBulgarianText = (key: string, t: any, fallback: string) => {
   const translated = t(key);
@@ -289,8 +301,8 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
                   onChange={(e) =>
                     setFormData((p) => ({ ...p, content: e.target.value }))
                   }
-                  rows={8}
-                  className="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  rows={5}
+                  className="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 "
                   placeholder={getBulgarianText(
                     "caseSubmission:caseSubmission.descriptionPlaceholder",
                     t,
@@ -418,7 +430,8 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="px-6 py-2 rounded-md border border-transparent bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-400 disabled:cursor-not-allowed"
+                  // CHANGED: Dynamically set class based on formData.type
+                  className={getSubmitButtonClass(formData.type)}
                 >
                   {isLoading
                     ? getBulgarianText("saving", t, "Записване...")

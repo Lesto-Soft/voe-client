@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useLocation } from "react-router";
-import { Link } from "react-router"; // Corrected import for react-router-dom v6+
+import { Link } from "react-router"; // Corrected import for react-router-dom
 import {
   ClipboardDocumentListIcon,
   ChartPieIcon,
@@ -24,6 +24,7 @@ import { ROLES } from "../../utils/GLOBAL_PARAMETERS";
 import { capitalizeFirstLetter } from "../../utils/stringUtils";
 import { useGetActiveCategories } from "../../graphql/hooks/category";
 import CaseDialog from "../modals/CaseDialog";
+import UserAvatar from "../cards/UserAvatar";
 
 export interface NavLinkProps {
   to: string;
@@ -75,10 +76,7 @@ const NavBar: React.FC<{ me: IMe }> = ({ me }) => {
     error: categoriesError,
   } = useGetActiveCategories();
 
-  const initials = me.name
-    .split(" ")
-    .map((word: string) => word[0])
-    .join("");
+  // The 'initials' constant is no longer needed here, it's handled by UserAvatar.
 
   const handleSignOut = async () => {
     try {
@@ -222,22 +220,17 @@ const NavBar: React.FC<{ me: IMe }> = ({ me }) => {
             >
               <DropdownMenu.Trigger asChild className="focus:outline-none">
                 <button className="flex items-center space-x-3 p-2 rounded-lg transition-colors hover:bg-gray-300">
-                  {/* User Avatar */}
-                  <div className="relative flex items-center justify-center w-12 h-12 bg-white text-white rounded-full shadow-lg overflow-hidden">
-                    {me.avatar ? (
-                      <img
-                        src={`${dev_endpoint}/static/avatars/${me._id}/${me.avatar}`}
-                        alt="User Avatar"
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).style.display = "none";
-                        }}
-                      />
-                    ) : (
-                      <span className="absolute inset-0 flex items-center justify-center text-black text-2xl font-bold">
-                        {initials}
-                      </span>
-                    )}
+                  {/* User Avatar - REPLACED WITH UserAvatar COMPONENT */}
+                  <div className="rounded-full shadow-lg">
+                    <UserAvatar
+                      name={me.name}
+                      imageUrl={
+                        me.avatar
+                          ? `${dev_endpoint}/static/avatars/${me._id}/${me.avatar}`
+                          : null
+                      }
+                      size={48}
+                    />
                   </div>
                   {/* User Name and Username */}
                   <div

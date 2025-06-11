@@ -183,6 +183,21 @@ export const GET_CASES_BY_USER_CATEGORIES = gql`
   ${caseFragment}
 `;
 
+export const GET_CASES_BY_USER_MANAGED_CATEGORIES = gql`
+  query GET_CASES_BY_USER_MANAGED_CATEGORIES(
+    $userId: ID!
+    $input: getAllInput
+  ) {
+    getCasesByUserManagedCategories(userId: $userId, input: $input) {
+      cases {
+        ...CaseFragment
+      }
+      count
+    }
+  }
+  ${caseFragment}
+`;
+
 export const GET_USER_CASES = gql`
   query GET_USER_CASES($userId: ID!, $input: getAllInput) {
     getUserCases(userId: $userId, input: $input) {

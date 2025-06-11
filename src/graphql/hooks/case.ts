@@ -7,6 +7,7 @@ import {
   GET_CASE_BY_CASE_NUMBER,
   GET_CASES,
   GET_CASES_BY_USER_CATEGORIES,
+  GET_CASES_BY_USER_MANAGED_CATEGORIES,
   GET_USER_ANSWERED_CASES,
   GET_USER_CASES,
   GET_USER_COMMENTED_CASES,
@@ -136,6 +137,32 @@ export const useGetCasesByUserCategories = (userId: string, input: any) => {
 
   const cases = data?.getCasesByUserCategories.cases || [];
   const count = data?.getCasesByUserCategories.count || 0;
+  return {
+    cases,
+    count,
+    loading,
+    error,
+    refetch,
+  };
+};
+
+export const useGetCasesByUserManagedCategories = (
+  userId: string,
+  input: any
+) => {
+  const variables = {
+    userId,
+    ...buildCaseQueryVariables(input),
+  };
+  const { loading, error, data, refetch } = useQuery(
+    GET_CASES_BY_USER_MANAGED_CATEGORIES,
+    {
+      variables,
+    }
+  );
+
+  const cases = data?.getCasesByUserManagedCategories.cases || [];
+  const count = data?.getCasesByUserManagedCategories.count || 0;
   return {
     cases,
     count,

@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import {
   useGetAllCases,
   useGetCasesByUserCategories,
+  useGetCasesByUserManagedCategories,
   useUserAnsweredCases,
   useUserCases,
   useUserCommentedCases,
@@ -15,6 +16,7 @@ import {
   ChatBubbleOvalLeftEllipsisIcon,
   ChevronUpIcon,
   ChevronDownIcon,
+  Cog6ToothIcon,
 } from "@heroicons/react/24/outline";
 import { useLocation, useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
@@ -62,6 +64,12 @@ const Dashboard = () => {
         icon: <UserCircleIcon className="h-5 w-5 mr-2" />,
       },
       {
+        label: "Управлявани",
+        hookKey: "managed",
+        hook: null,
+        icon: <Cog6ToothIcon className="h-5 w-5 mr-2" />,
+      },
+      {
         label: t("expert"),
         hookKey: "expert",
         hook: null,
@@ -94,6 +102,10 @@ const Dashboard = () => {
     useGetCasesByUserCategories,
     currentUser._id
   );
+  const getCasesByUserManagedCategoriesWithUser = withUserIdHook(
+    useGetCasesByUserManagedCategories,
+    currentUser._id
+  );
   const getUserCasesWithUser = withUserIdHook(useUserCases, currentUser._id);
   const getUserAnsweredCasesWithUser = withUserIdHook(
     useUserAnsweredCases,
@@ -107,13 +119,15 @@ const Dashboard = () => {
   const submenuWithHooks = useMemo(() => {
     const updatedSubmenu = [...submenu];
     updatedSubmenu[1].hook = getUserCasesWithUser;
-    updatedSubmenu[2].hook = getCasesByUserCategoriesWithUser;
-    updatedSubmenu[3].hook = getUserAnsweredCasesWithUser;
-    updatedSubmenu[4].hook = getUserCommentedCasesWithUser;
+    updatedSubmenu[2].hook = getCasesByUserManagedCategoriesWithUser;
+    updatedSubmenu[3].hook = getCasesByUserCategoriesWithUser;
+    updatedSubmenu[4].hook = getUserAnsweredCasesWithUser;
+    updatedSubmenu[5].hook = getUserCommentedCasesWithUser;
     return updatedSubmenu;
   }, [
     submenu,
     getUserCasesWithUser,
+    getCasesByUserManagedCategoriesWithUser,
     getCasesByUserCategoriesWithUser,
     getUserAnsweredCasesWithUser,
     getUserCommentedCasesWithUser,

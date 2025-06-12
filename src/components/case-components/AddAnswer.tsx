@@ -5,6 +5,8 @@ import { AttachmentInput } from "../../graphql/mutation/user"; // Actual type
 import { readFileAsBase64 } from "../../utils/attachment-handling"; // Actual utility
 import { useCreateAnswer } from "../../graphql/hooks/answer"; // Actual hook
 import { ANSWER_CONTENT } from "../../utils/GLOBAL_PARAMETERS"; // Actual constant for MAX_CHARS
+import SimpleTextEditor from "../forms/partials/SimplifiedTextEditor";
+import { getTextLength } from "../../utils/contentRenderer";
 
 // Interface for the props of the AddAnswer component
 interface AddAnswerProps {
@@ -40,8 +42,8 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
     error: apiError,
   } = useCreateAnswer(caseNumber);
 
-  // Memoized character count and check if content is too long
-  const charCount = useMemo(() => content.length, [content]);
+  // Updated character count to handle HTML content
+  const charCount = useMemo(() => getTextLength(content), [content]);
   const isContentTooLong = useMemo(
     () => charCount > ANSWER_CONTENT.MAX,
     [charCount]
@@ -88,16 +90,27 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
     event.preventDefault();
     setSubmissionError(null); // Clear previous errors
 
-    // Validate content length
-    if (isContentTooLong) {
+    // Validate content length using plain text length
+    const textLength = getTextLength(content);
+    if (textLength > ANSWER_CONTENT.MAX) {
       setSubmissionError(
         t("caseSubmission.errors.submission.contentTooLong") ||
-          "Content is too long."
+          "Answer is too long."
       );
       return;
     }
+
+    if (textLength < ANSWER_CONTENT.MIN) {
+      setSubmissionError(
+        t("caseSubmission.errors.submission.contentTooShort") ||
+          `Answer must be at least ${ANSWER_CONTENT.MIN} characters.`
+      );
+      return;
+    }
+
     // Validate if content or attachments are present
-    if (!content.trim() && attachments.length === 0) {
+    const hasContent = content.trim() && textLength > 0;
+    if (!hasContent && attachments.length === 0) {
       setSubmissionError(
         t("caseSubmission.errors.submission.emptyContent") ||
           "Cannot submit empty answer."
@@ -156,62 +169,58 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
     );
   };
 
-  // Function to handle changes in the textarea content
-  const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setContent(e.target.value);
+  // Updated to handle TextEditor content changes
+  const handleContentChange = (html: string) => {
+    setContent(html);
     // Clear submission error related to length if user corrects it
-    if (submissionError && e.target.value.length <= ANSWER_CONTENT.MAX) {
+    if (submissionError && getTextLength(html) <= ANSWER_CONTENT.MAX) {
       setSubmissionError(null);
     }
   };
 
-  // Determine if the submit button should be disabled
+  // Updated submit button disabled condition
   const isSubmitDisabled =
-    isContentTooLong || loading || content.length < ANSWER_CONTENT.MIN;
+    isContentTooLong || loading || getTextLength(content) < ANSWER_CONTENT.MIN;
 
   return (
     <div>
       {/* Main container for the input area */}
       <div className="flex flex-col gap-2 mx-5">
-        {/* Flex container for textarea, attachment button, and submit button */}
+        {/* Flex container for TextEditor, attachment button, and submit button */}
         {/* items-start will align the tops of the flex items */}
         <div className="flex items-start gap-2">
-          {" "}
-          {/* Removed inner mx-5, added items-start */}
-          {/* Container for the textarea and character counter */}
+          {/* Container for the TextEditor and character counter */}
           <div className="flex-grow relative">
-            <textarea
-              className={`border border-gray-300 rounded-lg p-3 w-full h-24 resize-none focus:outline-none focus:ring-2 ${
+            <SimpleTextEditor
+              content={content}
+              onUpdate={handleContentChange}
+              placeholder={"Напишете отговор..."} //{t("writeAnswer") || "Напишете отговор..."}
+              minHeight="96px"
+              maxHeight="250px"
+              wrapperClassName={`border rounded-lg overflow-hidden bg-white focus-within:ring-2 ${
                 isContentTooLong
-                  ? "ring-red-500 border-red-500" // Style for content too long
-                  : "focus:ring-btnRedHover focus:border-btnRedHover" // Standard focus style
+                  ? "border-red-500 focus-within:ring-red-500"
+                  : "border-gray-300 focus-within:ring-btnRedHover focus-within:border-btnRedHover"
               } transition-colors duration-150`}
-              placeholder={t("writeAnswer") || "Write your answer here..."}
-              value={content}
-              onChange={handleContentChange}
-              aria-invalid={isContentTooLong}
-              aria-describedby="char-counter submission-error-display"
             />
             {/* Character counter display */}
             <div
               id="char-counter"
               className={`absolute bottom-2 right-2 text-xs ${
                 isContentTooLong
-                  ? "text-red-600 font-semibold" // Style for counter when content is too long
-                  : "text-gray-500" // Standard counter style
-              }`}
+                  ? "text-red-600 font-semibold"
+                  : "text-gray-500"
+              } bg-white px-1 rounded shadow-sm`}
             >
               {charCount}/{ANSWER_CONTENT.MAX}
             </div>
           </div>
           {/* File attachment component */}
-          {/* For FileAttachmentAnswer to match height, its internal button should also be h-28 or it should be wrapped appropriately */}
           <FileAttachmentAnswer
             inputId="file-upload-answer"
             attachments={attachments}
             setAttachments={setAttachments}
             setFileError={setFileError}
-            // You might need to pass a className or style to FileAttachmentAnswer if it supports it, e.g., className="h-28"
           />
           {/* Submit button */}
           <button

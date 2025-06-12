@@ -3,6 +3,7 @@ import { PencilIcon } from "@heroicons/react/24/outline";
 import * as Dialog from "@radix-ui/react-dialog";
 import { useTranslation } from "react-i18next";
 import FileAttachmentBtn from "./FileAttachmentBtn";
+import SimpleTextEditor from "../forms/partials/SimplifiedTextEditor";
 import { IAnswer } from "../../db/interfaces";
 import { readFileAsBase64 } from "../../utils/attachment-handling";
 import { AttachmentInput } from "../../graphql/hooks/case";
@@ -15,7 +16,7 @@ interface EditButtonProps {
   me: any;
 }
 
-const EditAnswerBtn: React.FC<EditButtonProps> = ({
+const EditAnswerButton: React.FC<EditButtonProps> = ({
   answer,
   currentAttachments,
   caseNumber,
@@ -58,7 +59,6 @@ const EditAnswerBtn: React.FC<EditButtonProps> = ({
       );
     } catch (fileReadError) {
       console.error("Client: Error reading files to base64:", fileReadError);
-
       return;
     }
 
@@ -77,7 +77,7 @@ const EditAnswerBtn: React.FC<EditButtonProps> = ({
   };
 
   if (loading) return <div>Loading...</div>;
-  if (error) return <div>Error updating comment</div>;
+  if (error) return <div>Error updating answer</div>;
 
   return (
     <Dialog.Root>
@@ -91,40 +91,52 @@ const EditAnswerBtn: React.FC<EditButtonProps> = ({
         </button>
       </Dialog.Trigger>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-black/50" />
-        <Dialog.Content className="fixed top-1/2 left-1/2 w-[90%] max-w-md -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg shadow-lg">
-          <Dialog.Title className="text-lg font-medium text-gray-900">
-            {t("editComment")}
+        <Dialog.Overlay className="fixed inset-0 bg-black/50 z-40" />
+        <Dialog.Content className="fixed top-1/2 left-1/2 w-[90%] max-w-2xl -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg shadow-lg z-50 max-h-[85vh] overflow-y-auto">
+          <Dialog.Title className="text-lg font-medium text-gray-900 mb-2">
+            {t("editAnswer", "Edit Answer")}
           </Dialog.Title>
           <Dialog.Description className="text-sm text-gray-500 mb-4">
-            {t("editCommentInfo")}
+            {t("editAnswerInfo", "Update your answer content and attachments.")}
           </Dialog.Description>
-          <textarea
-            className="w-full h-24 border border-gray-300 rounded-lg p-2 mb-4 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder={t("writeHere")}
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-          />
+
+          {/* SimpleTextEditor replacing the textarea */}
+          <div className="mb-4">
+            <SimpleTextEditor
+              content={content}
+              onUpdate={(html) => setContent(html)}
+              placeholder={t("writeHere", "Write your answer here...")}
+              minHeight="120px"
+              maxHeight="300px"
+              wrapperClassName="w-full border border-gray-300 rounded-lg shadow-sm overflow-hidden bg-white focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500"
+            />
+          </div>
+
           <FileAttachmentBtn
             attachments={attachments}
             setAttachments={setAttachments}
           />
 
-          <div className="flex justify-end gap-2 mt-4">
+          <div className="flex justify-end gap-2 mt-6">
             <Dialog.Close asChild>
               <button
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded hover:bg-gray-200"
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
                 type="button"
               >
-                Cancel
+                {t("cancel", "Cancel")}
               </button>
             </Dialog.Close>
             <button
               onClick={handleSave}
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-500 rounded hover:bg-blue-600"
+              disabled={loading}
+              className={`px-4 py-2 text-sm font-medium text-white rounded focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
+                loading
+                  ? "bg-blue-400 cursor-not-allowed"
+                  : "bg-blue-500 hover:bg-blue-600"
+              }`}
               type="button"
             >
-              Save
+              {loading ? t("saving", "Saving...") : t("save", "Save")}
             </button>
           </div>
         </Dialog.Content>
@@ -133,4 +145,4 @@ const EditAnswerBtn: React.FC<EditButtonProps> = ({
   );
 };
 
-export default EditAnswerBtn;
+export default EditAnswerButton;

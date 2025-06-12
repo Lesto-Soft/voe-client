@@ -186,7 +186,7 @@ const TextEditor: React.FC<TextEditorProps> = ({
   content: propContent,
   onUpdate,
   editable = true,
-  placeholder = "Write something...",
+  placeholder = "Напишете нещо...",
   wrapperClassName = "w-full border border-gray-300 rounded-md shadow-sm overflow-hidden bg-white focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500",
   menuBarClassName,
   editorContentClassName = "w-full text-base text-gray-900 focus:outline-none",

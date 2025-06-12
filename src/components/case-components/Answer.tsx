@@ -12,9 +12,10 @@ import FinanceApproveBtn from "./FinanceApproveBtn";
 import { createFileUrl } from "../../utils/fileUtils";
 import ImagePreviewModal from "../modals/ImagePreviewModal";
 import AddComment from "./AddComment";
-import EditAnswerBtn from "../global/EditAnswerButton";
+import EditAnswerButton from "../global/EditAnswerButton";
 import { useDeleteAnswer } from "../../graphql/hooks/answer";
 import DeleteModal from "../modals/DeleteModal";
+import { renderContentSafely } from "../../utils/contentRenderer";
 
 const Answer: React.FC<{
   answer: IAnswer;
@@ -132,7 +133,7 @@ const Answer: React.FC<{
                   (me._id === answer.creator._id ||
                     admin_check(me.role.name)) && (
                     <>
-                      <EditAnswerBtn
+                      <EditAnswerButton
                         answer={answer}
                         caseNumber={caseNumber}
                         me={me}
@@ -150,8 +151,8 @@ const Answer: React.FC<{
               </div>
             </div>
             <div className="mt-1 flex-1 flex">
-              <div className="bg-gray-50 rounded p-3  text-gray-900 whitespace-pre-line w-full flex overflow-y-auto break-all">
-                {answer.content}
+              <div className="text-gray-700 mb-3">
+                {renderContentSafely(answer.content)}
               </div>
             </div>
             {answer.attachments && answer.attachments.length > 0 && (

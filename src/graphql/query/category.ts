@@ -47,10 +47,12 @@ export const COUNT_CATEGORIES_BY_EXACT_NAME = gql`
 export const GET_ACTIVE_CATEGORIES = gql`
   query GetAllActiveCategories {
     getLeanActiveCategories {
-      ...CategoryFragment
+      _id
+      name
+      problem
+      suggestion
     }
   }
-  ${categoryFragment}
 `;
 
 export const GET_CATEGORY_BY_NAME = gql`

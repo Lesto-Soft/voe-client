@@ -143,6 +143,9 @@ export const GET_CASE_BY_CASE_NUMBER = gql`
   query GET_CASE_BY_CASE_NUMBER($caseNumber: Int!, $roleId: String) {
     getCaseByNumber(case_number: $caseNumber, roleId: $roleId) {
       ...CaseFragment
+      creator {
+        avatar
+      }
       rating {
         _id
         score
@@ -158,6 +161,9 @@ export const GET_CASE_BY_CASE_NUMBER = gql`
         ...CaseHistoryFragment
       }
       answers {
+        creator {
+          avatar
+        }
         ...AnswerFragment
         comments {
           ...CommentFragment

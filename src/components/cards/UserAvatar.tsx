@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
+import ImagePreviewModal from "../modals/ImagePreviewModal";
 
 interface UserAvatarProps {
   name: string; // For initials calculation
   imageUrl: string | null | undefined; // Full URL to the image, or null/undefined if none
   size?: number; // Optional size in pixels (default: 32)
+  enablePreview?: boolean; // Optional preview functionality (default: false)
 }
 
 // Helper to get initials (you can keep this in UserManagementPage or move to utils)
@@ -19,6 +21,7 @@ const UserAvatar: React.FC<UserAvatarProps> = ({
   name,
   imageUrl,
   size = 32,
+  enablePreview = false,
 }) => {
   const [imageLoadFailed, setImageLoadFailed] = useState(false);
 
@@ -42,11 +45,19 @@ const UserAvatar: React.FC<UserAvatarProps> = ({
     fontSize: `${Math.max(10, Math.floor(size * 0.45))}px`, // Scale font size
   };
 
-  return (
+  // Determine if preview should be available
+  const shouldShowPreview = enablePreview && !displayFallback && imageUrl;
+
+  // The avatar content
+  const avatarContent = (
     <div
       className={`rounded-full flex items-center justify-center text-white font-semibold overflow-hidden ${
         displayFallback ? bgColor : "bg-gray-200"
-      }`} // Use dynamic bg or gray if image expected
+      } ${
+        shouldShowPreview
+          ? "cursor-pointer hover:opacity-80 transition-opacity"
+          : ""
+      }`}
       style={dimensionStyle}
       title={name} // Show full name on hover
     >
@@ -62,6 +73,21 @@ const UserAvatar: React.FC<UserAvatarProps> = ({
       )}
     </div>
   );
+
+  // If preview is enabled and there's a valid image, wrap with ImagePreviewModal
+  if (shouldShowPreview) {
+    return (
+      <ImagePreviewModal
+        imageUrl={imageUrl}
+        displayName={name}
+        isAvatar={true}
+        triggerElement={avatarContent}
+      />
+    );
+  }
+
+  // Otherwise, return the regular avatar
+  return avatarContent;
 };
 
 export default UserAvatar;

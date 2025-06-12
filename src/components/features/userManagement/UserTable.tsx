@@ -182,6 +182,7 @@ const UserTable: React.FC<UserTableProps> = ({
                         name={user.name || user.username || "U"}
                         imageUrl={imageUrl}
                         size={42}
+                        enablePreview={true}
                       />
                     </td>
                     <td className={`${columnWidths.name} px-3 py-4 text-sm`}>

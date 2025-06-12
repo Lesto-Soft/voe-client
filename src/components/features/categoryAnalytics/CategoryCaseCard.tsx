@@ -70,6 +70,7 @@ const CategoryCaseCard: React.FC<CategoryCaseCardProps> = ({
           name={caseItem.creator.name || "Unknown User"}
           imageUrl={creatorImageUrl}
           size={40}
+          enablePreview={true}
         />
         <div className="flex-1 min-w-0">
           {/* Main info line: CaseLink, Status, Type, Priority, Creator, Date */}

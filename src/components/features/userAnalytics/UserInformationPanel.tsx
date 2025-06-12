@@ -147,7 +147,12 @@ const UserInformationPanel: React.FC<UserInformationPanelProps> = ({
               <PencilSquareIcon className="h-6 w-6" />
             </button>
           )}
-          <UserAvatar name={user.name} imageUrl={avatarUrl} size={96} />
+          <UserAvatar
+            name={user.name}
+            imageUrl={avatarUrl}
+            size={96}
+            enablePreview={true}
+          />
           <h1 className="text-xl font-bold text-gray-800">{user.name}</h1>
           {user.username && (
             <p className="text-sm text-gray-500">@{user.username}</p>

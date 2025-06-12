@@ -19,6 +19,8 @@ const TopUserCard: React.FC<TopUserCardProps> = ({
   actionText,
   onPodiumClick,
 }) => {
+  const serverBaseUrl = import.meta.env.VITE_API_URL || "";
+
   return (
     <div className="bg-white p-4 rounded-lg shadow-md flex flex-col items-center min-h-[270px] relative">
       {stat && onPodiumClick && (
@@ -40,8 +42,13 @@ const TopUserCard: React.FC<TopUserCardProps> = ({
           <>
             <UserAvatar
               name={stat.user.name}
-              imageUrl={stat.user.avatar}
+              imageUrl={
+                stat.user.avatar
+                  ? `${serverBaseUrl}/static/avatars/${stat.user._id}/${stat.user.avatar}`
+                  : null
+              }
               size={48}
+              enablePreview={true}
             />
             <div className="mt-2">
               <UserLink user={stat.user} type="table" />

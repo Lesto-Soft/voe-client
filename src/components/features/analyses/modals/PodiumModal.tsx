@@ -40,6 +40,8 @@ export const PodiumModal: React.FC<PodiumModalProps> = ({
   title,
   users,
 }) => {
+  const serverBaseUrl = import.meta.env.VITE_API_URL || "";
+
   if (!isOpen) {
     return null;
   }
@@ -113,8 +115,13 @@ export const PodiumModal: React.FC<PodiumModalProps> = ({
                       <div className="flex flex-col items-center mb-1">
                         <UserAvatar
                           name={userStat.user.name}
-                          imageUrl={userStat.user.avatar}
+                          imageUrl={
+                            userStat.user.avatar
+                              ? `${serverBaseUrl}/static/avatars/${userStat.user._id}/${userStat.user.avatar}`
+                              : null
+                          }
                           size={48}
+                          enablePreview={true}
                         />
                       </div>
                       <div
@@ -153,8 +160,13 @@ export const PodiumModal: React.FC<PodiumModalProps> = ({
                         </span>
                         <UserAvatar
                           name={userStat.user.name}
-                          imageUrl={userStat.user.avatar}
+                          imageUrl={
+                            userStat.user.avatar
+                              ? `${serverBaseUrl}/static/avatars/${userStat.user._id}/${userStat.user.avatar}`
+                              : null
+                          }
                           size={32}
+                          enablePreview={true}
                         />
                         <div className="ml-3 flex-grow">
                           <UserLink user={userStat.user} type="table" />

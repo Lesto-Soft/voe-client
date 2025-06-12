@@ -32,7 +32,7 @@ const ApproveBtn: React.FC<{
       if (approved) {
         await unapproveAnswer(answer._id);
       } else {
-        await approveAnswer(answer._id, me.me._id, needsFinance);
+        await approveAnswer(answer._id, me._id, needsFinance);
       }
       setApproved((prev) => !prev);
     } catch (error) {

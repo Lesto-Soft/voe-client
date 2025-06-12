@@ -3,12 +3,15 @@ import { CREATE_CASE, RATE_CASE } from "../mutation/case";
 import {
   COUNT_CASES,
   COUNT_FILTERED_CASES,
+  GET_ANALYTITCS_DATA_CASES,
   GET_CASE_BY_CASE_NUMBER,
   GET_CASES,
   GET_CASES_BY_USER_CATEGORIES,
+  GET_CASES_BY_USER_MANAGED_CATEGORIES,
   GET_USER_ANSWERED_CASES,
   GET_USER_CASES,
   GET_USER_COMMENTED_CASES,
+  UPDATE_CASE,
 } from "../query/case";
 
 export type AttachmentInput = {
@@ -23,6 +26,14 @@ export type CreateCaseInput = {
   attachments?: AttachmentInput[];
   categories: string[];
   creator: string;
+};
+
+export type UpdateCaseInput = {
+  content: string;
+  priority: "LOW" | "MEDIUM" | "HIGH";
+  attachments?: AttachmentInput[];
+  categories: string[];
+  type: "PROBLEM" | "SUGGESTION";
 };
 
 // Define a more specific type for the data returned by the query
@@ -85,9 +96,23 @@ export const useGetAllCases = (input: any) => {
   };
 };
 
-export const useGetCaseByCaseNumber = (caseNumber: number) => {
+export const useGetAnalyticsDataCases = () => {
+  console.log("useGetAnalyticsDataCases called");
+  const { loading, error, data } = useQuery(GET_ANALYTITCS_DATA_CASES);
+  const cases = data?.getAnalyticsDataCases || 0;
+  console.log("useGetAnalyticsDataCases data 315:", cases[315]);
+  console.log("useGetAnalyticsDataCases data:", cases);
+
+  return {
+    cases,
+    loading,
+    error,
+  };
+};
+
+export const useGetCaseByCaseNumber = (caseNumber: number, roleId: string) => {
   const { loading, error, data, refetch } = useQuery(GET_CASE_BY_CASE_NUMBER, {
-    variables: { caseNumber },
+    variables: { caseNumber, roleId },
   });
   const caseData = data?.getCaseByNumber || null;
   return {
@@ -112,6 +137,32 @@ export const useGetCasesByUserCategories = (userId: string, input: any) => {
 
   const cases = data?.getCasesByUserCategories.cases || [];
   const count = data?.getCasesByUserCategories.count || 0;
+  return {
+    cases,
+    count,
+    loading,
+    error,
+    refetch,
+  };
+};
+
+export const useGetCasesByUserManagedCategories = (
+  userId: string,
+  input: any
+) => {
+  const variables = {
+    userId,
+    ...buildCaseQueryVariables(input),
+  };
+  const { loading, error, data, refetch } = useQuery(
+    GET_CASES_BY_USER_MANAGED_CATEGORIES,
+    {
+      variables,
+    }
+  );
+
+  const cases = data?.getCasesByUserManagedCategories.cases || [];
+  const count = data?.getCasesByUserManagedCategories.count || 0;
   return {
     cases,
     count,
@@ -267,5 +318,40 @@ export const useCountFilteredCases = (
     loading,
     error,
     refetch,
+  };
+};
+
+export const useUpdateCase = (caseNumber: number) => {
+  const [updateCaseMutation, { data, loading, error }] = useMutation(
+    UPDATE_CASE,
+    {
+      refetchQueries: [
+        { query: GET_CASE_BY_CASE_NUMBER, variables: { caseNumber } },
+      ],
+      awaitRefetchQueries: true,
+    }
+  );
+
+  const updateCase = async (
+    caseId: string,
+    userId: string,
+    input: UpdateCaseInput
+  ) => {
+    try {
+      const response = await updateCaseMutation({
+        variables: { caseId, userId, input },
+      });
+      return response.data.updateCase;
+    } catch (err) {
+      console.error("Failed to update case:", err);
+      throw err;
+    }
+  };
+
+  return {
+    updateCase,
+    data,
+    loading,
+    error,
   };
 };

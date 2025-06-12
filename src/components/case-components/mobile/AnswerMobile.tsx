@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import Comment from "../Comment";
 import ShowDate from "../../global/ShowDate";
 import { useTranslation } from "react-i18next";
-import EditButton from "../../global/EditButton";
+import EditButton from "../../global/EditCommentButton";
 import { admin_check } from "../../../utils/rowStringCheckers";
 import Creator from "../Creator";
 import UserLink from "../../global/UserLink";
@@ -16,7 +16,9 @@ const AnswerMobile: React.FC<{
   answer: IAnswer;
   me?: any;
   refetch: () => void;
-}> = ({ answer, me, refetch }) => {
+  caseNumber: number;
+  status?: string;
+}> = ({ answer, me, refetch, caseNumber, status }) => {
   const [approved, setApproved] = useState(!!answer.approved);
   const [financialApproved, setFinancialApproved] = useState(
     !!answer.financial_approved
@@ -59,11 +61,11 @@ const AnswerMobile: React.FC<{
           {answer.history && answer.history.length > 0 && (
             <AnswerHistoryModal history={answer.history} />
           )}
-          {me &&
+          {/* {me &&
             me.role &&
             (me._id === answer.creator._id || admin_check(me.role.name)) && (
               <EditButton />
-            )}
+            )} */}
         </div>
       </div>
 
@@ -108,7 +110,12 @@ const AnswerMobile: React.FC<{
           <hr className="my-2 border-gray-200" />
           <div className="flex flex-col gap-2">
             {answer.comments.map((comment: IComment) => (
-              <CommentMobile key={comment._id} comment={comment} me={me} />
+              <CommentMobile
+                key={comment._id}
+                comment={comment}
+                me={me}
+                caseNumber={caseNumber}
+              />
             ))}
           </div>
         </div>

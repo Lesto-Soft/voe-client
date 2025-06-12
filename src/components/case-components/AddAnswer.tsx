@@ -1,0 +1,335 @@
+import { useState, useMemo, useEffect } from "react";
+import FileAttachmentAnswer from "../global/FileAttachmentAnswer"; // Actual component
+import { PaperAirplaneIcon, XMarkIcon } from "@heroicons/react/24/solid";
+import { AttachmentInput } from "../../graphql/mutation/user"; // Actual type
+import { readFileAsBase64 } from "../../utils/attachment-handling"; // Actual utility
+import { useCreateAnswer } from "../../graphql/hooks/answer"; // Actual hook
+import { ANSWER_CONTENT } from "../../utils/GLOBAL_PARAMETERS"; // Actual constant for MAX_CHARS
+
+// Interface for the props of the AddAnswer component
+interface AddAnswerProps {
+  caseId?: string;
+  t: (key: string) => string; // Translation function
+  me: any; // User object, assuming it has an _id property
+  caseNumber: number;
+}
+
+// The AddAnswer component
+const AddAnswer: React.FC<AddAnswerProps> = ({
+  caseId,
+  t = (key: string) => key, // Default t function for standalone or testing
+  me,
+  caseNumber,
+}) => {
+  // State for attachments, file errors, content input, and submission errors
+  const [attachments, setAttachments] = useState<File[]>([]);
+  const [fileError, setFileError] = useState<string | null>(null);
+  const [content, setContent] = useState<string>("");
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
+
+  // State for controlling success message visibility and fade-out
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [fadeSuccess, setFadeSuccess] = useState(false);
+  const [mountSuccess, setMountSuccess] = useState(false); // for smooth appear
+
+  // Using the actual useCreateAnswer hook
+  const {
+    createAnswer,
+    data,
+    loading,
+    error: apiError,
+  } = useCreateAnswer(caseNumber);
+
+  // Memoized character count and check if content is too long
+  const charCount = useMemo(() => content.length, [content]);
+  const isContentTooLong = useMemo(
+    () => charCount > ANSWER_CONTENT.MAX,
+    [charCount]
+  );
+
+  // Effect to handle API errors from the useCreateAnswer hook
+  useEffect(() => {
+    if (apiError) {
+      setSubmissionError(
+        apiError.message ||
+          t("caseSubmission.errors.submission.apiError") ||
+          "An API error occurred."
+      );
+    }
+  }, [apiError, t]);
+
+  // Show success message when data is set and no error/loading
+  useEffect(() => {
+    if (data && !loading && !submissionError) {
+      setMountSuccess(true); // mount first (opacity-0)
+      setShowSuccess(true); // render the element
+      setFadeSuccess(false); // ensure not fading out
+
+      // Next tick, trigger fade-in
+      const appearTimeout = setTimeout(() => setFadeSuccess(false), 10); // ensure transition
+      // Start fade-out after 4.5s
+      const fadeTimeout = setTimeout(() => setFadeSuccess(true), 4500);
+      // Hide after 5s
+      const hideTimeout = setTimeout(() => {
+        setShowSuccess(false);
+        setMountSuccess(false);
+      }, 5000);
+
+      return () => {
+        clearTimeout(appearTimeout);
+        clearTimeout(fadeTimeout);
+        clearTimeout(hideTimeout);
+      };
+    }
+  }, [data, loading, submissionError]);
+
+  // Function to handle form submission
+  const submitAnswer = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setSubmissionError(null); // Clear previous errors
+
+    // Validate content length
+    if (isContentTooLong) {
+      setSubmissionError(
+        t("caseSubmission.errors.submission.contentTooLong") ||
+          "Content is too long."
+      );
+      return;
+    }
+    // Validate if content or attachments are present
+    if (!content.trim() && attachments.length === 0) {
+      setSubmissionError(
+        t("caseSubmission.errors.submission.emptyContent") ||
+          "Cannot submit empty answer."
+      );
+      return;
+    }
+
+    let attachmentInputs: AttachmentInput[] = [];
+    try {
+      // Process attachments to base64
+      attachmentInputs = await Promise.all(
+        attachments.map(async (file): Promise<AttachmentInput> => {
+          const base64Data = await readFileAsBase64(file); // Using actual utility
+          return { filename: file.name, file: base64Data };
+        })
+      );
+    } catch (fileReadError) {
+      console.error("Client: Error reading files to base64:", fileReadError);
+      setSubmissionError(
+        t("caseSubmission.errors.submission.fileProcessingError") ||
+          "Error processing file attachments."
+      );
+      return;
+    }
+
+    try {
+      // Call the createAnswer mutation
+      await createAnswer({
+        case: caseId,
+        attachments: attachmentInputs,
+        content,
+        creator: me._id,
+      });
+
+      // Reset form fields on successful submission
+      setContent("");
+      setAttachments([]);
+      // Optionally, you can clear submissionError here or rely on API success to imply no error
+      // setSubmissionError(null); // Or show a success message
+    } catch (error: any) {
+      // Catch errors from the createAnswer promise itself (e.g., network issues if not handled by hook)
+      console.error("Error creating answer:", error);
+      setSubmissionError(
+        error?.message ||
+          t("caseSubmission.errors.submission.genericError") ||
+          "Failed to submit answer."
+      );
+    }
+  };
+
+  // Function to remove an attachment
+  const handleRemoveAttachment = (fileNameToRemove: string) => {
+    setFileError(null); // Clear any existing file error
+    setAttachments((prevAttachments) =>
+      prevAttachments.filter((file) => file.name !== fileNameToRemove)
+    );
+  };
+
+  // Function to handle changes in the textarea content
+  const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setContent(e.target.value);
+    // Clear submission error related to length if user corrects it
+    if (submissionError && e.target.value.length <= ANSWER_CONTENT.MAX) {
+      setSubmissionError(null);
+    }
+  };
+
+  // Determine if the submit button should be disabled
+  const isSubmitDisabled =
+    isContentTooLong || loading || content.length < ANSWER_CONTENT.MIN;
+
+  return (
+    <div>
+      {/* Main container for the input area */}
+      <div className="flex flex-col gap-2 mx-5">
+        {/* Flex container for textarea, attachment button, and submit button */}
+        {/* items-start will align the tops of the flex items */}
+        <div className="flex items-start gap-2">
+          {" "}
+          {/* Removed inner mx-5, added items-start */}
+          {/* Container for the textarea and character counter */}
+          <div className="flex-grow relative">
+            <textarea
+              className={`border border-gray-300 rounded-lg p-3 w-full h-24 resize-none focus:outline-none focus:ring-2 ${
+                isContentTooLong
+                  ? "ring-red-500 border-red-500" // Style for content too long
+                  : "focus:ring-btnRedHover focus:border-btnRedHover" // Standard focus style
+              } transition-colors duration-150`}
+              placeholder={t("writeAnswer") || "Write your answer here..."}
+              value={content}
+              onChange={handleContentChange}
+              aria-invalid={isContentTooLong}
+              aria-describedby="char-counter submission-error-display"
+            />
+            {/* Character counter display */}
+            <div
+              id="char-counter"
+              className={`absolute bottom-2 right-2 text-xs ${
+                isContentTooLong
+                  ? "text-red-600 font-semibold" // Style for counter when content is too long
+                  : "text-gray-500" // Standard counter style
+              }`}
+            >
+              {charCount}/{ANSWER_CONTENT.MAX}
+            </div>
+          </div>
+          {/* File attachment component */}
+          {/* For FileAttachmentAnswer to match height, its internal button should also be h-28 or it should be wrapped appropriately */}
+          <FileAttachmentAnswer
+            inputId="file-upload-answer"
+            attachments={attachments}
+            setAttachments={setAttachments}
+            setFileError={setFileError}
+            // You might need to pass a className or style to FileAttachmentAnswer if it supports it, e.g., className="h-28"
+          />
+          {/* Submit button */}
+          <button
+            onClick={submitAnswer}
+            disabled={isSubmitDisabled}
+            aria-label={t("submitAnswer") || "Submit Answer"}
+            className={`flex items-center justify-center h-24 w-24 rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-btnRedHover disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150`}
+          >
+            {loading ? (
+              // Loading spinner
+              <svg
+                className="animate-spin h-6 w-6 text-blue-600"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+            ) : (
+              // Paper airplane icon
+              <PaperAirplaneIcon className="h-8 w-8 text-blue-600" /> // Matched spinner color
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* Display file errors */}
+      {fileError && (
+        <div className="mx-5 mt-2 px-2">
+          {" "}
+          {/* Consistent margin with mx-5 */}
+          <p className="text-sm text-red-500 transition-opacity duration-200 opacity-100">
+            {fileError || "\u00A0"}{" "}
+            {/* Non-breaking space for layout consistency */}
+          </p>
+        </div>
+      )}
+
+      {/* Display list of attached files */}
+      {attachments.length > 0 && (
+        <div className="mx-5 mt-2 text-sm text-gray-600 space-y-1 overflow-y-auto rounded p-2 bg-gray-100 border border-gray-200 max-h-32">
+          <div className="flex flex-wrap gap-2">
+            {attachments.map((file) => (
+              <div
+                key={file.name + "-" + file.lastModified + "-" + file.size} // Enhanced key for better uniqueness
+                className="flex items-center gap-2 px-3 py-1.5 text-sm bg-gray-200 rounded-full hover:bg-gray-300"
+                title={file.name}
+              >
+                <span className="truncate max-w-[150px] sm:max-w-xs">
+                  {file.name}
+                </span>{" "}
+                {/* Truncate long file names */}
+                <button
+                  type="button"
+                  onClick={() => handleRemoveAttachment(file.name)}
+                  className="p-0.5 rounded-full hover:bg-red-100 focus:outline-none focus:ring-1 focus:ring-red-500"
+                  aria-label={`${t("removeFile") || "Remove file"} ${
+                    file.name
+                  }`}
+                >
+                  <XMarkIcon className="h-4 w-4 text-btnRed hover:text-red-700" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Submission Error Display */}
+      {/* This uses conditional rendering for the error message for clarity and accessibility */}
+      {
+        <div
+          id="submission-error-display" // Ensure this ID is unique if multiple instances on one page or use aria-describedby on textarea
+          className={`mx-5 mt-3 col-span-1 md:col-span-2 p-3 rounded-md border
+         transition-opacity duration-300
+         ${
+           submissionError
+             ? "bg-red-100 border-red-400 text-red-700 opacity-100" // Visible styles
+             : "border-transparent text-transparent opacity-0 h-0 p-0 overflow-hidden" // Hidden and collapse space
+         }`}
+          aria-live="polite"
+          role="alert"
+        >
+          {/* Display error or non-breaking space to maintain height when not fully collapsed */}
+          {submissionError}
+        </div>
+      }
+
+      {/* Optional: Success Message Display */}
+      {showSuccess && (
+        <div
+          className={`mx-5 mt-3 p-3 rounded-md border bg-green-100 border-green-400 text-green-700 transition-opacity duration-500 ${
+            mountSuccess
+              ? fadeSuccess
+                ? "opacity-0"
+                : "opacity-100"
+              : "opacity-0"
+          }`}
+          role="status"
+          aria-live="polite"
+        >
+          {t("caseSubmission.success") || "Answer submitted successfully!"}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default AddAnswer;

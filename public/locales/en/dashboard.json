@@ -51,5 +51,8 @@
   "send": "Send",
   "hideComment": "Hide comment",
   "addComment": "Add comment",
-  "writeComment": "Write a comment..."
+  "writeComment": "Write a comment...",
+  "content": "Content",
+  "attachments": "Attachments",
+  "writeAnswer": "Write an answer..."
 }

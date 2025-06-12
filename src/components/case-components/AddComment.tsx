@@ -1,29 +1,85 @@
-import { useState } from "react";
-import { useCreateComment } from "../../graphql/hooks/comment";
-import FileAttachmentAnswer from "../global/FileAttachmentAnswer";
+import { useState, useMemo, useEffect } from "react";
+import { useCreateComment } from "../../graphql/hooks/comment"; // Actual hook
+import FileAttachmentAnswer from "../global/FileAttachmentAnswer"; // Actual component
 import { PaperAirplaneIcon, XMarkIcon } from "@heroicons/react/24/solid";
-import { AttachmentInput } from "../../graphql/mutation/user";
-import { readFileAsBase64 } from "../../utils/attachment-handling";
+import { AttachmentInput } from "../../graphql/mutation/user"; // Actual type
+import { readFileAsBase64 } from "../../utils/attachment-handling"; // Actual utility
+import { COMMENT_CONTENT } from "../../utils/GLOBAL_PARAMETERS"; // Import for comment character limit
 
+// Interface for the props of the AddComment component
 interface AddCommentProps {
-  caseId: string;
-  refetch: () => void;
-  t: (key: string) => string;
-  me: any;
+  caseId?: string;
+  t: (key: string) => string; // Translation function
+  me: any; // User object, assuming it has an _id property
+  caseNumber: number;
+  answerId?: string;
 }
-const AddComment: React.FC<AddCommentProps> = ({ caseId, refetch, t, me }) => {
-  const [attachments, setAttachments] = useState<File[]>([]); // Holds selected File objects
-  const [fileError, setFileError] = useState<string | null>(null); // State for file error message
-  const [content, setContent] = useState<string>(""); // Holds the content of the comment
-  const [submissionError, setSubmissionError] = useState<string | null>(null);
-  const { createComment, loading, error } = useCreateComment();
 
+// The AddComment component
+const AddComment: React.FC<AddCommentProps> = ({
+  caseId,
+  t = (key: string) => key, // Default t function for standalone or testing
+  me,
+  caseNumber,
+  answerId,
+}) => {
+  // State for attachments, file errors, content input, and submission errors
+  const [attachments, setAttachments] = useState<File[]>([]);
+  const [fileError, setFileError] = useState<string | null>(null);
+  const [content, setContent] = useState<string>("");
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
+
+  // Using the actual useCreateComment hook
+  // Note: This hook doesn't return 'data' in the provided snippet, so a data-driven success message isn't directly possible.
+  const {
+    createComment,
+    loading,
+    error: apiError,
+  } = useCreateComment(caseNumber);
+
+  // Memoized character count and check if content is too long
+  const charCount = useMemo(() => content.length, [content]);
+  const isContentTooLong = useMemo(
+    () => charCount > COMMENT_CONTENT.MAX, // Using COMMENT_CONTENT for max length
+    [charCount]
+  );
+
+  // Effect to handle API errors from the useCreateComment hook
+  useEffect(() => {
+    if (apiError) {
+      setSubmissionError(
+        apiError.message ||
+          t("caseSubmission.errors.submission.apiError") ||
+          "An API error occurred."
+      );
+    }
+  }, [apiError, t]);
+
+  // Function to handle form submission
   const submitComment = async (event: React.FormEvent) => {
     event.preventDefault(); // Prevent default form submission behavior
+    setSubmissionError(null); // Clear previous errors
 
-    // --- Prepare Attachments ---
+    // Validate content length
+    if (isContentTooLong) {
+      setSubmissionError(
+        t("caseSubmission.errors.submission.contentTooLongComment") || // Specific key for comment
+          "Comment is too long."
+      );
+      return;
+    }
+    // Validate if content or attachments are present
+    if (!content.trim() && attachments.length === 0) {
+      setSubmissionError(
+        t("caseSubmission.errors.submission.emptyComment") || // Specific key for comment
+          "Cannot submit an empty comment."
+      );
+      return;
+    }
+
     let attachmentInputs: AttachmentInput[] = [];
     try {
+      // Process attachments to base64
       attachmentInputs = await Promise.all(
         attachments.map(async (file): Promise<AttachmentInput> => {
           const base64Data = await readFileAsBase64(file);
@@ -33,112 +89,216 @@ const AddComment: React.FC<AddCommentProps> = ({ caseId, refetch, t, me }) => {
     } catch (fileReadError) {
       console.error("Client: Error reading files to base64:", fileReadError);
       setSubmissionError(
-        t("caseSubmission.errors.submission.fileProcessingError")
+        t("caseSubmission.errors.submission.fileProcessingError") ||
+          "Error processing file attachments."
       );
       return;
     }
 
-    if (attachments.length > 0) {
-      const formData = new FormData();
-      attachments.forEach((file) => {
-        formData.append("attachments", file); // Append each file to the FormData object
-      });
-      try {
-        await createComment({
-          case: caseId,
-          attachments: attachmentInputs,
-          content,
-          creator: me.me._id,
-        });
-        refetch(); // Refetch data after comment creation
-        setAttachments([]); // Clear attachments after submission
-      } catch (error) {
-        console.error("Error creating comment:", error);
+    try {
+      const commentPayload: any = {
+        // Define type more strictly if possible
+        attachments: attachmentInputs,
+        content,
+        creator: me._id,
+      };
+
+      if (caseId) {
+        commentPayload.case = caseId;
+      } else if (answerId) {
+        commentPayload.answer = answerId;
+      } else {
+        // Handle case where neither caseId nor answerId is provided, if necessary
+        console.error(
+          "Error: caseId or answerId must be provided for a comment."
+        );
+        setSubmissionError(
+          t("caseSubmission.errors.submission.missingIdentifier") ||
+            "Cannot submit comment without case or answer ID."
+        );
+        return;
       }
-    } else {
-      setFileError(t("noFilesSelected")); // Set error message if no files are selected
+
+      await createComment(commentPayload);
+
+      // Reset form fields on successful submission
+      setContent("");
+      setAttachments([]);
+      // No 'data' returned from hook, so success message is harder to implement here
+      // Could set a temporary success message state if needed.
+    } catch (error: any) {
+      // Catch errors from the createComment promise itself
+      console.error("Error creating comment:", error);
+      setSubmissionError(
+        error?.message ||
+          t("caseSubmission.errors.submission.genericCommentError") ||
+          "Failed to submit comment."
+      );
     }
   };
 
+  // Function to remove an attachment
   const handleRemoveAttachment = (fileNameToRemove: string) => {
-    setFileError(null);
+    setFileError(null); // Clear any existing file error
     setAttachments((prevAttachments) =>
-      // Create a new array excluding the file with the matching name
       prevAttachments.filter((file) => file.name !== fileNameToRemove)
     );
-    // Note: Programmatically clearing the <input type="file"> value is
-    // unreliable across browsers and often not necessary. The user can
-    // always click "Choose Files" again to re-select.
   };
+
+  // Function to handle changes in the textarea content
+  const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setContent(e.target.value);
+    // Clear submission error related to length if user corrects it
+    if (submissionError && e.target.value.length <= COMMENT_CONTENT.MAX) {
+      setSubmissionError(null);
+    }
+  };
+
+  // Determine if the submit button should be disabled
+  const isSubmitDisabled =
+    isContentTooLong ||
+    loading ||
+    (!content.trim() && attachments.length === 0);
 
   return (
     <div>
+      {/* Main container for the input area */}
       <div className="flex flex-col gap-2 mx-5">
-        <div className="flex  gap-2 mb-1 mx-5">
-          <textarea
-            className="border border-gray-300 rounded-lg p-2 w-full h-24 resize-none focus:outline-none focus:ring-2 focus:ring-btnRedHover"
-            placeholder={t("writeComment")}
-            onChange={(e) => setContent(e.target.value)} // Update content state on change
-          ></textarea>
+        {/* Flex container for textarea, attachment button, and submit button */}
+        <div className="flex items-start gap-2">
+          {" "}
+          {/* Align tops, removed inner mx-5 */}
+          {/* Container for the textarea and character counter */}
+          <div className="flex-grow relative">
+            <textarea
+              className={`border border-gray-300 rounded-lg p-3 w-full h-24 resize-none focus:outline-none focus:ring-2 ${
+                // h-24 as per original user code
+                isContentTooLong
+                  ? "ring-red-500 border-red-500" // Style for content too long
+                  : "focus:ring-btnRedHover focus:border-btnRedHover" // Standard focus style
+              } transition-colors duration-150`}
+              placeholder={t("writeComment") || "Write your comment..."}
+              value={content}
+              onChange={handleContentChange}
+              aria-invalid={isContentTooLong}
+              aria-describedby="comment-char-counter submission-error-display" // Unique id for counter
+            />
+            {/* Character counter display */}
+            <div
+              id="comment-char-counter" // Unique id
+              className={`absolute bottom-2 right-2 text-xs ${
+                isContentTooLong
+                  ? "text-red-600 font-semibold" // Style for counter when content is too long
+                  : "text-gray-500" // Standard counter style
+              }`}
+            >
+              {charCount}/{COMMENT_CONTENT.MAX}
+            </div>
+          </div>
+          {/* File attachment component */}
+          {/* NOTE: For FileAttachmentAnswer to match height, its internal button should also be h-24.
+              This might require changes within FileAttachmentAnswer or passing height props/classes. */}
           <FileAttachmentAnswer
+            inputId="file-upload-comment-answer"
             attachments={attachments}
             setAttachments={setAttachments}
             setFileError={setFileError}
+            // Example: pass a class if supported: className="h-24 flex items-center"
           />
+          {/* Submit button */}
           <button
             onClick={submitComment}
-            className="hover:cursor-pointer h-24 rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-200"
+            disabled={isSubmitDisabled}
+            aria-label={t("submitComment") || "Submit Comment"}
+            className={`flex items-center justify-center h-24 w-24 rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-btnRedHover disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150`}
+            // h-24 to match textarea, w-24 for a squarer look with the icon
           >
-            <PaperAirplaneIcon className="h-8 w-8" />
+            {loading ? (
+              // Loading spinner
+              <svg
+                className="animate-spin h-5 w-5 text-blue-600"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+            ) : (
+              // Paper airplane icon (h-6 w-6 is a bit smaller for h-24 button)
+              <PaperAirplaneIcon className="h-6 w-6 text-blue-600" />
+            )}
           </button>
         </div>
       </div>
 
-      {/* Display File Errors */}
+      {/* Display file errors */}
       {fileError && (
-        <div className="mx-10 px-2">
+        <div className="mx-5 mt-2 px-2">
+          {" "}
+          {/* Consistent margin with mx-5 */}
           <p className="text-sm text-red-500 transition-opacity duration-200 opacity-100">
             {fileError || "\u00A0"}
           </p>
         </div>
       )}
-      <div className="mx-10 text-sm text-gray-600 space-y-1 overflow-y-auto rounded p-2">
-        {attachments.length > 0 && (
+
+      {/* Display list of attached files */}
+      {attachments.length > 0 && (
+        <div className="mx-5 mt-2 text-sm text-gray-600 space-y-1 overflow-y-auto rounded p-2 bg-gray-100 border border-gray-200 max-h-28">
+          {" "}
           <div className="flex flex-wrap gap-2">
             {attachments.map((file) => (
-              <button
-                key={file.name + "-" + file.lastModified}
-                type="button"
-                onClick={() => handleRemoveAttachment(file.name)}
-                className="flex items-center gap-2 px-3 py-1 text-sm bg-gray-200 rounded-full hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400"
+              <div
+                key={file.name + "-" + file.lastModified + "-" + file.size}
+                className="flex items-center gap-2 px-3 py-1.5 text-sm bg-gray-200 rounded-full hover:bg-gray-300"
                 title={file.name}
               >
-                <span className="truncate">{file.name}</span>
-                <XMarkIcon
-                  className="hover:cursor-pointer hover:text-btnRedHover h-5 w-5 text-btnRed font-bold"
-                  style={{ verticalAlign: "middle" }}
-                />
-              </button>
+                <span className="truncate max-w-[150px] sm:max-w-xs">
+                  {file.name}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleRemoveAttachment(file.name)}
+                  className="p-0.5 rounded-full hover:bg-red-100 focus:outline-none focus:ring-1 focus:ring-red-500"
+                  aria-label={`${t("removeFile") || "Remove file"} ${
+                    file.name
+                  }`}
+                >
+                  <XMarkIcon className="h-4 w-4 text-btnRed hover:text-red-700" />
+                </button>
+              </div>
             ))}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
-      {/* Submission Error Display - Always rendered, uses opacity */}
+      {/* Submission Error Display - Always rendered, uses opacity for transition */}
       <div
-        className={`
-          col-span-1 md:col-span-2 p-3 rounded-md border
+        id="submission-error-display" // Ensure this ID is unique if multiple instances on one page or use aria-describedby on textarea
+        className={`mx-5 mt-3 col-span-1 md:col-span-2 p-3 rounded-md border
           transition-opacity duration-300
           ${
             submissionError
               ? "bg-red-100 border-red-400 text-red-700 opacity-100" // Visible styles
-              : "border-transparent text-transparent opacity-0" // Hidden: Make border & text transparent, opacity 0
-          }
-        `}
+              : "border-transparent text-transparent opacity-0 h-0 p-0 overflow-hidden" // Hidden and collapse space
+          }`}
         aria-live="polite"
+        role="alert"
       >
-        {/* Display error or non-breaking space to maintain height */}
-        {submissionError || "\u00A0"}
+        {/* Display error or non-breaking space to maintain height when not fully collapsed */}
+        {submissionError}
       </div>
     </div>
   );

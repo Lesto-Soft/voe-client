@@ -13,7 +13,7 @@ interface UseCreateCategoryFormStateProps {
   onDirtyChange?: (isDirty: boolean) => void;
 }
 
-export function useCreateCategoryFormState({
+export function useCategoryFormState({
   initialData,
   onDirtyChange,
 }: UseCreateCategoryFormStateProps) {

@@ -4,6 +4,7 @@ import { handleFileChange } from "../../utils/attachment-handling";
 import { useTranslation } from "react-i18next";
 import { PaperClipIcon } from "@heroicons/react/24/solid";
 interface FileAttachmentBtnProps {
+  inputId: string;
   attachments: File[];
   setAttachments: React.Dispatch<React.SetStateAction<File[]>>;
   setFileError: React.Dispatch<React.SetStateAction<string | null>>;
@@ -13,14 +14,14 @@ const FileAttachmentAnswer: React.FC<FileAttachmentBtnProps> = ({
   attachments,
   setAttachments,
   setFileError,
+  inputId,
 }) => {
   const { t } = useTranslation("caseSubmission"); // Assuming you have a translation function available
-
   return (
     <div className="">
       {/* Styled Label acting as Button - Disable visually if max files reached */}
       <label
-        htmlFor="file-upload-input"
+        htmlFor={inputId}
         className={`h-24 flex items-center justify-center w-full text-center  rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm ${
           attachments.length >= MAX_FILES
             ? "opacity-75 cursor-not-allowed" // Disabled style
@@ -35,7 +36,7 @@ const FileAttachmentAnswer: React.FC<FileAttachmentBtnProps> = ({
       </label>
       {/* Hidden Actual File Input - Disable if max files reached */}
       <input
-        id="file-upload-input"
+        id={inputId}
         name="attachments"
         type="file"
         multiple

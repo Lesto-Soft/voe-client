@@ -10,7 +10,7 @@ const FormHeader = ({ subtitleKey }: { subtitleKey: string }) => {
   return (
     <div className="mb-6 w-full text-center">
       {" "}
-      <h1 className="lg:text-5xl text-4xl font-extrabold font-main text-gray-800 uppercase w-full drop-shadow-lg">
+      <h1 className="lg:text-5xl text-4xl font-extrabold text-gray-800 uppercase w-full drop-shadow-lg">
         {" "}
         {t("home.title")}
       </h1>
@@ -184,7 +184,7 @@ const Home = () => {
         </div>
         <div className="w-full lg:w-1/2 flex justify-center items-center">
           <img
-            src="/images/illustrations/voe2-bg.png"
+            src="/images/illustrations/voe_visual.png"
             alt="VOE Image"
             className="h-48 w-48 md:h-64 md:w-64 lg:h-auto lg:w-full max-w-sm lg:max-w-md"
           />

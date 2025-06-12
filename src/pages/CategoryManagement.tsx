@@ -21,16 +21,20 @@ import {
   CategoryQueryApiParams,
 } from "../hooks/useCategoryManagement"; // Adjust path as needed
 import CategoryFilters from "../components/features/categoryManagement/CategoryFilters"; // Adjust path as needed
-import CreateCategoryModal from "../components/modals/CreateCategoryModal"; // Adjust path as needed
-import CreateCategoryForm, {
+import CategoryModal from "../components/modals/CategoryModal"; // Adjust path as needed
+import CategoryForm, {
   CategoryFormData,
-} from "../components/forms/CreateCategoryForm"; // Adjust path as needed
+} from "../components/forms/CategoryForm"; // Adjust path as needed
 import CategoryStats from "../components/features/categoryManagement/CategoryStats"; // Adjust path as needed
 import ConfirmActionDialog from "../components/modals/ConfirmActionDialog";
 import SuccessConfirmationModal from "../components/modals/SuccessConfirmationModal";
 // Assuming you might need to fetch users for the CreateCategoryForm
 import { useQuery } from "@apollo/client";
 import { GET_LEAN_USERS } from "../graphql/query/user"; // Adjust path for GET_LEAN_USERS
+
+import { useCurrentUser } from "../context/UserContext"; // <-- NEW: Import current user hook
+import { IMe } from "../db/interfaces"; // <-- NEW: Import IMe
+import { ROLES } from "../utils/GLOBAL_PARAMETERS";
 
 // Define a lean user type that includes the role ID, matching GET_LEAN_USERS
 interface ILeanUserForForm {
@@ -60,6 +64,10 @@ const CategoryManagement: React.FC = () => {
     handleItemsPerPageChange,
     currentQueryInput,
   } = useCategoryManagement();
+
+  // --- NEW: Get current user and determine if they are an admin ---
+  const currentUser = useCurrentUser() as IMe | undefined;
+  const isAdmin = currentUser?.role?._id === ROLES.ADMIN;
 
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<ICategory | null>(
@@ -565,7 +573,7 @@ const CategoryManagement: React.FC = () => {
   const mutationError = createCategoryErrorObj || updateCategoryErrorObj;
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6 font-sans">
+    <div className="min-h-screen bg-gray-100 p-6">
       <div className="mb-6 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
         <CategoryStats
           totalCaseCount={totalCaseCountForStats ?? 0}
@@ -590,15 +598,17 @@ const CategoryManagement: React.FC = () => {
             )}
             Филтри
           </button>
-          <button
-            type="button"
-            onClick={openCreateCategoryModal}
-            className="w-full sm:w-[280px] flex flex-shrink-0 justify-center items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-green-500 text-white hover:bg-green-600 hover:cursor-pointer active:bg-green-700 active:shadow-inner disabled:cursor-not-allowed"
-            disabled={mutationInProgress || isCurrentlyLoadingPageData}
-          >
-            <PlusIconSolid className="h-5 w-5 mr-1" />
-            Създай Категория
-          </button>
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={openCreateCategoryModal}
+              className="w-full sm:w-[280px] flex flex-shrink-0 justify-center items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-green-500 text-white hover:bg-green-600 hover:cursor-pointer active:bg-green-700 active:shadow-inner disabled:cursor-not-allowed"
+              disabled={mutationInProgress || isCurrentlyLoadingPageData}
+            >
+              <PlusIconSolid className="h-5 w-5 mr-1" />
+              Създай Категория
+            </button>
+          )}
         </div>
       </div>
 
@@ -643,7 +653,7 @@ const CategoryManagement: React.FC = () => {
         deleteLoading={deleteCategoryLoading}
       />
 
-      <CreateCategoryModal
+      <CategoryModal
         isOpen={isCategoryModalOpen}
         onClose={closeCategoryModal}
         title={
@@ -660,7 +670,7 @@ const CategoryManagement: React.FC = () => {
           </div>
         )}
         {!(createCategoryLoading || updateCategoryLoading) && (
-          <CreateCategoryForm
+          <CategoryForm
             key={editingCategory ? editingCategory._id : "create-new-category"}
             onSubmit={handleCategoryFormSubmit}
             onClose={closeCategoryModal}
@@ -674,7 +684,7 @@ const CategoryManagement: React.FC = () => {
             allUsersForFormLoading={allUsersForFormLoading}
           />
         )}
-      </CreateCategoryModal>
+      </CategoryModal>
 
       <ConfirmActionDialog
         isOpen={showDeleteConfirmDialog}

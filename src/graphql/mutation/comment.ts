@@ -7,3 +7,19 @@ export const ADD_COMMENT = gql`
     }
   }
 `;
+
+export const UPDATE_COMMENT = gql`
+  mutation Mutation($input: updateCommentInput!, $id: ID!) {
+    updateComment(input: $input, _id: $id) {
+      _id
+    }
+  }
+`;
+
+export const DELETE_COMMENT = gql`
+  mutation DeleteComment($id: ID!) {
+    deleteComment(_id: $id) {
+      _id
+    }
+  }
+`;

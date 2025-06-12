@@ -21,7 +21,7 @@ const CaseLink: React.FC<ICaseLinkProps> = ({ my_case, t }) => {
       title={`${t("details_for")} ${my_case.case_number}`}
       tabIndex={0}
     >
-      <span className="font-semibold">{my_case.case_number}</span>
+      <span className="font-bold">{my_case.case_number}</span>
       {/* Optionally, add an icon for clarity */}
       <svg
         className="ml-1 h-4 w-4 text-blue-400 group-hover:text-blue-600"

@@ -1,29 +1,65 @@
-import React from "react";
+import React, { use, useLayoutEffect } from "react";
 import {
   ChatBubbleBottomCenterTextIcon,
   ChatBubbleLeftEllipsisIcon,
   ClockIcon,
 } from "@heroicons/react/24/solid";
 import { useState } from "react";
-import { IAnswer, ICase, IComment } from "../../db/interfaces";
+import { IAnswer, ICase, ICategory, IComment } from "../../db/interfaces";
 import AnswerMobile from "./mobile/AnswerMobile";
 import CaseHistoryContent from "./CaseHistoryContent";
 import Comment from "./Comment";
 import Answer from "./Answer";
 import CommentMobile from "./mobile/CommentMobile";
 import AddComment from "./AddComment";
+import AddAnswer from "./AddAnswer";
+import { checkNormal } from "../../utils/rightUtils";
+import { USER_RIGHTS } from "../../utils/GLOBAL_PARAMETERS";
+
+const LOCAL_STORAGE_KEY = "case-submenu-view";
 
 interface SubmenuProps {
   caseData: ICase;
-  t: (key: string, options?: Record<string, any>) => string; // Updated type for t
+  t: (key: string, options?: Record<string, any>) => string;
   me: any;
   refetch: () => void;
+  userRights: string[];
 }
+const Submenu: React.FC<SubmenuProps> = ({
+  caseData,
+  t,
+  me,
+  refetch,
+  userRights,
+}) => {
+  const [view, setView] = useState<"answers" | "comments" | "history">(() => {
+    // Try to get the last selected view from sessionStorage
+    const stored = sessionStorage.getItem(LOCAL_STORAGE_KEY);
+    if (stored === "answers" || stored === "comments" || stored === "history") {
+      return stored;
+    }
+    return "answers";
+  });
 
-const Submenu: React.FC<SubmenuProps> = ({ caseData, t, me, refetch }) => {
-  const [view, setView] = useState<"answers" | "comments" | "history">(
-    "answers"
+  const expertCategoryIds = (me.expert_categories || []).map(
+    (cat: { _id: string }) => cat._id
   );
+  const caseCategoryIdsInThisCase = (caseData.categories || []).map(
+    (cat: ICategory) => cat._id
+  );
+
+  const isExpertForCase = expertCategoryIds.some((expertId: string) =>
+    caseCategoryIdsInThisCase.includes(expertId)
+  );
+
+  useLayoutEffect(() => {
+    sessionStorage.setItem(LOCAL_STORAGE_KEY, view);
+  }, [view]);
+
+  const isCreatorAndNothingElse =
+    userRights.length === 1 && userRights.includes("creator");
+
+  console.log(isCreatorAndNothingElse);
 
   const submenu = [
     {
@@ -57,6 +93,9 @@ const Submenu: React.FC<SubmenuProps> = ({ caseData, t, me, refetch }) => {
       icon: <ClockIcon className="h-5 w-5 mr-2" />,
     },
   ];
+  if (isCreatorAndNothingElse) {
+    submenu.splice(2, 2);
+  }
 
   return (
     <>
@@ -84,55 +123,106 @@ const Submenu: React.FC<SubmenuProps> = ({ caseData, t, me, refetch }) => {
       {/* Comments/answers and other scrollable content will go here */}
       {/* Section content */}
       <div>
-        {view === "answers" &&
-          (caseData.answers && caseData.answers.length > 0 ? (
-            <>
-              {[...caseData.answers] // Create a shallow copy of the array
-                .sort((a, b) => (b.approved ? 1 : 0) - (a.approved ? 1 : 0)) // Sort approved answers to the top
-                .map((answer: IAnswer) => (
-                  <div key={answer._id}>
-                    <div className="flex lg:hidden flex-col gap-4 mb-8">
-                      <AnswerMobile answer={answer} me={me} refetch={refetch} />
-                    </div>
-                    <div className="hidden lg:flex flex-col gap-4 mb-8">
-                      <Answer answer={answer} me={me} refetch={refetch} />
-                    </div>
-                  </div>
-                ))}
-            </>
-          ) : (
-            <div className="text-center text-gray-500">{t("no_answers")}</div>
-          ))}
-
-        {view === "comments" &&
-          (caseData.comments && caseData.comments.length > 0 ? (
-            <div>
-              <AddComment
+        {view === "answers" && (
+          <>
+            {userRights.includes(USER_RIGHTS.EXPERT) ||
+            userRights.includes(USER_RIGHTS.MANAGER) ? (
+              <AddAnswer
+                caseNumber={caseData.case_number}
                 caseId={caseData._id}
-                refetch={refetch}
                 t={t}
                 me={me}
               />
+            ) : null}
+            {caseData.answers && caseData.answers.length > 0 ? (
+              <>
+                {[...caseData.answers] // Create a shallow copy of the array
+                  .sort((a, b) => {
+                    // Approved answers first
+                    if (a.approved && !b.approved) return -1;
+                    if (!a.approved && b.approved) return 1;
+                    // If both are approved or both are not approved, sort by date (newest first)
+                    const dateA = new Date(a.date).getTime();
+                    const dateB = new Date(b.date).getTime();
+                    return dateB - dateA;
+                  })
+                  .map((answer: IAnswer) => {
+                    const showThisAnswer =
+                      answer.approved ||
+                      userRights.includes(USER_RIGHTS.EXPERT) ||
+                      userRights.includes(USER_RIGHTS.MANAGER);
+                    return showThisAnswer ? (
+                      <div key={answer._id}>
+                        <div className="flex lg:hidden flex-col gap-4 mb-8">
+                          <AnswerMobile
+                            answer={answer}
+                            me={me}
+                            refetch={refetch}
+                            caseNumber={caseData.case_number}
+                            status={caseData.status}
+                          />
+                        </div>
+                        <div className="hidden lg:flex flex-col gap-4 mb-8">
+                          <Answer
+                            answer={answer}
+                            me={me}
+                            refetch={refetch}
+                            caseNumber={caseData.case_number}
+                            status={caseData.status}
+                            caseCategories={caseData.categories}
+                          />
+                        </div>
+                      </div>
+                    ) : null; // React handles null by rendering nothing, which is what we want.
+                  })}
+              </>
+            ) : (
+              <div className="text-center text-gray-500">{t("no_answers")}</div>
+            )}
+          </>
+        )}
 
-              {[...caseData.comments]
-                .sort(
-                  (a, b) =>
-                    new Date(b.date).getTime() - new Date(a.date).getTime()
-                )
-                .map((comment: IComment) => (
-                  <div className=" gap-4 mb-8" key={comment._id}>
-                    <div className="hidden lg:block ">
-                      <Comment comment={comment} me={me} />
+        {view === "comments" && (
+          <>
+            <AddComment
+              caseId={caseData._id}
+              t={t}
+              me={me}
+              caseNumber={caseData.case_number}
+            />
+            {caseData.comments && caseData.comments.length > 0 ? (
+              <>
+                {[...caseData.comments]
+                  .sort(
+                    (a, b) =>
+                      new Date(b.date).getTime() - new Date(a.date).getTime()
+                  )
+                  .map((comment: IComment) => (
+                    <div className=" gap-4 mb-8" key={comment._id}>
+                      <div className="hidden lg:block ">
+                        <Comment
+                          comment={comment}
+                          me={me}
+                          caseNumber={caseData.case_number}
+                        />
+                      </div>
+                      <div className="lg:hidden flex">
+                        <CommentMobile
+                          comment={comment}
+                          me={me}
+                          caseNumber={caseData.case_number}
+                        />
+                      </div>
                     </div>
-                    <div className="lg:hidden flex">
-                      <CommentMobile comment={comment} me={me} />
-                    </div>
-                  </div>
-                ))}
-            </div>
-          ) : (
-            <div className="text-center text-gray-500">{t("no_comments")}</div>
-          ))}
+                  ))}
+              </>
+            ) : (
+              <div className="text-center text-gray-500">
+                {t("no_comments")}
+              </div>
+            )}
+          </>
+        )}
 
         {view === "history" &&
           (caseData.history && caseData.history.length > 0 ? (

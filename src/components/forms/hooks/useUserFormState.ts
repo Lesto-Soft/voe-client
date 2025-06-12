@@ -1,25 +1,24 @@
-// src/components/forms/hooks/useCreateUserFormState.ts
 import { useState, useEffect, useCallback } from "react";
 import { useDebounce } from "../../../hooks/useDebounce"; // Adjust path if needed
 import {
   useCountUsersByExactUsername,
   useCountUsersByExactEmail,
 } from "../../../graphql/hooks/user"; // Adjust path
-import { Role, User } from "../../../types/userManagementTypes"; // Adjust path
+import { IUser } from "../../../db/interfaces";
 
 // Helper function
 const isValidEmailFormat = (emailToTest: string): boolean =>
   emailToTest === "" || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailToTest);
 
-interface UseCreateUserFormStateProps {
-  initialData: User | null;
+interface UseUserFormStateProps {
+  initialData: IUser | null;
   serverBaseUrl: string;
 }
 
-export function useCreateUserFormState({
+export function useUserFormState({
   initialData,
   serverBaseUrl,
-}: UseCreateUserFormStateProps) {
+}: UseUserFormStateProps) {
   // --- Form Field State ---
   const [username, setUsername] = useState("");
   const [fullName, setFullName] = useState("");
@@ -30,29 +29,25 @@ export function useCreateUserFormState({
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [roleId, setRoleId] = useState("");
-  const [financialApprover, setFinancialApprover] = useState<boolean>(false); // Added state
+  const [financialApprover, setFinancialApprover] = useState<boolean>(false); // --- Validation State ---
 
-  // --- Validation State ---
   const [usernameError, setUsernameError] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [usernameHookError, setUsernameHookError] = useState<any | null>(null);
   const [emailHookError, setEmailHookError] = useState<any | null>(null);
   const [isCheckingUsername, setIsCheckingUsername] = useState(false);
-  const [isCheckingEmail, setIsCheckingEmail] = useState(false);
+  const [isCheckingEmail, setIsCheckingEmail] = useState(false); // --- Avatar State ---
 
-  // --- Avatar State ---
   const [originalAvatarFile, setOriginalAvatarFile] = useState<File | null>(
     null
   );
   const [finalCroppedBlob, setFinalCroppedBlob] = useState<Blob | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
-  const [isRemovingAvatar, setIsRemovingAvatar] = useState(false);
+  const [isRemovingAvatar, setIsRemovingAvatar] = useState(false); // --- Debounced Values ---
 
-  // --- Debounced Values ---
   const debouncedUsername = useDebounce(username, 700);
-  const debouncedEmail = useDebounce(email, 700);
+  const debouncedEmail = useDebounce(email, 700); // --- Validation Hooks ---
 
-  // --- Validation Hooks ---
   const trimmedDebouncedUsername = debouncedUsername.trim();
   const skipUsernameCheck =
     !trimmedDebouncedUsername ||
@@ -77,42 +72,30 @@ export function useCreateUserFormState({
     error: rawEmailExactCountError,
   } = useCountUsersByExactEmail(trimmedDebouncedEmail, {
     skip: skipEmailCheck,
-  });
+  }); // --- Effect for Initial Data ---
 
-  // --- Effect for Initial Data ---
   useEffect(() => {
-    console.log(
-      "[Hook] InitialData Effect: initialData changed or serverBaseUrl changed.",
-      initialData
-    );
     if (initialData) {
       setUsername(initialData.username || "");
       setFullName(initialData.name || "");
       setEmail(initialData.email || "");
       setPosition(initialData.position || "");
       setRoleId(initialData.role?._id || "");
-      setFinancialApprover(initialData.financial_approver || false); // Set financialApprover
+      setFinancialApprover(initialData.financial_approver || false);
       const currentAvatarUrl = initialData.avatar
         ? `${serverBaseUrl}/static/avatars/${initialData._id}/${
             initialData.avatar
           }?v=${Date.now()}`
         : null;
       setAvatarPreview(currentAvatarUrl);
-      console.log(
-        "[Hook] InitialData Effect: Set avatarPreview to:",
-        currentAvatarUrl
-      );
     } else {
       setUsername("");
       setFullName("");
       setEmail("");
       setPosition("");
       setRoleId("");
-      setFinancialApprover(false); // Reset financialApprover
+      setFinancialApprover(false);
       setAvatarPreview(null);
-      console.log(
-        "[Hook] InitialData Effect: Cleared form fields and avatarPreview."
-      );
     }
     setPassword("");
     setConfirmPassword("");
@@ -127,12 +110,8 @@ export function useCreateUserFormState({
     setOriginalAvatarFile(null);
     setFinalCroppedBlob(null);
     setIsRemovingAvatar(false);
-    console.log(
-      "[Hook] InitialData Effect: Reset passwords, errors, and avatar file states."
-    );
-  }, [initialData, serverBaseUrl]);
+  }, [initialData, serverBaseUrl]); // --- Validation Effects (Username & Email) ---
 
-  // --- Validation Effects (Username & Email) ---
   useEffect(() => {
     setIsCheckingUsername(
       usernameExactCountLoading &&
@@ -153,22 +132,14 @@ export function useCreateUserFormState({
     if (rawUsernameExactCountError) {
       setUsernameError(null);
       setUsernameHookError(rawUsernameExactCountError);
-      console.error(
-        "[Hook] Username exact count hook error:",
-        rawUsernameExactCountError
-      );
       return;
     }
     setUsernameHookError(null);
     if (typeof usernameExactCount === "number") {
-      if (initialData) {
-        if (usernameExactCount > 0)
-          setUsernameError("Потребителското име вече е заето.");
-        else setUsernameError(null);
+      if (usernameExactCount > 0) {
+        setUsernameError("Потребителското име вече е заето.");
       } else {
-        if (usernameExactCount > 0)
-          setUsernameError("Потребителското име вече е заето.");
-        else setUsernameError(null);
+        setUsernameError(null);
       }
     } else if (!usernameExactCountLoading) {
       setUsernameError("Невалиден отговор за проверка на потребителско име.");
@@ -178,7 +149,6 @@ export function useCreateUserFormState({
     usernameExactCount,
     usernameExactCountLoading,
     rawUsernameExactCountError,
-    initialData,
     skipUsernameCheck,
   ]);
 
@@ -212,16 +182,15 @@ export function useCreateUserFormState({
     if (rawEmailExactCountError) {
       if (emailError !== "Невалиден имейл формат.") setEmailError(null);
       setEmailHookError(rawEmailExactCountError);
-      console.error(
-        "[Hook] Email exact count hook error:",
-        rawEmailExactCountError
-      );
       return;
     }
     setEmailHookError(null);
     if (typeof emailExactCount === "number") {
-      if (emailExactCount > 0) setEmailError("Имейлът вече е регистриран.");
-      else setEmailError(null);
+      if (emailExactCount > 0) {
+        setEmailError("Имейлът вече е регистриран.");
+      } else {
+        setEmailError(null);
+      }
     } else if (!emailExactCountLoading) {
       setEmailError("Невалиден отговор за проверка на имейл.");
     }
@@ -230,59 +199,37 @@ export function useCreateUserFormState({
     emailExactCount,
     emailExactCountLoading,
     rawEmailExactCountError,
-    initialData,
     isEmailFormatCurrentlyValid,
     skipEmailCheck,
     emailError,
-  ]);
+  ]); // --- Avatar Handlers ---
 
-  // --- Avatar Handlers with Logging ---
   const handleSetOriginalFile = useCallback((file: File | null) => {
-    console.log(
-      "[Hook] handleSetOriginalFile called with:",
-      file ? file.name : null
-    );
     setOriginalAvatarFile(file);
     if (file) {
-      setIsRemovingAvatar(false); // If a new file is set, we are no longer removing
-      setFinalCroppedBlob(null); // Clear previous crop
-      console.log(
-        "[Hook] handleSetOriginalFile: Cleared isRemovingAvatar and finalCroppedBlob."
-      );
+      setIsRemovingAvatar(false);
+      setFinalCroppedBlob(null);
     }
   }, []);
 
   const handleSetCroppedBlob = useCallback((blob: Blob | null) => {
-    console.log(
-      "[Hook] handleSetCroppedBlob called with blob (size):",
-      blob ? blob.size : null
-    );
     setFinalCroppedBlob(blob);
   }, []);
 
   const handleSetAvatarPreview = useCallback((url: string | null) => {
-    console.log(
-      "[Hook] handleSetAvatarPreview called with url:",
-      url ? url.substring(0, 30) + "..." : null
-    );
     setAvatarPreview(url);
   }, []);
 
   const handleSetIsRemovingAvatar = useCallback((isRemoving: boolean) => {
-    console.log("[Hook] handleSetIsRemovingAvatar called with:", isRemoving);
     setIsRemovingAvatar(isRemoving);
     if (isRemoving) {
       setOriginalAvatarFile(null);
       setFinalCroppedBlob(null);
-      setAvatarPreview(null); // Also clear preview when removing
-      console.log(
-        "[Hook] handleSetIsRemovingAvatar: Cleared originalFile, croppedBlob, and avatarPreview."
-      );
+      setAvatarPreview(null);
     }
   }, []);
 
   return {
-    // Form Field State & Setters
     username,
     setUsername,
     fullName,
@@ -301,10 +248,8 @@ export function useCreateUserFormState({
     setConfirmNewPassword,
     roleId,
     setRoleId,
-    financialApprover, // Return state
-    setFinancialApprover, // Return setter
-
-    // Validation State
+    financialApprover,
+    setFinancialApprover,
     usernameError,
     setUsernameError,
     emailError,
@@ -313,8 +258,6 @@ export function useCreateUserFormState({
     emailHookError,
     isCheckingUsername,
     isCheckingEmail,
-
-    // Avatar State & Handlers
     originalAvatarFile,
     handleSetOriginalFile,
     finalCroppedBlob,
@@ -323,8 +266,6 @@ export function useCreateUserFormState({
     handleSetAvatarPreview,
     isRemovingAvatar,
     handleSetIsRemovingAvatar,
-
-    // Other needed values
     trimmedDebouncedEmail,
     isEmailFormatCurrentlyValid,
   };

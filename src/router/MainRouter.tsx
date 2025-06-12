@@ -8,22 +8,35 @@ import NavBar from "../components/menu/NavBar";
 import Profile from "../pages/Profile";
 import Analyses from "../pages/Analyses";
 import NotFoundPage from "../pages/NotFound";
-import UserData from "../pages/UserData";
 import User from "../pages/User";
 import Category from "../pages/Category";
 import Case from "../pages/Case";
 import CategoryManagement from "../pages/CategoryManagement";
+import { useGetMe } from "../graphql/hooks/user";
+import { IMe } from "../db/interfaces";
+import { UserProvider } from "../context/UserContext";
+import ProtectedRoute from "../components/auth/ProtectedRoute";
+import { ROLES } from "../utils/GLOBAL_PARAMETERS";
 
 const AppLayout = () => {
+  const { me, error, loading } = useGetMe();
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error.message}</div>;
+  if (!me || !me.me) return <div>Неуспешно зареждане на потребител.</div>;
+  const currentUserData: IMe = me.me;
+
   return (
-    <div className="w-full min-h-screen flex flex-col">
-      <div>
-        <NavBar />
+    <UserProvider value={currentUserData}>
+      <div className="w-full min-h-screen flex flex-col">
+        <div>
+          <NavBar me={currentUserData} />
+        </div>
+        <div className="flex-1 flex flex-col w-full min-h-0">
+          <Outlet />
+        </div>
       </div>
-      <div className="flex-1 flex flex-col w-full min-h-0">
-        <Outlet />
-      </div>
-    </div>
+    </UserProvider>
   );
 };
 
@@ -35,10 +48,6 @@ const mainRouter = createBrowserRouter([
   {
     path: "/submit-case",
     element: <CaseSubmission />,
-  },
-  {
-    path: "/user-data/:userId",
-    element: <UserData />,
   },
   {
     path: "/loading",
@@ -53,11 +62,19 @@ const mainRouter = createBrowserRouter([
       },
       {
         path: "/user-management",
-        element: <UserManagement />,
+        element: (
+          <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.EXPERT]}>
+            <UserManagement />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "/category-management",
-        element: <CategoryManagement />,
+        element: (
+          <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.EXPERT]}>
+            <CategoryManagement />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "/profile",
@@ -68,22 +85,22 @@ const mainRouter = createBrowserRouter([
         element: <Analyses />,
       },
       {
-        path: "/user/:id",
+        path: "/user/:username",
         element: <User />,
       },
       {
-        path: "/category/:id",
+        path: "/category/:name",
         element: <Category />,
       },
       {
         path: "/case/:number",
         element: <Case />,
       },
+      {
+        path: "*",
+        element: <NotFoundPage />,
+      },
     ],
-  },
-  {
-    path: "*",
-    element: <NotFoundPage />,
   },
 ]);
 

@@ -35,3 +35,27 @@ export const UNAPPROVE_ANSWER_FINANCE = gql`
     }
   }
 `;
+
+export const CREATE_ANSWER = gql`
+  mutation Mutation($input: createAnswerInput!) {
+    createAnswer(input: $input) {
+      _id
+    }
+  }
+`;
+
+export const UPDATE_ANSWER = gql`
+  mutation Mutation($input: updateAnswerInput!, $answerId: ID!, $userId: ID!) {
+    updateAnswer(input: $input, answerId: $answerId, userId: $userId) {
+      _id
+    }
+  }
+`;
+
+export const DELETE_ANSWER = gql`
+  mutation Mutation($deleteAnswerId: ID!) {
+    deleteAnswer(id: $deleteAnswerId) {
+      _id
+    }
+  }
+`;

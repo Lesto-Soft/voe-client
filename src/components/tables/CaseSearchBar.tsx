@@ -536,6 +536,7 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
             <option value=""> {t("all")}</option>
             <option value="OPEN"> {t("OPEN")}</option>
             <option value="IN_PROGRESS"> {t("IN_PROGRESS")}</option>
+            <option value="AWAITING_FINANCE"> {t("AWAITING_FINANCE")}</option>
             <option value="CLOSED"> {t("CLOSED")}</option>
           </select>
           <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 top-[calc(1.75rem+1px)]">

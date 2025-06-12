@@ -17,5 +17,12 @@
   "isFinanceNeeded": "Нужда от финансиране?",
   "yes": "Да",
   "no": "Не",
-  "financedBy": "Финансиран от"
+  "financedBy": "Финансиран от",
+  "no_answers": "Няма отговори",
+  "no_comments": "Няма коментари",
+  "no_history": "Няма история",
+  "send": "Изпрати",
+  "hideComment": "Скрий коментар",
+  "addComment": "Коментирай",
+  "writeComment": "Напиши коментар..."
 }

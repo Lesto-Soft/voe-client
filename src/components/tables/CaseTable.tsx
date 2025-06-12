@@ -23,12 +23,6 @@ const CaseTable: React.FC<{ cases: ICase[]; t: (word: string) => string }> = ({
   const { i18n } = useTranslation();
   const currentLanguage = i18n.language;
 
-  // Example: log the current language and the moment locale for the first case
-  if (cases.length > 0) {
-    const m = moment(cases[0].date).locale("bg").format("LLL");
-    console.log(m);
-  }
-
   // State to hold the current window width (still needed for description truncation)
   const [windowWidth, setWindowWidth] = useState(
     typeof window !== "undefined" ? window.innerWidth : 0

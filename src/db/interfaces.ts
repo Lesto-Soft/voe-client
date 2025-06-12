@@ -2,9 +2,9 @@ export interface ICase {
   _id: string;
   content: string;
   date: string;
-  type: string;
+  type: CaseType;
   attachments?: string[];
-  priority: string;
+  priority: CasePriority;
   status: ICaseStatus | string;
   case_number: number;
   categories: ICategory[];
@@ -15,6 +15,7 @@ export interface ICase {
   readBy?: IUser[];
   history?: ICaseHistory[];
   last_update?: string;
+  calculatedRating?: number | null;
 }
 
 export interface ICategory {
@@ -35,7 +36,7 @@ export interface IUser {
   name: string;
   email?: string;
   position?: string;
-  role?: string;
+  role?: IRole; // was string before - TODO check if we break anywhere
   avatar?: string;
   inbox?: string[];
   cases?: ICase[];
@@ -43,7 +44,7 @@ export interface IUser {
   managed_categories?: ICategory[];
   comments?: IComment[];
   answers?: IAnswer[];
-  financialApprover?: boolean;
+  financial_approver?: boolean;
 }
 
 export interface IRating {
@@ -63,7 +64,7 @@ export interface IRole {
 export interface IComment {
   _id: string;
   date: string;
-  content?: string;
+  content: string;
   case?: ICase;
   creator: IUser;
   answer?: IAnswer;
@@ -84,6 +85,7 @@ export interface IAnswer {
   financial_approved_date?: string;
   needs_finance?: boolean;
   history?: IAnswerHistory[];
+  case_number?: number;
 }
 
 export interface IAnswerHistory {
@@ -121,3 +123,29 @@ export const CASE_STATUS_DISPLAY_ORDER: ICaseStatus[] = [
   ICaseStatus.AwaitingFinance,
   ICaseStatus.Closed,
 ];
+
+export interface IMe {
+  _id: string;
+  username: string;
+  name: string;
+  email?: string;
+  position?: string;
+  role: IRole;
+  avatar?: string;
+  cases?: ICase[];
+  expert_categories?: ICategory[];
+  managed_categories: ICategory[];
+  comments?: IComment[];
+  answers?: IAnswer[];
+  financial_approver?: boolean;
+}
+
+export enum CaseType {
+  Problem = "PROBLEM",
+  Suggestion = "SUGGESTION",
+}
+export enum CasePriority {
+  Low = "LOW",
+  Medium = "MEDIUM",
+  High = "HIGH",
+}

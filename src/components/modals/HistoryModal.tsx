@@ -3,6 +3,7 @@ import { ICaseHistory } from "../../db/interfaces";
 import moment from "moment";
 import { useTranslation } from "react-i18next";
 import { ClockIcon } from "@heroicons/react/24/outline";
+import { getDifferences } from "../../utils/contentDifferences";
 
 // Priority color helper
 const getPriorityColor = (priority?: string) => {
@@ -50,27 +51,11 @@ const CaseHistoryModal: React.FC<{ history: ICaseHistory[] }> = ({
                 </div>
                 {/* Show changed fields if present */}
                 <div className="ml-2">
-                  {h.old_content !== h.new_content && (
-                    <div>
-                      <div>
-                        <span className="text-gray-500">
-                          {t("old_content")}:{" "}
-                        </span>
-                        <span className="line-through text-btnRedHover font-bold">
-                          {h.old_content}
-                        </span>
-                      </div>
-                      <div>
-                        {" "}
-                        <span className="text-gray-500 ">
-                          {t("new_content")}:{" "}
-                        </span>
-                        <span className="text-btnGreenHover font-bold">
-                          {h.new_content}
-                        </span>
-                      </div>
-                    </div>
-                  )}
+                  {h.old_content !== h.new_content &&
+                    h.old_content &&
+                    h.new_content && (
+                      <div>{getDifferences(h.old_content, h.new_content)}</div>
+                    )}
                   {h.old_priority !== h.new_priority && (
                     <div>
                       <span className="text-gray-500">{t("priority")}: </span>

@@ -10,6 +10,8 @@ import {
 } from "@heroicons/react/24/solid";
 import { useTranslation } from "react-i18next";
 import { NavLinkProps } from "./NavBar";
+import { IMe } from "../../db/interfaces";
+import { ROLES } from "../../utils/GLOBAL_PARAMETERS";
 
 const MobileNavLink: React.FC<NavLinkProps> = ({
   to,
@@ -40,15 +42,20 @@ interface MobileMenuProps {
   isOpen: boolean;
   handleSignOut: () => void;
   onLinkClick: () => void; // Function to close the menu
+  me: IMe;
 }
 
 const MobileMenu: React.FC<MobileMenuProps> = ({
   isOpen,
   handleSignOut,
   onLinkClick,
+  me,
 }) => {
   const { t } = useTranslation("menu");
 
+  const isAdmin = me.role._id === ROLES.ADMIN;
+  const isManagerExpert =
+    me.role._id === ROLES.EXPERT && me.managed_categories.length > 0;
   return (
     <div
       className={`
@@ -62,18 +69,22 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
       `}
     >
       <div className="flex flex-col space-y-1 p-4">
-        <MobileNavLink
-          to="/user-management"
-          icon={<UsersIcon className="h-6 w-6" />}
-          label={t("accounts")}
-          onClick={onLinkClick}
-        />
-        <MobileNavLink
-          to="/category-management"
-          icon={<TagIcon className="h-6 w-6" />}
-          label={t("categories")}
-          onClick={onLinkClick}
-        />
+        {(isAdmin || isManagerExpert) && (
+          <>
+            <MobileNavLink
+              to="/user-management"
+              icon={<UsersIcon className="h-6 w-6" />}
+              label={t("accounts")}
+              onClick={onLinkClick}
+            />
+            <MobileNavLink
+              to="/category-management"
+              icon={<TagIcon className="h-6 w-6" />}
+              label={t("categories")}
+              onClick={onLinkClick}
+            />
+          </>
+        )}
         <MobileNavLink
           to="/dashboard"
           icon={<ClipboardDocumentListIcon className="h-6 w-6" />}
@@ -87,7 +98,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
           onClick={onLinkClick}
         />
         <MobileNavLink
-          to="/profile"
+          to={`/user/${me.username}`}
           icon={<UserIcon className="h-6 w-6" />} // Add icon if desired
           label={t("profile")}
           onClick={onLinkClick}

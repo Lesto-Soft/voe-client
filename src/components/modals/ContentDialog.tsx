@@ -2,6 +2,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { useTranslation } from "react-i18next";
 import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/solid";
+import { renderContentSafely } from "../../utils/contentRenderer";
 
 interface FullScreenContentDialogProps {
   content: string;
@@ -43,8 +44,8 @@ const FullScreenContentDialog: React.FC<FullScreenContentDialogProps> = ({
                 </button>
               </Dialog.Close>
             </div>
-            <div className="p-6 overflow-y-auto whitespace-pre-line break-all">
-              {content}
+            <div className="prose prose-lg max-w-none p-6 bg-white rounded-lg shadow-xl max-h-[80vh] overflow-y-auto">
+              {renderContentSafely(content)}
             </div>
           </div>
         </Dialog.Content>

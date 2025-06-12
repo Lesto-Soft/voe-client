@@ -14,6 +14,7 @@ import {
   getStatusStyle,
   getTypeBadgeStyle,
 } from "../../utils/style-helpers";
+import { getContentPreview, stripHtmlTags } from "../../utils/contentRenderer";
 
 // --- Main CaseTable Component ---
 const CaseTable: React.FC<{ cases: ICase[]; t: (word: string) => string }> = ({
@@ -153,10 +154,11 @@ const CaseTable: React.FC<{ cases: ICase[]; t: (word: string) => string }> = ({
 
               // Dynamic truncation based on window width
               const truncateLength = getContentTruncateLength();
-              const displayContent =
-                my_case.content.length > truncateLength
-                  ? `${my_case.content.substring(0, truncateLength)}...`
-                  : my_case.content;
+
+              const displayContent = getContentPreview(
+                my_case.content,
+                truncateLength
+              );
 
               return (
                 <tr
@@ -210,13 +212,13 @@ const CaseTable: React.FC<{ cases: ICase[]; t: (word: string) => string }> = ({
                       )}
                     </div>
                   </td>
-                  {/* Description Cell */}
                   <td
                     className="max-w-[200px] sm:max-w-[250px] lg:max-w-[300px] px-3 py-4 text-sm break-words"
-                    title={my_case.content}
+                    title={stripHtmlTags(my_case.content)} // Show plain text in tooltip
                   >
                     {displayContent}
                   </td>
+
                   {/* Date Cell */}
                   <td className="w-32 px-3 py-4 whitespace-nowrap text-sm">
                     <div className="flex items-center" title={my_case.date}>

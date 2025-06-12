@@ -3,6 +3,7 @@ import React, { ChangeEvent } from "react";
 import { TFunction } from "i18next"; // Import TFunction from i18next
 import { ApolloError } from "@apollo/client"; // Import ApolloError
 import FileAttachmentBtn from "../../../global/FileAttachmentBtn"; // Adjusted path
+import TextEditor from "../../../forms/partials/TextEditor";
 
 interface CaseSubmissionLeftPanelProps {
   t: TFunction<"caseSubmission", undefined>; // Expecting the namespaced t
@@ -108,18 +109,17 @@ const CaseSubmissionLeftPanel: React.FC<CaseSubmissionLeftPanelProps> = ({
           >
             {t("caseSubmission.descriptionLabel")}
           </label>
-          <textarea
-            id="description"
-            placeholder={t("caseSubmission.descriptionPlaceholder")}
-            className="w-full h-40 border border-gray-300 p-3 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-            name="description"
-            value={content}
-            onChange={(e) => {
+          <TextEditor
+            content={content}
+            onUpdate={(html) => {
               if (clearAllFormErrors) clearAllFormErrors();
-              onContentChange(e.target.value);
+              onContentChange(html);
             }}
-            maxLength={500}
-            aria-label={t("caseSubmission.descriptionLabel")}
+            placeholder={t("caseSubmission.descriptionPlaceholder")}
+            editable={true}
+            minHeight="160px"
+            maxHeight="300px"
+            wrapperClassName="w-full border border-gray-300 rounded-md shadow-sm overflow-hidden bg-white focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500"
           />
         </div>
         <FileAttachmentBtn

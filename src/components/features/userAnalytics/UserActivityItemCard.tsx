@@ -29,6 +29,7 @@ import {
 } from "../../../utils/style-helpers"; // Adjust path to your style-helpers.ts
 
 import CategoryLink from "../../global/CategoryLink";
+import { getContentPreview } from "../../../utils/contentRenderer";
 
 type ActivityItem = ICase | IAnswer | IComment;
 
@@ -45,7 +46,6 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
 }) => {
   let icon: React.ReactNode;
   let titleFragments: React.ReactNode[] = [];
-  let contentPreview = "";
   let caseToLinkForDisplay: Partial<ICase> | undefined;
 
   const date = item.date;
@@ -54,8 +54,7 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
     (item as IAnswer)?.content ||
     (item as IComment)?.content ||
     "";
-  contentPreview =
-    itemContent.substring(0, 150) + (itemContent.length > 150 ? "..." : "");
+  const contentPreview = getContentPreview(itemContent, 150);
 
   titleFragments.push(
     <span

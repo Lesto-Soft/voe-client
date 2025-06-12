@@ -21,6 +21,7 @@ import { CASE_STATUS, USER_RIGHTS } from "../../utils/GLOBAL_PARAMETERS";
 import CaseDialog from "../modals/CaseDialog";
 import { PencilSquareIcon } from "@heroicons/react/24/outline";
 import { useGetActiveCategories } from "../../graphql/hooks/category";
+import { renderContentSafely } from "../../utils/contentRenderer";
 
 interface ICaseInfoProps {
   content: string;
@@ -87,24 +88,16 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
         <Creator creator={creator} />
         {date && <ShowDate date={date} />}
       </div>
-      {/* Content Section */}
       <div>
         <div className="flex justify-between items-center mb-1.5 px-1">
           <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
             {t("content")}
           </h3>
-          {/* FullScreenContentDialog: Show only on desktop, or style differently for mobile if needed */}
           <div className="hidden lg:flex lg:gap-2">
             {(rights.includes(USER_RIGHTS.CREATOR) ||
               rights.includes(USER_RIGHTS.ADMIN)) &&
               status !== CASE_STATUS.AWAITING_FINANCE &&
               status !== CASE_STATUS.CLOSED && (
-                // <EditCaseDialog
-                //   caseId={caseId}
-                //   caseNumber={caseNumber}
-                //   initialData={caseInitialDataForEdit}
-                //   me={me}
-                // />
                 <CaseDialog
                   mode="edit"
                   caseId={caseId}
@@ -121,7 +114,6 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
                   me={me}
                   availableCategories={categoriesDataFromHook || []}
                 >
-                  {/* This is the trigger button */}
                   <button
                     type="button"
                     title="Edit case"
@@ -134,13 +126,8 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
             <FullScreenContentDialog content={content} />
           </div>
         </div>
-        <div
-          className={`
-            bg-gray-50 rounded-md p-3 text-gray-900 overflow-y-auto custom-scrollbar
-            max-h-60 lg:max-h-70 whitespace-pre-line break-words
-          `}
-        >
-          {content}
+        <div className="bg-gray-50 rounded-md p-3 text-gray-900 overflow-y-auto custom-scrollbar max-h-60 lg:max-h-70 break-words">
+          {renderContentSafely(content)}
         </div>
       </div>
       {/* Attachments: Show only on desktop by default. For mobile, a different UI/UX might be needed. */}

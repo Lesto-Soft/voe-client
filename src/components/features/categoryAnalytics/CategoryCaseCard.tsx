@@ -21,6 +21,7 @@ import {
   translateCaseType,
   tForCaseLink, // For CaseLink's title
 } from "../../../utils/categoryDisplayUtils"; // Adjust path
+import { getContentPreview } from "../../../utils/contentRenderer";
 
 interface CategoryCaseCardProps {
   caseItem: ICase;
@@ -122,7 +123,7 @@ const CategoryCaseCard: React.FC<CategoryCaseCardProps> = ({
 
           {/* Content Preview */}
           <p className="text-sm text-gray-700 leading-relaxed line-clamp-3 sm:line-clamp-4">
-            {caseItem.content}
+            {getContentPreview(caseItem.content, 150)}
           </p>
         </div>
       </div>

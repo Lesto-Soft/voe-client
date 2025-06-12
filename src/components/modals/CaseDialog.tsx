@@ -20,6 +20,7 @@ import {
   CreateCaseInput,
 } from "../../graphql/hooks/case";
 import { readFileAsBase64 } from "../../utils/attachment-handling";
+import TextEditor from "../forms/partials/TextEditor";
 
 // Define an interface for the form data
 interface CaseFormData {
@@ -317,24 +318,24 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
                 <div>
                   <label
                     htmlFor="content"
-                    className="block text-sm font-medium text-gray-700 mb-2"
+                    className="block text-sm font-medium text-gray-700 mb-1"
                   >
-                    {getBulgarianText("content", t, "Съдържание")}
+                    {t("content")}
                   </label>
-                  <textarea
-                    id="content"
-                    name="content"
-                    value={formData.content}
-                    onChange={(e) =>
-                      setFormData((p) => ({ ...p, content: e.target.value }))
+                  <TextEditor
+                    content={formData.content}
+                    onUpdate={(html) =>
+                      setFormData((prev) => ({ ...prev, content: html }))
                     }
-                    rows={5}
-                    className="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                     placeholder={getBulgarianText(
-                      "caseSubmission:caseSubmission.descriptionPlaceholder",
+                      "caseSubmission.content.placeholder",
                       t,
-                      "Опишете вашия проблем или предложение..."
+                      "Опишете вашия случай..."
                     )}
+                    editable={true}
+                    minHeight="120px"
+                    maxHeight="300px"
+                    wrapperClassName="w-full border border-gray-300 rounded-md shadow-sm overflow-hidden bg-white focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500"
                   />
                 </div>
 

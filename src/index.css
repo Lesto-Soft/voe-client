@@ -169,3 +169,90 @@ body,
   margin-top: 0.25em;
   margin-bottom: 0.25em;
 }
+
+/* Rich content styles - ensures proper display of HTML content */
+.rich-content {
+  /* Ensure rich content styles don't conflict with existing styles */
+  line-height: 1.6;
+}
+
+.rich-content ul {
+  list-style-type: disc;
+  padding-left: 1.5rem;
+  margin: 0.5rem 0;
+}
+
+.rich-content ol {
+  list-style-type: decimal;
+  padding-left: 1.5rem;
+  margin: 0.5rem 0;
+}
+
+.rich-content li {
+  margin: 0.25rem 0;
+}
+
+.rich-content p {
+  margin: 0.5rem 0;
+}
+
+.rich-content p:first-child {
+  margin-top: 0;
+}
+
+.rich-content p:last-child {
+  margin-bottom: 0;
+}
+
+.rich-content strong {
+  font-weight: 600;
+}
+
+.rich-content em {
+  font-style: italic;
+}
+
+.rich-content u {
+  text-decoration: underline;
+}
+
+.rich-content s {
+  text-decoration: line-through;
+}
+
+/* Plain content styles - for backward compatibility */
+.plain-content {
+  white-space: pre-line;
+  word-wrap: break-word;
+  line-height: 1.6;
+}
+
+/* Ensure text alignment works in rich content */
+.rich-content [style*="text-align: left"] {
+  text-align: left;
+}
+
+.rich-content [style*="text-align: center"] {
+  text-align: center;
+}
+
+.rich-content [style*="text-align: right"] {
+  text-align: right;
+}
+
+/* Override prose styles that might be too large for our use cases */
+.rich-content.prose-sm p {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.rich-content.prose-sm ul,
+.rich-content.prose-sm ol {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.rich-content.prose-sm li {
+  margin-top: 0.125rem;
+  margin-bottom: 0.125rem;
+}

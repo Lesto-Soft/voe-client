@@ -2,10 +2,11 @@
 import * as React from "react";
 import { useState, useEffect } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
-// ADDED: Icons for the new dynamic title
+// ADDED: Icons for the new dynamic title and close button
 import {
   LightBulbIcon,
   ExclamationTriangleIcon,
+  XMarkIcon, // ADDED: Icon for the close button
 } from "@heroicons/react/24/solid";
 import { ICategory, IMe } from "../../db/interfaces";
 import { CASE_PRIORITY, CASE_TYPE } from "../../utils/GLOBAL_PARAMETERS";
@@ -86,7 +87,6 @@ const priorityOptions = [
   },
 ];
 
-// CHANGED: getCategoryClass now accepts a `caseType` to apply conditional coloring.
 const getCategoryClass = (
   categoryId: string,
   selectedCategoryIds: string[],
@@ -100,7 +100,6 @@ const getCategoryClass = (
     "px-4 py-2 text-sm font-semibold rounded-full border-2 transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2";
 
   if (isSelected) {
-    // Apply green for Suggestion, red for Problem
     if (caseType === "SUGGESTION") {
       baseClass +=
         " bg-green-600 text-white border-green-700 focus:ring-green-500";
@@ -118,7 +117,6 @@ const getCategoryClass = (
   return baseClass;
 };
 
-// ADDED: Style definition for the submit button based on case type
 const getSubmitButtonClass = (caseType: "PROBLEM" | "SUGGESTION") => {
   const baseClasses =
     "px-6 py-2 rounded-md border border-transparent text-white font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed transition-colors duration-200";
@@ -126,11 +124,9 @@ const getSubmitButtonClass = (caseType: "PROBLEM" | "SUGGESTION") => {
   if (caseType === "SUGGESTION") {
     return `${baseClasses} bg-green-600 hover:bg-green-700 focus:ring-green-500 disabled:bg-green-400`;
   }
-  // Default to PROBLEM
   return `${baseClasses} bg-red-600 hover:bg-red-700 focus:ring-red-500 disabled:bg-red-400`;
 };
 
-// Bulgarian text fallbacks
 const getBulgarianText = (key: string, t: any, fallback: string) => {
   const translated = t(key);
   return translated === key ? fallback : translated;
@@ -259,7 +255,6 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
 
   const isLoading = isUpdating || isCreating;
 
-  // ADDED: Helper function to render the dynamic title with icon
   const renderTitle = () => {
     const isSuggestion = formData.type === "SUGGESTION";
 
@@ -298,48 +293,96 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
       <Dialog.Trigger asChild>{props.children}</Dialog.Trigger>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/40 z-40" />
-        <Dialog.Content className="fixed z-50 left-1/2 top-1/2 w-[90vw] max-w-4xl -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-stone-100 p-6 shadow-lg focus:outline-none max-h-[90vh] overflow-y-auto">
-          {/* CHANGED: Title now uses the renderTitle helper */}
-          <Dialog.Title className="text-2xl font-bold mb-4 border-b border-gray-300 pb-3 text-gray-800">
-            {renderTitle()}
-          </Dialog.Title>
+        <Dialog.Content className="fixed z-50 left-1/2 top-1/2 w-[90vw] max-w-4xl -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-stone-100 shadow-lg focus:outline-none max-h-[90vh] flex flex-col">
+          {/* --- START: Sticky Header --- */}
+          <div className="sticky top-0 bg-stone-100 z-10 p-6 border-b border-gray-300">
+            <Dialog.Title className="text-2xl font-bold text-gray-800">
+              {renderTitle()}
+            </Dialog.Title>
+            <Dialog.Close asChild>
+              <button
+                className="absolute hover:cursor-pointer top-4 right-4 text-gray-500 hover:text-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500 rounded-full p-1 transition-colors"
+                aria-label="Close"
+              >
+                <XMarkIcon className="h-6 w-6" />
+              </button>
+            </Dialog.Close>
+          </div>
+          {/* --- END: Sticky Header --- */}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-6 p-6 bg-white rounded-lg shadow">
-              <div>
-                <label
-                  htmlFor="content"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  {getBulgarianText("content", t, "Съдържание")}
-                </label>
-                <textarea
-                  id="content"
-                  name="content"
-                  value={formData.content}
-                  onChange={(e) =>
-                    setFormData((p) => ({ ...p, content: e.target.value }))
-                  }
-                  rows={5}
-                  className="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                  placeholder={getBulgarianText(
-                    "caseSubmission:caseSubmission.descriptionPlaceholder",
-                    t,
-                    "Опишете вашия проблем или предложение..."
+          {/* --- START: Scrollable Form Content --- */}
+          <div className="overflow-y-auto flex-grow">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-6 p-6 bg-white rounded-lg shadow">
+                <div>
+                  <label
+                    htmlFor="content"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
+                    {getBulgarianText("content", t, "Съдържание")}
+                  </label>
+                  <textarea
+                    id="content"
+                    name="content"
+                    value={formData.content}
+                    onChange={(e) =>
+                      setFormData((p) => ({ ...p, content: e.target.value }))
+                    }
+                    rows={5}
+                    className="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    placeholder={getBulgarianText(
+                      "caseSubmission:caseSubmission.descriptionPlaceholder",
+                      t,
+                      "Опишете вашия проблем или предложение..."
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-6">
+                  {props.mode === "edit" && (
+                    <div>
+                      <p className="text-sm font-medium mb-3 text-gray-700">
+                        {getBulgarianText("type", t, "Тип на сигнала")}
+                      </p>
+                      <div className="flex flex-wrap gap-x-6 gap-y-2 p-3 rounded-lg items-center">
+                        {typeOptions.map(({ value, color, bgText, Icon }) => (
+                          <label
+                            key={value}
+                            className="flex items-center gap-2 cursor-pointer hover:opacity-80"
+                          >
+                            <input
+                              type="radio"
+                              value={value}
+                              checked={formData.type === value}
+                              onChange={() =>
+                                handleTypeChange(
+                                  value as "PROBLEM" | "SUGGESTION"
+                                )
+                              }
+                              style={{ accentColor: color }}
+                              className="w-5 h-5 cursor-pointer"
+                              name="type"
+                            />
+                            <Icon className="h-5 w-5" style={{ color }} />
+                            <span className="text-sm text-gray-700 font-semibold">
+                              {bgText}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
                   )}
-                />
-              </div>
 
-              {/* REFORMATTED & CHANGED: Grid layout for inputs */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-6">
-                {/* ADDED: Conditionally render Case Type input ONLY in 'edit' mode */}
-                {props.mode === "edit" && (
                   <div>
                     <p className="text-sm font-medium mb-3 text-gray-700">
-                      {getBulgarianText("type", t, "Тип на сигнала")}
+                      {getBulgarianText(
+                        "caseSubmission:caseSubmission.priorityLabel",
+                        t,
+                        "Приоритет"
+                      )}
                     </p>
                     <div className="flex flex-wrap gap-x-6 gap-y-2 p-3 rounded-lg items-center">
-                      {typeOptions.map(({ value, color, bgText, Icon }) => (
+                      {priorityOptions.map(({ value, color, bgText }) => (
                         <label
                           key={value}
                           className="flex items-center gap-2 cursor-pointer hover:opacity-80"
@@ -347,124 +390,83 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
                           <input
                             type="radio"
                             value={value}
-                            checked={formData.type === value}
+                            checked={formData.priority === value}
                             onChange={() =>
-                              handleTypeChange(
-                                value as "PROBLEM" | "SUGGESTION"
+                              handlePriorityChange(
+                                value as "LOW" | "MEDIUM" | "HIGH"
                               )
                             }
                             style={{ accentColor: color }}
                             className="w-5 h-5 cursor-pointer"
-                            name="type"
+                            name="priority"
                           />
-                          <Icon className="h-5 w-5" style={{ color }} />
-                          <span className="text-sm text-gray-700 font-semibold">
+                          <span className="text-sm text-gray-700">
                             {bgText}
                           </span>
                         </label>
                       ))}
                     </div>
                   </div>
-                )}
+                </div>
 
-                {/* Priority Input (remains visible in both modes) */}
                 <div>
                   <p className="text-sm font-medium mb-3 text-gray-700">
-                    {getBulgarianText(
-                      "caseSubmission:caseSubmission.priorityLabel",
-                      t,
-                      "Приоритет"
-                    )}
+                    {`Категории (максимум ${MAX_SELECTED_CATEGORIES})`}
                   </p>
-                  <div className="flex flex-wrap gap-x-6 gap-y-2 p-3 rounded-lg items-center">
-                    {priorityOptions.map(({ value, color, bgText }) => (
-                      <label
-                        key={value}
-                        className="flex items-center gap-2 cursor-pointer hover:opacity-80"
+                  <div className="flex flex-wrap gap-2">
+                    {availableCategories.map((cat) => (
+                      <button
+                        key={cat._id}
+                        type="button"
+                        onClick={() => toggleCategory(cat._id)}
+                        className={getCategoryClass(
+                          cat._id,
+                          formData.categoryIds,
+                          formData.type
+                        )}
+                        disabled={
+                          !formData.categoryIds.includes(cat._id) &&
+                          formData.categoryIds.length >= MAX_SELECTED_CATEGORIES
+                        }
                       >
-                        <input
-                          type="radio"
-                          value={value}
-                          checked={formData.priority === value}
-                          onChange={() =>
-                            handlePriorityChange(
-                              value as "LOW" | "MEDIUM" | "HIGH"
-                            )
-                          }
-                          style={{ accentColor: color }}
-                          className="w-5 h-5 cursor-pointer"
-                          name="priority"
-                        />
-                        <span className="text-sm text-gray-700">{bgText}</span>
-                      </label>
+                        {cat.name}
+                      </button>
                     ))}
                   </div>
                 </div>
-              </div>
 
-              <div>
-                <p className="text-sm font-medium mb-3 text-gray-700">
-                  {/* {getBulgarianText(
-                    "caseSubmission:caseSubmission.categoriesLabel",
-                    t,
-                    `Категории (максимум ${MAX_SELECTED_CATEGORIES})`
-                  )} */}
-                  {`Категории (максимум ${MAX_SELECTED_CATEGORIES})`}
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {availableCategories.map((cat) => (
+                <div>
+                  <FileAttachmentBtn
+                    attachments={attachments}
+                    setAttachments={setAttachments}
+                  />
+                </div>
+
+                <div className="flex justify-center gap-3 pt-4 border-t border-gray-300 mt-6">
+                  <Dialog.Close asChild>
                     <button
-                      key={cat._id}
                       type="button"
-                      onClick={() => toggleCategory(cat._id)}
-                      // CHANGED: Pass formData.type to get the correct color
-                      className={getCategoryClass(
-                        cat._id,
-                        formData.categoryIds,
-                        formData.type
-                      )}
-                      disabled={
-                        !formData.categoryIds.includes(cat._id) &&
-                        formData.categoryIds.length >= MAX_SELECTED_CATEGORIES
-                      }
+                      className="px-6 py-2 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                     >
-                      {cat.name}
+                      {getBulgarianText("cancel", t, "Отказ")}
                     </button>
-                  ))}
+                  </Dialog.Close>
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className={getSubmitButtonClass(formData.type)}
+                  >
+                    {isLoading
+                      ? getBulgarianText("saving", t, "Записване...")
+                      : props.mode === "edit"
+                      ? getBulgarianText("saveChanges", t, "Запази промените")
+                      : getBulgarianText("submit", t, "Изпрати")}
+                  </button>
                 </div>
               </div>
-
-              <div>
-                <FileAttachmentBtn
-                  attachments={attachments}
-                  setAttachments={setAttachments}
-                />
-              </div>
-
-              <div className="flex justify-center gap-3 pt-4 border-t border-gray-300 mt-6">
-                <Dialog.Close asChild>
-                  <button
-                    type="button"
-                    className="px-6 py-2 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                  >
-                    {getBulgarianText("cancel", t, "Отказ")}
-                  </button>
-                </Dialog.Close>
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  // CHANGED: Dynamically set class based on formData.type
-                  className={getSubmitButtonClass(formData.type)}
-                >
-                  {isLoading
-                    ? getBulgarianText("saving", t, "Записване...")
-                    : props.mode === "edit"
-                    ? getBulgarianText("saveChanges", t, "Запази промените")
-                    : getBulgarianText("submit", t, "Изпрати")}
-                </button>
-              </div>
-            </div>
-          </form>
+            </form>
+          </div>
+          {/* --- END: Scrollable Form Content --- */}
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>

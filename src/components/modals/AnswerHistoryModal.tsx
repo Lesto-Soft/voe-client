@@ -3,62 +3,75 @@ import { ClockIcon } from "@heroicons/react/24/outline";
 import * as Dialog from "@radix-ui/react-dialog";
 import { useTranslation } from "react-i18next";
 import moment from "moment";
+import UserLink from "../global/UserLink";
 import { getDifferences } from "../../utils/contentDifferences";
 
 const AnswerHistoryModal: React.FC<{
   history?: any[];
 }> = ({ history }) => {
   const { t } = useTranslation("modals");
+  console.log(history);
+
   return (
     <Dialog.Root>
       <Dialog.Trigger asChild>
         <button
           className="hover:cursor-pointer flex items-center px-2 py-1 rounded bg-gray-100 hover:bg-gray-200 text-xs font-medium border border-gray-300 transition ml-2"
           type="button"
-          title="История"
+          title="История на промените"
         >
           <ClockIcon className="h-4 w-4" />
         </button>
       </Dialog.Trigger>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-black/30 z-40" />
-        <Dialog.Content className="fixed z-50 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg p-6 w-full max-w-lg focus:outline-none">
-          <Dialog.Title className="text-lg font-bold mb-4">
-            {t("history")}
+        <Dialog.Overlay className="fixed inset-0 bg-black/50 z-40" />
+        <Dialog.Content className="fixed z-50 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg p-6 w-full max-w-2xl max-h-[80vh] overflow-hidden focus:outline-none">
+          <Dialog.Title className="text-lg font-bold mb-4 text-gray-900">
+            {t("answerHistory", "История на отговора")}
           </Dialog.Title>
-          <ul className="space-y-2 text-sm max-h-96 overflow-y-auto">
+
+          <div className="max-h-96 overflow-y-auto pr-2">
             {history && history.length > 0 ? (
-              history.map((h: any) => (
-                <li key={h._id} className="text-gray-700 border-b pb-2">
-                  <div>
-                    <span className="font-semibold">
-                      {moment(h.date_change).format("LLL")}
-                    </span>
-                    {" – "}
-                    <span className="font-medium">{h.user?.name}</span>
-                  </div>
-                  <div className="ml-2">
+              <ul className="space-y-4">
+                {history.map((h: any) => (
+                  <li
+                    key={h._id}
+                    className="border-b border-gray-100 pb-4 last:border-b-0"
+                  >
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="font-semibold text-gray-900">
+                        {moment(h.date_change).format("DD.MM.YYYY HH:mm")}
+                      </span>
+                      <UserLink user={h.user} type="case" />
+                    </div>
+
                     {h.old_content !== h.new_content &&
                       h.old_content &&
                       h.new_content && (
-                        <div>
+                        <div className="bg-gray-50 rounded-lg p-3">
                           {getDifferences(h.old_content, h.new_content)}
                         </div>
                       )}
-                  </div>
-                </li>
-              ))
+                  </li>
+                ))}
+              </ul>
             ) : (
-              <li className="text-gray-400 italic">{t("noHistory")}</li>
+              <div className="text-center py-8">
+                <ClockIcon className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                <p className="text-gray-400 italic">
+                  {t("noHistory", "Няма история на промени")}
+                </p>
+              </div>
             )}
-          </ul>
-          <div className="flex justify-end">
+          </div>
+
+          <div className="flex justify-end pt-4 border-t mt-4">
             <Dialog.Close asChild>
               <button
-                className="hover:cursor-pointer mt-4 px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 transition "
+                className="hover:cursor-pointer px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 transition focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                 type="button"
               >
-                Затвори
+                {t("close", "Затвори")}
               </button>
             </Dialog.Close>
           </div>
@@ -67,4 +80,5 @@ const AnswerHistoryModal: React.FC<{
     </Dialog.Root>
   );
 };
+
 export default AnswerHistoryModal;

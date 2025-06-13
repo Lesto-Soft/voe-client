@@ -28,6 +28,7 @@ fragment CaseHistoryFragment on CaseHistory {
       date_change
       user {
         name
+        username
         _id
       }
       old_type
@@ -74,6 +75,11 @@ fragment AnswerFragment on Answer {
         new_content
         old_content
         date_change
+        user {
+          _id
+          username
+          name
+        }
       }
         
 }`;

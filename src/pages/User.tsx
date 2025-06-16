@@ -23,6 +23,7 @@ import SuccessConfirmationModal from "../components/modals/SuccessConfirmationMo
 
 // Constants
 import { ROLES } from "../utils/GLOBAL_PARAMETERS";
+import { containsAnyCategoryById } from "../utils/arrayUtils";
 
 const User: React.FC = () => {
   const { username: userUsernameFromParams } = useParams<{
@@ -171,6 +172,16 @@ const User: React.FC = () => {
   };
 
   const isAdmin = currentUser?.role._id === ROLES.ADMIN;
+  const isManagerForCategory =
+    currentUser?.role?._id === ROLES.EXPERT &&
+    (containsAnyCategoryById(
+      currentUser?.managed_categories || [],
+      user?.expert_categories || []
+    ) ||
+      containsAnyCategoryById(
+        currentUser?.managed_categories || [],
+        user?.managed_categories || []
+      ));
 
   return (
     <>
@@ -222,7 +233,7 @@ const User: React.FC = () => {
             roles={rolesData?.getAllLeanRoles || []}
             rolesLoading={rolesLoading}
             rolesError={rolesError}
-            isAdmin={isAdmin} // <-- Pass permission flag
+            isAdmin={isAdmin || isManagerForCategory} // <-- Pass permission flag
           />
         )}
       </UserModal>

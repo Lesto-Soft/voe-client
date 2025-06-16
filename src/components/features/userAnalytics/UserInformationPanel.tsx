@@ -13,6 +13,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { useCurrentUser } from "../../../context/UserContext";
 import { ROLES } from "../../../utils/GLOBAL_PARAMETERS";
+import { containsAnyCategoryById } from "../../../utils/arrayUtils";
 
 interface UserInformationPanelProps {
   user: IUser | undefined | null;
@@ -74,8 +75,18 @@ const UserInformationPanel: React.FC<UserInformationPanelProps> = ({
 
   // --- NEW: Permission Logic ---
   const isAdmin = currentUser?.role?._id === ROLES.ADMIN;
+  const isManagerForCategory =
+    currentUser?.role?._id === ROLES.EXPERT &&
+    (containsAnyCategoryById(
+      currentUser?.managed_categories || [],
+      user?.expert_categories || []
+    ) ||
+      containsAnyCategoryById(
+        currentUser?.managed_categories || [],
+        user?.managed_categories || []
+      ));
   const isSelf = currentUser?._id === user?._id;
-  const canEdit = isAdmin || isSelf;
+  const canEdit = isAdmin || isManagerForCategory || isSelf;
 
   const avatarUrl = user.avatar
     ? `${serverBaseUrl}/static/avatars/${user._id}/${user.avatar}`

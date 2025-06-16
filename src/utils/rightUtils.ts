@@ -1,5 +1,6 @@
 import { ICase, IMe, IUser } from "../db/interfaces";
 import { ROLES } from "./GLOBAL_PARAMETERS";
+import { CASE_STATUS } from "./GLOBAL_PARAMETERS";
 
 export const checkNormal = (userRoleId: string): boolean => {
   if (!userRoleId) return false;
@@ -51,6 +52,19 @@ export const determineUserRightsForCase = (
 
   if (isAdmin) {
     rights.push("admin");
+  }
+
+  // Check if the user is a financial approver and (if the case is awaiting finance or if it has had a answer that needed finance)
+  const hasFinancialAnswer = caseData.answers?.some(
+    (answer) => answer.needs_finance === true
+  );
+
+  const isFinancial =
+    currentUser.financial_approver &&
+    (caseData.status === CASE_STATUS.AWAITING_FINANCE || hasFinancialAnswer);
+
+  if (isFinancial) {
+    rights.push("financial");
   }
 
   return rights;

@@ -182,6 +182,8 @@ const User: React.FC = () => {
         currentUser?.managed_categories || [],
         user?.managed_categories || []
       ));
+  const isSelf = currentUser?._id === user?._id;
+  const canEdit = isAdmin || isManagerForCategory || isSelf;
 
   return (
     <>
@@ -192,6 +194,8 @@ const User: React.FC = () => {
             isLoading={userLoading && !!user}
             serverBaseUrl={serverBaseUrl}
             onEditUser={openEditModal} // <-- Pass handler
+            // Pass calculated permission
+            canEdit={canEdit}
           />
 
           <UserActivityList

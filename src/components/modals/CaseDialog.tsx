@@ -6,7 +6,8 @@ import * as Dialog from "@radix-ui/react-dialog";
 import {
   LightBulbIcon,
   ExclamationTriangleIcon,
-  XMarkIcon, // ADDED: Icon for the close button
+  XMarkIcon,
+  ExclamationCircleIcon, // ADDED: Icon for error display
 } from "@heroicons/react/24/solid";
 import { ICategory, IMe } from "../../db/interfaces";
 import { CASE_PRIORITY, CASE_TYPE } from "../../utils/GLOBAL_PARAMETERS";
@@ -159,6 +160,8 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
   const [formData, setFormData] = useState<CaseFormData>(getInitialFormData());
   const [attachments, setAttachments] = useState<File[]>([]);
   const [isOpen, setIsOpen] = useState(false);
+  // ADDED: Error state
+  const [error, setError] = useState<string | null>(null);
 
   const { updateCase, loading: isUpdating } = useUpdateCase(
     props.mode === "edit" ? props.caseNumber : 0
@@ -183,8 +186,16 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
   useEffect(() => {
     if (isOpen) {
       setFormData(getInitialFormData());
+      setError(null); // Clear error when opening modal
     }
   }, [isOpen, props]);
+
+  // ADDED: Clear error when form data changes
+  useEffect(() => {
+    if (error) {
+      setError(null);
+    }
+  }, [formData, attachments]);
 
   const handlePriorityChange = (priority: "LOW" | "MEDIUM" | "HIGH") => {
     setFormData((prev) => ({ ...prev, priority }));
@@ -212,6 +223,19 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null); // Clear any existing errors
+
+    // Basic validation
+    if (!formData.content.trim()) {
+      setError("Моля въведете съдържание на сигнала.");
+      return;
+    }
+
+    if (formData.categoryIds.length === 0) {
+      setError("Моля изберете поне една категория.");
+      return;
+    }
+
     let attachmentInputs: AttachmentInput[] = [];
     try {
       attachmentInputs = await Promise.all(
@@ -222,6 +246,9 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
       );
     } catch (fileReadError) {
       console.error("Client: Error reading files to base64:", fileReadError);
+      setError(
+        "Грешка при четене на прикачените файлове. Моля опитайте отново."
+      );
       return;
     }
 
@@ -248,9 +275,23 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
       }
       setIsOpen(false);
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "An unknown error occurred.";
-      console.error(`Failed to ${props.mode} case:`, errorMessage);
+      let errorMessage = "Възникна неочаквана грешка.";
+
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      } else if (typeof err === "object" && err !== null) {
+        // Handle GraphQL errors
+        const graphQLError = (err as any).graphQLErrors?.[0]?.message;
+        const networkError = (err as any).networkError?.message;
+        errorMessage = graphQLError || networkError || errorMessage;
+      }
+
+      console.error(`Failed to ${props.mode} case:`, err);
+      setError(
+        `Грешка при ${
+          props.mode === "edit" ? "редактиране" : "създаване"
+        } на сигнала: ${errorMessage}`
+      );
     }
   };
 
@@ -296,18 +337,39 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
         <Dialog.Overlay className="fixed inset-0 bg-black/40 z-40" />
         <Dialog.Content className="fixed z-50 left-1/2 top-1/2 w-[90vw] max-w-4xl -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-stone-100 shadow-lg focus:outline-none max-h-[90vh] flex flex-col">
           {/* --- START: Sticky Header --- */}
-          <div className="sticky top-0 bg-stone-100 z-10 p-6 border-b border-gray-300">
-            <Dialog.Title className="text-2xl font-bold text-gray-800">
-              {renderTitle()}
-            </Dialog.Title>
-            <Dialog.Close asChild>
-              <button
-                className="absolute hover:cursor-pointer top-4 right-4 text-gray-500 hover:text-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500 rounded-full p-1 transition-colors"
-                aria-label="Close"
-              >
-                <XMarkIcon className="h-6 w-6" />
-              </button>
-            </Dialog.Close>
+          <div className="sticky top-0 bg-stone-100 z-10 border-b border-gray-300">
+            <div className="p-6">
+              <Dialog.Title className="text-2xl font-bold text-gray-800">
+                {renderTitle()}
+              </Dialog.Title>
+              <Dialog.Close asChild>
+                <button
+                  className="absolute hover:cursor-pointer top-4 right-4 text-gray-500 hover:text-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500 rounded-full p-1 transition-colors"
+                  aria-label="Close"
+                >
+                  <XMarkIcon className="h-6 w-6" />
+                </button>
+              </Dialog.Close>
+            </div>
+
+            {/* ADDED: Error Display Area */}
+            {error && (
+              <div className="px-6 pb-4">
+                <div className="flex items-start p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <ExclamationCircleIcon className="h-5 w-5 text-red-400 mr-3 mt-0.5 flex-shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-sm text-red-800">{error}</p>
+                  </div>
+                  <button
+                    onClick={() => setError(null)}
+                    className="ml-3 text-red-400 hover:text-red-600 focus:outline-none"
+                    aria-label="Dismiss error"
+                  >
+                    <XMarkIcon className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
           {/* --- END: Sticky Header --- */}
 

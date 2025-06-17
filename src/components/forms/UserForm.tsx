@@ -1,11 +1,28 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 import { Role } from "../../types/userManagementTypes";
 import ImageCropModal from "../modals/ImageCropModal";
-import { useUserFormState } from "./hooks/useUserFormState"; // <-- Use renamed hook
+import { useUserFormState } from "./hooks/useUserFormState";
 import UserInputFields from "./partials/UserInputFields";
 import PasswordFields from "./partials/PasswordFields";
 import AvatarUploadSection from "./partials/AvatarUploadSection";
-import { IUser } from "../../db/interfaces";
+import CategorySelectionDropdown from "./partials/CategorySelectionDropdown"; // NEW
+import { IUser, ICategory } from "../../db/interfaces";
+import { useGetActiveCategories } from "../../graphql/hooks/category"; // NEW
+import { ROLES } from "../../utils/GLOBAL_PARAMETERS"; // NEW
+
+const VALIDATION = {
+  USERNAME: { MIN: 3, MAX: 20 },
+  PASSWORD: { MIN: 6, MAX: 50 },
+  NAME: { MIN: 3, MAX: 50 },
+  POSITION: { MIN: 0, MAX: 50 },
+  EMAIL: { MAX: 100 },
+};
 
 const MAX_AVATAR_SIZE_MB = 3;
 const MAX_AVATAR_SIZE_BYTES = MAX_AVATAR_SIZE_MB * 1024 * 1024;
@@ -27,7 +44,6 @@ interface UserFormProps {
   roles: Role[];
   rolesLoading: boolean;
   rolesError: any;
-  // --- NEW PROPS ---
   isAdmin: boolean;
 }
 
@@ -55,7 +71,6 @@ const UserForm: React.FC<UserFormProps> = ({
   roles = [],
   rolesLoading: propsRolesLoading = false,
   rolesError: propsRolesError = null,
-  // --- NEW PROP ---
   isAdmin,
 }) => {
   const serverBaseUrl = import.meta.env.VITE_API_URL || "";
@@ -82,6 +97,10 @@ const UserForm: React.FC<UserFormProps> = ({
     setRoleId,
     financialApprover,
     setFinancialApprover,
+    expertCategoryIds,
+    setExpertCategoryIds,
+    managedCategoryIds,
+    setManagedCategoryIds,
     usernameError,
     setUsernameError,
     emailError,
@@ -102,13 +121,44 @@ const UserForm: React.FC<UserFormProps> = ({
     isEmailFormatCurrentlyValid,
   } = useUserFormState({ initialData, serverBaseUrl });
 
+  const {
+    categories: activeCategories,
+    loading: categoriesLoading,
+    error: categoriesError,
+  } = useGetActiveCategories();
+
   const [isCropModalOpen, setIsCropModalOpen] = useState(false);
   const [imageToCrop, setImageToCrop] = useState<string | null>(null);
   const [formSubmitError, setFormSubmitError] = useState<string | null>(null);
   const [avatarError, setAvatarError] = useState<string | null>(null);
 
+  const [nameError, setNameError] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cropCompletedRef = useRef<boolean>(false);
+  const isInitialMount = useRef(true); // --- ADDED: Ref to track initial mount
+
+  const canManageCategories = useMemo(
+    () => roleId === ROLES.ADMIN || roleId === ROLES.EXPERT,
+    [roleId]
+  );
+
+  // --- MODIFIED: This useEffect now correctly ignores the initial render ---
+  useEffect(() => {
+    // If it's the first render, do nothing. Let the form populate.
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+
+    // On subsequent renders (i.e., user changes the role), if the role
+    // is no longer Expert/Admin, clear the selected categories.
+    // if (!canManageCategories) {
+    //   setExpertCategoryIds([]);
+    //   setManagedCategoryIds([]);
+    // }
+  }, [canManageCategories, setExpertCategoryIds, setManagedCategoryIds]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setAvatarError(null);
@@ -183,50 +233,83 @@ const UserForm: React.FC<UserFormProps> = ({
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    // --- Reset all local errors on new submit attempt ---
     setFormSubmitError(null);
+    setUsernameError(null);
+    setNameError(null);
+    setEmailError(null);
+    setPasswordError(null);
     let canSubmit = true;
 
     const finalTrimmedUsername = username.trim();
+    const finalTrimmedName = fullName.trim();
     const finalTrimmedEmail = email.trim();
 
+    // --- NEW/ENHANCED VALIDATION LOGIC ---
     if (!finalTrimmedUsername) {
       setUsernameError("Потребителското име е задължително.");
       canSubmit = false;
+    } else if (finalTrimmedUsername.length < VALIDATION.USERNAME.MIN) {
+      setUsernameError(
+        `Потребителското име трябва да е поне ${VALIDATION.USERNAME.MIN} символа.`
+      );
+      canSubmit = false;
     }
+
+    if (!finalTrimmedName) {
+      setNameError("Името е задължително.");
+      canSubmit = false;
+    } else if (finalTrimmedName.length < VALIDATION.NAME.MIN) {
+      setNameError(`Името трябва да е поне ${VALIDATION.NAME.MIN} символа.`);
+      canSubmit = false;
+    }
+
+    if (!roleId) {
+      setFormSubmitError("Ролята е задължителна.");
+      canSubmit = false;
+    }
+
     if (finalTrimmedEmail && !isValidEmailFormat(finalTrimmedEmail)) {
       setEmailError("Невалиден имейл формат.");
       canSubmit = false;
     }
-    if (usernameError || usernameHookError) canSubmit = false;
-    if (
-      finalTrimmedEmail &&
-      isValidEmailFormat(finalTrimmedEmail) &&
-      (emailError || emailHookError)
-    )
-      canSubmit = false;
-    if (isCheckingUsername && finalTrimmedUsername) {
-      setFormSubmitError("Проверката на потребителско име е в ход.");
-      canSubmit = false;
-    }
-    if (
-      isCheckingEmail &&
-      finalTrimmedEmail &&
-      isValidEmailFormat(finalTrimmedEmail)
-    ) {
-      setFormSubmitError("Проверката на имейл е в ход.");
-      canSubmit = false;
+
+    // --- Password Validation ---
+    if (!isEditing) {
+      // CREATE MODE
+      if (!password) {
+        setPasswordError("Паролата е задължителна.");
+        canSubmit = false;
+      } else if (password.length < VALIDATION.PASSWORD.MIN) {
+        setPasswordError(
+          `Паролата трябва да е поне ${VALIDATION.PASSWORD.MIN} символа.`
+        );
+        canSubmit = false;
+      } else if (password !== confirmPassword) {
+        setPasswordError("Паролите не съвпадат.");
+        canSubmit = false;
+      }
+    } else {
+      // EDIT MODE
+      if (newPassword && newPassword.length < VALIDATION.PASSWORD.MIN) {
+        setPasswordError(
+          `Новата парола трябва да е поне ${VALIDATION.PASSWORD.MIN} символа.`
+        );
+        canSubmit = false;
+      } else if (newPassword !== confirmNewPassword) {
+        setPasswordError("Новите пароли не съвпадат.");
+        canSubmit = false;
+      }
     }
 
-    if (!initialData && !password) {
-      setFormSubmitError("Паролата е задължителна при създаване!");
+    // --- Check hook-based errors ---
+    if (usernameHookError || (emailHookError && finalTrimmedEmail)) {
       canSubmit = false;
     }
-    if (!initialData && password !== confirmPassword) {
-      setFormSubmitError("Паролите не съвпадат!");
-      canSubmit = false;
-    }
-    if (initialData && newPassword && newPassword !== confirmNewPassword) {
-      setFormSubmitError("Новите пароли не съвпадат!");
+    if (isCheckingUsername || (isCheckingEmail && finalTrimmedEmail)) {
+      setFormSubmitError(
+        "Проверката за уникалност все още е в ход. Моля изчакайте."
+      );
       canSubmit = false;
     }
 
@@ -243,8 +326,10 @@ const UserForm: React.FC<UserFormProps> = ({
       position: position.trim() || null,
       role: roleId || null,
       financial_approver: financialApprover,
+      expert_categories: expertCategoryIds, // NEW
+      managed_categories: managedCategoryIds, // NEW
     };
-    if (!initialData) formDataObject.password = password;
+    if (!isEditing) formDataObject.password = password;
     else if (newPassword) formDataObject.password = newPassword;
 
     let avatarInputData: AvatarInputData | null | undefined = undefined;
@@ -276,18 +361,20 @@ const UserForm: React.FC<UserFormProps> = ({
 
   if (propsRolesLoading)
     return <div className="p-4 text-center">Зареждане на роли...</div>;
-  if (propsRolesError)
+  if (propsRolesError || categoriesError)
     return (
       <div className="p-4 text-center text-red-500">
-        Грешка при зареждане на роли:{" "}
-        {propsRolesError.message || "Неизвестна грешка"}
+        Грешка при зареждане на данни:{" "}
+        {propsRolesError?.message ||
+          categoriesError?.message ||
+          "Неизвестна грешка"}
       </div>
     );
 
   const overallLoading =
     (isCheckingUsername && !!username.trim()) ||
     (isCheckingEmail && !!email.trim() && isEmailFormatCurrentlyValid);
-  const errorPlaceholderClass = "mt-1 text-xs min-h-[2.4em]";
+  const errorPlaceholderClass = "mt-1 text-xs min-h-[1.2em]";
 
   return (
     <>
@@ -298,45 +385,32 @@ const UserForm: React.FC<UserFormProps> = ({
             setUsername={(v) => {
               setUsername(v);
               setUsernameError(null);
-              setFormSubmitError(null);
             }}
-            usernameError={usernameError}
-            usernameHookError={usernameHookError}
+            usernameError={usernameError || usernameHookError?.message} // Combine errors
             isCheckingUsername={isCheckingUsername}
             fullName={fullName}
             setFullName={(v) => {
               setFullName(v);
-              setFormSubmitError(null);
+              setNameError(null);
             }}
+            nameError={nameError} // Pass new error prop
             email={email}
             setEmail={(v) => {
               setEmail(v);
               setEmailError(null);
-              setFormSubmitError(null);
             }}
-            emailError={emailError}
-            emailHookError={emailHookError}
+            emailError={emailError || emailHookError?.message} // Combine errors
             isCheckingEmail={isCheckingEmail}
             isEmailFormatCurrentlyValid={isEmailFormatCurrentlyValid}
             trimmedDebouncedEmail={trimmedDebouncedEmail}
             position={position}
-            setPosition={(v) => {
-              setPosition(v);
-              setFormSubmitError(null);
-            }}
+            setPosition={setPosition}
             roleId={roleId}
-            setRoleId={(v) => {
-              setRoleId(v);
-              setFormSubmitError(null);
-            }}
+            setRoleId={setRoleId}
             roles={roles}
             financialApprover={financialApprover}
-            setFinancialApprover={(v) => {
-              setFinancialApprover(v);
-              setFormSubmitError(null);
-            }}
+            setFinancialApprover={setFinancialApprover}
             errorPlaceholderClass={errorPlaceholderClass}
-            // --- PASS NEW PROPS ---
             isEditing={isEditing}
             isAdmin={isAdmin}
           />
@@ -354,28 +428,50 @@ const UserForm: React.FC<UserFormProps> = ({
             fileInputRef={fileInputRef}
           />
 
+          {canManageCategories && (
+            <>
+              <CategorySelectionDropdown
+                label="Експерт в категории"
+                allCategories={activeCategories}
+                selectedCategoryIds={expertCategoryIds}
+                onSelectionChange={setExpertCategoryIds}
+                isLoading={categoriesLoading}
+                errorPlaceholderClass={errorPlaceholderClass}
+              />
+              <CategorySelectionDropdown
+                label="Менажира категории"
+                allCategories={activeCategories}
+                selectedCategoryIds={managedCategoryIds}
+                onSelectionChange={setManagedCategoryIds}
+                isLoading={categoriesLoading}
+                errorPlaceholderClass={errorPlaceholderClass}
+              />
+            </>
+          )}
+
           <PasswordFields
             isEditing={isEditing}
             password={password}
             setPassword={(v) => {
               setPassword(v);
-              setFormSubmitError(null);
+              setPasswordError(null);
             }}
             confirmPassword={confirmPassword}
             setConfirmPassword={(v) => {
               setConfirmPassword(v);
-              setFormSubmitError(null);
+              setPasswordError(null);
             }}
             newPassword={newPassword}
             setNewPassword={(v) => {
               setNewPassword(v);
-              setFormSubmitError(null);
+              setPasswordError(null);
             }}
             confirmNewPassword={confirmNewPassword}
             setConfirmNewPassword={(v) => {
               setConfirmNewPassword(v);
-              setFormSubmitError(null);
+              setPasswordError(null);
             }}
+            passwordError={passwordError} // Pass new error prop
             errorPlaceholderClass={errorPlaceholderClass}
           />
         </div>

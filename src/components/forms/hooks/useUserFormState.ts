@@ -1,3 +1,4 @@
+// src/hooks/useUserFormState.ts
 import { useState, useEffect, useCallback } from "react";
 import { useDebounce } from "../../../hooks/useDebounce"; // Adjust path if needed
 import {
@@ -29,25 +30,31 @@ export function useUserFormState({
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [roleId, setRoleId] = useState("");
-  const [financialApprover, setFinancialApprover] = useState<boolean>(false); // --- Validation State ---
+  const [financialApprover, setFinancialApprover] = useState<boolean>(false);
+  const [expertCategoryIds, setExpertCategoryIds] = useState<string[]>([]);
+  const [managedCategoryIds, setManagedCategoryIds] = useState<string[]>([]);
 
+  // --- Validation State ---
   const [usernameError, setUsernameError] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [usernameHookError, setUsernameHookError] = useState<any | null>(null);
   const [emailHookError, setEmailHookError] = useState<any | null>(null);
   const [isCheckingUsername, setIsCheckingUsername] = useState(false);
-  const [isCheckingEmail, setIsCheckingEmail] = useState(false); // --- Avatar State ---
+  const [isCheckingEmail, setIsCheckingEmail] = useState(false);
 
+  // --- Avatar State ---
   const [originalAvatarFile, setOriginalAvatarFile] = useState<File | null>(
     null
   );
   const [finalCroppedBlob, setFinalCroppedBlob] = useState<Blob | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
-  const [isRemovingAvatar, setIsRemovingAvatar] = useState(false); // --- Debounced Values ---
+  const [isRemovingAvatar, setIsRemovingAvatar] = useState(false);
 
+  // --- Debounced Values ---
   const debouncedUsername = useDebounce(username, 700);
-  const debouncedEmail = useDebounce(email, 700); // --- Validation Hooks ---
+  const debouncedEmail = useDebounce(email, 700);
 
+  // --- Validation Hooks ---
   const trimmedDebouncedUsername = debouncedUsername.trim();
   const skipUsernameCheck =
     !trimmedDebouncedUsername ||
@@ -72,8 +79,9 @@ export function useUserFormState({
     error: rawEmailExactCountError,
   } = useCountUsersByExactEmail(trimmedDebouncedEmail, {
     skip: skipEmailCheck,
-  }); // --- Effect for Initial Data ---
+  });
 
+  // --- Effect for Initial Data ---
   useEffect(() => {
     if (initialData) {
       setUsername(initialData.username || "");
@@ -82,6 +90,12 @@ export function useUserFormState({
       setPosition(initialData.position || "");
       setRoleId(initialData.role?._id || "");
       setFinancialApprover(initialData.financial_approver || false);
+      setExpertCategoryIds(
+        initialData.expert_categories?.map((c: any) => c._id || c) || []
+      );
+      setManagedCategoryIds(
+        initialData.managed_categories?.map((c: any) => c._id || c) || []
+      );
       const currentAvatarUrl = initialData.avatar
         ? `${serverBaseUrl}/static/avatars/${initialData._id}/${
             initialData.avatar
@@ -89,14 +103,18 @@ export function useUserFormState({
         : null;
       setAvatarPreview(currentAvatarUrl);
     } else {
+      // Reset for "create new"
       setUsername("");
       setFullName("");
       setEmail("");
       setPosition("");
       setRoleId("");
       setFinancialApprover(false);
+      setExpertCategoryIds([]);
+      setManagedCategoryIds([]);
       setAvatarPreview(null);
     }
+    // Reset fields common to both edit and create
     setPassword("");
     setConfirmPassword("");
     setNewPassword("");
@@ -110,8 +128,9 @@ export function useUserFormState({
     setOriginalAvatarFile(null);
     setFinalCroppedBlob(null);
     setIsRemovingAvatar(false);
-  }, [initialData, serverBaseUrl]); // --- Validation Effects (Username & Email) ---
+  }, [initialData, serverBaseUrl]);
 
+  // --- Validation Effects (Username & Email) ---
   useEffect(() => {
     setIsCheckingUsername(
       usernameExactCountLoading &&
@@ -202,8 +221,9 @@ export function useUserFormState({
     isEmailFormatCurrentlyValid,
     skipEmailCheck,
     emailError,
-  ]); // --- Avatar Handlers ---
+  ]);
 
+  // --- Avatar Handlers ---
   const handleSetOriginalFile = useCallback((file: File | null) => {
     setOriginalAvatarFile(file);
     if (file) {
@@ -250,6 +270,10 @@ export function useUserFormState({
     setRoleId,
     financialApprover,
     setFinancialApprover,
+    expertCategoryIds, // NEW
+    setExpertCategoryIds, // NEW
+    managedCategoryIds, // NEW
+    setManagedCategoryIds, // NEW
     usernameError,
     setUsernameError,
     emailError,

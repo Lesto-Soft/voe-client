@@ -213,9 +213,8 @@ const UserManagement: React.FC = () => {
       position: formData.position,
       role: formData.role,
       financial_approver: formData.financial_approver,
-      ...(formData.managed_categories && {
-        managed_categories: formData.managed_categories,
-      }),
+      expert_categories: formData.expert_categories, // NEW
+      managed_categories: formData.managed_categories, // NEW
       ...(formData.password && { password: formData.password }),
       ...(avatarData !== undefined && { avatar: avatarData }),
     };

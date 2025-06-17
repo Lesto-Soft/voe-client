@@ -1,3 +1,4 @@
+// src/components/forms/partials/UserInputFields.tsx
 import React from "react";
 import { InformationCircleIcon } from "@heroicons/react/20/solid";
 import * as Tooltip from "@radix-ui/react-tooltip";
@@ -7,14 +8,13 @@ interface UserInputFieldsProps {
   username: string;
   setUsername: (value: string) => void;
   usernameError: string | null;
-  usernameHookError: any | null;
   isCheckingUsername: boolean;
   fullName: string;
   setFullName: (value: string) => void;
+  nameError: string | null; // ADDED: To display validation errors for the name field
   email: string;
   setEmail: (value: string) => void;
   emailError: string | null;
-  emailHookError: any | null;
   isCheckingEmail: boolean;
   isEmailFormatCurrentlyValid: boolean;
   trimmedDebouncedEmail: string;
@@ -26,7 +26,6 @@ interface UserInputFieldsProps {
   financialApprover: boolean;
   setFinancialApprover: (value: boolean) => void;
   errorPlaceholderClass: string;
-  // --- NEW PROPS ---
   isEditing: boolean;
   isAdmin: boolean;
 }
@@ -35,14 +34,13 @@ const UserInputFields: React.FC<UserInputFieldsProps> = ({
   username,
   setUsername,
   usernameError,
-  usernameHookError,
   isCheckingUsername,
   fullName,
   setFullName,
+  nameError, // ADDED
   email,
   setEmail,
   emailError,
-  emailHookError,
   isCheckingEmail,
   isEmailFormatCurrentlyValid,
   trimmedDebouncedEmail,
@@ -54,16 +52,13 @@ const UserInputFields: React.FC<UserInputFieldsProps> = ({
   financialApprover,
   setFinancialApprover,
   errorPlaceholderClass,
-  // --- NEW PROPS ---
   isEditing,
   isAdmin,
 }) => {
   const roleChangeWarningText =
     "ВНИМАНИЕ: Промяна на ролята ОТ Админ или Експерт КЪМ Нормален или Напуснал, ЩЕ ПРЕМАХНЕ потребителя от категориите, за които е експерт и/или мениджър.";
 
-  // --- NEW: Logic to disable fields ---
   const canEditSensitiveFields = isAdmin;
-  // Username cannot be changed after creation, except by an admin.
   const isUsernameDisabled = isEditing && !isAdmin;
 
   const disabledClasses =
@@ -88,27 +83,20 @@ const UserInputFields: React.FC<UserInputFieldsProps> = ({
             required
             disabled={isUsernameDisabled}
             className={`w-full rounded-md border p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
-              usernameError || usernameHookError
-                ? "border-red-500"
-                : "border-gray-300"
+              usernameError ? "border-red-500" : "border-gray-300"
             } ${
               isCheckingUsername ? "opacity-70 animate-pulse" : ""
             } ${disabledClasses}`}
           />
           <p
             className={`${errorPlaceholderClass} ${
-              usernameError || usernameHookError
-                ? "text-red-500"
-                : "text-blue-500"
+              usernameError ? "text-red-500" : "text-blue-500"
             }`}
           >
             {isCheckingUsername ? (
               "Проверка на потребителско име..."
             ) : usernameError ? (
               usernameError
-            ) : usernameHookError ? (
-              usernameHookError.message ||
-              "Грешка от сървъра при проверка на потребителско име."
             ) : (
               <>&nbsp;</>
             )}
@@ -129,9 +117,18 @@ const UserInputFields: React.FC<UserInputFieldsProps> = ({
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
             required
-            className={`w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${disabledClasses}`}
+            className={`w-full rounded-md border p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
+              nameError ? "border-red-500" : "border-gray-300" // MODIFIED
+            } ${disabledClasses}`}
           />
-          <p className={`${errorPlaceholderClass}`}>&nbsp;</p>
+          {/* MODIFIED: Display nameError */}
+          <p
+            className={`${errorPlaceholderClass} ${
+              nameError ? "text-red-500" : ""
+            }`}
+          >
+            {nameError || <>&nbsp;</>}
+          </p>
         </div>
 
         {/* Email Input - Optional */}
@@ -148,9 +145,7 @@ const UserInputFields: React.FC<UserInputFieldsProps> = ({
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className={`w-full rounded-md border p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
-              emailError || emailHookError
-                ? "border-red-500"
-                : "border-gray-300"
+              emailError ? "border-red-500" : "border-gray-300"
             } ${
               isCheckingEmail &&
               trimmedDebouncedEmail &&
@@ -161,7 +156,7 @@ const UserInputFields: React.FC<UserInputFieldsProps> = ({
           />
           <p
             className={`${errorPlaceholderClass} ${
-              emailError || emailHookError ? "text-red-500" : "text-blue-500"
+              emailError ? "text-red-500" : "text-blue-500"
             }`}
           >
             {isCheckingEmail &&
@@ -170,9 +165,6 @@ const UserInputFields: React.FC<UserInputFieldsProps> = ({
               "Проверка на имейл..."
             ) : emailError ? (
               emailError
-            ) : emailHookError ? (
-              emailHookError.message ||
-              "Грешка от сървъра при проверка на имейл."
             ) : (
               <>&nbsp;</>
             )}

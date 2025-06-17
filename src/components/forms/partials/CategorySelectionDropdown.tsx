@@ -130,7 +130,7 @@ const CategorySelectionDropdown: React.FC<CategorySelectionDropdownProps> = ({
       {isDropdownVisible && (
         <div
           ref={dropdownRef}
-          className="absolute z-50 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto"
+          className="absolute z-50 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-40 overflow-y-auto"
         >
           <div className="p-2">
             <input

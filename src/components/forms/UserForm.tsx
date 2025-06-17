@@ -127,6 +127,14 @@ const UserForm: React.FC<UserFormProps> = ({
     error: categoriesError,
   } = useGetActiveCategories();
 
+  // --- NEW: State to store the original category assignments ---
+  const [initialExpertCategories, setInitialExpertCategories] = useState<
+    string[]
+  >([]);
+  const [initialManagedCategories, setInitialManagedCategories] = useState<
+    string[]
+  >([]);
+
   const [isCropModalOpen, setIsCropModalOpen] = useState(false);
   const [imageToCrop, setImageToCrop] = useState<string | null>(null);
   const [formSubmitError, setFormSubmitError] = useState<string | null>(null);
@@ -138,25 +146,50 @@ const UserForm: React.FC<UserFormProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cropCompletedRef = useRef<boolean>(false);
 
+  // --- NEW: useEffect to populate the "memory" state on load ---
+  useEffect(() => {
+    if (initialData) {
+      const expertIds =
+        initialData.expert_categories?.map((c: any) => c._id || c) || [];
+      const managedIds =
+        initialData.managed_categories?.map((c: any) => c._id || c) || [];
+      setInitialExpertCategories(expertIds);
+      setInitialManagedCategories(managedIds);
+    }
+  }, [initialData]);
+
   const canManageCategories = useMemo(
     () => roleId === ROLES.ADMIN || roleId === ROLES.EXPERT,
     [roleId]
   );
 
-  // --- NEW: Event handler for role changes ---
+  // --- MODIFIED: The role change handler now includes restore logic ---
   const handleRoleChange = (newRoleId: string) => {
-    // First, update the role ID state
-    setRoleId(newRoleId);
-
-    // Then, check if this role change means we should clear the categories
+    // Check the privilege level of the role we are changing FROM
+    const oldRoleIsPrivileged = canManageCategories;
+    // Check the privilege level of the role we are changing TO
     const newRoleIsPrivileged =
       newRoleId === ROLES.ADMIN || newRoleId === ROLES.EXPERT;
 
-    // If the new role is NOT a privileged one, clear the category selections
-    if (!newRoleIsPrivileged) {
+    // Case 1: Restore categories
+    // If moving from a non-privileged role TO a privileged one...
+    if (!oldRoleIsPrivileged && newRoleIsPrivileged) {
+      // ...restore the original categories we saved on load.
+      setExpertCategoryIds(initialExpertCategories);
+      setManagedCategoryIds(initialManagedCategories);
+    }
+    // Case 2: Clear categories
+    // If moving from a privileged role TO a non-privileged one...
+    else if (oldRoleIsPrivileged && !newRoleIsPrivileged) {
+      // ...clear the categories as before.
       setExpertCategoryIds([]);
       setManagedCategoryIds([]);
     }
+    // Case 3: (e.g., Admin -> Expert or Normal -> Inactive)
+    // In all other cases, do nothing to the categories, preserving any changes.
+
+    // Finally, always update the role ID itself.
+    setRoleId(newRoleId);
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {

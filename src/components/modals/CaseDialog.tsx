@@ -36,6 +36,7 @@ type CaseDialogProps = {
   me: IMe;
   availableCategories: ICategory[];
   children: React.ReactNode;
+  onSuccess?: () => void; // Add callback for successful operations
 } & (
   | {
       mode: "edit";
@@ -272,7 +273,17 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
           attachments: attachmentInputs,
         };
         await createCase(input);
+
+        // For case creation, reload the page to ensure all data is fresh
+        window.location.reload();
+        return; // Exit early since page will reload
       }
+
+      // Call onSuccess callback after successful edit operation
+      if (props.onSuccess) {
+        props.onSuccess();
+      }
+
       setIsOpen(false);
     } catch (err) {
       let errorMessage = "Възникна неочаквана грешка.";

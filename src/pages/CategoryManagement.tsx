@@ -468,6 +468,11 @@ const CategoryManagement: React.FC = () => {
     setFormHasUnsavedChanges(false);
   };
 
+  const handleSuccessAndFormClose = () => {
+    setIsSuccessModalOpen(false); // First, close the success modal
+    closeCategoryModal(); // Then, close the form modal underneath
+  };
+
   const handleCategoryFormSubmit = async (
     formData: CategoryFormData,
     editingCategoryId: string | null
@@ -662,7 +667,12 @@ const CategoryManagement: React.FC = () => {
         hasUnsavedChanges={formHasUnsavedChanges}
       >
         {(createCategoryLoading || updateCategoryLoading) && (
-          <div className="p-4 text-center">Изпращане...</div>
+          <div
+            className="flex items-center justify-center p-4 text-center"
+            style={{ minHeight: "450px" }}
+          >
+            Изпращане...
+          </div>
         )}
         {mutationError && !(createCategoryLoading || updateCategoryLoading) && (
           <div className="p-4 mb-4 text-center text-red-600 bg-red-100 rounded-md">
@@ -702,7 +712,7 @@ const CategoryManagement: React.FC = () => {
 
       <SuccessConfirmationModal
         isOpen={isSuccessModalOpen}
-        onClose={() => setIsSuccessModalOpen(false)}
+        onClose={handleSuccessAndFormClose}
         message={successModalMessage}
       />
     </div>

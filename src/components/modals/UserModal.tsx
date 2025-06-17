@@ -49,15 +49,19 @@ const UserModal: React.FC<ModalProps> = ({
     setShowConfirmDialog(false);
   };
 
-  const handleBackdropMouseDown = () => {
-    isMouseDownOnBackdrop.current = true;
+  const handleBackdropMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    // MODIFIED: Only set the flag if the click is on the backdrop itself, not a child.
+    if (e.target === e.currentTarget) {
+      isMouseDownOnBackdrop.current = true;
+    }
   };
 
-  const handleBackdropMouseUp = () => {
-    if (isMouseDownOnBackdrop.current) {
-      isMouseDownOnBackdrop.current = false;
+  const handleBackdropMouseUp = (e: React.MouseEvent<HTMLDivElement>) => {
+    // MODIFIED: Only attempt to close if the click is on the backdrop itself.
+    if (e.target === e.currentTarget && isMouseDownOnBackdrop.current) {
       attemptClose();
     }
+    isMouseDownOnBackdrop.current = false;
   };
 
   const interactionProps = {
@@ -79,7 +83,7 @@ const UserModal: React.FC<ModalProps> = ({
       >
         <div
           className="relative w-full max-w-md md:max-w-lg lg:max-w-2xl rounded-lg bg-white p-4 md:p-6 shadow-xl max-h-[85vh] overflow-y-auto"
-          onMouseDown={(e) => e.stopPropagation()}
+          //onMouseDown={(e) => e.stopPropagation()}
           {...interactionProps}
         >
           <button

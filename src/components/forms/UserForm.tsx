@@ -137,28 +137,27 @@ const UserForm: React.FC<UserFormProps> = ({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cropCompletedRef = useRef<boolean>(false);
-  const isInitialMount = useRef(true); // --- ADDED: Ref to track initial mount
 
   const canManageCategories = useMemo(
     () => roleId === ROLES.ADMIN || roleId === ROLES.EXPERT,
     [roleId]
   );
 
-  // --- MODIFIED: This useEffect now correctly ignores the initial render ---
-  useEffect(() => {
-    // If it's the first render, do nothing. Let the form populate.
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-      return;
-    }
+  // --- NEW: Event handler for role changes ---
+  const handleRoleChange = (newRoleId: string) => {
+    // First, update the role ID state
+    setRoleId(newRoleId);
 
-    // On subsequent renders (i.e., user changes the role), if the role
-    // is no longer Expert/Admin, clear the selected categories.
-    // if (!canManageCategories) {
-    //   setExpertCategoryIds([]);
-    //   setManagedCategoryIds([]);
-    // }
-  }, [canManageCategories, setExpertCategoryIds, setManagedCategoryIds]);
+    // Then, check if this role change means we should clear the categories
+    const newRoleIsPrivileged =
+      newRoleId === ROLES.ADMIN || newRoleId === ROLES.EXPERT;
+
+    // If the new role is NOT a privileged one, clear the category selections
+    if (!newRoleIsPrivileged) {
+      setExpertCategoryIds([]);
+      setManagedCategoryIds([]);
+    }
+  };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setAvatarError(null);
@@ -406,7 +405,7 @@ const UserForm: React.FC<UserFormProps> = ({
             position={position}
             setPosition={setPosition}
             roleId={roleId}
-            setRoleId={setRoleId}
+            onRoleChange={handleRoleChange} // CHANGED: Pass the new handler
             roles={roles}
             financialApprover={financialApprover}
             setFinancialApprover={setFinancialApprover}
@@ -437,6 +436,7 @@ const UserForm: React.FC<UserFormProps> = ({
                 onSelectionChange={setExpertCategoryIds}
                 isLoading={categoriesLoading}
                 errorPlaceholderClass={errorPlaceholderClass}
+                disabled={!isAdmin} // ADDED: Disable if not an admin
               />
               <CategorySelectionDropdown
                 label="Менажира категории"
@@ -445,6 +445,7 @@ const UserForm: React.FC<UserFormProps> = ({
                 onSelectionChange={setManagedCategoryIds}
                 isLoading={categoriesLoading}
                 errorPlaceholderClass={errorPlaceholderClass}
+                disabled={!isAdmin} // ADDED: Disable if not an admin
               />
             </>
           )}

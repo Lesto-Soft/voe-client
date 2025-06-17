@@ -21,7 +21,7 @@ interface UserInputFieldsProps {
   position: string;
   setPosition: (value: string) => void;
   roleId: string;
-  setRoleId: (value: string) => void;
+  onRoleChange: (value: string) => void;
   roles: Role[];
   financialApprover: boolean;
   setFinancialApprover: (value: boolean) => void;
@@ -47,7 +47,7 @@ const UserInputFields: React.FC<UserInputFieldsProps> = ({
   position,
   setPosition,
   roleId,
-  setRoleId,
+  onRoleChange,
   roles,
   financialApprover,
   setFinancialApprover,
@@ -228,7 +228,7 @@ const UserInputFields: React.FC<UserInputFieldsProps> = ({
                 id="role"
                 name="role"
                 value={roleId}
-                onChange={(e) => setRoleId(e.target.value)}
+                onChange={(e) => onRoleChange(e.target.value)} // CHANGED: Use the new handler
                 required
                 disabled={!canEditSensitiveFields}
                 className={`w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${disabledClasses}`}

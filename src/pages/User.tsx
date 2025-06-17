@@ -93,6 +93,8 @@ const User: React.FC = () => {
       position: formData.position,
       role: formData.role,
       financial_approver: formData.financial_approver,
+      expert_categories: formData.expert_categories,
+      managed_categories: formData.managed_categories,
       ...(formData.password && { password: formData.password }),
       ...(avatarData !== undefined && { avatar: avatarData }),
     };

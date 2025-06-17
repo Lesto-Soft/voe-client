@@ -11,6 +11,7 @@ interface CategorySelectionDropdownProps {
   isLoading: boolean;
   placeholder?: string;
   errorPlaceholderClass: string;
+  disabled?: boolean; // ADDED: New prop to control editability
 }
 
 const CategorySelectionDropdown: React.FC<CategorySelectionDropdownProps> = ({
@@ -21,6 +22,7 @@ const CategorySelectionDropdown: React.FC<CategorySelectionDropdownProps> = ({
   isLoading,
   placeholder = "Избери категории...",
   errorPlaceholderClass,
+  disabled = false, // ADDED: Destructure with a default value
 }) => {
   console.log("SELECTED: ", selectedCategoryIds);
   console.log("ALL: ", allCategories);
@@ -28,6 +30,13 @@ const CategorySelectionDropdown: React.FC<CategorySelectionDropdownProps> = ({
   const [searchTerm, setSearchTerm] = useState("");
   const displayInputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // ADDED: This effect will close the dropdown if it becomes disabled while open
+  useEffect(() => {
+    if (disabled) {
+      setIsDropdownVisible(false);
+    }
+  }, [disabled]);
 
   const categoryNameCache = useMemo(() => {
     const cache: Record<string, string> = {};
@@ -96,9 +105,10 @@ const CategorySelectionDropdown: React.FC<CategorySelectionDropdownProps> = ({
           id={`category-select-${label}`}
           ref={displayInputRef}
           value={selectedCategoryNames}
-          onClick={() => setIsDropdownVisible((v) => !v)}
+          onClick={() => !disabled && setIsDropdownVisible((v) => !v)} // MODIFIED: Prevent opening if disabled
           readOnly
-          className="bg-white w-full px-3 py-2 pr-10 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm cursor-pointer truncate"
+          disabled={disabled} // ADDED: Disable the input
+          className="bg-white w-full px-3 py-2 pr-10 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm cursor-pointer truncate disabled:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-70" // MODIFIED: Added disabled styles
           placeholder={placeholder}
         />
         {selectedCategoryIds.length > 0 && (
@@ -109,7 +119,8 @@ const CategorySelectionDropdown: React.FC<CategorySelectionDropdownProps> = ({
               onSelectionChange([]);
               setSearchTerm("");
             }}
-            className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700"
+            disabled={disabled} // ADDED: Disable the clear button
+            className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-50" // MODIFIED: Added disabled styles
             title={`Изчисти ${label}`}
           >
             <XMarkIcon className="h-5 w-5" />

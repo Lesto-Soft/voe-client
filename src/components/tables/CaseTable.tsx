@@ -197,7 +197,7 @@ const CaseTable: React.FC<{ cases: ICase[]; t: (word: string) => string }> = ({
                   </td>
                   {/* Creator Cell - Now a Link */}
                   <td className="max-w-[150px] px-3 py-4 text-sm break-words">
-                    <UserLink user={my_case.creator} type="table" />
+                    <UserLink user={my_case.creator} />
                   </td>
                   {/* Category Cell - Now Links */}
                   <td className="max-w-[180px] px-3 py-4 text-sm hidden md:table-cell">

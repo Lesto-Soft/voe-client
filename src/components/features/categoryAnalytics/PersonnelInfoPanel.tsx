@@ -64,7 +64,7 @@ const PersonnelInfoPanel: React.FC<PersonnelInfoPanelProps> = ({
       <ul className="w-full flex flex-wrap gap-2 text-sm text-gray-600 overflow-y-auto max-h-32 lg:max-h-[calc(theme(space.37)-theme(space.2))] px-1 py-1 justify-center items-center">
         {users.map((user: IUser) => (
           <li key={user._id} className="flex">
-            <UserLink user={user} type="table" />
+            <UserLink user={user} />
           </li>
         ))}
       </ul>

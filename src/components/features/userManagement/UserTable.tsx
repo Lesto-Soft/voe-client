@@ -187,7 +187,7 @@ const UserTable: React.FC<UserTableProps> = ({
                     </td>
                     <td className={`${columnWidths.name} px-3 py-4 text-sm`}>
                       <div className="flex items-center justify-start flex-row">
-                        <UserLink user={user} type="table" />
+                        <UserLink user={user} />
                       </div>
                     </td>
                     <td

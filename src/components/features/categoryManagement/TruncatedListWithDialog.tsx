@@ -89,7 +89,7 @@ function TruncatedListWithDialog({
             LIMITATION: UserLink will appear active (purple) even if isContextInactive is true.
             No onClick prop means we can't easily make it non-interactive here without more complex wrappers.
           */}
-          <UserLink user={userItem} type="table" />
+          <UserLink user={userItem} />
         </div>
       );
     }
@@ -103,7 +103,7 @@ function TruncatedListWithDialog({
             1. No e.stopPropagation(): Clicking UserLink will navigate AND may trigger the dialog.
             2. Styling is fixed by UserLink.
           */}
-          <UserLink user={userItem} type="table" />
+          <UserLink user={userItem} />
         </div>
       );
     } else {
@@ -111,7 +111,7 @@ function TruncatedListWithDialog({
       // If these are also meant to be links now via UserLink:
       return (
         <div key={key}>
-          <UserLink user={userItem} type="table" />
+          <UserLink user={userItem} />
         </div>
       );
     }
@@ -176,7 +176,7 @@ function TruncatedListWithDialog({
                 <UserLink
                   key={`dialog-${userItem._id}`}
                   user={userItem}
-                  type="table" // Or "case" if more appropriate for list view
+                  // Or "case" if more appropriate for list view
                 />
               );
             })}

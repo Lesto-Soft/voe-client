@@ -171,7 +171,7 @@ const Answer: React.FC<{
                 {answer.approved && (
                   <>
                     <p className="whitespace-nowrap"> {t("approvedBy")} </p>
-                    <UserLink user={answer.approved} type="case" />
+                    <UserLink user={answer.approved} />
                     {/* <ShowDate date={answer.approved_date} /> */}
                   </>
                 )}
@@ -185,7 +185,7 @@ const Answer: React.FC<{
                 {answer.financial_approved && (
                   <>
                     <p className="whitespace-nowrap">{t("financedBy")}</p>
-                    <UserLink user={answer.financial_approved} type="case" />
+                    <UserLink user={answer.financial_approved} />
                     {answer.financial_approved_date && (
                       <ShowDate date={answer.financial_approved_date} />
                     )}

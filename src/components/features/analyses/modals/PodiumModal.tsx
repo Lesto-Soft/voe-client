@@ -132,7 +132,7 @@ export const PodiumModal: React.FC<PodiumModalProps> = ({
                         className={`w-full ${podiumColors[index]} rounded-t-lg p-2 flex flex-col justify-start items-center border-b-4 shadow-md`}
                       >
                         <div className="text-center">
-                          <UserLink user={userStat.user} type="table" />
+                          <UserLink user={userStat.user} />
                           <p className="text-lg font-bold text-gray-800">
                             {userStat.count}
                           </p>
@@ -169,7 +169,7 @@ export const PodiumModal: React.FC<PodiumModalProps> = ({
                           enablePreview={true}
                         />
                         <div className="ml-3 flex-grow">
-                          <UserLink user={userStat.user} type="table" />
+                          <UserLink user={userStat.user} />
                         </div>
                         <span className="font-bold text-gray-800">
                           {userStat.count}

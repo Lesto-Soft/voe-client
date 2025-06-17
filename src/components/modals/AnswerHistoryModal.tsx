@@ -42,7 +42,7 @@ const AnswerHistoryModal: React.FC<{
                       <span className="font-semibold text-gray-900">
                         {moment(h.date_change).format("DD.MM.YYYY HH:mm")}
                       </span>
-                      <UserLink user={h.user} type="case" />
+                      <UserLink user={h.user} />
                     </div>
 
                     {h.old_content !== h.new_content &&

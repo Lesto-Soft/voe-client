@@ -29,7 +29,7 @@ const Creator: React.FC<CreatorProps> = ({
         enablePreview={enableAvatarPreview}
       />
       <div className="mt-2 text-center">
-        <UserLink user={creator} type="case" />
+        <UserLink user={creator} />
         {creator.position && (
           <span className={`${labelTextClass} block mt-1`}>
             {creator.position}

@@ -21,7 +21,7 @@ const CommentMobile: React.FC<CommentProps> = ({ comment, me, caseNumber }) => {
     <div className="flex flex-row items-stretch gap-3 rounded p-3 w-full px-4">
       {/* Left: Creator info, vertically centered */}
       <div className="flex flex-col justify-center items-center">
-        <UserLink user={comment.creator} type="case" />
+        <UserLink user={comment.creator} />
         {comment.creator.position && (
           <span className="text-xs text-gray-400 italic mt-1 text-center w-full block">
             {comment.creator.position}

@@ -51,7 +51,7 @@ const TopUserCard: React.FC<TopUserCardProps> = ({
               enablePreview={true}
             />
             <div className="mt-2">
-              <UserLink user={stat.user} type="table" />
+              <UserLink user={stat.user} />
             </div>
             <p className="text-sm text-gray-600 mt-1">
               <span className="font-bold">{stat.count}</span> {actionText}

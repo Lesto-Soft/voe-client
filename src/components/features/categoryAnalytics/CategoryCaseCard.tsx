@@ -113,7 +113,7 @@ const CategoryCaseCard: React.FC<CategoryCaseCardProps> = ({
             {/* Creator (no change to this specific element's structure) */}
             <div className="flex items-center text-gray-600 flex-shrink-0">
               <span className="mr-1 text-gray-500">от:</span>
-              <UserLink user={caseItem.creator} type="table" />
+              <UserLink user={caseItem.creator} />
             </div>
             {/* Date (no change to this specific element's structure) */}
             <div className="text-gray-500 whitespace-nowrap flex-shrink-0">

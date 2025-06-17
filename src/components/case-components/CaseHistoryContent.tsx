@@ -27,7 +27,7 @@ const CaseHistoryContent: React.FC<{
               <span className="font-semibold text-gray-900">
                 <ShowDate date={h.date_change} />
               </span>
-              <UserLink user={h.user} type="case" />
+              <UserLink user={h.user} />
             </div>
           </div>
 

@@ -89,14 +89,14 @@ const AnswerMobile: React.FC<{
         {answer.approved && (
           <div className="flex items-center gap-1">
             <p>{t("approvedBy")}</p>
-            <UserLink user={answer.approved} type="case" />
+            <UserLink user={answer.approved} />
             {answer.approved_date && <ShowDate date={answer.approved_date} />}
           </div>
         )}
         {answer.financial_approved && (
           <div className="flex items-center gap-1">
             <p>{t("financedBy")}</p>
-            <UserLink user={answer.financial_approved} type="case" />
+            <UserLink user={answer.financial_approved} />
             {answer.financial_approved_date && (
               <ShowDate date={answer.financial_approved_date} />
             )}

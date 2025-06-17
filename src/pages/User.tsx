@@ -108,11 +108,15 @@ const User: React.FC = () => {
     try {
       await updateUser(editingUserId, finalInput as UpdateUserInput);
       await refetchUser(); // Refetch user data to show changes
-      setAvatarVersion(Date.now()); // Force avatar refresh
+      // --- MODIFIED ORDER ---
+      // 1. Close the form modal immediately
       closeEditModal();
-
+      // 2. Show the success message immediately
       setSuccessModalMessage("Потребителят е редактиран успешно!");
       setIsSuccessModalOpen(true);
+      // 3. Update avatar version and refetch data in the background
+      setAvatarVersion(Date.now());
+      refetchUser();
     } catch (err: any) {
       console.error("Error during user update:", err);
       const graphQLError = err.graphQLErrors?.[0]?.message;
@@ -223,7 +227,14 @@ const User: React.FC = () => {
         onClose={closeEditModal}
         title="Редактирай потребител"
       >
-        {updateLoading && <div className="p-4 text-center">Изпращане...</div>}
+        {updateLoading && (
+          <div
+            className="flex items-center justify-center p-4 text-center"
+            style={{ minHeight: "450px" }}
+          >
+            Изпращане...
+          </div>
+        )}
         {updateError && !updateLoading && (
           <div className="p-4 mb-4 text-center text-red-600 bg-red-100 rounded-md">
             Грешка при запис: {updateError?.message || "Неизвестна грешка"}

@@ -244,10 +244,17 @@ const UserManagement: React.FC = () => {
         refetchUserCount(),
         refetchRoles ? refetchRoles() : Promise.resolve(),
       ]);
-      setAvatarVersion(Date.now());
+      // --- MODIFIED ORDER ---
+      // 1. Close the form modal immediately
       closeModal();
+      // 2. Show the success message immediately
       setSuccessModalMessage(successMessage);
       setIsSuccessModalOpen(true);
+      // 3. Update avatar version and refetch data in the background
+      setAvatarVersion(Date.now());
+      refetchUsers();
+      refetchUserCount();
+      if (refetchRoles) refetchRoles();
     } catch (err: any) {
       console.error(`Error during user ${context}:`, err);
       const graphQLError = err.graphQLErrors?.[0]?.message;

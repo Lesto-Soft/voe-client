@@ -10,7 +10,7 @@ import {
   ExclamationCircleIcon, // ADDED: Icon for error display
 } from "@heroicons/react/24/solid";
 import { ICategory, IMe } from "../../db/interfaces";
-import { CASE_PRIORITY, CASE_TYPE } from "../../utils/GLOBAL_PARAMETERS";
+import { /*CASE_PRIORITY, */ CASE_TYPE } from "../../utils/GLOBAL_PARAMETERS";
 import { useTranslation } from "react-i18next";
 import FileAttachmentBtn from "../global/FileAttachmentBtn";
 import {
@@ -22,6 +22,8 @@ import {
 } from "../../graphql/hooks/case";
 import { readFileAsBase64 } from "../../utils/attachment-handling";
 import TextEditor from "../forms/partials/TextEditor";
+// ADDED: Import SuccessConfirmationModal
+import SuccessConfirmationModal from "./SuccessConfirmationModal";
 
 // Define an interface for the form data
 interface CaseFormData {
@@ -163,6 +165,9 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
   const [isOpen, setIsOpen] = useState(false);
   // ADDED: Error state
   const [error, setError] = useState<string | null>(null);
+  // ADDED: Success modal state
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
 
   const { updateCase, loading: isUpdating } = useUpdateCase(
     props.mode === "edit" ? props.caseNumber : 0
@@ -263,6 +268,13 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
           attachments: attachmentInputs,
         };
         await updateCase(props.caseId, me._id, input);
+
+        // ADDED: Show success modal for edit
+        setSuccessMessage(
+          `Сигнал #${props.caseNumber} беше успешно редактиран.`
+        );
+        setShowSuccessModal(true);
+        setIsOpen(false);
       } else {
         const input: CreateCaseInput = {
           creator: me._id,
@@ -274,17 +286,20 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
         };
         await createCase(input);
 
-        // For case creation, reload the page to ensure all data is fresh
-        window.location.reload();
-        return; // Exit early since page will reload
+        // ADDED: Show success modal for create
+        const typeText =
+          formData.type === "SUGGESTION"
+            ? "Предложението беше успешно създадено."
+            : "Проблемът беше успешно създаден.";
+        setSuccessMessage(typeText);
+        setShowSuccessModal(true);
+        setIsOpen(false);
       }
 
-      // Call onSuccess callback after successful edit operation
+      // Call onSuccess callback after successful operation
       if (props.onSuccess) {
         props.onSuccess();
       }
-
-      setIsOpen(false);
     } catch (err) {
       let errorMessage = "Възникна неочаквана грешка.";
 
@@ -303,6 +318,15 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
           props.mode === "edit" ? "редактиране" : "създаване"
         } на сигнала: ${errorMessage}`
       );
+    }
+  };
+
+  // ADDED: Handle success modal close
+  const handleSuccessModalClose = () => {
+    setShowSuccessModal(false);
+    // For create mode, reload the page after the success modal closes
+    if (props.mode === "create") {
+      window.location.reload();
     }
   };
 
@@ -342,84 +366,122 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
   };
 
   return (
-    <Dialog.Root open={isOpen} onOpenChange={setIsOpen}>
-      <Dialog.Trigger asChild>{props.children}</Dialog.Trigger>
-      <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-black/40 z-40" />
-        <Dialog.Content className="fixed z-50 left-1/2 top-1/2 w-[90vw] max-w-4xl -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-stone-100 shadow-lg focus:outline-none max-h-[90vh] flex flex-col">
-          {/* --- START: Sticky Header --- */}
-          <div className="sticky top-0 bg-stone-100 z-10 border-b border-gray-300">
-            <div className="p-6">
-              <Dialog.Title className="text-2xl font-bold text-gray-800">
-                {renderTitle()}
-              </Dialog.Title>
-              <Dialog.Close asChild>
-                <button
-                  className="absolute hover:cursor-pointer top-4 right-4 text-gray-500 hover:text-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500 rounded-full p-1 transition-colors"
-                  aria-label="Close"
-                >
-                  <XMarkIcon className="h-6 w-6" />
-                </button>
-              </Dialog.Close>
-            </div>
-
-            {/* ADDED: Error Display Area */}
-            {error && (
-              <div className="px-6 pb-4">
-                <div className="flex items-start p-4 bg-red-50 border border-red-200 rounded-lg">
-                  <ExclamationCircleIcon className="h-5 w-5 text-red-400 mr-3 mt-0.5 flex-shrink-0" />
-                  <div className="flex-1">
-                    <p className="text-sm text-red-800">{error}</p>
-                  </div>
+    <>
+      <Dialog.Root open={isOpen} onOpenChange={setIsOpen}>
+        <Dialog.Trigger asChild>{props.children}</Dialog.Trigger>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 bg-black/40 z-40" />
+          <Dialog.Content className="fixed z-50 left-1/2 top-1/2 w-[90vw] max-w-4xl -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-stone-100 shadow-lg focus:outline-none max-h-[90vh] flex flex-col">
+            {/* --- START: Sticky Header --- */}
+            <div className="sticky top-0 bg-stone-100 z-10 border-b border-gray-300">
+              <div className="p-6">
+                <Dialog.Title className="text-2xl font-bold text-gray-800">
+                  {renderTitle()}
+                </Dialog.Title>
+                <Dialog.Close asChild>
                   <button
-                    onClick={() => setError(null)}
-                    className="ml-3 text-red-400 hover:text-red-600 focus:outline-none"
-                    aria-label="Dismiss error"
+                    className="absolute hover:cursor-pointer top-4 right-4 text-gray-500 hover:text-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500 rounded-full p-1 transition-colors"
+                    aria-label="Close"
                   >
-                    <XMarkIcon className="h-4 w-4" />
+                    <XMarkIcon className="h-6 w-6" />
                   </button>
-                </div>
+                </Dialog.Close>
               </div>
-            )}
-          </div>
-          {/* --- END: Sticky Header --- */}
 
-          {/* --- START: Scrollable Form Content --- */}
-          <div className="overflow-y-auto flex-grow">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-6 p-6 bg-white rounded-lg shadow">
-                <div>
-                  <label
-                    htmlFor="content"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    {t("content")}
-                  </label>
-                  <TextEditor
-                    content={formData.content}
-                    onUpdate={(html) =>
-                      setFormData((prev) => ({ ...prev, content: html }))
-                    }
-                    placeholder={getBulgarianText(
-                      "caseSubmission.content.placeholder",
-                      t,
-                      "Опишете вашия случай..."
-                    )}
-                    editable={true}
-                    minHeight="120px"
-                    maxHeight="300px"
-                    wrapperClassName="w-full border border-gray-300 rounded-md shadow-sm overflow-hidden bg-white focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500"
-                  />
+              {/* ADDED: Error Display Area */}
+              {error && (
+                <div className="px-6 pb-4">
+                  <div className="flex items-start p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <ExclamationCircleIcon className="h-5 w-5 text-red-400 mr-3 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-sm text-red-800">{error}</p>
+                    </div>
+                    <button
+                      onClick={() => setError(null)}
+                      className="ml-3 text-red-400 hover:text-red-600 focus:outline-none"
+                      aria-label="Dismiss error"
+                    >
+                      <XMarkIcon className="h-4 w-4" />
+                    </button>
+                  </div>
                 </div>
+              )}
+            </div>
+            {/* --- END: Sticky Header --- */}
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-6">
-                  {props.mode === "edit" && (
+            {/* --- START: Scrollable Form Content --- */}
+            <div className="overflow-y-auto flex-grow">
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="space-y-6 p-6 bg-white rounded-lg shadow">
+                  <div>
+                    <label
+                      htmlFor="content"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      {t("content")}
+                    </label>
+                    <TextEditor
+                      content={formData.content}
+                      onUpdate={(html) =>
+                        setFormData((prev) => ({ ...prev, content: html }))
+                      }
+                      placeholder={getBulgarianText(
+                        "caseSubmission.content.placeholder",
+                        t,
+                        "Опишете вашия случай..."
+                      )}
+                      editable={true}
+                      minHeight="120px"
+                      maxHeight="300px"
+                      wrapperClassName="w-full border border-gray-300 rounded-md shadow-sm overflow-hidden bg-white focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-6">
+                    {props.mode === "edit" && (
+                      <div>
+                        <p className="text-sm font-medium mb-3 text-gray-700">
+                          {getBulgarianText("type", t, "Тип на сигнала")}
+                        </p>
+                        <div className="flex flex-wrap gap-x-6 gap-y-2 p-3 rounded-lg items-center">
+                          {typeOptions.map(({ value, color, bgText, Icon }) => (
+                            <label
+                              key={value}
+                              className="flex items-center gap-2 cursor-pointer hover:opacity-80"
+                            >
+                              <input
+                                type="radio"
+                                value={value}
+                                checked={formData.type === value}
+                                onChange={() =>
+                                  handleTypeChange(
+                                    value as "PROBLEM" | "SUGGESTION"
+                                  )
+                                }
+                                style={{ accentColor: color }}
+                                className="w-5 h-5 cursor-pointer"
+                                name="type"
+                              />
+                              <Icon className="h-5 w-5" style={{ color }} />
+                              <span className="text-sm text-gray-700 font-semibold">
+                                {bgText}
+                              </span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     <div>
                       <p className="text-sm font-medium mb-3 text-gray-700">
-                        {getBulgarianText("type", t, "Тип на сигнала")}
+                        {getBulgarianText(
+                          "caseSubmission:caseSubmission.priorityLabel",
+                          t,
+                          "Приоритет"
+                        )}
                       </p>
                       <div className="flex flex-wrap gap-x-6 gap-y-2 p-3 rounded-lg items-center">
-                        {typeOptions.map(({ value, color, bgText, Icon }) => (
+                        {priorityOptions.map(({ value, color, bgText }) => (
                           <label
                             key={value}
                             className="flex items-center gap-2 cursor-pointer hover:opacity-80"
@@ -427,123 +489,97 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
                             <input
                               type="radio"
                               value={value}
-                              checked={formData.type === value}
+                              checked={formData.priority === value}
                               onChange={() =>
-                                handleTypeChange(
-                                  value as "PROBLEM" | "SUGGESTION"
+                                handlePriorityChange(
+                                  value as "LOW" | "MEDIUM" | "HIGH"
                                 )
                               }
                               style={{ accentColor: color }}
                               className="w-5 h-5 cursor-pointer"
-                              name="type"
+                              name="priority"
                             />
-                            <Icon className="h-5 w-5" style={{ color }} />
-                            <span className="text-sm text-gray-700 font-semibold">
+                            <span className="text-sm text-gray-700">
                               {bgText}
                             </span>
                           </label>
                         ))}
                       </div>
                     </div>
-                  )}
+                  </div>
 
                   <div>
                     <p className="text-sm font-medium mb-3 text-gray-700">
-                      {getBulgarianText(
-                        "caseSubmission:caseSubmission.priorityLabel",
-                        t,
-                        "Приоритет"
-                      )}
+                      {`Категории (максимум ${MAX_SELECTED_CATEGORIES})`}
                     </p>
-                    <div className="flex flex-wrap gap-x-6 gap-y-2 p-3 rounded-lg items-center">
-                      {priorityOptions.map(({ value, color, bgText }) => (
-                        <label
-                          key={value}
-                          className="flex items-center gap-2 cursor-pointer hover:opacity-80"
+                    <div className="flex flex-wrap gap-2">
+                      {availableCategories.map((cat) => (
+                        <button
+                          key={cat._id}
+                          type="button"
+                          onClick={() => toggleCategory(cat._id)}
+                          className={getCategoryClass(
+                            cat._id,
+                            formData.categoryIds,
+                            formData.type
+                          )}
+                          disabled={
+                            !formData.categoryIds.includes(cat._id) &&
+                            formData.categoryIds.length >=
+                              MAX_SELECTED_CATEGORIES
+                          }
                         >
-                          <input
-                            type="radio"
-                            value={value}
-                            checked={formData.priority === value}
-                            onChange={() =>
-                              handlePriorityChange(
-                                value as "LOW" | "MEDIUM" | "HIGH"
-                              )
-                            }
-                            style={{ accentColor: color }}
-                            className="w-5 h-5 cursor-pointer"
-                            name="priority"
-                          />
-                          <span className="text-sm text-gray-700">
-                            {bgText}
-                          </span>
-                        </label>
+                          {cat.name}
+                        </button>
                       ))}
                     </div>
                   </div>
-                </div>
 
-                <div>
-                  <p className="text-sm font-medium mb-3 text-gray-700">
-                    {`Категории (максимум ${MAX_SELECTED_CATEGORIES})`}
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {availableCategories.map((cat) => (
+                  <div>
+                    <FileAttachmentBtn
+                      attachments={attachments}
+                      setAttachments={setAttachments}
+                    />
+                  </div>
+
+                  <div className="flex justify-center gap-3 pt-4 border-t border-gray-300 mt-6">
+                    <Dialog.Close asChild>
                       <button
-                        key={cat._id}
                         type="button"
-                        onClick={() => toggleCategory(cat._id)}
-                        className={getCategoryClass(
-                          cat._id,
-                          formData.categoryIds,
-                          formData.type
-                        )}
-                        disabled={
-                          !formData.categoryIds.includes(cat._id) &&
-                          formData.categoryIds.length >= MAX_SELECTED_CATEGORIES
-                        }
+                        className="px-6 py-2 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                       >
-                        {cat.name}
+                        {getBulgarianText("cancel", t, "Отказ")}
                       </button>
-                    ))}
+                    </Dialog.Close>
+                    <button
+                      type="submit"
+                      disabled={isLoading}
+                      className={getSubmitButtonClass(formData.type)}
+                    >
+                      {isLoading
+                        ? getBulgarianText("saving", t, "Записване...")
+                        : props.mode === "edit"
+                        ? getBulgarianText("saveChanges", t, "Запази промените")
+                        : getBulgarianText("submit", t, "Изпрати")}
+                    </button>
                   </div>
                 </div>
+              </form>
+            </div>
+            {/* --- END: Scrollable Form Content --- */}
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
 
-                <div>
-                  <FileAttachmentBtn
-                    attachments={attachments}
-                    setAttachments={setAttachments}
-                  />
-                </div>
-
-                <div className="flex justify-center gap-3 pt-4 border-t border-gray-300 mt-6">
-                  <Dialog.Close asChild>
-                    <button
-                      type="button"
-                      className="px-6 py-2 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                    >
-                      {getBulgarianText("cancel", t, "Отказ")}
-                    </button>
-                  </Dialog.Close>
-                  <button
-                    type="submit"
-                    disabled={isLoading}
-                    className={getSubmitButtonClass(formData.type)}
-                  >
-                    {isLoading
-                      ? getBulgarianText("saving", t, "Записване...")
-                      : props.mode === "edit"
-                      ? getBulgarianText("saveChanges", t, "Запази промените")
-                      : getBulgarianText("submit", t, "Изпрати")}
-                  </button>
-                </div>
-              </div>
-            </form>
-          </div>
-          {/* --- END: Scrollable Form Content --- */}
-        </Dialog.Content>
-      </Dialog.Portal>
-    </Dialog.Root>
+      {/* ADDED: Success Confirmation Modal */}
+      <SuccessConfirmationModal
+        isOpen={showSuccessModal}
+        onClose={handleSuccessModalClose}
+        title="Успех!"
+        message={successMessage}
+        autoCloseDuration={2000}
+      />
+    </>
   );
 };
 

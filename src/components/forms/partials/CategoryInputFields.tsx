@@ -33,8 +33,10 @@ interface CategoryInputFieldsProps {
   nameError: string | null;
   problem: string;
   setProblem: (value: string) => void;
+  problemError: string | null;
   suggestion: string;
   setSuggestion: (value: string) => void;
+  suggestionError: string | null;
   expertIds: string[];
   setExpertIds: (ids: string[]) => void;
   managerIds: string[];
@@ -54,8 +56,10 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
   nameError,
   problem,
   setProblem,
+  problemError,
   suggestion,
   setSuggestion,
+  suggestionError,
   expertIds,
   setExpertIds,
   managerIds,
@@ -448,7 +452,7 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
           htmlFor="categoryProblem"
           className="mb-1 block text-sm font-medium text-gray-700"
         >
-          {t("Проблем")}
+          {t("Проблем")} <span className="text-red-500">*</span>
         </label>
         <TextEditor
           content={problem}
@@ -457,7 +461,13 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
           minHeight="120px"
           maxHeight="120px"
         />
-        <p className={`${errorPlaceholderClass}`}>&nbsp;</p>
+        <p
+          className={`${errorPlaceholderClass} ${
+            problemError ? "text-red-500" : ""
+          }`}
+        >
+          {problemError || <>&nbsp;</>}
+        </p>
       </div>
 
       <div>
@@ -465,7 +475,7 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
           htmlFor="categorySuggestion"
           className="mb-1 block text-sm font-medium text-gray-700"
         >
-          {t("Предложение")}
+          {t("Предложение")} <span className="text-red-500">*</span>
         </label>
         <TextEditor
           content={suggestion}
@@ -474,7 +484,13 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
           minHeight="120px"
           maxHeight="120px"
         />
-        <p className={`${errorPlaceholderClass}`}>&nbsp;</p>
+        <p
+          className={`${errorPlaceholderClass} ${
+            suggestionError ? "text-red-500" : ""
+          }`}
+        >
+          {suggestionError || <>&nbsp;</>}
+        </p>
       </div>
     </>
   );

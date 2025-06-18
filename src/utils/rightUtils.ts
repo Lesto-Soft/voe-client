@@ -86,6 +86,33 @@ export const canViewUserProfile = (
     return true;
   }
 
+  // Rule 3: Managers can see experts/managers profiles of users with whom they share an expert/manager category
+  console.log("UR Current User: ", currentUser);
+  console.log("UR TARGET USER: ", targetUser);
+  if (
+    (currentUser.role?._id === ROLES.EXPERT ||
+      currentUser.role?._id === ROLES.ADMIN) &&
+    currentUser.managed_categories?.length > 0
+  ) {
+    const isManager = (currentUser.managed_categories || []).some(
+      (managed_category) => {
+        // Check if targetUser's expert categories contain any matches
+        const hasExpertMatch = (targetUser.expert_categories || []).some(
+          (expert_cat) => expert_cat._id === managed_category._id
+        );
+
+        // Check if targetUser's managed categories contain any matches
+        const hasManagedMatch = (targetUser.managed_categories || []).some(
+          (managed_cat) => managed_cat._id === managed_category._id
+        );
+
+        return hasExpertMatch || hasManagedMatch;
+      }
+    );
+
+    if (isManager) return true;
+  }
+
   // Add other rules here if needed, e.g., managers viewing their team.
   // For now, we'll assume other users cannot view profiles.
   // To allow all logged-in users to view any profile, simply return true here.

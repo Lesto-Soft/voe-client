@@ -51,6 +51,12 @@ export const GET_ACTIVE_CATEGORIES = gql`
       name
       problem
       suggestion
+      experts {
+        _id
+      }
+      managers {
+        _id
+      }
     }
   }
 `;

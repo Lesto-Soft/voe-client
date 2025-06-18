@@ -15,6 +15,12 @@ fragment CaseFragment on Case {
     categories {
         _id
         name
+        experts {
+          _id
+        }
+        managers {
+          _id
+        }
     }
     content
     status  

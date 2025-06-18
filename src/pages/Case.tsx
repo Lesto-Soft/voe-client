@@ -12,57 +12,77 @@ import { useCurrentUser } from "../context/UserContext";
 import { determineUserRightsForCase } from "../utils/rightUtils";
 import { ROLES } from "../utils/GLOBAL_PARAMETERS";
 
+// Authorization
+import { useAuthorization } from "../hooks/useAuthorization";
+import ForbiddenPage from "./ForbiddenPage";
+import PageStatusDisplay from "../components/global/PageStatusDisplay";
+
 const Case = () => {
   const { t } = useTranslation("dashboard");
   const { number: numberParam } = useParams<{ number: string }>();
   const currentUser = useCurrentUser();
 
-  let numericCaseNumber: number | undefined = undefined;
-  if (numberParam) {
-    const parsed = parseInt(numberParam, 10);
-    if (!isNaN(parsed) && parsed > 0) {
-      numericCaseNumber = parsed;
-    }
+  if (
+    !numberParam ||
+    isNaN(parseInt(numberParam, 10)) ||
+    parseInt(numberParam, 10) <= 0
+  ) {
+    return (
+      <PageStatusDisplay
+        notFound
+        message={`Номерът на сигнала "${
+          numberParam || ""
+        }" липсва или е невалиден.`}
+      />
+    );
   }
+  const numericCaseNumber = parseInt(numberParam, 10);
 
+  console.log("NUMBERIC CASE NUMBER: ", numericCaseNumber);
+  // 1. Fetch data as before
   const {
     caseData,
     loading: loadingCase,
     error: errorCase,
     refetch,
-  } = useGetCaseByCaseNumber(numericCaseNumber ?? 0, currentUser.role?._id);
+  } = useGetCaseByCaseNumber(numericCaseNumber, currentUser.role?._id);
 
-  if (!numberParam) {
-    return <div>Case number is missing in the URL.</div>;
-  }
-  if (!numericCaseNumber) {
-    return (
-      <div>
-        Invalid case number provided: "{numberParam}". Please check the URL.
-      </div>
-    );
-  }
+  console.log(caseData);
 
-  if (loadingCase) {
-    return <div>Loading case data...</div>;
+  // 2. Call the authorization hook with the fetched data
+  const { isAllowed, isLoading: authLoading } = useAuthorization({
+    type: "case",
+    data: caseData,
+  });
+
+  // 3. Handle all loading and error states
+  if (loadingCase || authLoading) {
+    // Using the 'message' prop here is good for context-specific text.
+    return <PageStatusDisplay loading message="Зареждане на сигнал..." />;
   }
 
   if (errorCase) {
-    console.error(`Error loading case ${numericCaseNumber}:`, errorCase);
-    return (
-      <div>
-        Error loading case data for case "{numericCaseNumber}". Please try again
-        later.
-      </div>
-    );
+    return <PageStatusDisplay error={errorCase} />;
   }
 
   if (!caseData) {
-    return <div>No case found for case number "{numericCaseNumber}".</div>;
+    return (
+      <PageStatusDisplay
+        notFound
+        message={`Не беше намерен сигнал с номер: "${numericCaseNumber}".`}
+      />
+    );
+  }
+
+  // 4. Handle forbidden access
+  if (!isAllowed) {
+    return <ForbiddenPage />;
   }
 
   const c = caseData as ICase;
-  const userRights = determineUserRightsForCase(currentUser, c);
+  // If all checks pass, render the page
+  // The 'userRights' logic can still be used to control UI elements within the page
+  const userRights = determineUserRightsForCase(currentUser, caseData as ICase);
 
   if (
     !userRights ||

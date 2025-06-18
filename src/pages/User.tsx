@@ -25,6 +25,9 @@ import SuccessConfirmationModal from "../components/modals/SuccessConfirmationMo
 import { ROLES } from "../utils/GLOBAL_PARAMETERS";
 import { containsAnyCategoryById } from "../utils/arrayUtils";
 
+import { useAuthorization } from "../hooks/useAuthorization";
+import ForbiddenPage from "./ForbiddenPage";
+
 const User: React.FC = () => {
   const { username: userUsernameFromParams } = useParams<{
     username: string;
@@ -47,12 +50,19 @@ const User: React.FC = () => {
   const currentUser = useCurrentUser() as IMe | undefined;
 
   // --- GraphQL Hooks ---
+  // 1. Fetch data
   const {
     loading: userLoading,
     error: userError,
     user,
     refetch: refetchUser, // <-- Get refetch function
   } = useGetFullUserByUsername(userUsernameFromParams);
+
+  // 2. Call the authorization hook with the fetched data
+  const { isAllowed, isLoading: authLoading } = useAuthorization({
+    type: "user",
+    data: user,
+  });
 
   const {
     updateUser,
@@ -127,44 +137,45 @@ const User: React.FC = () => {
     }
   };
 
+  // 3. Handle all loading, error, and not found states
   if (userUsernameFromParams === undefined) {
     return (
       <PageStatusDisplay
         notFound
-        message="User Username не е намерен в URL адреса."
-        height="h-screen"
+        message="Потребителското име не беше намерено в адреса."
       />
     );
   }
 
-  if (userLoading && !user) {
+  if (userLoading || authLoading) {
     return (
       <PageStatusDisplay
         loading
         message="Зареждане на потребителски данни..."
-        height="h-[calc(100vh-6rem)]"
       />
     );
   }
 
   if (userError) {
-    return (
-      <PageStatusDisplay
-        error={{ message: userError.message }}
-        message={`Грешка при зареждане на потребител с ID: ${userUsernameFromParams}.`}
-        height="h-[calc(100vh-6rem)]"
-      />
-    );
+    return <PageStatusDisplay error={userError} />;
   }
 
   if (!user) {
     return (
       <PageStatusDisplay
         notFound
-        message={`Потребител с Username: ${userUsernameFromParams} не е намерен.`}
-        height="h-[calc(100vh-6rem)]"
+        message={`Потребител с потребителско име: '${userUsernameFromParams}' не е намерен.`}
       />
     );
+  }
+
+  if (!isAllowed) {
+    return <ForbiddenPage />;
+  }
+
+  // 4. Handle forbidden access
+  if (!isAllowed) {
+    return <ForbiddenPage />;
   }
 
   const activityCounts = {

@@ -34,6 +34,9 @@ import CategoryStatisticsPanel from "../components/features/categoryAnalytics/Ca
 // Constants
 import { ROLES } from "../utils/GLOBAL_PARAMETERS";
 
+import { useAuthorization } from "../hooks/useAuthorization";
+import ForbiddenPage from "./ForbiddenPage";
+
 // Define a lean user type that includes the role ID, matching GET_LEAN_USERS
 interface ILeanUserForForm {
   _id: string;
@@ -47,6 +50,14 @@ const Category: React.FC = () => {
   const navigate = useNavigate(); // Hook for navigation
   const currentUser = useCurrentUser() as IMe | undefined;
 
+  // --- State for the edit modal ---
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [formHasUnsavedChanges, setFormHasUnsavedChanges] = useState(false);
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  const [successModalMessage, setSuccessModalMessage] = useState("");
+
+  // --- GraphQL hooks for editing ---
+  // 1. Fetch data
   const {
     loading: categoryLoading,
     error: categoryError,
@@ -54,13 +65,12 @@ const Category: React.FC = () => {
     refetch: refetchCategory, // Expose refetch
   } = useGetCategoryByName(categoryNameFromParams);
 
-  // --- NEW: State for the edit modal ---
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [formHasUnsavedChanges, setFormHasUnsavedChanges] = useState(false);
-  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
-  const [successModalMessage, setSuccessModalMessage] = useState("");
+  // 2. Call the authorization hook with the fetched data
+  const { isAllowed, isLoading: authLoading } = useAuthorization({
+    type: "category",
+    data: category,
+  });
 
-  // --- NEW: GraphQL hooks for editing ---
   const {
     updateCategory,
     loading: updateCategoryLoading,
@@ -171,7 +181,8 @@ const Category: React.FC = () => {
     }
   };
 
-  if (categoryLoading && !category) {
+  // 3. Handle all loading, error, and not found states
+  if (categoryLoading || authLoading || allUsersForFormLoading) {
     return (
       <PageStatusDisplay
         loading
@@ -180,29 +191,20 @@ const Category: React.FC = () => {
     );
   }
 
-  // Combine page-level errors with form-related errors for display
   const pageError = categoryError || allUsersForFormError;
   if (pageError) {
-    return (
-      <PageStatusDisplay
-        error={{ message: pageError.message }}
-        message={`Грешка при зареждане на категория '${
-          categoryNameFromParams || ""
-        }'.`}
-      />
-    );
+    return <PageStatusDisplay error={pageError} />;
   }
 
   if (!category) {
-    return (
-      <PageStatusDisplay
-        notFound
-        categoryName={categoryNameFromParams}
-        message={`Категорията '${
-          categoryNameFromParams || "не е посочено име"
-        }' не можа да бъде намерена или нямате достъп.`}
-      />
-    );
+    // --- REFINED: Using the 'categoryName' prop ---
+    // This lets the PageStatusDisplay component build the specific "Not Found" message itself.
+    return <PageStatusDisplay notFound categoryName={categoryNameFromParams} />;
+  }
+
+  // 4. Handle forbidden access
+  if (!isAllowed) {
+    return <ForbiddenPage />;
   }
 
   return (

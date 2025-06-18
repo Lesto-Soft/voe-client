@@ -1,6 +1,5 @@
-import { ICase, IMe, IUser } from "../db/interfaces";
-import { ROLES } from "./GLOBAL_PARAMETERS";
-import { CASE_STATUS } from "./GLOBAL_PARAMETERS";
+import { ICase, IMe, IUser, ICategory } from "../db/interfaces";
+import { ROLES, CASE_STATUS } from "./GLOBAL_PARAMETERS";
 
 export const checkNormal = (userRoleId: string): boolean => {
   if (!userRoleId) return false;
@@ -68,4 +67,63 @@ export const determineUserRightsForCase = (
   }
 
   return rights;
+};
+
+// --- NEW: Function to check view rights for a User Profile ---
+export const canViewUserProfile = (
+  currentUser: IMe,
+  targetUser: IUser
+): boolean => {
+  if (!currentUser || !targetUser) return false;
+
+  // Rule 1: Admins can see any profile.
+  if (currentUser.role?._id === ROLES.ADMIN) {
+    return true;
+  }
+
+  // Rule 2: Users can see their own profile.
+  if (currentUser._id === targetUser._id) {
+    return true;
+  }
+
+  // Add other rules here if needed, e.g., managers viewing their team.
+  // For now, we'll assume other users cannot view profiles.
+  // To allow all logged-in users to view any profile, simply return true here.
+  return false;
+};
+
+// --- NEW: Function to check view rights for a Category Page ---
+export const canViewCategory = (
+  currentUser: IMe,
+  category: ICategory
+): boolean => {
+  if (!currentUser || !category) return false;
+
+  // Rule 1: Admins can see any category.
+  if (currentUser.role?._id === ROLES.ADMIN) {
+    return true;
+  }
+
+  // Rule 2: Experts and Managers of that specific category can view it.
+  const isExpert = (category.experts || []).some(
+    (expert) => expert._id === currentUser._id
+  );
+  const isManager = (category.managers || []).some(
+    (manager) => manager._id === currentUser._id
+  );
+
+  if (isExpert || isManager) {
+    return true;
+  }
+
+  return false;
+};
+
+// --- NEW: Function to check view rights for a Case Page ---
+export const canViewCase = (currentUser: IMe, caseData: ICase): boolean => {
+  if (!currentUser || !caseData) return false;
+
+  // Use the existing rights determination function. If the user has *any* right, they can view.
+  const rights = determineUserRightsForCase(currentUser, caseData);
+  return rights.length > 0;
 };

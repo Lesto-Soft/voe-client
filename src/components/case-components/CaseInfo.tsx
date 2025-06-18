@@ -95,7 +95,8 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
           </h3>
           <div className="hidden lg:flex lg:gap-2">
             {(rights.includes(USER_RIGHTS.CREATOR) ||
-              rights.includes(USER_RIGHTS.ADMIN)) &&
+              rights.includes(USER_RIGHTS.ADMIN) ||
+              rights.includes(USER_RIGHTS.MANAGER)) &&
               status !== CASE_STATUS.AWAITING_FINANCE &&
               status !== CASE_STATUS.CLOSED && (
                 <CaseDialog

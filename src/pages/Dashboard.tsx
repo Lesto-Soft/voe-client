@@ -50,7 +50,6 @@ const Dashboard = () => {
   const [clearFiltersSignal, setClearFiltersSignal] = useState(0);
   const [fitler, setFilter] = useState(true);
   const currentUser = useCurrentUser();
-  console.log("Current User: ", currentUser);
 
   const allSubmenus = useMemo(
     () => [

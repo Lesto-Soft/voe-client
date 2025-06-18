@@ -45,6 +45,12 @@ fragment FullUserFragment on User {
         categories {
           _id
           name
+          experts {
+            _id
+          }
+          managers {
+            _id
+          }
         }
       }
       answers {
@@ -83,10 +89,22 @@ fragment FullUserFragment on User {
       expert_categories {
         _id
         name
+        experts {
+          _id
+        }
+        managers {
+          _id
+        }
       }
       managed_categories {
         _id
         name
+        experts {
+          _id
+        }
+        managers {
+          _id
+        }
       }
 }`;
 

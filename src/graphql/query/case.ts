@@ -9,6 +9,12 @@ fragment CaseFragment on Case {
       name
       position
       username
+      expert_categories {
+        _id
+      }
+      managed_categories {
+        _id
+      }
     }
     priority
     type
@@ -36,6 +42,12 @@ fragment CaseHistoryFragment on CaseHistory {
         name
         username
         _id
+        expert_categories {
+          _id
+        }
+        managed_categories {
+          _id
+        }
       }
       old_type
       new_type
@@ -62,17 +74,35 @@ fragment AnswerFragment on Answer {
         name
         username
         position
+        expert_categories {
+          _id
+        }
+        managed_categories {
+          _id
+        }
       }
       approved{
         _id
         name
         username
+        expert_categories {
+          _id
+        }
+        managed_categories {
+          _id
+        }
       }
       approved_date
       financial_approved{
         _id
         name
         username
+        expert_categories {
+          _id
+        }
+        managed_categories {
+          _id
+        }
       }
       financial_approved_date
       needs_finance
@@ -85,6 +115,12 @@ fragment AnswerFragment on Answer {
           _id
           username
           name
+          expert_categories {
+            _id
+          }
+          managed_categories {
+            _id
+          }
         }
       }
         
@@ -98,6 +134,12 @@ const commentFragment = `
           name
           position
           _id
+          expert_categories {
+            _id
+          }
+          managed_categories {
+            _id
+          }
         }
         content
         date
@@ -128,12 +170,24 @@ export const GET_ANALYTITCS_DATA_CASES = gql`
           name
           username
           avatar
+          expert_categories {
+            _id
+          }
+          managed_categories {
+            _id
+          }
         }
         creator {
           _id
           name
           username
           avatar
+          expert_categories {
+            _id
+          }
+          managed_categories {
+            _id
+          }
         }
       }
       rating {
@@ -144,6 +198,12 @@ export const GET_ANALYTITCS_DATA_CASES = gql`
           name
           username
           avatar
+          expert_categories {
+            _id
+          }
+          managed_categories {
+            _id
+          }
         }
       }
     }

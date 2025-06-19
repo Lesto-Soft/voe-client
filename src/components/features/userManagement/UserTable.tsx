@@ -8,7 +8,9 @@ import Pagination from "../../tables/Pagination"; // Adjust path
 import { capitalizeFirstLetter } from "../../../utils/stringUtils"; // Adjust path
 import { isNullOrEmptyArray } from "../../../utils/arrayUtils"; // Ensure this path is correct
 import UserLink from "../../global/UserLink";
-import { IUser } from "../../../db/interfaces";
+import { IMe, IUser } from "../../../db/interfaces";
+import { useCurrentUser } from "../../../context/UserContext";
+import { ROLES } from "../../../utils/GLOBAL_PARAMETERS";
 
 interface UserTableProps {
   users: IUser[];
@@ -51,6 +53,7 @@ const UserTable: React.FC<UserTableProps> = ({
 }) => {
   const [showSkeleton, setShowSkeleton] = useState(true);
   const skeletonTimerRef = useRef<number | null>(null);
+  const currentUser = useCurrentUser() as IMe | undefined;
 
   useEffect(() => {
     if (isLoadingUsers) {
@@ -238,7 +241,7 @@ const UserTable: React.FC<UserTableProps> = ({
                 ? "bg-green-50 text-green-500 border border-green-100 opacity-75"
                 : "bg-green-100 text-green-700 border border-green-200"
             }`}
-                              title="Financial Approver"
+                              title="Финансов одобрител"
                             >
                               $
                             </span>
@@ -291,6 +294,10 @@ const UserTable: React.FC<UserTableProps> = ({
                           } inline-flex justify-center items-center rounded bg-sky-100 p-1.5 text-sky-700 border border-sky-200 hover:border-sky-300 transition-all duration-150 ease-in-out hover:cursor-pointer hover:bg-sky-200 hover:text-sky-800 active:bg-sky-300 active:scale-[0.96] disabled:bg-gray-100 disabled:text-gray-400 disabled:opacity-70 disabled:cursor-not-allowed disabled:scale-100`}
                           aria-label={`Редактирай ${user.username}`}
                           title={`Редактирай ${user.username}`}
+                          disabled={
+                            currentUser?.role?._id !== ROLES.ADMIN &&
+                            user.role?._id === ROLES.ADMIN
+                          }
                           // disabled={
                           //   isInactive ||
                           //   createLoading ||

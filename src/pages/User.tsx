@@ -200,7 +200,10 @@ const User: React.FC = () => {
         user?.managed_categories || []
       ));
   const isSelf = currentUser?._id === user?._id;
-  const canEdit = isAdmin || isManagerForCategory || isSelf;
+  const canEdit =
+    isAdmin ||
+    (isManagerForCategory && user?.role?._id !== ROLES.ADMIN) || // up to us if we want to allow non-admin (manager) users to edit admins
+    isSelf;
 
   return (
     <>

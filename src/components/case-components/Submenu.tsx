@@ -59,8 +59,6 @@ const Submenu: React.FC<SubmenuProps> = ({
   const isCreatorAndNothingElse =
     userRights.length === 1 && userRights.includes("creator");
 
-  console.log(isCreatorAndNothingElse);
-
   const submenu = [
     {
       key: "answers",
@@ -126,7 +124,8 @@ const Submenu: React.FC<SubmenuProps> = ({
         {view === "answers" && (
           <>
             {userRights.includes(USER_RIGHTS.EXPERT) ||
-            userRights.includes(USER_RIGHTS.MANAGER) ? (
+            userRights.includes(USER_RIGHTS.MANAGER) ||
+            userRights.includes(USER_RIGHTS.ADMIN) ? (
               <AddAnswer
                 caseNumber={caseData.case_number}
                 caseId={caseData._id}
@@ -150,7 +149,8 @@ const Submenu: React.FC<SubmenuProps> = ({
                     const showThisAnswer =
                       answer.approved ||
                       userRights.includes(USER_RIGHTS.EXPERT) ||
-                      userRights.includes(USER_RIGHTS.MANAGER);
+                      userRights.includes(USER_RIGHTS.MANAGER) ||
+                      userRights.includes(USER_RIGHTS.ADMIN);
                     return showThisAnswer ? (
                       <div key={answer._id}>
                         <div className="flex lg:hidden flex-col gap-4 mb-8">

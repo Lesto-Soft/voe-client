@@ -38,7 +38,7 @@ interface ICaseInfoProps {
   refetch: () => void;
   attachments?: string[];
   rights: string[];
-  availableCategories: ICategory[];
+  // availableCategories: ICategory[];
 }
 
 const CaseInfo: React.FC<ICaseInfoProps> = ({
@@ -56,7 +56,7 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
   refetch,
   attachments = [],
   rights = [],
-  availableCategories,
+  // availableCategories,
 }) => {
   const { t } = useTranslation("dashboard");
   const statusStyle = getStatusStyle(status);

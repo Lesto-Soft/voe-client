@@ -11,7 +11,6 @@ const CategoryLink = (category: ICategory) => {
   if (!category || !currentUser) {
     return null;
   }
-  console.log(category);
   const isAllowed = canViewCategory(currentUser, category);
   const baseClasses =
     "inline-block max-w-full truncate whitespace-nowrap px-2 py-0.5 rounded-md text-xs font-bold transition-colors duration-150 ease-in-out bg-sky-100 text-sky-800 border border-sky-200";

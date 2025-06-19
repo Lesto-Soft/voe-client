@@ -69,34 +69,32 @@ const getCategoryClass = (
     selectedCategoryIds.length >= MAX_SELECTED_CATEGORIES && !isSelected;
 
   let baseClass =
-    "px-4 py-2 text-sm font-semibold rounded-full border-2 transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2";
+    "px-4 py-2 text-sm font-semibold rounded-full border-2 transition-all duration-200 ease-in-out focus:outline-none hover:cursor-pointer disabled:cursor-not-allowed";
 
   if (isSelected) {
     if (caseType === "SUGGESTION") {
-      baseClass +=
-        " bg-green-600 text-white border-green-700 focus:ring-green-500";
+      baseClass += " bg-green-600 text-white border-green-700";
     } else {
-      baseClass += " bg-red-600 text-white border-red-700 focus:ring-red-500";
+      baseClass += " bg-red-600 text-white border-red-700";
     }
   } else {
-    baseClass +=
-      " bg-white text-gray-700 border-gray-300 hover:bg-gray-100 focus:ring-blue-500";
+    baseClass += " bg-white text-gray-700 border-gray-300 hover:bg-gray-100";
   }
 
   if (isMaxReached) {
-    baseClass += " cursor-not-allowed opacity-50";
+    baseClass += "cursor-not-allowed opacity-50";
   }
   return baseClass;
 };
 
 const getSubmitButtonClass = (caseType: "PROBLEM" | "SUGGESTION") => {
   const baseClasses =
-    "px-6 py-2 rounded-md border border-transparent text-white font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed transition-colors duration-200";
+    "px-6 py-2 hover:cursor-pointer rounded-md border border-transparent text-white font-semibold focus:outline-none disabled:cursor-not-allowed transition-colors duration-200";
 
   if (caseType === "SUGGESTION") {
-    return `${baseClasses} bg-green-600 hover:bg-green-700 focus:ring-green-500 disabled:bg-green-400`;
+    return `${baseClasses} bg-green-600 hover:bg-green-700 disabled:bg-green-400`;
   }
-  return `${baseClasses} bg-red-600 hover:bg-red-700 focus:ring-red-500 disabled:bg-red-400`;
+  return `${baseClasses} bg-red-600 hover:bg-red-700 disabled:bg-red-400`;
 };
 
 const getBulgarianText = (key: string, t: any, fallback: string) => {
@@ -390,7 +388,7 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
                   </Dialog.Title>
                   <button
                     onClick={attemptClose}
-                    className="absolute hover:cursor-pointer top-4 right-4 text-gray-500 hover:text-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500 rounded-full p-1 transition-colors"
+                    className="absolute hover:cursor-pointer top-4 right-4 text-gray-500 hover:text-gray-800 focus:outline-none rounded-full p-1 transition-colors"
                     aria-label="Close"
                   >
                     <XMarkIcon className="h-6 w-6" />
@@ -437,7 +435,7 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
                         editable={true}
                         minHeight="120px"
                         maxHeight="300px"
-                        wrapperClassName="w-full border border-gray-300 rounded-md shadow-sm overflow-hidden bg-white focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500"
+                        wrapperClassName="w-full border border-gray-300 rounded-md shadow-sm overflow-hidden bg-white"
                       />
                     </div>
                     {/* ... form fields remain the same */}
@@ -578,14 +576,16 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
                       <button
                         type="button"
                         onClick={attemptClose}
-                        className="px-6 py-2 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                        className="px-6 py-2 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:outline-none hover:cursor-pointer"
                       >
                         {getBulgarianText("cancel", t, "Отказ")}
                       </button>
                       <button
                         type="submit"
                         disabled={isLoading}
-                        className={getSubmitButtonClass(formData.type)}
+                        className={`${getSubmitButtonClass(
+                          formData.type
+                        )} hover:cursor-pointer`}
                       >
                         {isLoading
                           ? getBulgarianText("saving", t, "Записване...")
@@ -617,7 +617,7 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
                   <AlertDialog.Cancel asChild>
                     <button
                       onClick={handleCancelClose}
-                      className="rounded bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2"
+                      className="rounded bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200 focus:outline-none hover:cursor-pointer"
                     >
                       Отказ
                     </button>
@@ -625,7 +625,7 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
                   <AlertDialog.Action asChild>
                     <button
                       onClick={handleConfirmClose}
-                      className="rounded bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
+                      className="rounded bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 focus:outline-none hover:cursor-pointer"
                     >
                       Излез
                     </button>

@@ -268,7 +268,11 @@ const NavBar: React.FC<{ me: IMe }> = ({ me }) => {
                     <p className="text-xs text-gray-500">
                       <span>
                         {" " + capitalizeFirstLetter(me.role.name) || "N/A"}
-                        {me.managed_categories.length > 0 && " (Мениджър)"}
+                        {me.managed_categories.length > 0 && " - Мениджър"}
+                      </span>
+
+                      <span>
+                        {me.financial_approver && " (финансов одобрител)"}
                       </span>
                     </p>
                   </div>

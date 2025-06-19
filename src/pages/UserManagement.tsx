@@ -116,6 +116,7 @@ const UserManagement: React.FC = () => {
     users: usersForRoleCountsData,
     loading: loadingUsersForRoleCounts,
     error: errorUsersForRoleCounts,
+    refetch: refetchUsersForRoleCounts,
   } = useGetAllUsers(textAttributeFiltersOnlyInput);
 
   const {
@@ -242,6 +243,7 @@ const UserManagement: React.FC = () => {
       await Promise.all([
         refetchUsers(),
         refetchUserCount(),
+        refetchUsersForRoleCounts(), // added since we can now change user.expert_categories / user.managed_categories through the UserForm
         refetchRoles ? refetchRoles() : Promise.resolve(),
       ]);
       // --- MODIFIED ORDER ---

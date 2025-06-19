@@ -12,9 +12,10 @@ import UserInputFields from "./partials/UserInputFields";
 import PasswordFields from "./partials/PasswordFields";
 import AvatarUploadSection from "./partials/AvatarUploadSection";
 import CategorySelectionDropdown from "./partials/CategorySelectionDropdown"; // NEW
-import { IUser, ICategory } from "../../db/interfaces";
+import { IUser, ICategory, IMe } from "../../db/interfaces";
 import { useGetActiveCategories } from "../../graphql/hooks/category"; // NEW
 import { ROLES } from "../../utils/GLOBAL_PARAMETERS"; // NEW
+import { useCurrentUser } from "../../context/UserContext";
 
 const VALIDATION = {
   USERNAME: { MIN: 3, MAX: 20 },
@@ -75,6 +76,7 @@ const UserForm: React.FC<UserFormProps> = ({
 }) => {
   const serverBaseUrl = import.meta.env.VITE_API_URL || "";
   const isEditing = !!initialData;
+  const currentUser = useCurrentUser() as IMe | undefined;
 
   const {
     username,
@@ -134,6 +136,16 @@ const UserForm: React.FC<UserFormProps> = ({
   const [initialManagedCategories, setInitialManagedCategories] = useState<
     string[]
   >([]);
+
+  const filteredRoles = useMemo(() => {
+    // isAdmin is true for both Expert (Managers) and Admin so we need to
+    // explicitly check the currentUser.role._id
+    if (currentUser?.role?._id !== ROLES.ADMIN) {
+      // Filter out ADMIN role if current user is not an admin
+      return roles.filter((role) => role._id !== ROLES.ADMIN);
+    }
+    return roles;
+  }, [roles, isAdmin]);
 
   const [isCropModalOpen, setIsCropModalOpen] = useState(false);
   const [imageToCrop, setImageToCrop] = useState<string | null>(null);
@@ -439,7 +451,7 @@ const UserForm: React.FC<UserFormProps> = ({
             setPosition={setPosition}
             roleId={roleId}
             onRoleChange={handleRoleChange} // CHANGED: Pass the new handler
-            roles={roles}
+            roles={filteredRoles}
             financialApprover={financialApprover}
             setFinancialApprover={setFinancialApprover}
             errorPlaceholderClass={errorPlaceholderClass}

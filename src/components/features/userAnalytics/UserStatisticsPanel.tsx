@@ -166,16 +166,16 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
             iconColorClass="text-blue-500"
           />
           <StatItem
-            icon={ChatBubbleLeftEllipsisIcon}
-            label="Коментари"
-            value={totalComments}
-            iconColorClass="text-purple-500"
-          />
-          <StatItem
             icon={ChatBubbleLeftRightIcon}
             label="Отговори"
             value={totalAnswers}
             iconColorClass="text-green-500"
+          />
+          <StatItem
+            icon={ChatBubbleLeftEllipsisIcon}
+            label="Коментари"
+            value={totalComments}
+            iconColorClass="text-purple-500"
           />
         </div>
 

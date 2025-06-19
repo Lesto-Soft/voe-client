@@ -24,8 +24,6 @@ const CategorySelectionDropdown: React.FC<CategorySelectionDropdownProps> = ({
   errorPlaceholderClass,
   disabled = false, // ADDED: Destructure with a default value
 }) => {
-  console.log("SELECTED: ", selectedCategoryIds);
-  console.log("ALL: ", allCategories);
   const [isDropdownVisible, setIsDropdownVisible] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const displayInputRef = useRef<HTMLInputElement>(null);

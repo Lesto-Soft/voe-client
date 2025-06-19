@@ -38,7 +38,6 @@ const Case = () => {
   }
   const numericCaseNumber = parseInt(numberParam, 10);
 
-  console.log("NUMBERIC CASE NUMBER: ", numericCaseNumber);
   // 1. Fetch data as before
   const {
     caseData,
@@ -46,8 +45,6 @@ const Case = () => {
     error: errorCase,
     refetch,
   } = useGetCaseByCaseNumber(numericCaseNumber, currentUser.role?._id);
-
-  console.log(caseData);
 
   // 2. Call the authorization hook with the fetched data
   const { isAllowed, isLoading: authLoading } = useAuthorization({

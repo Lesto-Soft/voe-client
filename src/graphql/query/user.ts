@@ -21,6 +21,9 @@ fragment UserFragment on User {
      
 }`;
 
+// we do so many populates since in UserActivityItemCard we need to get case.creator._id, case.categories._id, and case.answers.needs_finance
+// for each case, answers.case, comment.case, and comment.answers.case and yeah
+// we do this to get the proper CaseLink authorization
 const fullUserFragment = `
 fragment FullUserFragment on User {
       _id
@@ -42,6 +45,9 @@ fragment FullUserFragment on User {
         status
         type
         priority
+        creator {
+          _id
+        }
         categories {
           _id
           name
@@ -51,6 +57,9 @@ fragment FullUserFragment on User {
           managers {
             _id
           }
+        }
+        answers {
+          needs_finance
         }
       }
       answers {
@@ -68,6 +77,16 @@ fragment FullUserFragment on User {
           _id
           case_number
           status
+          creator {
+            _id
+          }
+          categories {
+            _id
+            name
+          }
+          answers {
+            needs_finance
+          }
         }
       }
       comments {
@@ -77,12 +96,34 @@ fragment FullUserFragment on User {
         case {
           _id
           case_number
+          status
+          creator {
+            _id
+          }
+          categories {
+            _id
+            name
+          }
+          answers {
+            needs_finance
+          }
         }
         answer {
           _id
           case {
             _id
             case_number
+            status
+            creator {
+              _id
+            }
+            categories {
+              _id
+              name
+            }
+            answers {
+              needs_finance
+            }
           }
         }
       }

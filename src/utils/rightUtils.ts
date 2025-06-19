@@ -13,7 +13,7 @@ export const determineUserRightsForCase = (
   const rights = [];
 
   // --- Rule 1: Check if the user is the creator of the case ---
-  if (currentUser._id === caseData.creator._id) {
+  if (caseData.creator && currentUser._id === caseData.creator._id) {
     rights.push("creator");
   }
 
@@ -87,8 +87,6 @@ export const canViewUserProfile = (
   }
 
   // Rule 3: Managers can see experts/managers profiles of users with whom they share an expert/manager category
-  console.log("UR Current User: ", currentUser);
-  console.log("UR TARGET USER: ", targetUser);
   if (
     (currentUser.role?._id === ROLES.EXPERT ||
       currentUser.role?._id === ROLES.ADMIN) &&
@@ -148,7 +146,7 @@ export const canViewCategory = (
 
 // --- NEW: Function to check view rights for a Case Page ---
 export const canViewCase = (currentUser: IMe, caseData: ICase): boolean => {
-  if (!currentUser || !caseData) return false;
+  if (!currentUser || !caseData || !caseData.creator) return false;
 
   // Use the existing rights determination function. If the user has *any* right, they can view.
   const rights = determineUserRightsForCase(currentUser, caseData);

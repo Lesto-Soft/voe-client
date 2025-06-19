@@ -21,8 +21,6 @@ type AuthorizationInput =
 export const useAuthorization = ({ type, data }: AuthorizationInput) => {
   const currentUser = useCurrentUser() as IMe;
 
-  console.log("Helloge ", data);
-
   // The authorization check is memoized to prevent re-calculation on every render.
   const isAllowed = useMemo(() => {
     // If there's no current user or no data to check against, deny access.
@@ -32,7 +30,6 @@ export const useAuthorization = ({ type, data }: AuthorizationInput) => {
 
     switch (type) {
       case "case":
-        console.log("CAN VIEW CASE?: ", currentUser, data);
         return canViewCase(currentUser, data as ICase);
       case "user":
         return canViewUserProfile(currentUser, data as IUser);

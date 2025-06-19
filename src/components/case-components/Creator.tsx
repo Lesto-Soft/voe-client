@@ -14,7 +14,6 @@ const Creator: React.FC<CreatorProps> = ({
   enableAvatarPreview = true, // Default to true for better UX
 }) => {
   const serverBaseUrl = import.meta.env.VITE_API_URL || "";
-  console.log("Creator: ", creator);
 
   return (
     <div className="flex flex-col items-center w-42">

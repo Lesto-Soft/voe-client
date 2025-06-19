@@ -120,6 +120,10 @@ export const GET_CATEGORY_BY_NAME = gql`
           approved {
             _id
           }
+          needs_finance
+        }
+        categories {
+          _id
         }
       }
       archived

@@ -192,9 +192,7 @@ export const useDeleteUser = () => {
     useMutation(DELETE_USER);
   const deleteUser = async (id: string) => {
     try {
-      console.log("[HOOK] Deleting user with ID:", id);
       const response = await deleteUserMutation({ variables: { id } });
-      console.log("[HOOK PT2]");
       return response.data?.deleteUser;
     } catch (err) {
       console.error("Failed to delete user:", err);

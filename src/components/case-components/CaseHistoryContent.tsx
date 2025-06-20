@@ -26,114 +26,128 @@ const CaseHistoryContent: React.FC<{
 
   return (
     <ul className="space-y-3 text-sm overflow-y-auto">
-      {history.map((h) => (
-        <li
-          key={h._id}
-          className="text-gray-700 border-b-5 border-gray-200 pb-3 last:border-b-0"
-        >
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-6">
-              <span className="font-semibold text-gray-900">
-                <ShowDate date={h.date_change} />
-              </span>
-              <UserLink user={h.user} />
-            </div>
-          </div>
+      {history.map((h) => {
+        // --- START: Calculate the actual added and removed categories ---
+        const oldCategoryIds = new Set(h.old_categories?.map((cat) => cat._id));
+        const newCategoryIds = new Set(h.new_categories?.map((cat) => cat._id));
 
-          <div className="ml-0 space-y-2">
-            {h.old_content !== h.new_content && (
-              <div>
-                {compact
-                  ? getSimplifiedDifferences(h.old_content, h.new_content)
-                  : getDifferences(h.old_content, h.new_content)}
+        const removedCategories =
+          h.old_categories?.filter((cat) => !newCategoryIds.has(cat._id)) || [];
+        const addedCategories =
+          h.new_categories?.filter((cat) => !oldCategoryIds.has(cat._id)) || [];
+        // --- END: Calculation ---
+
+        return (
+          <li
+            key={h._id}
+            className="text-gray-700 border-b-5 border-gray-200 pb-3 last:border-b-0"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-6">
+                <span className="font-semibold text-gray-900">
+                  <ShowDate date={h.date_change} />
+                </span>
+                <UserLink user={h.user} />
               </div>
-            )}
+            </div>
 
-            {h.old_priority !== h.new_priority &&
-              h.old_priority &&
-              h.new_priority && (
+            <div className="ml-0 space-y-2">
+              {h.old_content !== h.new_content && (
+                <div>
+                  {compact
+                    ? getSimplifiedDifferences(h.old_content, h.new_content)
+                    : getDifferences(h.old_content, h.new_content)}
+                </div>
+              )}
+
+              {h.old_priority !== h.new_priority &&
+                h.old_priority &&
+                h.new_priority && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="text-gray-500 font-medium">
+                      {t("priority")}:
+                    </span>
+                    <span
+                      className={`px-2 py-1 rounded text-xs line-through ${getPriorityStyle(
+                        h.old_priority
+                      )}`}
+                    >
+                      <span className="flex items-center gap-2">
+                        <FlagIcon className="h-4 w-4" />
+                        {t(`${h.old_priority}`)}
+                      </span>
+                    </span>
+                    <span className="text-gray-400">→</span>
+                    <span
+                      className={`px-2 py-1 rounded text-xs font-bold ${getPriorityStyle(
+                        h.new_priority
+                      )}`}
+                    >
+                      <span className="flex items-center gap-2">
+                        <FlagIcon className="h-4 w-4" />
+                        {t(`${h.new_priority}`)}
+                      </span>
+                    </span>
+                  </div>
+                )}
+
+              {h.old_type !== h.new_type && (
                 <div className="flex items-center gap-2 text-sm">
                   <span className="text-gray-500 font-medium">
-                    {t("priority")}:
+                    {t("type", "Тип")}:
                   </span>
                   <span
-                    className={`px-2 py-1 rounded text-xs line-through ${getPriorityStyle(
-                      h.old_priority
+                    className={`px-2 py-1 rounded text-xs line-through ${getTypeBadgeStyle(
+                      h.old_type || ""
                     )}`}
                   >
-                    <span className="flex items-center gap-2">
-                      <FlagIcon className="h-4 w-4" />
-                      {t(`${h.old_priority}`)}
-                    </span>
+                    {t(`${h.old_type}`)}
                   </span>
                   <span className="text-gray-400">→</span>
                   <span
-                    className={`px-2 py-1 rounded text-xs font-bold ${getPriorityStyle(
-                      h.new_priority
+                    className={`px-2 py-1 rounded text-xs font-bold ${getTypeBadgeStyle(
+                      h.new_type || ""
                     )}`}
                   >
-                    <span className="flex items-center gap-2">
-                      <FlagIcon className="h-4 w-4" />
-                      {t(`${h.new_priority}`)}
-                    </span>
+                    {t(`${h.new_type}`)}
                   </span>
                 </div>
               )}
 
-            {h.old_type !== h.new_type && (
-              <div className="flex items-center gap-2 text-sm">
-                <span className="text-gray-500 font-medium">
-                  {t("type", "Тип")}:
-                </span>
-                <span
-                  className={`px-2 py-1 rounded text-xs line-through ${getTypeBadgeStyle(
-                    h.old_type || ""
-                  )}`}
-                >
-                  {t(`${h.old_type}`)}
-                </span>
-                <span className="text-gray-400">→</span>
-                <span
-                  className={`px-2 py-1 rounded text-xs font-bold ${getTypeBadgeStyle(
-                    h.new_type || ""
-                  )}`}
-                >
-                  {t(`${h.new_type}`)}
-                </span>
-              </div>
-            )}
-
-            {/* Categories diff */}
-            {(h.old_categories?.length > 0 || h.new_categories?.length > 0) && (
-              <div className="space-y-1">
-                <span className="text-gray-500 font-medium text-sm">
-                  {t("categories")}:
-                </span>
-                {h.old_categories?.length > 0 && (
-                  <div className="flex flex-wrap gap-1">
-                    {h.old_categories.map((cat) => (
-                      <span
-                        key={cat._id}
-                        className="relative after:content-[''] after:absolute after:top-1/3 after:left-1/20 after:w-9/10 after:h-[2px] after:bg-sky-700 after:pointer-events-none"
-                        title="Премахната категория"
-                      >
-                        <CategoryLinkWrapper category={cat} />
-                      </span>
-                    ))}
-                  </div>
-                )}
-                {h.new_categories?.length > 0 && (
-                  <div className="flex flex-wrap gap-1">
-                    {h.new_categories.map((cat) => (
-                      <CategoryLinkWrapper key={cat._id} category={cat} />
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </li>
-      ))}
+              {/* Categories diff - Now maps over the filtered arrays */}
+              {(removedCategories.length > 0 || addedCategories.length > 0) && (
+                <div className="space-y-1">
+                  <span className="text-gray-500 font-medium text-sm">
+                    {t("categories")}:
+                  </span>
+                  {removedCategories.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      <span className="text-xs text-gray-500">Премахнати:</span>
+                      {removedCategories.map((cat) => (
+                        <span
+                          key={cat._id}
+                          className="relative after:content-[''] after:absolute after:top-1/3 after:left-1/20 after:w-9/10 after:h-[2px] after:bg-sky-700 after:pointer-events-none"
+                          title="Премахната категория"
+                        >
+                          <CategoryLinkWrapper category={cat} />
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  {addedCategories.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      <span className="text-xs text-gray-500">Добавени:</span>
+                      {addedCategories.map((cat) => (
+                        <CategoryLinkWrapper key={cat._id} category={cat} />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </li>
+        );
+      })}
     </ul>
   );
 };

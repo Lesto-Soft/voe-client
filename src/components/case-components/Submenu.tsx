@@ -112,7 +112,7 @@ const Submenu: React.FC<SubmenuProps> = ({
       </div>
 
       {/* --- NEW: Scrollable Content Area --- */}
-      <div className="flex-grow overflow-y-auto pt-6 ml-6">
+      <div className="flex-grow overflow-y-auto pt-6">
         {view === "answers" && (
           <>
             {userRights.includes(USER_RIGHTS.EXPERT) ||
@@ -216,7 +216,7 @@ const Submenu: React.FC<SubmenuProps> = ({
 
         {view === "history" &&
           (caseData.history && caseData.history.length > 0 ? (
-            <div className="flex flex-col gap-4 mb-8">
+            <div className="flex flex-col gap-4 mb-8 ml-4">
               <CaseHistoryContent history={caseData.history} />
             </div>
           ) : (

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { ICaseHistory, ICategory } from "../../db/interfaces";
 import ShowDate from "../global/ShowDate";
 import UserLink from "../global/UserLink";
@@ -10,14 +10,21 @@ import {
 } from "../../utils/contentDifferences";
 import { FlagIcon } from "@heroicons/react/24/solid";
 import CategoryLink from "../global/CategoryLink";
+import { isHtmlContent, stripHtmlTags } from "../../utils/contentRenderer"; // Import helpers
+
+type ViewMode = "content" | "formatting";
 
 const CaseHistoryContent: React.FC<{
   history: ICaseHistory[];
   compact?: boolean;
 }> = ({ history, compact = false }) => {
   const { t } = useTranslation("history");
+  const [viewModes, setViewModes] = useState<{ [key: string]: ViewMode }>({});
 
-  // This is a workaround to handle the non-standard prop definition in your CategoryLink component.
+  const handleToggle = (historyId: string, mode: ViewMode) => {
+    setViewModes((prev) => ({ ...prev, [historyId]: mode }));
+  };
+
   const CategoryLinkWrapper = (props: { category: ICategory }) => {
     const categoryAsProps = { ...props.category };
     // @ts-ignore
@@ -27,20 +34,28 @@ const CaseHistoryContent: React.FC<{
   return (
     <ul className="space-y-3 text-sm overflow-y-auto">
       {history.map((h) => {
-        // --- START: Calculate the actual added and removed categories ---
         const oldCategoryIds = new Set(h.old_categories?.map((cat) => cat._id));
         const newCategoryIds = new Set(h.new_categories?.map((cat) => cat._id));
-
         const removedCategories =
           h.old_categories?.filter((cat) => !newCategoryIds.has(cat._id)) || [];
         const addedCategories =
           h.new_categories?.filter((cat) => !oldCategoryIds.has(cat._id)) || [];
-        // --- END: Calculation ---
+
+        const currentView = viewModes[h._id] || "content";
+
+        // --- START: Logic for disabling buttons ---
+        const oldContent = h.old_content || "";
+        const newContent = h.new_content || "";
+        const hasContentChange =
+          stripHtmlTags(oldContent) !== stripHtmlTags(newContent);
+        const hasFormattingChange =
+          isHtmlContent(oldContent) || isHtmlContent(newContent);
+        // --- END: Logic for disabling buttons ---
 
         return (
           <li
             key={h._id}
-            className="text-gray-700 border-b-5 border-gray-200 pb-3 last:border-b-0"
+            className="text-gray-700 border-b border-gray-200 pb-4 mb-4 last:border-b-0 last:pb-0 last:mb-0"
           >
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-6">
@@ -54,9 +69,38 @@ const CaseHistoryContent: React.FC<{
             <div className="ml-0 space-y-2">
               {h.old_content !== h.new_content && (
                 <div>
+                  {/* Show toggle only if there are formatting changes to see */}
+                  {hasFormattingChange && !compact && (
+                    <div className="flex items-center gap-1 mb-2">
+                      <button
+                        onClick={() => handleToggle(h._id, "content")}
+                        disabled={!hasContentChange}
+                        className={`px-2 py-0.5 text-xs rounded-md border transition-colors ${
+                          currentView === "content"
+                            ? "bg-blue-600 text-white border-blue-600"
+                            : "bg-white text-gray-600 border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
+                        }`}
+                      >
+                        Съдържание
+                      </button>
+
+                      <button
+                        onClick={() => handleToggle(h._id, "formatting")}
+                        disabled={!hasFormattingChange}
+                        className={`px-2 py-0.5 text-xs rounded-md border transition-colors ${
+                          currentView === "formatting"
+                            ? "bg-blue-600 text-white border-blue-600"
+                            : "bg-white text-gray-600 border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
+                        }`}
+                      >
+                        Форматиране
+                      </button>
+                    </div>
+                  )}
+
                   {compact
                     ? getSimplifiedDifferences(h.old_content, h.new_content)
-                    : getDifferences(h.old_content, h.new_content)}
+                    : getDifferences(h.old_content, h.new_content, currentView)}
                 </div>
               )}
 
@@ -114,7 +158,6 @@ const CaseHistoryContent: React.FC<{
                 </div>
               )}
 
-              {/* Categories diff - Now maps over the filtered arrays */}
               {(removedCategories.length > 0 || addedCategories.length > 0) && (
                 <div className="space-y-1">
                   <div className="text-gray-500 font-bold underline text-sm mb-1">

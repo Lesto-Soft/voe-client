@@ -67,11 +67,12 @@ const getRichTextSideBySide = (oldText: string, newText: string) => {
 
 /**
  * Main function to get content differences.
- * It decides which visualization to use (inline vs. side-by-side) based on content type.
+ * It decides which visualization to use based on content type or a forced mode.
  */
 export const getDifferences = (
   oldText: string | undefined,
-  newText: string | undefined
+  newText: string | undefined,
+  mode: "auto" | "content" | "formatting" = "auto" // <-- ADDED MODE PARAMETER
 ) => {
   const oldContent = oldText || "";
   const newContent = newText || "";
@@ -82,12 +83,20 @@ export const getDifferences = (
 
   const oldPlainText = stripHtmlTags(oldContent);
   const newPlainText = stripHtmlTags(newContent);
+
+  // --- ADDED: Logic to handle forced mode ---
+  if (mode === "content") {
+    return getInlineDifferences(oldPlainText, newPlainText);
+  }
+  if (mode === "formatting") {
+    return getRichTextSideBySide(oldContent, newContent);
+  }
+  // --- END: Added Logic ---
+
+  // Default 'auto' behavior
   const isRichTextChange =
     isHtmlContent(oldContent) || isHtmlContent(newContent);
 
-  // Use the rich text side-by-side view if:
-  // 1. Either the old or new content is HTML.
-  // 2. Or the plain text is identical but the raw content is not (i.e., a formatting-only change).
   if (
     isRichTextChange ||
     (oldPlainText === newPlainText && oldContent !== newContent)
@@ -95,14 +104,10 @@ export const getDifferences = (
     return getRichTextSideBySide(oldContent, newContent);
   }
 
-  // Fallback to inline diff for plain text changes.
   return getInlineDifferences(oldPlainText, newPlainText);
 };
 
-/**
- * Simplified differences for smaller UI components
- * Shows a compact summary of changes, now smarter about formatting.
- */
+// ... (getSimplifiedDifferences and getChangePreview remain the same)
 export const getSimplifiedDifferences = (
   oldText: string | undefined,
   newText: string | undefined
@@ -149,12 +154,9 @@ export const getSimplifiedDifferences = (
     );
   }
 
-  return null; // Should not be reached, but as a fallback.
+  return null;
 };
 
-/**
- * Get a preview of what changed for history summaries
- */
 export const getChangePreview = (
   oldText: string | undefined,
   newText: string | undefined

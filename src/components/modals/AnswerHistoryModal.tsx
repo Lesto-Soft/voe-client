@@ -1,16 +1,24 @@
-import React from "react";
+import React, { useState } from "react";
 import { ClockIcon } from "@heroicons/react/24/outline";
 import * as Dialog from "@radix-ui/react-dialog";
 import { useTranslation } from "react-i18next";
 import UserLink from "../global/UserLink";
 import { getDifferences } from "../../utils/contentDifferences";
 import ShowDate from "../global/ShowDate";
+import { IAnswerHistory } from "../../db/interfaces";
+import { isHtmlContent, stripHtmlTags } from "../../utils/contentRenderer"; // Import helpers
+
+type ViewMode = "content" | "formatting";
 
 const AnswerHistoryModal: React.FC<{
-  history?: any[];
+  history?: IAnswerHistory[];
 }> = ({ history }) => {
   const { t } = useTranslation("modals");
-  console.log(history);
+  const [viewModes, setViewModes] = useState<{ [key: string]: ViewMode }>({});
+
+  const handleToggle = (historyId: string, mode: ViewMode) => {
+    setViewModes((prev) => ({ ...prev, [historyId]: mode }));
+  };
 
   return (
     <Dialog.Root>
@@ -33,23 +41,71 @@ const AnswerHistoryModal: React.FC<{
           <div className="max-h-96 overflow-y-auto pr-2">
             {history && history.length > 0 ? (
               <ul className="space-y-4">
-                {history.map((h: any) => (
-                  <li
-                    key={h._id}
-                    className="border-b-5 border-gray-200 pb-4 last:border-b-0"
-                  >
-                    <div className="flex items-center gap-6 mb-3">
-                      <ShowDate date={h.date_change} />
-                      <UserLink user={h.user} />
-                    </div>
+                {history.map((h: IAnswerHistory) => {
+                  const currentView = viewModes[h._id] || "content";
 
-                    {h.old_content !== h.new_content && (
-                      <div className="bg-gray-50 rounded-lg p-3">
-                        {getDifferences(h.old_content, h.new_content)}
+                  // --- START: Logic for disabling buttons ---
+                  const oldContent = h.old_content || "";
+                  const newContent = h.new_content || "";
+                  const hasContentChange =
+                    stripHtmlTags(oldContent) !== stripHtmlTags(newContent);
+                  const hasFormattingChange =
+                    isHtmlContent(oldContent) || isHtmlContent(newContent);
+                  // --- END: Logic for disabling buttons ---
+
+                  return (
+                    <li
+                      key={h._id}
+                      className="border-b border-gray-200 pb-4 last:border-b-0"
+                    >
+                      <div className="flex items-center gap-6 mb-3">
+                        <ShowDate date={h.date_change} />
+                        <UserLink user={h.user} />
                       </div>
-                    )}
-                  </li>
-                ))}
+
+                      {h.old_content !== h.new_content && (
+                        <div className="bg-gray-50 rounded-lg p-3">
+                          {/* Show toggle only if there are formatting changes to see */}
+                          {hasFormattingChange && (
+                            <div className="flex items-center gap-1 mb-2">
+                              <button
+                                onClick={() => handleToggle(h._id, "content")}
+                                disabled={!hasContentChange}
+                                className={`px-2 py-0.5 text-xs rounded-md border transition-colors ${
+                                  currentView === "content"
+                                    ? "bg-blue-600 text-white border-blue-600"
+                                    : "bg-white text-gray-600 border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
+                                }`}
+                              >
+                                Съдържание
+                              </button>
+
+                              <button
+                                onClick={() =>
+                                  handleToggle(h._id, "formatting")
+                                }
+                                disabled={!hasFormattingChange}
+                                className={`px-2 py-0.5 text-xs rounded-md border transition-colors ${
+                                  currentView === "formatting"
+                                    ? "bg-blue-600 text-white border-blue-600"
+                                    : "bg-white text-gray-600 border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
+                                }`}
+                              >
+                                Форматиране
+                              </button>
+                            </div>
+                          )}
+
+                          {getDifferences(
+                            h.old_content,
+                            h.new_content,
+                            currentView
+                          )}
+                        </div>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             ) : (
               <div className="text-center py-8">

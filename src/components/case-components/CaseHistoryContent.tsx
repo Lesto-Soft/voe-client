@@ -1,26 +1,35 @@
 import React from "react";
-import { ICaseHistory } from "../../db/interfaces";
+import { ICaseHistory, ICategory } from "../../db/interfaces";
 import ShowDate from "../global/ShowDate";
 import UserLink from "../global/UserLink";
-import { getPriorityStyle } from "../../utils/style-helpers";
+import { getPriorityStyle, getTypeBadgeStyle } from "../../utils/style-helpers";
 import { useTranslation } from "react-i18next";
 import {
   getDifferences,
   getSimplifiedDifferences,
 } from "../../utils/contentDifferences";
+import { FlagIcon } from "@heroicons/react/24/solid";
+import CategoryLink from "../global/CategoryLink";
 
 const CaseHistoryContent: React.FC<{
   history: ICaseHistory[];
-  compact?: boolean; // New prop for compact display
+  compact?: boolean;
 }> = ({ history, compact = false }) => {
   const { t } = useTranslation("history");
+
+  // This is a workaround to handle the non-standard prop definition in your CategoryLink component.
+  const CategoryLinkWrapper = (props: { category: ICategory }) => {
+    const categoryAsProps = { ...props.category };
+    // @ts-ignore
+    return CategoryLink(categoryAsProps);
+  };
 
   return (
     <ul className="space-y-3 text-sm overflow-y-auto">
       {history.map((h) => (
         <li
           key={h._id}
-          className="text-gray-700 border-b border-gray-100 pb-3 last:border-b-0"
+          className="text-gray-700 border-b-5 border-gray-200 pb-3 last:border-b-0"
         >
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-6">
@@ -31,17 +40,14 @@ const CaseHistoryContent: React.FC<{
             </div>
           </div>
 
-          {/* Show changed fields if present */}
           <div className="ml-0 space-y-2">
-            {h.old_content !== h.new_content &&
-              h.old_content &&
-              h.new_content && (
-                <div>
-                  {compact
-                    ? getSimplifiedDifferences(h.old_content, h.new_content)
-                    : getDifferences(h.old_content, h.new_content)}
-                </div>
-              )}
+            {h.old_content !== h.new_content && (
+              <div>
+                {compact
+                  ? getSimplifiedDifferences(h.old_content, h.new_content)
+                  : getDifferences(h.old_content, h.new_content)}
+              </div>
+            )}
 
             {h.old_priority !== h.new_priority &&
               h.old_priority &&
@@ -55,7 +61,10 @@ const CaseHistoryContent: React.FC<{
                       h.old_priority
                     )}`}
                   >
-                    {t(`${h.old_priority}`)}
+                    <span className="flex items-center gap-2">
+                      <FlagIcon className="h-4 w-4" />
+                      {t(`${h.old_priority}`)}
+                    </span>
                   </span>
                   <span className="text-gray-400">→</span>
                   <span
@@ -63,19 +72,32 @@ const CaseHistoryContent: React.FC<{
                       h.new_priority
                     )}`}
                   >
-                    {t(`${h.new_priority}`)}
+                    <span className="flex items-center gap-2">
+                      <FlagIcon className="h-4 w-4" />
+                      {t(`${h.new_priority}`)}
+                    </span>
                   </span>
                 </div>
               )}
 
             {h.old_type !== h.new_type && (
               <div className="flex items-center gap-2 text-sm">
-                <span className="text-gray-500 font-medium">{t("type")}:</span>
-                <span className="px-2 py-1 bg-gray-100 rounded text-xs line-through">
+                <span className="text-gray-500 font-medium">
+                  {t("type", "Тип")}:
+                </span>
+                <span
+                  className={`px-2 py-1 rounded text-xs line-through ${getTypeBadgeStyle(
+                    h.old_type || ""
+                  )}`}
+                >
                   {t(`${h.old_type}`)}
                 </span>
                 <span className="text-gray-400">→</span>
-                <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-bold">
+                <span
+                  className={`px-2 py-1 rounded text-xs font-bold ${getTypeBadgeStyle(
+                    h.new_type || ""
+                  )}`}
+                >
                   {t(`${h.new_type}`)}
                 </span>
               </div>
@@ -89,27 +111,21 @@ const CaseHistoryContent: React.FC<{
                 </span>
                 {h.old_categories?.length > 0 && (
                   <div className="flex flex-wrap gap-1">
-                    <span className="text-xs text-red-600">Премахнати:</span>
                     {h.old_categories.map((cat) => (
                       <span
                         key={cat._id}
-                        className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs line-through"
+                        className="relative after:content-[''] after:absolute after:top-1/3 after:left-1/20 after:w-9/10 after:h-[2px] after:bg-sky-700 after:pointer-events-none"
+                        title="Премахната категория"
                       >
-                        {cat.name}
+                        <CategoryLinkWrapper category={cat} />
                       </span>
                     ))}
                   </div>
                 )}
                 {h.new_categories?.length > 0 && (
                   <div className="flex flex-wrap gap-1">
-                    <span className="text-xs text-green-600">Добавени:</span>
                     {h.new_categories.map((cat) => (
-                      <span
-                        key={cat._id}
-                        className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium"
-                      >
-                        {cat.name}
-                      </span>
+                      <CategoryLinkWrapper key={cat._id} category={cat} />
                     ))}
                   </div>
                 )}

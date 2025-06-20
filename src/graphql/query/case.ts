@@ -56,10 +56,24 @@ fragment CaseHistoryFragment on CaseHistory {
       old_content
       new_content
       new_categories {
+        _id
         name
+        experts {
+          _id
+        }
+        managers {
+          _id
+        }
       }
       old_categories {
+        _id
         name
+         experts {
+          _id
+        }
+        managers {
+          _id
+        }
       }  
 }`;
 

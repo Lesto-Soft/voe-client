@@ -36,20 +36,18 @@ const AnswerHistoryModal: React.FC<{
                 {history.map((h: any) => (
                   <li
                     key={h._id}
-                    className="border-b border-gray-100 pb-4 last:border-b-0"
+                    className="border-b-5 border-gray-200 pb-4 last:border-b-0"
                   >
                     <div className="flex items-center gap-6 mb-3">
                       <ShowDate date={h.date_change} />
                       <UserLink user={h.user} />
                     </div>
 
-                    {h.old_content !== h.new_content &&
-                      h.old_content &&
-                      h.new_content && (
-                        <div className="bg-gray-50 rounded-lg p-3">
-                          {getDifferences(h.old_content, h.new_content)}
-                        </div>
-                      )}
+                    {h.old_content !== h.new_content && (
+                      <div className="bg-gray-50 rounded-lg p-3">
+                        {getDifferences(h.old_content, h.new_content)}
+                      </div>
+                    )}
                   </li>
                 ))}
               </ul>

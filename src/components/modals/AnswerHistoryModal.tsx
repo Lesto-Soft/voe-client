@@ -2,9 +2,9 @@ import React from "react";
 import { ClockIcon } from "@heroicons/react/24/outline";
 import * as Dialog from "@radix-ui/react-dialog";
 import { useTranslation } from "react-i18next";
-import moment from "moment";
 import UserLink from "../global/UserLink";
 import { getDifferences } from "../../utils/contentDifferences";
+import ShowDate from "../global/ShowDate";
 
 const AnswerHistoryModal: React.FC<{
   history?: any[];
@@ -38,10 +38,8 @@ const AnswerHistoryModal: React.FC<{
                     key={h._id}
                     className="border-b border-gray-100 pb-4 last:border-b-0"
                   >
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className="font-semibold text-gray-900">
-                        {moment(h.date_change).format("DD.MM.YYYY HH:mm")}
-                      </span>
+                    <div className="flex items-center gap-6 mb-3">
+                      <ShowDate date={h.date_change} />
                       <UserLink user={h.user} />
                     </div>
 

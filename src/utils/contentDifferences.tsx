@@ -62,7 +62,7 @@ export const getDifferences = (oldText: string, newText: string) => {
   return (
     <div className="space-y-1">
       <div className="text-xs text-gray-500 font-medium">
-        Промени във форматирането:
+        Промяна на съдържанието:
       </div>
       <div className="text-sm">
         {diff.map((part, index) => {

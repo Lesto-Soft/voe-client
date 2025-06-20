@@ -23,7 +23,7 @@ const CaseHistoryContent: React.FC<{
           className="text-gray-700 border-b border-gray-100 pb-3 last:border-b-0"
         >
           <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-6">
               <span className="font-semibold text-gray-900">
                 <ShowDate date={h.date_change} />
               </span>

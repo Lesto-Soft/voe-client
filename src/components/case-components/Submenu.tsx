@@ -88,7 +88,7 @@ const Submenu: React.FC<SubmenuProps> = ({
     // --- NEW: Flex container for sticky layout ---
     <div className="flex flex-col h-full">
       {/* --- NEW: Sticky Header --- */}
-      <div className="flex-shrink-0 sticky top-0 z-10 bg-gray-50 border-b border-gray-200 shadow-xs">
+      <div className="flex-shrink-0 sticky top-0 z-1 bg-white border-b border-gray-200">
         <div className="flex justify-center gap-2 py-4">
           {submenu.map((item) => (
             <button
@@ -112,7 +112,7 @@ const Submenu: React.FC<SubmenuProps> = ({
       </div>
 
       {/* --- NEW: Scrollable Content Area --- */}
-      <div className="flex-grow overflow-y-auto pt-6">
+      <div className="flex-grow overflow-y-auto pt-6 ml-6">
         {view === "answers" && (
           <>
             {userRights.includes(USER_RIGHTS.EXPERT) ||

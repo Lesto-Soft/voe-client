@@ -79,7 +79,7 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
   } = useGetActiveCategories();
 
   return (
-    <div className="flex flex-col gap-4 bg-white shadow-md p-4 rounded-lg w-full h-full lg:overflow-y-auto custom-scrollbar">
+    <div className="flex flex-col gap-4 bg-white shadow-md p-4 w-full h-full lg:overflow-y-auto custom-scrollbar">
       {/* Creator & Date */}
       <div className="flex flex-col items-center gap-2">
         <Creator creator={creator} />

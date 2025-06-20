@@ -1,13 +1,10 @@
-// src/pages/Case.tsx (or wherever your Case component is)
+// src/pages/Case.tsx
 import { useGetCaseByCaseNumber } from "../graphql/hooks/case";
 import { useParams } from "react-router";
-// ICase is an interface, not a component for import if it's just types
-// import { ICase } from "../db/interfaces";
 import { useTranslation } from "react-i18next";
-import CaseInfo from "../components/case-components/CaseInfo"; // Unified CaseInfo
-// No CaseInfoMobile import needed
+import CaseInfo from "../components/case-components/CaseInfo";
 import Submenu from "../components/case-components/Submenu";
-import { ICase } from "../db/interfaces"; // Ensure ICase type is imported
+import { ICase } from "../db/interfaces";
 import { useCurrentUser } from "../context/UserContext";
 import { determineUserRightsForCase } from "../utils/rightUtils";
 import { ROLES } from "../utils/GLOBAL_PARAMETERS";
@@ -38,7 +35,6 @@ const Case = () => {
   }
   const numericCaseNumber = parseInt(numberParam, 10);
 
-  // 1. Fetch data as before
   const {
     caseData,
     loading: loadingCase,
@@ -46,15 +42,12 @@ const Case = () => {
     refetch,
   } = useGetCaseByCaseNumber(numericCaseNumber, currentUser.role?._id);
 
-  // 2. Call the authorization hook with the fetched data
   const { isAllowed, isLoading: authLoading } = useAuthorization({
     type: "case",
     data: caseData,
   });
 
-  // 3. Handle all loading and error states
   if (loadingCase || authLoading) {
-    // Using the 'message' prop here is good for context-specific text.
     return <PageStatusDisplay loading message="Зареждане на сигнал..." />;
   }
 
@@ -71,14 +64,11 @@ const Case = () => {
     );
   }
 
-  // 4. Handle forbidden access
   if (!isAllowed) {
     return <ForbiddenPage />;
   }
 
   const c = caseData as ICase;
-  // If all checks pass, render the page
-  // The 'userRights' logic can still be used to control UI elements within the page
   const userRights = determineUserRightsForCase(currentUser, caseData as ICase);
 
   if (
@@ -91,15 +81,17 @@ const Case = () => {
   }
 
   return (
-    <div className="flex flex-col lg:flex-row bg-gray-50">
-      {/* Wrapper for the Unified ResponsiveCaseInfo */}
+    // --- MODIFIED: This container now defines the overall height for the two columns on desktop ---
+    <div className="flex flex-col lg:flex-row bg-gray-50 lg:h-[calc(100vh-6rem)]">
+      {/* Left Panel for CaseInfo: This remains sticky and its own content can scroll if needed */}
       <div
         className={`
           w-full lg:w-96 lg:shrink-0 
           lg:sticky lg:top-[6rem] 
           order-1 lg:order-none 
-          lg:h-[calc(100vh-6rem)]
-          mb-4 lg:mb-0 lg:mr-4 
+          lg:h-full
+          mb-4 lg:mb-0
+          z-2
         `}
       >
         <CaseInfo
@@ -120,23 +112,18 @@ const Case = () => {
         />
       </div>
 
-      <div
-        className="flex-1 w-full lg:w-auto 
-                   lg:overflow-y-auto lg:max-h-[calc(100vh-6rem)] /* Scrollable area for Submenu on desktop */
-                   order-2 lg:order-none
-                   p-4 sm:p-6 lg:p-0 /* Add padding for mobile/tablet, remove for desktop if submenu wrapper has it */
-                  "
-      >
-        {/* <div className="lg:py-8"> */}
-        <div>
-          <Submenu
-            caseData={c}
-            t={t}
-            me={currentUser}
-            refetch={refetch}
-            userRights={userRights}
-          />
-        </div>
+      {/* --- MODIFIED: Right Panel for Submenu ---
+          This container now has a fixed height and does NOT scroll.
+          This allows the Submenu component inside to handle its own scrolling.
+      */}
+      <div className="flex-1 w-full lg:w-auto order-2 lg:order-none lg:h-full">
+        <Submenu
+          caseData={c}
+          t={t}
+          me={currentUser}
+          refetch={refetch}
+          userRights={userRights}
+        />
       </div>
     </div>
   );

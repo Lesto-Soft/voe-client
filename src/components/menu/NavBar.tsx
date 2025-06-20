@@ -135,7 +135,7 @@ const NavBar: React.FC<{ me: IMe }> = ({ me }) => {
     me.role._id === ROLES.EXPERT && me.managed_categories.length > 0;
 
   return (
-    <div className="bg-gradient-to-r z-100 from-gray-100 to-gray-200 shadow-md relative max-w-full h-[6rem]">
+    <div className="bg-gradient-to-r z-11 from-gray-100 to-gray-200 shadow-md relative max-w-full h-[6rem]">
       <div className="flex items-center justify-between p-4 px-4 md:px-1 lg:px-12">
         {/* MODIFIED: Flex container for title and new buttons */}
         <div className="flex items-center gap-4 flex-1 min-w-0">

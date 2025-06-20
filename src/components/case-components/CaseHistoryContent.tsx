@@ -44,10 +44,10 @@ const CaseHistoryContent: React.FC<{
           >
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-6">
+                <UserLink user={h.user} />
                 <span className="font-semibold text-gray-900">
                   <ShowDate date={h.date_change} />
                 </span>
-                <UserLink user={h.user} />
               </div>
             </div>
 
@@ -64,7 +64,7 @@ const CaseHistoryContent: React.FC<{
                 h.old_priority &&
                 h.new_priority && (
                   <div className="flex items-center gap-2 text-sm">
-                    <span className="text-gray-500 font-medium">
+                    <span className="text-gray-500 font-bold underline">
                       {t("priority")}:
                     </span>
                     <span
@@ -93,7 +93,7 @@ const CaseHistoryContent: React.FC<{
 
               {h.old_type !== h.new_type && (
                 <div className="flex items-center gap-2 text-sm">
-                  <span className="text-gray-500 font-medium">
+                  <span className="text-gray-500 font-bold underline">
                     {t("type", "Тип")}:
                   </span>
                   <span
@@ -117,11 +117,11 @@ const CaseHistoryContent: React.FC<{
               {/* Categories diff - Now maps over the filtered arrays */}
               {(removedCategories.length > 0 || addedCategories.length > 0) && (
                 <div className="space-y-1">
-                  <span className="text-gray-500 font-medium text-sm">
+                  <div className="text-gray-500 font-bold underline text-sm mb-1">
                     {t("categories")}:
-                  </span>
+                  </div>
                   {removedCategories.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
+                    <div className="flex items-center flex-wrap gap-1">
                       <span className="text-xs text-gray-500">Премахнати:</span>
                       {removedCategories.map((cat) => (
                         <span
@@ -135,7 +135,7 @@ const CaseHistoryContent: React.FC<{
                     </div>
                   )}
                   {addedCategories.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
+                    <div className="flex items-center flex-wrap gap-1">
                       <span className="text-xs text-gray-500">Добавени:</span>
                       {addedCategories.map((cat) => (
                         <CategoryLinkWrapper key={cat._id} category={cat} />

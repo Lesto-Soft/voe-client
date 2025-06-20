@@ -93,7 +93,7 @@ const Submenu: React.FC<SubmenuProps> = ({
           {submenu.map((item) => (
             <button
               key={item.key}
-              className={`flex items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 border
+              className={`flex items-center px-4 py-2 rounded-lg font-semibold text-sm transition-colors duration-150 border
               ${
                 view === item.key
                   ? "border-btnRedHover text-btnRedHover shadow"

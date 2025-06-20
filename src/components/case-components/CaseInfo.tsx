@@ -81,9 +81,9 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
   return (
     <div className="flex flex-col gap-4 bg-white shadow-md p-4 w-full h-full lg:overflow-y-auto custom-scrollbar">
       {/* Creator & Date */}
-      <div className="flex flex-col items-center gap-2">
+      <div className="flex flex-col items-center gap-1">
         <Creator creator={creator} />
-        {date && <ShowDate date={date} />}
+        {date && <ShowDate date={date} centered={true} />}
       </div>
       <div>
         <div className="flex justify-between items-center mb-1.5 px-1">

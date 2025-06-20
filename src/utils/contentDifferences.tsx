@@ -13,7 +13,9 @@ const getInlineDifferences = (oldText: string, newText: string) => {
   const diff = diffWords(oldText, newText);
   return (
     <div className="space-y-1">
-      <div className="text-md text-gray-500 font-medium">Съдържание:</div>
+      <div className="text-md text-gray-500 font-bold underline">
+        Съдържание:
+      </div>
       <div className="text-sm" style={{ whiteSpace: "pre-wrap" }}>
         {diff.map((part, index) => {
           const className = part.added
@@ -40,7 +42,9 @@ const getInlineDifferences = (oldText: string, newText: string) => {
 const getRichTextSideBySide = (oldText: string, newText: string) => {
   return (
     <div className="space-y-3">
-      <div className="text-md text-gray-500 font-medium">Съдържание:</div>
+      <div className="text-md text-gray-500 font-bold underline">
+        Съдържание:
+      </div>
       {/* "Before" State */}
       {oldText && (
         <div>
@@ -116,7 +120,7 @@ export const getSimplifiedDifferences = (
   if (oldPlainText === newPlainText && oldContent !== newContent) {
     return (
       <div className="text-xs text-gray-600">
-        <span className="font-medium">
+        <span className="font-bold underline">
           Променено форматиране на съдържанието
         </span>
       </div>
@@ -130,7 +134,7 @@ export const getSimplifiedDifferences = (
 
     return (
       <div className="text-xs text-gray-600">
-        <span className="font-medium">Съдържанието е променено</span>
+        <span className="font-bold underline">Съдържанието е променено</span>
         {lengthDiff !== 0 && (
           <span
             className={`ml-2 ${

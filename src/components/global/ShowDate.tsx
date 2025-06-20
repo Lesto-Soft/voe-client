@@ -23,12 +23,20 @@ moment.updateLocale("bg", {
   },
 });
 
-const ShowDate = ({ date }: { date: string }) => {
+const ShowDate = ({
+  date,
+  centered = false,
+}: {
+  date: string;
+  centered?: boolean;
+}) => {
   const [showDate, setShowDate] = useState(false);
 
   return (
     <div
-      className="w-36 whitespace-nowrap text-sm text-gray-500 flex items-center gap-2 px-2 group relative hover:cursor-pointer"
+      className={`w-36 whitespace-nowrap text-sm text-gray-500 flex items-center ${
+        centered ? "justify-center" : ""
+      } gap-2 px-2 group relative hover:cursor-pointer`}
       onClick={() => setShowDate(!showDate)}
     >
       <CalendarIcon className="!h-4 !w-4 min-w-4 min-h-4" />

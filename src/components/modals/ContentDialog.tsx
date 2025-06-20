@@ -83,9 +83,9 @@ const ContentDialog: React.FC<ContentDialogProps> = ({
             {/* Left Column: Metadata (Substantially Narrower) */}
             <div className="md:w-1/4 lg:w-1/4 flex-shrink-0 flex flex-col gap-4 overflow-y-auto custom-scrollbar pr-2">
               {/* Creator and Date on one line */}
-              <div className="flex flex-col items-center justify-center w-full">
+              <div className="flex flex-col items-center justify-center w-full gap-1">
                 <Creator creator={creator} />
-                <span className="">{date && <ShowDate date={date} />}</span>
+                {date && <ShowDate date={date} centered={true} />}
               </div>
 
               {/* Priority and Type Row */}

@@ -8,9 +8,13 @@ import {
   getDifferences,
   getSimplifiedDifferences,
 } from "../../utils/contentDifferences";
-import { FlagIcon } from "@heroicons/react/24/solid";
+import {
+  FlagIcon,
+  CodeBracketIcon,
+  DocumentTextIcon,
+} from "@heroicons/react/24/solid";
 import CategoryLink from "../global/CategoryLink";
-import { isHtmlContent, stripHtmlTags } from "../../utils/contentRenderer"; // Import helpers
+import { isHtmlContent, stripHtmlTags } from "../../utils/contentRenderer";
 
 type ViewMode = "content" | "formatting";
 
@@ -41,16 +45,17 @@ const CaseHistoryContent: React.FC<{
         const addedCategories =
           h.new_categories?.filter((cat) => !oldCategoryIds.has(cat._id)) || [];
 
-        const currentView = viewModes[h._id] || "content";
-
-        // --- START: Logic for disabling buttons ---
         const oldContent = h.old_content || "";
         const newContent = h.new_content || "";
         const hasContentChange =
           stripHtmlTags(oldContent) !== stripHtmlTags(newContent);
         const hasFormattingChange =
           isHtmlContent(oldContent) || isHtmlContent(newContent);
-        // --- END: Logic for disabling buttons ---
+
+        // --- NEW: Smart default view logic ---
+        const isFormattingOnlyChange = !hasContentChange && hasFormattingChange;
+        const defaultView = isFormattingOnlyChange ? "formatting" : "content";
+        const currentView = viewModes[h._id] || defaultView;
 
         return (
           <li
@@ -69,34 +74,42 @@ const CaseHistoryContent: React.FC<{
             <div className="ml-0 space-y-2">
               {h.old_content !== h.new_content && (
                 <div>
-                  {/* Show toggle only if there are formatting changes to see */}
-                  {hasFormattingChange && !compact && (
-                    <div className="flex items-center gap-1 mb-2">
-                      <button
-                        onClick={() => handleToggle(h._id, "content")}
-                        disabled={!hasContentChange}
-                        className={`px-2 py-0.5 text-xs rounded-md border transition-colors ${
-                          currentView === "content"
-                            ? "bg-blue-600 text-white border-blue-600"
-                            : "bg-white text-gray-600 border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
-                        }`}
-                      >
-                        Съдържание
-                      </button>
-
-                      <button
-                        onClick={() => handleToggle(h._id, "formatting")}
-                        disabled={!hasFormattingChange}
-                        className={`px-2 py-0.5 text-xs rounded-md border transition-colors ${
-                          currentView === "formatting"
-                            ? "bg-blue-600 text-white border-blue-600"
-                            : "bg-white text-gray-600 border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
-                        }`}
-                      >
-                        Форматиране
-                      </button>
-                    </div>
-                  )}
+                  {/* --- NEW: Layout for label and toggle buttons --- */}
+                  <div className="flex items-center gap-5 justify-left mb-2">
+                    <span className="text-md text-gray-500 font-bold underline">
+                      Съдържание:
+                    </span>
+                    {hasFormattingChange && !compact && (
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => handleToggle(h._id, "content")}
+                          disabled={!hasContentChange}
+                          title="View plain text changes"
+                          className={`flex items-center px-2 py-0.5 text-xs rounded-md border transition-colors ${
+                            currentView === "content"
+                              ? "bg-gray-500 text-white border-gray-500 font-semibold"
+                              : "bg-white text-gray-500 border-gray-300 hover:bg-gray-100 hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
+                          }`}
+                        >
+                          <DocumentTextIcon className="h-4 w-4 mr-1.5" />
+                          Текст
+                        </button>
+                        <button
+                          onClick={() => handleToggle(h._id, "formatting")}
+                          disabled={!hasFormattingChange}
+                          title="View formatting changes"
+                          className={`flex items-center px-2 py-0.5 text-xs rounded-md border transition-colors ${
+                            currentView === "formatting"
+                              ? "bg-gray-500 text-white border-gray-500 font-semibold"
+                              : "bg-white text-gray-500 border-gray-300 hover:bg-gray-100 hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
+                          }`}
+                        >
+                          <CodeBracketIcon className="h-4 w-4 mr-1.5" />
+                          Формат
+                        </button>
+                      </div>
+                    )}
+                  </div>
 
                   {compact
                     ? getSimplifiedDifferences(h.old_content, h.new_content)

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { CodeBracketIcon, DocumentTextIcon } from "@heroicons/react/24/solid";
 import { ClockIcon } from "@heroicons/react/24/outline";
 import * as Dialog from "@radix-ui/react-dialog";
 import { useTranslation } from "react-i18next";
@@ -6,7 +7,7 @@ import UserLink from "../global/UserLink";
 import { getDifferences } from "../../utils/contentDifferences";
 import ShowDate from "../global/ShowDate";
 import { IAnswerHistory } from "../../db/interfaces";
-import { isHtmlContent, stripHtmlTags } from "../../utils/contentRenderer"; // Import helpers
+import { isHtmlContent, stripHtmlTags } from "../../utils/contentRenderer";
 
 type ViewMode = "content" | "formatting";
 
@@ -34,7 +35,7 @@ const AnswerHistoryModal: React.FC<{
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/50 z-40" />
         <Dialog.Content className="fixed z-50 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg p-6 w-full max-w-2xl max-h-[80vh] overflow-hidden focus:outline-none">
-          <Dialog.Title className="text-lg font-bold mb-4 text-gray-900">
+          <Dialog.Title className="text-lg font-bold mb-4 text-gray-900 shadow-xs">
             {t("answerHistory", "История на отговора")}
           </Dialog.Title>
 
@@ -42,16 +43,19 @@ const AnswerHistoryModal: React.FC<{
             {history && history.length > 0 ? (
               <ul className="space-y-4">
                 {history.map((h: IAnswerHistory) => {
-                  const currentView = viewModes[h._id] || "content";
-
-                  // --- START: Logic for disabling buttons ---
                   const oldContent = h.old_content || "";
                   const newContent = h.new_content || "";
                   const hasContentChange =
                     stripHtmlTags(oldContent) !== stripHtmlTags(newContent);
                   const hasFormattingChange =
                     isHtmlContent(oldContent) || isHtmlContent(newContent);
-                  // --- END: Logic for disabling buttons ---
+
+                  const isFormattingOnlyChange =
+                    !hasContentChange && hasFormattingChange;
+                  const defaultView = isFormattingOnlyChange
+                    ? "formatting"
+                    : "content";
+                  const currentView = viewModes[h._id] || defaultView;
 
                   return (
                     <li
@@ -59,42 +63,49 @@ const AnswerHistoryModal: React.FC<{
                       className="border-b border-gray-200 pb-4 last:border-b-0"
                     >
                       <div className="flex items-center gap-6 mb-3">
-                        <ShowDate date={h.date_change} />
                         <UserLink user={h.user} />
+                        <ShowDate date={h.date_change} />
                       </div>
 
                       {h.old_content !== h.new_content && (
                         <div className="bg-gray-50 rounded-lg p-3">
-                          {/* Show toggle only if there are formatting changes to see */}
-                          {hasFormattingChange && (
-                            <div className="flex items-center gap-1 mb-2">
-                              <button
-                                onClick={() => handleToggle(h._id, "content")}
-                                disabled={!hasContentChange}
-                                className={`px-2 py-0.5 text-xs rounded-md border transition-colors ${
-                                  currentView === "content"
-                                    ? "bg-blue-600 text-white border-blue-600"
-                                    : "bg-white text-gray-600 border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
-                                }`}
-                              >
-                                Съдържание
-                              </button>
-
-                              <button
-                                onClick={() =>
-                                  handleToggle(h._id, "formatting")
-                                }
-                                disabled={!hasFormattingChange}
-                                className={`px-2 py-0.5 text-xs rounded-md border transition-colors ${
-                                  currentView === "formatting"
-                                    ? "bg-blue-600 text-white border-blue-600"
-                                    : "bg-white text-gray-600 border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
-                                }`}
-                              >
-                                Форматиране
-                              </button>
-                            </div>
-                          )}
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-md text-gray-500 font-bold underline">
+                              Съдържание:
+                            </span>
+                            {hasFormattingChange && (
+                              <div className="flex items-center gap-1">
+                                <button
+                                  onClick={() => handleToggle(h._id, "content")}
+                                  disabled={!hasContentChange}
+                                  title="View plain text changes"
+                                  className={`flex items-center px-2 py-0.5 text-xs rounded-md border transition-colors ${
+                                    currentView === "content"
+                                      ? "bg-gray-600 text-white border-gray-600 font-semibold"
+                                      : "bg-white text-gray-600 border-gray-300 hover:bg-gray-100 hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
+                                  }`}
+                                >
+                                  <DocumentTextIcon className="h-4 w-4 mr-1.5" />
+                                  Текст
+                                </button>
+                                <button
+                                  onClick={() =>
+                                    handleToggle(h._id, "formatting")
+                                  }
+                                  disabled={!hasFormattingChange}
+                                  title="View formatting changes"
+                                  className={`flex items-center px-2 py-0.5 text-xs rounded-md border transition-colors ${
+                                    currentView === "formatting"
+                                      ? "bg-gray-600 text-white border-gray-600 font-semibold"
+                                      : "bg-white text-gray-600 border-gray-300 hover:bg-gray-100 hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
+                                  }`}
+                                >
+                                  <CodeBracketIcon className="h-4 w-4 mr-1.5" />
+                                  Формат
+                                </button>
+                              </div>
+                            )}
+                          </div>
 
                           {getDifferences(
                             h.old_content,
@@ -117,7 +128,7 @@ const AnswerHistoryModal: React.FC<{
             )}
           </div>
 
-          <div className="flex justify-end pt-4 border-t mt-4">
+          <div className="flex justify-end pt-4 border-t border-gray-200 mt-4">
             <Dialog.Close asChild>
               <button
                 className="hover:cursor-pointer px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 transition focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"

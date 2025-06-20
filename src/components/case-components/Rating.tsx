@@ -52,7 +52,7 @@ const CaseRating: React.FC<{
   return (
     <div className={`${caseBoxClasses} flex-1`}>
       <span className={labelTextClass}>
-        {t("rating")} ({avg}):
+        {"Оценка"} ({avg}):
       </span>
 
       <div className="flex items-center">

@@ -68,7 +68,7 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
     type,
     priority,
     status,
-    categories, // Pass the array of ICategory objects
+    categories,
     attachments,
   };
 
@@ -79,12 +79,9 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
   } = useGetActiveCategories();
 
   return (
-    // This root div will fill its parent. The parent in Case.tsx handles stickiness, width, and height for desktop.
     <div className="flex flex-col gap-4 bg-white shadow-md p-4 rounded-lg w-full h-full lg:overflow-y-auto custom-scrollbar">
       {/* Creator & Date */}
       <div className="flex flex-col items-center gap-2">
-        {" "}
-        {/* Mobile: centered column. Desktop: still centered column but in sidebar */}
         <Creator creator={creator} />
         {date && <ShowDate date={date} />}
       </div>
@@ -118,20 +115,35 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
                   <button
                     type="button"
                     title="Edit case"
-                    className="p-1 rounded hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    className="p-1 rounded hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400 hover:cursor-pointer"
                   >
                     <PencilSquareIcon className="h-5 w-5 text-gray-500" />
                   </button>
                 </CaseDialog>
               )}
-            <FullScreenContentDialog content={content} />
+            {/* --- MODIFIED CALL TO PASS ALL DATA --- */}
+            <FullScreenContentDialog
+              content={content}
+              title={`${t("case", "Сигнал")} #${caseNumber}`}
+              creator={creator}
+              date={date}
+              type={type}
+              priority={priority}
+              categories={categories}
+              rating={rating}
+              attachments={attachments}
+              caseId={caseId}
+              me={me}
+              refetch={refetch}
+              isCurrentUserCreator={isCurrentUserCreator}
+            />
           </div>
         </div>
         <div className="bg-gray-50 rounded-md p-3 text-gray-900 overflow-y-auto custom-scrollbar max-h-60 lg:max-h-70 break-words">
           {renderContentSafely(content)}
         </div>
       </div>
-      {/* Attachments: Show only on desktop by default. For mobile, a different UI/UX might be needed. */}
+      {/* ... (rest of the CaseInfo component remains the same) ... */}
       {attachments && attachments.length > 0 && (
         <div className="hidden lg:flex flex-wrap gap-2 mb-2">
           {attachments.map((file) => (
@@ -143,17 +155,14 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
           ))}
         </div>
       )}
-
       <div className="flex flex-wrap gap-x-4 gap-y-3">
-        {" "}
-        {/* Parent container uses flex-wrap for all screen sizes */}
         {/* Priority */}
         <div
           className={`
     ${caseBoxClasses} ${priorityStyle} 
-    grow basis-[140px]                       // MOBILE FIRST: Fluid basis, allows item to grow. Adjust '140px' as needed.
-    sm:basis-[160px]                         // On 'sm' screens, slightly larger basis if desired.
-    lg:w-[calc(50%-0.5rem)] lg:basis-auto    // DESKTOP ('lg' and up): Set explicit width for 2-per-row. Reset basis to auto.
+    grow basis-[140px]
+    sm:basis-[160px]
+    lg:w-[calc(50%-0.5rem)] lg:basis-auto
   `}
         >
           <span className={labelTextClass}>{t("priority")}:</span>

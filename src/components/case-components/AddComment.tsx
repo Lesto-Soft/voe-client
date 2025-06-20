@@ -171,7 +171,7 @@ const AddComment: React.FC<AddCommentProps> = ({
           {/* Container for the textarea and character counter */}
           <div className="flex-grow relative">
             <textarea
-              className={`border border-gray-300 rounded-lg p-3 w-full h-24 resize-none focus:outline-none focus:ring-2 ${
+              className={`border border-gray-300 bg-white rounded-lg p-3 w-full h-24 resize-none focus:outline-none focus:ring-2 ${
                 // h-24 as per original user code
                 isContentTooLong
                   ? "ring-red-500 border-red-500" // Style for content too long

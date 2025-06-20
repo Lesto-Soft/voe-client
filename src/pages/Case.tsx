@@ -127,7 +127,8 @@ const Case = () => {
                    p-4 sm:p-6 lg:p-0 /* Add padding for mobile/tablet, remove for desktop if submenu wrapper has it */
                   "
       >
-        <div className="lg:py-8">
+        {/* <div className="lg:py-8"> */}
+        <div>
           <Submenu
             caseData={c}
             t={t}

@@ -47,7 +47,22 @@ export interface IUser {
   financial_approver?: boolean;
 }
 
+// Represents a user's score for a specific metric (e.g., "Service": 5 stars)
+export interface IMetricScore {
+  metricName: string;
+  score: number;
+}
+
+// The main IRating interface is updated to hold multiple metric scores
 export interface IRating {
+  _id: string;
+  user: IUser;
+  case: ICase;
+  overallScore: number; // The user's main, single rating score
+  scores: IMetricScore[]; // Detailed scores for each metric
+}
+
+export interface IRatingOld {
   _id: string;
   user: IUser;
   case: ICase;
@@ -149,3 +164,7 @@ export enum CasePriority {
   Medium = "MEDIUM",
   High = "HIGH",
 }
+
+// export const RATING_METRICS = ["Service", "Location", "Efficiency"];
+// Съответствие, Въздействие, Ефективност
+export const RATING_METRICS = ["Adequacy", "Impact", "Efficiency"];

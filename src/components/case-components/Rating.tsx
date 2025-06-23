@@ -1,112 +1,65 @@
-import React from "react";
-import { useState } from "react";
-import { StarIcon } from "@heroicons/react/24/outline";
+// src/components/case-components/Rating.tsx
+
+import React, { useMemo } from "react";
+import { StarIcon as StarSolid } from "@heroicons/react/24/solid";
+import { PlusIcon } from "@heroicons/react/24/outline";
 import { IRating } from "../../db/interfaces";
 import { caseBoxClasses, labelTextClass } from "../../ui/reusable-styles";
-import { useRateCase } from "../../graphql/hooks/case";
 
-const CaseRating: React.FC<{
-  ratings?: IRating[];
-  onRate?: (rating: number) => void;
+interface MinimalRatingProps {
+  ratings: IRating[];
+  onOpenModal: () => void;
   disabled?: boolean;
-  t: (word: string) => string;
-  caseId: string;
-  me: any;
-  refetch: () => void;
-}> = ({ ratings = [], onRate, disabled, t, caseId, me, refetch }) => {
-  // Calculate average rating
-  const avg =
-    ratings && ratings.length > 0
-      ? Math.round(
-          (ratings.reduce((sum, r) => sum + (r.score || 0), 0) /
-            ratings.length) *
-            100
-        ) / 100 // Round to two decimal places
-      : 0;
-  const [hovered, setHovered] = useState<number | null>(null);
-  const [selected, setSelected] = useState<number>(avg);
-  const { rateCase, loading, error, data } = useRateCase();
+}
 
-  if (loading) console.log("Loading rating...");
-  if (error) console.error("Error rating case:", error);
-  if (data) console.log("Rating data:", data);
-
-  const handleClick = async (star: number) => {
-    try {
-      await rateCase(caseId, me._id, star);
-      await refetch(); // Refetch the data to update the UI
-      if (disabled) return;
-      setSelected(star);
-      onRate?.(star);
-    } catch (err) {
-      console.error("Error rating case:", err);
+const CaseRating: React.FC<MinimalRatingProps> = ({
+  ratings = [],
+  onOpenModal,
+  disabled,
+}) => {
+  const { average, total } = useMemo(() => {
+    if (!ratings || ratings.length === 0) {
+      return { average: 0, total: 0 };
     }
-  };
-
-  const getStarFill = (rating: number, star: number) => {
-    if (rating >= star) return "full"; // Fully filled star
-    if (rating >= star - 0.5) return "half"; // Half-filled star
-    return "empty"; // Empty star
-  };
+    const totalScore = ratings.reduce((sum, r) => sum + r.overallScore, 0);
+    return {
+      average: parseFloat((totalScore / ratings.length).toFixed(1)),
+      total: ratings.length,
+    };
+  }, [ratings]);
 
   return (
-    <div className={`${caseBoxClasses} flex-1`}>
-      <span className={labelTextClass}>
-        {"Оценка"} ({avg}):
-      </span>
+    <div className={`${caseBoxClasses} flex-col !items-start`}>
+      {/* MODIFIED: Top row now contains the label and the add button */}
+      <div className="flex items-center gap-1">
+        <span className={labelTextClass}>Rating:</span>
+        {!disabled && (
+          <button
+            onClick={onOpenModal}
+            className="p-0.5 rounded-full text-blue-600 hover:bg-blue-50"
+            title="Add or edit your rating"
+          >
+            {/* Adjusted icon size to better fit next to the label */}
+            <PlusIcon className="h-4 w-4" />
+          </button>
+        )}
+      </div>
 
-      <div className="flex items-center">
-        {[1, 2, 3, 4, 5].map((star) => {
-          const fillType = getStarFill(hovered ?? selected, star);
-          return (
-            <button
-              key={star}
-              type="button"
-              className="focus:outline-none"
-              onMouseEnter={() => setHovered(star)}
-              onMouseLeave={() => setHovered(null)}
-              onClick={() => handleClick(star)}
-              disabled={disabled}
-              aria-label={`Rate ${star}`}
-            >
-              <span
-                className={`inline-block relative transition-transform duration-150 hover:cursor-pointer ${
-                  hovered === star
-                    ? "scale-125"
-                    : hovered && star <= hovered
-                    ? "scale-110"
-                    : ""
-                }`}
-              >
-                {/* Empty Star */}
-                <StarIcon
-                  className="h-5 w-5 text-gray-300"
-                  fill="none"
-                  stroke="currentColor"
-                />
-                {/* Filled Star */}
-                {fillType !== "empty" && (
-                  <StarIcon
-                    className={`h-5 w-5 absolute top-0 left-0 ${
-                      fillType === "full"
-                        ? "text-yellow-400"
-                        : "text-yellow-400"
-                    }`}
-                    fill={fillType === "full" ? "#facc15" : "currentColor"}
-                    stroke="currentColor"
-                    style={
-                      fillType === "half"
-                        ? { clipPath: "inset(0 50% 0 0)" } // Clip the right half
-                        : {}
-                    }
-                  />
-                )}
-              </span>
-            </button>
-          );
-        })}
-        <span className="ml-2 text-sm text-gray-500">
-          {ratings && ratings.length > 0 ? `(${ratings.length})` : ""}
+      {/* Bottom row for stars and count */}
+      <div
+        className="flex items-center mt-1"
+        title={`Average rating: ${average}`}
+      >
+        {[1, 2, 3, 4, 5].map((star) => (
+          <StarSolid
+            key={star}
+            className={`h-5 w-5 ${
+              average >= star ? "text-yellow-400" : "text-gray-300"
+            }`}
+          />
+        ))}
+        <span className="ml-1.5 text-sm text-gray-500 font-medium">
+          ({total})
         </span>
       </div>
     </div>

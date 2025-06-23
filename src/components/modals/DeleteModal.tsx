@@ -28,9 +28,11 @@ const DeleteModal: React.FC<DeleteModalProps> = ({
         <Dialog.Overlay className="fixed inset-0 bg-black/50 z-[1000]" />
         <Dialog.Content className="bg-white rounded-lg p-6 min-w-[320px] max-w-[400px] fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[1001] shadow-xl">
           <Dialog.Title className="font-semibold text-lg mb-3">
-            {t(title)}
+            {t(title, "Изтриване")}
           </Dialog.Title>
-          <Dialog.Description className="mb-6">{t(content)}</Dialog.Description>
+          <Dialog.Description className="mb-6">
+            {t(content, "Сигурни ли сте, че искате да изтриете отговора?")}
+          </Dialog.Description>
           <div className="flex justify-end gap-2">
             <Dialog.Close asChild>
               <button className="hover:cursor-pointer px-4 py-2 rounded bg-gray-200 text-gray-900 hover:bg-gray-300 transition">

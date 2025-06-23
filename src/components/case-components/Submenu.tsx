@@ -4,12 +4,10 @@ import {
   ChatBubbleLeftEllipsisIcon,
   ClockIcon,
 } from "@heroicons/react/24/solid";
-import { IAnswer, ICase, ICategory, IComment, IMe } from "../../db/interfaces";
-import AnswerMobile from "./mobile/AnswerMobile";
+import { IAnswer, ICase, IComment, IMe } from "../../db/interfaces";
 import CaseHistoryContent from "./CaseHistoryContent";
 import Comment from "./Comment";
 import Answer from "./Answer";
-import CommentMobile from "./mobile/CommentMobile";
 import AddComment from "./AddComment";
 import AddAnswer from "./AddAnswer";
 import { USER_RIGHTS } from "../../utils/GLOBAL_PARAMETERS";
@@ -19,7 +17,7 @@ const LOCAL_STORAGE_KEY = "case-submenu-view";
 interface SubmenuProps {
   caseData: ICase;
   t: (key: string, options?: Record<string, any>) => string;
-  me: IMe; // More specific type if available
+  me: IMe;
   refetch: () => void;
   userRights: string[];
 }
@@ -111,7 +109,7 @@ const Submenu: React.FC<SubmenuProps> = ({
         </div>
       </div>
 
-      {/* --- NEW: Scrollable Content Area --- */}
+      {/* Scrollable Content Area */}
       <div className="flex-grow overflow-y-auto pt-6">
         {view === "answers" && (
           <>
@@ -141,28 +139,17 @@ const Submenu: React.FC<SubmenuProps> = ({
                       userRights.includes(USER_RIGHTS.EXPERT) ||
                       userRights.includes(USER_RIGHTS.MANAGER) ||
                       userRights.includes(USER_RIGHTS.ADMIN);
+                    // --- SIMPLIFIED LOGIC ---
                     return showThisAnswer ? (
-                      <div key={answer._id}>
-                        <div className="flex lg:hidden flex-col gap-4 mb-8">
-                          <AnswerMobile
-                            answer={answer}
-                            me={me}
-                            refetch={refetch}
-                            caseNumber={caseData.case_number}
-                            status={caseData.status}
-                          />
-                        </div>
-                        <div className="hidden lg:flex flex-col gap-4 mb-8">
-                          <Answer
-                            answer={answer}
-                            me={me}
-                            refetch={refetch}
-                            caseNumber={caseData.case_number}
-                            status={caseData.status}
-                            caseCategories={caseData.categories}
-                          />
-                        </div>
-                      </div>
+                      <Answer
+                        key={answer._id}
+                        answer={answer}
+                        me={me}
+                        refetch={refetch}
+                        caseNumber={caseData.case_number}
+                        status={caseData.status}
+                        caseCategories={caseData.categories}
+                      />
                     ) : null;
                   })}
               </>
@@ -188,22 +175,13 @@ const Submenu: React.FC<SubmenuProps> = ({
                       new Date(b.date).getTime() - new Date(a.date).getTime()
                   )
                   .map((comment: IComment) => (
-                    <div className=" gap-4 mb-8" key={comment._id}>
-                      <div className="hidden lg:block ">
-                        <Comment
-                          comment={comment}
-                          me={me}
-                          caseNumber={caseData.case_number}
-                        />
-                      </div>
-                      <div className="lg:hidden flex">
-                        <CommentMobile
-                          comment={comment}
-                          me={me}
-                          caseNumber={caseData.case_number}
-                        />
-                      </div>
-                    </div>
+                    // --- SIMPLIFIED LOGIC ---
+                    <Comment
+                      key={comment._id}
+                      comment={comment}
+                      me={me}
+                      caseNumber={caseData.case_number}
+                    />
                   ))}
               </>
             ) : (

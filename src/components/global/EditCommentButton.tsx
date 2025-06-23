@@ -88,9 +88,9 @@ const EditButton: React.FC<EditButtonProps> = ({
         </button>
       </Dialog.Trigger>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-black/50" />
-        <Dialog.Content className="fixed top-1/2 left-1/2 w-[90%] max-w-md -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg shadow-lg">
-          <Dialog.Title className="text-lg font-medium text-gray-900">
+        <Dialog.Overlay className="fixed z-25 inset-0 bg-black/50" />
+        <Dialog.Content className="fixed z-50 top-1/2 left-1/2 w-[90%] max-w-md -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg shadow-lg">
+          <Dialog.Title className="text-lg  font-medium text-gray-900">
             {t("editComment")}
           </Dialog.Title>
           <Dialog.Description className="text-sm text-gray-500 mb-4">
@@ -110,7 +110,7 @@ const EditButton: React.FC<EditButtonProps> = ({
           <div className="flex justify-end gap-2 mt-4">
             <Dialog.Close asChild>
               <button
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded hover:bg-gray-200"
+                className="hover:cursor-pointer px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded hover:bg-gray-200"
                 type="button"
               >
                 Cancel
@@ -118,7 +118,7 @@ const EditButton: React.FC<EditButtonProps> = ({
             </Dialog.Close>
             <button
               onClick={handleSave}
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-500 rounded hover:bg-blue-600"
+              className="hover:cursor-pointer px-4 py-2 text-sm font-medium text-white bg-blue-500 rounded hover:bg-blue-600"
               type="button"
             >
               Save

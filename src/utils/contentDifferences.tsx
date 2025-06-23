@@ -15,7 +15,10 @@ const getInlineDifferences = (oldText: string, newText: string) => {
   const diff = diffWords(oldText, newText);
   // --- REMOVED: The heading div ---
   return (
-    <div className="text-sm" style={{ whiteSpace: "pre-wrap" }}>
+    <div
+      className="text-sm"
+      style={{ whiteSpace: "pre-line", overflowWrap: "break-word" }}
+    >
       {diff.map((part, index) => {
         const className = part.added
           ? "bg-green-100 text-green-800 px-1 rounded font-medium"
@@ -45,7 +48,7 @@ const getRichTextSideBySide = (oldText: string, newText: string) => {
       {oldText && (
         <div>
           <div className="text-xs font-semibold text-gray-500 mb-1">Преди:</div>
-          <div className="bg-gray-100 border border-gray-200 p-2 rounded max-h-60 overflow-y-auto">
+          <div className="bg-gray-100 border border-gray-200 p-2 rounded max-h-60 overflow-y-auto mx-4">
             {renderContentSafely(oldText)}
           </div>
         </div>
@@ -53,7 +56,7 @@ const getRichTextSideBySide = (oldText: string, newText: string) => {
       {/* "After" State */}
       <div>
         <div className="text-xs font-semibold text-gray-500 mb-1">След:</div>
-        <div className="bg-green-50 border border-green-200 p-2 rounded max-h-60 overflow-y-auto">
+        <div className="bg-green-50 border border-green-200 p-2 rounded max-h-60 overflow-y-auto mx-4">
           {renderContentSafely(newText)}
         </div>
       </div>

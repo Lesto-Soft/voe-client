@@ -84,7 +84,7 @@ const CaseHistoryContent: React.FC<{
                         <button
                           onClick={() => handleToggle(h._id, "content")}
                           disabled={!hasContentChange}
-                          title="View plain text changes"
+                          title="Вижте промени в текста"
                           className={`flex items-center px-2 py-0.5 text-xs rounded-md border transition-colors ${
                             currentView === "content"
                               ? "bg-gray-500 text-white border-gray-500 font-semibold"
@@ -97,7 +97,7 @@ const CaseHistoryContent: React.FC<{
                         <button
                           onClick={() => handleToggle(h._id, "formatting")}
                           disabled={!hasFormattingChange}
-                          title="View formatting changes"
+                          title="Вижте промени във форматирането"
                           className={`flex items-center px-2 py-0.5 text-xs rounded-md border transition-colors ${
                             currentView === "formatting"
                               ? "bg-gray-500 text-white border-gray-500 font-semibold"

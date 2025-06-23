@@ -90,7 +90,7 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
           <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
             {t("content")}
           </h3>
-          <div className="hidden lg:flex lg:gap-2">
+          <div className="flex lg:gap-2">
             {(rights.includes(USER_RIGHTS.CREATOR) ||
               rights.includes(USER_RIGHTS.ADMIN) ||
               rights.includes(USER_RIGHTS.MANAGER)) &&
@@ -145,7 +145,7 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
       </div>
       {/* ... (rest of the CaseInfo component remains the same) ... */}
       {attachments && attachments.length > 0 && (
-        <div className="hidden lg:flex flex-wrap gap-2 mb-2">
+        <div className="flex flex-wrap gap-2 mb-2">
           {attachments.map((file) => (
             <ImagePreviewModal
               key={file}

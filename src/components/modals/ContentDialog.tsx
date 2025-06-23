@@ -52,7 +52,7 @@ const ContentDialog: React.FC<ContentDialogProps> = ({
     <Dialog.Root>
       <Dialog.Trigger asChild>
         <button
-          className="p-1.5 rounded-md text-gray-500 hover:text-blue-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition hover:cursor-pointer"
+          className="hidden lg:flex p-1.5 rounded-md text-gray-500 hover:text-blue-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition hover:cursor-pointer"
           type="button"
           aria-label={t("showFullScreen") || "Show full screen"}
         >

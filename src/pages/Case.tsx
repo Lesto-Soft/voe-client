@@ -90,7 +90,7 @@ const Case = () => {
           lg:sticky lg:top-[6rem] 
           order-1 lg:order-none 
           lg:h-full
-          mb-4 lg:mb-0
+          lg:mb-0
           z-2
         `}
       >

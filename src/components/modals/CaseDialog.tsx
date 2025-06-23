@@ -412,7 +412,7 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
                   </div>
                 )}
               </div>
-              <div className="overflow-y-auto flex-grow">
+              <div className="overflow-y-auto flex-grow rounded-lg ">
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="space-y-6 p-6 bg-white rounded-lg shadow">
                     <div>

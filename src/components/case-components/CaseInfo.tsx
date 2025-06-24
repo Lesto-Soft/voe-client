@@ -1,4 +1,4 @@
-// src/components/case-components/CaseInfo.tsx (Modified)
+// src/components/case-components/CaseInfo.tsx (Updated)
 import React, { useState } from "react";
 import {
   ICategory,
@@ -6,7 +6,7 @@ import {
   IRating,
   IMetricScore,
   IUser,
-} from "../../db/interfaces"; // Ensure IRating is imported
+} from "../../db/interfaces";
 import CategoryLink from "../global/CategoryLink";
 import { FlagIcon } from "@heroicons/react/24/solid";
 import {
@@ -17,7 +17,7 @@ import {
 import { labelTextClass, caseBoxClasses } from "../../ui/reusable-styles";
 import { useTranslation } from "react-i18next";
 import Creator from "./Creator";
-import CaseRating from "./Rating"; // This is now the new, overhauled component
+import CaseRating from "./Rating";
 import ShowDate from "../global/ShowDate";
 import ImagePreviewModal from "../modals/ImagePreviewModal";
 import { createFileUrl } from "../../utils/fileUtils";
@@ -27,10 +27,9 @@ import CaseDialog from "../modals/CaseDialog";
 import { PencilSquareIcon } from "@heroicons/react/24/outline";
 import { useGetActiveCategories } from "../../graphql/hooks/category";
 import { renderContentSafely } from "../../utils/contentRenderer";
-import RateCaseModal from "../modals/RateCaseModal"; // The new DETAILED modal
+import RateCaseModal from "../modals/RateCaseModal";
 
-// --- MOCK DATA FOR DEMONSTRATION ---
-// Define some mock users
+// --- MOCK DATA (Remains the same) ---
 const mockUser1: IUser = {
   _id: "user1",
   name: "John Doe",
@@ -49,8 +48,31 @@ const mockUser3: IUser = {
   username: "p.jones",
   role: {} as any,
 };
+const mockUser4: IUser = {
+  _id: "user4",
+  name: "Maria Garcia",
+  username: "m.garcia",
+  role: {} as any,
+};
+const mockUser5: IUser = {
+  _id: "user5",
+  name: "Chen Wei",
+  username: "c.wei",
+  role: {} as any,
+};
+const mockUser6: IUser = {
+  _id: "user6",
+  name: "Fatima Al-Fassi",
+  username: "f.alfassi",
+  role: {} as any,
+};
+const mockUser7: IUser = {
+  _id: "user7",
+  name: "David Miller",
+  username: "d.miller",
+  role: {} as any,
+};
 
-// Create a few sample ratings as if they came from the community
 const mockCommunityRatings: IRating[] = [
   {
     _id: "rating1",
@@ -58,8 +80,8 @@ const mockCommunityRatings: IRating[] = [
     case: { _id: "case1" } as any,
     overallScore: 5,
     scores: [
-      { metricName: "Service", score: 5 },
-      { metricName: "Location", score: 4 },
+      { metricName: "Adequacy", score: 5 },
+      { metricName: "Impact", score: 4 },
       { metricName: "Efficiency", score: 5 },
     ],
   },
@@ -69,20 +91,82 @@ const mockCommunityRatings: IRating[] = [
     case: { _id: "case1" } as any,
     overallScore: 4,
     scores: [
-      { metricName: "Service", score: 4 },
-      { metricName: "Location", score: 5 },
-      { metricName: "Efficiency", score: 3 },
+      { metricName: "Adequacy", score: 4 },
+      { metricName: "Impact", score: 5 },
     ],
   },
   {
     _id: "rating3",
     user: mockUser3,
     case: { _id: "case1" } as any,
+    overallScore: 3,
+    scores: [],
+  },
+  {
+    _id: "rating4",
+    user: mockUser4,
+    case: { _id: "case1" } as any,
     overallScore: 4,
     scores: [
-      { metricName: "Service", score: 3 },
-      { metricName: "Location", score: 4 },
+      { metricName: "Adequacy", score: 4 },
+      { metricName: "Impact", score: 4 },
       { metricName: "Efficiency", score: 4 },
+    ],
+  },
+  {
+    _id: "rating5",
+    user: mockUser5,
+    case: { _id: "case1" } as any,
+    overallScore: 2,
+    scores: [
+      { metricName: "Adequacy", score: 1 },
+      { metricName: "Impact", score: 2 },
+    ],
+  },
+  {
+    _id: "rating6",
+    user: mockUser6,
+    case: { _id: "case1" } as any,
+    overallScore: 5,
+    scores: [
+      { metricName: "Adequacy", score: 5 },
+      { metricName: "Impact", score: 5 },
+      { metricName: "Efficiency", score: 5 },
+    ],
+  },
+  {
+    _id: "rating7",
+    user: mockUser7,
+    case: { _id: "case1" } as any,
+    overallScore: 4,
+    scores: [],
+  },
+  {
+    _id: "rating8",
+    user: mockUser1,
+    case: { _id: "case1" } as any,
+    overallScore: 4,
+    scores: [
+      { metricName: "Adequacy", score: 4 },
+      { metricName: "Impact", score: 3 },
+      { metricName: "Efficiency", score: 4 },
+    ],
+  },
+  {
+    _id: "rating9",
+    user: mockUser2,
+    case: { _id: "case1" } as any,
+    overallScore: 5,
+    scores: [{ metricName: "Efficiency", score: 5 }],
+  },
+  {
+    _id: "rating10",
+    user: mockUser4,
+    case: { _id: "case1" } as any,
+    overallScore: 4,
+    scores: [
+      { metricName: "Adequacy", score: 5 },
+      { metricName: "Impact", score: 4 },
     ],
   },
 ];
@@ -96,7 +180,7 @@ interface ICaseInfoProps {
   status: string;
   categories: ICategory[];
   creator: any;
-  rating: IRating[]; // The prop should be of type IRating[] now
+  rating: IRating[];
   date?: string;
   me: IMe;
   caseNumber: number;
@@ -113,7 +197,7 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
   status,
   categories,
   creator,
-  rating,
+  rating, // This prop now holds the "real" data, but we use the mock data below
   date,
   me,
   caseNumber,
@@ -148,6 +232,9 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
   };
 
   const { categories: categoriesDataFromHook } = useGetActiveCategories();
+
+  // NOTE: The line below uses the REAL rating prop.
+  // For the demo, we pass the MOCK data to the modal instead.
   const currentUserRating = rating.find((r) => r.user._id === me._id);
 
   return (
@@ -159,7 +246,7 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
           {date && <ShowDate date={date} centered={true} />}
         </div>
 
-        {/* Content Section ... */}
+        {/* Content Section */}
         <div>
           <div className="flex justify-between items-center mb-1.5 px-1">
             <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
@@ -218,7 +305,7 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
           </div>
         </div>
 
-        {/* Attachments Section ... */}
+        {/* Attachments Section */}
         {attachments && attachments.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-2">
             {attachments.map((file) => (
@@ -269,14 +356,14 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
           {/* Minimalist Rating Component */}
           <div className="grow basis-[140px] sm:basis-[160px] lg:w-[calc(50%-0.5rem)] lg:basis-auto">
             <CaseRating
-              ratings={rating}
+              ratings={mockCommunityRatings}
               onOpenModal={() => setRatingModalOpen(true)}
               disabled={isCurrentUserCreator}
             />
           </div>
         </div>
 
-        {/* Categories Section ... */}
+        {/* Categories Section */}
         <div className={`${caseBoxClasses} flex-col bg-white`}>
           <span className={labelTextClass}>{t("categories")}:</span>
           <span className="flex flex-wrap gap-1">
@@ -297,19 +384,10 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
         onClose={() => setRatingModalOpen(false)}
         onSubmit={handleRatingSubmit}
         caseNumber={caseNumber}
-        caseRatings={
-          mockCommunityRatings
-        } /* MODIFIED: Using MOCK data here for demonstration */
+        // Pass the corrected mock data to the modal for demonstration
+        caseRatings={mockCommunityRatings}
         currentUserRating={currentUserRating}
       />
-      {/* <RateCaseModal
-        isOpen={isRatingModalOpen}
-        onClose={() => setRatingModalOpen(false)}
-        onSubmit={handleRatingSubmit}
-        caseNumber={caseNumber}
-        caseRatings={rating}
-        currentUserRating={currentUserRating}
-      /> */}
     </>
   );
 };

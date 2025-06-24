@@ -13,6 +13,7 @@ import {
   ChevronDownIcon,
   LightBulbIcon,
   ExclamationTriangleIcon,
+  StarIcon,
 } from "@heroicons/react/24/solid";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { dev_endpoint } from "../../db/config";
@@ -104,6 +105,7 @@ const NavBar: React.FC<{ me: IMe }> = ({ me }) => {
     "/submit-case": t("submit_case_desc"),
     "/user-management": t("accounts_desc"),
     "/category-management": t("categories_desc"),
+    "/rating-management": t("ratings_desc"),
     "/analyses": t("analyses_desc"),
   };
 
@@ -199,6 +201,11 @@ const NavBar: React.FC<{ me: IMe }> = ({ me }) => {
                 to="/category-management"
                 icon={<TagIcon className="h-6 w-6" />}
                 label={t("categories")}
+              />
+              <NavLink
+                to="/rating-management"
+                icon={<StarIcon className="h-6 w-6" />}
+                label={t("ratings")}
               />
             </>
           )}

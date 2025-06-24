@@ -12,6 +12,7 @@ import User from "../pages/User";
 import Category from "../pages/Category";
 import Case from "../pages/Case";
 import CategoryManagement from "../pages/CategoryManagement";
+import RatingManagement from "../pages/RatingManagement";
 import { useGetMe } from "../graphql/hooks/user";
 import { IMe } from "../db/interfaces";
 import { UserProvider } from "../context/UserContext";
@@ -73,6 +74,14 @@ const mainRouter = createBrowserRouter([
         element: (
           <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.EXPERT]}>
             <CategoryManagement />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "/rating-management",
+        element: (
+          <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.EXPERT]}>
+            <RatingManagement />
           </ProtectedRoute>
         ),
       },

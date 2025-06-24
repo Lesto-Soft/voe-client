@@ -1,5 +1,5 @@
 // src/components/case-components/CaseInfo.tsx (Updated)
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   ICategory,
   IMe,
@@ -29,56 +29,75 @@ import { useGetActiveCategories } from "../../graphql/hooks/category";
 import { renderContentSafely } from "../../utils/contentRenderer";
 import RateCaseModal from "../modals/RateCaseModal";
 
-// --- MOCK DATA (Remains the same) ---
+// --- MOCK DATA ---
 const mockUser1: IUser = {
   _id: "user1",
-  name: "John Doe",
-  username: "j.doe",
+  name: "[Тестов Оценител]",
+  username: "i.petrov",
   role: {} as any,
 };
 const mockUser2: IUser = {
   _id: "user2",
-  name: "Jane Smith",
-  username: "j.smith",
+  name: "Мария Георгиева",
+  username: "m.georgieva",
   role: {} as any,
 };
 const mockUser3: IUser = {
   _id: "user3",
-  name: "Peter Jones",
-  username: "p.jones",
+  name: "Петър Димитров",
+  username: "p.dimitrov",
   role: {} as any,
 };
 const mockUser4: IUser = {
   _id: "user4",
-  name: "Maria Garcia",
-  username: "m.garcia",
+  name: "Елена Иванова",
+  username: "e.ivanova",
   role: {} as any,
 };
 const mockUser5: IUser = {
   _id: "user5",
-  name: "Chen Wei",
-  username: "c.wei",
+  name: "Георги Стоянов",
+  username: "g.stoyanov",
   role: {} as any,
 };
 const mockUser6: IUser = {
   _id: "user6",
-  name: "Fatima Al-Fassi",
-  username: "f.alfassi",
+  name: "Десислава Николова",
+  username: "d.nikolova",
   role: {} as any,
 };
 const mockUser7: IUser = {
   _id: "user7",
-  name: "David Miller",
-  username: "d.miller",
+  name: "Стоян Христов",
+  username: "s.hristov",
+  role: {} as any,
+};
+const mockUser8: IUser = {
+  _id: "user8",
+  name: "Пенчо Пенчев",
+  username: "test.user",
   role: {} as any,
 };
 
-const mockCommunityRatings: IRating[] = [
+// Array of all mock users for random selection
+const allMockUsers = [
+  mockUser1,
+  mockUser2,
+  mockUser3,
+  mockUser4,
+  mockUser5,
+  mockUser6,
+  mockUser7,
+  mockUser8,
+];
+
+// Initial mock ratings (without the current user)
+const initialMockRatings: IRating[] = [
   {
     _id: "rating1",
-    user: mockUser1,
+    user: mockUser7,
     case: { _id: "case1" } as any,
-    overallScore: 5,
+    overallScore: 0, // Will be calculated
     scores: [
       { metricName: "Adequacy", score: 5 },
       { metricName: "Impact", score: 4 },
@@ -89,7 +108,7 @@ const mockCommunityRatings: IRating[] = [
     _id: "rating2",
     user: mockUser2,
     case: { _id: "case1" } as any,
-    overallScore: 4,
+    overallScore: 0,
     scores: [
       { metricName: "Adequacy", score: 4 },
       { metricName: "Impact", score: 5 },
@@ -99,14 +118,14 @@ const mockCommunityRatings: IRating[] = [
     _id: "rating3",
     user: mockUser3,
     case: { _id: "case1" } as any,
-    overallScore: 3,
-    scores: [],
+    overallScore: 0,
+    scores: [{ metricName: "Adequacy", score: 3 }],
   },
   {
     _id: "rating4",
     user: mockUser4,
     case: { _id: "case1" } as any,
-    overallScore: 4,
+    overallScore: 0,
     scores: [
       { metricName: "Adequacy", score: 4 },
       { metricName: "Impact", score: 4 },
@@ -117,7 +136,7 @@ const mockCommunityRatings: IRating[] = [
     _id: "rating5",
     user: mockUser5,
     case: { _id: "case1" } as any,
-    overallScore: 2,
+    overallScore: 0,
     scores: [
       { metricName: "Adequacy", score: 1 },
       { metricName: "Impact", score: 2 },
@@ -127,46 +146,23 @@ const mockCommunityRatings: IRating[] = [
     _id: "rating6",
     user: mockUser6,
     case: { _id: "case1" } as any,
-    overallScore: 5,
+    overallScore: 0,
+    scores: [
+      { metricName: "Adequacy", score: 1 },
+      { metricName: "Impact", score: 2 },
+      { metricName: "Efficiency", score: 1 },
+    ],
+  },
+
+  {
+    _id: "rating7",
+    user: mockUser8,
+    case: { _id: "case1" } as any,
+    overallScore: 0,
     scores: [
       { metricName: "Adequacy", score: 5 },
       { metricName: "Impact", score: 5 },
       { metricName: "Efficiency", score: 5 },
-    ],
-  },
-  {
-    _id: "rating7",
-    user: mockUser7,
-    case: { _id: "case1" } as any,
-    overallScore: 4,
-    scores: [],
-  },
-  {
-    _id: "rating8",
-    user: mockUser1,
-    case: { _id: "case1" } as any,
-    overallScore: 4,
-    scores: [
-      { metricName: "Adequacy", score: 4 },
-      { metricName: "Impact", score: 3 },
-      { metricName: "Efficiency", score: 4 },
-    ],
-  },
-  {
-    _id: "rating9",
-    user: mockUser2,
-    case: { _id: "case1" } as any,
-    overallScore: 5,
-    scores: [{ metricName: "Efficiency", score: 5 }],
-  },
-  {
-    _id: "rating10",
-    user: mockUser4,
-    case: { _id: "case1" } as any,
-    overallScore: 4,
-    scores: [
-      { metricName: "Adequacy", score: 5 },
-      { metricName: "Impact", score: 4 },
     ],
   },
 ];
@@ -197,7 +193,7 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
   status,
   categories,
   creator,
-  rating, // This prop now holds the "real" data, but we use the mock data below
+  rating, // Real rating data (not used in mock)
   date,
   me,
   caseNumber,
@@ -208,10 +204,28 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
   const { t } = useTranslation("dashboard");
   const [isRatingModalOpen, setRatingModalOpen] = useState(false);
 
+  // State for mock ratings and current mock user
+  const [mockRatings, setMockRatings] = useState<IRating[]>(initialMockRatings);
+  const [currentMockUser, setCurrentMockUser] = useState<IUser | null>(null);
+
+  // On component mount, randomly assign a mock user
+  useEffect(() => {
+    // const randomUser =
+    //   allMockUsers[Math.floor(Math.random() * allMockUsers.length)];
+    // setCurrentMockUser(randomUser);
+    // console.log("Assigned mock user:", randomUser.name);
+    setCurrentMockUser(allMockUsers[0]);
+  }, []);
+
   const statusStyle = getStatusStyle(status);
   const priorityStyle = getPriorityStyle(priority);
   const typeBadgeStyle = getTypeBadgeStyle(type);
-  const isCurrentUserCreator = creator?._id === me?._id;
+
+  // Check if current mock user is the creator
+  const isCurrentUserCreator = currentMockUser
+    ? creator?._id === currentMockUser._id
+    : false;
+
   const caseInitialDataForEdit = {
     content,
     type,
@@ -226,20 +240,60 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
     scores: IMetricScore[];
   }) => {
     console.log("Submitting rating from modal:", ratingData);
-    // Here you would call your GraphQL mutation
+
+    if (!currentMockUser) return;
+
+    // Check if the current mock user already has a rating
+    const existingRatingIndex = mockRatings.findIndex(
+      (r) => r.user._id === currentMockUser._id
+    );
+
+    if (existingRatingIndex >= 0) {
+      // Update existing rating
+      const updatedRatings = [...mockRatings];
+      updatedRatings[existingRatingIndex] = {
+        ...updatedRatings[existingRatingIndex],
+        overallScore: ratingData.overallScore,
+        scores: ratingData.scores,
+      };
+      setMockRatings(updatedRatings);
+      console.log("Updated existing rating for:", currentMockUser.name);
+    } else {
+      // Add new rating
+      const newRating: IRating = {
+        _id: `rating${mockRatings.length + 1}`,
+        user: currentMockUser,
+        case: { _id: caseId } as any,
+        overallScore: ratingData.overallScore,
+        scores: ratingData.scores,
+      };
+      setMockRatings([...mockRatings, newRating]);
+      console.log("Added new rating for:", currentMockUser.name);
+    }
+
+    // In real implementation, this would call GraphQL mutation
     // await rateCase({ variables: { caseId, userId: me._id, ...ratingData } });
     // refetch();
   };
 
   const { categories: categoriesDataFromHook } = useGetActiveCategories();
 
-  // NOTE: The line below uses the REAL rating prop.
-  // For the demo, we pass the MOCK data to the modal instead.
-  const currentUserRating = rating.find((r) => r.user._id === me._id);
+  // Find current mock user's rating
+  const currentUserRating = currentMockUser
+    ? mockRatings.find((r) => r.user._id === currentMockUser._id)
+    : undefined;
 
   return (
     <>
       <div className="flex flex-col gap-4 bg-white shadow-md p-4 w-full h-full lg:overflow-y-auto custom-scrollbar">
+        {/* Mock User Indicator (for demo purposes) */}
+        {currentMockUser && (
+          <div className="bg-blue-50 border border-blue-200 rounded-md p-2 text-sm text-blue-700">
+            <span className="font-semibold">Демо режим:</span> Влезли сте като{" "}
+            {currentMockUser.name}
+          </div>
+        )}
+
         {/* Creator & Date */}
         <div className="flex flex-col items-center gap-1">
           <Creator creator={creator} />
@@ -356,9 +410,10 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
           {/* Minimalist Rating Component */}
           <div className="grow basis-[140px] sm:basis-[160px] lg:w-[calc(50%-0.5rem)] lg:basis-auto">
             <CaseRating
-              ratings={mockCommunityRatings}
+              ratings={mockRatings}
               onOpenModal={() => setRatingModalOpen(true)}
               disabled={isCurrentUserCreator}
+              hasUserRated={!!currentUserRating}
             />
           </div>
         </div>
@@ -378,14 +433,13 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
         </div>
       </div>
 
-      {/* The RateCaseModal is rendered here, controlled by local state */}
+      {/* The RateCaseModal with mock data */}
       <RateCaseModal
         isOpen={isRatingModalOpen}
         onClose={() => setRatingModalOpen(false)}
         onSubmit={handleRatingSubmit}
         caseNumber={caseNumber}
-        // Pass the corrected mock data to the modal for demonstration
-        caseRatings={mockCommunityRatings}
+        caseRatings={mockRatings}
         currentUserRating={currentUserRating}
       />
     </>

@@ -1,29 +1,46 @@
-// src/components/modals/RateCaseModal.tsx (Updated Layout)
+// src/components/modals/RateCaseModal.tsx
 
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import * as Tooltip from "@radix-ui/react-tooltip";
-import { XMarkIcon, StarIcon as StarSolid } from "@heroicons/react/24/solid";
+import { StarIcon as StarSolid } from "@heroicons/react/24/solid";
 import {
   ChevronDownIcon,
   ChevronUpIcon,
   QuestionMarkCircleIcon,
   StarIcon as StarOutline,
+  XCircleIcon,
 } from "@heroicons/react/24/outline";
 import { IRating, IMetricScore, RATING_METRICS } from "../../db/interfaces";
 import RatingDistributionChart from "../charts/RatingDistributionChart";
 
-// NOTE: No changes needed in the helper components (RatingHintContent, StarRatingInput)
+// Utility function to calculate user rating from their metric scores
+const calculateUserRating = (scores: IMetricScore[]): number => {
+  if (!scores || scores.length === 0) return 0;
 
-type MetricName = "Overall" | (typeof RATING_METRICS)[number];
+  const validScores = scores.filter((s) => s.score > 0);
+  if (validScores.length === 0) return 0;
+
+  const sum = validScores.reduce((acc, s) => acc + s.score, 0);
+  return sum / validScores.length;
+};
+
+// Utility function to calculate overall case rating
+const calculateCaseRating = (ratings: IRating[]): number => {
+  if (!ratings || ratings.length === 0) return 0;
+
+  const userRatings = ratings.map((r) => calculateUserRating(r.scores));
+  const validRatings = userRatings.filter((rating) => rating > 0);
+
+  if (validRatings.length === 0) return 0;
+
+  const sum = validRatings.reduce((acc, rating) => acc + rating, 0);
+  return sum / validRatings.length;
+};
+
+type MetricName = (typeof RATING_METRICS)[number];
 
 const hintData = {
-  Overall: {
-    title: "Цялостна Оценка",
-    description:
-      "Каква е цялостната Ви оценка за този сигнал, вземайки предвид всички фактори?",
-    tiers: { "1-2 точки": "Слаб", "3 точки": "Среден", "4-5 точки": "Силен" },
-  },
   Adequacy: {
     title: "Съответствие",
     description: "Уместност на сигнала. Качество на описание на сигнала.",
@@ -108,7 +125,7 @@ const StarRatingInput: React.FC<{
 const ReadOnlyStars: React.FC<{ score: number }> = ({ score }) => (
   <div className="flex items-center">
     {[1, 2, 3, 4, 5].map((s) =>
-      s <= score ? (
+      s <= Math.round(score) ? ( // Use Math.round for better visual representation of averages
         <StarSolid key={s} className="h-4 w-4 text-yellow-400" />
       ) : (
         <StarOutline key={s} className="h-4 w-4 text-gray-300" />
@@ -137,19 +154,17 @@ const RateCaseModal: React.FC<RateCaseModalProps> = ({
   caseRatings,
   currentUserRating,
 }) => {
-  const [overallScore, setOverallScore] = useState(0);
   const [metricScores, setMetricScores] = useState<{ [key: string]: number }>(
     {}
   );
-  const [activeDistribution, setActiveDistribution] =
-    useState<MetricName>("Overall");
-  // NEW: State to control visibility of the user breakdown list
+  const [activeDistribution, setActiveDistribution] = useState<
+    MetricName | "Overall"
+  >("Overall"); // Default to overall view
   const [isUserBreakdownVisible, setUserBreakdownVisible] = useState(false);
 
   const firstStarRef = useRef<HTMLDivElement>(null);
 
   const translationMap: { [key in MetricName]: string } = {
-    Overall: "Цялостно",
     Adequacy: "Съответствие",
     Impact: "Въздействие",
     Efficiency: "Ефективност",
@@ -157,7 +172,6 @@ const RateCaseModal: React.FC<RateCaseModalProps> = ({
 
   useEffect(() => {
     if (currentUserRating) {
-      setOverallScore(currentUserRating.overallScore);
       const initialMetricScores = currentUserRating.scores.reduce(
         (acc, score) => {
           acc[score.metricName] = score.score;
@@ -167,7 +181,6 @@ const RateCaseModal: React.FC<RateCaseModalProps> = ({
       );
       setMetricScores(initialMetricScores);
     } else {
-      setOverallScore(0);
       setMetricScores({});
     }
   }, [currentUserRating, isOpen]);
@@ -183,100 +196,109 @@ const RateCaseModal: React.FC<RateCaseModalProps> = ({
     }
   }, [isOpen]);
 
-  // The useMemo hook remains the same, as it already calculates the necessary data.
-  const { distributions, totalRatings, allMetricsData, ratingsByUser } =
-    useMemo(() => {
-      const defaultMetricsData = RATING_METRICS.reduce((acc, metric) => {
-        acc[metric] = { average: 0, count: 0 };
-        return acc;
-      }, {} as Record<(typeof RATING_METRICS)[number], { average: number; count: number }>);
-      const defaultDistributions = RATING_METRICS.reduce((acc, metric) => {
-        acc[metric] = {};
-        return acc;
-      }, {} as Record<(typeof RATING_METRICS)[number], { [key: number]: number }>);
-      const defaultRatingsByUser = RATING_METRICS.reduce((acc, metric) => {
-        acc[metric] = [];
-        return acc;
-      }, {} as Record<string, { user: string; score: number }[]>);
-      if (!caseRatings || caseRatings.length === 0) {
-        return {
-          totalRatings: 0,
-          allMetricsData: {
-            Overall: { average: 0, count: 0 },
-            ...defaultMetricsData,
-          },
-          distributions: { Overall: {}, ...defaultDistributions },
-          ratingsByUser: { Overall: [], ...defaultRatingsByUser },
-        };
-      }
-      const overallScores = caseRatings.map((r) => r.overallScore);
-      const overallDistribution = overallScores.reduce((acc, score) => {
-        acc[Math.round(score)] = (acc[Math.round(score)] || 0) + 1;
-        return acc;
-      }, {} as { [key: number]: number });
-      const overallAverage =
-        overallScores.reduce((s, c) => s + c, 0) / overallScores.length;
-      const overallRatingsByUser = caseRatings.map((r) => ({
-        user: r.user.name,
-        score: r.overallScore,
-      }));
-      const metricCalcs = RATING_METRICS.reduce(
-        (acc, metric) => {
-          const metricRatings = caseRatings
-            .map((r) => ({
-              user: r.user.name,
-              score: r.scores.find((s) => s.metricName === metric)?.score,
-            }))
-            .filter((r) => r.score !== undefined) as {
-            user: string;
-            score: number;
-          }[];
-          if (metricRatings.length > 0) {
-            const scores = metricRatings.map((r) => r.score);
-            acc.distributions[metric] = scores.reduce((dist, score) => {
-              dist[score] = (dist[score] || 0) + 1;
-              return dist;
-            }, {} as { [key: number]: number });
-            acc.data[metric] = {
-              average: scores.reduce((s, c) => s + c, 0) / scores.length,
-              count: scores.length,
-            };
-            acc.byUser[metric] = metricRatings;
-          } else {
-            acc.distributions[metric] = {};
-            acc.data[metric] = { average: 0, count: 0 };
-            acc.byUser[metric] = [];
-          }
-          return acc;
-        },
-        {
-          distributions: {} as Record<string, { [key: number]: number }>,
-          data: {} as Record<string, { average: number; count: number }>,
-          byUser: {} as Record<string, { user: string; score: number }[]>,
-        }
-      );
+  const {
+    distributions,
+    totalRatings,
+    allMetricsData,
+    ratingsByUser,
+    calculatedAverage,
+  } = useMemo(() => {
+    const defaultMetricsData = RATING_METRICS.reduce((acc, metric) => {
+      acc[metric] = { average: 0, count: 0 };
+      return acc;
+    }, {} as Record<(typeof RATING_METRICS)[number], { average: number; count: number }>);
+    const defaultDistributions = RATING_METRICS.reduce((acc, metric) => {
+      acc[metric] = {};
+      return acc;
+    }, {} as Record<(typeof RATING_METRICS)[number], { [key: number]: number }>);
+    const defaultRatingsByUser = RATING_METRICS.reduce((acc, metric) => {
+      acc[metric] = [];
+      return acc;
+    }, {} as Record<string, { user: string; score: number }[]>);
+    if (!caseRatings || caseRatings.length === 0) {
       return {
-        distributions: {
-          Overall: overallDistribution,
-          ...metricCalcs.distributions,
-        },
-        allMetricsData: {
-          Overall: { average: overallAverage, count: overallScores.length },
-          ...metricCalcs.data,
-        },
-        totalRatings: caseRatings.length,
-        ratingsByUser: { Overall: overallRatingsByUser, ...metricCalcs.byUser },
+        totalRatings: 0,
+        allMetricsData: defaultMetricsData,
+        distributions: defaultDistributions,
+        ratingsByUser: defaultRatingsByUser,
+        calculatedAverage: 0,
       };
-    }, [caseRatings]);
+    }
+    const overallAverage = calculateCaseRating(caseRatings);
+    const userOverallRatings = caseRatings
+      .map((r) => ({ user: r.user.name, score: calculateUserRating(r.scores) }))
+      .filter((r) => r.score > 0);
+    const overallDistribution = userOverallRatings.reduce((acc, r) => {
+      const roundedScore = Math.round(r.score);
+      acc[roundedScore] = (acc[roundedScore] || 0) + 1;
+      return acc;
+    }, {} as { [key: number]: number });
+    const metricCalcs = RATING_METRICS.reduce(
+      (acc, metric) => {
+        const metricRatings = caseRatings
+          .map((r) => ({
+            user: r.user.name,
+            score: r.scores.find((s) => s.metricName === metric)?.score,
+          }))
+          .filter((r) => r.score !== undefined) as {
+          user: string;
+          score: number;
+        }[];
+        if (metricRatings.length > 0) {
+          const scores = metricRatings.map((r) => r.score);
+          acc.distributions[metric] = scores.reduce((dist, score) => {
+            dist[score] = (dist[score] || 0) + 1;
+            return dist;
+          }, {} as { [key: number]: number });
+          acc.data[metric] = {
+            average: scores.reduce((s, c) => s + c, 0) / scores.length,
+            count: scores.length,
+          };
+          acc.byUser[metric] = metricRatings;
+        } else {
+          acc.distributions[metric] = {};
+          acc.data[metric] = { average: 0, count: 0 };
+          acc.byUser[metric] = [];
+        }
+        return acc;
+      },
+      {
+        distributions: {} as Record<string, { [key: number]: number }>,
+        data: {} as Record<string, { average: number; count: number }>,
+        byUser: {} as Record<string, { user: string; score: number }[]>,
+      }
+    );
+    return {
+      distributions: {
+        Overall: overallDistribution,
+        ...metricCalcs.distributions,
+      },
+      allMetricsData: {
+        Overall: { average: overallAverage, count: userOverallRatings.length },
+        ...metricCalcs.data,
+      },
+      totalRatings: caseRatings.length,
+      ratingsByUser: { Overall: userOverallRatings, ...metricCalcs.byUser },
+      calculatedAverage: overallAverage,
+    };
+  }, [caseRatings]);
 
+  const hasAtLeastOneMetric = Object.values(metricScores).some(
+    (score) => score > 0
+  );
   const handleSubmit = () => {
-    if (overallScore === 0) return;
-    const finalMetricScores: IMetricScore[] = RATING_METRICS.map((metric) => ({
-      metricName: metric,
-      score: metricScores[metric] || 0,
-    }));
-    onSubmit({ overallScore, scores: finalMetricScores });
+    if (!hasAtLeastOneMetric) return;
+    const finalMetricScores: IMetricScore[] = RATING_METRICS.filter(
+      (metric) => metricScores[metric] > 0
+    ).map((metric) => ({ metricName: metric, score: metricScores[metric] }));
+    const calculatedOverall = calculateUserRating(finalMetricScores);
+    onSubmit({ overallScore: calculatedOverall, scores: finalMetricScores });
     onClose();
+  };
+  type DisplayMetricName = "Overall" | MetricName;
+  const displayTranslationMap: { [key in DisplayMetricName]: string } = {
+    Overall: "Изчислена обща",
+    ...translationMap,
   };
 
   return (
@@ -285,7 +307,6 @@ const RateCaseModal: React.FC<RateCaseModalProps> = ({
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 z-40 bg-black/40 data-[state=open]:animate-overlayShow" />
           <Dialog.Content
-            // MODIFIED: Changed overflow-y-auto to overflow-y-scroll
             className="fixed left-1/2 top-1/2 z-50 w-[90vw] max-w-2xl -translate-x-1/2 -translate-y-1/2 rounded-lg bg-white p-6 shadow-xl data-[state=open]:animate-contentShow focus:outline-none overflow-y-scroll max-h-[90vh]"
             onOpenAutoFocus={(e) => {
               e.preventDefault();
@@ -295,116 +316,151 @@ const RateCaseModal: React.FC<RateCaseModalProps> = ({
               Оценка за Сигнал #{caseNumber}
             </Dialog.Title>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-              {/* Left Side: User Input Form (No changes here) */}
+              {/* Left Side: User Input Form */}
               <div className="flex flex-col gap-4 p-4 rounded-lg bg-gray-50 border border-gray-200 order-2 md:order-1">
-                <div className="flex flex-col">
-                  <div className="flex items-center gap-1.5 mb-1">
-                    <h3 className="font-semibold text-gray-800">
-                      Вашата цялостна оценка
-                      <span className="text-red-500">*</span>
-                    </h3>
-                    <Tooltip.Root delayDuration={100}>
-                      <Tooltip.Trigger asChild>
-                        <button
-                          type="button"
-                          className="text-gray-400 hover:text-gray-600 focus:outline-none"
-                          tabIndex={-1}
-                        >
-                          <QuestionMarkCircleIcon className="h-5 w-5" />
-                        </button>
-                      </Tooltip.Trigger>
-                      <Tooltip.Portal>
-                        <Tooltip.Content
-                          className="z-[99] max-w-sm rounded-lg bg-gray-900 text-white p-4 shadow-xl"
-                          sideOffset={5}
-                          align="start"
-                        >
-                          <RatingHintContent metricKey="Overall" />
-                          <Tooltip.Arrow className="fill-gray-900" />
-                        </Tooltip.Content>
-                      </Tooltip.Portal>
-                    </Tooltip.Root>
-                  </div>
-                  <div ref={firstStarRef}>
-                    <StarRatingInput
-                      value={overallScore}
-                      onChange={setOverallScore}
-                    />
-                  </div>
-                </div>
-                <hr className="border-t-2 border-gray-200 my-2" />
                 <div>
                   <h3 className="font-semibold text-gray-800">
-                    Детайлни оценки (опционално)
+                    Детайлни оценки<span className="text-red-500">*</span>
+                    <span className="text-sm font-normal text-gray-600 ml-2">
+                      (поне една метрика)
+                    </span>
                   </h3>
-                  {RATING_METRICS.map((metric) => (
-                    <div key={metric} className="mt-2">
-                      <div className="flex items-center gap-1.5 mb-1">
-                        <label className="text-sm font-medium text-gray-700">
-                          {translationMap[metric as MetricName]}
-                        </label>
-                        <Tooltip.Root delayDuration={100}>
-                          <Tooltip.Trigger asChild>
+                  <p className="text-xs text-gray-600 mt-1">
+                    Вашата обща оценка ще бъде изчислена автоматично въз основа
+                    на оценените метрики.
+                  </p>
+                  {RATING_METRICS.map((metric, index) => {
+                    const existingScore =
+                      currentUserRating?.scores.find(
+                        (s) => s.metricName === metric
+                      )?.score || 0;
+                    const hasExistingRating = existingScore > 0;
+                    const currentScore = metricScores[metric] || 0;
+                    return (
+                      <div key={metric} className="mt-3">
+                        <div className="flex items-center gap-1.5 mb-1">
+                          {/* MODIFICATION 1: Swapped element order */}
+                          <label
+                            className={`text-sm font-medium text-gray-700`}
+                          >
+                            {translationMap[metric as MetricName]}
+                          </label>
+                          <Tooltip.Root delayDuration={100}>
+                            <Tooltip.Trigger asChild>
+                              <button
+                                type="button"
+                                className="text-gray-400 hover:text-gray-600 focus:outline-none"
+                                tabIndex={-1}
+                              >
+                                <QuestionMarkCircleIcon className="h-5 w-5" />
+                              </button>
+                            </Tooltip.Trigger>
+                            <Tooltip.Portal>
+                              <Tooltip.Content
+                                className="z-[99] max-w-sm rounded-lg bg-gray-900 text-white p-4 shadow-xl"
+                                sideOffset={5}
+                                align="start"
+                              >
+                                <RatingHintContent
+                                  metricKey={metric as keyof typeof hintData}
+                                />
+                                <Tooltip.Arrow className="fill-gray-900" />
+                              </Tooltip.Content>
+                            </Tooltip.Portal>
+                          </Tooltip.Root>
+                          {hasExistingRating && (
+                            <span className="text-xs text-gray-400 italic">
+                              (предишна оценка: {existingScore})
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div
+                            ref={index === 0 ? firstStarRef : undefined}
+                            className={
+                              hasExistingRating && currentScore === 0
+                                ? "opacity-60"
+                                : ""
+                            }
+                          >
+                            <StarRatingInput
+                              value={currentScore}
+                              onChange={(val) =>
+                                setMetricScores((p) => ({
+                                  ...p,
+                                  [metric]: val,
+                                }))
+                              }
+                              size="h-6 w-6"
+                            />
+                          </div>
+                          {currentScore > 0 && (
                             <button
                               type="button"
-                              className="text-gray-400 hover:text-gray-600 focus:outline-none"
-                              tabIndex={-1}
+                              onClick={() =>
+                                setMetricScores((p) => ({ ...p, [metric]: 0 }))
+                              }
+                              className="text-gray-400 hover:text-red-500 transition-colors"
+                              title="Изчисти оценката"
                             >
-                              <QuestionMarkCircleIcon className="h-5 w-5" />
+                              <XCircleIcon className="h-5 w-5" />
                             </button>
-                          </Tooltip.Trigger>
-                          <Tooltip.Portal>
-                            <Tooltip.Content
-                              className="z-[99] max-w-sm rounded-lg bg-gray-900 text-white p-4 shadow-xl"
-                              sideOffset={5}
-                              align="start"
-                            >
-                              <RatingHintContent
-                                metricKey={metric as keyof typeof hintData}
-                              />
-                              <Tooltip.Arrow className="fill-gray-900" />
-                            </Tooltip.Content>
-                          </Tooltip.Portal>
-                        </Tooltip.Root>
+                          )}
+                        </div>
                       </div>
-                      <StarRatingInput
-                        value={metricScores[metric] || 0}
-                        onChange={(val) =>
-                          setMetricScores((p) => ({ ...p, [metric]: val }))
-                        }
-                        size="h-6 w-6"
-                      />
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
-
-              {/* Right Side: Community Statistics (MODIFIED) */}
+              {/* Right Side: Community Statistics */}
               <div className="flex flex-col gap-4 order-1 md:order-2">
                 <h3 className="font-semibold text-gray-800">
                   Разпределение Оценки
                 </h3>
                 {totalRatings > 0 ? (
                   <>
-                    <div className="text-center p-2 rounded-lg bg-gray-100">
+                    <div className="text-center p-3 rounded-lg bg-gray-100">
                       <p className="text-sm font-semibold text-gray-600">
-                        Средна оценка
+                        {activeDistribution === "Overall"
+                          ? "Средна оценка (изчислена)"
+                          : `Средна оценка за ${
+                              displayTranslationMap[
+                                activeDistribution as DisplayMetricName
+                              ]
+                            }`}
                       </p>
                       <p className="text-3xl font-bold text-gray-800">
-                        {allMetricsData.Overall.average.toFixed(1)}
+                        {activeDistribution === "Overall"
+                          ? calculatedAverage.toFixed(1)
+                          : allMetricsData[activeDistribution]?.average.toFixed(
+                              1
+                            ) || "0.0"}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {activeDistribution === "Overall"
+                          ? "Базирана на средните оценки по метрики"
+                          : `от ${
+                              allMetricsData[activeDistribution]?.count || 0
+                            } оценки`}
                       </p>
                     </div>
-
                     <div>
                       <h4 className="text-sm font-medium text-gray-600 mb-2">
-                        {translationMap[activeDistribution]} разпределение
+                        {
+                          displayTranslationMap[
+                            activeDistribution as DisplayMetricName
+                          ]
+                        }{" "}
+                        разпределение
                       </h4>
                       <RatingDistributionChart
                         distribution={distributions[activeDistribution] || {}}
-                        totalRatings={totalRatings}
+                        totalRatings={
+                          activeDistribution === "Overall"
+                            ? allMetricsData.Overall.count
+                            : allMetricsData[activeDistribution]?.count || 0
+                        }
                       />
-
-                      {/* NEW: Toggle button for user breakdown */}
                       <div className="mt-3 text-center">
                         <button
                           onClick={() => setUserBreakdownVisible((p) => !p)}
@@ -421,25 +477,33 @@ const RateCaseModal: React.FC<RateCaseModalProps> = ({
                           )}
                         </button>
                       </div>
-
-                      {/* NEW: Conditionally rendered user breakdown section */}
                       {isUserBreakdownVisible && (
-                        <div className="bg-gray-50 p-2 mt-2 rounded-md border max-h-32 overflow-y-auto custom-scrollbar">
+                        <div className="bg-gray-50 p-3 mt-2 rounded-md max-h-36 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-400">
                           {ratingsByUser[activeDistribution] &&
                           ratingsByUser[activeDistribution].length > 0 ? (
-                            <ul className="space-y-1.5">
+                            <ul className="space-y-2">
                               {ratingsByUser[activeDistribution].map(
-                                (r, index) => (
-                                  <li
-                                    key={index}
-                                    className="flex justify-between items-center text-xs text-gray-700"
-                                  >
-                                    <span className="truncate pr-2">
-                                      {r.user}
-                                    </span>
-                                    <ReadOnlyStars score={r.score} />
-                                  </li>
-                                )
+                                (r, index) => {
+                                  const isCurrentUser =
+                                    currentUserRating &&
+                                    r.user === currentUserRating.user.name;
+                                  return (
+                                    <li
+                                      key={index}
+                                      className={`flex justify-between items-center text-xs px-2 py-1 rounded ${
+                                        isCurrentUser
+                                          ? "bg-blue-100 text-blue-800 font-semibold"
+                                          : "text-gray-700"
+                                      }`}
+                                    >
+                                      <span className="truncate pr-2">
+                                        {r.user}
+                                        {isCurrentUser && " (Вие)"}
+                                      </span>
+                                      <ReadOnlyStars score={r.score} />
+                                    </li>
+                                  );
+                                }
                               )}
                             </ul>
                           ) : (
@@ -450,38 +514,47 @@ const RateCaseModal: React.FC<RateCaseModalProps> = ({
                         </div>
                       )}
                     </div>
-
                     <div>
                       <h4 className="text-sm font-medium text-gray-600 mt-4 mb-2">
                         Разбивка по средни оценки
                       </h4>
                       <div className="space-y-1">
-                        {/* MODIFIED: This section is now just for selecting the active metric */}
                         {Object.entries(allMetricsData).map(
                           ([metric, data]) => (
-                            <button
-                              key={metric}
-                              onClick={() =>
-                                setActiveDistribution(metric as MetricName)
-                              }
-                              className={`w-full flex justify-between items-center text-sm p-2 rounded-md transition-colors ${
-                                activeDistribution === metric
-                                  ? "bg-blue-100 text-blue-800"
-                                  : "hover:bg-gray-100"
-                              }`}
-                            >
-                              <span className="font-semibold">
-                                {translationMap[metric as MetricName]}
-                              </span>
-                              <div className="flex items-baseline gap-1">
-                                <span className="font-bold">
-                                  {data.average.toFixed(1)}
+                            <React.Fragment key={metric}>
+                              <button
+                                onClick={() =>
+                                  setActiveDistribution(
+                                    metric as DisplayMetricName
+                                  )
+                                }
+                                className={`w-full flex justify-between items-center text-sm p-2 rounded-md transition-colors ${
+                                  activeDistribution === metric
+                                    ? "bg-blue-100 text-blue-800"
+                                    : "hover:bg-gray-100"
+                                }`}
+                              >
+                                <span className="font-semibold">
+                                  {
+                                    displayTranslationMap[
+                                      metric as DisplayMetricName
+                                    ]
+                                  }
                                 </span>
-                                <span className="text-xs text-gray-500">
-                                  ({data.count})
-                                </span>
-                              </div>
-                            </button>
+                                <div className="flex items-baseline gap-1">
+                                  <span className="font-bold">
+                                    {data.average.toFixed(1)}
+                                  </span>
+                                  <span className="text-xs text-gray-500">
+                                    ({data.count})
+                                  </span>
+                                </div>
+                              </button>
+                              {/* MODIFICATION 2: Add visual separator */}
+                              {metric === "Overall" && (
+                                <hr className="my-1 border-gray-200" />
+                              )}
+                            </React.Fragment>
                           )
                         )}
                       </div>
@@ -494,7 +567,6 @@ const RateCaseModal: React.FC<RateCaseModalProps> = ({
                 )}
               </div>
             </div>
-
             <div className="mt-6 flex justify-end gap-3">
               <button
                 onClick={onClose}
@@ -504,13 +576,15 @@ const RateCaseModal: React.FC<RateCaseModalProps> = ({
               </button>
               <button
                 onClick={handleSubmit}
-                disabled={overallScore === 0}
+                disabled={!hasAtLeastOneMetric}
                 className={`rounded px-4 py-2 text-sm font-medium text-white transition-colors ${
-                  overallScore === 0
+                  !hasAtLeastOneMetric
                     ? "bg-gray-400 cursor-not-allowed"
                     : "bg-blue-600 hover:bg-blue-700"
                 }`}
-                title={overallScore === 0 ? "Моля, дайте цялостна оценка" : ""}
+                title={
+                  !hasAtLeastOneMetric ? "Моля, оценете поне една метрика" : ""
+                }
               >
                 Изпрати
               </button>

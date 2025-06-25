@@ -1,4 +1,4 @@
-// src/components/modals/RateCaseModal.tsx (Refactored)
+// src/components/modals/RateCaseModal.tsx (Final Polish)
 
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
@@ -11,19 +11,16 @@ import {
   StarIcon as StarOutline,
   XCircleIcon,
 } from "@heroicons/react/24/outline";
-import { IMetricScore, IRatingMetric, IMe } from "../../db/interfaces";
+import { IMetricScore, IRatingMetric, IMe, IUser } from "../../db/interfaces";
 import {
   useGetAllRatingMetrics,
   useBulkCreateMetricScores,
-  useGetCaseMetricScores,
 } from "../../graphql/hooks/rating";
 import RatingDistributionChart from "../charts/RatingDistributionChart";
-import PageStatusDisplay from "../global/PageStatusDisplay"; // For loading/error states
+import PageStatusDisplay from "../global/PageStatusDisplay";
+import { ApolloError } from "@apollo/client";
 
-// --- REMOVED --- Old utility functions (calculateUserRating, calculateCaseRating) are no longer needed.
-// --- REMOVED --- The hardcoded 'hintData' object is no longer needed.
-
-// --- Helper Components (Unchanged) ---
+// --- Helper Components ---
 
 const RatingHintContent: React.FC<{ metric: IRatingMetric }> = ({ metric }) => {
   return (
@@ -64,26 +61,44 @@ const StarRatingInput: React.FC<{
   );
 };
 
-const ReadOnlyStars: React.FC<{ score: number }> = ({ score }) => (
-  <div className="flex items-center">
-    {[1, 2, 3, 4, 5].map((s) =>
-      s <= Math.round(score) ? (
-        <StarSolid key={s} className="h-4 w-4 text-yellow-400" />
-      ) : (
-        <StarOutline key={s} className="h-4 w-4 text-gray-300" />
-      )
-    )}
-  </div>
-);
+// --- THIS COMPONENT IS UPDATED ---
+const ReadOnlyStars: React.FC<{ score: number }> = ({ score }) => {
+  const starFillPercentage = Math.max(0, Math.min(100, (score / 5) * 100));
 
-// --- UPDATED --- Props are simplified
+  return (
+    <div className="relative flex">
+      {/* Background Layer: Empty Stars */}
+      <div className="flex text-gray-300">
+        {[...Array(5)].map((_, i) => (
+          <StarSolid key={`bg-${i}`} className="h-4 w-4" />
+        ))}
+      </div>
+      {/* Foreground Layer: Filled Stars (Clipped) */}
+      <div
+        className="absolute top-0 left-0 h-full overflow-hidden whitespace-nowrap flex"
+        style={{ width: `${starFillPercentage}%` }}
+      >
+        <div className="flex text-yellow-400">
+          {[...Array(5)].map((_, i) => (
+            <StarSolid key={`fg-${i}`} className="h-4 w-4" />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+// ---
+
 interface RateCaseModalProps {
   isOpen: boolean;
   onClose: () => void;
   caseId: string;
   caseNumber: number;
   currentUser: IMe;
-  onSuccessfulSubmit: () => void; // To trigger a refetch on the parent page
+  onSuccessfulSubmit: () => void;
+  caseScores: IMetricScore[];
+  isLoadingScores: boolean;
+  errorScores?: ApolloError | undefined;
 }
 
 const RateCaseModal: React.FC<RateCaseModalProps> = ({
@@ -93,145 +108,157 @@ const RateCaseModal: React.FC<RateCaseModalProps> = ({
   caseNumber,
   currentUser,
   onSuccessfulSubmit,
+  caseScores,
+  isLoadingScores,
+  errorScores,
 }) => {
-  // --- NEW: Data Fetching using our Hooks ---
+  // The rest of the component is exactly the same as the previous step.
+  // ... all hooks and logic ...
   const {
     ratingMetrics,
     loading: loadingMetrics,
     error: errorMetrics,
   } = useGetAllRatingMetrics({ skip: !isOpen });
-
-  const {
-    metricScores: caseScores,
-    loading: loadingScores,
-    error: errorScores,
-  } = useGetCaseMetricScores(caseId);
-
   const {
     submitScores,
     loading: submittingScores,
     error: errorSubmitting,
   } = useBulkCreateMetricScores();
 
-  // --- UPDATED --- State is now keyed by metric ID
   const [userScores, setUserScores] = useState<{ [metricId: string]: number }>(
     {}
   );
   const [activeDistribution, setActiveDistribution] =
     useState<string>("Overall");
   const [isUserBreakdownVisible, setUserBreakdownVisible] = useState(false);
-
   const firstStarRef = useRef<HTMLDivElement>(null);
 
-  // --- UPDATED --- This effect initializes the form with the user's existing scores
   useEffect(() => {
     if (isOpen && caseScores.length > 0) {
       const currentUserScores = caseScores.filter(
         (s) => s.user._id === currentUser._id
       );
-
       if (currentUserScores.length > 0) {
-        const initialScores = currentUserScores.reduce((acc, score) => {
-          acc[score.metric._id] = score.score;
-          return acc;
-        }, {} as { [metricId: string]: number });
-        setUserScores(initialScores);
+        setUserScores(
+          currentUserScores.reduce((acc, score) => {
+            acc[score.metric._id] = score.score;
+            return acc;
+          }, {} as { [metricId: string]: number })
+        );
       } else {
-        setUserScores({}); // Reset if user has no scores for this case
+        setUserScores({});
       }
     } else if (!isOpen) {
-      setUserScores({}); // Reset on close
+      setUserScores({});
     }
   }, [isOpen, caseScores, currentUser._id]);
 
-  // --- UPDATED --- The entire statistics calculation is re-wired for the new data structure
-  const { distributions, allMetricsData, calculatedAverage } = useMemo(() => {
-    if (!caseScores || caseScores.length === 0) {
-      return {
-        distributions: {},
-        allMetricsData: {},
-        calculatedAverage: 0,
-      };
-    }
-
-    // Calculate overall average from all scores
-    const totalSum = caseScores.reduce((acc, s) => acc + s.score, 0);
-    const overallAverage = totalSum / caseScores.length;
-
-    // Group scores by metric ID
-    const scoresByMetric = caseScores.reduce((acc, score) => {
+  const scoresByMetric = useMemo(() => {
+    return caseScores.reduce((acc, score) => {
       const metricId = score.metric._id;
-      if (!acc[metricId]) {
-        acc[metricId] = [];
-      }
+      if (!acc[metricId]) acc[metricId] = [];
       acc[metricId].push(score);
       return acc;
-    }, {} as { [metricId: string]: IMetricScore[] });
+    }, {} as { [key: string]: IMetricScore[] });
+  }, [caseScores]);
 
-    const metricsData: { [key: string]: { average: number; count: number } } =
-      {};
-    const metricDistributions: { [key: string]: { [key: number]: number } } =
-      {};
-
-    for (const metricId in scoresByMetric) {
-      const scores = scoresByMetric[metricId];
-      const sum = scores.reduce((acc, s) => acc + s.score, 0);
-      metricsData[metricId] = {
-        average: sum / scores.length,
-        count: scores.length,
+  const displayData = useMemo(() => {
+    if (!caseScores || caseScores.length === 0) {
+      return {
+        card: {
+          title: "Средна оценка",
+          average: 0,
+          count: 0,
+          countText: "подадени оценки",
+        },
+        distribution: {},
+        breakdown: [],
       };
-      metricDistributions[metricId] = scores.reduce((dist, s) => {
-        dist[s.score] = (dist[s.score] || 0) + 1;
-        return dist;
-      }, {} as { [key: number]: number });
     }
 
-    // Add an "Overall" category for the distribution chart
-    const overallDistribution = caseScores.reduce((dist, s) => {
-      dist[s.score] = (dist[s.score] || 0) + 1;
-      return dist;
-    }, {} as { [key: number]: number });
+    const scoresByUser = caseScores.reduce((acc, score) => {
+      const userId = score.user._id;
+      if (!acc[userId]) acc[userId] = { user: score.user, scores: [] };
+      acc[userId].scores.push(score.score);
+      return acc;
+    }, {} as { [key: string]: { user: IUser; scores: number[] } });
 
-    return {
-      distributions: { ...metricDistributions, Overall: overallDistribution },
-      allMetricsData: metricsData,
-      calculatedAverage: overallAverage,
-    };
-  }, [caseScores]);
+    const userAverages = Object.values(scoresByUser).map((data) => {
+      const avg = data.scores.reduce((a, b) => a + b, 0) / data.scores.length;
+      return { user: data.user, averageScore: avg };
+    });
+
+    const overallAverage =
+      userAverages.reduce((acc, val) => acc + val.averageScore, 0) /
+      (userAverages.length || 1);
+
+    if (activeDistribution === "Overall") {
+      return {
+        card: {
+          title: "Средна оценка",
+          average: overallAverage,
+          count: userAverages.length,
+          countText: "оценили потребители",
+        },
+        distribution: userAverages.reduce((acc, item) => {
+          const rounded = Math.round(item.averageScore);
+          acc[rounded] = (acc[rounded] || 0) + 1;
+          return acc;
+        }, {} as { [key: number]: number }),
+        breakdown: userAverages.map((item) => ({
+          user: item.user,
+          score: item.averageScore,
+        })),
+      };
+    } else {
+      const relevantScores = scoresByMetric[activeDistribution] || [];
+      const metricInfo = ratingMetrics.find(
+        (m) => m._id === activeDistribution
+      );
+      const metricAverage =
+        relevantScores.reduce((acc, s) => acc + s.score, 0) /
+        (relevantScores.length || 1);
+
+      return {
+        card: {
+          title: `Средна оценка за ${metricInfo?.name || ""}`,
+          average: metricAverage,
+          count: relevantScores.length,
+          countText: "подадени оценки",
+        },
+        distribution: relevantScores.reduce((acc, item) => {
+          acc[item.score] = (acc[item.score] || 0) + 1;
+          return acc;
+        }, {} as { [key: number]: number }),
+        breakdown: relevantScores.map((item) => ({
+          user: item.user,
+          score: item.score,
+        })),
+      };
+    }
+  }, [caseScores, activeDistribution, ratingMetrics, scoresByMetric]);
 
   const hasAtLeastOneMetric = Object.values(userScores).some(
     (score) => score > 0
   );
 
-  // --- UPDATED --- Submission logic uses the new hook
   const handleSubmit = async () => {
     if (!hasAtLeastOneMetric || submittingScores) return;
-
     const scoresToSubmit = Object.entries(userScores)
       .filter(([, score]) => score > 0)
-      .map(([metricId, score]) => ({
-        metric: metricId,
-        score: score,
-      }));
-
+      .map(([metricId, score]) => ({ metric: metricId, score }));
     try {
       await submitScores({
         user: currentUser._id,
         case: caseId,
         scores: scoresToSubmit,
       });
-      onSuccessfulSubmit(); // Trigger refetch on parent page
+      onSuccessfulSubmit();
       onClose();
     } catch (e) {
       console.error("Submission failed", e);
-      // Optionally show an error message to the user
       alert(`Грешка при изпращане на оценката: ${errorSubmitting?.message}`);
     }
-  };
-
-  const getMetricName = (metricId: string) => {
-    if (metricId === "Overall") return "Общо разпределение";
-    return ratingMetrics.find((m) => m._id === metricId)?.name || "Metric";
   };
 
   return (
@@ -247,23 +274,19 @@ const RateCaseModal: React.FC<RateCaseModalProps> = ({
               Оценка за Сигнал #{caseNumber}
             </Dialog.Title>
 
-            {(loadingMetrics || loadingScores) && (
-              <PageStatusDisplay
-                loading
-                message="Зареждане на данни за оценка..."
-              />
+            {(loadingMetrics || isLoadingScores) && (
+              <PageStatusDisplay loading message="Зареждане..." />
             )}
             {(errorMetrics || errorScores) && (
               <PageStatusDisplay error={errorMetrics || errorScores} />
             )}
 
             {!loadingMetrics &&
-              !loadingScores &&
+              !isLoadingScores &&
               !errorMetrics &&
               !errorScores && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-                  {/* Left Side: User Input Form */}
-                  <div className="flex flex-col gap-4 p-4 rounded-lg bg-gray-50 border border-gray-200 order-2 md:order-1">
+                  <div className="flex flex-col gap-4 p-4 rounded-lg bg-gray-50 border order-2 md:order-1">
                     <div>
                       <h3 className="font-semibold text-gray-800">
                         Вашата оценка<span className="text-red-500">*</span>
@@ -339,7 +362,6 @@ const RateCaseModal: React.FC<RateCaseModalProps> = ({
                     </div>
                   </div>
 
-                  {/* Right Side: Community Statistics */}
                   <div className="flex flex-col gap-4 order-1 md:order-2">
                     <h3 className="font-semibold text-gray-800">
                       Оценки от общността
@@ -348,28 +370,23 @@ const RateCaseModal: React.FC<RateCaseModalProps> = ({
                       <>
                         <div className="text-center p-3 rounded-lg bg-gray-100">
                           <p className="text-sm font-semibold text-gray-600">
-                            Средна оценка
+                            {displayData.card.title}
                           </p>
                           <p className="text-3xl font-bold text-gray-800">
-                            {calculatedAverage.toFixed(1)}
+                            {displayData.card.average.toFixed(1)}
                           </p>
                           <p className="text-xs text-gray-500 mt-1">
-                            от {caseScores.length} подадени оценки
+                            от {displayData.card.count}{" "}
+                            {displayData.card.countText}
                           </p>
                         </div>
-
                         <div>
                           <h4 className="text-sm font-medium text-gray-600 mb-2">
-                            Разпределение за:{" "}
-                            {getMetricName(activeDistribution)}
+                            Разпределение
                           </h4>
                           <RatingDistributionChart
-                            distribution={
-                              distributions[activeDistribution] || {}
-                            }
-                            totalRatings={Object.values(
-                              distributions[activeDistribution] || {}
-                            ).reduce((a, b) => a + b, 0)}
+                            distribution={displayData.distribution}
+                            totalRatings={displayData.breakdown.length}
                           />
                           <div className="mt-3 text-center">
                             <button
@@ -388,24 +405,24 @@ const RateCaseModal: React.FC<RateCaseModalProps> = ({
                             </button>
                           </div>
                           {isUserBreakdownVisible && (
-                            <div className="bg-gray-50 p-3 mt-2 rounded-md max-h-36 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-400">
-                              {caseScores.length > 0 ? (
+                            <div className="bg-gray-50 p-3 mt-2 rounded-md max-h-36 overflow-y-auto scrollbar-thin">
+                              {displayData.breakdown.length > 0 ? (
                                 <ul className="space-y-2">
-                                  {caseScores.map((s) => (
+                                  {displayData.breakdown.map((item, index) => (
                                     <li
-                                      key={s._id}
+                                      key={index}
                                       className={`flex justify-between items-center text-xs px-2 py-1 rounded ${
-                                        s.user._id === currentUser._id
+                                        item.user._id === currentUser._id
                                           ? "bg-blue-100 text-blue-800 font-semibold"
                                           : "text-gray-700"
                                       }`}
                                     >
                                       <span className="truncate pr-2">
-                                        {s.user.name}
-                                        {s.user._id === currentUser._id &&
+                                        {item.user.name}
+                                        {item.user._id === currentUser._id &&
                                           " (Вие)"}
                                       </span>
-                                      <ReadOnlyStars score={s.score} />
+                                      <ReadOnlyStars score={item.score} />
                                     </li>
                                   ))}
                                 </ul>
@@ -424,42 +441,49 @@ const RateCaseModal: React.FC<RateCaseModalProps> = ({
                           <div className="space-y-1">
                             <button
                               onClick={() => setActiveDistribution("Overall")}
-                              className={`w-full flex justify-between items-center text-sm p-2 rounded-md transition-colors ${
+                              className={`w-full text-left text-sm p-2 rounded-md transition-colors ${
                                 activeDistribution === "Overall"
-                                  ? "bg-blue-100 text-blue-800"
+                                  ? "bg-blue-100 text-blue-800 font-bold"
                                   : "hover:bg-gray-100"
                               }`}
                             >
-                              <span className="font-semibold">Общо</span>
+                              Общо
                             </button>
                             <hr className="my-1 border-gray-200" />
-                            {ratingMetrics.map((metric) => (
-                              <button
-                                key={metric._id}
-                                onClick={() =>
-                                  setActiveDistribution(metric._id)
-                                }
-                                className={`w-full flex justify-between items-center text-sm p-2 rounded-md transition-colors ${
-                                  activeDistribution === metric._id
-                                    ? "bg-blue-100 text-blue-800"
-                                    : "hover:bg-gray-100"
-                                }`}
-                              >
-                                <span className="font-semibold">
-                                  {metric.name}
-                                </span>
-                                <div className="flex items-baseline gap-1">
-                                  <span className="font-bold">
-                                    {(
-                                      allMetricsData[metric._id]?.average || 0
-                                    ).toFixed(1)}
+                            {ratingMetrics.map((metric) => {
+                              const metricScores =
+                                scoresByMetric[metric._id] || [];
+                              const metricAverage =
+                                metricScores.reduce(
+                                  (acc, s) => acc + s.score,
+                                  0
+                                ) / (metricScores.length || 1);
+                              return (
+                                <button
+                                  key={metric._id}
+                                  onClick={() =>
+                                    setActiveDistribution(metric._id)
+                                  }
+                                  className={`w-full flex justify-between items-center text-sm p-2 rounded-md transition-colors ${
+                                    activeDistribution === metric._id
+                                      ? "bg-blue-100 text-blue-800"
+                                      : "hover:bg-gray-100"
+                                  }`}
+                                >
+                                  <span className="font-semibold">
+                                    {metric.name}
                                   </span>
-                                  <span className="text-xs text-gray-500">
-                                    ({allMetricsData[metric._id]?.count || 0})
-                                  </span>
-                                </div>
-                              </button>
-                            ))}
+                                  <div className="flex items-baseline gap-1">
+                                    <span className="font-bold">
+                                      {metricAverage.toFixed(1)}
+                                    </span>
+                                    <span className="text-xs text-gray-500">
+                                      ({metricScores.length})
+                                    </span>
+                                  </div>
+                                </button>
+                              );
+                            })}
                           </div>
                         </div>
                       </>

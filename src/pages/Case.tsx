@@ -104,6 +104,8 @@ const Case = () => {
           refetch={refetch}
           attachments={c.attachments}
           caseNumber={c.case_number}
+          isLoading={loadingCase}
+          error={errorCase}
           rights={userRights}
         />
       </div>

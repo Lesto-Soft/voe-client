@@ -1,12 +1,10 @@
-// src/components/case-components/CaseRatingDisplay.tsx (Refactored)
+// src/components/case-components/CaseRatingDisplay.tsx (Final UI Polish)
 
 import React, { useMemo } from "react";
 import { StarIcon as StarSolid } from "@heroicons/react/24/solid";
 import { PlusIcon, CheckIcon } from "@heroicons/react/24/outline";
 import { IMetricScore } from "../../db/interfaces";
 import { caseBoxClasses, labelTextClass } from "../../ui/reusable-styles";
-
-// --- REMOVED --- The old calculation utility functions are no longer needed here.
 
 interface CaseRatingDisplayProps {
   metricScores: IMetricScore[];
@@ -24,18 +22,22 @@ const CaseRatingDisplay: React.FC<CaseRatingDisplayProps> = ({
   hasUserRated,
 }) => {
   const { average, totalRaters } = useMemo(() => {
-    // The average is now passed directly from the parent component.
     const avg = calculatedRating || 0;
-
-    // We calculate the total number of unique raters.
     const uniqueUserIds = new Set(metricScores.map((score) => score.user._id));
     const total = uniqueUserIds.size;
-
     return {
       average: avg,
       totalRaters: total,
     };
   }, [metricScores, calculatedRating]);
+
+  // --- THIS IS THE CHANGE ---
+  // Calculate the percentage width for the foreground stars
+  const starFillPercentage = useMemo(() => {
+    // Ensure the average is between 0 and 5, then calculate percentage
+    const clampedAverage = Math.max(0, Math.min(5, average));
+    return (clampedAverage / 5) * 100;
+  }, [average]);
 
   return (
     <div className={`${caseBoxClasses} flex-col !items-start`}>
@@ -73,18 +75,28 @@ const CaseRatingDisplay: React.FC<CaseRatingDisplayProps> = ({
             <span className="mr-1.5 text-base font-bold text-gray-800 tracking-tight">
               {average.toFixed(1)}
             </span>
-            {[1, 2, 3, 4, 5].map((star) => (
-              <StarSolid
-                key={star}
-                className={`h-4 w-4 ${
-                  average >= star
-                    ? "text-yellow-400"
-                    : average >= star - 0.5
-                    ? "text-yellow-400" // Half-star logic (optional but nice)
-                    : "text-gray-300"
-                }`}
-              />
-            ))}
+
+            {/* --- THIS IS THE NEW JSX LOGIC --- */}
+            <div className="relative flex">
+              {/* Background Layer: Empty Stars */}
+              <div className="flex text-gray-300">
+                {[...Array(5)].map((_, i) => (
+                  <StarSolid key={`bg-${i}`} className="h-4 w-4" />
+                ))}
+              </div>
+              {/* Foreground Layer: Filled Stars (Clipped) */}
+              <div
+                className="absolute top-0 left-0 h-full overflow-hidden whitespace-nowrap flex"
+                style={{ width: `${starFillPercentage}%` }}
+              >
+                <div className="flex text-yellow-400">
+                  {[...Array(5)].map((_, i) => (
+                    <StarSolid key={`fg-${i}`} className="h-4 w-4" />
+                  ))}
+                </div>
+              </div>
+            </div>
+
             <span className="ml-1 text-sm text-gray-500 font-medium">
               ({totalRaters})
             </span>

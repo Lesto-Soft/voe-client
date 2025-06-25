@@ -1,6 +1,7 @@
 // src/components/case-components/CaseInfo.tsx (Corrected)
 
 import React, { useState, useMemo } from "react";
+import { ApolloError } from "@apollo/client";
 import { ICategory, IMe, IMetricScore } from "../../db/interfaces";
 import CategoryLink from "../global/CategoryLink";
 import { FlagIcon, PencilSquareIcon } from "@heroicons/react/24/solid";
@@ -38,6 +39,8 @@ interface ICaseInfoProps {
   caseNumber: number;
   refetch: () => void;
   attachments?: string[];
+  isLoading: boolean;
+  error?: ApolloError | undefined; // <-- ADD THIS PROP
   rights: string[];
 }
 
@@ -57,6 +60,8 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
   refetch,
   attachments = [],
   rights = [],
+  isLoading,
+  error,
 }) => {
   const { t } = useTranslation("dashboard");
   const [isRatingModalOpen, setRatingModalOpen] = useState(false);
@@ -232,6 +237,9 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
         caseId={caseId}
         caseNumber={caseNumber}
         currentUser={me}
+        caseScores={metricScores}
+        isLoadingScores={isLoading}
+        errorScores={error} // <-- PASS THE PROP HERE
       />
     </>
   );

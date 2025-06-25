@@ -14,6 +14,7 @@ import { GET_CASE_METRIC_SCORES } from "../query/metricScore";
 import {
   BULK_CREATE_METRIC_SCORES,
   BulkMetricScoresInput,
+  DELETE_METRIC_SCORE,
 } from "../mutation/metricScore";
 
 // =================================================================
@@ -100,4 +101,20 @@ export const useBulkCreateMetricScores = () => {
     error,
     data,
   };
+};
+
+export const useDeleteMetricScore = () => {
+  const [deleteMetricScoreMutation, { loading, error }] =
+    useMutation(DELETE_METRIC_SCORE);
+
+  const deleteScore = async (_id: string) => {
+    try {
+      await deleteMetricScoreMutation({ variables: { _id } });
+    } catch (err) {
+      console.error("Failed to delete metric score:", err);
+      throw err;
+    }
+  };
+
+  return { deleteScore, loading, error };
 };

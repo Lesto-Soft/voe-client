@@ -1,3 +1,5 @@
+// src/components/modals/RateCaseModal.tsx (Corrected)
+
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import * as Tooltip from "@radix-ui/react-tooltip";
@@ -14,13 +16,17 @@ import { IMetricScore, IRatingMetric, IMe, IUser } from "../../db/interfaces";
 import {
   useGetAllRatingMetrics,
   useBulkCreateMetricScores,
+  useDeleteMetricScore,
 } from "../../graphql/hooks/rating";
 import RatingDistributionChart from "../charts/RatingDistributionChart";
 import PageStatusDisplay from "../global/PageStatusDisplay";
 import { ApolloError } from "@apollo/client";
 import ConfirmActionDialog from "./ConfirmActionDialog";
 
-// --- Helper Components ---
+type ScoreState = {
+  score: number;
+  scoreId?: string;
+};
 
 const RatingHintContent: React.FC<{ metric: IRatingMetric }> = ({ metric }) => {
   return (
@@ -63,7 +69,6 @@ const StarRatingInput: React.FC<{
 
 const ReadOnlyStars: React.FC<{ score: number }> = ({ score }) => {
   const starFillPercentage = Math.max(0, Math.min(100, (score / 5) * 100));
-
   return (
     <div className="relative flex">
       <div className="flex text-gray-300">
@@ -84,8 +89,6 @@ const ReadOnlyStars: React.FC<{ score: number }> = ({ score }) => {
     </div>
   );
 };
-
-// ---
 
 interface RateCaseModalProps {
   isOpen: boolean;
@@ -120,12 +123,17 @@ const RateCaseModal: React.FC<RateCaseModalProps> = ({
     loading: submittingScores,
     error: errorSubmitting,
   } = useBulkCreateMetricScores();
+  const {
+    deleteScore,
+    loading: deletingScore,
+    error: errorDeleting,
+  } = useDeleteMetricScore();
 
-  const [userScores, setUserScores] = useState<{ [metricId: string]: number }>(
-    {}
-  );
+  const [userScores, setUserScores] = useState<{
+    [metricId: string]: ScoreState;
+  }>({});
   const [initialUserScores, setInitialUserScores] = useState<{
-    [metricId: string]: number;
+    [metricId: string]: ScoreState;
   }>({});
   const [showConfirmClose, setShowConfirmClose] = useState(false);
   const [activeDistribution, setActiveDistribution] =
@@ -138,10 +146,9 @@ const RateCaseModal: React.FC<RateCaseModalProps> = ({
       const currentUserExistingScores = caseScores
         .filter((s) => s.user._id === currentUser._id)
         .reduce((acc, score) => {
-          acc[score.metric._id] = score.score;
+          acc[score.metric._id] = { score: score.score, scoreId: score._id };
           return acc;
-        }, {} as { [metricId: string]: number });
-
+        }, {} as { [metricId: string]: ScoreState });
       setUserScores(currentUserExistingScores);
       setInitialUserScores(currentUserExistingScores);
     }
@@ -227,8 +234,11 @@ const RateCaseModal: React.FC<RateCaseModalProps> = ({
     }
   }, [caseScores, activeDistribution, ratingMetrics, scoresByMetric]);
 
+  // --- FIX #1A ---
+  // The logic here was comparing an object `s` to a number `0`.
+  // It needs to compare the `score` property of the object.
   const hasAtLeastOneMetric = useMemo(
-    () => Object.values(userScores).some((s) => s > 0),
+    () => Object.values(userScores).some((s) => s.score > 0),
     [userScores]
   );
 
@@ -237,16 +247,41 @@ const RateCaseModal: React.FC<RateCaseModalProps> = ({
     const currentKeys = Object.keys(userScores);
     if (initialKeys.length !== currentKeys.length) return true;
     for (const key of currentKeys) {
-      if (initialUserScores[key] !== userScores[key]) return true;
+      if (initialUserScores[key]?.score !== userScores[key]?.score) return true;
     }
     return false;
   }, [userScores, initialUserScores]);
 
+  const handleClearScore = async (metricId: string) => {
+    const scoreState = initialUserScores[metricId];
+    console.log("SCORE STATE: ", scoreState);
+    if (scoreState && scoreState.scoreId) {
+      console.log("going for the delete");
+      try {
+        await deleteScore(scoreState.scoreId);
+        onSuccessfulSubmit();
+      } catch (e) {
+        alert(`Грешка при изтриване на оценка: ${errorDeleting?.message}`);
+      }
+    } else {
+      setUserScores((p) => ({ ...p, [metricId]: { score: 0 } }));
+    }
+  };
+
   const handleSubmit = async () => {
-    if (!hasAtLeastOneMetric || !scoresHaveChanged || submittingScores) return;
+    if (!scoresHaveChanged || submittingScores || deletingScore) return;
     const scoresToSubmit = Object.entries(userScores)
-      .filter(([, score]) => score > 0)
-      .map(([metricId, score]) => ({ metric: metricId, score }));
+      .filter(([, s]) => s.score > 0)
+      .map(([metricId, s]) => ({ metric: metricId, score: s.score }));
+
+    // --- FIX #2 ---
+    // If all scores were cleared, the changes need to be "committed" by updating
+    // the initial state, otherwise the modal thinks there are still unsaved changes.
+    if (scoresToSubmit.length === 0) {
+      setInitialUserScores(userScores);
+      return;
+    }
+
     try {
       await submitScores({
         user: currentUser._id,
@@ -268,7 +303,6 @@ const RateCaseModal: React.FC<RateCaseModalProps> = ({
       onClose();
     }
   };
-
   const handleConfirmClose = () => {
     setShowConfirmClose(false);
     onClose();
@@ -329,7 +363,9 @@ const RateCaseModal: React.FC<RateCaseModalProps> = ({
                           Оценете по един или повече от критериите по-долу.
                         </p>
                         {ratingMetrics.map((metric, index) => {
-                          const currentScore = userScores[metric._id] || 0;
+                          const currentScore = userScores[metric._id] || {
+                            score: 0,
+                          };
                           return (
                             <div key={metric._id} className="mt-3">
                               <div className="flex items-center gap-1.5 mb-1">
@@ -359,30 +395,27 @@ const RateCaseModal: React.FC<RateCaseModalProps> = ({
                                 </Tooltip.Root>
                               </div>
                               <div className="flex items-center gap-2">
-                                <div
-                                  ref={index === 0 ? firstStarRef : undefined}
-                                >
+                                <div>
                                   <StarRatingInput
-                                    value={currentScore}
+                                    value={currentScore.score}
                                     onChange={(val) =>
                                       setUserScores((p) => ({
                                         ...p,
-                                        [metric._id]: val,
+                                        [metric._id]: {
+                                          ...p[metric._id],
+                                          score: val,
+                                        },
                                       }))
                                     }
                                     size="h-6 w-6"
                                   />
                                 </div>
-                                {currentScore > 0 && (
+                                {currentScore.score > 0 && (
                                   <button
                                     type="button"
-                                    onClick={() =>
-                                      setUserScores((p) => ({
-                                        ...p,
-                                        [metric._id]: 0,
-                                      }))
-                                    }
-                                    className="text-gray-400 hover:text-red-500 transition-colors"
+                                    onClick={() => handleClearScore(metric._id)}
+                                    disabled={deletingScore || submittingScores}
+                                    className="text-gray-400 hover:text-red-500 transition-colors disabled:opacity-50"
                                     title="Изчисти оценката"
                                   >
                                     <XCircleIcon className="h-5 w-5" />
@@ -394,20 +427,25 @@ const RateCaseModal: React.FC<RateCaseModalProps> = ({
                         })}
                       </div>
                       <div className="mt-auto pt-4">
+                        {/* --- FIX #1B --- */}
+                        {/* The disabled logic now correctly includes the !hasAtLeastOneMetric check */}
                         <button
                           onClick={handleSubmit}
                           disabled={
                             !scoresHaveChanged ||
                             !hasAtLeastOneMetric ||
-                            submittingScores
+                            submittingScores ||
+                            deletingScore
                           }
                           className={`w-full rounded px-4 py-2 text-sm font-medium text-white transition-colors ${
-                            !hasAtLeastOneMetric || !scoresHaveChanged
+                            !scoresHaveChanged || !hasAtLeastOneMetric
                               ? "bg-gray-400 cursor-not-allowed"
                               : "bg-blue-600 hover:bg-blue-700"
                           } disabled:opacity-70 disabled:cursor-wait`}
                         >
-                          {submittingScores ? "Изпращане..." : "Изпрати"}
+                          {submittingScores || deletingScore
+                            ? "Обработване..."
+                            : "Изпрати"}
                         </button>
                       </div>
                     </div>
@@ -429,60 +467,6 @@ const RateCaseModal: React.FC<RateCaseModalProps> = ({
                               {displayData.card.countText}
                             </p>
                           </div>
-
-                          <div>
-                            <h4 className="text-sm font-medium text-gray-600 mt-4 mb-2">
-                              Средни оценки по метрики
-                            </h4>
-                            <div className="space-y-1">
-                              <button
-                                onClick={() => setActiveDistribution("Overall")}
-                                className={`w-full text-left text-sm p-2 rounded-md transition-colors ${
-                                  activeDistribution === "Overall"
-                                    ? "bg-blue-100 text-blue-800 font-bold"
-                                    : "hover:bg-gray-100"
-                                }`}
-                              >
-                                Общо
-                              </button>
-                              <hr className="my-1 border-gray-200" />
-                              {ratingMetrics.map((metric) => {
-                                const metricScores =
-                                  scoresByMetric[metric._id] || [];
-                                const metricAverage =
-                                  metricScores.reduce(
-                                    (acc, s) => acc + s.score,
-                                    0
-                                  ) / (metricScores.length || 1);
-                                return (
-                                  <button
-                                    key={metric._id}
-                                    onClick={() =>
-                                      setActiveDistribution(metric._id)
-                                    }
-                                    className={`w-full flex justify-between items-center text-sm p-2 rounded-md transition-colors ${
-                                      activeDistribution === metric._id
-                                        ? "bg-blue-100 text-blue-800"
-                                        : "hover:bg-gray-100"
-                                    }`}
-                                  >
-                                    <span className="font-semibold">
-                                      {metric.name}
-                                    </span>
-                                    <div className="flex items-baseline gap-1">
-                                      <span className="font-bold">
-                                        {metricAverage.toFixed(1)}
-                                      </span>
-                                      <span className="text-xs text-gray-500">
-                                        ({metricScores.length})
-                                      </span>
-                                    </div>
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          </div>
-
                           <div>
                             <h4 className="text-sm font-medium text-gray-600 mb-2">
                               Разпределение
@@ -540,6 +524,58 @@ const RateCaseModal: React.FC<RateCaseModalProps> = ({
                                 )}
                               </div>
                             )}
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-medium text-gray-600 mt-4 mb-2">
+                              Разбивка по критерии
+                            </h4>
+                            <div className="space-y-1">
+                              <button
+                                onClick={() => setActiveDistribution("Overall")}
+                                className={`w-full text-left text-sm p-2 rounded-md transition-colors ${
+                                  activeDistribution === "Overall"
+                                    ? "bg-blue-100 text-blue-800 font-bold"
+                                    : "hover:bg-gray-100"
+                                }`}
+                              >
+                                Общо
+                              </button>
+                              <hr className="my-1 border-gray-200" />
+                              {ratingMetrics.map((metric) => {
+                                const metricScores =
+                                  scoresByMetric[metric._id] || [];
+                                const metricAverage =
+                                  metricScores.reduce(
+                                    (acc, s) => acc + s.score,
+                                    0
+                                  ) / (metricScores.length || 1);
+                                return (
+                                  <button
+                                    key={metric._id}
+                                    onClick={() =>
+                                      setActiveDistribution(metric._id)
+                                    }
+                                    className={`w-full flex justify-between items-center text-sm p-2 rounded-md transition-colors ${
+                                      activeDistribution === metric._id
+                                        ? "bg-blue-100 text-blue-800"
+                                        : "hover:bg-gray-100"
+                                    }`}
+                                  >
+                                    <span className="font-semibold">
+                                      {metric.name}
+                                    </span>
+                                    <div className="flex items-baseline gap-1">
+                                      <span className="font-bold">
+                                        {metricAverage.toFixed(1)}
+                                      </span>
+                                      <span className="text-xs text-gray-500">
+                                        ({metricScores.length})
+                                      </span>
+                                    </div>
+                                  </button>
+                                );
+                              })}
+                            </div>
                           </div>
                         </>
                       ) : (

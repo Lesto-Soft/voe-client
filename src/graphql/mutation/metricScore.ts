@@ -26,3 +26,12 @@ export const BULK_CREATE_METRIC_SCORES = gql`
     }
   }
 `;
+
+// Add this new export to the bottom of the file
+export const DELETE_METRIC_SCORE = gql`
+  mutation DeleteMetricScore($_id: ID!) {
+    deleteMetricScore(_id: $_id) {
+      _id # We only need the ID back to confirm success
+    }
+  }
+`;

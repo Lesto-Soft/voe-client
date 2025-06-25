@@ -1,8 +1,27 @@
+// src/graphql/query/case.ts (Corrected)
 import { gql } from "@apollo/client";
 
-const caseFragment = `
-fragment CaseFragment on Case {
+// --- Fragments ---
+
+const metricScoreFragment = gql`
+  fragment MetricScoreFragment on MetricScore {
+    _id
+    score
+    date
+    metric {
       _id
+      name
+    }
+    user {
+      _id
+      name
+    }
+  }
+`;
+
+const caseFragment = gql`
+  fragment CaseFragment on Case {
+    _id
     case_number
     creator {
       _id
@@ -19,29 +38,118 @@ fragment CaseFragment on Case {
     priority
     type
     categories {
+      _id
+      name
+      experts {
         _id
-        name
-        experts {
-          _id
-        }
-        managers {
-          _id
-        }
+      }
+      managers {
+        _id
+      }
     }
     content
-    status  
+    status
     date
-    attachments 
-}`;
+    attachments
+  }
+`;
 
-const caseHistoryFragment = `
-fragment CaseHistoryFragment on CaseHistory { 
+const caseHistoryFragment = gql`
+  fragment CaseHistoryFragment on CaseHistory {
+    _id
+    date_change
+    user {
+      name
+      username
       _id
+      expert_categories {
+        _id
+      }
+      managed_categories {
+        _id
+      }
+    }
+    old_type
+    new_type
+    old_priority
+    new_priority
+    old_content
+    new_content
+    new_categories {
+      _id
+      name
+      experts {
+        _id
+      }
+      managers {
+        _id
+      }
+    }
+    old_categories {
+      _id
+      name
+      experts {
+        _id
+      }
+      managers {
+        _id
+      }
+    }
+  }
+`;
+
+const answerFragment = gql`
+  fragment AnswerFragment on Answer {
+    _id
+    content
+    date
+    attachments
+    creator {
+      _id
+      name
+      username
+      position
+      expert_categories {
+        _id
+      }
+      managed_categories {
+        _id
+      }
+    }
+    approved {
+      _id
+      name
+      username
+      expert_categories {
+        _id
+      }
+      managed_categories {
+        _id
+      }
+    }
+    approved_date
+    financial_approved {
+      _id
+      name
+      username
+      expert_categories {
+        _id
+      }
+      managed_categories {
+        _id
+      }
+    }
+    financial_approved_date
+    needs_finance
+    history {
+      _id
+      new_content
+      old_content
       date_change
       user {
-        name
-        username
         _id
+        username
+        name
         expert_categories {
           _id
         }
@@ -49,116 +157,32 @@ fragment CaseHistoryFragment on CaseHistory {
           _id
         }
       }
-      old_type
-      new_type
-      old_priority
-      new_priority
-      old_content
-      new_content
-      new_categories {
-        _id
-        name
-        experts {
-          _id
-        }
-        managers {
-          _id
-        }
-      }
-      old_categories {
-        _id
-        name
-         experts {
-          _id
-        }
-        managers {
-          _id
-        }
-      }  
-}`;
+    }
+  }
+`;
 
-const answerFragment = `
-fragment AnswerFragment on Answer {
+const commentFragment = gql`
+  fragment CommentFragment on Comment {
+    _id
+    creator {
+      username
+      name
+      position
       _id
-      content
-      date
-      attachments
-      creator {
+      expert_categories {
         _id
-        name
-        username
-        position
-        expert_categories {
-          _id
-        }
-        managed_categories {
-          _id
-        }
       }
-      approved{
+      managed_categories {
         _id
-        name
-        username
-        expert_categories {
-          _id
-        }
-        managed_categories {
-          _id
-        }
       }
-      approved_date
-      financial_approved{
-        _id
-        name
-        username
-        expert_categories {
-          _id
-        }
-        managed_categories {
-          _id
-        }
-      }
-      financial_approved_date
-      needs_finance
-      history {
-        _id
-        new_content
-        old_content
-        date_change
-        user {
-          _id
-          username
-          name
-          expert_categories {
-            _id
-          }
-          managed_categories {
-            _id
-          }
-        }
-      }
-        
-}`;
+    }
+    content
+    date
+    attachments
+  }
+`;
 
-const commentFragment = ` 
- fragment CommentFragment on Comment {
-        _id
-        creator {
-          username
-          name
-          position
-          _id
-          expert_categories {
-            _id
-          }
-          managed_categories {
-            _id
-          }
-        }
-        content
-        date
-        attachments 
-  }`;
+// --- Queries ---
 
 export const GET_CASES = gql`
   query GET_CASES($input: getAllInput) {
@@ -204,41 +228,25 @@ export const GET_ANALYTITCS_DATA_CASES = gql`
           }
         }
       }
-      rating {
-        _id
-        score
-        user {
-          _id
-          name
-          username
-          avatar
-          expert_categories {
-            _id
-          }
-          managed_categories {
-            _id
-          }
-        }
+      metricScores {
+        ...MetricScoreFragment
       }
     }
   }
   ${caseFragment}
+  ${metricScoreFragment}
 `;
 
 export const GET_CASE_BY_CASE_NUMBER = gql`
   query GET_CASE_BY_CASE_NUMBER($caseNumber: Int!, $roleId: String) {
     getCaseByNumber(case_number: $caseNumber, roleId: $roleId) {
       ...CaseFragment
+      calculatedRating
       creator {
         avatar
       }
-      rating {
-        _id
-        score
-        user {
-          _id
-          name
-        }
+      metricScores {
+        ...MetricScoreFragment
       }
       comments {
         ...CommentFragment
@@ -258,6 +266,7 @@ export const GET_CASE_BY_CASE_NUMBER = gql`
     }
   }
   ${caseFragment}
+  ${metricScoreFragment}
   ${caseHistoryFragment}
   ${answerFragment}
   ${commentFragment}
@@ -335,13 +344,5 @@ export const COUNT_CASES = gql`
 export const COUNT_FILTERED_CASES = gql`
   query CountFilteredCases($input: getAllInput) {
     countFilteredCases(input: $input)
-  }
-`;
-
-export const UPDATE_CASE = gql`
-  mutation UpdateCase($caseId: ID!, $userId: ID!, $input: updateCaseInput!) {
-    updateCase(caseId: $caseId, userId: $userId, input: $input) {
-      _id
-    }
   }
 `;

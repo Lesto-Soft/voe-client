@@ -10,7 +10,7 @@ import {
 import { labelTextClass, caseBoxClasses } from "../../../ui/reusable-styles";
 import { useTranslation } from "react-i18next";
 import Creator from "../Creator";
-import CaseRating from "../Rating";
+import CaseRating from "../CaseRatingDisplay";
 import ShowDate from "../../global/ShowDate";
 
 interface ICaseInfoProps {

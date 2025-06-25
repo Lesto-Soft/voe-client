@@ -1,18 +1,22 @@
+// src/components/modals/ContentDialog.tsx (Updated)
+
 import * as Dialog from "@radix-ui/react-dialog";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { useTranslation } from "react-i18next";
 import { ArrowTopRightOnSquareIcon, FlagIcon } from "@heroicons/react/24/solid";
 import { renderContentSafely } from "../../utils/contentRenderer";
-import { ICategory, IMe, IUser } from "../../db/interfaces";
+import { ICategory, IMe, IMetricScore, IUser } from "../../db/interfaces"; // UPDATED
 import Creator from "../case-components/Creator";
 import ShowDate from "../global/ShowDate";
-import CaseRating from "../case-components/Rating";
+import CaseRatingDisplay from "../case-components/CaseRatingDisplay"; // UPDATED
 import CategoryLink from "../global/CategoryLink";
 import ImagePreviewModal from "./ImagePreviewModal";
 import { createFileUrl } from "../../utils/fileUtils";
 import { getPriorityStyle, getTypeBadgeStyle } from "../../utils/style-helpers";
 import { labelTextClass, caseBoxClasses } from "../../ui/reusable-styles";
+import { useMemo } from "react";
 
+// --- UPDATED Props Interface ---
 interface ContentDialogProps {
   content: string;
   title: string;
@@ -21,7 +25,8 @@ interface ContentDialogProps {
   type: "PROBLEM" | "SUGGESTION";
   priority: "LOW" | "MEDIUM" | "HIGH";
   categories: ICategory[];
-  rating: any;
+  metricScores?: IMetricScore[]; // UPDATED
+  calculatedRating?: number | null; // UPDATED
   attachments?: string[];
   caseId: string;
   me: IMe;
@@ -37,7 +42,8 @@ const ContentDialog: React.FC<ContentDialogProps> = ({
   type,
   priority,
   categories,
-  rating,
+  metricScores = [], // UPDATED
+  calculatedRating, // UPDATED
   attachments = [],
   caseId,
   me,
@@ -47,6 +53,12 @@ const ContentDialog: React.FC<ContentDialogProps> = ({
   const { t } = useTranslation(["modals", "dashboard"]);
   const priorityStyle = getPriorityStyle(priority);
   const typeBadgeStyle = getTypeBadgeStyle(type);
+
+  // --- NEW: We calculate this here as well to pass to the display component ---
+  const hasUserRated = useMemo(
+    () => metricScores.some((score) => score.user._id === me._id),
+    [metricScores, me._id]
+  );
 
   return (
     <Dialog.Root>
@@ -80,16 +92,15 @@ const ContentDialog: React.FC<ContentDialogProps> = ({
 
           {/* Body with two columns */}
           <div className="flex-grow flex flex-col md:flex-row gap-6 overflow-hidden p-4">
-            {/* Left Column: Metadata (Substantially Narrower) */}
-            <div className="md:w-1/4 lg:w-1/4 flex-shrink-0 flex flex-col gap-4 overflow-y-auto custom-scrollbar pr-2">
-              {/* Creator and Date on one line */}
+            {/* Left Column: Metadata */}
+            <div className="md:w-1/3 lg:w-1/4 flex-shrink-0 flex flex-col gap-4 overflow-y-auto custom-scrollbar pr-2">
               <div className="flex flex-col items-center justify-center w-full gap-1">
                 <Creator creator={creator} />
                 {date && <ShowDate date={date} centered={true} />}
               </div>
 
-              {/* Priority and Type Row */}
-              <div className="flex flex-col sm:flex-row gap-3">
+              {/* Info boxes */}
+              <div className="flex flex-col gap-3">
                 <div className={`${caseBoxClasses} ${priorityStyle} flex-1`}>
                   <span className={labelTextClass}>
                     {t("dashboard:priority")}:
@@ -109,19 +120,19 @@ const ContentDialog: React.FC<ContentDialogProps> = ({
                     </span>
                   </div>
                 </div>
+                {/* --- UPDATED: Rating Display Component --- */}
                 <div className={`${caseBoxClasses}`}>
-                  <CaseRating
-                    ratings={rating}
-                    t={t}
-                    caseId={caseId}
-                    me={me}
-                    refetch={refetch}
-                    disabled={isCurrentUserCreator}
+                  <CaseRatingDisplay
+                    metricScores={metricScores}
+                    calculatedRating={calculatedRating}
+                    onOpenModal={() => {
+                      /* The modal is opened from the main page, not the dialog */
+                    }}
+                    disabled={true} // The button to add/edit a rating is disabled inside the dialog
+                    hasUserRated={hasUserRated}
                   />
                 </div>
               </div>
-
-              {/* Rating on its own line */}
 
               {/* Categories */}
               <div className={`${caseBoxClasses} flex-col`}>
@@ -160,7 +171,7 @@ const ContentDialog: React.FC<ContentDialogProps> = ({
             </div>
 
             {/* Right Column: Main Content */}
-            <div className="flex-grow md:w-3/4 lg:w-3/4 flex flex-col gap-4 border-l border-gray-100 pl-6">
+            <div className="flex-grow md:w-2/3 lg:w-3/4 flex flex-col gap-4 border-l border-gray-100 pl-6">
               <div className="font-normal text-gray-500">
                 {t("dashboard:content")}
               </div>

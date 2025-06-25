@@ -1,5 +1,6 @@
+// src/graphql/hooks/case.ts (Corrected)
 import { useMutation, useQuery, QueryHookOptions } from "@apollo/client";
-import { CREATE_CASE, RATE_CASE } from "../mutation/case";
+import { CREATE_CASE, UPDATE_CASE } from "../mutation/case"; // RATE_CASE removed from imports
 import {
   COUNT_CASES,
   COUNT_FILTERED_CASES,
@@ -11,7 +12,7 @@ import {
   GET_USER_ANSWERED_CASES,
   GET_USER_CASES,
   GET_USER_COMMENTED_CASES,
-  UPDATE_CASE,
+  // UPDATE_CASE, // This was duplicated, removed.
 } from "../query/case";
 
 export type AttachmentInput = {
@@ -261,28 +262,7 @@ export const useCountCases = () => {
   };
 };
 
-export const useRateCase = () => {
-  const [rateCaseMutation, { data, loading, error }] = useMutation(RATE_CASE);
-
-  const rateCase = async (caseId: string, userId: string, score: number) => {
-    try {
-      const response = await rateCaseMutation({
-        variables: { caseId, userId, score },
-      });
-      return response.data.createRating;
-    } catch (err) {
-      console.error("Failed to rate case:", err);
-      throw err;
-    }
-  };
-
-  return {
-    rateCase,
-    data,
-    loading,
-    error,
-  };
-};
+// The 'useRateCase' hook has been removed as it is now obsolete.
 
 export const useCountFilteredCases = (
   // The first argument is your custom object used to build the actual GraphQL variables

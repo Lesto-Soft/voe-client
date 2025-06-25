@@ -85,24 +85,20 @@ const Case = () => {
     <div className="flex flex-col lg:flex-row bg-gray-50 lg:h-[calc(100vh-6rem)]">
       {/* Left Panel for CaseInfo: This remains sticky and its own content can scroll if needed */}
       <div
-        className={`
-          w-full lg:w-96 lg:shrink-0 
-          lg:sticky lg:top-[6rem] 
-          order-1 lg:order-none 
-          lg:h-full
-          lg:mb-0
-          z-2
-        `}
+        className={
+          "w-full lg:w-96 lg:shrink-0 lg:sticky lg:top-[6rem] order-1 lg:order-none lg:h-full lg:mb-0 z-2"
+        }
       >
         <CaseInfo
           content={c.content}
           caseId={c._id}
           type={c.type}
           priority={c.priority}
-          status={c.status}
+          status={c.status as string}
           categories={c.categories}
           creator={c.creator}
-          rating={c.rating}
+          metricScores={c.metricScores} // <-- UPDATED PROP
+          calculatedRating={c.calculatedRating} // <-- NEW PROP
           date={c.date}
           me={currentUser}
           refetch={refetch}

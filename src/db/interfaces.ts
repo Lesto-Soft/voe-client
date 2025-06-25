@@ -11,11 +11,11 @@ export interface ICase {
   creator: IUser;
   comments?: IComment[];
   answers?: IAnswer[];
-  rating?: IRating[];
+  metricScores?: IMetricScore[]; // <-- UPDATED from 'rating'
+  calculatedRating?: number | null; // This is useful as it's provided by the backend
   readBy?: IUser[];
   history?: ICaseHistory[];
   last_update?: string;
-  calculatedRating?: number | null;
 }
 
 export interface ICategory {
@@ -36,7 +36,7 @@ export interface IUser {
   name: string;
   email?: string;
   position?: string;
-  role?: IRole; // was string before - TODO check if we break anywhere
+  role?: IRole;
   avatar?: string;
   inbox?: string[];
   cases?: ICase[];
@@ -44,29 +44,32 @@ export interface IUser {
   managed_categories?: ICategory[];
   comments?: IComment[];
   answers?: IAnswer[];
+  metricScores?: IMetricScore[]; // <-- ADDED
   financial_approver?: boolean;
 }
 
-// Represents a user's score for a specific metric (e.g., "Service": 5 stars)
+/**
+ * Represents a single score given by a user for a specific metric on a case.
+ * This corresponds to the MetricScore type in GraphQL.
+ */
 export interface IMetricScore {
-  metricName: string;
-  score: number;
-}
-
-// The main IRating interface is updated to hold multiple metric scores
-export interface IRating {
   _id: string;
-  user: IUser;
-  case: ICase;
-  overallScore: number; // The user's main, single rating score
-  scores: IMetricScore[]; // Detailed scores for each metric
-}
-
-export interface IRatingOld {
-  _id: string;
-  user: IUser;
-  case: ICase;
+  user: IUser; // Can be a lean version if needed, e.g., { _id, name }
+  case: ICase; // Can be a lean version
+  metric: IRatingMetric;
   score: number;
+  date: string;
+}
+/**
+ * Defines the structure of a rating metric (e.g., "Съответствие").
+ * This corresponds to the RatingMetric type in GraphQL.
+ */
+export interface IRatingMetric {
+  _id: string;
+  name: string;
+  description: string;
+  archived: boolean;
+  order: number;
 }
 
 export interface IRole {
@@ -155,6 +158,11 @@ export interface IMe {
   financial_approver?: boolean;
 }
 
+export interface IMe extends Omit<IUser, "role"> {
+  role: IRole; // Ensure role is not optional for the logged-in user
+  managed_categories: ICategory[]; // Ensure this is not optional
+}
+
 export enum CaseType {
   Problem = "PROBLEM",
   Suggestion = "SUGGESTION",
@@ -164,7 +172,3 @@ export enum CasePriority {
   Medium = "MEDIUM",
   High = "HIGH",
 }
-
-// export const RATING_METRICS = ["Service", "Location", "Efficiency"];
-// Съответствие, Въздействие, Ефективност
-export const RATING_METRICS = ["Adequacy", "Impact", "Efficiency"];

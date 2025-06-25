@@ -1,23 +1,23 @@
-import { IRating, IMetricScore } from "../db/interfaces";
+// import { IRating, IMetricScore } from "../db/interfaces";
 
-export const calculateUserRating = (scores: IMetricScore[]): number => {
-  if (!scores || scores.length === 0) return 0;
+// export const calculateUserRating = (scores: IMetricScore[]): number => {
+//   if (!scores || scores.length === 0) return 0;
 
-  const validScores = scores.filter((s) => s.score > 0);
-  if (validScores.length === 0) return 0;
+//   const validScores = scores.filter((s) => s.score > 0);
+//   if (validScores.length === 0) return 0;
 
-  const sum = validScores.reduce((acc, s) => acc + s.score, 0);
-  return sum / validScores.length;
-};
+//   const sum = validScores.reduce((acc, s) => acc + s.score, 0);
+//   return sum / validScores.length;
+// };
 
-export const calculateCaseRating = (ratings: IRating[]): number => {
-  if (!ratings || ratings.length === 0) return 0;
+// export const calculateCaseRating = (ratings: IRating[]): number => {
+//   if (!ratings || ratings.length === 0) return 0;
 
-  const userRatings = ratings.map((r) => calculateUserRating(r.scores));
-  const validRatings = userRatings.filter((rating) => rating > 0);
+//   const userRatings = ratings.map((r) => calculateUserRating(r.scores));
+//   const validRatings = userRatings.filter((rating) => rating > 0);
 
-  if (validRatings.length === 0) return 0;
+//   if (validRatings.length === 0) return 0;
 
-  const sum = validRatings.reduce((acc, rating) => acc + rating, 0);
-  return sum / validRatings.length;
-};
+//   const sum = validRatings.reduce((acc, rating) => acc + rating, 0);
+//   return sum / validRatings.length;
+// };

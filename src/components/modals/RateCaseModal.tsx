@@ -1,14 +1,9 @@
-// src/components/modals/RateCaseModal.tsx (Corrected)
-
-import React, { useState, useMemo, useEffect, useRef } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { StarIcon as StarSolid } from "@heroicons/react/24/solid";
 import {
-  ChevronDownIcon,
-  ChevronUpIcon,
   QuestionMarkCircleIcon,
-  StarIcon as StarOutline,
   XCircleIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
@@ -138,8 +133,10 @@ const RateCaseModal: React.FC<RateCaseModalProps> = ({
   const [showConfirmClose, setShowConfirmClose] = useState(false);
   const [activeDistribution, setActiveDistribution] =
     useState<string>("Overall");
-  const [isUserBreakdownVisible, setUserBreakdownVisible] = useState(false);
-  const firstStarRef = useRef<HTMLDivElement>(null);
+  const [confirmingDelete, setConfirmingDelete] = useState<string | null>(null);
+  const [activeRatingsView, setActiveRatingsView] = useState<
+    "distribution" | "individual"
+  >("distribution");
 
   useEffect(() => {
     if (isOpen) {
@@ -151,6 +148,9 @@ const RateCaseModal: React.FC<RateCaseModalProps> = ({
         }, {} as { [metricId: string]: ScoreState });
       setUserScores(currentUserExistingScores);
       setInitialUserScores(currentUserExistingScores);
+      setActiveRatingsView("distribution");
+    } else {
+      setConfirmingDelete(null);
     }
   }, [isOpen, caseScores, currentUser._id]);
 
@@ -182,14 +182,26 @@ const RateCaseModal: React.FC<RateCaseModalProps> = ({
       acc[userId].scores.push(score.score);
       return acc;
     }, {} as { [key: string]: { user: IUser; scores: number[] } });
+
     const userAverages = Object.values(scoresByUser).map((data) => {
       const avg = data.scores.reduce((a, b) => a + b, 0) / data.scores.length;
       return { user: data.user, averageScore: avg };
     });
+
     const overallAverage =
       userAverages.reduce((acc, val) => acc + val.averageScore, 0) /
       (userAverages.length || 1);
+
+    const sortBreakdown = (breakdown: any[]) => {
+      return breakdown.sort((a, b) => {
+        if (a.user._id === currentUser._id) return -1;
+        if (b.user._id === currentUser._id) return 1;
+        return a.user.name.localeCompare(b.user.name);
+      });
+    };
+
     if (activeDistribution === "Overall") {
+      const sortedAverages = sortBreakdown([...userAverages]);
       return {
         card: {
           title: "Средна оценка",
@@ -202,19 +214,21 @@ const RateCaseModal: React.FC<RateCaseModalProps> = ({
           acc[rounded] = (acc[rounded] || 0) + 1;
           return acc;
         }, {} as { [key: number]: number }),
-        breakdown: userAverages.map((item) => ({
+        breakdown: sortedAverages.map((item) => ({
           user: item.user,
           score: item.averageScore,
         })),
       };
     } else {
       const relevantScores = scoresByMetric[activeDistribution] || [];
+      const sortedScores = sortBreakdown([...relevantScores]);
       const metricInfo = ratingMetrics.find(
-        (m) => m._id === activeDistribution
+        (m: IRatingMetric) => m._id === activeDistribution
       );
       const metricAverage =
         relevantScores.reduce((acc, s) => acc + s.score, 0) /
         (relevantScores.length || 1);
+
       return {
         card: {
           title: `Средна оценка за ${metricInfo?.name || ""}`,
@@ -226,17 +240,20 @@ const RateCaseModal: React.FC<RateCaseModalProps> = ({
           acc[item.score] = (acc[item.score] || 0) + 1;
           return acc;
         }, {} as { [key: number]: number }),
-        breakdown: relevantScores.map((item) => ({
+        breakdown: sortedScores.map((item) => ({
           user: item.user,
           score: item.score,
         })),
       };
     }
-  }, [caseScores, activeDistribution, ratingMetrics, scoresByMetric]);
+  }, [
+    caseScores,
+    activeDistribution,
+    ratingMetrics,
+    scoresByMetric,
+    currentUser._id,
+  ]);
 
-  // --- FIX #1A ---
-  // The logic here was comparing an object `s` to a number `0`.
-  // It needs to compare the `score` property of the object.
   const hasAtLeastOneMetric = useMemo(
     () => Object.values(userScores).some((s) => s.score > 0),
     [userScores]
@@ -252,11 +269,16 @@ const RateCaseModal: React.FC<RateCaseModalProps> = ({
     return false;
   }, [userScores, initialUserScores]);
 
-  const handleClearScore = async (metricId: string) => {
-    const scoreState = initialUserScores[metricId];
-    console.log("SCORE STATE: ", scoreState);
+  const handleClearScore = (metricId: string) => {
+    setConfirmingDelete(metricId);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!confirmingDelete) return;
+    const metricIdToDelete = confirmingDelete;
+    setConfirmingDelete(null);
+    const scoreState = initialUserScores[metricIdToDelete];
     if (scoreState && scoreState.scoreId) {
-      console.log("going for the delete");
       try {
         await deleteScore(scoreState.scoreId);
         onSuccessfulSubmit();
@@ -264,7 +286,7 @@ const RateCaseModal: React.FC<RateCaseModalProps> = ({
         alert(`Грешка при изтриване на оценка: ${errorDeleting?.message}`);
       }
     } else {
-      setUserScores((p) => ({ ...p, [metricId]: { score: 0 } }));
+      setUserScores((p) => ({ ...p, [metricIdToDelete]: { score: 0 } }));
     }
   };
 
@@ -273,15 +295,10 @@ const RateCaseModal: React.FC<RateCaseModalProps> = ({
     const scoresToSubmit = Object.entries(userScores)
       .filter(([, s]) => s.score > 0)
       .map(([metricId, s]) => ({ metric: metricId, score: s.score }));
-
-    // --- FIX #2 ---
-    // If all scores were cleared, the changes need to be "committed" by updating
-    // the initial state, otherwise the modal thinks there are still unsaved changes.
     if (scoresToSubmit.length === 0) {
       setInitialUserScores(userScores);
       return;
     }
-
     try {
       await submitScores({
         user: currentUser._id,
@@ -351,7 +368,8 @@ const RateCaseModal: React.FC<RateCaseModalProps> = ({
                 !errorMetrics &&
                 !errorScores && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-                    <div className="flex flex-col p-4 rounded-lg bg-gray-50 border order-2 md:order-1">
+                    {/* LEFT PANEL: USER RATING INPUT */}
+                    <div className="flex flex-col p-4 rounded-lg bg-gray-50 border-gray-500 order-2 md:order-1">
                       <div>
                         <h3 className="font-semibold text-gray-800">
                           Вашата оценка<span className="text-red-500">*</span>
@@ -362,7 +380,7 @@ const RateCaseModal: React.FC<RateCaseModalProps> = ({
                         <p className="text-xs text-gray-600 mt-1">
                           Оценете по един или повече от критериите по-долу.
                         </p>
-                        {ratingMetrics.map((metric, index) => {
+                        {ratingMetrics.map((metric: IRatingMetric) => {
                           const currentScore = userScores[metric._id] || {
                             score: 0,
                           };
@@ -411,15 +429,46 @@ const RateCaseModal: React.FC<RateCaseModalProps> = ({
                                   />
                                 </div>
                                 {currentScore.score > 0 && (
-                                  <button
-                                    type="button"
-                                    onClick={() => handleClearScore(metric._id)}
-                                    disabled={deletingScore || submittingScores}
-                                    className="text-gray-400 hover:text-red-500 transition-colors disabled:opacity-50"
-                                    title="Изчисти оценката"
-                                  >
-                                    <XCircleIcon className="h-5 w-5" />
-                                  </button>
+                                  <div className="relative">
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        handleClearScore(metric._id)
+                                      }
+                                      disabled={
+                                        deletingScore ||
+                                        submittingScores ||
+                                        confirmingDelete === metric._id
+                                      }
+                                      className="text-gray-400 hover:text-red-500 transition-colors disabled:opacity-50 flex items-center"
+                                      title="Изчисти оценката"
+                                    >
+                                      <XCircleIcon className="h-5 w-5" />
+                                    </button>
+                                    {confirmingDelete === metric._id && (
+                                      <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 z-10 flex flex-col items-center gap-2 whitespace-nowrap bg-white border border-gray-200 rounded-md p-3 shadow-lg animate-fadeIn">
+                                        <p className="text-sm font-semibold text-gray-800">
+                                          Премахни оценката?
+                                        </p>
+                                        <div className="flex justify-center gap-3 w-full">
+                                          <button
+                                            onClick={handleConfirmDelete}
+                                            className="w-full text-sm font-bold text-white bg-red-600 hover:bg-red-700 px-4 py-1.5 rounded-md transition-colors"
+                                          >
+                                            Да
+                                          </button>
+                                          <button
+                                            onClick={() =>
+                                              setConfirmingDelete(null)
+                                            }
+                                            className="w-full text-sm font-bold text-gray-700 bg-gray-200 hover:bg-gray-300 px-4 py-1.5 rounded-md transition-colors"
+                                          >
+                                            Не
+                                          </button>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
                                 )}
                               </div>
                             </div>
@@ -427,8 +476,6 @@ const RateCaseModal: React.FC<RateCaseModalProps> = ({
                         })}
                       </div>
                       <div className="mt-auto pt-4">
-                        {/* --- FIX #1B --- */}
-                        {/* The disabled logic now correctly includes the !hasAtLeastOneMetric check */}
                         <button
                           onClick={handleSubmit}
                           disabled={
@@ -437,96 +484,39 @@ const RateCaseModal: React.FC<RateCaseModalProps> = ({
                             submittingScores ||
                             deletingScore
                           }
-                          className={`w-full rounded px-4 py-2 text-sm font-medium text-white transition-colors ${
+                          className={`w-full rounded px-4 py-2 text-sm  text-white transition-colors ${
                             !scoresHaveChanged || !hasAtLeastOneMetric
-                              ? "bg-gray-400 cursor-not-allowed"
-                              : "bg-blue-600 hover:bg-blue-700"
+                              ? "bg-gray-400 cursor-not-allowed font-medium"
+                              : "bg-amber-600 hover:bg-amber-700 font-bold"
                           } disabled:opacity-70 disabled:cursor-wait`}
                         >
                           {submittingScores || deletingScore
                             ? "Обработване..."
-                            : "Изпрати"}
+                            : "Оцени"}
                         </button>
                       </div>
                     </div>
+
+                    {/* RIGHT PANEL: COMMUNITY RATINGS */}
                     <div className="flex flex-col gap-4 order-1 md:order-2">
-                      <h3 className="font-semibold text-gray-800">
-                        Оценки от общността
-                      </h3>
+                      <div className="text-center p-3 rounded-lg bg-gray-100">
+                        <p className="text-sm font-semibold text-gray-600">
+                          {displayData.card.title}
+                        </p>
+                        <p className="text-3xl font-bold text-gray-800">
+                          {displayData.card.average.toFixed(1)}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          от {displayData.card.count}{" "}
+                          {displayData.card.countText}
+                        </p>
+                      </div>
+
                       {caseScores.length > 0 ? (
                         <>
-                          <div className="text-center p-3 rounded-lg bg-gray-100">
-                            <p className="text-sm font-semibold text-gray-600">
-                              {displayData.card.title}
-                            </p>
-                            <p className="text-3xl font-bold text-gray-800">
-                              {displayData.card.average.toFixed(1)}
-                            </p>
-                            <p className="text-xs text-gray-500 mt-1">
-                              от {displayData.card.count}{" "}
-                              {displayData.card.countText}
-                            </p>
-                          </div>
+                          {/* --- SECTION 1: METRIC BREAKDOWN (MOVED HERE) --- */}
                           <div>
-                            <h4 className="text-sm font-medium text-gray-600 mb-2">
-                              Разпределение
-                            </h4>
-                            <RatingDistributionChart
-                              distribution={displayData.distribution}
-                              totalRatings={displayData.breakdown.length}
-                            />
-                            <div className="mt-3 text-center">
-                              <button
-                                onClick={() =>
-                                  setUserBreakdownVisible((p) => !p)
-                                }
-                                className="text-sm font-semibold text-blue-600 hover:text-blue-800 inline-flex items-center gap-1"
-                              >
-                                <span>
-                                  {isUserBreakdownVisible ? "Скрий" : "Покажи"}{" "}
-                                  индивидуални оценки
-                                </span>
-                                {isUserBreakdownVisible ? (
-                                  <ChevronUpIcon className="h-4 w-4" />
-                                ) : (
-                                  <ChevronDownIcon className="h-4 w-4" />
-                                )}
-                              </button>
-                            </div>
-                            {isUserBreakdownVisible && (
-                              <div className="bg-gray-50 p-3 mt-2 rounded-md max-h-36 overflow-y-auto scrollbar-thin">
-                                {displayData.breakdown.length > 0 ? (
-                                  <ul className="space-y-2">
-                                    {displayData.breakdown.map(
-                                      (item, index) => (
-                                        <li
-                                          key={index}
-                                          className={`flex justify-between items-center text-xs px-2 py-1 rounded ${
-                                            item.user._id === currentUser._id
-                                              ? "bg-blue-100 text-blue-800 font-semibold"
-                                              : "text-gray-700"
-                                          }`}
-                                        >
-                                          <span className="truncate pr-2">
-                                            {item.user.name}
-                                            {item.user._id ===
-                                              currentUser._id && " (Вие)"}
-                                          </span>
-                                          <ReadOnlyStars score={item.score} />
-                                        </li>
-                                      )
-                                    )}
-                                  </ul>
-                                ) : (
-                                  <p className="text-xs text-gray-500 text-center p-2">
-                                    Няма оценки.
-                                  </p>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                          <div>
-                            <h4 className="text-sm font-medium text-gray-600 mt-4 mb-2">
+                            <h4 className="text-base font-semibold text-gray-800 mb-2">
                               Разбивка по критерии
                             </h4>
                             <div className="space-y-1">
@@ -541,7 +531,7 @@ const RateCaseModal: React.FC<RateCaseModalProps> = ({
                                 Общо
                               </button>
                               <hr className="my-1 border-gray-200" />
-                              {ratingMetrics.map((metric) => {
+                              {ratingMetrics.map((metric: IRatingMetric) => {
                                 const metricScores =
                                   scoresByMetric[metric._id] || [];
                                 const metricAverage =
@@ -577,6 +567,83 @@ const RateCaseModal: React.FC<RateCaseModalProps> = ({
                               })}
                             </div>
                           </div>
+
+                          {/* --- SECTION 2: COMMUNITY RATINGS --- */}
+                          <div>
+                            <div className="mt-4">
+                              {/* Tab Navigation with CSS Grid */}
+                              <div className="grid grid-cols-2 border-b border-gray-200">
+                                <button
+                                  onClick={() =>
+                                    setActiveRatingsView("distribution")
+                                  }
+                                  className={`py-2 text-center text-sm font-medium transition-colors -mb-px ${
+                                    activeRatingsView === "distribution"
+                                      ? "border-b-2 border-blue-600 text-blue-600"
+                                      : "text-gray-500 hover:text-blue-600 border-b-2 border-transparent"
+                                  }`}
+                                >
+                                  Разпределение
+                                </button>
+                                <button
+                                  onClick={() =>
+                                    setActiveRatingsView("individual")
+                                  }
+                                  className={`py-2 text-center text-sm font-medium transition-colors -mb-px ${
+                                    activeRatingsView === "individual"
+                                      ? "border-b-2 border-blue-600 text-blue-600"
+                                      : "text-gray-500 hover:text-blue-600 border-b-2 border-transparent"
+                                  }`}
+                                >
+                                  Индивидуални
+                                </button>
+                              </div>
+
+                              {/* Tab Content with Fixed Height */}
+                              <div className="mt-3 h-40">
+                                {activeRatingsView === "distribution" && (
+                                  <RatingDistributionChart
+                                    distribution={displayData.distribution}
+                                    totalRatings={displayData.breakdown.length}
+                                  />
+                                )}
+                                {activeRatingsView === "individual" && (
+                                  <div className="h-full overflow-y-auto scrollbar-thin rounded-md bg-gray-50 p-2">
+                                    {displayData.breakdown.length > 0 ? (
+                                      <ul className="space-y-1">
+                                        {displayData.breakdown.map(
+                                          (item, index) => (
+                                            <li
+                                              key={index}
+                                              className={`flex justify-between items-center text-xs px-2 py-1.5 rounded ${
+                                                item.user._id ===
+                                                currentUser._id
+                                                  ? "bg-blue-100 text-blue-800 font-semibold"
+                                                  : "text-gray-700"
+                                              }`}
+                                            >
+                                              <span className="truncate pr-2">
+                                                {item.user.name}
+                                                {item.user._id ===
+                                                  currentUser._id && " (Вие)"}
+                                              </span>
+                                              <ReadOnlyStars
+                                                score={item.score}
+                                              />
+                                            </li>
+                                          )
+                                        )}
+                                      </ul>
+                                    ) : (
+                                      <p className="text-xs text-gray-500 text-center p-2">
+                                        Няма индивидуални оценки.
+                                      </p>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
                         </>
                       ) : (
                         <p className="text-sm text-gray-500">
@@ -590,7 +657,7 @@ const RateCaseModal: React.FC<RateCaseModalProps> = ({
           </Dialog.Portal>
         </Tooltip.Provider>
       </Dialog.Root>
-      {/* --- NEW CONFIRMATION DIALOG --- */}
+
       <ConfirmActionDialog
         isOpen={showConfirmClose}
         onOpenChange={setShowConfirmClose}
@@ -598,6 +665,7 @@ const RateCaseModal: React.FC<RateCaseModalProps> = ({
         title="Незапазени промени"
         description="Имате незапазени промени по вашата оценка. Сигурни ли сте, че искате да затворите прозореца?"
         confirmButtonText="Да, затвори"
+        cancelButtonText="Не, не затваряй"
         isDestructiveAction={true}
       />
     </>

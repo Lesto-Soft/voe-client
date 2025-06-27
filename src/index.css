@@ -170,6 +170,15 @@ body,
 }
 
 /* TextEditorSpecific.css */
+.custom-tiptap-editor .is-empty::before,
+.custom-simple-editor .is-empty::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #adb5bd; /* A standard placeholder color, feel free to change */
+  pointer-events: none;
+  height: 0;
+}
+
 .custom-tiptap-editor ul {
   list-style-type: disc;
   padding-left: 2rem; /* Adjust to match prose or your preference */

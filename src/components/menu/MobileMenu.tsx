@@ -5,6 +5,7 @@ import {
   ChartPieIcon,
   UsersIcon,
   TagIcon,
+  StarIcon,
   UserIcon,
   ArrowRightCircleIcon,
 } from "@heroicons/react/24/solid";
@@ -81,6 +82,12 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
               to="/category-management"
               icon={<TagIcon className="h-6 w-6" />}
               label={t("categories")}
+              onClick={onLinkClick}
+            />
+            <MobileNavLink
+              to="/rating-management"
+              icon={<StarIcon className="h-6 w-6" />}
+              label={t("ratings")}
               onClick={onLinkClick}
             />
           </>

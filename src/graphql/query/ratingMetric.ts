@@ -9,6 +9,8 @@ export const GET_ALL_RATING_METRICS = gql`
       description
       order
       archived
+      totalScores
+      averageScore
     }
   }
 `;

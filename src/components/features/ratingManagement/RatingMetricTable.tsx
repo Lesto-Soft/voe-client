@@ -69,38 +69,44 @@ const RatingMetricTable: React.FC<RatingMetricTableProps> = ({
         </th>
         <th
           scope="col"
-          className="w-1/5 px-3 py-4 text-left text-sm font-semibold text-white uppercase tracking-wider"
+          className="w-1/5 px-3 py-4 text-left text-sm font-semibold text-white uppercase tracking-wider relative"
         >
+          <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-px bg-gray-400"></span>
           Име
         </th>
         <th
           scope="col"
-          className="w-1/3 px-3 py-4 text-left text-sm font-semibold text-white uppercase tracking-wider"
+          className="w-1/3 px-3 py-4 text-left text-sm font-semibold text-white uppercase tracking-wider relative"
         >
+          <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-px bg-gray-400"></span>
           Описание
         </th>
         <th
           scope="col"
-          className="w-32 px-3 py-4 text-center text-sm font-semibold text-white uppercase tracking-wider"
+          className="w-32 px-3 py-4 text-center text-sm font-semibold text-white uppercase tracking-wider relative"
         >
+          <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-px bg-gray-400"></span>
           Статус
         </th>
         <th
           scope="col"
-          className="w-36 px-3 py-4 text-center text-sm font-semibold text-white uppercase tracking-wider"
+          className="w-36 px-3 py-4 text-center text-sm font-semibold text-white uppercase tracking-wider relative"
         >
+          <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-px bg-gray-400"></span>
           ОБЩО ОЦЕНКИ
         </th>
         <th
           scope="col"
-          className="w-36 px-3 py-4 text-center text-sm font-semibold text-white uppercase tracking-wider"
+          className="w-36 px-3 py-4 text-center text-sm font-semibold text-white uppercase tracking-wider relative"
         >
+          <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-px bg-gray-400"></span>
           СРЕДНА ОЦЕНКА
         </th>
         <th
           scope="col"
-          className="w-32 px-3 py-4 text-center text-sm font-semibold text-white uppercase tracking-wider"
+          className="w-32 px-3 py-4 text-center text-sm font-semibold text-white uppercase tracking-wider relative"
         >
+          <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-px bg-gray-400"></span>
           Действия
         </th>
       </tr>

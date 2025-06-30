@@ -1,6 +1,7 @@
 // src/pages/RatingManagement.tsx
 import React, { useMemo, useState, useEffect } from "react";
 import { PlusIcon as PlusIconSolid } from "@heroicons/react/20/solid";
+import { ChevronUpIcon, ChevronDownIcon } from "@heroicons/react/24/outline"; // <-- Import chevrons
 import {
   useGetAllRatingMetrics,
   useCreateRatingMetric,
@@ -30,7 +31,6 @@ const RatingManagement: React.FC = () => {
     setArchivedStatus,
   } = useRatingMetricManagement();
 
-  // --- LOCAL STATE MANAGEMENT ---
   const [displayMetrics, setDisplayMetrics] = useState<IRatingMetric[]>([]);
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [editingMetric, setEditingMetric] = useState<IRatingMetric | null>(
@@ -43,8 +43,8 @@ const RatingManagement: React.FC = () => {
     useState(false);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [successModalMessage, setSuccessModalMessage] = useState("");
+  const [showFilters, setShowFilters] = useState(true); // <-- State for filters toggle
 
-  // --- GRAPHQL HOOKS ---
   const {
     ratingMetrics: fetchedMetrics,
     loading: metricsLoading,
@@ -67,7 +67,6 @@ const RatingManagement: React.FC = () => {
   const isMutating =
     createLoading || updateLoading || deleteLoading || reorderLoading;
 
-  // --- FILTERING AND STATE SYNC ---
   const filteredMetrics = useMemo(() => {
     if (!fetchedMetrics) return [];
     return fetchedMetrics
@@ -96,15 +95,12 @@ const RatingManagement: React.FC = () => {
     archivedStatus,
   ]);
 
-  // Sync local display state with filtered data from Apollo
   useEffect(() => {
-    // Only update if the source has actually changed to prevent re-renders
     if (JSON.stringify(displayMetrics) !== JSON.stringify(filteredMetrics)) {
       setDisplayMetrics(filteredMetrics);
     }
   }, [filteredMetrics]);
 
-  // --- HANDLERS ---
   const handleOpenCreateModal = () => {
     setEditingMetric(null);
     setIsFormModalOpen(true);
@@ -172,10 +168,10 @@ const RatingManagement: React.FC = () => {
   const handleReorderSave = async (orderedIds: string[]) => {
     try {
       await reorderRatingMetrics({ variables: { orderedIds } });
-      await refetchMetrics(); // Refetch to confirm new order from the DB
+      await refetchMetrics();
     } catch (err: any) {
       console.error("Failed to reorder metrics:", err);
-      setDisplayMetrics(filteredMetrics); // Revert optimistic update on error
+      setDisplayMetrics(filteredMetrics);
       alert("Грешка при пренареждането.");
     }
   };
@@ -186,23 +182,39 @@ const RatingManagement: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
-      <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <h1 className="text-2xl font-bold text-gray-800">
-          Управление на метрики за оценка
-        </h1>
-        <div className="flex-shrink-0">
+      {/* --- PAGE HEADER SECTION --- */}
+      <div className="mb-6 flex flex-col md:flex-row md:items-start md:justify-end gap-4">
+        {/* NEW: Buttons container */}
+        <div className="flex flex-col sm:flex-row gap-2 items-center md:items-start flex-shrink-0">
+          <button
+            className="w-full sm:w-auto flex justify-center items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-gray-500 text-white hover:bg-gray-600 hover:cursor-pointer"
+            title={showFilters ? "Скрий филтри" : "Покажи филтри"}
+            onClick={() => setShowFilters(!showFilters)}
+          >
+            {showFilters ? (
+              <ChevronUpIcon className="h-5 w-5 mr-1" />
+            ) : (
+              <ChevronDownIcon className="h-5 w-5 mr-1" />
+            )}
+            Филтри
+          </button>
           <button
             onClick={handleOpenCreateModal}
-            className="flex w-full justify-center items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-green-500 text-white hover:bg-green-600 active:bg-green-700 disabled:opacity-60 disabled:cursor-not-allowed"
+            className="w-full sm:w-[280px] flex flex-shrink-0 justify-center items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-green-500 text-white hover:bg-green-600 active:bg-green-700 disabled:opacity-60 disabled:cursor-not-allowed"
             disabled={isMutating}
           >
             <PlusIconSolid className="h-5 w-5 mr-1" />
-            Създай метрика
+            Създай Метрика
           </button>
         </div>
       </div>
 
-      <div className="mb-6">
+      {/* --- FILTERS SECTION --- */}
+      <div
+        className={`transition-all duration-300 ease-in-out overflow-hidden ${
+          showFilters ? "max-h-screen opacity-100 mb-6" : "max-h-0 opacity-0"
+        }`}
+      >
         <RatingMetricFilters
           filterName={filterName}
           setFilterName={setFilterName}

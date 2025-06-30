@@ -8,6 +8,8 @@ const RATING_METRIC_FRAGMENT = gql`
     description
     order
     archived
+    totalScores
+    averageScore
   }
 `;
 

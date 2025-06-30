@@ -70,6 +70,8 @@ export interface IRatingMetric {
   description: string;
   archived: boolean;
   order: number;
+  totalScores?: number;
+  averageScore?: number;
 }
 
 export interface IRole {

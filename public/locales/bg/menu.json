@@ -19,6 +19,6 @@
   "user_desc": "Потребител {{username}}",
   "category_desc": "Категория {{categoryName}}",
   "submit_case_desc": "Подай сигнал в системата",
-  "ratings_desc": "Управление на метрики за оценяване",
+  "ratings_desc": "Управление на оценки",
   "ratings": "Оценки"
 }

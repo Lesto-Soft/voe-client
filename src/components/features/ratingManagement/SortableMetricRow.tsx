@@ -97,13 +97,13 @@ export const SortableMetricRow: React.FC<SortableMetricRowProps> = ({
           </span>
         )}
       </td>
-      <td
-        className={`${columnWidths.totalScores} px-3 py-4 text-center text-sm`}
-      >
-        N/A
+      <td className="w-36 px-3 py-4 text-center text-sm font-medium">
+        {metric.totalScores ?? 0}
       </td>
-      <td className={`${columnWidths.avgScore} px-3 py-4 text-center text-sm`}>
-        N/A
+      <td className="w-36 px-3 py-4 text-center text-sm font-medium">
+        {metric.totalScores && metric.totalScores > 0 && metric.averageScore
+          ? metric.averageScore.toFixed(2)
+          : "-"}
       </td>
       <td className={`${columnWidths.actions} px-3 py-4 text-center`}>
         <div className="inline-flex items-center space-x-2">

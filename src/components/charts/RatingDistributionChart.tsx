@@ -15,7 +15,7 @@ const RatingDistributionChart: React.FC<RatingDistributionChartProps> = ({
   totalRatings,
 }) => {
   if (totalRatings === 0) {
-    return <p className="text-sm text-gray-500">No ratings yet.</p>;
+    return <p className="text-sm text-gray-500">Няма оценки все още.</p>;
   }
 
   return (

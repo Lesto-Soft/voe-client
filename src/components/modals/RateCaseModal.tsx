@@ -49,7 +49,7 @@ const StarRatingInput: React.FC<{
           onMouseEnter={() => setHovered(star)}
           onMouseLeave={() => setHovered(0)}
           onClick={() => onChange(star)}
-          className="focus:outline-none transition-transform duration-150 hover:scale-125"
+          className="focus:outline-none transition-transform duration-150 hover:scale-125 hover:cursor-pointer"
         >
           <StarSolid
             className={` ${size} ${
@@ -348,7 +348,7 @@ const RateCaseModal: React.FC<RateCaseModalProps> = ({
                 <Dialog.Close asChild>
                   <button
                     onClick={handleAttemptClose}
-                    className="p-1 rounded-full text-gray-400 hover:text-red-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
+                    className="p-1 rounded-full text-gray-400 hover:text-red-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors hover:cursor-pointer"
                     aria-label="Close"
                   >
                     <XMarkIcon className="h-6 w-6" />
@@ -440,7 +440,7 @@ const RateCaseModal: React.FC<RateCaseModalProps> = ({
                                         submittingScores ||
                                         confirmingDelete === metric._id
                                       }
-                                      className="text-gray-400 hover:text-red-500 transition-colors disabled:opacity-50 flex items-center"
+                                      className="text-gray-400 hover:text-red-500 transition-colors disabled:opacity-50 flex items-center hover:cursor-pointer"
                                       title="Изчисти оценката"
                                     >
                                       <XCircleIcon className="h-5 w-5" />
@@ -484,11 +484,11 @@ const RateCaseModal: React.FC<RateCaseModalProps> = ({
                             submittingScores ||
                             deletingScore
                           }
-                          className={`w-full rounded px-4 py-2 text-sm  text-white transition-colors ${
+                          className={`w-full rounded px-4 py-2 text-sm text-white transition-colors ${
                             !scoresHaveChanged || !hasAtLeastOneMetric
-                              ? "bg-gray-400 cursor-not-allowed font-medium"
+                              ? "bg-gray-400 font-medium"
                               : "bg-amber-600 hover:bg-amber-700 font-bold"
-                          } disabled:opacity-70 disabled:cursor-wait`}
+                          } disabled:opacity-70 disabled:cursor-not-allowed`}
                         >
                           {submittingScores || deletingScore
                             ? "Обработване..."
@@ -522,7 +522,7 @@ const RateCaseModal: React.FC<RateCaseModalProps> = ({
                             <div className="space-y-1">
                               <button
                                 onClick={() => setActiveDistribution("Overall")}
-                                className={`w-full text-left text-sm p-2 rounded-md transition-colors ${
+                                className={`w-full text-left text-sm p-2 rounded-md transition-colors hover:cursor-pointer ${
                                   activeDistribution === "Overall"
                                     ? "bg-blue-100 text-blue-800 font-bold"
                                     : "hover:bg-gray-100"
@@ -545,7 +545,7 @@ const RateCaseModal: React.FC<RateCaseModalProps> = ({
                                     onClick={() =>
                                       setActiveDistribution(metric._id)
                                     }
-                                    className={`w-full flex justify-between items-center text-sm p-2 rounded-md transition-colors ${
+                                    className={`w-full flex justify-between items-center text-sm p-2 rounded-md transition-colors hover:cursor-pointer ${
                                       activeDistribution === metric._id
                                         ? "bg-blue-100 text-blue-800"
                                         : "hover:bg-gray-100"
@@ -570,14 +570,14 @@ const RateCaseModal: React.FC<RateCaseModalProps> = ({
 
                           {/* --- SECTION 2: COMMUNITY RATINGS --- */}
                           <div>
-                            <div className="mt-4">
+                            <div>
                               {/* Tab Navigation with CSS Grid */}
                               <div className="grid grid-cols-2 border-b border-gray-200">
                                 <button
                                   onClick={() =>
                                     setActiveRatingsView("distribution")
                                   }
-                                  className={`py-2 text-center text-sm font-medium transition-colors -mb-px ${
+                                  className={`py-2 text-center text-sm font-medium transition-colors -mb-px hover:cursor-pointer ${
                                     activeRatingsView === "distribution"
                                       ? "border-b-2 border-blue-600 text-blue-600"
                                       : "text-gray-500 hover:text-blue-600 border-b-2 border-transparent"
@@ -589,7 +589,7 @@ const RateCaseModal: React.FC<RateCaseModalProps> = ({
                                   onClick={() =>
                                     setActiveRatingsView("individual")
                                   }
-                                  className={`py-2 text-center text-sm font-medium transition-colors -mb-px ${
+                                  className={`py-2 text-center text-sm font-medium transition-colors -mb-px hover:cursor-pointer ${
                                     activeRatingsView === "individual"
                                       ? "border-b-2 border-blue-600 text-blue-600"
                                       : "text-gray-500 hover:text-blue-600 border-b-2 border-transparent"

@@ -15,23 +15,14 @@ interface SortableMetricRowProps {
   metric: IRatingMetric;
   onEditMetric: (metric: IRatingMetric) => void;
   onDeleteMetric: (metric: IRatingMetric) => void;
+  isAdmin: boolean;
 }
-
-// Re-defining column widths here to be self-contained
-const columnWidths = {
-  order: "w-16",
-  name: "w-1/5",
-  description: "w-1/3",
-  archived: "w-32",
-  totalScores: "w-36",
-  avgScore: "w-36",
-  actions: "w-32",
-};
 
 export const SortableMetricRow: React.FC<SortableMetricRowProps> = ({
   metric,
   onEditMetric,
   onDeleteMetric,
+  isAdmin,
 }) => {
   const {
     attributes,
@@ -40,7 +31,10 @@ export const SortableMetricRow: React.FC<SortableMetricRowProps> = ({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: metric._id });
+  } = useSortable({
+    id: metric._id,
+    disabled: !isAdmin,
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -48,6 +42,17 @@ export const SortableMetricRow: React.FC<SortableMetricRowProps> = ({
     opacity: isDragging ? 0.8 : 1,
     zIndex: isDragging ? 1 : 0,
     position: "relative" as "relative",
+  };
+
+  // Helper function to get medal color style based on the score
+  const getScoreCellStyle = (score: number | undefined | null): string => {
+    if (!score || score === 0) {
+      return "font-bold text-gray-500"; // Default style for no score
+    }
+    if (score >= 4.5) return "font-bold text-amber-500"; // Gold
+    if (score >= 3.5) return "font-bold text-slate-500"; // Silver
+    if (score >= 2.5) return "font-bold text-orange-700"; // Bronze
+    return "font-black text-red-500"; // Below bronze
   };
 
   return (
@@ -60,31 +65,37 @@ export const SortableMetricRow: React.FC<SortableMetricRowProps> = ({
           : "bg-white hover:bg-gray-50"
       }`}
     >
-      <td className={`${columnWidths.order} px-3 py-4 text-center`}>
+      <td className="w-16 px-3 py-4 text-center">
         <div
+          {...(isAdmin && listeners)}
           {...attributes}
-          {...listeners}
-          className={`flex items-center justify-center p-2 rounded-md hover:bg-gray-300 ${
-            metric.archived ? "text-gray-400" : "text-gray-500"
-          } cursor-grab active:cursor-grabbing`}
+          className={`flex items-center justify-center p-2 rounded-md ${
+            isAdmin
+              ? "hover:bg-gray-300 cursor-grab active:cursor-grabbing"
+              : ""
+          } ${metric.archived ? "text-gray-400" : "text-gray-500"}`}
         >
-          <Bars3Icon className="h-5 w-5" aria-hidden="true" />
+          {isAdmin ? (
+            <Bars3Icon className="h-5 w-5" aria-hidden="true" />
+          ) : (
+            <span>{metric.order}</span>
+          )}
         </div>
       </td>
       <td
-        className={`${columnWidths.name} px-3 py-4 text-sm font-medium ${
+        className={`w-1/5 px-3 py-4 text-sm font-bold ${
           metric.archived ? "" : "text-gray-900"
         }`}
       >
         {metric.name}
       </td>
       <td
-        className={`${columnWidths.description} px-3 py-4 text-sm truncate`}
+        className="w-1/3 px-3 py-4 text-sm truncate"
         title={metric.description}
       >
         {metric.description}
       </td>
-      <td className={`${columnWidths.archived} px-3 py-4 text-center`}>
+      <td className="w-32 px-3 py-4 text-center">
         {metric.archived ? (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
             <ArchiveBoxIcon className="h-4 w-4 mr-1.5" />
@@ -100,29 +111,39 @@ export const SortableMetricRow: React.FC<SortableMetricRowProps> = ({
       <td className="w-36 px-3 py-4 text-center text-sm font-medium">
         {metric.totalScores ?? 0}
       </td>
-      <td className="w-36 px-3 py-4 text-center text-sm font-medium">
+      {/* --- CELL WITH CONDITIONAL STYLING --- */}
+      <td
+        className={`w-36 px-3 py-4 text-center text-sm ${getScoreCellStyle(
+          metric.averageScore
+        )}`}
+      >
         {metric.totalScores && metric.totalScores > 0 && metric.averageScore
           ? metric.averageScore.toFixed(2)
           : "-"}
       </td>
-      <td className={`${columnWidths.actions} px-3 py-4 text-center`}>
-        <div className="inline-flex items-center space-x-2">
-          <button
-            onClick={() => onEditMetric(metric)}
-            className="inline-flex justify-center items-center rounded bg-sky-100 p-1.5 text-sky-700 border border-sky-200 hover:border-sky-300 transition-all duration-150 ease-in-out hover:cursor-pointer hover:bg-sky-200 active:bg-sky-300"
-            title={`Редактирай ${metric.name}`}
-          >
-            <PencilSquareIcon className="h-5 w-5" />
-          </button>
-          <button
-            onClick={() => onDeleteMetric(metric)}
-            className="inline-flex justify-center items-center rounded bg-red-100 p-1.5 text-red-700 border border-red-200 hover:border-red-300 transition-all duration-150 ease-in-out hover:cursor-pointer hover:bg-red-200 active:bg-red-300"
-            title={`Изтрий ${metric.name}`}
-          >
-            <TrashIcon className="h-5 w-5" />
-          </button>
-        </div>
-      </td>
+
+      {isAdmin && (
+        <td className="w-32 px-3 py-4 text-center">
+          <div className="inline-flex items-center space-x-2">
+            <button
+              onClick={() => onEditMetric(metric)}
+              className="inline-flex justify-center items-center rounded bg-sky-100 p-1.5 text-sky-700 border border-sky-200 hover:border-sky-300 transition-all duration-150 ease-in-out hover:cursor-pointer hover:bg-sky-200 active:bg-sky-300"
+              title={`Редактирай ${metric.name}`}
+            >
+              <PencilSquareIcon className="h-5 w-5" />
+            </button>
+            <button
+              onClick={() => onDeleteMetric(metric)}
+              className="inline-flex justify-center items-center rounded bg-red-100 p-1.5 text-red-700 border border-red-200 hover:border-red-300 transition-all duration-150 ease-in-out hover:cursor-pointer hover:bg-red-200 active:bg-red-300"
+              title={`Изтрий ${metric.name}`}
+            >
+              <TrashIcon className="h-5 w-5" />
+            </button>
+          </div>
+        </td>
+      )}
     </tr>
   );
 };
+
+export default SortableMetricRow;

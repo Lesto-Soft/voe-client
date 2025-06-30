@@ -67,7 +67,7 @@ const CaseTable: React.FC<{ cases: ICase[]; t: (word: string) => string }> = ({
               {/* First Header (No separator) */}
               <th
                 scope="col"
-                className="w-24 px-3 py-4 text-left text-sm font-semibold text-white uppercase tracking-wide cursor-pointer hover:bg-gray-600"
+                className="w-24 px-3 py-4 text-center text-sm font-semibold text-white uppercase tracking-wide cursor-pointer hover:bg-gray-600"
               >
                 {t("case_number")}
               </th>
@@ -76,7 +76,7 @@ const CaseTable: React.FC<{ cases: ICase[]; t: (word: string) => string }> = ({
                 scope="col"
                 className="w-3 px-3 py-4 text-center text-sm font-semibold text-white uppercase tracking-wide relative"
               >
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 pr-2 text-gray-400">
+                <span className="absolute left-0 top-1/2 -translate-y-1/2 pr-2 text-gray-400">
                   |
                 </span>
                 {t("priority")}
@@ -85,7 +85,7 @@ const CaseTable: React.FC<{ cases: ICase[]; t: (word: string) => string }> = ({
                 scope="col"
                 className="w-28 px-3 py-4 text-center text-sm font-semibold text-white uppercase tracking-wide relative"
               >
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 pr-2 text-gray-400">
+                <span className="absolute left-0 top-1/2 -translate-y-1/2 pr-2 text-gray-400">
                   |
                 </span>
                 {t("type")}
@@ -94,7 +94,7 @@ const CaseTable: React.FC<{ cases: ICase[]; t: (word: string) => string }> = ({
                 scope="col"
                 className="max-w-[150px] px-3 py-4 text-center text-sm font-semibold text-white uppercase tracking-wide relative"
               >
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 pr-2 text-gray-400">
+                <span className="absolute left-0 top-1/2 -translate-y-1/2 pr-2 text-gray-400">
                   |
                 </span>
                 {t("creator")}
@@ -103,7 +103,7 @@ const CaseTable: React.FC<{ cases: ICase[]; t: (word: string) => string }> = ({
                 scope="col"
                 className="max-w-[180px] px-3 py-4 text-center text-sm font-semibold text-white uppercase tracking-wide hidden md:table-cell relative"
               >
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 pr-2 text-gray-400 hidden md:inline-block">
+                <span className="absolute left-0 top-1/2 -translate-y-1/2 pr-2 text-gray-400 hidden md:inline-block">
                   |
                 </span>
                 {t("categories")}
@@ -112,7 +112,7 @@ const CaseTable: React.FC<{ cases: ICase[]; t: (word: string) => string }> = ({
                 scope="col"
                 className="max-w-[200px] sm:max-w-[250px] lg:max-w-[300px] px-3 py-4 text-center text-sm font-semibold text-white uppercase tracking-wide relative"
               >
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 pr-2 text-gray-400">
+                <span className="absolute left-0 top-1/2 -translate-y-1/2 pr-2 text-gray-400">
                   |
                 </span>
                 {t("description")}
@@ -121,7 +121,7 @@ const CaseTable: React.FC<{ cases: ICase[]; t: (word: string) => string }> = ({
                 scope="col"
                 className="w-32 px-3 py-4 text-center text-sm font-semibold text-white uppercase tracking-wide relative"
               >
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 pr-2 text-gray-400">
+                <span className="absolute left-0 top-1/2 -translate-y-1/2 pr-2 text-gray-400">
                   |
                 </span>
                 {t("date")}
@@ -130,14 +130,14 @@ const CaseTable: React.FC<{ cases: ICase[]; t: (word: string) => string }> = ({
                 scope="col"
                 className="w-32 px-3 py-4 text-center text-sm font-semibold text-white uppercase tracking-wide relative"
               >
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 pr-2 text-gray-400">
+                <span className="absolute left-0 top-1/2 -translate-y-1/2 pr-2 text-gray-400">
                   |
                 </span>
                 {t("status")}
               </th>
               {/* Last Header */}
               <th scope="col" className="relative w-16 px-3 py-4">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 pr-2 text-gray-400">
+                <span className="absolute left-0 top-1/2 -translate-y-1/2 pr-2 text-gray-400">
                   |
                 </span>
                 <span className="sr-only">{t("actions")}</span>

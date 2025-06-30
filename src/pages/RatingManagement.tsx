@@ -12,12 +12,14 @@ import {
 import { useRatingMetricManagement } from "../hooks/useRatingMetricManagement";
 import PageStatusDisplay from "../components/global/PageStatusDisplay";
 import RatingMetricFilters from "../components/features/ratingManagement/RatingMetricFilters";
-import { IRatingMetric } from "../db/interfaces";
+import { IMe, IRatingMetric } from "../db/interfaces";
 import RatingMetricTable from "../components/features/ratingManagement/RatingMetricTable";
 import UserModal from "../components/modals/UserModal";
 import RatingMetricForm from "../components/forms/RatingMetricForm";
 import SuccessConfirmationModal from "../components/modals/SuccessConfirmationModal";
 import ConfirmActionDialog from "../components/modals/ConfirmActionDialog";
+import { useCurrentUser } from "../context/UserContext";
+import { ROLES } from "../utils/GLOBAL_PARAMETERS";
 
 const RatingManagement: React.FC = () => {
   const {
@@ -63,6 +65,9 @@ const RatingManagement: React.FC = () => {
     useDeleteRatingMetric();
   const { reorderRatingMetrics, loading: reorderLoading } =
     useReorderRatingMetrics();
+
+  const currentUser = useCurrentUser() as IMe | undefined;
+  const isAdmin = currentUser?.role?._id === ROLES.ADMIN;
 
   const isMutating =
     createLoading || updateLoading || deleteLoading || reorderLoading;
@@ -198,14 +203,17 @@ const RatingManagement: React.FC = () => {
             )}
             Филтри
           </button>
-          <button
-            onClick={handleOpenCreateModal}
-            className="w-full sm:w-[280px] flex flex-shrink-0 justify-center items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-green-500 text-white hover:bg-green-600 active:bg-green-700 disabled:opacity-60 disabled:cursor-not-allowed"
-            disabled={isMutating}
-          >
-            <PlusIconSolid className="h-5 w-5 mr-1" />
-            Създай Метрика
-          </button>
+          {/* --- Conditionally render the create button --- */}
+          {isAdmin && (
+            <button
+              onClick={handleOpenCreateModal}
+              className="w-full sm:w-[280px] flex flex-shrink-0 justify-center items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-green-500 text-white hover:bg-green-600 active:bg-green-700 disabled:opacity-60 disabled:cursor-not-allowed"
+              disabled={isMutating}
+            >
+              <PlusIconSolid className="h-5 w-5 mr-1" />
+              Създай метрика
+            </button>
+          )}
         </div>
       </div>
 
@@ -232,38 +240,44 @@ const RatingManagement: React.FC = () => {
         onEditMetric={handleEditMetric}
         onDeleteMetric={handleDeleteMetric}
         onReorderSave={handleReorderSave}
+        isAdmin={isAdmin}
       />
 
-      <UserModal
-        isOpen={isFormModalOpen}
-        onClose={handleCloseModal}
-        title={editingMetric ? "Редактирай метрика" : "Създай нова метрика"}
-      >
-        <RatingMetricForm
-          key={editingMetric ? editingMetric._id : "create-new-metric"}
-          onSubmit={handleFormSubmit}
+      {/* --- Conditionally render the form modal --- */}
+      {isAdmin && (
+        <UserModal
+          isOpen={isFormModalOpen}
           onClose={handleCloseModal}
-          initialData={editingMetric}
-          isLoading={isMutating}
-        />
-      </UserModal>
+          title={editingMetric ? "Редактирай метрика" : "Създай нова метрика"}
+        >
+          <RatingMetricForm
+            key={editingMetric ? editingMetric._id : "create-new-metric"}
+            onSubmit={handleFormSubmit}
+            onClose={handleCloseModal}
+            initialData={editingMetric}
+            isLoading={isMutating}
+          />
+        </UserModal>
+      )}
 
-      <ConfirmActionDialog
-        isOpen={isConfirmDeleteDialogOpen}
-        onOpenChange={setIsConfirmDeleteDialogOpen}
-        onConfirm={handleConfirmDelete}
-        title="Потвърди изтриването"
-        description={
-          <span>
-            Сигурни ли сте, че искате да изтриете метриката
-            <strong className="px-1">{metricToDelete?.name}</strong>? Всички
-            оценки, дадени за нея, също ще бъдат изтрити. Тази операция е
-            необратима.
-          </span>
-        }
-        confirmButtonText="Изтрий"
-        isDestructiveAction={true}
-      />
+      {isAdmin && (
+        <ConfirmActionDialog
+          isOpen={isConfirmDeleteDialogOpen}
+          onOpenChange={setIsConfirmDeleteDialogOpen}
+          onConfirm={handleConfirmDelete}
+          title="Потвърди изтриването"
+          description={
+            <span>
+              Сигурни ли сте, че искате да изтриете метриката
+              <strong className="px-1">{metricToDelete?.name}</strong>? Всички
+              оценки, дадени за нея, също ще бъдат изтрити. Тази операция е
+              необратима.
+            </span>
+          }
+          confirmButtonText="Изтрий"
+          isDestructiveAction={true}
+        />
+      )}
 
       <SuccessConfirmationModal
         isOpen={isSuccessModalOpen}

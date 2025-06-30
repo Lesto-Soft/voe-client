@@ -3,6 +3,7 @@ import React from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { IRatingMetric } from "../../../db/interfaces";
+import * as Tooltip from "@radix-ui/react-tooltip"; // <-- Import Radix Tooltip
 import {
   PencilSquareIcon,
   TrashIcon,
@@ -18,6 +19,7 @@ interface SortableMetricRowProps {
   onEditMetric: (metric: IRatingMetric) => void;
   onDeleteMetric: (metric: IRatingMetric) => void;
   isAdmin: boolean;
+  isFiltered: boolean;
 }
 
 export const SortableMetricRow: React.FC<SortableMetricRowProps> = ({
@@ -25,7 +27,10 @@ export const SortableMetricRow: React.FC<SortableMetricRowProps> = ({
   onEditMetric,
   onDeleteMetric,
   isAdmin,
+  isFiltered,
 }) => {
+  const isDraggable = isAdmin && !isFiltered;
+
   const {
     attributes,
     listeners,
@@ -35,7 +40,7 @@ export const SortableMetricRow: React.FC<SortableMetricRowProps> = ({
     isDragging,
   } = useSortable({
     id: metric._id,
-    disabled: !isAdmin,
+    disabled: !isDraggable,
   });
 
   const style = {
@@ -57,6 +62,24 @@ export const SortableMetricRow: React.FC<SortableMetricRowProps> = ({
     return "font-black text-red-500"; // Below bronze
   };
 
+  const dragHandle = (
+    <div
+      {...(isDraggable && listeners)}
+      {...attributes}
+      className={`flex items-center justify-center p-2 rounded-md ${
+        isDraggable
+          ? "hover:bg-gray-300 cursor-grab active:cursor-grabbing"
+          : "cursor-not-allowed opacity-50"
+      } ${metric.archived ? "text-gray-400" : "text-gray-500"}`}
+    >
+      {isAdmin ? (
+        <Bars3Icon className="h-5 w-5" aria-hidden="true" />
+      ) : (
+        <span>{metric.order}</span>
+      )}
+    </div>
+  );
+
   return (
     <tr
       ref={setNodeRef}
@@ -68,21 +91,24 @@ export const SortableMetricRow: React.FC<SortableMetricRowProps> = ({
       }`}
     >
       <td className="w-16 px-3 py-4 text-center">
-        <div
-          {...(isAdmin && listeners)}
-          {...attributes}
-          className={`flex items-center justify-center p-2 rounded-md ${
-            isAdmin
-              ? "hover:bg-gray-300 cursor-grab active:cursor-grabbing"
-              : ""
-          } ${metric.archived ? "text-gray-400" : "text-gray-500"}`}
-        >
-          {isAdmin ? (
-            <Bars3Icon className="h-5 w-5" aria-hidden="true" />
-          ) : (
-            <span>{metric.order}</span>
-          )}
-        </div>
+        {isFiltered ? (
+          <Tooltip.Provider delayDuration={300}>
+            <Tooltip.Root>
+              <Tooltip.Trigger asChild>{dragHandle}</Tooltip.Trigger>
+              <Tooltip.Portal>
+                <Tooltip.Content
+                  sideOffset={5}
+                  className="z-50 bg-gray-800 text-white px-3 py-1.5 text-xs rounded-md shadow-lg"
+                >
+                  Изчистете филтрите, за да пренаредите
+                  <Tooltip.Arrow className="fill-gray-800" />
+                </Tooltip.Content>
+              </Tooltip.Portal>
+            </Tooltip.Root>
+          </Tooltip.Provider>
+        ) : (
+          dragHandle
+        )}
       </td>
       <td
         className={`w-1/5 px-3 py-4 text-sm font-medium ${
@@ -91,7 +117,6 @@ export const SortableMetricRow: React.FC<SortableMetricRowProps> = ({
       >
         <RatingMetricLink metric={metric} />
       </td>
-
       <td
         className="w-1/3 px-3 py-4 text-sm truncate"
         title={metric.description}
@@ -114,7 +139,6 @@ export const SortableMetricRow: React.FC<SortableMetricRowProps> = ({
       <td className="w-36 px-3 py-4 text-center text-sm font-medium">
         {metric.totalScores ?? 0}
       </td>
-      {/* --- CELL WITH CONDITIONAL STYLING --- */}
       <td
         className={`w-36 px-3 py-4 text-center text-sm ${getScoreCellStyle(
           metric.averageScore
@@ -124,7 +148,6 @@ export const SortableMetricRow: React.FC<SortableMetricRowProps> = ({
           ? metric.averageScore.toFixed(2)
           : "-"}
       </td>
-
       {isAdmin && (
         <td className="w-32 px-3 py-4 text-center">
           <div className="inline-flex items-center space-x-2">

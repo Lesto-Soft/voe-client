@@ -73,6 +73,13 @@ const RatingManagement: React.FC = () => {
   const currentUser = useCurrentUser() as IMe | undefined;
   const isAdmin = currentUser?.role?._id === ROLES.ADMIN;
 
+  // Determine if any filter is currently active.
+  const isAnyFilterActive =
+    debouncedFilterName !== "" ||
+    debouncedFilterDescription !== "" ||
+    archivedStatus !== "all" ||
+    tierFilter !== "all";
+
   const isMutating =
     createLoading || updateLoading || deleteLoading || reorderLoading;
 
@@ -310,6 +317,7 @@ const RatingManagement: React.FC = () => {
         onDeleteMetric={handleDeleteMetric}
         onReorderSave={handleReorderSave}
         isAdmin={isAdmin}
+        isFiltered={isAnyFilterActive}
       />
 
       {/* --- Conditionally render the form modal --- */}

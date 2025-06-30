@@ -22,7 +22,7 @@ const RatingMetricLink: React.FC<RatingMetricLinkProps> = ({ metric }) => {
   const isAllowed = canViewRatingMetric(currentUser);
 
   const baseClasses = getMetricBadgeClasses();
-  const hoverClasses = "hover:bg-yellow-200 hover:cursor-pointer";
+  const hoverClasses = "hover:bg-yellow-200 hover:cursor-pointer uppercase";
   const disabledClasses = "opacity-70 cursor-not-allowed";
   const title = isAllowed
     ? `View details for ${metric.name}`

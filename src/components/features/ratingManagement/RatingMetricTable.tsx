@@ -25,6 +25,7 @@ interface RatingMetricTableProps {
   setMetrics: (metrics: IRatingMetric[]) => void; // For optimistic UI update
   onReorderSave: (orderedIds: string[]) => void; // To trigger mutation
   isAdmin: boolean;
+  isFiltered: boolean;
 }
 
 const RatingMetricTable: React.FC<RatingMetricTableProps> = ({
@@ -35,6 +36,7 @@ const RatingMetricTable: React.FC<RatingMetricTableProps> = ({
   setMetrics,
   onReorderSave,
   isAdmin,
+  isFiltered,
 }) => {
   const sensors = useSensors(useSensor(PointerSensor));
   const metricIds = React.useMemo(() => metrics.map((m) => m._id), [metrics]);
@@ -149,6 +151,7 @@ const RatingMetricTable: React.FC<RatingMetricTableProps> = ({
                       onEditMetric={onEditMetric}
                       onDeleteMetric={onDeleteMetric}
                       isAdmin={isAdmin}
+                      isFiltered={isFiltered}
                     />
                   ))
                 )}

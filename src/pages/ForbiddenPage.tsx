@@ -7,7 +7,7 @@ export default function ForbiddenPage() {
   const currentUser = useCurrentUser();
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 p-6">
+    <div className="h-[calc(100vh-6rem)] flex flex-col items-center justify-center bg-gray-100 p-6">
       <h1 className="text-9xl font-bold text-gray-800">403</h1>
       <p className="mt-4 text-2xl font-semibold text-gray-800">
         {t("forbiddenTitle", "Нямате необходимите права за достъп")}

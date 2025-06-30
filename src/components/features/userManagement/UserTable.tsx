@@ -175,9 +175,7 @@ const UserTable: React.FC<UserTableProps> = ({
                 return (
                   <tr key={user._id} className={rowClasses}>
                     <td
-                      className={`${
-                        columnWidths.avatar
-                      } px-3 py-4 whitespace-nowrap flex justify-center items-center ${
+                      className={`w-full px-3 py-4 whitespace-nowrap flex justify-center items-center ${
                         isInactive ? "opacity-50" : ""
                       }`}
                     >

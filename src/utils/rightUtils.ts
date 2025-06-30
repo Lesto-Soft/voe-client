@@ -144,11 +144,20 @@ export const canViewCategory = (
   return false;
 };
 
-// --- NEW: Function to check view rights for a Case Page ---
 export const canViewCase = (currentUser: IMe, caseData: ICase): boolean => {
   if (!currentUser || !caseData || !caseData.creator) return false;
 
   // Use the existing rights determination function. If the user has *any* right, they can view.
   const rights = determineUserRightsForCase(currentUser, caseData);
   return rights.length > 0;
+};
+
+export const canViewRatingMetric = (currentUser: IMe): boolean => {
+  if (!currentUser) return false;
+
+  // Rule: Admins and Experts can view metric details.
+  const isAdmin = currentUser.role?._id === ROLES.ADMIN;
+  const isExpert = currentUser.role?._id === ROLES.EXPERT;
+
+  return isAdmin || isExpert;
 };

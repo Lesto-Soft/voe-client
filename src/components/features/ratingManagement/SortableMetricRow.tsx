@@ -10,6 +10,7 @@ import {
   ArchiveBoxIcon,
   Bars3Icon,
 } from "@heroicons/react/24/solid";
+import RatingMetricLink from "../../global/RankingMetricLink";
 import { TIERS } from "../../../utils/GLOBAL_PARAMETERS";
 
 interface SortableMetricRowProps {
@@ -84,12 +85,13 @@ export const SortableMetricRow: React.FC<SortableMetricRowProps> = ({
         </div>
       </td>
       <td
-        className={`w-1/5 px-3 py-4 text-sm font-bold ${
+        className={`w-1/5 px-3 py-4 text-sm font-medium ${
           metric.archived ? "" : "text-gray-900"
         }`}
       >
-        {metric.name}
+        <RatingMetricLink metric={metric} />
       </td>
+
       <td
         className="w-1/3 px-3 py-4 text-sm truncate"
         title={metric.description}
@@ -98,7 +100,7 @@ export const SortableMetricRow: React.FC<SortableMetricRowProps> = ({
       </td>
       <td className="w-32 px-3 py-4 text-center">
         {metric.archived ? (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-200 text-gray-800">
             <ArchiveBoxIcon className="h-4 w-4 mr-1.5" />
             Архивирана
           </span>

@@ -12,6 +12,9 @@ import {
 import { useRatingMetricManagement } from "../hooks/useRatingMetricManagement";
 import PageStatusDisplay from "../components/global/PageStatusDisplay";
 import RatingMetricFilters from "../components/features/ratingManagement/RatingMetricFilters";
+import RatingMetricStats, {
+  TierFilter,
+} from "../components/features/ratingManagement/RatingMetricStats";
 import { IMe, IRatingMetric } from "../db/interfaces";
 import RatingMetricTable from "../components/features/ratingManagement/RatingMetricTable";
 import UserModal from "../components/modals/UserModal";
@@ -19,7 +22,7 @@ import RatingMetricForm from "../components/forms/RatingMetricForm";
 import SuccessConfirmationModal from "../components/modals/SuccessConfirmationModal";
 import ConfirmActionDialog from "../components/modals/ConfirmActionDialog";
 import { useCurrentUser } from "../context/UserContext";
-import { ROLES } from "../utils/GLOBAL_PARAMETERS";
+import { ROLES, TIERS } from "../utils/GLOBAL_PARAMETERS";
 
 const RatingManagement: React.FC = () => {
   const {
@@ -46,6 +49,7 @@ const RatingManagement: React.FC = () => {
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [successModalMessage, setSuccessModalMessage] = useState("");
   const [showFilters, setShowFilters] = useState(true); // <-- State for filters toggle
+  const [tierFilter, setTierFilter] = useState<TierFilter>("all"); // <-- Add state for tier filter
 
   const {
     ratingMetrics: fetchedMetrics,
@@ -72,7 +76,36 @@ const RatingManagement: React.FC = () => {
   const isMutating =
     createLoading || updateLoading || deleteLoading || reorderLoading;
 
-  const filteredMetrics = useMemo(() => {
+  // const filteredMetrics = useMemo(() => {
+  //   if (!fetchedMetrics) return [];
+  //   return fetchedMetrics
+  //     .filter((metric: IRatingMetric) => {
+  //       if (archivedStatus === "active") return !metric.archived;
+  //       if (archivedStatus === "archived") return metric.archived;
+  //       return true;
+  //     })
+  //     .filter((metric: IRatingMetric) => {
+  //       const nameMatch = debouncedFilterName
+  //         ? metric.name
+  //             .toLowerCase()
+  //             .includes(debouncedFilterName.toLowerCase())
+  //         : true;
+  //       const descriptionMatch = debouncedFilterDescription
+  //         ? metric.description
+  //             .toLowerCase()
+  //             .includes(debouncedFilterDescription.toLowerCase())
+  //         : true;
+  //       return nameMatch && descriptionMatch;
+  //     });
+  // }, [
+  //   fetchedMetrics,
+  //   debouncedFilterName,
+  //   debouncedFilterDescription,
+  //   archivedStatus,
+  // ]);
+
+  // This memo filters by text/archived status FIRST
+  const primaryFilteredMetrics = useMemo(() => {
     if (!fetchedMetrics) return [];
     return fetchedMetrics
       .filter((metric: IRatingMetric) => {
@@ -100,11 +133,40 @@ const RatingManagement: React.FC = () => {
     archivedStatus,
   ]);
 
-  useEffect(() => {
-    if (JSON.stringify(displayMetrics) !== JSON.stringify(filteredMetrics)) {
-      setDisplayMetrics(filteredMetrics);
+  // This FINAL memo applies the tier filter to the list that goes to the table
+  const finalMetricsForTable = useMemo(() => {
+    if (tierFilter === "all") {
+      return primaryFilteredMetrics;
     }
-  }, [filteredMetrics]);
+    return primaryFilteredMetrics.filter((metric: IRatingMetric) => {
+      const score = metric.averageScore;
+      // Metrics with no scores don't belong to any tier except 'all'
+      if (score === undefined || score === null || score === 0) return false;
+
+      switch (tierFilter) {
+        case "gold":
+          return score >= TIERS.GOLD;
+        case "silver":
+          return score >= TIERS.SILVER && score < TIERS.GOLD;
+        case "bronze":
+          return score >= TIERS.BRONZE && score < TIERS.SILVER;
+        case "alert":
+          return score < TIERS.BRONZE;
+        default:
+          return true;
+      }
+    });
+  }, [primaryFilteredMetrics, tierFilter]);
+
+  // Sync local display state with the FINAL filtered data
+  useEffect(() => {
+    // We now sync from the result of the tier filter
+    if (
+      JSON.stringify(displayMetrics) !== JSON.stringify(finalMetricsForTable)
+    ) {
+      setDisplayMetrics(finalMetricsForTable);
+    }
+  }, [finalMetricsForTable]);
 
   const handleOpenCreateModal = () => {
     setEditingMetric(null);
@@ -176,7 +238,7 @@ const RatingManagement: React.FC = () => {
       await refetchMetrics();
     } catch (err: any) {
       console.error("Failed to reorder metrics:", err);
-      setDisplayMetrics(filteredMetrics);
+      setDisplayMetrics(finalMetricsForTable);
       alert("Грешка при пренареждането.");
     }
   };
@@ -188,9 +250,17 @@ const RatingManagement: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-100 p-6">
       {/* --- PAGE HEADER SECTION --- */}
-      <div className="mb-6 flex flex-col md:flex-row md:items-start md:justify-end gap-4">
-        {/* NEW: Buttons container */}
-        <div className="flex flex-col sm:flex-row gap-2 items-center md:items-start flex-shrink-0">
+      <div className="mb-6 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+        {/* --- STATS COMPONENT ON THE LEFT --- */}
+        <RatingMetricStats
+          metrics={primaryFilteredMetrics}
+          activeTier={tierFilter}
+          onTierSelect={setTierFilter}
+          isLoading={metricsLoading && !fetchedMetrics?.length}
+        />
+
+        {/* --- ACTION BUTTONS ON THE RIGHT --- */}
+        <div className="flex flex-col sm:flex-row gap-2 items-center md:items-start flex-shrink-0 mt-4 md:mt-0">
           <button
             className="w-full sm:w-auto flex justify-center items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-gray-500 text-white hover:bg-gray-600 hover:cursor-pointer"
             title={showFilters ? "Скрий филтри" : "Покажи филтри"}
@@ -203,7 +273,6 @@ const RatingManagement: React.FC = () => {
             )}
             Филтри
           </button>
-          {/* --- Conditionally render the create button --- */}
           {isAdmin && (
             <button
               onClick={handleOpenCreateModal}

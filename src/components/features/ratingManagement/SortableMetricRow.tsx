@@ -10,6 +10,7 @@ import {
   ArchiveBoxIcon,
   Bars3Icon,
 } from "@heroicons/react/24/solid";
+import { TIERS } from "../../../utils/GLOBAL_PARAMETERS";
 
 interface SortableMetricRowProps {
   metric: IRatingMetric;
@@ -49,9 +50,9 @@ export const SortableMetricRow: React.FC<SortableMetricRowProps> = ({
     if (!score || score === 0) {
       return "font-bold text-gray-500"; // Default style for no score
     }
-    if (score >= 4.5) return "font-bold text-amber-500"; // Gold
-    if (score >= 3.5) return "font-bold text-slate-500"; // Silver
-    if (score >= 2.5) return "font-bold text-orange-700"; // Bronze
+    if (score >= TIERS.GOLD) return "font-bold text-amber-500"; // Gold
+    if (score >= TIERS.SILVER) return "font-bold text-slate-500"; // Silver
+    if (score >= TIERS.BRONZE) return "font-bold text-orange-700"; // Bronze
     return "font-black text-red-500"; // Below bronze
   };
 

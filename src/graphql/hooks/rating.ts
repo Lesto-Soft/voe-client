@@ -8,6 +8,7 @@ import {
   CREATE_RATING_METRIC,
   UPDATE_RATING_METRIC,
   DELETE_RATING_METRIC,
+  REORDER_RATING_METRICS,
 } from "../mutation/ratingMetric";
 
 import { GET_CASE_METRIC_SCORES } from "../query/metricScore";
@@ -52,6 +53,13 @@ export const useDeleteRatingMetric = () => {
   const [deleteRatingMetric, { loading, error }] =
     useMutation(DELETE_RATING_METRIC);
   return { deleteRatingMetric, loading, error };
+};
+
+export const useReorderRatingMetrics = () => {
+  const [reorderRatingMetrics, { loading, error }] = useMutation(
+    REORDER_RATING_METRICS
+  );
+  return { reorderRatingMetrics, loading, error };
 };
 
 // =================================================================

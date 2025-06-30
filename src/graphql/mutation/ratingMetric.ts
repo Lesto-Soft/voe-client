@@ -30,9 +30,16 @@ export const UPDATE_RATING_METRIC = gql`
 `;
 
 export const DELETE_RATING_METRIC = gql`
-  mutation DeleteRatingMetric($_id: ID!) {
-    deleteRatingMetric(_id: $_id) {
+  mutation DeleteRatingMetric($id: ID!) {
+    deleteRatingMetric(_id: $id) {
       ...RatingMetricFragment
     }
+  }
+  ${RATING_METRIC_FRAGMENT}
+`;
+
+export const REORDER_RATING_METRICS = gql`
+  mutation ReorderRatingMetrics($orderedIds: [ID!]!) {
+    reorderRatingMetrics(orderedIds: $orderedIds)
   }
 `;

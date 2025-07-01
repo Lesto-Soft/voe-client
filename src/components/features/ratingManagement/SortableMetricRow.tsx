@@ -118,10 +118,10 @@ export const SortableMetricRow: React.FC<SortableMetricRowProps> = ({
         <RatingMetricLink metric={metric} />
       </td>
       <td
-        className="w-1/3 px-3 py-4 text-sm truncate"
+        className="w-1/3 px-3 py-4 text-sm max-w-0"
         title={metric.description}
       >
-        {metric.description}
+        <div className="truncate">{metric.description}</div>
       </td>
       <td className="w-32 px-3 py-4 text-center">
         {metric.archived ? (

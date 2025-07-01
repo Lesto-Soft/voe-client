@@ -37,7 +37,6 @@ import { ROLES } from "../utils/GLOBAL_PARAMETERS";
 import { useAuthorization } from "../hooks/useAuthorization";
 import ForbiddenPage from "./ForbiddenPage";
 
-// Define a lean user type that includes the role ID, matching GET_LEAN_USERS
 interface ILeanUserForForm {
   _id: string;
   name: string;
@@ -45,27 +44,35 @@ interface ILeanUserForForm {
   role: { _id: string } | null;
 }
 
+type CaseStatusTab =
+  | "all"
+  | "OPEN"
+  | "IN_PROGRESS"
+  | "AWAITING_FINANCE"
+  | "CLOSED";
+
 const Category: React.FC = () => {
   const { name: categoryNameFromParams } = useParams<{ name: string }>();
-  const navigate = useNavigate(); // Hook for navigation
+  const navigate = useNavigate();
   const currentUser = useCurrentUser() as IMe | undefined;
 
-  // --- State for the edit modal ---
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [formHasUnsavedChanges, setFormHasUnsavedChanges] = useState(false);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [successModalMessage, setSuccessModalMessage] = useState("");
+  const [activeStatus, setActiveStatus] = useState<CaseStatusTab>("all");
+  const [dateRange, setDateRange] = useState<{
+    startDate: Date | null;
+    endDate: Date | null;
+  }>({ startDate: null, endDate: null });
 
-  // --- GraphQL hooks for editing ---
-  // 1. Fetch data
   const {
     loading: categoryLoading,
     error: categoryError,
     category,
-    refetch: refetchCategory, // Expose refetch
+    refetch: refetchCategory,
   } = useGetCategoryByName(categoryNameFromParams);
 
-  // 2. Call the authorization hook with the fetched data
   const { isAllowed, isLoading: authLoading } = useAuthorization({
     type: "category",
     data: category,
@@ -84,35 +91,47 @@ const Category: React.FC = () => {
   } = useQuery<{ getLeanUsers: ILeanUserForForm[] }>(GET_LEAN_USERS, {
     variables: { input: "" },
     fetchPolicy: "cache-and-network",
-    skip: !isEditModalOpen, // Skip fetching users until the modal is opened
+    skip: !isEditModalOpen,
   });
 
-  // --- NEW: Permission Logic ---
   const canEdit = useMemo(() => {
     if (!currentUser || !category) return false;
-    // Rule 1: Admin can edit
     if (currentUser.role?._id === ROLES.ADMIN) {
       return true;
     }
-    // Rule 2: Expert who manages this category can edit
     if (currentUser.role?._id === ROLES.EXPERT) {
       return (
-        //currentUser.managed_categories?.some((mc) => mc._id === category._id) ??
         category.managers?.some((manager) => manager._id === currentUser._id) ??
         false
       );
     }
-    // Rule 3: Everyone else cannot
     return false;
   }, [currentUser, category]);
 
-  // Determine if data is ready for display and scroll restoration
+  const dateFilteredCases = useMemo(() => {
+    const allCases = category?.cases || [];
+    if (!dateRange.startDate || !dateRange.endDate) {
+      return allCases;
+    }
+    return allCases.filter((c) => {
+      const caseDate = new Date(c.date);
+      return caseDate >= dateRange.startDate! && caseDate <= dateRange.endDate!;
+    });
+  }, [category?.cases, dateRange]);
+
+  const finalFilteredCases = useMemo(() => {
+    if (activeStatus === "all") {
+      return dateFilteredCases;
+    }
+    return dateFilteredCases.filter((c) => c.status === activeStatus);
+  }, [dateFilteredCases, activeStatus]);
+
   const isDataReady = !categoryLoading && !categoryError && !!category;
 
   const { visibleCasesCount, scrollableCasesListRef, handleLoadMoreCases } =
     useCategoryScrollPersistence(categoryNameFromParams, isDataReady);
 
-  const signalStats = useCategorySignalStats(category);
+  const signalStats = useCategorySignalStats(dateFilteredCases);
 
   const [activeStatsView, setActiveStatsView] = useState<
     "status" | "type" | "resolution"
@@ -132,9 +151,8 @@ const Category: React.FC = () => {
 
   const serverBaseUrl = import.meta.env.VITE_API_URL || "";
 
-  // --- NEW: Modal handler functions ---
   const openEditModal = () => {
-    if (!canEdit) return; // Security check
+    if (!canEdit) return;
     setFormHasUnsavedChanges(false);
     setIsEditModalOpen(true);
   };
@@ -146,7 +164,7 @@ const Category: React.FC = () => {
 
   const handleCategoryFormSubmit = async (
     formData: CategoryFormData,
-    editingCategoryId: string | null // Will always be the current category ID
+    editingCategoryId: string | null
   ) => {
     if (!editingCategoryId || !category) return;
 
@@ -162,13 +180,10 @@ const Category: React.FC = () => {
     try {
       const originalName = category.name;
       await updateCategory(editingCategoryId, inputForMutation);
-      await refetchCategory(); // Refetch the category data
-
+      await refetchCategory();
       closeEditModal();
       setSuccessModalMessage("Категорията е редактирана успешно!");
       setIsSuccessModalOpen(true);
-
-      // If the name changed, the URL is now invalid. Navigate to the new URL.
       if (formData.name !== originalName) {
         navigate(`/category/${encodeURIComponent(formData.name)}`, {
           replace: true,
@@ -176,12 +191,10 @@ const Category: React.FC = () => {
       }
     } catch (err: any) {
       console.error("Error during category update:", err);
-      // The error will be displayed inside the modal via the `updateCategoryErrorObj`
-      throw err; // Re-throw to be caught by the form's handler
+      throw err;
     }
   };
 
-  // 3. Handle all loading, error, and not found states
   if (categoryLoading || authLoading || allUsersForFormLoading) {
     return (
       <PageStatusDisplay
@@ -197,12 +210,9 @@ const Category: React.FC = () => {
   }
 
   if (!category) {
-    // --- REFINED: Using the 'categoryName' prop ---
-    // This lets the PageStatusDisplay component build the specific "Not Found" message itself.
     return <PageStatusDisplay notFound categoryName={categoryNameFromParams} />;
   }
 
-  // 4. Handle forbidden access
   if (!isAllowed) {
     return <ForbiddenPage />;
   }
@@ -213,7 +223,6 @@ const Category: React.FC = () => {
         isArchived={category.archived}
         categoryName={category.name}
       />
-
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 overflow-hidden">
         <PersonnelInfoPanel
           category={category}
@@ -221,21 +230,23 @@ const Category: React.FC = () => {
           setActivePersonnelTab={setActivePersonnelTab}
           activeInfoTab={activeInfoTab}
           setActiveInfoTab={setActiveInfoTab}
-          // --- NEW: Pass edit props ---
           canEdit={canEdit}
           onEditClick={openEditModal}
         />
-
         <CategoryCasesList
-          allCases={category.cases}
+          allCases={finalFilteredCases}
+          dateFilteredCases={dateFilteredCases}
           visibleCasesCount={visibleCasesCount}
           handleLoadMoreCases={handleLoadMoreCases}
           scrollableRef={scrollableCasesListRef}
           serverBaseUrl={serverBaseUrl}
           isLoading={categoryLoading && !!category}
           categoryName={category.name}
+          activeStatus={activeStatus}
+          setActiveStatus={setActiveStatus}
+          dateRange={dateRange}
+          onDateRangeChange={setDateRange}
         />
-
         <CategoryStatisticsPanel
           signalStats={signalStats}
           activeStatsView={activeStatsView}
@@ -243,8 +254,6 @@ const Category: React.FC = () => {
           isLoading={categoryLoading && !!category}
         />
       </div>
-
-      {/* --- NEW: Edit Category Modal --- */}
       <CategoryModal
         isOpen={isEditModalOpen}
         onClose={closeEditModal}
@@ -261,13 +270,11 @@ const Category: React.FC = () => {
           </div>
         )}
         {!updateCategoryLoading && (
-          <CategoryForm // Using the renamed component
-            // The key ensures the form re-initializes if the category context somehow changes,
-            // though it's unlikely on this page without a full reload.
+          <CategoryForm
             key={category._id}
             onSubmit={handleCategoryFormSubmit}
             onClose={closeEditModal}
-            initialData={category} // Always pass the current category data for editing
+            initialData={category}
             submitButtonText="Запази промените"
             isSubmitting={updateCategoryLoading}
             onDirtyChange={setFormHasUnsavedChanges}
@@ -276,7 +283,6 @@ const Category: React.FC = () => {
           />
         )}
       </CategoryModal>
-
       <SuccessConfirmationModal
         isOpen={isSuccessModalOpen}
         onClose={() => setIsSuccessModalOpen(false)}

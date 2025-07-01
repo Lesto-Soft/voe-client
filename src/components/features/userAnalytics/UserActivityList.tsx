@@ -205,7 +205,8 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
               <button
                 key={tab.key}
                 onClick={() => handleTabChange(tab.key)}
-                className={`hover:cursor-pointer px-3 py-1.5 text-xs sm:text-sm font-medium rounded-md whitespace-nowrap transition-colors duration-150 focus:outline-none ${
+                disabled={tab.count === 0 && activeTab !== tab.key}
+                className={`hover:cursor-pointer px-3 py-1.5 text-xs sm:text-sm font-medium rounded-md whitespace-nowrap transition-colors duration-150 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed ${
                   activeTab === tab.key
                     ? "bg-indigo-600 text-white shadow-sm"
                     : "bg-gray-100 text-gray-700 hover:bg-gray-200"

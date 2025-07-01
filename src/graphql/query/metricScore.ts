@@ -31,10 +31,28 @@ export const GET_METRIC_SCORES_BY_METRIC = gql`
         _id
         name
         username
+        expert_categories {
+          _id
+        }
+        managed_categories {
+          _id
+        }
       }
       case {
         _id
         case_number
+        creator {
+          _id
+        }
+        categories {
+          _id
+          experts {
+            _id
+          }
+          managers {
+            _id
+          }
+        }
       }
     }
   }

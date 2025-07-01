@@ -17,6 +17,7 @@
   "submit-case": "Подай сигнал",
   "case_desc": "Сигнал номер {{caseId}}",
   "user_desc": "Потребител {{username}}",
+  "rating_desc": "Метрика за оценяване",
   "category_desc": "Категория {{categoryName}}",
   "submit_case_desc": "Подай сигнал в системата",
   "ratings_desc": "Управление на метрики за оценки",

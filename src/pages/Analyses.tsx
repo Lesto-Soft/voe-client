@@ -15,6 +15,7 @@ import DistributionChartCard from "../components/features/analyses/components/Di
 import SummaryCard from "../components/features/analyses/components/SummaryCard";
 import TopUserCard from "../components/features/analyses/components/TopUserCard";
 import { PodiumModal } from "../components/features/analyses/modals/PodiumModal";
+import PageStatusDisplay from "../components/global/PageStatusDisplay";
 
 // Constants and Types
 import {
@@ -61,24 +62,27 @@ const Analyses: React.FC = () => {
   } | null>(null);
 
   // --- Render Loading/Error/Empty States ---
-  if (analyticsDataLoading) {
+  if (
+    analyticsDataLoading ||
+    analyticsDataError ||
+    !allCases ||
+    allCases.length === 0
+  ) {
     return (
-      <div className="flex items-center justify-center h-full min-h-[calc(100vh-200px)]">
-        <p>Зареждане на аналитични данни...</p>
-      </div>
-    );
-  }
-  if (analyticsDataError) {
-    return (
-      <div className="flex items-center justify-center h-full min-h-[calc(100vh-200px)]">
-        <p>Грешка при зареждане на данни: {analyticsDataError.message}</p>
-      </div>
-    );
-  }
-  if (!allCases || allCases.length === 0) {
-    return (
-      <div className="flex items-center justify-center h-full min-h-[calc(100vh-200px)]">
-        <p>Няма налични данни за анализ.</p>
+      <div className="p-2 md:p-5 bg-gray-100 min-h-full">
+        <PageStatusDisplay
+          loading={analyticsDataLoading}
+          error={analyticsDataError}
+          notFound={
+            !analyticsDataLoading && (!allCases || allCases.length === 0)
+          }
+          message={
+            !analyticsDataLoading && (!allCases || allCases.length === 0)
+              ? "Няма налични данни за анализ."
+              : undefined
+          }
+          height="h-[calc(100vh-12rem)]"
+        />
       </div>
     );
   }

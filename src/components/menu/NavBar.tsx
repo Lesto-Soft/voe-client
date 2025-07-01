@@ -145,6 +145,14 @@ const NavBar: React.FC<{ me: IMe }> = ({ me }) => {
     } else {
       currentPage = "Проблем с потребителя";
     }
+  } else if (/^\/rating-metric\/[^/]+$/.test(location.pathname)) {
+    // TODO change to name
+    const ratingMetricId = location.pathname.split("/").pop();
+    if (ratingMetricId) {
+      currentPage = t("rating_desc", { username: ratingMetricId });
+    } else {
+      currentPage = "Проблем с оценката";
+    }
   } else {
     currentPage = pageNames[location.pathname] || "Страницата не е намерена";
   }

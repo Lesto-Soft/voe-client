@@ -196,11 +196,11 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
 
   return (
     <div className="lg:col-span-6 bg-white rounded-lg shadow-lg flex flex-col overflow-hidden max-h-full">
-      <div className="p-3 sm:p-4 border-b border-gray-200">
+      <div className="p-1 sm:p-2 border-b border-gray-200">
         {/* 4. UPDATE THE LAYOUT FOR TABS AND THE NEW TOGGLE BUTTON */}
-        <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center justify-between pb-1">
           {/* Container for the tabs */}
-          <div className="flex space-x-1 sm:space-x-2 overflow-x-auto pb-1 custom-scrollbar-xs">
+          <div className="flex space-x-1 sm:space-x-2 overflow-x-auto custom-scrollbar-xs">
             {tabs.map((tab) => (
               <button
                 key={tab.key}
@@ -220,7 +220,7 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
           <button
             onClick={() => setIsDateFilterVisible((prev) => !prev)}
             title="Filter by date"
-            className={`hover:cursor-pointer p-2 rounded-md transition-colors duration-150 ml-2 ${
+            className={`hover:cursor-pointer p-2 rounded-md transition-colors duration-150 ${
               isDateFilterVisible
                 ? "bg-indigo-100 text-indigo-600"
                 : "bg-gray-100 text-gray-500 hover:bg-gray-200"
@@ -232,10 +232,12 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
 
         {/* 5. CONDITIONALLY RENDER THE DATE SELECTOR BELOW THE TABS */}
         {isDateFilterVisible && (
-          <DateRangeSelector
-            dateRange={dateRange}
-            onDateRangeChange={onDateRangeChange}
-          />
+          <div className=" border-t pt-1 border-gray-200">
+            <DateRangeSelector
+              dateRange={dateRange}
+              onDateRangeChange={onDateRangeChange}
+            />
+          </div>
         )}
       </div>
 

@@ -79,7 +79,7 @@ const DateRangeSelector: React.FC<DateRangeSelectorProps> = ({
   return (
     <>
       <style>{customInputStyles}</style>
-      <div className="flex flex-row justify-between border-t pt-1 border-gray-200">
+      <div className="flex flex-row justify-between">
         <div className="flex items-center justify-center space-x-1 sm:space-x-2 overflow-x-auto custom-scrollbar-xs">
           {/* 3. UPDATE THE ACTIVE CHECK FOR THE BUTTONS */}
           <button

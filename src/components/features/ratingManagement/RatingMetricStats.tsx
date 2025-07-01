@@ -67,7 +67,7 @@ const RatingMetricStats: React.FC<RatingMetricStatsProps> = ({
     },
     {
       tier: "bronze",
-      title: "Лоши оценки",
+      title: "Средни оценки",
       icon: StarIcon,
       iconColor: "text-orange-700",
     },

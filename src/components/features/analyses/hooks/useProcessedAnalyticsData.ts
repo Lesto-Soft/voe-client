@@ -120,13 +120,62 @@ export const useProcessedAnalyticsData = (
     [filteredCasesForPieCharts]
   );
 
-  const rankedRaters = useMemo(
-    (): RankedUser[] =>
-      getRankedUsers(filteredCasesForPieCharts, (c) =>
-        (c.rating || []).map((r) => r.user)
-      ),
-    [filteredCasesForPieCharts]
-  );
+  const rankedRaters = useMemo((): RankedUser[] => {
+    if (!filteredCasesForPieCharts || filteredCasesForPieCharts.length === 0) {
+      return [];
+    }
+
+    // Map to store which unique cases each user has rated.
+    // Key: userId (string)
+    // Value: { user: IUser, ratedCaseIds: Set<string> }
+    const userRatedCasesMap = new Map<
+      string,
+      { user: IUser; ratedCaseIds: Set<string> }
+    >();
+
+    // Iterate over all filtered cases
+    for (const caseItem of filteredCasesForPieCharts) {
+      // Skip cases that have no ratings
+      if (!caseItem.metricScores || caseItem.metricScores.length === 0) {
+        continue;
+      }
+
+      // Iterate over each score within the case
+      for (const score of caseItem.metricScores) {
+        if (score?.user?._id) {
+          const userId = score.user._id;
+
+          // If we haven't seen this user before, add them to the map.
+          if (!userRatedCasesMap.has(userId)) {
+            userRatedCasesMap.set(userId, {
+              user: score.user,
+              ratedCaseIds: new Set<string>(),
+            });
+          }
+
+          // Add the current case's ID to this user's Set of rated cases.
+          // A Set automatically handles duplicates, so rating multiple metrics
+          // on the same case only adds the case ID once.
+          userRatedCasesMap.get(userId)!.ratedCaseIds.add(caseItem._id);
+        }
+      }
+    }
+
+    if (userRatedCasesMap.size === 0) return [];
+
+    // Transform the map into the final RankedUser array structure
+    const rankedList: RankedUser[] = Array.from(userRatedCasesMap.values()).map(
+      ({ user, ratedCaseIds }) => ({
+        user,
+        count: ratedCaseIds.size, // The count is the number of unique cases rated
+      })
+    );
+
+    // Sort the list from highest count to lowest
+    rankedList.sort((a, b) => b.count - a.count);
+
+    return rankedList;
+  }, [filteredCasesForPieCharts]);
 
   // --- The rest of the data processing remains unchanged ---
   const barChartDisplayData = useMemo(() => {

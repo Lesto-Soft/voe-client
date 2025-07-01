@@ -15,6 +15,8 @@ const metricScoreFragment = gql`
     user {
       _id
       name
+      username
+      avatar
     }
   }
 `;
@@ -34,6 +36,7 @@ const caseFragment = gql`
       managed_categories {
         _id
       }
+      avatar
     }
     priority
     type

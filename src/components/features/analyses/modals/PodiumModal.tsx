@@ -147,7 +147,7 @@ export const PodiumModal: React.FC<PodiumModalProps> = ({
               {otherUsers.length > 0 && (
                 <div>
                   <h3 className="text-lg font-semibold text-gray-700 mb-3 border-t pt-4">
-                    Останали участници
+                    Останали потребители:
                   </h3>
                   <ul className="space-y-2">
                     {otherUsers.map((userStat, index) => (

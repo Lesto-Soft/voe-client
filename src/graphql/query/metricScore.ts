@@ -20,3 +20,22 @@ export const GET_CASE_METRIC_SCORES = gql`
     }
   }
 `;
+
+export const GET_METRIC_SCORES_BY_METRIC = gql`
+  query GetMetricScoresByMetric($metricId: ID!) {
+    getMetricScoresByMetric(metricId: $metricId) {
+      _id
+      score
+      date
+      user {
+        _id
+        name
+        username
+      }
+      case {
+        _id
+        case_number
+      }
+    }
+  }
+`;

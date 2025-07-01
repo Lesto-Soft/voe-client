@@ -14,3 +14,15 @@ export const GET_ALL_RATING_METRICS = gql`
     }
   }
 `;
+
+export const GET_RATING_METRIC_BY_ID = gql`
+  query GetRatingMetricById($id: ID!) {
+    getRatingMetricById(_id: $id) {
+      _id
+      name
+      description
+      archived
+      order
+    }
+  }
+`;

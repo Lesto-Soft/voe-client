@@ -2,17 +2,16 @@ import React from "react";
 import { TrophyIcon } from "@heroicons/react/24/outline"; // <-- NEW: Import from Heroicons
 import UserAvatar from "../../../cards/UserAvatar";
 import UserLink from "../../../global/UserLink";
-import { TopUserStat } from "../types";
+import { RankedUser } from "../types";
 
 // The local TrophyIcon SVG component has been removed.
 
 interface TopUserCardProps {
   title: string;
-  stat: TopUserStat;
+  stat: RankedUser | undefined; // Changed from TopUserStat
   actionText: string;
   onPodiumClick?: () => void;
 }
-
 const TopUserCard: React.FC<TopUserCardProps> = ({
   title,
   stat,

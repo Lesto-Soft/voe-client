@@ -1,6 +1,6 @@
 // components/features/analyses/hooks/useProcessedAnalyticsData.ts
 import { useMemo } from "react";
-import { ICase, ICategory, IUser } from "../../../../db/interfaces";
+import { ICase, ICategory } from "../../../../db/interfaces";
 import {
   getDaysInMonth,
   getStartAndEndOfWeek,
@@ -29,46 +29,6 @@ interface AnalyticsFilters {
   isAllTimePies: boolean;
 }
 
-// We'll use this type for the new ranked lists.
-// We can formally add this to the types/index.ts file in the next step.
-type RankedUser = {
-  user: IUser;
-  count: number;
-};
-
-// --- NEW HELPER FUNCTION ---
-const getRankedUsers = (
-  cases: ICase[],
-  getUserArray: (c: ICase) => (IUser | null | undefined)[]
-): RankedUser[] => {
-  if (!cases || cases.length === 0) return [];
-
-  const userCounts = new Map<string, { user: IUser; count: number }>();
-
-  cases.forEach((caseItem) => {
-    const users = getUserArray(caseItem);
-    users.forEach((user) => {
-      // Ensure user and user._id exist to count them
-      if (user && user._id && user.name) {
-        const existing = userCounts.get(user._id);
-        if (existing) {
-          existing.count++;
-        } else {
-          // If the user object is encountered for the first time, store it.
-          userCounts.set(user._id, { user, count: 1 });
-        }
-      }
-    });
-  });
-
-  if (userCounts.size === 0) return [];
-
-  // Convert map to array and sort by count descending
-  const rankedList = [...userCounts.values()].sort((a, b) => b.count - a.count);
-
-  return rankedList;
-};
-
 // --- THE HOOK ---
 export const useProcessedAnalyticsData = (
   allCases: ICase[] | undefined,
@@ -94,88 +54,6 @@ export const useProcessedAnalyticsData = (
       return caseDate >= startDateForPies && caseDate <= endDateForPies;
     });
   }, [allCases, startDateForPies, endDateForPies, isAllTimePies]);
-
-  // --- MODIFIED: Top User Calculations (now returns ranked lists) ---
-  const rankedSignalGivers = useMemo(
-    (): RankedUser[] =>
-      getRankedUsers(filteredCasesForPieCharts, (c) =>
-        c.creator ? [c.creator] : []
-      ),
-    [filteredCasesForPieCharts]
-  );
-
-  const rankedSolutionGivers = useMemo(
-    (): RankedUser[] =>
-      getRankedUsers(filteredCasesForPieCharts, (c) =>
-        (c.answers || []).map((a) => a.creator)
-      ),
-    [filteredCasesForPieCharts]
-  );
-
-  const rankedApprovers = useMemo(
-    (): RankedUser[] =>
-      getRankedUsers(filteredCasesForPieCharts, (c) =>
-        (c.answers || []).map((a) => a.approved).filter((u): u is IUser => !!u)
-      ),
-    [filteredCasesForPieCharts]
-  );
-
-  const rankedRaters = useMemo((): RankedUser[] => {
-    if (!filteredCasesForPieCharts || filteredCasesForPieCharts.length === 0) {
-      return [];
-    }
-
-    // Map to store which unique cases each user has rated.
-    // Key: userId (string)
-    // Value: { user: IUser, ratedCaseIds: Set<string> }
-    const userRatedCasesMap = new Map<
-      string,
-      { user: IUser; ratedCaseIds: Set<string> }
-    >();
-
-    // Iterate over all filtered cases
-    for (const caseItem of filteredCasesForPieCharts) {
-      // Skip cases that have no ratings
-      if (!caseItem.metricScores || caseItem.metricScores.length === 0) {
-        continue;
-      }
-
-      // Iterate over each score within the case
-      for (const score of caseItem.metricScores) {
-        if (score?.user?._id) {
-          const userId = score.user._id;
-
-          // If we haven't seen this user before, add them to the map.
-          if (!userRatedCasesMap.has(userId)) {
-            userRatedCasesMap.set(userId, {
-              user: score.user,
-              ratedCaseIds: new Set<string>(),
-            });
-          }
-
-          // Add the current case's ID to this user's Set of rated cases.
-          // A Set automatically handles duplicates, so rating multiple metrics
-          // on the same case only adds the case ID once.
-          userRatedCasesMap.get(userId)!.ratedCaseIds.add(caseItem._id);
-        }
-      }
-    }
-
-    if (userRatedCasesMap.size === 0) return [];
-
-    // Transform the map into the final RankedUser array structure
-    const rankedList: RankedUser[] = Array.from(userRatedCasesMap.values()).map(
-      ({ user, ratedCaseIds }) => ({
-        user,
-        count: ratedCaseIds.size, // The count is the number of unique cases rated
-      })
-    );
-
-    // Sort the list from highest count to lowest
-    rankedList.sort((a, b) => b.count - a.count);
-
-    return rankedList;
-  }, [filteredCasesForPieCharts]);
 
   // --- The rest of the data processing remains unchanged ---
   const barChartDisplayData = useMemo(() => {
@@ -473,10 +351,5 @@ export const useProcessedAnalyticsData = (
     typePieData,
     averageRatingData,
     periodCaseSummary,
-    // MODIFIED: Export ranked lists instead of single top users
-    rankedSignalGivers,
-    rankedSolutionGivers,
-    rankedApprovers,
-    rankedRaters,
   };
 };

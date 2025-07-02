@@ -3,6 +3,7 @@ import React, { useState } from "react";
 
 // Data Fetching
 import { useGetAnalyticsDataCases } from "../graphql/hooks/case";
+import { useGetRankedUsers } from "../graphql/hooks/user";
 
 // Custom Hooks for the Analyses Feature
 import { useAnalysesFilters } from "../components/features/analyses/hooks/useAnalysesFilters";
@@ -16,6 +17,7 @@ import SummaryCard from "../components/features/analyses/components/SummaryCard"
 import TopUserCard from "../components/features/analyses/components/TopUserCard";
 import { PodiumModal } from "../components/features/analyses/modals/PodiumModal";
 import PageStatusDisplay from "../components/global/PageStatusDisplay";
+import { RankingType } from "../components/features/analyses/types";
 
 // Constants and Types
 import {
@@ -43,11 +45,33 @@ const Analyses: React.FC = () => {
     typePieData,
     averageRatingData,
     periodCaseSummary,
-    rankedSignalGivers,
-    rankedSolutionGivers,
-    rankedApprovers,
-    rankedRaters,
   } = useProcessedAnalyticsData(allCases, filters);
+
+  // ADD calls to the new, efficient hook for each ranking type
+  const { rankedUsers: rankedCreators } = useGetRankedUsers(
+    filters.startDateForPies,
+    filters.endDateForPies,
+    RankingType.CREATORS,
+    filters.isAllTimePies
+  );
+  const { rankedUsers: rankedSolvers } = useGetRankedUsers(
+    filters.startDateForPies,
+    filters.endDateForPies,
+    RankingType.SOLVERS,
+    filters.isAllTimePies
+  );
+  const { rankedUsers: rankedApprovers } = useGetRankedUsers(
+    filters.startDateForPies,
+    filters.endDateForPies,
+    RankingType.APPROVERS,
+    filters.isAllTimePies
+  );
+  const { rankedUsers: rankedRaters } = useGetRankedUsers(
+    filters.startDateForPies,
+    filters.endDateForPies,
+    RankingType.RATERS,
+    filters.isAllTimePies
+  );
 
   // --- NEW: State for toggling the bar chart style ---
   const [barChartStyle, setBarChartStyle] = useState<"grouped" | "stacked">(
@@ -266,24 +290,24 @@ const Analyses: React.FC = () => {
             // User Leaderboard View
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
               <TopUserCard
-                title="Най-активен подател на сигнали"
-                stat={rankedSignalGivers[0]}
+                title="Най-активен сигнализатор"
+                stat={rankedCreators[0]}
                 actionText="сигнала"
                 onPodiumClick={() =>
                   setPodiumState({
-                    title: "Класация: Подали сигнали",
-                    users: rankedSignalGivers,
+                    title: "Класация: Подадени сигнали",
+                    users: rankedCreators,
                   })
                 }
               />
               <TopUserCard
-                title="Най-активен даващ решения"
-                stat={rankedSolutionGivers[0]}
+                title="Най-активен решител"
+                stat={rankedSolvers[0]}
                 actionText="решения"
                 onPodiumClick={() =>
                   setPodiumState({
-                    title: "Класация: Дали решения",
-                    users: rankedSolutionGivers,
+                    title: "Класация: Дадени решения (одобрени)",
+                    users: rankedSolvers,
                   })
                 }
               />
@@ -293,7 +317,7 @@ const Analyses: React.FC = () => {
                 actionText="одобрения"
                 onPodiumClick={() =>
                   setPodiumState({
-                    title: "Класация: Одобрили решения",
+                    title: "Класация: Одобрени решения",
                     users: rankedApprovers,
                   })
                 }
@@ -304,7 +328,7 @@ const Analyses: React.FC = () => {
                 actionText="оценки"
                 onPodiumClick={() =>
                   setPodiumState({
-                    title: "Класация: Оценили сигнали",
+                    title: "Класация: Оценени сигнали",
                     users: rankedRaters,
                   })
                 }

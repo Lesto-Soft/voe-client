@@ -244,3 +244,23 @@ export const GET_ME = gql`
   }
   ${userFragment}
 `;
+
+export const GET_RANKED_USERS = gql`
+  query GetRankedUsers($input: RankedUsersInput!) {
+    getRankedUsers(input: $input) {
+      user {
+        _id
+        name
+        username
+        avatar
+        expert_categories {
+          _id
+        }
+        managed_categories {
+          _id
+        }
+      }
+      count
+    }
+  }
+`;

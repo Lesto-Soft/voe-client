@@ -9,6 +9,7 @@ import {
   COUNT_USERS_BY_EXACT_USERNAME,
   GET_USER_BY_ID,
   GET_FULL_USER_BY_USERNAME,
+  GET_RANKED_USERS,
 } from "../query/user"; // Adjust path if needed
 import {
   CREATE_USER,
@@ -18,6 +19,10 @@ import {
   DELETE_USER,
 } from "../mutation/user"; // Adjust path if needed
 import { IUser } from "../../db/interfaces";
+import {
+  RankedUser,
+  RankingType,
+} from "../../components/features/analyses/types";
 
 // --- Define Input Types (These should match your GraphQL Schema!) ---
 // Interface for the filters used in UserManagementPage
@@ -324,5 +329,40 @@ export const useGetMe = () => {
     error,
     me: data, // <= CHECK YOUR QUERY RESPONSE FIELD NAME! (Maybe data?.me ?)
     refetch,
+  };
+};
+
+/**
+ * Fetches a ranked list of users from the new server-side aggregation query.
+ * @param startDate - The start of the period.
+ * @param endDate - The end of the period.
+ * @param type - The type of ranking to fetch.
+ * @param isAllTime - If true, startDate and endDate are ignored.
+ */
+export const useGetRankedUsers = (
+  startDate: Date | null,
+  endDate: Date | null,
+  type: RankingType,
+  isAllTime: boolean
+) => {
+  const { data, loading, error } = useQuery<{ getRankedUsers: RankedUser[] }>(
+    GET_RANKED_USERS,
+    {
+      variables: {
+        input: {
+          startDate: isAllTime ? null : startDate?.toISOString(),
+          endDate: isAllTime ? null : endDate?.toISOString(),
+          type,
+        },
+      },
+      // Skip the query if a date range is required but not yet available
+      skip: !isAllTime && (!startDate || !endDate),
+    }
+  );
+
+  return {
+    rankedUsers: data?.getRankedUsers || [],
+    loading,
+    error,
   };
 };

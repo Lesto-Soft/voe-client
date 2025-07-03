@@ -9,6 +9,8 @@ export interface UserActivityStats {
   totalSignals: number;
   totalAnswers: number;
   totalComments: number;
+  ratedCasesCount: number; // How many of the user's cases have been rated
+  averageCaseRating: number | null; // The average rating of the user's cases
   signalsByCategoryChartData: PieSegmentData[];
   ratingTierDistributionData: PieSegmentData[]; // <-- Add new data field
 }
@@ -18,12 +20,14 @@ const useUserActivityStats = (
   user: IUser | undefined | null,
   startDate: Date | null,
   endDate: Date | null
-): UserActivityStats => {
+): UserActivityStats | null => {
   const stats = useMemo((): UserActivityStats => {
     const defaultStats: UserActivityStats = {
       totalSignals: 0,
       totalAnswers: 0,
       totalComments: 0,
+      ratedCasesCount: 0,
+      averageCaseRating: null,
       signalsByCategoryChartData: [],
       ratingTierDistributionData: [], // <-- Default to empty array
     };
@@ -97,6 +101,23 @@ const useUserActivityStats = (
       .filter((segment) => segment.value > 0)
       .sort((a, b) => b.value - a.value);
 
+    // --- NEW: Calculate stats for ratings RECEIVED by the user's cases ---
+    let ratedCasesSum = 0;
+    let ratedCasesCount = 0;
+    filteredCases.forEach((c) => {
+      if (
+        c.calculatedRating !== null &&
+        c.calculatedRating !== undefined &&
+        c.calculatedRating > 0
+      ) {
+        ratedCasesSum += c.calculatedRating;
+        ratedCasesCount++;
+      }
+    });
+
+    const averageCaseRating =
+      ratedCasesCount > 0 ? ratedCasesSum / ratedCasesCount : null;
+
     // --- NEW: Calculate Rating Tier Distribution ---
     const tierCounts = { Gold: 0, Silver: 0, Bronze: 0, Problematic: 0 };
     filteredCases.forEach((c) => {
@@ -109,16 +130,34 @@ const useUserActivityStats = (
     });
 
     const ratingTierDistributionData: PieSegmentData[] = [
-      { label: "Gold", value: tierCounts.Gold, color: "#FFD700" },
-      { label: "Silver", value: tierCounts.Silver, color: "#C0C0C0" },
-      { label: "Bronze", value: tierCounts.Bronze, color: "#CD7F32" },
-      { label: "Problematic", value: tierCounts.Problematic, color: "#EF4444" },
+      {
+        label: `Отлични (>${TIERS.GOLD})`,
+        value: tierCounts.Gold,
+        color: "#FFD700",
+      },
+      {
+        label: `Добри (${TIERS.SILVER}-${TIERS.GOLD})`,
+        value: tierCounts.Silver,
+        color: "#C0C0C0",
+      },
+      {
+        label: `Средни (${TIERS.BRONZE}-${TIERS.SILVER})`,
+        value: tierCounts.Bronze,
+        color: "#CD7F32",
+      },
+      {
+        label: `Проблемни (<${TIERS.BRONZE})`,
+        value: tierCounts.Problematic,
+        color: "#EF4444",
+      },
     ].filter((segment) => segment.value > 0);
 
     return {
       totalSignals,
       totalAnswers,
       totalComments,
+      ratedCasesCount,
+      averageCaseRating,
       signalsByCategoryChartData,
       ratingTierDistributionData,
     };

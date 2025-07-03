@@ -45,6 +45,7 @@ fragment FullUserFragment on User {
         status
         type
         priority
+        calculatedRating
         creator {
           _id
         }

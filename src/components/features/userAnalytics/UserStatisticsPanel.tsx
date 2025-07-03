@@ -5,6 +5,8 @@ import {
   ChatBubbleLeftRightIcon,
   ChatBubbleLeftEllipsisIcon,
   InformationCircleIcon,
+  StarIcon,
+  ReceiptPercentIcon,
 } from "@heroicons/react/24/outline";
 import PieChart, { PieSegmentData } from "../../../components/charts/PieChart";
 import { UserActivityStats } from "../../../hooks/useUserActivityStats";
@@ -154,6 +156,23 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
             value={userStats.totalComments}
             iconColorClass="text-purple-500"
           />
+          {/* <hr className="my-2 border-gray-200" /> */}
+          {/* <StatItem
+            icon={ReceiptPercentIcon}
+            label="Получени оценки"
+            value={userStats.ratedCasesCount}
+            iconColorClass="text-sky-500"
+          /> */}
+          <StatItem
+            icon={StarIcon}
+            label="Средна оценка на сигнал"
+            value={
+              userStats.averageCaseRating
+                ? userStats.averageCaseRating.toFixed(2)
+                : "-"
+            }
+            iconColorClass="text-amber-500"
+          />
         </div>
 
         <div className="flex border-b border-gray-200 text-xs sm:text-sm">
@@ -187,7 +206,7 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
             )}
           {activeTab === "ratings" &&
             renderPieChartSection(
-              "Разпределение по Рейтинг",
+              "Разпределение по Оценка на Сигнал",
               userStats.ratingTierDistributionData
             )}
         </div>

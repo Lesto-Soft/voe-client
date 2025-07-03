@@ -13,7 +13,7 @@ import {
   XCircleIcon,
   InformationCircleIcon,
 } from "@heroicons/react/24/outline";
-import { FlagIcon } from "@heroicons/react/24/solid"; // Use solid FlagIcon as in CaseInfo
+import { FlagIcon, StarIcon } from "@heroicons/react/24/solid"; // Use solid FlagIcon as in CaseInfo
 import {
   // Utilities from categoryDisplayUtils for translations
   translateStatus as translateStatusUtil,
@@ -26,6 +26,7 @@ import {
   getStatusStyle as getStatusStyleFromHelper,
   getPriorityStyle as getPriorityStyleFromHelper,
   getTypeBadgeStyle as getTypeBadgeStyleFromHelper,
+  getCalculatedRatingStyle as getCalculatedRatingStyleFromHelper,
 } from "../../../utils/style-helpers"; // Adjust path to your style-helpers.ts
 
 import CategoryLink from "../../global/CategoryLink";
@@ -156,7 +157,8 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
   // Prepare styles for case-specific details if activityType is "case"
   let statusStyleFromHelper,
     typeBadgeClassesFromHelper,
-    priorityTextColorClassFromHelper;
+    priorityTextColorClassFromHelper,
+    calculatedRatingTextColorClassFromHelper;
   if (activityType === "case" && "status" in item) {
     statusStyleFromHelper = getStatusStyleFromHelper(item.status as string);
     typeBadgeClassesFromHelper = getTypeBadgeStyleFromHelper(
@@ -166,6 +168,10 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
       priorityTextColorClassFromHelper = getPriorityStyleFromHelper(
         (item as ICase).priority
       );
+    }
+    if ((item as ICase).calculatedRating) {
+      calculatedRatingTextColorClassFromHelper =
+        getCalculatedRatingStyleFromHelper((item as ICase).calculatedRating);
     }
   }
 
@@ -247,13 +253,27 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
                       <div className="flex-shrink-0">
                         {/* Wrapper to help with spacing */}
                         <span
-                          className={`inline-flex items-center px-2 py-0.5 rounded-full font-medium ${priorityTextColorClassFromHelper}`}
+                          className={`inline-flex items-center pl-2 py-0.5 rounded-full font-medium ${priorityTextColorClassFromHelper}`}
                         >
                           <FlagIcon className="h-3.5 w-3.5 mr-1 flex-shrink-0" />
                           {translatePriorityUtil(item.priority)}
                         </span>
                       </div>
                     )}
+                  {/* Calculated Rating Badge/Text */}
+                  {item.calculatedRating && (
+                    <div className="flex-shrink-0">
+                      {/* Wrapper to help with spacing */}
+                      <span
+                        className={`inline-flex items-center px-1 py-0.5 rounded-full font-medium ${calculatedRatingTextColorClassFromHelper}`}
+                      >
+                        <StarIcon className="h-3.5 w-3.5 mr-1 flex-shrink-0" />
+                        <span className="brightness-75">
+                          {item.calculatedRating.toFixed(2)}
+                        </span>
+                      </span>
+                    </div>
+                  )}
                 </div>
                 {/* Line 2: Categories */}
                 {"categories" in item &&

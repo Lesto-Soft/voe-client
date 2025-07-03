@@ -18,7 +18,7 @@ fragment UserFragment on User {
       comments {_id}
       expert_categories {_id}
       managed_categories {_id}
-     
+      
 }`;
 
 // we do so many populates since in UserActivityItemCard we need to get case.creator._id, case.categories._id, and case.answers.needs_finance
@@ -145,6 +145,30 @@ fragment FullUserFragment on User {
         }
         managers {
           _id
+        }
+      }
+      metricScores {
+        _id
+        score
+        date
+        metric {
+          _id
+          name
+        }
+        case {
+          _id
+          case_number
+          status
+          creator {
+            _id
+          }
+          categories {
+            _id
+            name
+          }
+          answers {
+            needs_finance
+          }
         }
       }
 }`;

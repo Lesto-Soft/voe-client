@@ -2,6 +2,7 @@
 import React, { useMemo, useEffect, useState } from "react"; // 1. Import useEffect
 import { IUser, ICase, IAnswer, IComment } from "../../../db/interfaces";
 import UserActivityItemCard from "./UserActivityItemCard";
+import UserRatingActivityCard from "./UserRatingActivityCard";
 import {
   InboxIcon,
   ArrowDownCircleIcon,
@@ -10,24 +11,31 @@ import {
 import useUserActivityScrollPersistence from "../../../hooks/useUserActivityScrollPersistence";
 import DateRangeSelector from "./DateRangeSelector"; // 2. Import the new component
 
+// Represents a case that the user has rated, with their average score
+interface RatedCaseActivity {
+  case: ICase;
+  averageScore: number;
+}
+
 interface CombinedActivity {
   id: string;
   date: string;
-  item: ICase | IAnswer | IComment;
-  activityType: "case" | "answer" | "comment";
+  item: ICase | IAnswer | IComment | RatedCaseActivity;
+  activityType: "case" | "answer" | "comment" | "rating";
 }
 
-type ActivityTab = "all" | "cases" | "answers" | "comments";
+type ActivityTab = "all" | "cases" | "answers" | "comments" | "ratings";
 
 // 3. Update the props interface
 interface UserActivityListProps {
   user: IUser | undefined | null;
   isLoading?: boolean;
   counts: {
+    all: number;
     cases: number;
     answers: number;
     comments: number;
-    all: number;
+    ratings: number;
   };
   userId?: string;
   dateRange: { startDate: Date | null; endDate: Date | null };
@@ -75,6 +83,30 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
       const itemDate = new Date(itemDateStr);
       return itemDate >= dateRange.startDate && itemDate <= dateRange.endDate;
     };
+    // Process metric scores into rated case activities
+    const ratedCases: Map<
+      string,
+      { scores: number[]; latestDate: string; caseData: ICase }
+    > = new Map();
+    if (user.metricScores) {
+      user.metricScores
+        .filter((score) => isInDateRange(score.date))
+        .forEach((score) => {
+          if (!ratedCases.has(score.case._id)) {
+            ratedCases.set(score.case._id, {
+              scores: [],
+              latestDate: score.date,
+              caseData: score.case,
+            });
+          }
+          const entry = ratedCases.get(score.case._id)!;
+          entry.scores.push(score.score);
+          if (new Date(score.date) > new Date(entry.latestDate)) {
+            entry.latestDate = score.date;
+          }
+        });
+    }
+
     const activities: CombinedActivity[] = [];
     if (user.cases) {
       user.cases
@@ -112,6 +144,21 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
           })
         );
     }
+
+    ratedCases.forEach((value, key) => {
+      const averageScore =
+        value.scores.reduce((a, b) => a + b, 0) / value.scores.length;
+      activities.push({
+        id: `rating-${key}`,
+        date: value.latestDate,
+        item: {
+          case: value.caseData,
+          averageScore,
+        },
+        activityType: "rating",
+      });
+    });
+
     return activities.sort(
       (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
     );
@@ -134,6 +181,11 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
           (a) => a.activityType === "comment"
         );
         break;
+      case "ratings":
+        baseActivities = allActivities.filter(
+          (a) => a.activityType === "rating"
+        );
+        break;
       case "all":
       default:
         baseActivities = allActivities;
@@ -147,6 +199,7 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
     { key: "cases", label: "Сигнали", count: counts.cases },
     { key: "answers", label: "Отговори", count: counts.answers },
     { key: "comments", label: "Коментари", count: counts.comments },
+    { key: "ratings", label: "Оценки", count: counts.ratings },
   ];
 
   // Logic for `getCurrentTabTotalCount` and `canLoadMore` should now use the filtered `allActivities`
@@ -158,6 +211,8 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
         return allActivities.filter((a) => a.activityType === "answer").length;
       case "comments":
         return allActivities.filter((a) => a.activityType === "comment").length;
+      case "ratings":
+        return allActivities.filter((a) => a.activityType === "rating").length;
       case "all":
       default:
         return allActivities.length;
@@ -249,14 +304,28 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
         {activitiesToDisplay.length > 0 ? (
           <>
             <div>
-              {activitiesToDisplay.map((activity) => (
-                <UserActivityItemCard
-                  key={activity.id}
-                  item={activity.item}
-                  activityType={activity.activityType}
-                  actor={user!}
-                />
-              ))}
+              {activitiesToDisplay.map((activity) =>
+                activity.activityType === "rating" ? (
+                  <UserRatingActivityCard
+                    key={activity.id}
+                    ratedCase={(activity.item as RatedCaseActivity).case}
+                    averageScore={
+                      (activity.item as RatedCaseActivity).averageScore
+                    }
+                    date={activity.date}
+                    actor={user!}
+                  />
+                ) : (
+                  <UserActivityItemCard
+                    key={activity.id}
+                    item={activity.item as ICase | IAnswer | IComment}
+                    activityType={
+                      activity.activityType as "case" | "answer" | "comment"
+                    }
+                    actor={user!}
+                  />
+                )
+              )}
             </div>
 
             {canLoadMore && (

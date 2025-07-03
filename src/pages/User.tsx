@@ -1,24 +1,21 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react"; // Added useMemo to import
 import { useParams } from "react-router";
-import {
-  useGetFullUserByUsername,
-  useUpdateUser, // <-- Import hook for updating
-} from "../graphql/hooks/user";
-import { useGetRoles } from "../graphql/hooks/role"; // <-- Import hook for roles
+import { useGetFullUserByUsername, useUpdateUser } from "../graphql/hooks/user";
+import { useGetRoles } from "../graphql/hooks/role";
 import { IUser, IMe } from "../db/interfaces";
 import { AttachmentInput, UpdateUserInput } from "../graphql/mutation/user";
 
 // Hooks
 import useUserActivityStats from "../hooks/useUserActivityStats";
-import { useCurrentUser } from "../context/UserContext"; // <-- Import current user hook
+import { useCurrentUser } from "../context/UserContext";
 
 // UI Components
 import PageStatusDisplay from "../components/global/PageStatusDisplay";
 import UserInformationPanel from "../components/features/userAnalytics/UserInformationPanel";
 import UserActivityList from "../components/features/userAnalytics/UserActivityList";
 import UserStatisticsPanel from "../components/features/userAnalytics/UserStatisticsPanel";
-import UserModal from "../components/modals/UserModal"; // <-- Use renamed modal
-import UserForm from "../components/forms/UserForm"; // <-- Use renamed form
+import UserModal from "../components/modals/UserModal";
+import UserForm from "../components/forms/UserForm";
 import SuccessConfirmationModal from "../components/modals/SuccessConfirmationModal";
 
 // Constants
@@ -33,12 +30,11 @@ const User: React.FC = () => {
     username: string;
   }>();
 
-  // --- NEW: State for Modals and Data ---
+  // --- State and Other Hooks ---
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [successModalMessage, setSuccessModalMessage] = useState("");
   const [avatarVersion, setAvatarVersion] = useState(Date.now());
-
   const [dateRange, setDateRange] = useState<{
     startDate: Date | null;
     endDate: Date | null;
@@ -50,15 +46,13 @@ const User: React.FC = () => {
   const currentUser = useCurrentUser() as IMe | undefined;
 
   // --- GraphQL Hooks ---
-  // 1. Fetch data
   const {
     loading: userLoading,
     error: userError,
     user,
-    refetch: refetchUser, // <-- Get refetch function
+    refetch: refetchUser,
   } = useGetFullUserByUsername(userUsernameFromParams);
 
-  // 2. Call the authorization hook with the fetched data
   const { isAllowed, isLoading: authLoading } = useAuthorization({
     type: "user",
     data: user,
@@ -84,17 +78,23 @@ const User: React.FC = () => {
 
   const serverBaseUrl = import.meta.env.VITE_API_URL || "";
 
-  // --- NEW: Edit Modal Handlers ---
-  const openEditModal = () => setIsEditModalOpen(true);
-  const closeEditModal = () => setIsEditModalOpen(false);
+  // --- MOVED THIS useMemo HOOK UP ---
+  // It must be called unconditionally before any early returns.
+  const ratedCasesCount = useMemo(() => {
+    if (!user?.metricScores) return 0;
+    const ratedCaseIds = new Set(
+      user.metricScores.map((score) => score.case._id)
+    );
+    return ratedCaseIds.size;
+  }, [user]);
 
-  // --- NEW: Form Submit Handler ---
+  // --- Form Submit Handler ---
   const handleFormSubmit = async (
     formData: any,
     editingUserId: string | null,
     avatarData: AttachmentInput | null | undefined
   ) => {
-    if (!editingUserId) return; // Should not happen in this context
+    if (!editingUserId) return;
 
     const finalInput: Partial<UpdateUserInput> = {
       username: formData.username,
@@ -109,7 +109,6 @@ const User: React.FC = () => {
       ...(avatarData !== undefined && { avatar: avatarData }),
     };
 
-    // Clean up undefined values
     Object.keys(finalInput).forEach((key) => {
       if (finalInput[key as keyof typeof finalInput] === undefined)
         delete finalInput[key as keyof typeof finalInput];
@@ -117,14 +116,10 @@ const User: React.FC = () => {
 
     try {
       await updateUser(editingUserId, finalInput as UpdateUserInput);
-      await refetchUser(); // Refetch user data to show changes
-      // --- MODIFIED ORDER ---
-      // 1. Close the form modal immediately
+      await refetchUser();
       closeEditModal();
-      // 2. Show the success message immediately
       setSuccessModalMessage("Потребителят е редактиран успешно!");
       setIsSuccessModalOpen(true);
-      // 3. Update avatar version and refetch data in the background
       setAvatarVersion(Date.now());
       refetchUser();
     } catch (err: any) {
@@ -137,7 +132,10 @@ const User: React.FC = () => {
     }
   };
 
-  // 3. Handle all loading, error, and not found states
+  const openEditModal = () => setIsEditModalOpen(true);
+  const closeEditModal = () => setIsEditModalOpen(false);
+
+  // --- Early returns for loading/error states ---
   if (userUsernameFromParams === undefined) {
     return (
       <PageStatusDisplay
@@ -173,19 +171,17 @@ const User: React.FC = () => {
     return <ForbiddenPage />;
   }
 
-  // 4. Handle forbidden access
-  if (!isAllowed) {
-    return <ForbiddenPage />;
-  }
-
+  // --- Logic after all hooks and returns ---
   const activityCounts = {
     cases: userStats?.totalSignals || 0,
     answers: userStats?.totalAnswers || 0,
     comments: userStats?.totalComments || 0,
+    ratings: ratedCasesCount,
     all:
       (userStats?.totalSignals || 0) +
       (userStats?.totalAnswers || 0) +
-      (userStats?.totalComments || 0),
+      (userStats?.totalComments || 0) +
+      ratedCasesCount,
   };
 
   const isAdmin = currentUser?.role._id === ROLES.ADMIN;
@@ -202,7 +198,7 @@ const User: React.FC = () => {
   const isSelf = currentUser?._id === user?._id;
   const canEdit =
     isAdmin ||
-    (isManagerForCategory && user?.role?._id !== ROLES.ADMIN) || // up to us if we want to allow non-admin (manager) users to edit admins
+    (isManagerForCategory && user?.role?._id !== ROLES.ADMIN) ||
     isSelf;
 
   return (
@@ -213,8 +209,7 @@ const User: React.FC = () => {
             user={user}
             isLoading={userLoading && !!user}
             serverBaseUrl={serverBaseUrl}
-            onEditUser={openEditModal} // <-- Pass handler
-            // Pass calculated permission
+            onEditUser={openEditModal}
             canEdit={canEdit}
           />
 
@@ -235,7 +230,6 @@ const User: React.FC = () => {
         </div>
       </div>
 
-      {/* --- NEW: Render Modal for Editing --- */}
       <UserModal
         isOpen={isEditModalOpen}
         onClose={closeEditModal}
@@ -256,7 +250,7 @@ const User: React.FC = () => {
         )}
         {!updateLoading && (
           <UserForm
-            key={user._id} // Use user ID as key to re-mount on user change
+            key={user._id}
             onSubmit={handleFormSubmit}
             onClose={closeEditModal}
             initialData={user}
@@ -264,7 +258,7 @@ const User: React.FC = () => {
             roles={rolesData?.getAllLeanRoles || []}
             rolesLoading={rolesLoading}
             rolesError={rolesError}
-            isAdmin={isAdmin || isManagerForCategory} // <-- Pass permission flag
+            isAdmin={isAdmin || isManagerForCategory}
           />
         )}
       </UserModal>

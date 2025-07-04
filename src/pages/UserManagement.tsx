@@ -205,7 +205,7 @@ const UserManagement: React.FC = () => {
   const handleFormSubmit = async (
     formData: any,
     editingUserId: string | null,
-    avatarData: AttachmentInput | null | undefined
+    avatarData: File | null | undefined
   ) => {
     const finalInput: Partial<CreateUserInput | UpdateUserInput> = {
       username: formData.username,

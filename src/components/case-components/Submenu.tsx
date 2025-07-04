@@ -162,10 +162,12 @@ const Submenu: React.FC<SubmenuProps> = ({
         {view === "comments" && (
           <>
             <AddComment
+              key="main-case-comment-box"
               caseId={caseData._id}
               t={t}
               me={me}
               caseNumber={caseData.case_number}
+              inputId={`file-upload-comment-case-${caseData._id}`}
             />
             {caseData.comments && caseData.comments.length > 0 ? (
               <>

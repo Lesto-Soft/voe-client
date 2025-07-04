@@ -24,7 +24,7 @@ export type CreateCaseInput = {
   content: string;
   type: "PROBLEM" | "SUGGESTION";
   priority: "LOW" | "MEDIUM" | "HIGH";
-  attachments?: AttachmentInput[];
+  attachments?: File[];
   categories: string[];
   creator: string;
 };
@@ -32,12 +32,12 @@ export type CreateCaseInput = {
 export type UpdateCaseInput = {
   content: string;
   priority: "LOW" | "MEDIUM" | "HIGH";
-  attachments?: AttachmentInput[];
-  categories: string[];
   type: "PROBLEM" | "SUGGESTION";
+  categories: string[];
+  attachments?: File[];
+  deletedAttachments?: string[];
 };
 
-// Define a more specific type for the data returned by the query
 interface CountFilteredCasesData {
   countFilteredCases: number;
 }
@@ -234,8 +234,11 @@ export const useCreateCase = () => {
     useMutation(CREATE_CASE);
 
   const createCase = async (input: CreateCaseInput) => {
+    console.log(input);
     try {
-      const response = await createCaseMutation({ variables: { input } });
+      const response = await createCaseMutation({
+        variables: input,
+      });
       return response.data.createCase;
     } catch (err) {
       console.error("Failed to create case:", err);
@@ -287,7 +290,6 @@ export const useCountFilteredCases = (
     }
   );
 
-  // Default count to 0 if data or countFilteredCases is not available
   const count = data?.countFilteredCases ?? 0;
 
   return {
@@ -315,6 +317,7 @@ export const useUpdateCase = (caseNumber: number) => {
     input: UpdateCaseInput
   ) => {
     try {
+      console.log(caseId, userId, input);
       const response = await updateCaseMutation({
         variables: { caseId, userId, input },
       });

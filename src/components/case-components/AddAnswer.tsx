@@ -118,29 +118,11 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
       return;
     }
 
-    let attachmentInputs: AttachmentInput[] = [];
-    try {
-      // Process attachments to base64
-      attachmentInputs = await Promise.all(
-        attachments.map(async (file): Promise<AttachmentInput> => {
-          const base64Data = await readFileAsBase64(file); // Using actual utility
-          return { filename: file.name, file: base64Data };
-        })
-      );
-    } catch (fileReadError) {
-      console.error("Client: Error reading files to base64:", fileReadError);
-      setSubmissionError(
-        t("caseSubmission.errors.submission.fileProcessingError") ||
-          "Error processing file attachments."
-      );
-      return;
-    }
-
     try {
       // Call the createAnswer mutation
       await createAnswer({
         case: caseId,
-        attachments: attachmentInputs,
+        attachments,
         content,
         creator: me._id,
       });
@@ -221,13 +203,14 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
             attachments={attachments}
             setAttachments={setAttachments}
             setFileError={setFileError}
+            height={36}
           />
           {/* Submit button */}
           <button
             onClick={submitAnswer}
             disabled={isSubmitDisabled}
             aria-label={t("submitAnswer") || "Submit Answer"}
-            className={`flex items-center justify-center h-24 w-24 rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-btnRedHover disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150`}
+            className={`flex items-center justify-center h-36 w-24 rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-btnRedHover disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150`}
           >
             {loading ? (
               // Loading spinner

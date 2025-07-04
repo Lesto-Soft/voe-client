@@ -1,11 +1,8 @@
 import React, { useState } from "react";
 import { useParams } from "react-router";
-import {
-  useGetFullUserByUsername,
-  useUpdateUser, // <-- Import hook for updating
-} from "../graphql/hooks/user";
+import { useGetFullUserByUsername, useUpdateUser } from "../graphql/hooks/user";
 import { useGetRoles } from "../graphql/hooks/role"; // <-- Import hook for roles
-import { IUser, IMe } from "../db/interfaces";
+import { IMe } from "../db/interfaces";
 import { AttachmentInput, UpdateUserInput } from "../graphql/mutation/user";
 
 // Hooks
@@ -92,7 +89,7 @@ const User: React.FC = () => {
   const handleFormSubmit = async (
     formData: any,
     editingUserId: string | null,
-    avatarData: AttachmentInput | null | undefined
+    avatarData: File | null | undefined
   ) => {
     if (!editingUserId) return; // Should not happen in this context
 

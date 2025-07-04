@@ -287,22 +287,6 @@ export const useCaseFormState = ({
     }
 
     setIsSubmittingForm(true);
-    let attachmentInputs: CaseAttachmentInput[] = [];
-    try {
-      attachmentInputs = await Promise.all(
-        attachments.map(async (file) => ({
-          filename: file.name,
-          file: await readFileAsBase64(file),
-        }))
-      );
-    } catch (fileReadError) {
-      console.error("Client: Error reading files to base64:", fileReadError);
-      setSubmissionError(
-        t("caseSubmission.errors.submission.fileProcessingError")
-      );
-      setIsSubmittingForm(false);
-      return;
-    }
 
     const categoryIds = findCategoryIdsByName(selectedCategories, categoryList);
     if (categoryIds.length !== selectedCategories.length) {
@@ -319,7 +303,7 @@ export const useCaseFormState = ({
       priority,
       categories: categoryIds,
       creator: fetchedCreatorId,
-      attachments: attachmentInputs,
+      attachments,
     };
 
     try {

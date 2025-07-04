@@ -19,7 +19,6 @@ import {
   useCreateCase,
   CreateCaseInput,
 } from "../../graphql/hooks/case";
-import { readFileAsBase64 } from "../../utils/attachment-handling";
 import TextEditor from "../forms/partials/TextEditor";
 import SuccessConfirmationModal from "./SuccessConfirmationModal";
 
@@ -127,8 +126,11 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
   const [initialFormState, setInitialFormState] = useState<CaseFormData>(
     getInitialFormData()
   );
-  const [attachments, setAttachments] = useState<File[]>([]);
-  const [initialAttachments, setInitialAttachments] = useState<File[]>([]);
+  // State for files added by the user in the current session (for both modes)
+  const [newAttachments, setNewAttachments] = useState<File[]>([]);
+
+  // State for attachment URLs that already exist (edit mode only)
+  const [existingAttachments, setExistingAttachments] = useState<string[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -141,34 +143,31 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
   );
   const { createCase, loading: isCreating } = useCreateCase();
 
-  const hasUnsavedChanges =
-    JSON.stringify(formData) !== JSON.stringify(initialFormState) ||
-    attachments.length !== initialAttachments.length ||
-    attachments.some((file, index) => file !== initialAttachments[index]);
-
+  const hasUnsavedChanges = (() => {
+    const formChanged =
+      JSON.stringify(formData) !== JSON.stringify(initialFormState);
+    if (props.mode === "edit") {
+      const initialAttachmentCount = props.initialData.attachments?.length || 0;
+      const attachmentsChanged =
+        newAttachments.length > 0 ||
+        existingAttachments.length !== initialAttachmentCount;
+      return formChanged || attachmentsChanged;
+    } // In create mode, any new attachment is an unsaved change.
+    return formChanged || newAttachments.length > 0;
+  })();
   useEffect(() => {
     if (isOpen) {
       const initialData = getInitialFormData();
       setFormData(initialData);
       setInitialFormState(initialData);
       setError(null);
-      setShowConfirmDialog(false);
+      setShowConfirmDialog(false); // Reset attachment states
 
-      if (props.mode === "edit" && props.initialData.attachments?.length > 0) {
-        Promise.all(
-          props.initialData.attachments.map(async (url) => {
-            const response = await fetch(url);
-            const blob = await response.blob();
-            const filename = url.split("/").pop() || "attachment";
-            return new File([blob], filename, { type: blob.type });
-          })
-        ).then((files) => {
-          setAttachments(files);
-          setInitialAttachments(files);
-        });
+      setNewAttachments([]);
+      if (props.mode === "edit") {
+        setExistingAttachments(props.initialData.attachments || []);
       } else {
-        setAttachments([]);
-        setInitialAttachments([]);
+        setExistingAttachments([]);
       }
     }
   }, [isOpen, props]);
@@ -177,7 +176,7 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
     if (error) {
       setError(null);
     }
-  }, [formData, attachments]);
+  }, [formData, newAttachments]);
 
   const handleOpenChange = (open: boolean) => {
     if (!open) {
@@ -240,7 +239,6 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
       return prev;
     });
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -254,45 +252,35 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
       return;
     }
 
-    let attachmentInputs: AttachmentInput[] = [];
-    try {
-      attachmentInputs = await Promise.all(
-        attachments.map(async (file): Promise<AttachmentInput> => {
-          const base64Data = await readFileAsBase64(file);
-          return { filename: file.name, file: base64Data };
-        })
-      );
-    } catch (fileReadError) {
-      console.error("Client: Error reading files to base64:", fileReadError);
-      setError(
-        "Грешка при четене на прикачените файлове. Моля опитайте отново."
-      );
-      return;
-    }
-
     try {
       if (props.mode === "edit") {
+        const initialUrls = props.initialData.attachments || [];
+        const deletedAttachments = initialUrls.filter(
+          (url) => !existingAttachments.includes(url)
+        );
+
         const input: UpdateCaseInput = {
           content: formData.content,
           type: formData.type,
           priority: formData.priority,
           categories: formData.categoryIds,
-          attachments: attachmentInputs,
+          attachments: newAttachments.length > 0 ? newAttachments : undefined,
+          deletedAttachments:
+            deletedAttachments.length > 0 ? deletedAttachments : undefined,
         };
         await updateCase(props.caseId, me._id, input);
         setSuccessMessage(
           `Сигнал #${props.caseNumber} беше успешно редактиран.`
         );
-        setShowSuccessModal(true);
-        setIsOpen(false);
       } else {
+        // create mode
         const input: CreateCaseInput = {
           creator: me._id,
           content: formData.content,
           type: formData.type,
           priority: formData.priority,
           categories: formData.categoryIds,
-          attachments: attachmentInputs,
+          attachments: newAttachments.length > 0 ? newAttachments : undefined,
         };
         await createCase(input);
         const typeText =
@@ -300,9 +288,10 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
             ? "Предложението беше успешно създадено."
             : "Проблемът беше успешно създаден.";
         setSuccessMessage(typeText);
-        setShowSuccessModal(true);
-        setIsOpen(false);
-      }
+      } // Common success logic
+
+      setShowSuccessModal(true);
+      setIsOpen(false);
       if (props.onSuccess) {
         props.onSuccess();
       }
@@ -361,6 +350,10 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
         </span>
       </div>
     );
+  };
+
+  const handleRemoveExistingAttachment = (urlToRemove: string) => {
+    setExistingAttachments((prev) => prev.filter((url) => url !== urlToRemove));
   };
 
   return (
@@ -567,9 +560,61 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
                       </div>
                     </div>
                     <div>
+                       {" "}
+                      {/* This section will only render in edit mode if there are existing files */}
+                       {" "}
+                      {props.mode === "edit" &&
+                        existingAttachments.length > 0 && (
+                          <div className="mb-4">
+                                 {" "}
+                            <p className="text-xs font-semibold text-gray-600 mb-1">
+                              Текущи файлове:
+                            </p>
+                                 {" "}
+                            <ul className="text-sm text-gray-800 space-y-1 rounded p-2 border border-gray-200 bg-gray-50 max-h-28 overflow-y-auto">
+                                     {" "}
+                              {existingAttachments.map((url) => {
+                                const filename = url.split("/").pop() || url;
+                                return (
+                                  <li
+                                    key={url}
+                                    className="flex justify-between items-center group p-1 rounded hover:bg-gray-200"
+                                  >
+                                                 {" "}
+                                    <span
+                                      className="truncate pr-2"
+                                      title={filename}
+                                    >
+                                      {filename}
+                                    </span>
+                                                 {" "}
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        handleRemoveExistingAttachment(url)
+                                      }
+                                      className="text-red-500 hover:text-red-700"
+                                      aria-label={`Remove ${filename}`}
+                                    >
+                                                     {" "}
+                                      <XMarkIcon className="h-5 w-5" />         
+                                         {" "}
+                                    </button>
+                                               {" "}
+                                  </li>
+                                );
+                              })}
+                                   {" "}
+                            </ul>
+                               {" "}
+                          </div>
+                        )}
+                       {" "}
+                      {/* Your FileAttachmentBtn now handles ONLY new files in all modes */}
+                       {" "}
                       <FileAttachmentBtn
-                        attachments={attachments}
-                        setAttachments={setAttachments}
+                        attachments={newAttachments}
+                        setAttachments={setNewAttachments}
                       />
                     </div>
                     <div className="flex justify-center gap-3 pt-4 border-t border-gray-300 mt-6">

@@ -1,13 +1,17 @@
 import { ApolloClient, InMemoryCache, createHttpLink } from "@apollo/client";
 import { dev_endpoint, dev_graphqlEndpoint } from "../db/config";
+import createUploadLink from "apollo-upload-client/createUploadLink.mjs";
 
-const httpLink = createHttpLink({
+const uploadLink = createUploadLink({
   uri: dev_graphqlEndpoint,
   credentials: "include",
+  headers: {
+    "apollo-require-preflight": "true",
+  },
 });
 
 export const apolloClient = new ApolloClient({
-  link: httpLink,
+  link: uploadLink,
   cache: new InMemoryCache(),
   defaultOptions: {
     watchQuery: {

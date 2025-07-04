@@ -90,6 +90,46 @@ fragment FullUserFragment on User {
           }
         }
       }
+        approvedAnswers {
+        _id
+        content
+        date
+        case {
+          _id
+          case_number
+          status
+          creator {
+            _id
+          }
+          categories {
+            _id
+            name
+          }
+          answers {
+            needs_finance
+          }
+        }
+      }
+      financialApprovedAnswers {
+        _id
+        content
+        date
+        case {
+          _id
+          case_number
+          status
+          creator {
+            _id
+          }
+          categories {
+            _id
+            name
+          }
+          answers {
+            needs_finance
+          }
+        }
+      }
       comments {
         _id
         content

@@ -6,6 +6,7 @@ import CaseLink from "../../../components/global/CaseLink"; // Adjust path
 import {
   ChatBubbleLeftEllipsisIcon,
   ChatBubbleLeftRightIcon,
+  BanknotesIcon,
   DocumentTextIcon,
   CheckBadgeIcon,
   ClockIcon,
@@ -36,7 +37,12 @@ type ActivityItem = ICase | IAnswer | IComment;
 
 interface UserActivityItemCardProps {
   item: ActivityItem;
-  activityType: "case" | "answer" | "comment";
+  activityType:
+    | "case"
+    | "answer"
+    | "comment"
+    | "base_approval"
+    | "finance_approval";
   actor: IUser;
 }
 
@@ -95,6 +101,34 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
         </span>
       );
     }
+  } else if (activityType === "base_approval" && "case" in item) {
+    const answerItem = item as IAnswer;
+    icon = <CheckBadgeIcon className="h-5 w-5 text-sky-500" />;
+    titleFragments.push(
+      <span key="action" className="ml-1 whitespace-nowrap">
+        одобри отговор
+      </span>
+    );
+    caseToLinkForDisplay = answerItem.case;
+    titleFragments.push(
+      <span key="preposition" className="ml-1 text-gray-500 whitespace-nowrap">
+        по
+      </span>
+    );
+  } else if (activityType === "finance_approval" && "case" in item) {
+    const answerItem = item as IAnswer;
+    icon = <BanknotesIcon className="h-5 w-5 text-emerald-500" />;
+    titleFragments.push(
+      <span key="action" className="ml-1 whitespace-nowrap">
+        финансира отговор
+      </span>
+    );
+    caseToLinkForDisplay = answerItem.case;
+    titleFragments.push(
+      <span key="preposition" className="ml-1 text-gray-500 whitespace-nowrap">
+         по
+      </span>
+    );
   } else if (activityType === "comment" && "content" in item) {
     const commentItem = item as IComment;
     icon = <ChatBubbleLeftEllipsisIcon className="h-5 w-5 text-purple-500" />;
@@ -170,8 +204,12 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
       );
     }
     if ((item as ICase).calculatedRating) {
-      calculatedRatingTextColorClassFromHelper =
-        getCalculatedRatingStyleFromHelper((item as ICase).calculatedRating);
+      const calculatedRating = (item as ICase).calculatedRating;
+      if (calculatedRating != null) {
+        // This checks for both null and undefined
+        calculatedRatingTextColorClassFromHelper =
+          getCalculatedRatingStyleFromHelper(calculatedRating);
+      }
     }
   }
 

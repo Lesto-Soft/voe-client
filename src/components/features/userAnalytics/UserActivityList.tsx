@@ -20,11 +20,24 @@ interface RatedCaseActivity {
 interface CombinedActivity {
   id: string;
   date: string;
-  item: ICase | IAnswer | IComment | RatedCaseActivity;
-  activityType: "case" | "answer" | "comment" | "rating";
+  item: ICase | IAnswer | IComment | RatedCaseActivity; // IAnswer is used for approvals too
+  activityType:
+    | "case"
+    | "answer"
+    | "comment"
+    | "rating"
+    | "base_approval"
+    | "finance_approval";
 }
 
-type ActivityTab = "all" | "cases" | "answers" | "comments" | "ratings";
+type ActivityTab =
+  | "all"
+  | "cases"
+  | "answers"
+  | "comments"
+  | "ratings"
+  | "approvals"
+  | "finances";
 
 // 3. Update the props interface
 interface UserActivityListProps {
@@ -36,6 +49,8 @@ interface UserActivityListProps {
     answers: number;
     comments: number;
     ratings: number;
+    approvals: number;
+    finances: number;
   };
   userId?: string;
   dateRange: { startDate: Date | null; endDate: Date | null };
@@ -132,6 +147,30 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
           })
         );
     }
+    if (user.approvedAnswers) {
+      user.approvedAnswers
+        .filter((a) => isInDateRange(a.date))
+        .forEach((answerItem) =>
+          activities.push({
+            id: `base-approval-${answerItem._id}`,
+            date: answerItem.date,
+            item: answerItem,
+            activityType: "base_approval",
+          })
+        );
+    }
+    if (user.financialApprovedAnswers) {
+      user.financialApprovedAnswers
+        .filter((a) => isInDateRange(a.date))
+        .forEach((answerItem) =>
+          activities.push({
+            id: `finance-approval-${answerItem._id}`,
+            date: answerItem.date,
+            item: answerItem,
+            activityType: "finance_approval",
+          })
+        );
+    }
     if (user.comments) {
       user.comments
         .filter((c) => isInDateRange(c.date))
@@ -186,6 +225,16 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
           (a) => a.activityType === "rating"
         );
         break;
+      case "approvals":
+        baseActivities = allActivities.filter(
+          (a) => a.activityType === "base_approval"
+        );
+        break;
+      case "finances":
+        baseActivities = allActivities.filter(
+          (a) => a.activityType === "finance_approval"
+        );
+        break;
       case "all":
       default:
         baseActivities = allActivities;
@@ -200,6 +249,8 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
     { key: "answers", label: "Отговори", count: counts.answers },
     { key: "comments", label: "Коментари", count: counts.comments },
     { key: "ratings", label: "Оценки", count: counts.ratings },
+    { key: "approvals", label: "Одобрени", count: counts.approvals },
+    { key: "finances", label: "Финансирани", count: counts.finances },
   ];
 
   // Logic for `getCurrentTabTotalCount` and `canLoadMore` should now use the filtered `allActivities`
@@ -213,6 +264,13 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
         return allActivities.filter((a) => a.activityType === "comment").length;
       case "ratings":
         return allActivities.filter((a) => a.activityType === "rating").length;
+      case "approvals":
+        return allActivities.filter((a) => a.activityType === "base_approval")
+          .length;
+      case "finances":
+        return allActivities.filter(
+          (a) => a.activityType === "finance_approval"
+        ).length;
       case "all":
       default:
         return allActivities.length;
@@ -320,7 +378,12 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
                     key={activity.id}
                     item={activity.item as ICase | IAnswer | IComment}
                     activityType={
-                      activity.activityType as "case" | "answer" | "comment"
+                      activity.activityType as
+                        | "case"
+                        | "answer"
+                        | "comment"
+                        | "base_approval"
+                        | "finance_approval"
                     }
                     actor={user!}
                   />

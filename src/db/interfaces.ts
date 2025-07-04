@@ -44,7 +44,9 @@ export interface IUser {
   managed_categories?: ICategory[];
   comments?: IComment[];
   answers?: IAnswer[];
-  metricScores?: IMetricScore[]; // <-- ADDED
+  approvedAnswers?: IAnswer[];
+  financialApprovedAnswers?: IAnswer[];
+  metricScores?: IMetricScore[];
   financial_approver?: boolean;
 }
 

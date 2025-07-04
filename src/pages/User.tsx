@@ -177,11 +177,15 @@ const User: React.FC = () => {
     answers: userStats?.totalAnswers || 0,
     comments: userStats?.totalComments || 0,
     ratings: ratedCasesCount,
+    approvals: user?.approvedAnswers?.length || 0,
+    finances: user?.financialApprovedAnswers?.length || 0,
     all:
       (userStats?.totalSignals || 0) +
       (userStats?.totalAnswers || 0) +
       (userStats?.totalComments || 0) +
-      ratedCasesCount,
+      ratedCasesCount +
+      (user?.approvedAnswers?.length || 0) +
+      (user?.financialApprovedAnswers?.length || 0),
   };
 
   const isAdmin = currentUser?.role._id === ROLES.ADMIN;

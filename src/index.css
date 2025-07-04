@@ -339,6 +339,35 @@ body,
   background: #94a3b8;
 }
 
+.custom-scrollbar-xs {
+  /* Custom scrollbar for horizontal scrolling */
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: #cbd5e1 #f1f5f9; /* Firefox */
+}
+
+.custom-scrollbar-xs::-webkit-scrollbar {
+  height: 4px; /* Height for horizontal scrollbar */
+}
+
+.custom-scrollbar-xs::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 2px;
+}
+
+.custom-scrollbar-xs::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 2px;
+}
+
+.custom-scrollbar-xs::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Hide scrollbar arrows for cleaner look */
+.custom-scrollbar-xs::-webkit-scrollbar-button {
+  display: none;
+}
+
 /* Diff highlighting animations */
 .diff-added {
   animation: fadeInGreen 0.3s ease-in-out;

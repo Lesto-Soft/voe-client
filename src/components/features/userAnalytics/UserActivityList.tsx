@@ -1,5 +1,5 @@
 // src/components/features/userAnalytics/UserActivityList.tsx
-import React, { useMemo, useEffect, useState } from "react"; // 1. Import useEffect
+import React, { useMemo, useEffect, useState, useRef } from "react"; // Added useRef
 import { IUser, ICase, IAnswer, IComment } from "../../../db/interfaces";
 import UserActivityItemCard from "./UserActivityItemCard";
 import UserRatingActivityCard from "./UserRatingActivityCard";
@@ -9,7 +9,7 @@ import {
   CalendarDaysIcon,
 } from "@heroicons/react/24/outline";
 import useUserActivityScrollPersistence from "../../../hooks/useUserActivityScrollPersistence";
-import DateRangeSelector from "./DateRangeSelector"; // 2. Import the new component
+import DateRangeSelector from "./DateRangeSelector";
 
 // Represents a case that the user has rated, with their average score
 interface RatedCaseActivity {
@@ -20,7 +20,7 @@ interface RatedCaseActivity {
 interface CombinedActivity {
   id: string;
   date: string;
-  item: ICase | IAnswer | IComment | RatedCaseActivity; // IAnswer is used for approvals too
+  item: ICase | IAnswer | IComment | RatedCaseActivity;
   activityType:
     | "case"
     | "answer"
@@ -39,7 +39,6 @@ type ActivityTab =
   | "approvals"
   | "finances";
 
-// 3. Update the props interface
 interface UserActivityListProps {
   user: IUser | undefined | null;
   isLoading?: boolean;
@@ -65,12 +64,14 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
   isLoading,
   counts,
   userId,
-  dateRange, // Destructure new props
-  onDateRangeChange, // Destructure new props
+  dateRange,
+  onDateRangeChange,
 }) => {
-  // 3. ADD STATE FOR THE FILTER VISIBILITY
   const [isDateFilterVisible, setIsDateFilterVisible] = useState(false);
   const isDataReady = !isLoading && !!user;
+
+  // Add ref for the tabs container
+  const tabsContainerRef = useRef<HTMLDivElement>(null);
 
   const {
     activeTab,
@@ -81,16 +82,39 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
     resetScrollAndVisibleCount,
   } = useUserActivityScrollPersistence(userId, isDataReady);
 
-  // 4. ADD EFFECT TO RESET SCROLL ON DATE CHANGE
-  // This improves user experience by resetting the view when the data fundamentally changes.
-
   useEffect(() => {
     if (resetScrollAndVisibleCount) {
       resetScrollAndVisibleCount();
     }
   }, [dateRange, resetScrollAndVisibleCount]);
 
-  // 5. ADD FILTERING LOGIC TO MEMOIZED ACTIVITIES
+  // Add effect for horizontal scrolling with mouse wheel
+  useEffect(() => {
+    const scrollContainer = tabsContainerRef.current;
+
+    if (!scrollContainer) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      // Only prevent default if we're actually going to scroll horizontally
+      if (e.deltaY !== 0) {
+        e.preventDefault();
+
+        // Smooth horizontal scroll
+        const scrollAmount = e.deltaY * 1.5; // Adjust multiplier for scroll speed
+        scrollContainer.scrollBy({
+          left: scrollAmount,
+          behavior: "smooth",
+        });
+      }
+    };
+
+    scrollContainer.addEventListener("wheel", handleWheel, { passive: false });
+
+    return () => {
+      scrollContainer.removeEventListener("wheel", handleWheel);
+    };
+  }, []); // Empty dependency array since ref won't change
+
   const allActivities = useMemo((): CombinedActivity[] => {
     if (!user) return [];
     const isInDateRange = (itemDateStr: string) => {
@@ -98,11 +122,12 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
       const itemDate = new Date(itemDateStr);
       return itemDate >= dateRange.startDate && itemDate <= dateRange.endDate;
     };
-    // Process metric scores into rated case activities
+
     const ratedCases: Map<
       string,
       { scores: number[]; latestDate: string; caseData: ICase }
     > = new Map();
+
     if (user.metricScores) {
       user.metricScores
         .filter((score) => isInDateRange(score.date))
@@ -123,6 +148,7 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
     }
 
     const activities: CombinedActivity[] = [];
+
     if (user.cases) {
       user.cases
         .filter((c) => isInDateRange(c.date))
@@ -135,6 +161,7 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
           })
         );
     }
+
     if (user.answers) {
       user.answers
         .filter((a) => isInDateRange(a.date))
@@ -147,6 +174,7 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
           })
         );
     }
+
     if (user.approvedAnswers) {
       user.approvedAnswers
         .filter((a) => isInDateRange(a.date))
@@ -159,6 +187,7 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
           })
         );
     }
+
     if (user.financialApprovedAnswers) {
       user.financialApprovedAnswers
         .filter((a) => isInDateRange(a.date))
@@ -171,6 +200,7 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
           })
         );
     }
+
     if (user.comments) {
       user.comments
         .filter((c) => isInDateRange(c.date))
@@ -203,7 +233,6 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
     );
   }, [user, dateRange]);
 
-  // This will now automatically be filtered because it's derived from `allActivities`
   const activitiesToDisplay = useMemo((): CombinedActivity[] => {
     let baseActivities: CombinedActivity[];
     switch (activeTab) {
@@ -253,7 +282,6 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
     { key: "finances", label: "Финансирани", count: counts.finances },
   ];
 
-  // Logic for `getCurrentTabTotalCount` and `canLoadMore` should now use the filtered `allActivities`
   const getCurrentTabTotalCount = (): number => {
     switch (activeTab) {
       case "cases":
@@ -310,10 +338,12 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
   return (
     <div className="lg:col-span-6 bg-white rounded-lg shadow-lg flex flex-col overflow-hidden max-h-full">
       <div className="p-1 sm:p-2 border-b border-gray-200">
-        {/* 4. UPDATE THE LAYOUT FOR TABS AND THE NEW TOGGLE BUTTON */}
         <div className="flex items-center justify-between pb-1">
-          {/* Container for the tabs */}
-          <div className="flex space-x-1 sm:space-x-2 overflow-x-auto custom-scrollbar-xs">
+          {/* Container for the tabs - now with ref */}
+          <div
+            ref={tabsContainerRef}
+            className="flex space-x-1 sm:space-x-2 mr-5 overflow-x-auto custom-scrollbar-xs"
+          >
             {tabs.map((tab) => (
               <button
                 key={tab.key}
@@ -330,7 +360,6 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
             ))}
           </div>
 
-          {/* The new button to toggle the date filter */}
           <button
             onClick={() => setIsDateFilterVisible((prev) => !prev)}
             title="Filter by date"
@@ -344,7 +373,6 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
           </button>
         </div>
 
-        {/* 5. CONDITIONALLY RENDER THE DATE SELECTOR BELOW THE TABS */}
         {isDateFilterVisible && (
           <div className=" border-t pt-1 border-gray-200">
             <DateRangeSelector

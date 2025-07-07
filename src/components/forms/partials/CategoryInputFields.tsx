@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect, useMemo } from "react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 // Removed IUser import as ILeanUserForForm is more specific here
 import TextEditor from "./TextEditor";
-import { ROLES } from "../../../utils/GLOBAL_PARAMETERS";
+import { CATEGORY_HELPERS, ROLES } from "../../../utils/GLOBAL_PARAMETERS";
 
 // Define a lean user type that includes the role ID for the form, matching what parent passes
 interface ILeanUserForForm {
@@ -12,6 +12,13 @@ interface ILeanUserForForm {
   username: string;
   role: { _id: string } | null; // Role can be null
 }
+
+// --- Helper function to get plain text length from HTML ---
+const getTextLength = (html: string): number => {
+  const temp = document.createElement("div");
+  temp.innerHTML = html;
+  return temp.textContent?.trim().length || 0;
+};
 
 // useDebounce function (can be kept if client-side search term debouncing is still desired, though less critical now)
 function useDebounce<T>(value: T, delay: number): T {
@@ -73,6 +80,22 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
   usersLoading,
 }) => {
   const t = (key: string) => key; // Placeholder for translations
+
+  // --- NEW: Calculate character counts and check length limits ---
+  const problemCharCount = useMemo(() => getTextLength(problem), [problem]);
+  const isProblemTooLong = useMemo(
+    () => problemCharCount > CATEGORY_HELPERS.MAX,
+    [problemCharCount]
+  );
+
+  const suggestionCharCount = useMemo(
+    () => getTextLength(suggestion),
+    [suggestion]
+  );
+  const isSuggestionTooLong = useMemo(
+    () => suggestionCharCount > CATEGORY_HELPERS.MAX,
+    [suggestionCharCount]
+  );
 
   // Filter allUsersForAssigning to get only those with Expert or Admin roles
   const assignableUsers = useMemo(() => {
@@ -459,13 +482,18 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
           onUpdate={(html) => setProblem(html)}
           placeholder={t("Опишете проблема...")}
           height="120px"
+          maxLength={CATEGORY_HELPERS.MAX}
+          wrapperClassName={isProblemTooLong ? "!border-red-500" : ""}
         />
+        {/* NEW: Display length error */}
         <p
           className={`${errorPlaceholderClass} ${
-            problemError ? "text-red-500" : ""
+            problemError || isProblemTooLong ? "text-red-500" : ""
           }`}
         >
-          {problemError || <>&nbsp;</>}
+          {isProblemTooLong
+            ? `Съдържанието надвишава лимита от ${CATEGORY_HELPERS.MAX} символа.`
+            : problemError || <>&nbsp;</>}
         </p>
       </div>
 
@@ -481,13 +509,18 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
           onUpdate={(html) => setSuggestion(html)}
           placeholder={t("Напишете предложение...")}
           height="120px"
+          maxLength={CATEGORY_HELPERS.MAX}
+          wrapperClassName={isSuggestionTooLong ? "!border-red-500" : ""}
         />
+        {/* NEW: Display length error */}
         <p
           className={`${errorPlaceholderClass} ${
-            suggestionError ? "text-red-500" : ""
+            suggestionError || isSuggestionTooLong ? "text-red-500" : ""
           }`}
         >
-          {suggestionError || <>&nbsp;</>}
+          {isSuggestionTooLong
+            ? `Съдържанието надвишава лимита от ${CATEGORY_HELPERS.MAX} символа.`
+            : suggestionError || <>&nbsp;</>}
         </p>
       </div>
     </>

@@ -42,13 +42,6 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
     error: apiError,
   } = useCreateAnswer(caseNumber);
 
-  // Updated character count to handle HTML content
-  const charCount = useMemo(() => getTextLength(content), [content]);
-  const isContentTooLong = useMemo(
-    () => charCount > ANSWER_CONTENT.MAX,
-    [charCount]
-  );
-
   // Effect to handle API errors from the useCreateAnswer hook
   useEffect(() => {
     if (apiError) {
@@ -94,16 +87,16 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
     const textLength = getTextLength(content);
     if (textLength > ANSWER_CONTENT.MAX) {
       setSubmissionError(
-        t("caseSubmission.errors.submission.contentTooLong") ||
-          "Answer is too long."
+        // t("caseSubmission.errors.submission.contentTooLong") ||
+        "Отговорът е прекалено дълъг."
       );
       return;
     }
 
     if (textLength < ANSWER_CONTENT.MIN) {
       setSubmissionError(
-        t("caseSubmission.errors.submission.contentTooShort") ||
-          `Answer must be at least ${ANSWER_CONTENT.MIN} characters.`
+        // t("caseSubmission.errors.submission.contentTooShort") ||
+        `Отговорът трябва да е поне ${ANSWER_CONTENT.MIN} символа.`
       );
       return;
     }
@@ -162,7 +155,7 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
 
   // Updated submit button disabled condition
   const isSubmitDisabled =
-    isContentTooLong || loading || getTextLength(content) < ANSWER_CONTENT.MIN;
+    loading || getTextLength(content) < ANSWER_CONTENT.MIN;
 
   return (
     <div>
@@ -172,29 +165,17 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
         {/* items-start will align the tops of the flex items */}
         <div className="flex items-start gap-2">
           {/* Container for the TextEditor and character counter */}
-          <div className="flex-grow relative">
+          <div className="flex-grow relative min-w-0 max-w-full">
             <SimpleTextEditor
               content={content}
               onUpdate={handleContentChange}
-              placeholder={"Напишете отговор..."} //{t("writeAnswer") || "Напишете отговор..."}
+              placeholder={"Напишете отговор..."}
               height="123px"
-              wrapperClassName={`border rounded-lg overflow-hidden bg-white focus-within:ring-2 ${
-                isContentTooLong
-                  ? "border-red-500 focus-within:ring-red-500"
-                  : "border-gray-300 focus-within:ring-btnRedHover focus-within:border-btnRedHover"
-              } transition-colors duration-150`}
+              // Simply pass the maxLength prop!
+              maxLength={ANSWER_CONTENT.MAX}
+              // The wrapperClassName is now simpler as it doesn't need validation styles
+              wrapperClassName="transition-colors duration-150"
             />
-            {/* Character counter display */}
-            <div
-              id="char-counter"
-              className={`absolute bottom-2 right-4 text-xs ${
-                isContentTooLong
-                  ? "text-red-600 font-semibold"
-                  : "text-gray-500"
-              } bg-white px-1 rounded shadow-sm`}
-            >
-              {charCount}/{ANSWER_CONTENT.MAX}
-            </div>
           </div>
           {/* File attachment component */}
           <FileAttachmentAnswer

@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
@@ -10,15 +10,23 @@ interface SimpleTextEditorProps {
   placeholder?: string;
   height?: string;
   wrapperClassName?: string;
+  maxLength?: number;
 }
 
 const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
   content,
   onUpdate,
   placeholder = "Напишете отговор...",
-  height = "123px",
-  wrapperClassName = "w-full border border-gray-300 rounded-md shadow-sm overflow-hidden bg-white focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500",
+  height = "96px",
+  wrapperClassName,
+  maxLength,
 }) => {
+  const [charCount, setCharCount] = useState(0);
+  const isContentTooLong = useMemo(
+    () => maxLength && charCount > maxLength,
+    [charCount, maxLength]
+  );
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -39,6 +47,9 @@ const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
     ],
     content: content || "",
     onUpdate: ({ editor: currentEditor }) => {
+      const characterCount = currentEditor.getText().length;
+      setCharCount(characterCount);
+
       if (onUpdate) {
         const textContent = currentEditor.getText().trim();
         const output = textContent === "" ? "" : currentEditor.getHTML();
@@ -47,13 +58,26 @@ const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
     },
     editorProps: {
       attributes: {
+        // Add `break-words` to force long text to wrap
         class:
-          "prose prose-sm max-w-none p-3 focus:outline-none custom-simple-editor",
-        style: `height: ${height}; overflow-y: auto;`,
+          "prose prose-sm max-w-none p-3 pr-4 focus:outline-none custom-simple-editor",
+        style: `height: ${height}; overflow-y: auto; padding-bottom: 2rem;`,
       },
     },
   });
 
+  useEffect(() => {
+    if (content) {
+      // Create a temporary element to strip HTML and get text length
+      const tempDiv = document.createElement("div");
+      tempDiv.innerHTML = content;
+      setCharCount(tempDiv.innerText.length || 0);
+    } else {
+      setCharCount(0);
+    }
+  }, [content]);
+
+  // This effect syncs external content changes to the editor
   useEffect(() => {
     if (editor && content !== undefined) {
       const currentHTML = editor.getHTML();
@@ -68,8 +92,19 @@ const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
     }
   }, [content, editor]);
 
+  const finalWrapperClassName = `
+    relative w-full border rounded-md shadow-sm overflow-hidden bg-white 
+    focus-within:ring-1 transition-colors duration-150
+    ${
+      isContentTooLong
+        ? "border-red-500 focus-within:ring-red-500"
+        : "border-gray-300 focus-within:ring-blue-500"
+    }
+    ${wrapperClassName || ""}
+  `;
+
   return (
-    <div className={wrapperClassName}>
+    <div className={finalWrapperClassName.trim()}>
       {editor && (
         <div className="flex items-center gap-1 p-2 border-b border-gray-200 bg-gray-50 rounded-t-md">
           <button
@@ -111,6 +146,15 @@ const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
         </div>
       )}
       <EditorContent editor={editor} />
+      {maxLength && (
+        <div
+          className={`absolute bottom-2 right-4 text-xs ${
+            isContentTooLong ? "text-red-600 font-semibold" : "text-gray-500"
+          } bg-white px-1 rounded shadow-sm`}
+        >
+          {charCount}/{maxLength}
+        </div>
+      )}
     </div>
   );
 };

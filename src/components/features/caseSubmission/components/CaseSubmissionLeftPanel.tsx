@@ -4,6 +4,7 @@ import { TFunction } from "i18next"; // Import TFunction from i18next
 import { ApolloError } from "@apollo/client"; // Import ApolloError
 import FileAttachmentBtn from "../../../global/FileAttachmentBtn"; // Adjusted path
 import TextEditor from "../../../forms/partials/TextEditor";
+import { CASE_CONTENT } from "../../../../utils/GLOBAL_PARAMETERS";
 
 interface CaseSubmissionLeftPanelProps {
   t: TFunction<"caseSubmission", undefined>; // Expecting the namespaced t
@@ -118,6 +119,7 @@ const CaseSubmissionLeftPanel: React.FC<CaseSubmissionLeftPanelProps> = ({
             placeholder={t("caseSubmission.descriptionPlaceholder")}
             editable={true}
             height="160px"
+            maxLength={CASE_CONTENT.MAX}
             wrapperClassName="w-full border border-gray-300 rounded-md shadow-sm overflow-hidden bg-white focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500"
           />
         </div>

@@ -290,6 +290,7 @@ body,
 /* Simple Text Editor specific styles */
 .custom-simple-editor {
   /* Styles specific to the simple text editor */
+  word-break: break-word;
 }
 
 .custom-simple-editor p {

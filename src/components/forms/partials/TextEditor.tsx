@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useEditor, EditorContent, Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
@@ -21,6 +21,7 @@ export interface TextEditorProps {
   menuBarClassName?: string;
   editorContentClassName?: string;
   height?: string;
+  maxLength?: number;
 }
 
 // MenuBar component remains the same...
@@ -166,8 +167,14 @@ const TextEditor: React.FC<TextEditorProps> = ({
   menuBarClassName,
   editorContentClassName = "w-full text-base text-gray-900 focus:outline-none",
   height = "150px",
+  maxLength,
 }) => {
   const [renderKey, setRenderKey] = useState(0);
+  const [charCount, setCharCount] = useState(0);
+  const isContentTooLong = useMemo(
+    () => maxLength && charCount > maxLength,
+    [charCount, maxLength]
+  );
 
   const editor = useEditor({
     extensions: [
@@ -176,10 +183,7 @@ const TextEditor: React.FC<TextEditorProps> = ({
       TextAlign.configure({ types: ["paragraph"], defaultAlignment: "left" }),
       Placeholder.configure({
         placeholder: ({ editor }) => {
-          if (editor.getText().trim() === "") {
-            return placeholder || "";
-          }
-          // FIXED: Return an empty string instead of null
+          if (editor.getText().trim() === "") return placeholder || "";
           return "";
         },
       }),
@@ -190,20 +194,33 @@ const TextEditor: React.FC<TextEditorProps> = ({
       setRenderKey((key) => key + 1);
     },
     onUpdate: ({ editor: currentEditor }) => {
+      // --- NEW: Update internal char count and call external onUpdate ---
+      const characterCount = currentEditor.getText().length;
+      setCharCount(characterCount);
+
       if (onUpdate) {
-        const textContent = currentEditor.getText().trim();
-        const output = textContent === "" ? "" : currentEditor.getHTML();
-        onUpdate(output);
+        const html = currentEditor.isEmpty ? "" : currentEditor.getHTML();
+        onUpdate(html);
       }
     },
     editorProps: {
       attributes: {
         class:
-          "prose prose-sm sm:prose-base max-w-none p-3 focus:outline-none custom-tiptap-editor",
-        style: `height: ${height}; overflow-y: auto;`,
+          "prose prose-sm sm:prose-base max-w-none p-3 pr-4 focus:outline-none custom-tiptap-editor",
+        // Added bottom padding to make space for the counter
+        style: `height: ${height}; overflow-y: auto; padding-bottom: 2rem;`,
       },
     },
   });
+
+  // Effect to initialize character count from prop
+  useEffect(() => {
+    if (editor && propContent) {
+      const initialContent = document.createElement("div");
+      initialContent.innerHTML = propContent;
+      setCharCount(initialContent.innerText.length);
+    }
+  }, [editor]);
 
   useEffect(() => {
     if (editor && propContent !== undefined) {
@@ -219,14 +236,36 @@ const TextEditor: React.FC<TextEditorProps> = ({
     }
   }, [propContent, editor]);
 
+  // --- NEW: Logic to combine default, dynamic, and prop classes ---
+  const finalWrapperClassName = `
+    relative w-full border rounded-md shadow-sm overflow-hidden bg-white 
+    focus-within:ring-1 transition-colors duration-150
+    ${
+      isContentTooLong
+        ? "border-red-500 focus-within:ring-red-500"
+        : "border-gray-300 focus-within:ring-blue-500"
+    }
+    ${wrapperClassName || ""}
+  `;
+
   return (
-    <div className={wrapperClassName}>
+    <div className={finalWrapperClassName.trim()}>
       <MemoizedMenuBar
         editor={editor}
         className={menuBarClassName}
         renderKey={renderKey}
       />
       <EditorContent editor={editor} className={editorContentClassName} />
+      {/* --- NEW: Character counter display --- */}
+      {maxLength && (
+        <div
+          className={`absolute bottom-2 right-4 text-xs ${
+            isContentTooLong ? "text-red-600 font-semibold" : "text-gray-500"
+          } bg-white px-1 rounded shadow-sm`}
+        >
+          {charCount}/{maxLength}
+        </div>
+      )}
     </div>
   );
 };

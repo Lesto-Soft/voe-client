@@ -9,7 +9,7 @@ import {
   ExclamationCircleIcon,
 } from "@heroicons/react/24/solid";
 import { ICategory, IMe } from "../../db/interfaces";
-import { CASE_TYPE } from "../../utils/GLOBAL_PARAMETERS";
+import { CASE_CONTENT, CASE_TYPE } from "../../utils/GLOBAL_PARAMETERS";
 import { useTranslation } from "react-i18next";
 import FileAttachmentBtn from "../global/FileAttachmentBtn";
 import {
@@ -427,6 +427,7 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
                         )}
                         editable={true}
                         height="150px"
+                        maxLength={CASE_CONTENT.MAX}
                         wrapperClassName="w-full border border-gray-300 rounded-md shadow-sm overflow-hidden bg-white"
                       />
                     </div>

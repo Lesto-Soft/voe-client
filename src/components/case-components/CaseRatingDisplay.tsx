@@ -1,5 +1,3 @@
-// src/components/case-components/CaseRatingDisplay.tsx (Final UI Polish)
-
 import React, { useMemo } from "react";
 import { StarIcon as StarSolid } from "@heroicons/react/24/solid";
 import { PlusIcon, CheckIcon } from "@heroicons/react/24/outline";
@@ -31,38 +29,44 @@ const CaseRatingDisplay: React.FC<CaseRatingDisplayProps> = ({
     };
   }, [metricScores, calculatedRating]);
 
-  // --- THIS IS THE CHANGE ---
-  // Calculate the percentage width for the foreground stars
   const starFillPercentage = useMemo(() => {
-    // Ensure the average is between 0 and 5, then calculate percentage
     const clampedAverage = Math.max(0, Math.min(5, average));
     return (clampedAverage / 5) * 100;
   }, [average]);
 
   return (
-    <div className={`${caseBoxClasses} flex-col !items-start`}>
+    <div
+      onClick={!disabled ? onOpenModal : undefined}
+      // 1. Add the "group" class here. The general hover effect is removed.
+      className={`${caseBoxClasses} flex-col !items-start group ${
+        !disabled ? "cursor-pointer" : ""
+      }`}
+      title={
+        !disabled
+          ? hasUserRated
+            ? "Редактирайте вашата оценка"
+            : "Добавете вашата оценка"
+          : ""
+      }
+    >
       <div className="flex items-center gap-1">
         <span className={labelTextClass}>Оценка:</span>
         {!disabled && (
-          <button
-            onClick={onOpenModal}
+          // 2. Change "hover:" to "group-hover:"
+          // This makes the icon's background appear on parent hover.
+          <div
             className={`p-0.5 rounded-full transition-colors ${
               hasUserRated
-                ? "text-green-600 hover:bg-green-50"
-                : "text-blue-600 hover:bg-blue-50"
+                ? "text-green-600 group-hover:bg-green-200 group-hover:scale-105"
+                : "text-blue-600 group-hover:bg-blue-200 group-hover:scale-105"
             }`}
-            title={
-              hasUserRated
-                ? "Редактирайте вашата оценка"
-                : "Добавете вашата оценка"
-            }
           >
             {hasUserRated ? (
               <CheckIcon className="h-4 w-4" />
             ) : (
               <PlusIcon className="h-4 w-4" />
             )}
-          </button>
+          </div>
         )}
       </div>
 
@@ -76,15 +80,12 @@ const CaseRatingDisplay: React.FC<CaseRatingDisplayProps> = ({
               {average.toFixed(1)}
             </span>
 
-            {/* --- THIS IS THE NEW JSX LOGIC --- */}
             <div className="relative flex">
-              {/* Background Layer: Empty Stars */}
               <div className="flex text-gray-300">
                 {[...Array(5)].map((_, i) => (
                   <StarSolid key={`bg-${i}`} className="h-4 w-4" />
                 ))}
               </div>
-              {/* Foreground Layer: Filled Stars (Clipped) */}
               <div
                 className="absolute top-0 left-0 h-full overflow-hidden whitespace-nowrap flex"
                 style={{ width: `${starFillPercentage}%` }}

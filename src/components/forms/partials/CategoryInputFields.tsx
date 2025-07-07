@@ -458,8 +458,7 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
           content={problem}
           onUpdate={(html) => setProblem(html)}
           placeholder={t("Опишете проблема...")}
-          minHeight="120px"
-          maxHeight="120px"
+          height="120px"
         />
         <p
           className={`${errorPlaceholderClass} ${
@@ -481,8 +480,7 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
           content={suggestion}
           onUpdate={(html) => setSuggestion(html)}
           placeholder={t("Напишете предложение...")}
-          minHeight="120px"
-          maxHeight="120px"
+          height="120px"
         />
         <p
           className={`${errorPlaceholderClass} ${

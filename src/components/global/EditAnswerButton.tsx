@@ -99,9 +99,8 @@ const EditAnswerButton: React.FC<EditButtonProps> = ({
             <SimpleTextEditor
               content={content}
               onUpdate={(html) => setContent(html)}
-              placeholder={t("writeHere", "Write your answer here...")}
-              minHeight="120px"
-              maxHeight="300px"
+              placeholder={t("writeHere", "Пишете тук...")}
+              height="123px"
               wrapperClassName="w-full border border-gray-300 rounded-lg shadow-sm overflow-hidden bg-white focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500"
             />
           </div>

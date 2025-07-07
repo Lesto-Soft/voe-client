@@ -165,11 +165,11 @@ const AddComment: React.FC<AddCommentProps> = ({
             {/* Character counter display */}
             <div
               id="comment-char-counter" // Unique id
-              className={`absolute bottom-2 right-2 text-xs ${
+              className={`absolute bottom-3 right-4 text-xs ${
                 isContentTooLong
-                  ? "text-red-600 font-semibold" // Style for counter when content is too long
-                  : "text-gray-500" // Standard counter style
-              }`}
+                  ? "text-red-600 font-semibold"
+                  : "text-gray-500"
+              } bg-white px-1 rounded shadow-sm`}
             >
               {charCount}/{COMMENT_CONTENT.MAX}
             </div>

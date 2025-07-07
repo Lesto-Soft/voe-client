@@ -1,4 +1,3 @@
-// src/components/forms/partials/SimpleTextEditor.tsx
 import React, { useEffect } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
@@ -9,8 +8,7 @@ interface SimpleTextEditorProps {
   content?: string;
   onUpdate?: (html: string) => void;
   placeholder?: string;
-  minHeight?: string;
-  maxHeight?: string;
+  height?: string;
   wrapperClassName?: string;
 }
 
@@ -18,8 +16,7 @@ const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
   content,
   onUpdate,
   placeholder = "Напишете отговор...",
-  minHeight = "96px",
-  maxHeight,
+  height = "123px",
   wrapperClassName = "w-full border border-gray-300 rounded-md shadow-sm overflow-hidden bg-white focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500",
 }) => {
   const editor = useEditor({
@@ -31,29 +28,40 @@ const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
         listItem: false,
       }),
       Underline,
-      Placeholder.configure({ placeholder }),
+      Placeholder.configure({
+        placeholder: ({ editor }) => {
+          if (editor.getText().trim() === "") {
+            return placeholder || "";
+          }
+          return "";
+        },
+      }),
     ],
     content: content || "",
     onUpdate: ({ editor: currentEditor }) => {
       if (onUpdate) {
-        onUpdate(currentEditor.getHTML());
+        const textContent = currentEditor.getText().trim();
+        const output = textContent === "" ? "" : currentEditor.getHTML();
+        onUpdate(output);
       }
     },
     editorProps: {
       attributes: {
         class:
           "prose prose-sm max-w-none p-3 focus:outline-none custom-simple-editor",
-        style: `min-height: ${minHeight}; ${
-          maxHeight ? `max-height: ${maxHeight}; overflow-y: auto;` : ""
-        }`,
+        style: `height: ${height}; overflow-y: auto;`,
       },
     },
   });
 
-  // Sync external content changes with the editor
   useEffect(() => {
     if (editor && content !== undefined) {
       const currentHTML = editor.getHTML();
+      const isEditorEmpty = editor.getText().trim() === "";
+      const isPropEmpty = content === "" || content === "<p></p>";
+
+      if (isEditorEmpty && isPropEmpty) return;
+
       if (currentHTML !== content) {
         editor.commands.setContent(content, false);
       }
@@ -62,7 +70,6 @@ const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
 
   return (
     <div className={wrapperClassName}>
-      {/* Simple toolbar with just basic formatting */}
       {editor && (
         <div className="flex items-center gap-1 p-2 border-b border-gray-200 bg-gray-50 rounded-t-md">
           <button

@@ -177,8 +177,7 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
               content={content}
               onUpdate={handleContentChange}
               placeholder={"Напишете отговор..."} //{t("writeAnswer") || "Напишете отговор..."}
-              minHeight="96px"
-              maxHeight="250px"
+              height="123px"
               wrapperClassName={`border rounded-lg overflow-hidden bg-white focus-within:ring-2 ${
                 isContentTooLong
                   ? "border-red-500 focus-within:ring-red-500"
@@ -188,7 +187,7 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
             {/* Character counter display */}
             <div
               id="char-counter"
-              className={`absolute bottom-2 right-2 text-xs ${
+              className={`absolute bottom-2 right-4 text-xs ${
                 isContentTooLong
                   ? "text-red-600 font-semibold"
                   : "text-gray-500"

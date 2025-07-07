@@ -426,8 +426,7 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
                           "Опишете вашия случай..."
                         )}
                         editable={true}
-                        minHeight="120px"
-                        maxHeight="300px"
+                        height="150px"
                         wrapperClassName="w-full border border-gray-300 rounded-md shadow-sm overflow-hidden bg-white"
                       />
                     </div>

@@ -117,8 +117,7 @@ const CaseSubmissionLeftPanel: React.FC<CaseSubmissionLeftPanelProps> = ({
             }}
             placeholder={t("caseSubmission.descriptionPlaceholder")}
             editable={true}
-            minHeight="160px"
-            maxHeight="300px"
+            height="160px"
             wrapperClassName="w-full border border-gray-300 rounded-md shadow-sm overflow-hidden bg-white focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500"
           />
         </div>

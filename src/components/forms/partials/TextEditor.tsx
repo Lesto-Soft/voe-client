@@ -1,24 +1,17 @@
-// src/components/TextEditor.tsx
 import React, { useEffect, useState } from "react";
 import { useEditor, EditorContent, Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
 import TextAlign from "@tiptap/extension-text-align";
 import Placeholder from "@tiptap/extension-placeholder";
-// import Highlight from "@tiptap/extension-highlight"; // If you added it
-
-// --- 1. Import Heroicons ---
 import {
   ListBulletIcon,
-  NumberedListIcon, // Using this for Ordered List as a common alternative
   Bars3BottomLeftIcon,
   Bars3BottomRightIcon,
-  Bars3Icon, // For Align Center (can also be Bars2Icon)
-  // For Bold, Italic, Underline, Strikethrough, we'll use stylized text
-  // as Heroicons doesn't have direct "B", "I", "U", "S" typography icons.
+  Bars3Icon,
+  NumberedListIcon,
 } from "@heroicons/react/20/solid";
 
-// --- Component Props --- (no changes)
 export interface TextEditorProps {
   content?: string;
   onUpdate?: (html: string) => void;
@@ -27,11 +20,10 @@ export interface TextEditorProps {
   wrapperClassName?: string;
   menuBarClassName?: string;
   editorContentClassName?: string;
-  minHeight?: string;
-  maxHeight?: string;
+  height?: string;
 }
 
-// --- Menu Bar Button Configuration --- (no changes)
+// MenuBar component remains the same...
 interface MenuButtonConfig {
   id: string;
   action: (editor: Editor) => void;
@@ -41,27 +33,16 @@ interface MenuButtonConfig {
   title: string;
 }
 
-// --- MenuBar Component ---
 interface MenuBarProps {
   editor: Editor | null;
   className?: string;
   renderKey?: number;
 }
-
 const MenuBar: React.FC<MenuBarProps> = ({ editor, className, renderKey }) => {
   if (!editor) return null;
 
-  // console.log(
-  //   `MenuBar rendering (key: ${renderKey}). Editor selection anchor:`,
-  //   editor.state.selection.anchor
-  // );
-
-  // --- 2. Update menuItem labels with icons or stylized text ---
-  // We'll aim for a visual size similar to 20x20px icons (w-5 h-5).
-  // text-lg (1.125rem = 18px) or text-xl (1.25rem = 20px) can work for text.
-  // leading-tight or leading-none helps vertically align text in buttons.
-  const iconSizeClass = "w-5 h-5"; // For Heroicons (20x20px)
-  const textLabelBaseClass = "text-lg leading-tight"; // For B, I, U, S, 1.
+  const iconSizeClass = "w-5 h-5";
+  const textLabelBaseClass = "text-lg leading-tight";
 
   const menuItems: MenuButtonConfig[] = [
     {
@@ -100,7 +81,7 @@ const MenuBar: React.FC<MenuBarProps> = ({ editor, className, renderKey }) => {
       id: "bulletList",
       action: (e) => e.chain().focus().toggleBulletList().run(),
       isActive: (e) => e.isActive("bulletList"),
-      canExecute: (e) => e.isEditable, // Changed from e.can().toggleBulletList()
+      canExecute: (e) => e.isEditable,
       label: <ListBulletIcon className={iconSizeClass} />,
       title: "Bullet List",
     },
@@ -108,7 +89,7 @@ const MenuBar: React.FC<MenuBarProps> = ({ editor, className, renderKey }) => {
       id: "orderedList",
       action: (e) => e.chain().focus().toggleOrderedList().run(),
       isActive: (e) => e.isActive("orderedList"),
-      canExecute: (e) => e.isEditable, // Changed from e.can().toggleOrderedList()
+      canExecute: (e) => e.isEditable,
       label: <NumberedListIcon className={iconSizeClass} />,
       title: "Ordered List",
     },
@@ -125,7 +106,7 @@ const MenuBar: React.FC<MenuBarProps> = ({ editor, className, renderKey }) => {
       action: (e) => e.chain().focus().setTextAlign("center").run(),
       isActive: (e) => e.isActive({ textAlign: "center" }),
       canExecute: (e) => e.can().setTextAlign("center"),
-      label: <Bars3Icon className={iconSizeClass} />, // Often used for center or generic menu
+      label: <Bars3Icon className={iconSizeClass} />,
       title: "Align Center",
     },
     {
@@ -155,22 +136,17 @@ const MenuBar: React.FC<MenuBarProps> = ({ editor, className, renderKey }) => {
             onClick={() => item.action(editor)}
             title={item.title}
             disabled={item.canExecute ? !item.canExecute(editor) : false}
-            // --- 3. Adjust padding if needed, current should be okay ---
-            // The `px-2.5 py-1.5` gives space around the icon/text.
-            // The `text-sm` on the button itself sets a base, but the icon/span can override its own size.
-            // Ensure buttons are vertically centered if text and icons have different heights.
-            // Adding `flex items-center justify-center` to the button can help if alignment is off.
             className={`px-2 py-1 flex items-center justify-center rounded
-                        text-gray-700 hover:bg-gray-200
-                        focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:z-10
-                        disabled:opacity-40 disabled:cursor-not-allowed
-                        ${
-                          isActive
-                            ? "bg-indigo-100 text-indigo-700 hover:bg-indigo-200 ring-1 ring-indigo-500"
-                            : "bg-transparent"
-                        }`}
+                                text-gray-700 hover:bg-gray-200
+                                focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:z-10
+                                disabled:opacity-40 disabled:cursor-not-allowed
+                                ${
+                                  isActive
+                                    ? "bg-indigo-100 text-indigo-700 hover:bg-indigo-200 ring-1 ring-indigo-500"
+                                    : "bg-transparent"
+                                }`}
             aria-pressed={isActive}
-            style={{ minWidth: "36px", minHeight: "36px" }} // Ensure consistent button size
+            style={{ minWidth: "36px", minHeight: "36px" }}
           >
             {item.label}
           </button>
@@ -181,7 +157,6 @@ const MenuBar: React.FC<MenuBarProps> = ({ editor, className, renderKey }) => {
 };
 const MemoizedMenuBar = React.memo(MenuBar);
 
-// --- TextEditor Component ---
 const TextEditor: React.FC<TextEditorProps> = ({
   content: propContent,
   onUpdate,
@@ -190,8 +165,7 @@ const TextEditor: React.FC<TextEditorProps> = ({
   wrapperClassName = "w-full border border-gray-300 rounded-md shadow-sm overflow-hidden bg-white focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500",
   menuBarClassName,
   editorContentClassName = "w-full text-base text-gray-900 focus:outline-none",
-  minHeight: propMinHeight = "150px",
-  maxHeight: propMaxHeight,
+  height = "150px",
 }) => {
   const [renderKey, setRenderKey] = useState(0);
 
@@ -200,8 +174,15 @@ const TextEditor: React.FC<TextEditorProps> = ({
       StarterKit.configure({ heading: false }),
       Underline,
       TextAlign.configure({ types: ["paragraph"], defaultAlignment: "left" }),
-      Placeholder.configure({ placeholder }),
-      // Highlight, // If you added it
+      Placeholder.configure({
+        placeholder: ({ editor }) => {
+          if (editor.getText().trim() === "") {
+            return placeholder || "";
+          }
+          // FIXED: Return an empty string instead of null
+          return "";
+        },
+      }),
     ],
     content: propContent || "",
     editable,
@@ -210,16 +191,16 @@ const TextEditor: React.FC<TextEditorProps> = ({
     },
     onUpdate: ({ editor: currentEditor }) => {
       if (onUpdate) {
-        onUpdate(currentEditor.getHTML());
+        const textContent = currentEditor.getText().trim();
+        const output = textContent === "" ? "" : currentEditor.getHTML();
+        onUpdate(output);
       }
     },
     editorProps: {
       attributes: {
         class:
           "prose prose-sm sm:prose-base max-w-none p-3 focus:outline-none custom-tiptap-editor",
-        style: `min-height: ${propMinHeight}; ${
-          propMaxHeight ? `max-height: ${propMaxHeight}; overflow-y: auto;` : ""
-        }`,
+        style: `height: ${height}; overflow-y: auto;`,
       },
     },
   });
@@ -227,6 +208,11 @@ const TextEditor: React.FC<TextEditorProps> = ({
   useEffect(() => {
     if (editor && propContent !== undefined) {
       const currentHTML = editor.getHTML();
+      const isEditorEmpty = editor.getText().trim() === "";
+      const isPropEmpty = propContent === "" || propContent === "<p></p>";
+
+      if (isEditorEmpty && isPropEmpty) return;
+
       if (currentHTML !== propContent) {
         editor.commands.setContent(propContent, false);
       }

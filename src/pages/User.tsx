@@ -92,7 +92,7 @@ const User: React.FC = () => {
   const handleFormSubmit = async (
     formData: any,
     editingUserId: string | null,
-    avatarData: AttachmentInput | null | undefined
+    avatarData: File | null | undefined
   ) => {
     if (!editingUserId) return;
 

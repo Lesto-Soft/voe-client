@@ -110,7 +110,6 @@ export const handleFileChange = (
     if (processingError) {
       setFileError(processingError);
     }
-
     // Return the new state array
     return [...prevAttachments, ...validFilesToAdd]; // Append valid files
   });

@@ -126,9 +126,10 @@ export const useCreateAnswer = (caseNumber: number) => {
   );
 
   const createAnswer = async (input: any) => {
+    console.log(input);
     try {
       const response = await createAnswerMutation({
-        variables: { input: { ...input } },
+        variables: input,
       });
       return response.data.createAnswer;
     } catch (err) {

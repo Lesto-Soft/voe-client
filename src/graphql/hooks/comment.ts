@@ -6,6 +6,7 @@ import {
 } from "../mutation/comment";
 import { GET_CASE_BY_CASE_NUMBER } from "../query/case";
 import { AttachmentInput } from "./case";
+import { UpdateCommentInput } from "../../components/global/EditCommentButton";
 
 export type CreateCommentInput = {
   case?: string;
@@ -28,7 +29,7 @@ export const useCreateComment = (caseNumber: number) => {
   const createComment = async (input: CreateCommentInput) => {
     try {
       const { data } = await createCommentMutation({
-        variables: { input },
+        variables: input,
       });
       return data.createComment;
     } catch (error) {
@@ -51,16 +52,9 @@ export const useUpdateComment = (caseNumber: number) => {
     }
   );
 
-  const updateComment = async (
-    input: {
-      content: string;
-      attachments?: AttachmentInput[];
-    },
-    id: string
-  ) => {
+  const updateComment = async (input: UpdateCommentInput, id: string) => {
     try {
-      console.log(input.attachments);
-
+      console.log(input);
       const { data } = await updateCommentMutation({
         variables: { input, id },
       });

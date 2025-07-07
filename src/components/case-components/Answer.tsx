@@ -123,10 +123,12 @@ const Answer: React.FC<{
         </div>
         {showCommentBox && (
           <AddComment
+            key={answer._id}
             t={t}
             answerId={answer._id}
             caseNumber={caseNumber}
             me={me}
+            inputId={`file-upload-comment-answer-${answer._id}`}
           />
         )}
       </div>
@@ -205,7 +207,6 @@ const Answer: React.FC<{
             </div>
             <div className="col-span-2">{answerContentAndAttachments}</div>
           </div>
-          {commentsSection}
         </div>
 
         {/* --- DESKTOP VIEW (FLEX) --- */}
@@ -256,10 +257,10 @@ const Answer: React.FC<{
                 </div>
               </div>
               <div>{answerContentAndAttachments}</div>
-              {commentsSection}
             </div>
           </div>
         </div>
+        {commentsSection}
       </div>
     </div>
   );

@@ -8,12 +8,19 @@ import { IAnswer } from "../../db/interfaces";
 import { readFileAsBase64 } from "../../utils/attachment-handling";
 import { AttachmentInput } from "../../graphql/hooks/case";
 import { useUpdateAnswer } from "../../graphql/hooks/answer";
+import { XMarkIcon } from "@heroicons/react/24/solid";
 
 interface EditButtonProps {
   answer: IAnswer;
   currentAttachments?: string[];
   caseNumber: number;
   me: any;
+}
+
+export interface UpdateAnswerInput {
+  content?: string;
+  attachments?: File[];
+  deletedAttachments?: string[];
 }
 
 const EditAnswerButton: React.FC<EditButtonProps> = ({
@@ -28,49 +35,36 @@ const EditAnswerButton: React.FC<EditButtonProps> = ({
 
   const { t } = useTranslation("modals");
   const [content, setContent] = useState<string>(answer.content || "");
-  const [attachments, setAttachments] = useState<File[]>([]);
+  const [existingAttachments, setExistingAttachments] = useState<string[]>([]);
+  const [newAttachments, setNewAttachments] = useState<File[]>([]);
   const { updateAnswer, loading, error } = useUpdateAnswer(caseNumber);
 
   useEffect(() => {
-    if (currentAttachments && currentAttachments.length > 0) {
-      Promise.all(
-        currentAttachments.map(async (url) => {
-          const response = await fetch(url);
-          const blob = await response.blob();
-          // Extract filename from URL or use a fallback
-          const filename = url.split("/").pop() || "attachment";
-          return new File([blob], filename, { type: blob.type });
-        })
-      ).then(setAttachments);
-    } else {
-      setAttachments([]);
-    }
-  }, [currentAttachments]);
+    // This runs when the component mounts or the initial comment data changes.
+    setContent(answer.content || "");
+    setExistingAttachments(answer.attachments || []);
+    setNewAttachments([]); // Always clear new files on open
+  }, [answer]);
+
+  const handleRemoveExistingAttachment = (urlToRemove: string) => {
+    setExistingAttachments((prev) => prev.filter((url) => url !== urlToRemove));
+  };
 
   const handleSave = async () => {
-    // --- Prepare Attachments ---
-    let attachmentInputs: AttachmentInput[] = [];
-    try {
-      attachmentInputs = await Promise.all(
-        attachments.map(async (file): Promise<AttachmentInput> => {
-          const base64Data = await readFileAsBase64(file);
-          return { filename: file.name, file: base64Data };
-        })
-      );
-    } catch (fileReadError) {
-      console.error("Client: Error reading files to base64:", fileReadError);
-      return;
-    }
+    const initialUrls = answer.attachments || [];
+    const deletedAttachments = initialUrls.filter(
+      (url) => !existingAttachments.includes(url)
+    );
+
+    const input: UpdateAnswerInput = {
+      content,
+      attachments: newAttachments.length > 0 ? newAttachments : undefined,
+      deletedAttachments:
+        deletedAttachments.length > 0 ? deletedAttachments : undefined,
+    };
 
     try {
-      await updateAnswer(
-        {
-          content,
-          attachments: attachmentInputs,
-        },
-        answer._id,
-        me._id
-      );
+      await updateAnswer(input, answer._id, me._id);
     } catch (error) {
       console.error("Error updating answer:", error);
     }
@@ -111,11 +105,45 @@ const EditAnswerButton: React.FC<EditButtonProps> = ({
               wrapperClassName="w-full border border-gray-300 rounded-lg shadow-sm overflow-hidden bg-white focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500"
             />
           </div>
+          <div className="space-y-3">
+            {/* List of existing files */}
+            {existingAttachments.length > 0 && (
+              <div className="mb-4">
+                <p className="text-xs font-semibold text-gray-600 mb-1">
+                  Текущи файлове:
+                </p>
+                <ul className="text-sm text-gray-800 space-y-1 rounded p-2 border border-gray-200 bg-gray-50 max-h-28 overflow-y-auto">
+                  {existingAttachments.map((url) => {
+                    const filename = url.split("/").pop() || url;
+                    return (
+                      <li
+                        key={url}
+                        className="flex justify-between items-center group p-1 rounded hover:bg-gray-200"
+                      >
+                        <span className="truncate pr-2" title={filename}>
+                          {filename}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveExistingAttachment(url)}
+                          className="text-red-500 hover:text-red-700"
+                          aria-label={`Remove ${filename}`}
+                        >
+                          <XMarkIcon className="h-5 w-5" />
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            )}
 
-          <FileAttachmentBtn
-            attachments={attachments}
-            setAttachments={setAttachments}
-          />
+            {/* Your FileAttachmentBtn now handles ONLY new files */}
+            <FileAttachmentBtn
+              attachments={newAttachments}
+              setAttachments={setNewAttachments}
+            />
+          </div>
 
           <div className="flex justify-end gap-2 mt-6">
             <Dialog.Close asChild>

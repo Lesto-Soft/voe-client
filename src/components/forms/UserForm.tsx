@@ -28,16 +28,11 @@ const VALIDATION = {
 const MAX_AVATAR_SIZE_MB = 3;
 const MAX_AVATAR_SIZE_BYTES = MAX_AVATAR_SIZE_MB * 1024 * 1024;
 
-interface AvatarInputData {
-  filename: string;
-  file: string; // base64 string
-}
-
 interface UserFormProps {
   onSubmit: (
     formData: any,
     editingUserId: string | null,
-    avatarData: AvatarInputData | null | undefined
+    avatarData: File | null | undefined
   ) => void;
   onClose: () => void;
   initialData: IUser | null;
@@ -47,19 +42,6 @@ interface UserFormProps {
   rolesError: any;
   isAdmin: boolean;
 }
-
-const blobToBase64 = (blob: Blob): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const base64String = (reader.result as string)?.split(",")[1];
-      if (base64String) resolve(base64String);
-      else reject(new Error("Could not convert Blob to base64."));
-    };
-    reader.onerror = (error) => reject(error);
-    reader.readAsDataURL(blob);
-  });
-};
 
 const isValidEmailFormat = (emailToTest: string): boolean =>
   /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailToTest);
@@ -376,31 +358,24 @@ const UserForm: React.FC<UserFormProps> = ({
     if (!isEditing) formDataObject.password = password;
     else if (newPassword) formDataObject.password = newPassword;
 
-    let avatarInputData: AvatarInputData | null | undefined = undefined;
-    if (finalCroppedBlob) {
-      try {
-        const base64String = await blobToBase64(finalCroppedBlob);
-        const filename = originalAvatarFile?.name
-          ? `cropped_${originalAvatarFile.name.replace(
-              /[^a-zA-Z0-9._-]/g,
-              "_"
-            )}`
-          : "cropped_avatar.png";
+    let avatarFile: File | null | undefined = undefined;
 
-        avatarInputData = { filename, file: base64String };
-      } catch (error) {
-        setFormSubmitError(
-          `Грешка при обработка на изрязания аватар: ${
-            error instanceof Error ? error.message : "Неизвестна грешка"
-          }`
-        );
-        return;
-      }
-    } else if (isRemovingAvatar && initialData?._id) {
-      avatarInputData = null;
+    if (finalCroppedBlob) {
+      // We have a new/edited avatar, so convert the Blob into a File object.
+      const filename = originalAvatarFile?.name
+        ? `cropped_${originalAvatarFile.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`
+        : "cropped_avatar.png";
+
+      avatarFile = new File([finalCroppedBlob], filename, {
+        type: finalCroppedBlob.type,
+      });
+    } else if (isRemovingAvatar && isEditing) {
+      // The user chose to remove their existing avatar.
+      avatarFile = null;
     }
 
-    onSubmit(formDataObject, initialData?._id || null, avatarInputData);
+    // Pass the raw File object, null, or undefined up to the parent component.
+    onSubmit(formDataObject, initialData?._id || null, avatarFile);
   };
 
   if (propsRolesLoading)

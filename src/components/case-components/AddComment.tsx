@@ -13,6 +13,7 @@ interface AddCommentProps {
   me: any; // User object, assuming it has an _id property
   caseNumber: number;
   answerId?: string;
+  inputId?: string; // Optional input ID for file attachment
 }
 
 // The AddComment component
@@ -22,6 +23,7 @@ const AddComment: React.FC<AddCommentProps> = ({
   me,
   caseNumber,
   answerId,
+  inputId,
 }) => {
   // State for attachments, file errors, content input, and submission errors
   const [attachments, setAttachments] = useState<File[]>([]);
@@ -29,8 +31,6 @@ const AddComment: React.FC<AddCommentProps> = ({
   const [content, setContent] = useState<string>("");
   const [submissionError, setSubmissionError] = useState<string | null>(null);
 
-  // Using the actual useCreateComment hook
-  // Note: This hook doesn't return 'data' in the provided snippet, so a data-driven success message isn't directly possible.
   const {
     createComment,
     loading,
@@ -77,28 +77,10 @@ const AddComment: React.FC<AddCommentProps> = ({
       return;
     }
 
-    let attachmentInputs: AttachmentInput[] = [];
-    try {
-      // Process attachments to base64
-      attachmentInputs = await Promise.all(
-        attachments.map(async (file): Promise<AttachmentInput> => {
-          const base64Data = await readFileAsBase64(file);
-          return { filename: file.name, file: base64Data };
-        })
-      );
-    } catch (fileReadError) {
-      console.error("Client: Error reading files to base64:", fileReadError);
-      setSubmissionError(
-        t("caseSubmission.errors.submission.fileProcessingError") ||
-          "Error processing file attachments."
-      );
-      return;
-    }
-
     try {
       const commentPayload: any = {
         // Define type more strictly if possible
-        attachments: attachmentInputs,
+        attachments,
         content,
         creator: me._id,
       };
@@ -108,10 +90,6 @@ const AddComment: React.FC<AddCommentProps> = ({
       } else if (answerId) {
         commentPayload.answer = answerId;
       } else {
-        // Handle case where neither caseId nor answerId is provided, if necessary
-        console.error(
-          "Error: caseId or answerId must be provided for a comment."
-        );
         setSubmissionError(
           t("caseSubmission.errors.submission.missingIdentifier") ||
             "Cannot submit comment without case or answer ID."
@@ -160,6 +138,7 @@ const AddComment: React.FC<AddCommentProps> = ({
     loading ||
     (!content.trim() && attachments.length === 0);
 
+  // console.log("opened AddComment component", inputId, attachments);
   return (
     <div>
       {/* Main container for the input area */}
@@ -199,7 +178,7 @@ const AddComment: React.FC<AddCommentProps> = ({
           {/* NOTE: For FileAttachmentAnswer to match height, its internal button should also be h-24.
               This might require changes within FileAttachmentAnswer or passing height props/classes. */}
           <FileAttachmentAnswer
-            inputId="file-upload-comment-answer"
+            inputId={inputId ?? "default"}
             attachments={attachments}
             setAttachments={setAttachments}
             setFileError={setFileError}

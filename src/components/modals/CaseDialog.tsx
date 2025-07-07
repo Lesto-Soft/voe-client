@@ -414,6 +414,7 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
                         className="block text-sm font-medium text-gray-700 mb-1"
                       >
                         {t("content")}
+                        <span className="text-red-500">*</span>
                       </label>
                       <TextEditor
                         content={formData.content}
@@ -437,6 +438,7 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
                         <div>
                           <p className="text-sm font-medium mb-3 text-gray-700">
                             {getBulgarianText("type", t, "Тип на сигнала")}
+                            <span className="text-red-500">*</span>
                           </p>
                           <div className="flex flex-wrap gap-x-6 gap-y-2 p-3 rounded-lg items-center">
                             {[
@@ -486,6 +488,7 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
                             t,
                             "Приоритет"
                           )}
+                          <span className="text-red-500">*</span>
                         </p>
                         <div className="flex flex-wrap gap-x-6 gap-y-2 p-3 rounded-lg items-center">
                           {[
@@ -535,7 +538,9 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
                     </div>
                     <div>
                       <p className="text-sm font-medium mb-3 text-gray-700">
-                        {`Категории (максимум ${MAX_SELECTED_CATEGORIES})`}
+                        {`Категории`}
+                        <span className="text-red-500">*</span>{" "}
+                        {`(максимум ${MAX_SELECTED_CATEGORIES})`}
                       </p>
                       <div className="flex flex-wrap gap-2">
                         {availableCategories.map((cat) => (

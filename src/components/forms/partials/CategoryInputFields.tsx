@@ -229,7 +229,8 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
           htmlFor="categoryName"
           className="mb-1 block text-sm font-medium text-gray-700"
         >
-          {t("Име на категория")} <span className="text-red-500">*</span>
+          {t("Име на категория")}
+          <span className="text-red-500">*</span>
         </label>
         <input
           type="text"
@@ -475,7 +476,8 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
           htmlFor="categoryProblem"
           className="mb-1 block text-sm font-medium text-gray-700"
         >
-          {t("Проблем")} <span className="text-red-500">*</span>
+          {t("Проблем")}
+          <span className="text-red-500">*</span>
         </label>
         <TextEditor
           content={problem}
@@ -502,7 +504,8 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
           htmlFor="categorySuggestion"
           className="mb-1 block text-sm font-medium text-gray-700"
         >
-          {t("Предложение")} <span className="text-red-500">*</span>
+          {t("Предложение")}
+          <span className="text-red-500">*</span>
         </label>
         <TextEditor
           content={suggestion}

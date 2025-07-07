@@ -45,6 +45,7 @@ const CaseSubmissionLeftPanel: React.FC<CaseSubmissionLeftPanelProps> = ({
               className="block text-sm font-medium text-gray-700 mb-1"
             >
               {t("caseSubmission.usernameLabel")}
+              <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -88,6 +89,7 @@ const CaseSubmissionLeftPanel: React.FC<CaseSubmissionLeftPanelProps> = ({
               className="block text-sm font-medium text-gray-700 mb-1"
             >
               {t("caseSubmission.fullNameLabel")}
+              <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -109,6 +111,7 @@ const CaseSubmissionLeftPanel: React.FC<CaseSubmissionLeftPanelProps> = ({
             className="block text-sm font-medium text-gray-700 mb-1"
           >
             {t("caseSubmission.descriptionLabel")}
+            <span className="text-red-500">*</span>
           </label>
           <TextEditor
             content={content}

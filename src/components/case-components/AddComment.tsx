@@ -37,12 +37,18 @@ const AddComment: React.FC<AddCommentProps> = ({
     error: apiError,
   } = useCreateComment(caseNumber);
 
-  // Memoized character count and check if content is too long
   const charCount = useMemo(() => content.length, [content]);
+
+  // ADDED: validation for both min and max length
   const isContentTooLong = useMemo(
-    () => charCount > COMMENT_CONTENT.MAX, // Using COMMENT_CONTENT for max length
+    () => charCount > COMMENT_CONTENT.MAX,
     [charCount]
   );
+  const isContentTooShort = useMemo(
+    () => charCount > 0 && charCount < COMMENT_CONTENT.MIN,
+    [charCount]
+  );
+  const isInvalid = isContentTooLong || isContentTooShort;
 
   // Effect to handle API errors from the useCreateComment hook
   useEffect(() => {
@@ -60,11 +66,16 @@ const AddComment: React.FC<AddCommentProps> = ({
     event.preventDefault(); // Prevent default form submission behavior
     setSubmissionError(null); // Clear previous errors
 
-    // Validate content length
+    // UPDATED: Validate content length
     if (isContentTooLong) {
       setSubmissionError(
-        t("caseSubmission.errors.submission.contentTooLongComment") || // Specific key for comment
-          "Comment is too long."
+        `Коментарът не може да надвишава ${COMMENT_CONTENT.MAX} символа.`
+      );
+      return;
+    }
+    if (content.length > 0 && content.length < COMMENT_CONTENT.MIN) {
+      setSubmissionError(
+        `Коментарът трябва да е поне ${COMMENT_CONTENT.MIN} символа.`
       );
       return;
     }
@@ -134,7 +145,7 @@ const AddComment: React.FC<AddCommentProps> = ({
 
   // Determine if the submit button should be disabled
   const isSubmitDisabled =
-    isContentTooLong ||
+    isInvalid || // UPDATED
     loading ||
     (!content.trim() && attachments.length === 0);
 
@@ -150,25 +161,23 @@ const AddComment: React.FC<AddCommentProps> = ({
           {/* Container for the textarea and character counter */}
           <div className="flex-grow relative">
             <textarea
-              className={`border border-gray-300 bg-white rounded-lg p-3 w-full h-24 resize-none focus:outline-none focus:ring-2 ${
-                // h-24 as per original user code
-                isContentTooLong
-                  ? "ring-red-500 border-red-500" // Style for content too long
-                  : "focus:ring-btnRedHover focus:border-btnRedHover" // Standard focus style
+              className={`border bg-white rounded-lg p-3 w-full h-24 resize-none focus:outline-none focus:ring-1 ${
+                isInvalid
+                  ? "ring-red-500 border-red-500" // Style for any invalid state
+                  : "border-gray-300 focus:ring-blue-500"
               } transition-colors duration-150`}
               placeholder={t("writeComment") || "Write your comment..."}
               value={content}
               onChange={handleContentChange}
-              aria-invalid={isContentTooLong}
-              aria-describedby="comment-char-counter submission-error-display" // Unique id for counter
+              minLength={COMMENT_CONTENT.MIN}
+              maxLength={COMMENT_CONTENT.MAX}
+              aria-invalid={isInvalid}
+              aria-describedby="comment-char-counter submission-error-display"
             />
-            {/* Character counter display */}
             <div
-              id="comment-char-counter" // Unique id
+              id="comment-char-counter"
               className={`absolute bottom-3 right-4 text-xs ${
-                isContentTooLong
-                  ? "text-red-600 font-semibold"
-                  : "text-gray-500"
+                isInvalid ? "text-red-600 font-semibold" : "text-gray-500"
               } bg-white px-1 rounded shadow-sm`}
             >
               {charCount}/{COMMENT_CONTENT.MAX}

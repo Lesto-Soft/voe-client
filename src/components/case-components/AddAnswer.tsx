@@ -1,12 +1,11 @@
 import { useState, useMemo, useEffect } from "react";
-import FileAttachmentAnswer from "../global/FileAttachmentAnswer"; // Actual component
+import FileAttachmentAnswer from "../global/FileAttachmentAnswer";
 import { PaperAirplaneIcon, XMarkIcon } from "@heroicons/react/24/solid";
-import { AttachmentInput } from "../../graphql/mutation/user"; // Actual type
-import { readFileAsBase64 } from "../../utils/attachment-handling"; // Actual utility
-import { useCreateAnswer } from "../../graphql/hooks/answer"; // Actual hook
-import { ANSWER_CONTENT } from "../../utils/GLOBAL_PARAMETERS"; // Actual constant for MAX_CHARS
+import { useCreateAnswer } from "../../graphql/hooks/answer";
+import { ANSWER_CONTENT } from "../../utils/GLOBAL_PARAMETERS";
 import SimpleTextEditor from "../forms/partials/SimplifiedTextEditor";
 import { getTextLength } from "../../utils/contentRenderer";
+import ImagePreviewModal from "../modals/ImagePreviewModal";
 
 // Interface for the props of the AddAnswer component
 interface AddAnswerProps {
@@ -157,6 +156,22 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
   const isSubmitDisabled =
     loading || getTextLength(content) < ANSWER_CONTENT.MIN;
 
+  // Memoize object URLs for each file
+  const fileObjectUrls = useMemo(() => {
+    const map = new Map<string, string>();
+    attachments.forEach((file) => {
+      map.set(file.name + "-" + file.lastModified, URL.createObjectURL(file));
+    });
+    return map;
+  }, [attachments]);
+
+  // Cleanup object URLs on unmount or when attachments change
+  useEffect(() => {
+    return () => {
+      fileObjectUrls.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [fileObjectUrls]);
+
   return (
     <div>
       {/* Main container for the input area */}
@@ -238,28 +253,42 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
       {attachments.length > 0 && (
         <div className="mx-5 mt-2 text-sm text-gray-600 space-y-1 overflow-y-auto rounded p-2 bg-gray-100 border border-gray-200 max-h-32">
           <div className="flex flex-wrap gap-2">
-            {attachments.map((file) => (
-              <div
-                key={file.name + "-" + file.lastModified + "-" + file.size} // Enhanced key for better uniqueness
-                className="flex items-center gap-2 px-3 py-1.5 text-sm bg-gray-200 rounded-full hover:bg-gray-300"
-                title={file.name}
-              >
-                <span className="truncate max-w-[150px] sm:max-w-xs">
-                  {file.name}
-                </span>{" "}
-                {/* Truncate long file names */}
-                <button
-                  type="button"
-                  onClick={() => handleRemoveAttachment(file.name)}
-                  className="p-0.5 rounded-full hover:bg-red-100 focus:outline-none focus:ring-1 focus:ring-red-500"
-                  aria-label={`${t("removeFile") || "Remove file"} ${
-                    file.name
-                  }`}
+            {attachments.map((file) => {
+              const fileKey = file.name + "-" + file.lastModified;
+              const fileUrl = fileObjectUrls.get(fileKey) || "";
+
+              return (
+                <div
+                  key={file.name + "-" + file.lastModified + "-" + file.size}
+                  className="flex items-center gap-2 px-3 py-1.5 text-sm bg-gray-200 rounded-full hover:bg-gray-300"
+                  title={file.name}
                 >
-                  <XMarkIcon className="h-4 w-4 text-btnRed hover:text-red-700" />
-                </button>
-              </div>
-            ))}
+                  <ImagePreviewModal
+                    imageUrl={fileUrl}
+                    fileName={file.name}
+                    triggerElement={
+                      <button
+                        type="button"
+                        className="truncate max-w-[150px] sm:max-w-xs cursor-pointer"
+                        title={file.name}
+                      >
+                        {file.name}
+                      </button>
+                    }
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveAttachment(file.name)}
+                    className="p-0.5 rounded-full hover:bg-red-100 focus:outline-none focus:ring-1 focus:ring-red-500 cursor-pointer"
+                    aria-label={`${t("removeFile") || "Remove file"} ${
+                      file.name
+                    }`}
+                  >
+                    <XMarkIcon className="h-4 w-4 text-btnRed hover:text-red-700" />
+                  </button>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

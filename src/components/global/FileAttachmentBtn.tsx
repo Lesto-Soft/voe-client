@@ -2,6 +2,8 @@ import React from "react";
 import { MAX_FILES, MAX_FILE_SIZE_MB } from "../../utils/attachment-handling";
 import { handleFileChange } from "../../utils/attachment-handling";
 import { useTranslation } from "react-i18next";
+import ImagePreviewModal from "../modals/ImagePreviewModal";
+
 interface FileAttachmentBtnProps {
   attachments: File[];
   setAttachments: React.Dispatch<React.SetStateAction<File[]>>;
@@ -13,6 +15,23 @@ const FileAttachmentBtn: React.FC<FileAttachmentBtnProps> = ({
 }) => {
   const { t } = useTranslation("caseSubmission"); // Assuming you have a translation function available
   const [fileError, setFileError] = React.useState<string | null>(null); // State for file error message
+
+  // Memoize object URLs for each file
+  const fileObjectUrls = React.useMemo(() => {
+    const map = new Map<string, string>();
+    attachments.forEach((file) => {
+      map.set(file.name + "-" + file.lastModified, URL.createObjectURL(file));
+    });
+    return map;
+  }, [attachments]);
+
+  // Cleanup object URLs on unmount or when attachments change
+  React.useEffect(() => {
+    return () => {
+      fileObjectUrls.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [fileObjectUrls]);
+
   const handleRemoveAttachment = (fileNameToRemove: string) => {
     setFileError(null);
     setAttachments((prevAttachments) =>
@@ -86,30 +105,42 @@ const FileAttachmentBtn: React.FC<FileAttachmentBtnProps> = ({
           {attachments.length > 0 && (
             // Apply max-height and overflow to this inner div
             <ul className="list-none pl-1 space-y-1">
-              {attachments.map((file) => (
-                <li
-                  key={file.name + "-" + file.lastModified}
-                  className="flex justify-between items-center group p-1 rounded hover:bg-gray-200" // Hover effect on item
-                >
-                  <span
-                    className="truncate pr-2 group-hover:underline"
-                    title={file.name}
+              {attachments.map((file) => {
+                const fileKey = file.name + "-" + file.lastModified;
+                const fileUrl = fileObjectUrls.get(fileKey) || "";
+
+                return (
+                  <li
+                    key={file.name + "-" + file.lastModified}
+                    className="flex justify-between items-center group p-1 rounded hover:bg-gray-200"
                   >
-                    {file.name}{" "}
-                    <span className="text-xs text-gray-500">
-                      ({(file.size / 1024 / 1024).toFixed(2)} MB)
-                    </span>
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveAttachment(file.name)}
-                    className="ml-2 px-1.5 py-0.5 text-red-500 hover:text-red-700 text-lg font-bold leading-none rounded focus:outline-none focus:ring-1 focus:ring-red-500 cursor-pointer"
-                    aria-label={`Remove ${file.name}`}
-                  >
-                    &times;
-                  </button>
-                </li>
-              ))}
+                    <ImagePreviewModal
+                      imageUrl={fileUrl}
+                      fileName={file.name}
+                      triggerElement={
+                        <button
+                          type="button"
+                          className="truncate pr-2 group-hover:underline cursor-pointer text-left flex-1"
+                          title={file.name}
+                        >
+                          {file.name}{" "}
+                          <span className="text-xs text-gray-500">
+                            ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                          </span>
+                        </button>
+                      }
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveAttachment(file.name)}
+                      className="ml-2 px-1.5 py-0.5 text-red-500 hover:text-red-700 text-lg font-bold leading-none rounded focus:outline-none focus:ring-1 focus:ring-red-500 cursor-pointer"
+                      aria-label={`Remove ${file.name}`}
+                    >
+                      &times;
+                    </button>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>

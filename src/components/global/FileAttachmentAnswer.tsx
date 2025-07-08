@@ -1,5 +1,5 @@
 import React from "react";
-import { MAX_FILES, MAX_FILE_SIZE_MB } from "../../utils/attachment-handling";
+import { MAX_FILES } from "../../utils/attachment-handling";
 import { handleFileChange } from "../../utils/attachment-handling";
 import { useTranslation } from "react-i18next";
 import { PaperClipIcon } from "@heroicons/react/24/solid";

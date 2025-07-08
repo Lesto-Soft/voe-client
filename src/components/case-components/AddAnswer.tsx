@@ -186,8 +186,8 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
               onUpdate={handleContentChange}
               placeholder={"Напишете отговор..."}
               height="123px"
-              // Simply pass the maxLength prop!
               maxLength={ANSWER_CONTENT.MAX}
+              minLength={ANSWER_CONTENT.MIN}
               // The wrapperClassName is now simpler as it doesn't need validation styles
               wrapperClassName="transition-colors duration-150"
             />

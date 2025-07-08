@@ -4,6 +4,8 @@ import React, { useState } from "react";
 import { ICategory } from "../../db/interfaces"; // Adjust path
 import { useCategoryFormState } from "./hooks/useCategoryFormState"; // Adjust path
 import CategoryInputFields from "./partials/CategoryInputFields"; // Adjust path
+import { getTextLength } from "../../utils/contentRenderer";
+import { CATEGORY_HELPERS } from "../../utils/GLOBAL_PARAMETERS";
 
 export interface CategoryFormData {
   name: string;
@@ -78,8 +80,8 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
     setSuggestionError(null);
 
     const finalTrimmedName = name.trim();
-    const finalTrimmedProblem = problem.trim();
-    const finalTrimmedSuggestion = suggestion.trim();
+    const problemLength = getTextLength(problem);
+    const suggestionLength = getTextLength(suggestion);
     let hasValidationErrors = false;
 
     if (!finalTrimmedName) {
@@ -95,18 +97,28 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
       hasValidationErrors = true;
     }
 
-    // Validation for 'problem' field (if not empty)
-    if (finalTrimmedProblem.length < 10) {
+    // UPDATED validation for 'problem' field
+    if (problemLength < CATEGORY_HELPERS.MIN) {
       setProblemError(
-        "Описанието на проблема е задължително и трябва да е поне 10 символа."
+        `Описанието на проблема е задължително и трябва да е поне ${CATEGORY_HELPERS.MIN} символа.`
+      );
+      hasValidationErrors = true;
+    } else if (problemLength > CATEGORY_HELPERS.MAX) {
+      setProblemError(
+        `Описанието на проблема не може да надвишава ${CATEGORY_HELPERS.MAX} символа.`
       );
       hasValidationErrors = true;
     }
 
-    // Validation for 'suggestion' field (if not empty)
-    if (finalTrimmedSuggestion.length < 10) {
+    // UPDATED validation for 'suggestion' field
+    if (suggestionLength < CATEGORY_HELPERS.MIN) {
       setSuggestionError(
-        "Описанието на предложението е задължително и трябва да е поне 10 символа."
+        `Описанието на предложението е задължително и трябва да е поне ${CATEGORY_HELPERS.MIN} символа.`
+      );
+      hasValidationErrors = true;
+    } else if (suggestionLength > CATEGORY_HELPERS.MAX) {
+      setSuggestionError(
+        `Описанието на предложението не може да надвишава ${CATEGORY_HELPERS.MAX} символа.`
       );
       hasValidationErrors = true;
     }
@@ -117,8 +129,8 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
 
     const formDataObject: CategoryFormData = {
       name: finalTrimmedName,
-      problem: finalTrimmedProblem || undefined,
-      suggestion: finalTrimmedSuggestion || undefined,
+      problem: problem, // Send the full HTML
+      suggestion: suggestion, // Send the full HTML
       expertIds: expertIds.length > 0 ? expertIds : undefined,
       managerIds: managerIds.length > 0 ? managerIds : undefined,
       archived: archived,

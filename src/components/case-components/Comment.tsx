@@ -57,7 +57,7 @@ const Comment: React.FC<CommentProps> = ({ comment, me, caseNumber }) => {
 
       {/* Right: Content */}
       <div className="flex-1 flex flex-col">
-        <div className="text-sm text-gray-800 whitespace-pre-line bg-gray-50 rounded p-3 max-h-32 overflow-y-auto">
+        <div className="text-sm text-gray-800 whitespace-pre-line bg-gray-50 rounded p-3 max-h-32 overflow-y-auto break-all">
           {comment.content}
         </div>
         {comment.attachments && comment.attachments.length > 0 && (

@@ -7,6 +7,8 @@ import React, {
   ChangeEvent,
   FormEvent,
 } from "react";
+import { CASE_CONTENT } from "../../../../utils/GLOBAL_PARAMETERS";
+import { getTextLength } from "../../../../utils/contentRenderer";
 import { useNavigate } from "react-router"; // Corrected import
 import { useLazyQuery, ApolloError } from "@apollo/client";
 import { useTranslation } from "react-i18next";
@@ -281,6 +283,22 @@ export const useCaseFormState = ({
       );
       return;
     }
+    // --- Content Length Validation ---
+    const textLength = getTextLength(content);
+    if (content.trim().length > 0 && textLength < CASE_CONTENT.MIN) {
+      setSubmissionError(
+        `Описанието трябва да е поне ${CASE_CONTENT.MIN} символа.`
+      );
+      return;
+    }
+    if (textLength > CASE_CONTENT.MAX) {
+      setSubmissionError(
+        `Описанието не може да бъде по-дълго от ${CASE_CONTENT.MAX} символа.`
+      );
+      return;
+    }
+    // --- End Validation ---
+
     if (selectedCategories.length === 0) {
       setSubmissionError(t("caseSubmission.errors.submission.missingCategory"));
       return;

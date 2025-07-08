@@ -123,7 +123,8 @@ const CaseSubmissionLeftPanel: React.FC<CaseSubmissionLeftPanelProps> = ({
             editable={true}
             height="160px"
             maxLength={CASE_CONTENT.MAX}
-            wrapperClassName="w-full border border-gray-300 rounded-md shadow-sm overflow-hidden bg-white focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500"
+            minLength={CASE_CONTENT.MIN}
+            wrapperClassName="w-full rounded-md shadow-sm overflow-hidden bg-white"
           />
         </div>
         <FileAttachmentBtn

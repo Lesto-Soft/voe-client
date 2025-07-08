@@ -81,10 +81,14 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
 }) => {
   const t = (key: string) => key; // Placeholder for translations
 
-  // --- NEW: Calculate character counts and check length limits ---
+  // --- Calculate character counts and check all length limits ---
   const problemCharCount = useMemo(() => getTextLength(problem), [problem]);
   const isProblemTooLong = useMemo(
     () => problemCharCount > CATEGORY_HELPERS.MAX,
+    [problemCharCount]
+  );
+  const isProblemTooShort = useMemo(
+    () => problemCharCount > 0 && problemCharCount < CATEGORY_HELPERS.MIN,
     [problemCharCount]
   );
 
@@ -94,6 +98,10 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
   );
   const isSuggestionTooLong = useMemo(
     () => suggestionCharCount > CATEGORY_HELPERS.MAX,
+    [suggestionCharCount]
+  );
+  const isSuggestionTooShort = useMemo(
+    () => suggestionCharCount > 0 && suggestionCharCount < CATEGORY_HELPERS.MIN,
     [suggestionCharCount]
   );
 
@@ -485,17 +493,25 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
           placeholder={t("Опишете проблема...")}
           height="120px"
           maxLength={CATEGORY_HELPERS.MAX}
-          wrapperClassName={isProblemTooLong ? "!border-red-500" : ""}
+          minLength={CATEGORY_HELPERS.MIN}
+          wrapperClassName="w-full rounded-md shadow-sm overflow-hidden bg-white"
         />
-        {/* NEW: Display length error */}
+        {/* UPDATED: Display more specific length errors */}
         <p
           className={`${errorPlaceholderClass} ${
-            problemError || isProblemTooLong ? "text-red-500" : ""
+            problemError || isProblemTooLong || isProblemTooShort
+              ? "text-red-500"
+              : ""
           }`}
         >
-          {isProblemTooLong
-            ? `Съдържанието надвишава лимита от ${CATEGORY_HELPERS.MAX} символа.`
-            : problemError || <>&nbsp;</>}
+          {problemError}
+          {isProblemTooLong &&
+            `Съдържанието надвишава лимита от ${CATEGORY_HELPERS.MAX} символа.`}
+          {isProblemTooShort &&
+            `Съдържанието трябва да е поне ${CATEGORY_HELPERS.MIN} символа.`}
+          {!problemError && !isProblemTooLong && !isProblemTooShort && (
+            <>&nbsp;</>
+          )}
         </p>
       </div>
 
@@ -513,17 +529,25 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
           placeholder={t("Напишете предложение...")}
           height="120px"
           maxLength={CATEGORY_HELPERS.MAX}
-          wrapperClassName={isSuggestionTooLong ? "!border-red-500" : ""}
+          minLength={CATEGORY_HELPERS.MIN}
+          wrapperClassName="w-full rounded-md shadow-sm overflow-hidden bg-white"
         />
-        {/* NEW: Display length error */}
+        {/* UPDATED: Display more specific length errors */}
         <p
           className={`${errorPlaceholderClass} ${
-            suggestionError || isSuggestionTooLong ? "text-red-500" : ""
+            suggestionError || isSuggestionTooLong || isSuggestionTooShort
+              ? "text-red-500"
+              : ""
           }`}
         >
-          {isSuggestionTooLong
-            ? `Съдържанието надвишава лимита от ${CATEGORY_HELPERS.MAX} символа.`
-            : suggestionError || <>&nbsp;</>}
+          {suggestionError}
+          {isSuggestionTooLong &&
+            `Съдържанието надвишава лимита от ${CATEGORY_HELPERS.MAX} символа.`}
+          {isSuggestionTooShort &&
+            `Съдържанието трябва да е поне ${CATEGORY_HELPERS.MIN} символа.`}
+          {!suggestionError &&
+            !isSuggestionTooLong &&
+            !isSuggestionTooShort && <>&nbsp;</>}
         </p>
       </div>
     </>

@@ -21,6 +21,7 @@ import {
 } from "../../graphql/hooks/case";
 import TextEditor from "../forms/partials/TextEditor";
 import SuccessConfirmationModal from "./SuccessConfirmationModal";
+import { getTextLength } from "../../utils/contentRenderer";
 
 // Define an interface for the form data
 interface CaseFormData {
@@ -243,8 +244,16 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
     e.preventDefault();
     setError(null);
 
-    if (!formData.content.trim()) {
-      setError("Моля въведете съдържание на сигнала.");
+    const textLength = getTextLength(formData.content);
+
+    if (textLength < CASE_CONTENT.MIN) {
+      setError(`Съдържанието трябва да е поне ${CASE_CONTENT.MIN} символа.`);
+      return;
+    }
+    if (textLength > CASE_CONTENT.MAX) {
+      setError(
+        `Съдържанието не може да надвишава ${CASE_CONTENT.MAX} символа.`
+      );
       return;
     }
     if (formData.categoryIds.length === 0) {
@@ -429,7 +438,8 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
                         editable={true}
                         height="150px"
                         maxLength={CASE_CONTENT.MAX}
-                        wrapperClassName="w-full border border-gray-300 rounded-md shadow-sm overflow-hidden bg-white"
+                        minLength={CASE_CONTENT.MIN}
+                        wrapperClassName="w-full rounded-md shadow-sm overflow-hidden bg-white"
                       />
                     </div>
                     {/* ... form fields remain the same */}

@@ -155,13 +155,12 @@ const AddComment: React.FC<AddCommentProps> = ({
       {/* Main container for the input area */}
       <div className="flex flex-col gap-2 mx-5">
         {/* Flex container for textarea, attachment button, and submit button */}
-        <div className="flex items-start gap-2">
-          {" "}
-          {/* Align tops, removed inner mx-5 */}
+        {/* UPDATED: Container now stretches children to be equal height */}
+        <div className="flex items-stretch gap-2">
           {/* Container for the textarea and character counter */}
           <div className="flex-grow relative">
             <textarea
-              className={`border bg-white rounded-lg p-3 w-full h-24 resize-none focus:outline-none focus:ring-1 ${
+              className={`border border-gray-300 bg-white rounded-lg p-3 w-full h-full resize-none focus:outline-none focus:ring-1 ${
                 isInvalid
                   ? "ring-red-500 border-red-500" // Style for any invalid state
                   : "border-gray-300 focus:ring-blue-500"
@@ -198,7 +197,7 @@ const AddComment: React.FC<AddCommentProps> = ({
             onClick={submitComment}
             disabled={isSubmitDisabled}
             aria-label={t("submitComment") || "Submit Comment"}
-            className={`flex items-center justify-center h-24 w-24 rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-btnRedHover disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150`}
+            className={`flex items-center justify-center h-auto w-24 rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-btnRedHover disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150`}
             // h-24 to match textarea, w-24 for a squarer look with the icon
           >
             {loading ? (

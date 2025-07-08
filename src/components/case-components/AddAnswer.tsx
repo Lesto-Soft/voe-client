@@ -161,20 +161,16 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
     <div>
       {/* Main container for the input area */}
       <div className="flex flex-col gap-2 mx-5">
-        {/* Flex container for TextEditor, attachment button, and submit button */}
-        {/* items-start will align the tops of the flex items */}
-        <div className="flex items-start gap-2">
+        <div className="flex items-stretch gap-2">
           {/* Container for the TextEditor and character counter */}
           <div className="flex-grow relative min-w-0 max-w-full">
             <SimpleTextEditor
               content={content}
               onUpdate={handleContentChange}
               placeholder={"Напишете отговор..."}
-              height="123px"
               maxLength={ANSWER_CONTENT.MAX}
               minLength={ANSWER_CONTENT.MIN}
-              // The wrapperClassName is now simpler as it doesn't need validation styles
-              wrapperClassName="transition-colors duration-150"
+              wrapperClassName="transition-colors duration-150 h-36"
             />
           </div>
           {/* File attachment component */}
@@ -190,7 +186,7 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
             onClick={submitAnswer}
             disabled={isSubmitDisabled}
             aria-label={t("submitAnswer") || "Submit Answer"}
-            className={`flex items-center justify-center h-36 w-24 rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-btnRedHover disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150`}
+            className={`flex items-center justify-center h-36 w-24 min-w-24 rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-btnRedHover disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150`}
           >
             {loading ? (
               // Loading spinner

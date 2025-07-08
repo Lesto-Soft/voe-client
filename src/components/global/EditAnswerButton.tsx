@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { PencilIcon } from "@heroicons/react/24/outline";
+import { PencilIcon, ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import * as Dialog from "@radix-ui/react-dialog";
 import { useTranslation } from "react-i18next";
 import FileAttachmentBtn from "./FileAttachmentBtn";
@@ -9,6 +9,8 @@ import { readFileAsBase64 } from "../../utils/attachment-handling";
 import { AttachmentInput } from "../../graphql/hooks/case";
 import { useUpdateAnswer } from "../../graphql/hooks/answer";
 import { XMarkIcon } from "@heroicons/react/24/solid";
+import { ANSWER_CONTENT } from "../../utils/GLOBAL_PARAMETERS";
+import { getTextLength } from "../../utils/contentRenderer";
 
 interface EditButtonProps {
   answer: IAnswer;
@@ -34,23 +36,45 @@ const EditAnswerButton: React.FC<EditButtonProps> = ({
   }
 
   const { t } = useTranslation("modals");
+  const [isOpen, setIsOpen] = useState(false);
   const [content, setContent] = useState<string>(answer.content || "");
   const [existingAttachments, setExistingAttachments] = useState<string[]>([]);
   const [newAttachments, setNewAttachments] = useState<File[]>([]);
-  const { updateAnswer, loading, error } = useUpdateAnswer(caseNumber);
+  const [error, setError] = useState<string | null>(null); // State for validation errors
+  const {
+    updateAnswer,
+    loading,
+    error: apiError,
+  } = useUpdateAnswer(caseNumber);
 
   useEffect(() => {
-    // This runs when the component mounts or the initial comment data changes.
-    setContent(answer.content || "");
-    setExistingAttachments(answer.attachments || []);
-    setNewAttachments([]); // Always clear new files on open
-  }, [answer]);
+    if (isOpen) {
+      setContent(answer.content || "");
+      setExistingAttachments(answer.attachments || []);
+      setNewAttachments([]);
+      setError(null); // Clear errors when modal opens
+    }
+  }, [isOpen, answer]);
 
   const handleRemoveExistingAttachment = (urlToRemove: string) => {
     setExistingAttachments((prev) => prev.filter((url) => url !== urlToRemove));
   };
 
   const handleSave = async () => {
+    setError(null); // Clear previous errors
+
+    // --- Validation Block ---
+    const textLength = getTextLength(content);
+    if (textLength < ANSWER_CONTENT.MIN) {
+      setError(`Отговорът трябва да е поне ${ANSWER_CONTENT.MIN} символа.`);
+      return; // Stop the submission
+    }
+    if (textLength > ANSWER_CONTENT.MAX) {
+      setError(`Отговорът не може да надвишава ${ANSWER_CONTENT.MAX} символа.`);
+      return; // Stop the submission
+    }
+    // --- End Validation ---
+
     const initialUrls = answer.attachments || [];
     const deletedAttachments = initialUrls.filter(
       (url) => !existingAttachments.includes(url)
@@ -65,16 +89,19 @@ const EditAnswerButton: React.FC<EditButtonProps> = ({
 
     try {
       await updateAnswer(input, answer._id, me._id);
-    } catch (error) {
-      console.error("Error updating answer:", error);
+      setIsOpen(false); // Close dialog on success
+    } catch (err: any) {
+      console.error("Error updating answer:", err);
+      // Set the error state with the message from the backend
+      setError(err.message || "Възникна грешка при записа.");
     }
   };
 
   if (loading) return <div>Loading...</div>;
-  if (error) return <div>Error updating answer</div>;
+  if (apiError && !isOpen) return <div>Error updating answer</div>;
 
   return (
-    <Dialog.Root>
+    <Dialog.Root open={isOpen} onOpenChange={setIsOpen}>
       <Dialog.Trigger asChild>
         <button
           className="hover:cursor-pointer ml-2 flex items-center px-2 py-1 rounded text-xs font-medium border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 transition"
@@ -101,9 +128,20 @@ const EditAnswerButton: React.FC<EditButtonProps> = ({
               onUpdate={(html) => setContent(html)}
               placeholder={t("writeHere", "Пишете тук...")}
               height="123px"
-              wrapperClassName="w-full border border-gray-300 rounded-lg shadow-sm overflow-hidden bg-white focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500"
+              minLength={ANSWER_CONTENT.MIN}
+              maxLength={ANSWER_CONTENT.MAX}
+              wrapperClassName="w-full rounded-lg shadow-sm overflow-hidden bg-white"
             />
           </div>
+
+          {/* Error display */}
+          {error && (
+            <div className="mt-4 flex items-start p-3 bg-red-50 border border-red-200 rounded-lg">
+              <ExclamationCircleIcon className="h-5 w-5 text-red-400 mr-2 mt-0.5 flex-shrink-0" />
+              <p className="text-sm text-red-800">{error}</p>
+            </div>
+          )}
+
           <div className="space-y-3">
             {/* List of existing files */}
             {existingAttachments.length > 0 && (

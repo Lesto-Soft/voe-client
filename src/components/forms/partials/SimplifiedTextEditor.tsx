@@ -3,6 +3,7 @@ import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
 import Placeholder from "@tiptap/extension-placeholder";
+import { getTextLength } from "../../../utils/contentRenderer";
 
 interface SimpleTextEditorProps {
   content?: string;
@@ -11,6 +12,7 @@ interface SimpleTextEditorProps {
   height?: string;
   wrapperClassName?: string;
   maxLength?: number;
+  minLength?: number;
 }
 
 const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
@@ -20,12 +22,22 @@ const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
   height = "96px",
   wrapperClassName,
   maxLength,
+  minLength,
 }) => {
   const [charCount, setCharCount] = useState(0);
+
   const isContentTooLong = useMemo(
     () => maxLength && charCount > maxLength,
     [charCount, maxLength]
   );
+
+  const isContentTooShort = useMemo(
+    // Content is too short if minLength is defined, there's some text, but it's less than the minimum.
+    () => minLength && charCount > 0 && charCount < minLength,
+    [charCount, minLength]
+  );
+
+  const isInvalid = isContentTooLong || isContentTooShort;
 
   const editor = useEditor({
     extensions: [
@@ -66,15 +78,9 @@ const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
     },
   });
 
+  // This effect syncs the character count when the initial content is loaded
   useEffect(() => {
-    if (content) {
-      // Create a temporary element to strip HTML and get text length
-      const tempDiv = document.createElement("div");
-      tempDiv.innerHTML = content;
-      setCharCount(tempDiv.innerText.length || 0);
-    } else {
-      setCharCount(0);
-    }
+    setCharCount(getTextLength(content || ""));
   }, [content]);
 
   // This effect syncs external content changes to the editor
@@ -82,7 +88,7 @@ const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
     if (editor && content !== undefined) {
       const currentHTML = editor.getHTML();
       const isEditorEmpty = editor.getText().trim() === "";
-      const isPropEmpty = content === "" || content === "<p></p>";
+      const isPropEmpty = !content || content === "<p></p>";
 
       if (isEditorEmpty && isPropEmpty) return;
 
@@ -96,8 +102,8 @@ const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
     relative w-full border rounded-md shadow-sm overflow-hidden bg-white 
     focus-within:ring-1 transition-colors duration-150
     ${
-      isContentTooLong
-        ? "border-red-500 focus-within:ring-red-500"
+      isInvalid
+        ? "border-red-200 focus-within:ring-red-100"
         : "border-gray-300 focus-within:ring-blue-500"
     }
     ${wrapperClassName || ""}
@@ -149,7 +155,7 @@ const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
       {maxLength && (
         <div
           className={`absolute bottom-2 right-4 text-xs ${
-            isContentTooLong ? "text-red-600 font-semibold" : "text-gray-500"
+            isInvalid ? "text-red-600 font-semibold" : "text-gray-500"
           } bg-white px-1 rounded shadow-sm`}
         >
           {charCount}/{maxLength}

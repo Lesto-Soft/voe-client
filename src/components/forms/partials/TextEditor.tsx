@@ -11,6 +11,7 @@ import {
   Bars3Icon,
   NumberedListIcon,
 } from "@heroicons/react/20/solid";
+import { getTextLength } from "../../../utils/contentRenderer";
 
 export interface TextEditorProps {
   content?: string;
@@ -22,6 +23,7 @@ export interface TextEditorProps {
   editorContentClassName?: string;
   height?: string;
   maxLength?: number;
+  minLength?: number;
 }
 
 // MenuBar component remains the same...
@@ -138,14 +140,14 @@ const MenuBar: React.FC<MenuBarProps> = ({ editor, className, renderKey }) => {
             title={item.title}
             disabled={item.canExecute ? !item.canExecute(editor) : false}
             className={`px-2 py-1 flex items-center justify-center rounded
-                                text-gray-700 hover:bg-gray-200
-                                focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:z-10
-                                disabled:opacity-40 disabled:cursor-not-allowed
-                                ${
-                                  isActive
-                                    ? "bg-indigo-100 text-indigo-700 hover:bg-indigo-200 ring-1 ring-indigo-500"
-                                    : "bg-transparent"
-                                }`}
+                                  text-gray-700 hover:bg-gray-200
+                                  focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:z-10
+                                  disabled:opacity-40 disabled:cursor-not-allowed
+                                  ${
+                                    isActive
+                                      ? "bg-indigo-100 text-indigo-700 hover:bg-indigo-200 ring-1 ring-indigo-500"
+                                      : "bg-transparent"
+                                  }`}
             aria-pressed={isActive}
             style={{ minWidth: "36px", minHeight: "36px" }}
           >
@@ -168,13 +170,22 @@ const TextEditor: React.FC<TextEditorProps> = ({
   editorContentClassName = "w-full text-base text-gray-900 focus:outline-none",
   height = "150px",
   maxLength,
+  minLength,
 }) => {
   const [renderKey, setRenderKey] = useState(0);
   const [charCount, setCharCount] = useState(0);
+
   const isContentTooLong = useMemo(
     () => maxLength && charCount > maxLength,
     [charCount, maxLength]
   );
+
+  const isContentTooShort = useMemo(
+    () => minLength && charCount > 0 && charCount < minLength,
+    [charCount, minLength]
+  );
+
+  const isInvalid = isContentTooLong || isContentTooShort;
 
   const editor = useEditor({
     extensions: [
@@ -194,7 +205,7 @@ const TextEditor: React.FC<TextEditorProps> = ({
       setRenderKey((key) => key + 1);
     },
     onUpdate: ({ editor: currentEditor }) => {
-      // --- NEW: Update internal char count and call external onUpdate ---
+      // --- Update internal char count and call external onUpdate ---
       const characterCount = currentEditor.getText().length;
       setCharCount(characterCount);
 
@@ -213,20 +224,17 @@ const TextEditor: React.FC<TextEditorProps> = ({
     },
   });
 
-  // Effect to initialize character count from prop
+  // Effect to initialize/update character count from prop
   useEffect(() => {
-    if (editor && propContent) {
-      const initialContent = document.createElement("div");
-      initialContent.innerHTML = propContent;
-      setCharCount(initialContent.innerText.length);
-    }
-  }, [editor]);
+    setCharCount(getTextLength(propContent || ""));
+  }, [propContent]);
 
+  // This effect syncs external content changes to the editor
   useEffect(() => {
     if (editor && propContent !== undefined) {
       const currentHTML = editor.getHTML();
       const isEditorEmpty = editor.getText().trim() === "";
-      const isPropEmpty = propContent === "" || propContent === "<p></p>";
+      const isPropEmpty = !propContent || propContent === "<p></p>";
 
       if (isEditorEmpty && isPropEmpty) return;
 
@@ -236,13 +244,13 @@ const TextEditor: React.FC<TextEditorProps> = ({
     }
   }, [propContent, editor]);
 
-  // --- NEW: Logic to combine default, dynamic, and prop classes ---
+  // --- Logic to combine default, dynamic, and prop classes ---
   const finalWrapperClassName = `
     relative w-full border rounded-md shadow-sm overflow-hidden bg-white 
     focus-within:ring-1 transition-colors duration-150
     ${
-      isContentTooLong
-        ? "border-red-500 focus-within:ring-red-500"
+      isInvalid
+        ? "border-red-200 focus-within:ring-red-100"
         : "border-gray-300 focus-within:ring-blue-500"
     }
     ${wrapperClassName || ""}
@@ -256,11 +264,11 @@ const TextEditor: React.FC<TextEditorProps> = ({
         renderKey={renderKey}
       />
       <EditorContent editor={editor} className={editorContentClassName} />
-      {/* --- NEW: Character counter display --- */}
+      {/* --- Character counter display --- */}
       {maxLength && (
         <div
           className={`absolute bottom-2 right-4 text-xs ${
-            isContentTooLong ? "text-red-600 font-semibold" : "text-gray-500"
+            isInvalid ? "text-red-500 font-semibold" : "text-gray-500"
           } bg-white px-1 rounded shadow-sm`}
         >
           {charCount}/{maxLength}

@@ -43,7 +43,8 @@ const EditButton: React.FC<EditButtonProps> = ({ comment, caseNumber }) => {
 
   const isInvalid =
     charCount > COMMENT_CONTENT.MAX ||
-    (charCount > 0 && charCount < COMMENT_CONTENT.MIN);
+    charCount == 0 ||
+    charCount < COMMENT_CONTENT.MIN;
 
   useEffect(() => {
     if (isOpen) {
@@ -133,9 +134,9 @@ const EditButton: React.FC<EditButtonProps> = ({ comment, caseNumber }) => {
               maxLength={COMMENT_CONTENT.MAX}
             />
             <div
-              className={`absolute bottom-2 right-2 text-xs px-1 rounded ${
+              className={`absolute bottom-3 right-4 text-xs ${
                 isInvalid ? "text-red-600 font-semibold" : "text-gray-500"
-              }`}
+              } bg-white px-1 rounded shadow-sm`}
             >
               {charCount}/{COMMENT_CONTENT.MAX}
             </div>

@@ -73,7 +73,7 @@ const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
         // Add `break-words` to force long text to wrap
         class:
           "prose prose-sm max-w-none p-3 pr-4 focus:outline-none custom-simple-editor",
-        style: `height: ${height}; overflow-y: auto; padding-bottom: 2rem;`,
+        style: `overflow-y: auto; padding-bottom: 2rem;`,
       },
     },
   });
@@ -101,9 +101,10 @@ const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
   const finalWrapperClassName = `
     relative w-full border rounded-md shadow-sm overflow-hidden bg-white 
     focus-within:ring-1 transition-colors duration-150
+    flex flex-col
     ${
       isInvalid
-        ? "border-red-200 focus-within:ring-red-100"
+        ? "border-red-500 focus-within:ring-red-500"
         : "border-gray-300 focus-within:ring-blue-500"
     }
     ${wrapperClassName || ""}
@@ -112,7 +113,7 @@ const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
   return (
     <div className={finalWrapperClassName.trim()}>
       {editor && (
-        <div className="flex items-center gap-1 p-2 border-b border-gray-200 bg-gray-50 rounded-t-md">
+        <div className="flex-shrink-0 flex items-center gap-1 p-2 border-b border-gray-200 bg-gray-50 rounded-t-md">
           <button
             type="button"
             onClick={() => editor.chain().focus().toggleBold().run()}
@@ -151,16 +152,18 @@ const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
           </button>
         </div>
       )}
-      <EditorContent editor={editor} />
-      {maxLength && (
-        <div
-          className={`absolute bottom-2 right-4 text-xs ${
-            isInvalid ? "text-red-600 font-semibold" : "text-gray-500"
-          } bg-white px-1 rounded shadow-sm`}
-        >
-          {charCount}/{maxLength}
-        </div>
-      )}
+      <div className="relative flex-grow">
+        <EditorContent editor={editor} className="h-full" />
+        {maxLength && (
+          <div
+            className={`absolute bottom-2 right-4 text-xs ${
+              isInvalid ? "text-red-600 font-semibold" : "text-gray-500"
+            } bg-white px-1 rounded shadow-sm`}
+          >
+            {charCount}/{maxLength}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

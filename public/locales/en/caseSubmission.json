@@ -2,7 +2,7 @@
   "caseSubmission": {
     "title": "Submit {{type}}",
     "subtitle": "Please fill out the form below",
-    "loadingForm": "Loading form...",
+    "loadingForm": "Loading form for signalization...",
     "submittingCase": "Submitting case...",
     "invalidType": "Invalid or missing case type in URL (?type=problem or ?type=suggestion).",
     "loadingCategoriesError": "Error loading categories: {{message}}",

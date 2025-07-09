@@ -7,7 +7,7 @@ import UserManagement from "../pages/UserManagement";
 import NavBar from "../components/menu/NavBar";
 import Profile from "../pages/Profile";
 import Analyses from "../pages/Analyses";
-import NotFoundPage from "../pages/NotFound";
+import NotFoundPage from "../pages/ErrorPages/NotFound";
 import User from "../pages/User";
 import Category from "../pages/Category";
 import Case from "../pages/Case";
@@ -19,12 +19,13 @@ import { IMe } from "../db/interfaces";
 import { UserProvider } from "../context/UserContext";
 import ProtectedRoute from "../components/auth/ProtectedRoute";
 import { ROLES } from "../utils/GLOBAL_PARAMETERS";
+import ServerErrorPage from "../pages/ErrorPages/ServerErrorPage";
 
 const AppLayout = () => {
   const { me, error, loading } = useGetMe();
 
   if (loading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error.message}</div>;
+  if (error) return (window.location.href = "/");
   if (!me || !me.me) return <div>Неуспешно зареждане на потребител.</div>;
   const currentUserData: IMe = me.me;
 
@@ -54,6 +55,10 @@ const mainRouter = createBrowserRouter([
   {
     path: "/loading",
     element: <LoadingTestPage />,
+  },
+  {
+    path: "/server-error",
+    element: <ServerErrorPage />,
   },
   {
     element: <AppLayout />,

@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router";
-import { ICase, IMe } from "../../db/interfaces";
+import { ICase } from "../../db/interfaces";
 import { useCurrentUser } from "../../context/UserContext";
 import { canViewCase } from "../../utils/rightUtils";
 

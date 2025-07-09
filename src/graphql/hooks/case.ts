@@ -1,6 +1,6 @@
 // src/graphql/hooks/case.ts (Corrected)
 import { useMutation, useQuery, QueryHookOptions } from "@apollo/client";
-import { CREATE_CASE, UPDATE_CASE } from "../mutation/case"; // RATE_CASE removed from imports
+import { CREATE_CASE, DELETE_CASE, UPDATE_CASE } from "../mutation/case"; // RATE_CASE removed from imports
 import {
   COUNT_CASES,
   COUNT_FILTERED_CASES,
@@ -9,6 +9,7 @@ import {
   GET_CASES,
   GET_CASES_BY_USER_CATEGORIES,
   GET_CASES_BY_USER_MANAGED_CATEGORIES,
+  GET_RELEVANT_CASES,
   GET_USER_ANSWERED_CASES,
   GET_USER_CASES,
   GET_USER_COMMENTED_CASES,
@@ -97,6 +98,28 @@ export const useGetAllCases = (input: any) => {
   };
 };
 
+export const useGetRelevantCases = (userId: string, input: any) => {
+  const variables = buildCaseQueryVariables(input);
+
+  const { loading, error, data, refetch } = useQuery(GET_RELEVANT_CASES, {
+    variables: {
+      ...variables,
+      userId,
+    },
+    skip: !userId,
+  });
+  const cases = data?.getRelevantCases.cases || [];
+  const count = data?.getRelevantCases.count || 0;
+
+  return {
+    cases,
+    count,
+    loading,
+    error,
+    refetch,
+  };
+};
+
 export const useGetAnalyticsDataCases = () => {
   const { loading, error, data } = useQuery(GET_ANALYTITCS_DATA_CASES);
   const cases = data?.getAnalyticsDataCases || 0;
@@ -135,6 +158,7 @@ export const useGetCasesByUserCategories = (userId: string, input: any) => {
 
   const cases = data?.getCasesByUserCategories.cases || [];
   const count = data?.getCasesByUserCategories.count || 0;
+
   return {
     cases,
     count,
@@ -330,6 +354,38 @@ export const useUpdateCase = (caseNumber: number) => {
 
   return {
     updateCase,
+    data,
+    loading,
+    error,
+  };
+};
+
+export const useDeleteCase = (
+  options: {
+    onCompleted?: () => void;
+  } = {}
+) => {
+  const [deleteCaseMutation, { data, loading, error }] = useMutation(
+    DELETE_CASE,
+    {
+      onCompleted: options.onCompleted,
+    }
+  );
+
+  const deleteCase = async (id: string) => {
+    try {
+      const response = await deleteCaseMutation({
+        variables: { id },
+      });
+      return response.data.deleteCase;
+    } catch (err) {
+      console.error("Failed to delete case:", err);
+      throw err;
+    }
+  };
+
+  return {
+    deleteCase,
     data,
     loading,
     error,

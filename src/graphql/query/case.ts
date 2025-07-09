@@ -54,6 +54,9 @@ const caseFragment = gql`
     status
     date
     attachments
+    answers {
+      needs_finance
+    }
   }
 `;
 
@@ -190,6 +193,18 @@ const commentFragment = gql`
 export const GET_CASES = gql`
   query GET_CASES($input: getAllInput) {
     getAllCases(input: $input) {
+      cases {
+        ...CaseFragment
+      }
+      count
+    }
+  }
+  ${caseFragment}
+`;
+
+export const GET_RELEVANT_CASES = gql`
+  query GET_RELEVANT_CASES($input: getAllInput, $userId: ID!) {
+    getRelevantCases(input: $input, userId: $userId) {
       cases {
         ...CaseFragment
       }

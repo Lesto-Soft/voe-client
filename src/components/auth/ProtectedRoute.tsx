@@ -1,7 +1,7 @@
 // src/components/auth/ProtectedRoute.js
 import React from "react";
 import { useCurrentUser } from "../../context/UserContext";
-import ForbiddenPage from "../../pages/ForbiddenPage";
+import ForbiddenPage from "../../pages/ErrorPages/ForbiddenPage";
 import { IMe } from "../../db/interfaces";
 
 interface ProtectedRouteProps {

@@ -1,8 +1,9 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback, use } from "react";
 import {
   useGetAllCases,
   useGetCasesByUserCategories,
   useGetCasesByUserManagedCategories,
+  useGetRelevantCases,
   useUserAnsweredCases,
   useUserCases,
   useUserCommentedCases,
@@ -51,12 +52,22 @@ const Dashboard = () => {
   const [fitler, setFilter] = useState(true);
   const currentUser = useCurrentUser();
 
+  const useAllRelevantCasesHook = useCallback(
+    (input: any) => {
+      return useGetRelevantCases(currentUser._id, input);
+    },
+    [currentUser._id]
+  );
+
   const allSubmenus = useMemo(
     () => [
       {
         label: t("all"),
         hookKey: "all",
-        hook: useGetAllCases,
+        hook:
+          currentUser.role?._id === ROLES.ADMIN
+            ? useGetAllCases
+            : useAllRelevantCasesHook,
         icon: <ListBulletIcon className="h-5 w-5 mr-2" />,
       },
       {
@@ -127,20 +138,20 @@ const Dashboard = () => {
       ? submenu.findIndex((item) => item.hookKey === screenKey)
       : 0;
 
-  const getCasesByUserCategoriesWithUser = withUserIdHook(
+  const getExpertCases = withUserIdHook(
     useGetCasesByUserCategories,
     currentUser._id
   );
-  const getCasesByUserManagedCategoriesWithUser = withUserIdHook(
+  const getManagedCases = withUserIdHook(
     useGetCasesByUserManagedCategories,
     currentUser._id
   );
-  const getUserCasesWithUser = withUserIdHook(useUserCases, currentUser._id);
-  const getUserAnsweredCasesWithUser = withUserIdHook(
+  const getCreatedCases = withUserIdHook(useUserCases, currentUser._id);
+  const getAnsweredCases = withUserIdHook(
     useUserAnsweredCases,
     currentUser._id
   );
-  const getUserCommentedCasesWithUser = withUserIdHook(
+  const getCommentedCases = withUserIdHook(
     useUserCommentedCases,
     currentUser._id
   );
@@ -152,19 +163,19 @@ const Dashboard = () => {
     updatedSubmenu.forEach((item, index) => {
       switch (item.hookKey) {
         case "mine":
-          updatedSubmenu[index].hook = getUserCasesWithUser;
+          updatedSubmenu[index].hook = getCreatedCases;
           break;
         case "managed":
-          updatedSubmenu[index].hook = getCasesByUserManagedCategoriesWithUser;
+          updatedSubmenu[index].hook = getManagedCases;
           break;
         case "expert":
-          updatedSubmenu[index].hook = getCasesByUserCategoriesWithUser;
+          updatedSubmenu[index].hook = getExpertCases;
           break;
         case "answered":
-          updatedSubmenu[index].hook = getUserAnsweredCasesWithUser;
+          updatedSubmenu[index].hook = getAnsweredCases;
           break;
         case "commented":
-          updatedSubmenu[index].hook = getUserCommentedCasesWithUser;
+          updatedSubmenu[index].hook = getCommentedCases;
           break;
         default:
           // "all" hook is already set in allSubmenus
@@ -175,11 +186,11 @@ const Dashboard = () => {
     return updatedSubmenu;
   }, [
     submenu,
-    getUserCasesWithUser,
-    getCasesByUserManagedCategoriesWithUser,
-    getCasesByUserCategoriesWithUser,
-    getUserAnsweredCasesWithUser,
-    getUserCommentedCasesWithUser,
+    getCreatedCases,
+    getManagedCases,
+    getExpertCases,
+    getAnsweredCases,
+    getCommentedCases,
   ]);
 
   useEffect(() => {

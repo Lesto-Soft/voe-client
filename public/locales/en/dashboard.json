@@ -54,5 +54,6 @@
   "writeComment": "Write a comment...",
   "content": "Content",
   "attachments": "Attachments",
-  "writeAnswer": "Write an answer..."
+  "writeAnswer": "Write an answer...",
+  "delete_case": "Delete case"
 }

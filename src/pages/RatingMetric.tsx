@@ -11,7 +11,7 @@ import { ROLES } from "../utils/GLOBAL_PARAMETERS";
 
 // UI Components
 import PageStatusDisplay from "../components/global/PageStatusDisplay";
-import ForbiddenPage from "./ForbiddenPage";
+import ForbiddenPage from "./ErrorPages/ForbiddenPage";
 import RatingMetricInformationPanel from "../components/features/ratingMetricAnalytics/RatingMetricInformationPanel";
 import MetricScoreList from "../components/features/ratingMetricAnalytics/MetricScoreList";
 import RatingMetricStatisticsPanel from "../components/features/ratingMetricAnalytics/RatingMetricStatisticsPanel";

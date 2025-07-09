@@ -35,7 +35,7 @@ import CategoryStatisticsPanel from "../components/features/categoryAnalytics/Ca
 import { ROLES } from "../utils/GLOBAL_PARAMETERS";
 
 import { useAuthorization } from "../hooks/useAuthorization";
-import ForbiddenPage from "./ForbiddenPage";
+import ForbiddenPage from "./ErrorPages/ForbiddenPage";
 
 interface ILeanUserForForm {
   _id: string;
@@ -195,6 +195,16 @@ const Category: React.FC = () => {
     }
   };
 
+  const pageError = categoryError || allUsersForFormError;
+
+  if (!category || pageError) {
+    return <PageStatusDisplay notFound categoryName={categoryNameFromParams} />;
+  }
+
+  if (!isAllowed) {
+    return <ForbiddenPage />;
+  }
+
   if (categoryLoading || authLoading || allUsersForFormLoading) {
     return (
       <PageStatusDisplay
@@ -202,19 +212,6 @@ const Category: React.FC = () => {
         message="Зареждане на данните за категорията..."
       />
     );
-  }
-
-  const pageError = categoryError || allUsersForFormError;
-  if (pageError) {
-    return <PageStatusDisplay error={pageError} />;
-  }
-
-  if (!category) {
-    return <PageStatusDisplay notFound categoryName={categoryNameFromParams} />;
-  }
-
-  if (!isAllowed) {
-    return <ForbiddenPage />;
   }
 
   return (

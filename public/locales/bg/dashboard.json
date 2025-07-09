@@ -54,5 +54,6 @@
   "writeComment": "Напиши коментар...",
   "content": "Съдържание",
   "attachments": "Прикачени файлове",
-  "writeAnswer": "Напиши отговор..."
+  "writeAnswer": "Напиши отговор...",
+  "delete_case": "Изтрий сигнал"
 }

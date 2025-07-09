@@ -3,7 +3,8 @@ import { useLocation, useNavigate } from "react-router";
 import CaseTable from "./CaseTable";
 import CaseSearchBar from "./CaseSearchBar";
 import Pagination from "./Pagination";
-import CaseTableSkeleton from "../skeletons/CaseTableSkeleton"; // Import the skeleton
+import CaseTableSkeleton from "../skeletons/CaseTableSkeleton";
+import { ICase } from "../../db/interfaces";
 
 // Accepts a fetch hook as a prop
 type FetchHook = (input: any) => {
@@ -83,8 +84,12 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
 
   // Filter state
   const [caseNumber, setCaseNumber] = useState(initialFilters.caseNumber);
-  const [priority, setPriority] = useState(initialFilters.priority);
-  const [type, setType] = useState(initialFilters.type);
+  const [priority, setPriority] = useState<"" | ICase["priority"]>(
+    initialFilters.priority as "" | ICase["priority"]
+  );
+  const [type, setType] = useState<"" | ICase["type"]>(
+    initialFilters.type as "" | ICase["type"]
+  );
   const [creatorId, setCreatorId] = useState(initialFilters.creatorId);
   const [categoryIds, setCategoryIds] = useState<string[]>(
     initialFilters.categoryIds
@@ -325,7 +330,7 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
         {showSkeleton ? (
           <CaseTableSkeleton rows={itemsPerPage} />
         ) : cases && cases.length > 0 ? (
-          <CaseTable cases={cases} t={t} />
+          <CaseTable cases={cases} t={t} onCaseDeleted={refetch} />
         ) : (
           <div className="text-center py-10 text-gray-500">
             {t("no_cases_found")}

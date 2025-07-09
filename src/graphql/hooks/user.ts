@@ -115,7 +115,6 @@ export const useGetFullUserByUsername = (username: string | undefined) => {
     skip: !username, // Skip the query if username is undefined or null
   });
 
-  // For debugging the hook's output
   useEffect(() => {
     if (!loading) {
       if (error) {

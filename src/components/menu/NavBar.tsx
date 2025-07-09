@@ -34,7 +34,7 @@ export interface NavLinkProps {
   label: string;
   onClick?: () => void;
   dropdown?: boolean;
-  theme?: "red" | "blue"; // <-- ADDED THEME PROP
+  theme?: "red" | "blue";
 }
 
 const NavLink: React.FC<NavLinkProps> = ({

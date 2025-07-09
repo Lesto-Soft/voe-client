@@ -11,7 +11,7 @@ import { ROLES } from "../utils/GLOBAL_PARAMETERS";
 
 // Authorization
 import { useAuthorization } from "../hooks/useAuthorization";
-import ForbiddenPage from "./ForbiddenPage";
+import ForbiddenPage from "./ErrorPages/ForbiddenPage";
 import PageStatusDisplay from "../components/global/PageStatusDisplay";
 
 const Case = () => {
@@ -47,12 +47,12 @@ const Case = () => {
     data: caseData,
   });
 
-  if (loadingCase || authLoading) {
-    return <PageStatusDisplay loading message="Зареждане на сигнал..." />;
-  }
-
   if (errorCase) {
     return <PageStatusDisplay error={errorCase} />;
+  }
+
+  if (loadingCase || authLoading) {
+    return <PageStatusDisplay loading message="Зареждане на сигнал..." />;
   }
 
   if (!caseData) {

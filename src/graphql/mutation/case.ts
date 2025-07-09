@@ -45,3 +45,11 @@ export const UPDATE_CASE = gql`
     }
   }
 `;
+
+export const DELETE_CASE = gql`
+  mutation DeleteCase($id: ID!) {
+    deleteCase(_id: $id) {
+      _id
+    }
+  }
+`;

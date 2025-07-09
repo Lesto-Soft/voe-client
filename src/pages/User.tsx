@@ -2,8 +2,8 @@ import React, { useState, useMemo } from "react"; // Added useMemo to import
 import { useParams } from "react-router";
 import { useGetFullUserByUsername, useUpdateUser } from "../graphql/hooks/user";
 import { useGetRoles } from "../graphql/hooks/role";
-import { IUser, IMe } from "../db/interfaces";
-import { AttachmentInput, UpdateUserInput } from "../graphql/mutation/user";
+import { IMe } from "../db/interfaces";
+import { UpdateUserInput } from "../graphql/mutation/user";
 
 // Hooks
 import useUserActivityStats from "../hooks/useUserActivityStats";
@@ -17,15 +17,16 @@ import UserStatisticsPanel from "../components/features/userAnalytics/UserStatis
 import UserModal from "../components/modals/UserModal";
 import UserForm from "../components/forms/UserForm";
 import SuccessConfirmationModal from "../components/modals/SuccessConfirmationModal";
-
+import { useNavigate } from "react-router";
 // Constants
 import { ROLES } from "../utils/GLOBAL_PARAMETERS";
 import { containsAnyCategoryById } from "../utils/arrayUtils";
 
 import { useAuthorization } from "../hooks/useAuthorization";
-import ForbiddenPage from "./ForbiddenPage";
+import ForbiddenPage from "./ErrorPages/ForbiddenPage";
 
 const User: React.FC = () => {
+  const navigate = useNavigate();
   const { username: userUsernameFromParams } = useParams<{
     username: string;
   }>();
@@ -34,7 +35,6 @@ const User: React.FC = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [successModalMessage, setSuccessModalMessage] = useState("");
-  const [avatarVersion, setAvatarVersion] = useState(Date.now());
   const [dateRange, setDateRange] = useState<{
     startDate: Date | null;
     endDate: Date | null;
@@ -116,11 +116,13 @@ const User: React.FC = () => {
 
     try {
       await updateUser(editingUserId, finalInput as UpdateUserInput);
+      if (finalInput.username) {
+        navigate(`/user/${finalInput.username}`);
+      }
       await refetchUser();
       closeEditModal();
       setSuccessModalMessage("Потребителят е редактиран успешно!");
       setIsSuccessModalOpen(true);
-      setAvatarVersion(Date.now());
       refetchUser();
     } catch (err: any) {
       console.error("Error during user update:", err);
@@ -145,24 +147,15 @@ const User: React.FC = () => {
     );
   }
 
+  if (userError || !user) {
+    return <PageStatusDisplay error={userError} />;
+  }
+
   if (userLoading || authLoading) {
     return (
       <PageStatusDisplay
         loading
         message="Зареждане на потребителски данни..."
-      />
-    );
-  }
-
-  if (userError) {
-    return <PageStatusDisplay error={userError} />;
-  }
-
-  if (!user) {
-    return (
-      <PageStatusDisplay
-        notFound
-        message={`Потребител с потребителско име: '${userUsernameFromParams}' не е намерен.`}
       />
     );
   }

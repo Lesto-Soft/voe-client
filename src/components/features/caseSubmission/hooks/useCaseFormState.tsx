@@ -9,15 +9,12 @@ import React, {
 } from "react";
 import { CASE_CONTENT } from "../../../../utils/GLOBAL_PARAMETERS";
 import { getTextLength } from "../../../../utils/contentRenderer";
-import { useNavigate } from "react-router"; // Corrected import
 import { useLazyQuery, ApolloError } from "@apollo/client";
 import { useTranslation } from "react-i18next";
 import { TFunction } from "i18next";
 import { GET_USER_BY_USERNAME } from "../../../../graphql/query/user"; // Adjust path
-import { readFileAsBase64 } from "../../../../utils/attachment-handling"; // Adjust path
 import {
   FormCategory,
-  CaseAttachmentInput,
   CreateCaseMutationInput,
   UserQueryResult,
   UserQueryVars,

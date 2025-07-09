@@ -96,6 +96,12 @@ const LoginForm = ({
     } catch (err) {
       setIsLoading(false);
       console.error(err);
+      if ((err as any)?.response?.status === 403) {
+        setError(
+          "Този потребител е напуснал. Моля, използвайте друг акаунт или се свържете с администратора."
+        );
+        return;
+      }
       setError(
         (err as any)?.response?.data?.message ||
           (err instanceof Error ? err.message : "An unknown error occurred.")

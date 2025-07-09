@@ -1,6 +1,6 @@
 import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
-import { useCurrentUser } from "../context/UserContext";
+import { useCurrentUser } from "../../context/UserContext";
 
 export default function NotFoundPage() {
   const { t } = useTranslation("menu");

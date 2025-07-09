@@ -170,7 +170,8 @@ const UserTable: React.FC<UserTableProps> = ({
                   isNullOrEmptyArray(user.comments) &&
                   isNullOrEmptyArray(user.answers) &&
                   isNullOrEmptyArray(user.expert_categories) &&
-                  isNullOrEmptyArray(user.managed_categories);
+                  isNullOrEmptyArray(user.managed_categories) &&
+                  !user.financial_approver;
 
                 return (
                   <tr key={user._id} className={rowClasses}>

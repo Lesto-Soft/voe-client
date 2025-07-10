@@ -420,6 +420,7 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
                         | "finance_approval"
                     }
                     actor={user!}
+                    date={activity.date}
                   />
                 )
               )}

@@ -177,11 +177,14 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
 
     if (user.approvedAnswers) {
       user.approvedAnswers
-        .filter((a) => isInDateRange(a.date))
+        .filter((a) => {
+          const dateToFilterBy = a.approved_date || a.date;
+          return isInDateRange(dateToFilterBy);
+        })
         .forEach((answerItem) =>
           activities.push({
             id: `base-approval-${answerItem._id}`,
-            date: answerItem.date,
+            date: answerItem.approved_date || answerItem.date,
             item: answerItem,
             activityType: "base_approval",
           })
@@ -190,11 +193,14 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
 
     if (user.financialApprovedAnswers) {
       user.financialApprovedAnswers
-        .filter((a) => isInDateRange(a.date))
+        .filter((a) => {
+          const dateToFilterBy = a.financial_approved_date || a.date;
+          return isInDateRange(dateToFilterBy);
+        })
         .forEach((answerItem) =>
           activities.push({
             id: `finance-approval-${answerItem._id}`,
-            date: answerItem.date,
+            date: answerItem.financial_approved_date || answerItem.date,
             item: answerItem,
             activityType: "finance_approval",
           })

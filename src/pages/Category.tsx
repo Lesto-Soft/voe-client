@@ -36,6 +36,7 @@ import { ROLES } from "../utils/GLOBAL_PARAMETERS";
 
 import { useAuthorization } from "../hooks/useAuthorization";
 import ForbiddenPage from "./ErrorPages/ForbiddenPage";
+import moment from "moment";
 
 interface ILeanUserForForm {
   _id: string;
@@ -114,7 +115,7 @@ const Category: React.FC = () => {
       return allCases;
     }
     return allCases.filter((c) => {
-      const caseDate = new Date(c.date);
+      const caseDate = new Date(parseInt(c.date));
       return caseDate >= dateRange.startDate! && caseDate <= dateRange.endDate!;
     });
   }, [category?.cases, dateRange]);
@@ -196,15 +197,6 @@ const Category: React.FC = () => {
   };
 
   const pageError = categoryError || allUsersForFormError;
-
-  if (!category || pageError) {
-    return <PageStatusDisplay notFound categoryName={categoryNameFromParams} />;
-  }
-
-  if (!isAllowed) {
-    return <ForbiddenPage />;
-  }
-
   if (categoryLoading || authLoading || allUsersForFormLoading) {
     return (
       <PageStatusDisplay
@@ -212,6 +204,13 @@ const Category: React.FC = () => {
         message="Зареждане на данните за категорията..."
       />
     );
+  }
+  if (pageError || !category) {
+    return <PageStatusDisplay notFound categoryName={categoryNameFromParams} />;
+  }
+
+  if (!isAllowed) {
+    return <ForbiddenPage />;
   }
 
   return (

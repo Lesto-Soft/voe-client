@@ -137,7 +137,15 @@ const User: React.FC = () => {
   const openEditModal = () => setIsEditModalOpen(true);
   const closeEditModal = () => setIsEditModalOpen(false);
 
-  // --- Early returns for loading/error states ---
+  if (userLoading || authLoading) {
+    return (
+      <PageStatusDisplay
+        loading
+        message="Зареждане на потребителски данни..."
+      />
+    );
+  }
+
   if (userUsernameFromParams === undefined) {
     return (
       <PageStatusDisplay
@@ -149,15 +157,6 @@ const User: React.FC = () => {
 
   if (userError || !user) {
     return <PageStatusDisplay error={userError} />;
-  }
-
-  if (userLoading || authLoading) {
-    return (
-      <PageStatusDisplay
-        loading
-        message="Зареждане на потребителски данни..."
-      />
-    );
   }
 
   if (!isAllowed) {

@@ -5,6 +5,7 @@ import CaseSearchBar from "./CaseSearchBar";
 import Pagination from "./Pagination";
 import CaseTableSkeleton from "../skeletons/CaseTableSkeleton";
 import { ICase } from "../../db/interfaces";
+import moment from "moment";
 
 // Accepts a fetch hook as a prop
 type FetchHook = (input: any) => {
@@ -45,6 +46,8 @@ function getFiltersFromParams(params: URLSearchParams) {
     categoryIds, // use array
     content: params.get("content") || "",
     status: params.get("status") || "",
+    startDate: params.get("startDate"),
+    endDate: params.get("endDate"),
   };
 }
 
@@ -56,6 +59,8 @@ function setFiltersToParams(params: URLSearchParams, filters: any) {
       } else {
         params.delete("categoryIds");
       }
+    } else if (value instanceof Date) {
+      params.set(key, moment(value).format("DD-MM-YYYY"));
     } else if (value) {
       params.set(key, String(value));
     } else {
@@ -96,6 +101,17 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
   );
   const [content, setContent] = useState(initialFilters.content);
   const [status, setStatus] = useState(initialFilters.status);
+  const [dateRange, setDateRange] = useState<{
+    startDate: Date | null;
+    endDate: Date | null;
+  }>({
+    startDate: initialFilters.startDate
+      ? moment(initialFilters.startDate, "DD-MM-YYYY").toDate()
+      : null,
+    endDate: initialFilters.endDate
+      ? moment(initialFilters.endDate, "DD-MM-YYYY").toDate()
+      : null,
+  });
 
   // Debounced values for inputs that should trigger fetch after delay
   const debouncedCaseNumber = useDebounce(caseNumber, 500); // Adjust delay as needed
@@ -110,6 +126,14 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
     categoryIds: initialFilters.categoryIds,
     content: initialFilters.content,
     status: initialFilters.status,
+    dateRange: {
+      startDate: initialFilters.startDate
+        ? moment(initialFilters.startDate, "DD-MM-YYYY").toDate()
+        : null,
+      endDate: initialFilters.endDate
+        ? moment(initialFilters.endDate, "DD-MM-YYYY").toDate()
+        : null,
+    },
   });
 
   function clearFilters() {
@@ -120,6 +144,7 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
     setCategoryIds([]);
     setContent("");
     setStatus("");
+    setDateRange({ startDate: null, endDate: null });
     setCurrentPage(1);
     const params = new URLSearchParams(location.search);
     params.set("perPage", String(itemsPerPage));
@@ -133,6 +158,8 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
       "categoryIds",
       "content",
       "status",
+      "startDate",
+      "endDate",
     ].forEach((key) => params.delete(key));
     navigate(`${location.pathname}?${params.toString()}`, { replace: true });
   }
@@ -155,11 +182,17 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
       categoryIds, // use array
       content: debouncedContent,
       status,
+      startDate: dateRange.startDate,
+      endDate: dateRange.endDate,
     };
 
     const prevFilters = prevFiltersRef.current;
     const categoryIdsChanged =
       JSON.stringify(categoryIds) !== JSON.stringify(prevFilters.categoryIds);
+    const dateRangeChanged =
+      dateRange.startDate?.getTime() !==
+        prevFilters.dateRange.startDate?.getTime() ||
+      dateRange.endDate?.getTime() !== prevFilters.dateRange.endDate?.getTime();
 
     const filtersChanged =
       caseNumber !== prevFilters.caseNumber ||
@@ -168,7 +201,8 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
       creatorId !== prevFilters.creatorId ||
       categoryIdsChanged ||
       content !== prevFilters.content ||
-      status !== prevFilters.status;
+      status !== prevFilters.status ||
+      dateRangeChanged;
 
     if (filtersChanged) {
       const params = new URLSearchParams(location.search);
@@ -183,7 +217,6 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
       setFiltersToParams(params, filtersForUrl); // Use potentially debounced values for URL consistency with fetch
       navigate(`${location.pathname}?${params.toString()}`, { replace: true });
 
-      // Update ref with current non-debounced values
       prevFiltersRef.current = {
         caseNumber,
         priority,
@@ -192,9 +225,9 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
         categoryIds,
         content,
         status,
+        dateRange,
       };
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     debouncedCaseNumber,
     priority,
@@ -207,6 +240,7 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
     navigate,
     location.search,
     location.pathname,
+    dateRange,
   ]); // Add debounced values to dependencies
 
   // Handle page change (updates URL immediately)
@@ -224,6 +258,8 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
       categoryIds,
       content: debouncedContent,
       status,
+      startDate: dateRange.startDate,
+      endDate: dateRange.endDate,
     });
     navigate(`${location.pathname}?${params.toString()}`);
   };
@@ -242,6 +278,11 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
     if (creatorId) input.creatorId = creatorId;
     if (categoryIds && categoryIds.length > 0) input.categories = categoryIds; // Assuming backend expects array
     if (status) input.status = status;
+    if (dateRange.startDate)
+      input.startDate = moment(dateRange.startDate).format("DD-MM-YYYY");
+    if (dateRange.endDate)
+      input.endDate = moment(dateRange.endDate).format("DD-MM-YYYY");
+
     return input;
   }, [
     itemsPerPage,
@@ -253,6 +294,7 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
     creatorId,
     categoryIds,
     status,
+    dateRange,
   ]);
 
   // Use the provided fetch hook. It will receive debounced inputs via buildInput.
@@ -322,6 +364,8 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
           setContent={setContent}
           status={status}
           setStatus={setStatus}
+          dateRange={dateRange}
+          setDateRange={setDateRange}
           t={t}
         />
       </div>

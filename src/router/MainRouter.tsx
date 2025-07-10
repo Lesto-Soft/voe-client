@@ -20,11 +20,12 @@ import { UserProvider } from "../context/UserContext";
 import ProtectedRoute from "../components/auth/ProtectedRoute";
 import { ROLES } from "../utils/GLOBAL_PARAMETERS";
 import ServerErrorPage from "../pages/ErrorPages/ServerErrorPage";
+import NavbarSkeleton from "../components/skeletons/NavbarSkeleton";
 
 const AppLayout = () => {
   const { me, error, loading } = useGetMe();
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <NavbarSkeleton />;
   if (error) return (window.location.href = "/");
   if (!me || !me.me) return <div>Неуспешно зареждане на потребител.</div>;
   const currentUserData: IMe = me.me;

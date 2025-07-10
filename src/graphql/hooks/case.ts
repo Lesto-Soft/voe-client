@@ -15,6 +15,7 @@ import {
   GET_USER_COMMENTED_CASES,
   // UPDATE_CASE, // This was duplicated, removed.
 } from "../query/case";
+import moment from "moment";
 
 export type AttachmentInput = {
   filename: string;
@@ -61,6 +62,8 @@ export function buildCaseQueryVariables(input: any) {
     categories,
     status,
     case_number,
+    startDate,
+    endDate,
   } = input || {};
 
   const variables: any = {
@@ -77,6 +80,8 @@ export function buildCaseQueryVariables(input: any) {
   if (categories && categories.length > 0)
     variables.input.categories = categories;
   if (status) variables.input.status = status;
+  if (startDate) variables.input.startDate = startDate;
+  if (endDate) variables.input.endDate = endDate;
 
   return variables;
 }
@@ -199,12 +204,13 @@ export const useUserCases = (userId: string, input: any) => {
     userId,
     ...buildCaseQueryVariables(input),
   };
+
   const { loading, error, data, refetch } = useQuery(GET_USER_CASES, {
     variables,
   });
 
-  const cases = data?.getUserCases.cases || [];
   const count = data?.getUserCases.count || 0;
+  const cases = data?.getUserCases.cases || [];
   return {
     cases,
     count,
@@ -258,7 +264,6 @@ export const useCreateCase = () => {
     useMutation(CREATE_CASE);
 
   const createCase = async (input: CreateCaseInput) => {
-    console.log(input);
     try {
       const response = await createCaseMutation({
         variables: input,
@@ -341,7 +346,6 @@ export const useUpdateCase = (caseNumber: number) => {
     input: UpdateCaseInput
   ) => {
     try {
-      console.log(caseId, userId, input);
       const response = await updateCaseMutation({
         variables: { caseId, userId, input },
       });

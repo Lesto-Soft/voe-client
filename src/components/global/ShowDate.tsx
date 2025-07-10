@@ -40,8 +40,8 @@ const ShowDate = ({
       onClick={() => setShowDate(!showDate)}
     >
       <CalendarIcon className="!h-4 !w-4 min-w-4 min-h-4" />
-      {!showDate && <span>{moment(date).fromNow()}</span>}
-      {showDate && <span>{moment(date).format("lll")}</span>}
+      {!showDate && <span>{moment(parseInt(date)).fromNow()}</span>}
+      {showDate && <span>{moment(parseInt(date)).format("lll")}</span>}
     </div>
   );
 };

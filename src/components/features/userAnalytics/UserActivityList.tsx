@@ -117,9 +117,11 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
 
   const allActivities = useMemo((): CombinedActivity[] => {
     if (!user) return [];
-    const isInDateRange = (itemDateStr: string) => {
+    const isInDateRange = (itemDateStr: string | number) => {
       if (!dateRange.startDate || !dateRange.endDate) return true;
       const itemDate = new Date(itemDateStr);
+      console.log(itemDate, dateRange.startDate, dateRange.endDate);
+
       return itemDate >= dateRange.startDate && itemDate <= dateRange.endDate;
     };
 
@@ -151,7 +153,7 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
 
     if (user.cases) {
       user.cases
-        .filter((c) => isInDateRange(c.date))
+        .filter((c) => isInDateRange(parseInt(c.date)))
         .forEach((caseItem) =>
           activities.push({
             id: `case-${caseItem._id}`,

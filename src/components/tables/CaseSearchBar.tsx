@@ -4,6 +4,7 @@ import { ICase, ICategory } from "../../db/interfaces";
 import { GET_LEAN_USERS } from "../../graphql/query/user";
 import { GET_ACTIVE_CATEGORIES } from "../../graphql/query/category";
 import { ChevronDownIcon, XMarkIcon } from "@heroicons/react/24/outline"; // Import icons
+import DateRangeSelector from "../features/userAnalytics/DateRangeSelector";
 
 // Interface for Lean User (assuming structure)
 interface ILeanUser {
@@ -49,6 +50,11 @@ interface CaseSearchBarProps {
   setContent: (v: string) => void;
   status: ICase["status"] | "";
   setStatus: (v: ICase["status"] | "") => void;
+  dateRange: { startDate: Date | null; endDate: Date | null };
+  setDateRange: (range: {
+    startDate: Date | null;
+    endDate: Date | null;
+  }) => void;
   t: (key: string) => string;
 }
 
@@ -67,6 +73,8 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
   setContent,
   status,
   setStatus,
+  dateRange,
+  setDateRange,
   t,
 }) => {
   // --- State for Creator Search ---
@@ -293,6 +301,13 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
 
   return (
     <div className="px-4 sm:px-6 lg:px-8 py-5">
+      <div className="mb-4">
+        <DateRangeSelector
+          dateRange={dateRange}
+          onDateRangeChange={setDateRange}
+        />
+      </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-x-4 gap-y-3 items-end">
         <div>
           <label

@@ -108,6 +108,7 @@ const CaseTable: React.FC<ICaseTableProps> = ({ cases, t, onCaseDeleted }) => {
   if (loading) {
     return <LoadingModal message="Изтриване на сигнал..." />;
   }
+
   return (
     <div className="flex-1 flex flex-col min-h-0 px-4 sm:px-6 lg:px-8">
       <div className="flex flex-col shadow-md rounded-lg overflow-hidden bg-white border border-gray-200 overflow-x-auto">
@@ -273,7 +274,7 @@ const CaseTable: React.FC<ICaseTableProps> = ({ cases, t, onCaseDeleted }) => {
                   {/* Date Cell */}
                   <td className="w-32 px-3 py-4 whitespace-nowrap text-sm">
                     <div className="flex items-center" title={my_case.date}>
-                      {`${moment(my_case.date)
+                      {`${moment(parseInt(my_case.date, 10))
                         .locale(currentLanguage)
                         .format("lll")}`}
                     </div>

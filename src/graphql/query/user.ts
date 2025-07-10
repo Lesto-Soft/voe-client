@@ -90,10 +90,12 @@ fragment FullUserFragment on User {
           }
         }
       }
-        approvedAnswers {
+      approvedAnswers {
         _id
         content
         date
+        approved_date
+        approved {_id}
         case {
           _id
           case_number
@@ -114,6 +116,8 @@ fragment FullUserFragment on User {
         _id
         content
         date
+        financial_approved_date
+        financial_approved {_id}
         case {
           _id
           case_number

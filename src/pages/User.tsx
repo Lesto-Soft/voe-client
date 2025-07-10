@@ -78,15 +78,51 @@ const User: React.FC = () => {
 
   const serverBaseUrl = import.meta.env.VITE_API_URL || "";
 
-  // --- MOVED THIS useMemo HOOK UP ---
-  // It must be called unconditionally before any early returns.
+  // --- MODIFIED: This calculation now respects the date range ---
   const ratedCasesCount = useMemo(() => {
+    console.log("Metric Scores: ", user?.metricScores);
     if (!user?.metricScores) return 0;
-    const ratedCaseIds = new Set(
-      user.metricScores.map((score) => score.case._id)
+    const isInDateRange = (itemDateStr: string) => {
+      if (!dateRange.startDate || !dateRange.endDate) return true;
+      const itemDate = new Date(itemDateStr);
+      return itemDate >= dateRange.startDate && itemDate <= dateRange.endDate;
+    };
+    const filteredScores = user.metricScores.filter((score) =>
+      isInDateRange(score.date)
     );
+    const ratedCaseIds = new Set(filteredScores.map((score) => score.case._id));
     return ratedCaseIds.size;
-  }, [user]);
+  }, [user, dateRange]);
+
+  // --- MODIFIED: Now uses a fallback for legacy data ---
+  const approvalsCount = useMemo(() => {
+    if (!user?.approvedAnswers) return 0;
+    const isInDateRange = (dateStr: string) => {
+      if (!dateRange.startDate || !dateRange.endDate) return true;
+      const itemDate = new Date(dateStr);
+      return itemDate >= dateRange.startDate && itemDate <= dateRange.endDate;
+    };
+
+    return user.approvedAnswers.filter((a) => {
+      const dateToFilterBy = a.approved_date || a.date;
+      return isInDateRange(dateToFilterBy);
+    }).length;
+  }, [user, dateRange]);
+
+  // --- MODIFIED: Now uses a fallback for legacy data ---
+  const financesCount = useMemo(() => {
+    if (!user?.financialApprovedAnswers) return 0;
+    const isInDateRange = (dateStr: string) => {
+      if (!dateRange.startDate || !dateRange.endDate) return true;
+      const itemDate = new Date(dateStr);
+      return itemDate >= dateRange.startDate && itemDate <= dateRange.endDate;
+    };
+
+    return user.financialApprovedAnswers.filter((a) => {
+      const dateToFilterBy = a.financial_approved_date || a.date;
+      return isInDateRange(dateToFilterBy);
+    }).length;
+  }, [user, dateRange]);
 
   // --- Form Submit Handler ---
   const handleFormSubmit = async (
@@ -169,15 +205,15 @@ const User: React.FC = () => {
     answers: userStats?.totalAnswers || 0,
     comments: userStats?.totalComments || 0,
     ratings: ratedCasesCount,
-    approvals: user?.approvedAnswers?.length || 0,
-    finances: user?.financialApprovedAnswers?.length || 0,
+    approvals: approvalsCount,
+    finances: financesCount,
     all:
       (userStats?.totalSignals || 0) +
       (userStats?.totalAnswers || 0) +
       (userStats?.totalComments || 0) +
       ratedCasesCount +
-      (user?.approvedAnswers?.length || 0) +
-      (user?.financialApprovedAnswers?.length || 0),
+      approvalsCount +
+      financesCount,
   };
 
   const isAdmin = currentUser?.role._id === ROLES.ADMIN;

@@ -44,18 +44,19 @@ interface UserActivityItemCardProps {
     | "base_approval"
     | "finance_approval";
   actor: IUser;
+  date: string;
 }
 
 const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
   item,
   activityType,
   actor,
+  date,
 }) => {
   let icon: React.ReactNode;
   let titleFragments: React.ReactNode[] = [];
   let caseToLinkForDisplay: Partial<ICase> | undefined;
 
-  const date = item.date;
   const itemContent =
     (item as ICase)?.content ||
     (item as IAnswer)?.content ||

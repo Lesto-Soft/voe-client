@@ -240,7 +240,7 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
             </div>
             {date && (
               <span className="text-xs text-gray-400 whitespace-nowrap flex-shrink-0 mt-1 sm:mt-0 self-start sm:self-baseline">
-                <ShowDate date={date} />
+                <ShowDate date={date} isCase={activityType === "case"} />
               </span>
             )}
           </div>

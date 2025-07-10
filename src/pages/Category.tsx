@@ -115,7 +115,7 @@ const Category: React.FC = () => {
       return allCases;
     }
     return allCases.filter((c) => {
-      const caseDate = new Date(parseInt(c.date));
+      const caseDate = new Date(c.date);
       return caseDate >= dateRange.startDate! && caseDate <= dateRange.endDate!;
     });
   }, [category?.cases, dateRange]);

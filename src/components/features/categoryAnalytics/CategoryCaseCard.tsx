@@ -117,7 +117,7 @@ const CategoryCaseCard: React.FC<CategoryCaseCardProps> = ({
             </div>
             {/* Date (no change to this specific element's structure) */}
             <div className="text-gray-500 whitespace-nowrap flex-shrink-0">
-              <ShowDate date={caseItem.date} />
+              <ShowDate date={parseInt(caseItem.date)} />
             </div>
           </div>
 

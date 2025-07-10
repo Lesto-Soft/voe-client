@@ -50,7 +50,7 @@ export const useProcessedAnalyticsData = (
     if (isAllTimePies) return allCases;
     if (!startDateForPies || !endDateForPies) return [];
     return allCases.filter((c: ICase) => {
-      const caseDate = new Date(c.date);
+      const caseDate = new Date(parseInt(c.date));
       return caseDate >= startDateForPies && caseDate <= endDateForPies;
     });
   }, [allCases, startDateForPies, endDateForPies, isAllTimePies]);
@@ -131,11 +131,12 @@ export const useProcessedAnalyticsData = (
       })`;
       const yearlyDataAggregated: { [year: string]: any } = {};
       allCases.forEach((c: ICase) => {
-        const year = new Date(c.date).getFullYear().toString();
+        const year = new Date(parseInt(c.date)).getFullYear().toString();
         if (!yearlyDataAggregated[year]) {
           yearlyDataAggregated[year] = aggregateCases(
             allCases.filter(
-              (cs: ICase) => new Date(cs.date).getFullYear().toString() === year
+              (cs: ICase) =>
+                new Date(parseInt(cs.date)).getFullYear().toString() === year
             )
           );
         }
@@ -148,11 +149,11 @@ export const useProcessedAnalyticsData = (
         barChartMode === "type" ? "по тип" : "по приоритет"
       })`;
       const yearCases = allCases.filter(
-        (c: ICase) => new Date(c.date).getFullYear() === currentYear
+        (c: ICase) => new Date(parseInt(c.date)).getFullYear() === currentYear
       );
       dataForChart = MONTH_NAMES.map((monthName, index) => {
         const monthCases = yearCases.filter(
-          (c: ICase) => new Date(c.date).getMonth() === index
+          (c: ICase) => new Date(parseInt(c.date)).getMonth() === index
         );
         return { periodLabel: monthName, ...aggregateCases(monthCases) };
       });
@@ -163,7 +164,7 @@ export const useProcessedAnalyticsData = (
         barChartMode === "type" ? "по тип" : "по приоритет"
       })`;
       const monthCasesFiltered = allCases.filter((c: ICase) => {
-        const caseDate = new Date(c.date);
+        const caseDate = new Date(parseInt(c.date));
         return (
           caseDate.getFullYear() === currentYear &&
           caseDate.getMonth() === currentMonth - 1
@@ -173,7 +174,7 @@ export const useProcessedAnalyticsData = (
       dataForChart = Array.from({ length: daysInSelectedMonth }, (_, i) => {
         const dayNumber = i + 1;
         const dayCases = monthCasesFiltered.filter(
-          (c: ICase) => new Date(c.date).getDate() === dayNumber
+          (c: ICase) => new Date(parseInt(c.date)).getDate() === dayNumber
         );
         return {
           periodLabel: dayNumber.toString(),
@@ -186,12 +187,13 @@ export const useProcessedAnalyticsData = (
       })`;
       const { start, end } = getStartAndEndOfWeek(currentWeek, currentYear);
       const weekCasesFiltered = allCases.filter((c: ICase) => {
-        const d = new Date(c.date);
+        const d = new Date(parseInt(c.date));
         return d >= start && d <= end;
       });
       dataForChart = DAY_NAMES_FULL.map((dayName, index) => {
         const dayCases = weekCasesFiltered.filter(
-          (c: ICase) => (new Date(c.date).getUTCDay() + 6) % 7 === index
+          (c: ICase) =>
+            (new Date(parseInt(c.date)).getUTCDay() + 6) % 7 === index
         );
         return { periodLabel: dayName, ...aggregateCases(dayCases) };
       });
@@ -202,13 +204,14 @@ export const useProcessedAnalyticsData = (
         barChartMode === "type" ? "по тип" : "по приоритет"
       })`;
       const rangeCasesFiltered = allCases.filter((c: ICase) => {
-        const d = new Date(c.date);
+        const d = new Date(parseInt(c.date));
         return d >= startDateForPies && d <= endDateForPies;
       });
       dataForChart = DAY_NAMES_FULL.map((name) => {
         const dayCases = rangeCasesFiltered.filter(
           (c: ICase) =>
-            DAY_NAMES_FULL[(new Date(c.date).getUTCDay() + 6) % 7] === name
+            DAY_NAMES_FULL[(new Date(parseInt(c.date)).getUTCDay() + 6) % 7] ===
+            name
         );
         return { periodLabel: name, ...aggregateCases(dayCases) };
       });

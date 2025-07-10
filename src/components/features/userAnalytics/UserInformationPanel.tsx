@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { IUser, ICategory, IMe } from "../../../db/interfaces";
+import { IUser, ICategory } from "../../../db/interfaces";
 import UserAvatar from "../../../components/cards/UserAvatar";
 import CategoryLink from "../../../components/global/CategoryLink";
 import {
@@ -17,7 +17,6 @@ interface UserInformationPanelProps {
   isLoading?: boolean;
   serverBaseUrl: string;
   onEditUser: () => void;
-  // Add permission prop
   canEdit: boolean;
 }
 

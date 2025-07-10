@@ -26,11 +26,17 @@ moment.updateLocale("bg", {
 const ShowDate = ({
   date,
   centered = false,
+  isCase = false,
 }: {
   date: string;
   centered?: boolean;
+  isCase?: boolean;
 }) => {
   const [showDate, setShowDate] = useState(false);
+  let parseDate;
+  if (isCase) {
+    parseDate = parseInt(date);
+  } else parseDate = date;
 
   return (
     <div
@@ -40,8 +46,8 @@ const ShowDate = ({
       onClick={() => setShowDate(!showDate)}
     >
       <CalendarIcon className="!h-4 !w-4 min-w-4 min-h-4" />
-      {!showDate && <span>{moment(parseInt(date)).fromNow()}</span>}
-      {showDate && <span>{moment(parseInt(date)).format("lll")}</span>}
+      {!showDate && <span>{moment(parseDate).fromNow()}</span>}
+      {showDate && <span>{moment(parseDate).format("lll")}</span>}
     </div>
   );
 };

@@ -1,6 +1,7 @@
+// src/pages/CaseSubmission.tsx
 // src/pages/CaseSubmissionPage.tsx
 import React, { useState, useMemo } from "react";
-import { useLocation, Link, useNavigate } from "react-router"; // Corrected Link import, ADDED useNavigate
+import { useLocation, useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
 
 import { useGetActiveCategories } from "../graphql/hooks/category"; // Adjust path
@@ -13,7 +14,7 @@ import CaseSubmissionLeftPanel from "../components/features/caseSubmission/compo
 import CaseSubmissionRightPanel from "../components/features/caseSubmission/components/CaseSubmissionRightPanel"; // Adjust path
 import HelpModal from "../components/modals/HelpModal"; // Adjust path
 import SuccessConfirmationModal from "../components/modals/SuccessConfirmationModal";
-// import LoadingModal from "../components/modals/LoadingModal"; // Optional
+import CaseSubmissionSkeleton from "../components/skeletons/CaseSubmissionSkeleton";
 
 const CaseSubmissionPage: React.FC = () => {
   const { t } = useTranslation("caseSubmission");
@@ -79,9 +80,7 @@ const CaseSubmissionPage: React.FC = () => {
   const [isHelpModalOpen, setIsHelpModalOpen] = useState<boolean>(false);
 
   if (categoriesLoading) {
-    return (
-      <div className="p-6 text-center">{t("caseSubmission.loadingForm")}</div>
-    );
+    return <CaseSubmissionSkeleton />;
   }
 
   if (categoriesError) {
@@ -108,6 +107,11 @@ const CaseSubmissionPage: React.FC = () => {
 
   return (
     <>
+      {/* The skeleton is now always active with low opacity for comparison */}
+      {/* <div className="absolute inset-0 z-50 opacity-95 pointer-events-none">
+        <CaseSubmissionSkeleton />
+      </div> */}
+
       <div className="min-h-screen p-6 grid grid-cols-1 md:grid-cols-2 gap-6 bg-stone-200">
         <CaseSubmissionHeader
           caseTypeParam={caseTypeParam}

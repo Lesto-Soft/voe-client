@@ -1,4 +1,5 @@
 import React from "react";
+import { XMarkIcon } from "@heroicons/react/24/solid";
 
 interface HelpModalProps {
   isOpen: boolean;
@@ -27,7 +28,7 @@ const HelpModal: React.FC<HelpModalProps> = ({
   return (
     // Overlay backdrop
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center  transition-opacity bg-gray-500/50 duration-300 ease-in-out"
+      className="fixed inset-0 z-50 flex items-center justify-center transition-opacity bg-gray-500/50 duration-300 ease-in-out"
       onClick={handleOverlayClick} // Close on overlay click
       aria-labelledby="modal-title"
       role="dialog"
@@ -47,10 +48,10 @@ const HelpModal: React.FC<HelpModalProps> = ({
           )}
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 text-2xl leading-none"
+            className="p-1 cursor-pointer rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 transition-colors"
             aria-label="Close modal"
           >
-            &times; {/* Nice 'X' character */}
+            <XMarkIcon className="h-6 w-6" />
           </button>
         </div>
 

@@ -10,6 +10,7 @@ import {
 } from "@heroicons/react/24/outline";
 import useUserActivityScrollPersistence from "../../../hooks/useUserActivityScrollPersistence";
 import DateRangeSelector from "./DateRangeSelector";
+import { parseActivityDate } from "../../../utils/dateUtils";
 
 // Represents a case that the user has rated, with their average score
 interface RatedCaseActivity {
@@ -119,7 +120,7 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
     if (!user) return [];
     const isInDateRange = (itemDateStr: string | number) => {
       if (!dateRange.startDate || !dateRange.endDate) return true;
-      const itemDate = new Date(itemDateStr);
+      const itemDate = parseActivityDate(itemDateStr);
       console.log(itemDate, dateRange.startDate, dateRange.endDate);
 
       return itemDate >= dateRange.startDate && itemDate <= dateRange.endDate;
@@ -153,7 +154,7 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
 
     if (user.cases) {
       user.cases
-        .filter((c) => isInDateRange(parseInt(c.date)))
+        .filter((c) => isInDateRange(c.date))
         .forEach((caseItem) =>
           activities.push({
             id: `case-${caseItem._id}`,
@@ -236,9 +237,12 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
       });
     });
 
-    return activities.sort(
-      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-    );
+    return activities.sort((a, b) => {
+      return (
+        parseActivityDate(b.date).getTime() -
+        parseActivityDate(a.date).getTime()
+      );
+    });
   }, [user, dateRange]);
 
   const activitiesToDisplay = useMemo((): CombinedActivity[] => {

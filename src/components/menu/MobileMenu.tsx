@@ -19,6 +19,7 @@ const MobileNavLink: React.FC<NavLinkProps> = ({
   icon,
   label,
   onClick,
+  adminOnly = false,
 }) => {
   const location = useLocation();
   const isActive = location.pathname === to;
@@ -29,9 +30,14 @@ const MobileNavLink: React.FC<NavLinkProps> = ({
       onClick={onClick}
       className={`flex items-center space-x-3 p-3 rounded-md w-full text-left transition duration-150 ease-in-out ${
         isActive
-          ? "bg-btnRedHover text-white"
-          : "text-gray-700 hover:bg-gray-300 hover:text-btnRedHover"
-      }`}
+          ? adminOnly
+            ? "bg-btnBlueHover text-white hover:text-white"
+            : "bg-btnRedHover text-white hover:text-white"
+          : "text-gray-700 hover:bg-gray-300"
+      }        ${
+        adminOnly ? " hover:text-btnBlueHover" : " hover:text-btnRedHover"
+      }
+}`}
     >
       {icon && <span className="flex-shrink-0 w-6 h-6">{icon}</span>}
       <span className="text-base font-medium">{label}</span>
@@ -77,18 +83,21 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
               icon={<UsersIcon className="h-6 w-6" />}
               label={t("accounts")}
               onClick={onLinkClick}
+              adminOnly={true}
             />
             <MobileNavLink
               to="/category-management"
               icon={<TagIcon className="h-6 w-6" />}
               label={t("categories")}
               onClick={onLinkClick}
+              adminOnly={true}
             />
             <MobileNavLink
               to="/rating-management"
               icon={<StarIcon className="h-6 w-6" />}
               label={t("ratings")}
               onClick={onLinkClick}
+              adminOnly={true}
             />
           </>
         )}
@@ -115,7 +124,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
             handleSignOut();
             onLinkClick(); // Close menu after sign out action
           }}
-          className="flex items-center rounded-md  space-x-3 p-3 w-full text-left text-gray-700 hover:bg-gray-300 hover:text-btnRedHover transition duration-150 ease-in-out"
+          className="cursor-pointer flex items-center rounded-md  space-x-3 p-3 w-full text-left text-gray-700 hover:bg-gray-300 hover:text-btnRedHover transition duration-150 ease-in-out"
         >
           <ArrowRightCircleIcon className="h-6 w-6" />
           <span className="text-base font-medium">{t("signOut")}</span>

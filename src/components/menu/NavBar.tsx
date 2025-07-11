@@ -35,6 +35,7 @@ export interface NavLinkProps {
   onClick?: () => void;
   dropdown?: boolean;
   theme?: "red" | "blue";
+  adminOnly?: boolean; // Optional prop to conditionally render for admin only
 }
 
 const NavLink: React.FC<NavLinkProps> = ({

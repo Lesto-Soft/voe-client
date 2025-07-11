@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback, use } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import {
   useGetAllCases,
   useGetCasesByUserCategories,
@@ -21,7 +21,6 @@ import {
 } from "@heroicons/react/24/outline";
 import { useLocation, useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
-import LoadingModal from "../components/modals/LoadingModal";
 import { useCurrentUser } from "../context/UserContext";
 import { ROLES } from "../utils/GLOBAL_PARAMETERS";
 // roles are ROLES.NORMAL, ROLES.EXPERT, ROLES.ADMIN

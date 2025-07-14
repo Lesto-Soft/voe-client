@@ -2,6 +2,12 @@
 import React, { useState, useEffect } from "react";
 import { IRatingMetric } from "../../db/interfaces";
 
+// NEW: Add validation constants based on the backend schema
+const VALIDATION = {
+  NAME: { MIN: 3, MAX: 50 },
+  DESCRIPTION: { MIN: 10, MAX: 200 },
+};
+
 interface RatingMetricFormProps {
   onSubmit: (formData: Partial<IRatingMetric>) => void;
   onClose: () => void;
@@ -18,7 +24,10 @@ const RatingMetricForm: React.FC<RatingMetricFormProps> = ({
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [archived, setArchived] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+
+  // NEW: Specific error states
+  const [nameError, setNameError] = useState<string | null>(null);
+  const [descriptionError, setDescriptionError] = useState<string | null>(null);
 
   const isEditing = !!initialData;
 
@@ -32,19 +41,48 @@ const RatingMetricForm: React.FC<RatingMetricFormProps> = ({
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError(null);
-    if (!name.trim()) {
-      setError("Името на метриката е задължително.");
-      return;
+    // NEW: Reset specific errors
+    setNameError(null);
+    setDescriptionError(null);
+    let hasErrors = false;
+
+    const trimmedName = name.trim();
+    if (trimmedName.length < VALIDATION.NAME.MIN) {
+      setNameError(`Името трябва да е поне ${VALIDATION.NAME.MIN} символа.`);
+      hasErrors = true;
+    } else if (trimmedName.length > VALIDATION.NAME.MAX) {
+      setNameError(
+        `Името не може да бъде по-дълго от ${VALIDATION.NAME.MAX} символа.`
+      );
+      hasErrors = true;
     }
-    if (!description.trim()) {
-      setError("Описанието на метриката е задължително.");
+
+    const trimmedDescription = description.trim();
+    if (trimmedDescription.length < VALIDATION.DESCRIPTION.MIN) {
+      setDescriptionError(
+        `Описанието трябва да е поне ${VALIDATION.DESCRIPTION.MIN} символа.`
+      );
+      hasErrors = true;
+    } else if (trimmedDescription.length > VALIDATION.DESCRIPTION.MAX) {
+      setDescriptionError(
+        `Описанието не може да бъде по-дълго от ${VALIDATION.DESCRIPTION.MAX} символа.`
+      );
+      hasErrors = true;
+    }
+
+    if (hasErrors) {
       return;
     }
 
-    const formData: Partial<IRatingMetric> = { name, description, archived };
+    const formData: Partial<IRatingMetric> = {
+      name: trimmedName,
+      description: trimmedDescription,
+      archived,
+    };
     onSubmit(formData);
   };
+
+  const errorPlaceholderClass = "mt-1 text-xs min-h-[1.2em]";
 
   return (
     <form onSubmit={handleSubmit} noValidate>
@@ -61,11 +99,33 @@ const RatingMetricForm: React.FC<RatingMetricFormProps> = ({
             type="text"
             id="metricName"
             value={name}
-            onChange={(e) => setName(e.target.value)}
-            className={`w-full rounded-md border p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
-              error?.includes("Име") ? "border-red-500" : "border-gray-300"
+            onChange={(e) => {
+              setName(e.target.value);
+              if (nameError) setNameError(null);
+            }}
+            maxLength={VALIDATION.NAME.MAX + 5} // Allow some overtyping
+            className={`w-full rounded-md border p-2 shadow-sm focus:outline-none focus:border-indigo-500 ${
+              nameError ? "border-red-500" : "border-gray-300"
             }`}
           />
+          <div className="flex justify-between items-center">
+            <p
+              className={`${errorPlaceholderClass} ${
+                nameError ? "text-red-500" : ""
+              }`}
+            >
+              {nameError || <>&nbsp;</>}
+            </p>
+            <p
+              className={`text-xs ${
+                name.length > VALIDATION.NAME.MAX
+                  ? "text-red-500"
+                  : "text-gray-500"
+              }`}
+            >
+              {name.length} / {VALIDATION.NAME.MAX}
+            </p>
+          </div>
         </div>
 
         {/* Metric Description */}
@@ -80,15 +140,36 @@ const RatingMetricForm: React.FC<RatingMetricFormProps> = ({
             id="metricDescription"
             rows={4}
             value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            className={`w-full rounded-md border p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
-              error?.includes("Описание") ? "border-red-500" : "border-gray-300"
+            onChange={(e) => {
+              setDescription(e.target.value);
+              if (descriptionError) setDescriptionError(null);
+            }}
+            maxLength={VALIDATION.DESCRIPTION.MAX + 10} // Allow some overtyping
+            className={`w-full rounded-md border p-2 shadow-sm focus:outline-none focus:border-indigo-500 resize-none ${
+              descriptionError ? "border-red-500" : "border-gray-300"
             }`}
           />
+          <div className="flex justify-between items-center">
+            <p
+              className={`${errorPlaceholderClass} ${
+                descriptionError ? "text-red-500" : ""
+              }`}
+            >
+              {descriptionError || <>&nbsp;</>}
+            </p>
+            <p
+              className={`text-xs ${
+                description.length > VALIDATION.DESCRIPTION.MAX
+                  ? "text-red-500"
+                  : "text-gray-500"
+              }`}
+            >
+              {description.length} / {VALIDATION.DESCRIPTION.MAX}
+            </p>
+          </div>
         </div>
 
-        {/* --- CHANGE IS HERE --- */}
-        {/* Archived Status - Now always visible */}
+        {/* Archived Status */}
         <div className="flex items-center pt-2">
           <input
             type="checkbox"
@@ -105,11 +186,6 @@ const RatingMetricForm: React.FC<RatingMetricFormProps> = ({
             Архивирана
           </label>
         </div>
-
-        {/* Error Display */}
-        {error && (
-          <div className="mt-1 text-xs text-red-500 min-h-[1.2em]">{error}</div>
-        )}
       </div>
 
       <div className="mt-8 text-center">

@@ -283,7 +283,7 @@ const RatingManagement: React.FC = () => {
           {isAdmin && (
             <button
               onClick={handleOpenCreateModal}
-              className="w-full sm:w-[280px] flex flex-shrink-0 justify-center items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-green-500 text-white hover:bg-green-600 active:bg-green-700 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="cursor-pointer w-full sm:w-[280px] flex flex-shrink-0 justify-center items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-green-500 text-white hover:bg-green-600 active:bg-green-700 disabled:opacity-60 disabled:cursor-not-allowed"
               disabled={isMutating}
             >
               <PlusIconSolid className="h-5 w-5 mr-1" />

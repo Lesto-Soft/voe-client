@@ -11,18 +11,18 @@ import { useUserFormState } from "./hooks/useUserFormState";
 import UserInputFields from "./partials/UserInputFields";
 import PasswordFields from "./partials/PasswordFields";
 import AvatarUploadSection from "./partials/AvatarUploadSection";
-import CategorySelectionDropdown from "./partials/CategorySelectionDropdown"; // NEW
+import CategorySelectionDropdown from "./partials/CategorySelectionDropdown";
 import { IUser, ICategory, IMe } from "../../db/interfaces";
-import { useGetActiveCategories } from "../../graphql/hooks/category"; // NEW
-import { ROLES } from "../../utils/GLOBAL_PARAMETERS"; // NEW
+import { useGetActiveCategories } from "../../graphql/hooks/category";
+import { ROLES } from "../../utils/GLOBAL_PARAMETERS";
 import { useCurrentUser } from "../../context/UserContext";
 
 const VALIDATION = {
-  USERNAME: { MIN: 3, MAX: 20 },
-  PASSWORD: { MIN: 6, MAX: 50 },
+  USERNAME: { MIN: 3, MAX: 25 },
+  PASSWORD: { MIN: 6, MAX: 15 },
   NAME: { MIN: 3, MAX: 50 },
-  POSITION: { MIN: 0, MAX: 50 },
-  EMAIL: { MAX: 100 },
+  POSITION: { MIN: 3, MAX: 50 },
+  EMAIL: { MAX: 50 },
 };
 
 const MAX_AVATAR_SIZE_MB = 3;
@@ -111,7 +111,6 @@ const UserForm: React.FC<UserFormProps> = ({
     error: categoriesError,
   } = useGetActiveCategories();
 
-  // --- NEW: State to store the original category assignments ---
   const [initialExpertCategories, setInitialExpertCategories] = useState<
     string[]
   >([]);
@@ -120,10 +119,7 @@ const UserForm: React.FC<UserFormProps> = ({
   >([]);
 
   const filteredRoles = useMemo(() => {
-    // isAdmin is true for both Expert (Managers) and Admin so we need to
-    // explicitly check the currentUser.role._id
     if (currentUser?.role?._id !== ROLES.ADMIN) {
-      // Filter out ADMIN role if current user is not an admin
       return roles.filter((role) => role._id !== ROLES.ADMIN);
     }
     return roles;
@@ -136,11 +132,11 @@ const UserForm: React.FC<UserFormProps> = ({
 
   const [nameError, setNameError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [positionError, setPositionError] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cropCompletedRef = useRef<boolean>(false);
 
-  // --- NEW: useEffect to populate the "memory" state on load ---
   useEffect(() => {
     if (initialData) {
       const expertIds =
@@ -157,32 +153,18 @@ const UserForm: React.FC<UserFormProps> = ({
     [roleId]
   );
 
-  // --- MODIFIED: The role change handler now includes restore logic ---
   const handleRoleChange = (newRoleId: string) => {
-    // Check the privilege level of the role we are changing FROM
     const oldRoleIsPrivileged = canManageCategories;
-    // Check the privilege level of the role we are changing TO
     const newRoleIsPrivileged =
       newRoleId === ROLES.ADMIN || newRoleId === ROLES.EXPERT;
 
-    // Case 1: Restore categories
-    // If moving from a non-privileged role TO a privileged one...
     if (!oldRoleIsPrivileged && newRoleIsPrivileged) {
-      // ...restore the original categories we saved on load.
       setExpertCategoryIds(initialExpertCategories);
       setManagedCategoryIds(initialManagedCategories);
-    }
-    // Case 2: Clear categories
-    // If moving from a privileged role TO a non-privileged one...
-    else if (oldRoleIsPrivileged && !newRoleIsPrivileged) {
-      // ...clear the categories as before.
+    } else if (oldRoleIsPrivileged && !newRoleIsPrivileged) {
       setExpertCategoryIds([]);
       setManagedCategoryIds([]);
     }
-    // Case 3: (e.g., Admin -> Expert or Normal -> Inactive)
-    // In all other cases, do nothing to the categories, preserving any changes.
-
-    // Finally, always update the role ID itself.
     setRoleId(newRoleId);
   };
 
@@ -259,25 +241,38 @@ const UserForm: React.FC<UserFormProps> = ({
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    // --- Reset all local errors on new submit attempt ---
+    // --- Reset only local/submit-specific errors ---
     setFormSubmitError(null);
-    setUsernameError(null);
     setNameError(null);
-    setEmailError(null);
     setPasswordError(null);
+    setPositionError(null);
+    // Do NOT reset usernameError/emailError here; they are controlled by the hook
+    // and reflect the latest async validation state. They are reset on input change.
+
     let canSubmit = true;
+
+    // --- First, check for pre-existing errors from the async hook ---
+    if (usernameError || emailError) {
+      canSubmit = false;
+    }
 
     const finalTrimmedUsername = username.trim();
     const finalTrimmedName = fullName.trim();
     const finalTrimmedEmail = email.trim();
+    const finalTrimmedPosition = position.trim();
 
-    // --- NEW/ENHANCED VALIDATION LOGIC ---
+    // --- Synchronous Validations ---
     if (!finalTrimmedUsername) {
       setUsernameError("Потребителското име е задължително.");
       canSubmit = false;
     } else if (finalTrimmedUsername.length < VALIDATION.USERNAME.MIN) {
       setUsernameError(
         `Потребителското име трябва да е поне ${VALIDATION.USERNAME.MIN} символа.`
+      );
+      canSubmit = false;
+    } else if (finalTrimmedUsername.length > VALIDATION.USERNAME.MAX) {
+      setUsernameError(
+        `Потребителското име не може да бъде по-дълго от ${VALIDATION.USERNAME.MAX} символа.`
       );
       canSubmit = false;
     }
@@ -288,6 +283,11 @@ const UserForm: React.FC<UserFormProps> = ({
     } else if (finalTrimmedName.length < VALIDATION.NAME.MIN) {
       setNameError(`Името трябва да е поне ${VALIDATION.NAME.MIN} символа.`);
       canSubmit = false;
+    } else if (finalTrimmedName.length > VALIDATION.NAME.MAX) {
+      setNameError(
+        `Името не може да бъде по-дълго от ${VALIDATION.NAME.MAX} символа.`
+      );
+      canSubmit = false;
     }
 
     if (!roleId) {
@@ -295,14 +295,33 @@ const UserForm: React.FC<UserFormProps> = ({
       canSubmit = false;
     }
 
-    if (finalTrimmedEmail && !isValidEmailFormat(finalTrimmedEmail)) {
-      setEmailError("Невалиден имейл формат.");
-      canSubmit = false;
+    if (finalTrimmedEmail) {
+      if (!isValidEmailFormat(finalTrimmedEmail)) {
+        setEmailError("Невалиден имейл формат.");
+        canSubmit = false;
+      } else if (finalTrimmedEmail.length > VALIDATION.EMAIL.MAX) {
+        setEmailError(
+          `Имейлът не може да бъде по-дълъг от ${VALIDATION.EMAIL.MAX} символа.`
+        );
+        canSubmit = false;
+      }
     }
 
-    // --- Password Validation ---
+    if (finalTrimmedPosition) {
+      if (finalTrimmedPosition.length < VALIDATION.POSITION.MIN) {
+        setPositionError(
+          `Позицията трябва да е поне ${VALIDATION.POSITION.MIN} символа.`
+        );
+        canSubmit = false;
+      } else if (finalTrimmedPosition.length > VALIDATION.POSITION.MAX) {
+        setPositionError(
+          `Позицията не може да бъде по-дълга от ${VALIDATION.POSITION.MAX} символа.`
+        );
+        canSubmit = false;
+      }
+    }
+
     if (!isEditing) {
-      // CREATE MODE
       if (!password) {
         setPasswordError("Паролата е задължителна.");
         canSubmit = false;
@@ -311,28 +330,39 @@ const UserForm: React.FC<UserFormProps> = ({
           `Паролата трябва да е поне ${VALIDATION.PASSWORD.MIN} символа.`
         );
         canSubmit = false;
+      } else if (password.length > VALIDATION.PASSWORD.MAX) {
+        setPasswordError(
+          `Паролата не може да бъде по-дълга от ${VALIDATION.PASSWORD.MAX} символа.`
+        );
+        canSubmit = false;
       } else if (password !== confirmPassword) {
         setPasswordError("Паролите не съвпадат.");
         canSubmit = false;
       }
     } else {
-      // EDIT MODE
-      if (newPassword && newPassword.length < VALIDATION.PASSWORD.MIN) {
-        setPasswordError(
-          `Новата парола трябва да е поне ${VALIDATION.PASSWORD.MIN} символа.`
-        );
-        canSubmit = false;
-      } else if (newPassword !== confirmNewPassword) {
-        setPasswordError("Новите пароли не съвпадат.");
-        canSubmit = false;
+      if (newPassword) {
+        if (newPassword.length < VALIDATION.PASSWORD.MIN) {
+          setPasswordError(
+            `Новата парола трябва да е поне ${VALIDATION.PASSWORD.MIN} символа.`
+          );
+          canSubmit = false;
+        } else if (newPassword.length > VALIDATION.PASSWORD.MAX) {
+          setPasswordError(
+            `Новата парола не може да бъде по-дълга от ${VALIDATION.PASSWORD.MAX} символа.`
+          );
+          canSubmit = false;
+        } else if (newPassword !== confirmNewPassword) {
+          setPasswordError("Новите пароли не съвпадат.");
+          canSubmit = false;
+        }
       }
     }
 
-    // --- Check hook-based errors ---
-    if (usernameHookError || (emailHookError && finalTrimmedEmail)) {
+    // --- Final check for hook network errors and loading states ---
+    if (usernameHookError || emailHookError) {
       canSubmit = false;
     }
-    if (isCheckingUsername || (isCheckingEmail && finalTrimmedEmail)) {
+    if (isCheckingUsername || isCheckingEmail) {
       setFormSubmitError(
         "Проверката за уникалност все още е в ход. Моля изчакайте."
       );
@@ -340,8 +370,16 @@ const UserForm: React.FC<UserFormProps> = ({
     }
 
     if (!canSubmit) {
-      if (!formSubmitError)
+      if (
+        !formSubmitError &&
+        !usernameError &&
+        !emailError &&
+        !nameError &&
+        !passwordError &&
+        !positionError
+      ) {
         setFormSubmitError("Моля, коригирайте грешките във формата.");
+      }
       return;
     }
 
@@ -349,11 +387,11 @@ const UserForm: React.FC<UserFormProps> = ({
       username: finalTrimmedUsername,
       name: fullName.trim(),
       email: finalTrimmedEmail || null,
-      position: position.trim() || null,
+      position: finalTrimmedPosition || null,
       role: roleId || null,
       financial_approver: financialApprover,
-      expert_categories: expertCategoryIds, // NEW
-      managed_categories: managedCategoryIds, // NEW
+      expert_categories: expertCategoryIds,
+      managed_categories: managedCategoryIds,
     };
     if (!isEditing) formDataObject.password = password;
     else if (newPassword) formDataObject.password = newPassword;
@@ -361,7 +399,6 @@ const UserForm: React.FC<UserFormProps> = ({
     let avatarFile: File | null | undefined = undefined;
 
     if (finalCroppedBlob) {
-      // We have a new/edited avatar, so convert the Blob into a File object.
       const filename = originalAvatarFile?.name
         ? `cropped_${originalAvatarFile.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`
         : "cropped_avatar.png";
@@ -370,11 +407,9 @@ const UserForm: React.FC<UserFormProps> = ({
         type: finalCroppedBlob.type,
       });
     } else if (isRemovingAvatar && isEditing) {
-      // The user chose to remove their existing avatar.
       avatarFile = null;
     }
 
-    // Pass the raw File object, null, or undefined up to the parent component.
     onSubmit(formDataObject, initialData?._id || null, avatarFile);
   };
 
@@ -405,27 +440,31 @@ const UserForm: React.FC<UserFormProps> = ({
               setUsername(v);
               setUsernameError(null);
             }}
-            usernameError={usernameError || usernameHookError?.message} // Combine errors
+            usernameError={usernameError || usernameHookError?.message}
             isCheckingUsername={isCheckingUsername}
             fullName={fullName}
             setFullName={(v) => {
               setFullName(v);
               setNameError(null);
             }}
-            nameError={nameError} // Pass new error prop
+            nameError={nameError}
             email={email}
             setEmail={(v) => {
               setEmail(v);
               setEmailError(null);
             }}
-            emailError={emailError || emailHookError?.message} // Combine errors
+            emailError={emailError || emailHookError?.message}
             isCheckingEmail={isCheckingEmail}
             isEmailFormatCurrentlyValid={isEmailFormatCurrentlyValid}
             trimmedDebouncedEmail={trimmedDebouncedEmail}
             position={position}
-            setPosition={setPosition}
+            setPosition={(v) => {
+              setPosition(v);
+              setPositionError(null);
+            }}
+            positionError={positionError}
             roleId={roleId}
-            onRoleChange={handleRoleChange} // CHANGED: Pass the new handler
+            onRoleChange={handleRoleChange}
             roles={filteredRoles}
             financialApprover={financialApprover}
             setFinancialApprover={setFinancialApprover}
@@ -456,7 +495,7 @@ const UserForm: React.FC<UserFormProps> = ({
                 onSelectionChange={setExpertCategoryIds}
                 isLoading={categoriesLoading}
                 errorPlaceholderClass={errorPlaceholderClass}
-                disabled={!isAdmin} // ADDED: Disable if not an admin
+                disabled={!isAdmin}
               />
               <CategorySelectionDropdown
                 label="Менажира категории"
@@ -465,7 +504,7 @@ const UserForm: React.FC<UserFormProps> = ({
                 onSelectionChange={setManagedCategoryIds}
                 isLoading={categoriesLoading}
                 errorPlaceholderClass={errorPlaceholderClass}
-                disabled={!isAdmin} // ADDED: Disable if not an admin
+                disabled={!isAdmin}
               />
             </>
           )}
@@ -492,7 +531,7 @@ const UserForm: React.FC<UserFormProps> = ({
               setConfirmNewPassword(v);
               setPasswordError(null);
             }}
-            passwordError={passwordError} // Pass new error prop
+            passwordError={passwordError}
             errorPlaceholderClass={errorPlaceholderClass}
           />
         </div>

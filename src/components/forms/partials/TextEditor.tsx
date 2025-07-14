@@ -251,7 +251,7 @@ const TextEditor: React.FC<TextEditorProps> = ({
     ${
       isInvalid
         ? "border-red-200 focus-within:ring-red-100"
-        : "border-gray-300 focus-within:ring-blue-500"
+        : "border-gray-300 focus-within:ring-indigo-500"
     }
     ${wrapperClassName || ""}
   `;

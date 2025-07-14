@@ -105,7 +105,7 @@ const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
     ${
       isInvalid
         ? "border-red-500 focus-within:ring-red-500"
-        : "border-gray-300 focus-within:ring-blue-500"
+        : "border-gray-300 focus-within:ring-indigo-500"
     }
     ${wrapperClassName || ""}
   `;

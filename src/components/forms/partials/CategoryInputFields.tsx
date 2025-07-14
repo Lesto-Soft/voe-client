@@ -246,7 +246,7 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
-          className={`w-full rounded-md border p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
+          className={`w-full rounded-md border p-2 shadow-sm focus:outline-none focus:border-indigo-500 ${
             nameError ? "border-red-500" : "border-gray-300"
           }`}
         />

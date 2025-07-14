@@ -11,7 +11,7 @@ interface UserInputFieldsProps {
   isCheckingUsername: boolean;
   fullName: string;
   setFullName: (value: string) => void;
-  nameError: string | null; // ADDED: To display validation errors for the name field
+  nameError: string | null;
   email: string;
   setEmail: (value: string) => void;
   emailError: string | null;
@@ -20,6 +20,7 @@ interface UserInputFieldsProps {
   trimmedDebouncedEmail: string;
   position: string;
   setPosition: (value: string) => void;
+  positionError: string | null; // <-- NEW
   roleId: string;
   onRoleChange: (value: string) => void;
   roles: Role[];
@@ -37,7 +38,7 @@ const UserInputFields: React.FC<UserInputFieldsProps> = ({
   isCheckingUsername,
   fullName,
   setFullName,
-  nameError, // ADDED
+  nameError,
   email,
   setEmail,
   emailError,
@@ -46,6 +47,7 @@ const UserInputFields: React.FC<UserInputFieldsProps> = ({
   trimmedDebouncedEmail,
   position,
   setPosition,
+  positionError, // <-- NEW
   roleId,
   onRoleChange,
   roles,
@@ -82,7 +84,7 @@ const UserInputFields: React.FC<UserInputFieldsProps> = ({
             onChange={(e) => setUsername(e.target.value)}
             required
             disabled={isUsernameDisabled}
-            className={`w-full rounded-md border p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
+            className={`w-full rounded-md border p-2 shadow-sm focus:outline-none focus:border-indigo-500 ${
               usernameError ? "border-red-500" : "border-gray-300"
             } ${
               isCheckingUsername ? "opacity-70 animate-pulse" : ""
@@ -117,11 +119,10 @@ const UserInputFields: React.FC<UserInputFieldsProps> = ({
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
             required
-            className={`w-full rounded-md border p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
-              nameError ? "border-red-500" : "border-gray-300" // MODIFIED
+            className={`w-full rounded-md border p-2 shadow-sm focus:outline-none focus:border-indigo-500 ${
+              nameError ? "border-red-500" : "border-gray-300"
             } ${disabledClasses}`}
           />
-          {/* MODIFIED: Display nameError */}
           <p
             className={`${errorPlaceholderClass} ${
               nameError ? "text-red-500" : ""
@@ -144,7 +145,7 @@ const UserInputFields: React.FC<UserInputFieldsProps> = ({
             id="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className={`w-full rounded-md border p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
+            className={`w-full rounded-md border p-2 shadow-sm focus:outline-none focus:border-indigo-500 ${
               emailError ? "border-red-500" : "border-gray-300"
             } ${
               isCheckingEmail &&
@@ -184,9 +185,17 @@ const UserInputFields: React.FC<UserInputFieldsProps> = ({
             id="position"
             value={position}
             onChange={(e) => setPosition(e.target.value)}
-            className={`w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${disabledClasses}`}
+            className={`w-full rounded-md border p-2 shadow-sm focus:outline-none focus:border-indigo-500 ${
+              positionError ? "border-red-500" : "border-gray-300"
+            } ${disabledClasses}`}
           />
-          <p className={`${errorPlaceholderClass}`}>&nbsp;</p>
+          <p
+            className={`${errorPlaceholderClass} ${
+              positionError ? "text-red-500" : ""
+            }`}
+          >
+            {positionError || <>&nbsp;</>}
+          </p>
         </div>
 
         {/* Combined Row for Role and Financial Approver */}
@@ -228,10 +237,10 @@ const UserInputFields: React.FC<UserInputFieldsProps> = ({
                 id="role"
                 name="role"
                 value={roleId}
-                onChange={(e) => onRoleChange(e.target.value)} // CHANGED: Use the new handler
+                onChange={(e) => onRoleChange(e.target.value)}
                 required
                 disabled={!canEditSensitiveFields}
-                className={`w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${disabledClasses}`}
+                className={`w-full rounded-md border border-gray-300 p-2 shadow-sm focus:outline-none focus:border-indigo-500 ${disabledClasses}`}
               >
                 <option value="">Изберете роля</option>
                 {roles.map((r) => (
@@ -256,7 +265,7 @@ const UserInputFields: React.FC<UserInputFieldsProps> = ({
                   checked={financialApprover}
                   onChange={(e) => setFinancialApprover(e.target.checked)}
                   disabled={!canEditSensitiveFields}
-                  className={`h-5 w-5 rounded border-gray-300 text-blue-600 shadow-sm focus:ring-blue-500 ${disabledClasses}`}
+                  className={`h-5 w-5 rounded border-gray-300 text-blue-600 shadow-sm focus:outline-none focus:border-indigo-500 ${disabledClasses}`}
                 />
                 <label
                   htmlFor="financial_approver"

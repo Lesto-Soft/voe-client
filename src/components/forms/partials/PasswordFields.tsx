@@ -49,7 +49,7 @@ const PasswordFields: React.FC<PasswordFieldsProps> = ({
               value={password}
               onChange={(e) => setPassword?.(e.target.value)}
               required={!isEditing}
-              className={`w-full rounded-md border p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
+              className={`w-full rounded-md border p-2 shadow-sm focus:outline-none focus:border-indigo-500 ${
                 passwordError ? "border-red-500" : "border-gray-300" // MODIFIED
               }`}
             />
@@ -68,7 +68,7 @@ const PasswordFields: React.FC<PasswordFieldsProps> = ({
               value={confirmPassword}
               onChange={(e) => setConfirmPassword?.(e.target.value)}
               required={!isEditing}
-              className={`w-full rounded-md border p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
+              className={`w-full rounded-md border p-2 shadow-sm focus:outline-none focus:border-indigo-500 ${
                 passwordError ? "border-red-500" : "border-gray-300" // MODIFIED
               }`}
             />
@@ -101,7 +101,7 @@ const PasswordFields: React.FC<PasswordFieldsProps> = ({
               id="newPassword"
               value={newPassword}
               onChange={(e) => setNewPassword?.(e.target.value)}
-              className={`w-full rounded-md border p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
+              className={`w-full rounded-md border p-2 shadow-sm focus:outline-none focus:border-indigo-500 ${
                 passwordError ? "border-red-500" : "border-gray-300" // MODIFIED
               }`}
               placeholder="Нова парола"
@@ -120,7 +120,7 @@ const PasswordFields: React.FC<PasswordFieldsProps> = ({
               id="confirmNewPassword"
               value={confirmNewPassword}
               onChange={(e) => setConfirmNewPassword?.(e.target.value)}
-              className={`w-full rounded-md border p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
+              className={`w-full rounded-md border p-2 shadow-sm focus:outline-none focus:border-indigo-500 ${
                 passwordError ? "border-red-500" : "border-gray-300" // MODIFIED
               }`}
               placeholder="Потвърди нова парола"

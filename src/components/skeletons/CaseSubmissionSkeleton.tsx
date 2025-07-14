@@ -18,9 +18,9 @@ const CaseSubmissionSkeleton: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen p-6 grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 animate-pulse">
+    <div className="min-h-screen p-6 grid grid-cols-1 md:grid-cols-2 gap-6 bg-stone-200 animate-pulse">
       {/* --- Header Skeleton --- */}
-      <div className="col-span-1 md:col-span-2 flex flex-col md:flex-row justify-between md:items-center gap-4 -mt-2">
+      <div className="col-span-1 md:col-span-2 flex flex-col md:flex-row justify-between md:items-center gap-4 mt-11">
         {/* ---- TINKER HINT ----
          * To raise or lower the entire header, adjust the negative top margin '-mt-4' on the line above.
          * For example, '-mt-6' will raise it more, and '-mt-2' will raise it less.

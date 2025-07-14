@@ -31,7 +31,6 @@ const overlayClass =
 const contentClass =
   "fixed z-50 top-1/2 left-1/2 w-[90vw] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-lg bg-white p-6 shadow-lg data-[state=open]:animate-contentShow focus:outline-none border border-gray-300";
 const titleClass = "text-lg font-semibold text-gray-800 mb-2";
-const descriptionClass = "mb-5 text-sm text-gray-600";
 const closeButtonClass =
   "absolute top-3 right-3 inline-flex h-7 w-7 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-purple-500 transition-colors";
 const listContainerClass =

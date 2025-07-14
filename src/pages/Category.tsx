@@ -1,17 +1,14 @@
-// src/pages/Category.tsx
 import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router"; // Import useNavigate
 import { useQuery } from "@apollo/client";
 
-// --- NEW: Import icons, hooks, components and types ---
-import { PencilSquareIcon } from "@heroicons/react/24/solid";
 import { useCurrentUser } from "../context/UserContext"; // Adjust path as needed
 import {
   useGetCategoryByName,
   useUpdateCategory,
 } from "../graphql/hooks/category"; // Adjust path
 import { GET_LEAN_USERS } from "../graphql/query/user"; // Adjust path
-import { ICategory, IMe } from "../db/interfaces"; // Adjust path
+import { IMe } from "../db/interfaces"; // Adjust path
 import { UpdateCategoryInput } from "../graphql/mutation/category";
 import CategoryModal from "../components/modals/CategoryModal"; // Adjust path
 import CategoryForm, {
@@ -37,7 +34,6 @@ import { ROLES } from "../utils/GLOBAL_PARAMETERS";
 
 import { useAuthorization } from "../hooks/useAuthorization";
 import ForbiddenPage from "./ErrorPages/ForbiddenPage";
-import moment from "moment";
 
 interface ILeanUserForForm {
   _id: string;

@@ -15,7 +15,7 @@ interface CommentProps {
 }
 
 const Comment: React.FC<CommentProps> = ({ comment, me, caseNumber }) => {
-  const { deleteComment, error, loading } = useDeleteComment(caseNumber);
+  const { deleteComment } = useDeleteComment(caseNumber);
 
   // Actions block is defined once to avoid repetition.
   const actions = me &&

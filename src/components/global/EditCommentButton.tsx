@@ -5,9 +5,6 @@ import { useTranslation } from "react-i18next";
 import FileAttachmentBtn from "./FileAttachmentBtn";
 import { IComment } from "../../db/interfaces";
 import { useUpdateComment } from "../../graphql/hooks/comment";
-import { readFileAsBase64 } from "../../utils/attachment-handling";
-import { AttachmentInput } from "../../graphql/hooks/case";
-import { XCircleIcon, XMarkIcon } from "@heroicons/react/24/solid";
 import { COMMENT_CONTENT } from "../../utils/GLOBAL_PARAMETERS";
 
 interface EditButtonProps {

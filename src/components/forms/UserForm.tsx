@@ -12,7 +12,7 @@ import UserInputFields from "./partials/UserInputFields";
 import PasswordFields from "./partials/PasswordFields";
 import AvatarUploadSection from "./partials/AvatarUploadSection";
 import CategorySelectionDropdown from "./partials/CategorySelectionDropdown";
-import { IUser, ICategory, IMe } from "../../db/interfaces";
+import { IUser, IMe } from "../../db/interfaces";
 import { useGetActiveCategories } from "../../graphql/hooks/category";
 import { ROLES } from "../../utils/GLOBAL_PARAMETERS";
 import { useCurrentUser } from "../../context/UserContext";
@@ -48,7 +48,6 @@ const isValidEmailFormat = (emailToTest: string): boolean =>
 
 const UserForm: React.FC<UserFormProps> = ({
   onSubmit,
-  onClose,
   initialData = null,
   submitButtonText = "Запази",
   roles = [],
@@ -133,6 +132,7 @@ const UserForm: React.FC<UserFormProps> = ({
   const [nameError, setNameError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [positionError, setPositionError] = useState<string | null>(null);
+  const [submitEmailError, setSubmitEmailError] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cropCompletedRef = useRef<boolean>(false);
@@ -241,17 +241,14 @@ const UserForm: React.FC<UserFormProps> = ({
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    // --- Reset only local/submit-specific errors ---
     setFormSubmitError(null);
     setNameError(null);
     setPasswordError(null);
     setPositionError(null);
-    // Do NOT reset usernameError/emailError here; they are controlled by the hook
-    // and reflect the latest async validation state. They are reset on input change.
+    setSubmitEmailError(null);
 
     let canSubmit = true;
 
-    // --- First, check for pre-existing errors from the async hook ---
     if (usernameError || emailError) {
       canSubmit = false;
     }
@@ -261,7 +258,6 @@ const UserForm: React.FC<UserFormProps> = ({
     const finalTrimmedEmail = email.trim();
     const finalTrimmedPosition = position.trim();
 
-    // --- Synchronous Validations ---
     if (!finalTrimmedUsername) {
       setUsernameError("Потребителското име е задължително.");
       canSubmit = false;
@@ -297,10 +293,10 @@ const UserForm: React.FC<UserFormProps> = ({
 
     if (finalTrimmedEmail) {
       if (!isValidEmailFormat(finalTrimmedEmail)) {
-        setEmailError("Невалиден имейл формат.");
+        setSubmitEmailError("Невалиден имейл формат.");
         canSubmit = false;
       } else if (finalTrimmedEmail.length > VALIDATION.EMAIL.MAX) {
-        setEmailError(
+        setSubmitEmailError(
           `Имейлът не може да бъде по-дълъг от ${VALIDATION.EMAIL.MAX} символа.`
         );
         canSubmit = false;
@@ -358,7 +354,6 @@ const UserForm: React.FC<UserFormProps> = ({
       }
     }
 
-    // --- Final check for hook network errors and loading states ---
     if (usernameHookError || emailHookError) {
       canSubmit = false;
     }
@@ -376,7 +371,8 @@ const UserForm: React.FC<UserFormProps> = ({
         !emailError &&
         !nameError &&
         !passwordError &&
-        !positionError
+        !positionError &&
+        !submitEmailError
       ) {
         setFormSubmitError("Моля, коригирайте грешките във формата.");
       }
@@ -452,8 +448,11 @@ const UserForm: React.FC<UserFormProps> = ({
             setEmail={(v) => {
               setEmail(v);
               setEmailError(null);
+              setSubmitEmailError(null);
             }}
-            emailError={emailError || emailHookError?.message}
+            emailError={
+              submitEmailError || emailError || emailHookError?.message
+            }
             isCheckingEmail={isCheckingEmail}
             isEmailFormatCurrentlyValid={isEmailFormatCurrentlyValid}
             trimmedDebouncedEmail={trimmedDebouncedEmail}

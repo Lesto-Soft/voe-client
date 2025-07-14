@@ -1,6 +1,6 @@
 // src/components/global/UserLink.tsx
 import { Link } from "react-router";
-import { IMe, IUser } from "../../db/interfaces";
+import { IUser } from "../../db/interfaces";
 import { canViewUserProfile } from "../../utils/rightUtils";
 import { useCurrentUser } from "../../context/UserContext"; // 1. Import the hook
 

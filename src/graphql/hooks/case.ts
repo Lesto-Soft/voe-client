@@ -15,7 +15,6 @@ import {
   GET_USER_COMMENTED_CASES,
   // UPDATE_CASE, // This was duplicated, removed.
 } from "../query/case";
-import moment from "moment";
 
 export type AttachmentInput = {
   filename: string;

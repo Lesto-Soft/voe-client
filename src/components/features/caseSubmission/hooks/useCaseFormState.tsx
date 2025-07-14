@@ -75,7 +75,6 @@ export const useCaseFormState = ({
   caseTypeParam,
   categoriesData,
   executeCreateCase,
-  createCaseLoadingHook,
   createCaseErrorHook,
   onSuccess,
 }: HookProps): UseCaseFormStateReturn => {

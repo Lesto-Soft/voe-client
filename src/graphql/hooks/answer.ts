@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "@apollo/client";
+import { useMutation } from "@apollo/client";
 import {
   APPROVE_ANSWER,
   APPROVE_ANSWER_FINANCE,

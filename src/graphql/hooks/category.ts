@@ -15,7 +15,6 @@ import {
   UpdateCategoryInput,
   DELETE_CATEGORY,
 } from "../mutation/category";
-import Category from "../../pages/Category";
 
 export function buildCategoryQueryVariables(input: any) {
   // Destructure input with default values for pagination

@@ -5,10 +5,7 @@ import { useTranslation } from "react-i18next";
 import FileAttachmentBtn from "./FileAttachmentBtn";
 import SimpleTextEditor from "../forms/partials/SimplifiedTextEditor";
 import { IAnswer } from "../../db/interfaces";
-import { readFileAsBase64 } from "../../utils/attachment-handling";
-import { AttachmentInput } from "../../graphql/hooks/case";
 import { useUpdateAnswer } from "../../graphql/hooks/answer";
-import { XMarkIcon } from "@heroicons/react/24/solid";
 import { ANSWER_CONTENT } from "../../utils/GLOBAL_PARAMETERS";
 import { getTextLength } from "../../utils/contentRenderer";
 
@@ -27,7 +24,6 @@ export interface UpdateAnswerInput {
 
 const EditAnswerButton: React.FC<EditButtonProps> = ({
   answer,
-  currentAttachments,
   caseNumber,
   me,
 }) => {

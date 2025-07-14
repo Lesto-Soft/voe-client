@@ -17,7 +17,6 @@ import { SignalStats } from "../../../hooks/useCategorySignalStats"; // Adjust p
 import {
   translateStatus,
   translateCaseType,
-  translateResolutionCategory,
 } from "../../../utils/categoryDisplayUtils"; // Adjust path
 
 interface CategoryStatisticsPanelProps {
@@ -37,8 +36,7 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
 }) => {
   const renderPieChartWithLegend = (
     title: string,
-    pieData: PieSegmentData[],
-    translationFn?: (label: string) => string
+    pieData: PieSegmentData[]
   ) => {
     const totalValue = pieData.reduce((sum, item) => sum + item.value, 0);
 
@@ -48,7 +46,7 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
         <div className="animate-pulse">
           <div className="h-6 bg-gray-200 rounded w-3/4 mb-3"></div>
           <div className="flex justify-center mb-3">
-            <div className="h-32 w-32 sm:h-36 sm:w-36 lg:h-40 lg:h-40 bg-gray-200 rounded-full"></div>
+            <div className="h-32 w-32 sm:h-36 sm:w-36 bg-gray-200 rounded-full"></div>
           </div>
           <div className="space-y-1">
             {[...Array(3)].map((_, i) => (
@@ -234,8 +232,7 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
               </div>
               {renderPieChartWithLegend(
                 "Разпределение по Статус",
-                signalStats.statusPieChartData,
-                translateStatus
+                signalStats.statusPieChartData
               )}
             </div>
           )}
@@ -282,8 +279,7 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
               </div>
               {renderPieChartWithLegend(
                 "Разпределение по Тип",
-                signalStats.typePieChartData,
-                translateCaseType
+                signalStats.typePieChartData
               )}
             </div>
           )}
@@ -326,8 +322,7 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
               </div>
               {renderPieChartWithLegend(
                 "Разпределение по Време на Резолюция",
-                signalStats.resolutionPieChartData,
-                translateResolutionCategory
+                signalStats.resolutionPieChartData
               )}
             </div>
           )}

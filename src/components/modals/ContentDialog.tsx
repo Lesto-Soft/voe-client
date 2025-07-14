@@ -8,13 +8,11 @@ import { renderContentSafely } from "../../utils/contentRenderer";
 import { ICategory, IMe, IMetricScore, IUser } from "../../db/interfaces"; // UPDATED
 import Creator from "../case-components/Creator";
 import ShowDate from "../global/ShowDate";
-import CaseRatingDisplay from "../case-components/CaseRatingDisplay"; // UPDATED
 import CategoryLink from "../global/CategoryLink";
 import ImagePreviewModal from "./ImagePreviewModal";
 import { createFileUrl } from "../../utils/fileUtils";
 import { getPriorityStyle, getTypeBadgeStyle } from "../../utils/style-helpers";
 import { labelTextClass, caseBoxClasses } from "../../ui/reusable-styles";
-import { useMemo } from "react";
 
 // --- UPDATED Props Interface ---
 interface ContentDialogProps {
@@ -42,23 +40,12 @@ const ContentDialog: React.FC<ContentDialogProps> = ({
   type,
   priority,
   categories,
-  metricScores = [], // UPDATED
-  calculatedRating, // UPDATED
   attachments = [],
   caseId,
-  me,
-  refetch,
-  isCurrentUserCreator,
 }) => {
   const { t } = useTranslation(["modals", "dashboard"]);
   const priorityStyle = getPriorityStyle(priority);
   const typeBadgeStyle = getTypeBadgeStyle(type);
-
-  // --- NEW: We calculate this here as well to pass to the display component ---
-  const hasUserRated = useMemo(
-    () => metricScores.some((score) => score.user._id === me._id),
-    [metricScores, me._id]
-  );
 
   return (
     <Dialog.Root>

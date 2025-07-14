@@ -24,22 +24,6 @@ import {
   RankingType,
 } from "../../components/features/analyses/types";
 
-// --- Define Input Types (These should match your GraphQL Schema!) ---
-// Interface for the filters used in UserManagementPage
-interface UserFiltersInput {
-  name?: string;
-  username?: string;
-  position?: string;
-  email?: string;
-  roleIds?: string[];
-  financial_approver?: boolean; // Note: your build function adds if truthy
-  is_manager?: boolean; // <-- ADDED for manager filter
-  itemsPerPage?: number;
-  currentPage?: number; // Expecting the 0-based index here
-  query?: string; // Include if your getAllInput still has/needs it
-  // Add any other filter fields your backend supports
-}
-
 export function buildUserQueryVariables(input: any) {
   const {
     itemsPerPage,

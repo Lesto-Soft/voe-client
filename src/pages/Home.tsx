@@ -1,6 +1,6 @@
 import axios from "axios";
 import { useState } from "react";
-import { dev_endpoint } from "../db/config";
+import { endpoint } from "../db/config";
 import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
 // import LanguageSwitcher from "../components/modals/LanguageSwitcher";
@@ -91,7 +91,7 @@ const LoginForm = ({
     setError(null);
     try {
       const response = await axios.post(
-        `${dev_endpoint}/login`,
+        `${endpoint}/login`,
         { username, password },
         {
           method: "POST",

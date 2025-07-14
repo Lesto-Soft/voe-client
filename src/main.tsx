@@ -1,4 +1,4 @@
-import { StrictMode, Suspense } from "react";
+import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./i18n"; // Import the i18n configuration
 import "./index.css"; // Your global styles

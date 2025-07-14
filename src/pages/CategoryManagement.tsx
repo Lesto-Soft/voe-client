@@ -14,7 +14,7 @@ import {
   CreateCategoryInput,
   UpdateCategoryInput,
 } from "../graphql/mutation/category"; // Adjust path as needed
-import { ICategory, ICaseStatus as CaseStatus, IUser } from "../db/interfaces"; // Adjust path as needed, Added IUser
+import { ICategory, ICaseStatus as CaseStatus } from "../db/interfaces"; // Adjust path as needed, Added IUser
 import CategoryTable from "../components/features/categoryManagement/CategoryTable"; // Adjust path as needed
 import {
   useCategoryManagement,
@@ -350,11 +350,8 @@ const CategoryManagement: React.FC = () => {
     loading: updateCategoryLoading,
     error: updateCategoryErrorObj,
   } = useUpdateCategory();
-  const {
-    deleteCategory,
-    loading: deleteCategoryLoading,
-    error: deleteCategoryErrorObj,
-  } = useDeleteCategory();
+  const { deleteCategory, loading: deleteCategoryLoading } =
+    useDeleteCategory();
 
   const isLoadingOverallCaseCounts =
     totalCaseCountLoading ||

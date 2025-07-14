@@ -1,5 +1,5 @@
 import { ApolloClient, ApolloLink, InMemoryCache } from "@apollo/client";
-import { dev_graphqlEndpoint } from "../db/config";
+import { graphqlEndpoint } from "../db/config";
 import createUploadLink from "apollo-upload-client/createUploadLink.mjs";
 import { onError } from "@apollo/client/link/error";
 
@@ -17,7 +17,7 @@ const errorLink = onError(({ graphQLErrors, networkError }) => {
 });
 
 const uploadLink = createUploadLink({
-  uri: dev_graphqlEndpoint,
+  uri: graphqlEndpoint,
   credentials: "include",
   headers: {
     "apollo-require-preflight": "true",

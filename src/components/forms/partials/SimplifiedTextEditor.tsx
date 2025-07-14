@@ -19,7 +19,6 @@ const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
   content,
   onUpdate,
   placeholder = "Напишете отговор...",
-  height = "96px",
   wrapperClassName,
   maxLength,
   minLength,

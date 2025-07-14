@@ -10,11 +10,7 @@ import {
   useUpdateUser,
   useDeleteUser,
 } from "../graphql/hooks/user"; // Adjust path
-import {
-  AttachmentInput,
-  CreateUserInput,
-  UpdateUserInput,
-} from "../graphql/mutation/user"; // Adjust path
+import { CreateUserInput, UpdateUserInput } from "../graphql/mutation/user"; // Adjust path
 import { useGetRoles } from "../graphql/hooks/role"; // Adjust path
 
 // Context & Interfaces

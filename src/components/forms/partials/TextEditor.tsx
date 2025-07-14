@@ -41,7 +41,7 @@ interface MenuBarProps {
   className?: string;
   renderKey?: number;
 }
-const MenuBar: React.FC<MenuBarProps> = ({ editor, className, renderKey }) => {
+const MenuBar: React.FC<MenuBarProps> = ({ editor, className }) => {
   if (!editor) return null;
 
   const iconSizeClass = "w-5 h-5";

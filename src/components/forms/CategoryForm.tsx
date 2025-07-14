@@ -41,7 +41,6 @@ interface CategoryFormProps {
 // Component name updated
 const CategoryForm: React.FC<CategoryFormProps> = ({
   onSubmit,
-  onClose,
   initialData = null,
   submitButtonText,
   isSubmitting = false,

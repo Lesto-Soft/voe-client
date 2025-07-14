@@ -5,7 +5,6 @@ import Dashboard from "../pages/Dashboard";
 import LoadingTestPage from "../pages/LoadingTestPage";
 import UserManagement from "../pages/UserManagement";
 import NavBar from "../components/menu/NavBar";
-import Profile from "../pages/Profile";
 import Analyses from "../pages/Analyses";
 import NotFoundPage from "../pages/ErrorPages/NotFound";
 import User from "../pages/User";
@@ -91,10 +90,6 @@ const mainRouter = createBrowserRouter([
             <RatingManagement />
           </ProtectedRoute>
         ),
-      },
-      {
-        path: "/profile",
-        element: <Profile />,
       },
       {
         path: "/analyses",

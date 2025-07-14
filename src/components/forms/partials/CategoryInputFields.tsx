@@ -20,20 +20,6 @@ const getTextLength = (html: string): number => {
   return temp.textContent?.trim().length || 0;
 };
 
-// useDebounce function (can be kept if client-side search term debouncing is still desired, though less critical now)
-function useDebounce<T>(value: T, delay: number): T {
-  const [debouncedValue, setDebouncedValue] = useState<T>(value);
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [value, delay]);
-  return debouncedValue;
-}
-
 interface CategoryInputFieldsProps {
   name: string;
   setName: (value: string) => void;

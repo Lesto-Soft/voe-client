@@ -1,5 +1,3 @@
-import React from "react";
-
 const NavbarSkeleton = () => {
   return (
     <div className="bg-gray-200 shadow-md h-[6rem]">

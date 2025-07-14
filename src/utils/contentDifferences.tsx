@@ -1,6 +1,3 @@
-// src/utils/contentDifferences.tsx
-
-import React from "react";
 import { diffWords } from "diff";
 import {
   stripHtmlTags,

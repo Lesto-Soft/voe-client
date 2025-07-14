@@ -136,33 +136,33 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
     },
   });
 
-  function clearFilters() {
-    setCaseNumber("");
-    setPriority("");
-    setType("");
-    setCreatorId("");
-    setCategoryIds([]);
-    setContent("");
-    setStatus("");
-    setDateRange({ startDate: null, endDate: null });
-    setCurrentPage(1);
-    const params = new URLSearchParams(location.search);
-    params.set("perPage", String(itemsPerPage));
-    params.set("page", "1");
-    // Remove filter params
-    [
-      "caseNumber",
-      "priority",
-      "type",
-      "creatorId",
-      "categoryIds",
-      "content",
-      "status",
-      "startDate",
-      "endDate",
-    ].forEach((key) => params.delete(key));
-    navigate(`${location.pathname}?${params.toString()}`, { replace: true });
-  }
+  // function clearFilters() {
+  //   setCaseNumber("");
+  //   setPriority("");
+  //   setType("");
+  //   setCreatorId("");
+  //   setCategoryIds([]);
+  //   setContent("");
+  //   setStatus("");
+  //   setDateRange({ startDate: null, endDate: null });
+  //   setCurrentPage(1);
+  //   const params = new URLSearchParams(location.search);
+  //   params.set("perPage", String(itemsPerPage));
+  //   params.set("page", "1");
+  //   // Remove filter params
+  //   [
+  //     "caseNumber",
+  //     "priority",
+  //     "type",
+  //     "creatorId",
+  //     "categoryIds",
+  //     "content",
+  //     "status",
+  //     "startDate",
+  //     "endDate",
+  //   ].forEach((key) => params.delete(key));
+  //   navigate(`${location.pathname}?${params.toString()}`, { replace: true });
+  // }
 
   // Sync currentPage with URL
   useEffect(() => {

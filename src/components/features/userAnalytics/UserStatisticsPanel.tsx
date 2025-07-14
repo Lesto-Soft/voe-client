@@ -6,7 +6,6 @@ import {
   ChatBubbleLeftEllipsisIcon,
   InformationCircleIcon,
   StarIcon,
-  ReceiptPercentIcon,
 } from "@heroicons/react/24/outline";
 import PieChart, { PieSegmentData } from "../../../components/charts/PieChart";
 import { UserActivityStats } from "../../../hooks/useUserActivityStats";
@@ -22,7 +21,6 @@ type StatsTab = "categories" | "ratings";
 
 const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
   userStats,
-  userName,
   isLoading,
 }) => {
   // State to manage the active tab

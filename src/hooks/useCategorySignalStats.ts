@@ -1,11 +1,10 @@
 import { useMemo } from "react";
-import { ICategory, ICase } from "../db/interfaces"; // Adjust path as needed
+import { ICase } from "../db/interfaces"; // Adjust path as needed
 import {
   getStatusStyle,
   TYPE_COLORS,
   calculateResolutionStats,
   ResolutionCategoryKey,
-  RESOLUTION_CATEGORY_CONFIG,
   translateStatus, // Import the translation function for status
   translateCaseType, // Import the translation function for case type
 } from "../utils/categoryDisplayUtils"; // Adjust path as needed

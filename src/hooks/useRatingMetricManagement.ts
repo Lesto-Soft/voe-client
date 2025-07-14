@@ -1,5 +1,5 @@
 // src/hooks/useRatingMetricManagement.ts
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { useDebounce } from "./useDebounce";
 

@@ -1,5 +1,3 @@
-import React from "react";
-
 // The SVG icon component remains the same
 const ServerIcon = () => (
   <svg

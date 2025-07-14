@@ -19,7 +19,6 @@ import {
   translateStatus,
   translatePriority,
   translateCaseType,
-  tForCaseLink, // For CaseLink's title
 } from "../../../utils/categoryDisplayUtils"; // Adjust path
 import {
   getContentPreview,

@@ -32,7 +32,6 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
   // Using the actual useCreateAnswer hook
   const {
     createAnswer,
-    data,
     loading,
     error: apiError,
   } = useCreateAnswer(caseNumber);

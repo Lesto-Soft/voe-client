@@ -17,7 +17,7 @@ import {
   WrenchScrewdriverIcon,
 } from "@heroicons/react/24/solid";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { dev_endpoint } from "../../db/config";
+import { endpoint } from "../../db/config";
 import axios from "axios";
 import MobileMenu from "./MobileMenu";
 import { useTranslation } from "react-i18next";
@@ -100,7 +100,7 @@ const NavBar: React.FC<{ me: IMe }> = ({ me }) => {
   const handleSignOut = async () => {
     try {
       await axios.post(
-        `${dev_endpoint}/logout`,
+        `${endpoint}/logout`,
         {},
         {
           withCredentials: true,
@@ -305,7 +305,7 @@ const NavBar: React.FC<{ me: IMe }> = ({ me }) => {
                       name={me.name}
                       imageUrl={
                         me.avatar
-                          ? `${dev_endpoint}/static/avatars/${me._id}/${me.avatar}`
+                          ? `${endpoint}/static/avatars/${me._id}/${me.avatar}`
                           : null
                       }
                       size={48}

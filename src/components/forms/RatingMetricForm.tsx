@@ -17,7 +17,6 @@ interface RatingMetricFormProps {
 
 const RatingMetricForm: React.FC<RatingMetricFormProps> = ({
   onSubmit,
-  onClose,
   initialData,
   isLoading,
 }) => {

@@ -13,7 +13,6 @@ import { CASE_CONTENT, CASE_TYPE } from "../../utils/GLOBAL_PARAMETERS";
 import { useTranslation } from "react-i18next";
 import FileAttachmentBtn from "../global/FileAttachmentBtn";
 import {
-  AttachmentInput,
   UpdateCaseInput,
   useUpdateCase,
   useCreateCase,

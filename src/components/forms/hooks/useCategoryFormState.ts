@@ -1,6 +1,6 @@
 // src/components/forms/hooks/useCreateCategoryFormState.ts
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { ICategory, IUser } from "../../../db/interfaces"; // Adjust path
+import { ICategory } from "../../../db/interfaces"; // Adjust path
 import { arraysEqualUnordered } from "../../../utils/arrayUtils";
 
 interface IUserLean {

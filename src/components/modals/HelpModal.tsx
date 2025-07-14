@@ -35,9 +35,9 @@ const HelpModal: React.FC<HelpModalProps> = ({
       aria-modal="true"
     >
       {/* Modal Content Container */}
-      <div className="bg-white rounded-lg shadow-xl p-6 m-4 max-w-lg w-full transform transition-all duration-300 ease-in-out scale-100 opacity-100">
+      <div className="bg-white rounded-lg shadow-xl m-4 max-w-lg w-full flex flex-col transform transition-all duration-300 ease-in-out scale-100 opacity-100">
         {/* Modal Header */}
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex justify-between items-center p-4 border-b border-gray-200">
           {title && (
             <h2
               id="modal-title"
@@ -56,7 +56,12 @@ const HelpModal: React.FC<HelpModalProps> = ({
         </div>
 
         {/* Modal Body */}
-        <div className="text-gray-700">{children}</div>
+        <div
+          className="px-6 py-5 overflow-y-auto"
+          style={{ maxHeight: "70vh" }}
+        >
+          <div className="text-gray-700">{children}</div>
+        </div>
       </div>
     </div>
   );

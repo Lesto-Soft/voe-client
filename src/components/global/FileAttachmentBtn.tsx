@@ -3,15 +3,25 @@ import { MAX_FILES, MAX_FILE_SIZE_MB } from "../../utils/attachment-handling";
 import { handleFileChange } from "../../utils/attachment-handling";
 import { useTranslation } from "react-i18next";
 import ImagePreviewModal from "../modals/ImagePreviewModal";
+import { XMarkIcon } from "@heroicons/react/24/solid";
+import { createFileUrl } from "../../utils/fileUtils";
 
 interface FileAttachmentBtnProps {
   attachments: File[];
   setAttachments: React.Dispatch<React.SetStateAction<File[]>>;
+  existingAttachments?: string[]; // Optional prop for existing attachments
+  setExistingAttachments?: React.Dispatch<React.SetStateAction<string[]>>; // Optional prop for existing attachments setter
+  type?: "cases" | "answers" | "comments";
+  objectId?: string;
 }
 
 const FileAttachmentBtn: React.FC<FileAttachmentBtnProps> = ({
   attachments,
   setAttachments,
+  existingAttachments = [], // Default to empty array if not provided
+  setExistingAttachments = () => {}, // Default to no-op function if not provided
+  type,
+  objectId,
 }) => {
   const { t } = useTranslation("caseSubmission"); // Assuming you have a translation function available
   const [fileError, setFileError] = React.useState<string | null>(null); // State for file error message
@@ -39,21 +49,81 @@ const FileAttachmentBtn: React.FC<FileAttachmentBtnProps> = ({
     );
   };
 
+  const handleRemoveExistingAttachment = (urlToRemove: string) => {
+    setExistingAttachments((prev) => prev.filter((url) => url !== urlToRemove));
+  };
   return (
     <div>
+      {existingAttachments.length > 0 && (
+        <div className="mb-4">
+          <p className="text-xs font-semibold text-gray-600 mb-1">
+            {t("caseSubmission.currentFiles", {
+              count: existingAttachments.length,
+              max: MAX_FILES,
+            })}
+          </p>
+          <div className="mt-2 text-sm text-gray-600 space-y-1 overflow-y-auto rounded p-2 bg-gray-100 border border-gray-200 max-h-32">
+            <div className="flex flex-wrap gap-2">
+              {existingAttachments.map((fileName) => {
+                console.log(fileName);
+                const filename = fileName.split("/").pop() || fileName;
+                let fileUrl = "";
+                if (type && objectId) {
+                  fileUrl = createFileUrl(type, objectId, fileName);
+                }
+
+                console.log(fileUrl);
+                return (
+                  <div
+                    key={fileName}
+                    className="flex items-center gap-2 px-3 py-1.5 text-sm bg-gray-200 rounded-full hover:bg-gray-300"
+                    title={filename}
+                  >
+                    <ImagePreviewModal
+                      imageUrl={fileUrl}
+                      fileName={filename}
+                      triggerElement={
+                        <button
+                          type="button"
+                          className="truncate max-w-[150px] sm:max-w-xs cursor-pointer"
+                          title={filename}
+                        >
+                          {filename}
+                        </button>
+                      }
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveExistingAttachment(filename)}
+                      className="p-0.5 rounded-full hover:bg-red-100 focus:outline-none focus:ring-1 focus:ring-red-500 cursor-pointer"
+                      aria-label={`Remove ${filename}`}
+                    >
+                      <XMarkIcon className="h-4 w-4 text-btnRed hover:text-red-700" />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
       <label className="block text-sm font-medium text-gray-700 mb-1">
         {/* Update label to show current count vs max */}
-        {t("caseSubmission.attachmentsLabel", {
-          count: attachments.length,
-          max: MAX_FILES,
-          maxSize: MAX_FILE_SIZE_MB,
-        })}
+        {MAX_FILES - (existingAttachments.length + attachments.length) > 0
+          ? t("caseSubmission.attachmentsLabel", {
+              count: attachments.length,
+              max: MAX_FILES - existingAttachments.length,
+              maxSize: MAX_FILE_SIZE_MB,
+            })
+          : t("caseSubmission.noMoreAttachmentsAllowed", {
+              max: MAX_FILES,
+            })}
       </label>
       {/* Styled Label acting as Button - Disable visually if max files reached */}
       <label
         htmlFor="file-upload-input"
         className={`w-full text-center inline-block rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm ${
-          attachments.length >= MAX_FILES
+          existingAttachments.length + attachments.length >= MAX_FILES
             ? "opacity-75 cursor-not-allowed" // Disabled style
             : "cursor-pointer hover:bg-gray-200 active:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2" // Enabled style
         }`}
@@ -71,12 +141,16 @@ const FileAttachmentBtn: React.FC<FileAttachmentBtnProps> = ({
         type="file"
         multiple
         onChange={(event) =>
-          handleFileChange(t, event, setAttachments, setFileError)
+          handleFileChange(
+            t,
+            event,
+            setAttachments,
+            setFileError,
+            existingAttachments
+          )
         }
         className="sr-only"
-        disabled={attachments.length >= MAX_FILES} // HTML disabled attribute
-        // Optional: Add accept attribute for client-side hint (doesn't enforce size)
-        // accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt"
+        disabled={attachments.length + existingAttachments.length >= MAX_FILES}
       />
 
       {/* Display File Errors */}
@@ -97,22 +171,18 @@ const FileAttachmentBtn: React.FC<FileAttachmentBtnProps> = ({
         {" "}
         {/* Keeps minimum space */}
         {/* Conditionally render the list container *inside* */}
-        <div
-          className={`text-sm text-gray-600 space-y-1 h-20 overflow-y-auto rounded p-2 ${
-            attachments.length === 0 ? "" : "border border-gray-200 bg-gray-50"
-          }`} // Added max-h, overflow, border, padding, bg
-        >
-          {attachments.length > 0 && (
-            // Apply max-height and overflow to this inner div
-            <ul className="list-none pl-1 space-y-1">
+        {attachments.length > 0 && (
+          <div className="text-sm text-gray-600 space-y-1 overflow-y-auto rounded p-2 bg-gray-100 border border-gray-200 max-h-32">
+            <div className="flex flex-wrap gap-2">
               {attachments.map((file) => {
                 const fileKey = file.name + "-" + file.lastModified;
                 const fileUrl = fileObjectUrls.get(fileKey) || "";
 
                 return (
-                  <li
+                  <div
                     key={file.name + "-" + file.lastModified}
-                    className="flex justify-between items-center group p-1 rounded hover:bg-gray-200"
+                    className="flex items-center gap-2 px-3 py-1.5 text-sm bg-gray-200 rounded-full hover:bg-gray-300"
+                    title={file.name}
                   >
                     <ImagePreviewModal
                       imageUrl={fileUrl}
@@ -120,7 +190,7 @@ const FileAttachmentBtn: React.FC<FileAttachmentBtnProps> = ({
                       triggerElement={
                         <button
                           type="button"
-                          className="truncate pr-2 group-hover:underline cursor-pointer text-left flex-1"
+                          className="truncate max-w-[150px] sm:max-w-xs cursor-pointer"
                           title={file.name}
                         >
                           {file.name}{" "}
@@ -133,17 +203,17 @@ const FileAttachmentBtn: React.FC<FileAttachmentBtnProps> = ({
                     <button
                       type="button"
                       onClick={() => handleRemoveAttachment(file.name)}
-                      className="ml-2 px-1.5 py-0.5 text-red-500 hover:text-red-700 text-lg font-bold leading-none rounded focus:outline-none focus:ring-1 focus:ring-red-500 cursor-pointer"
+                      className="p-0.5 rounded-full hover:bg-red-100 focus:outline-none focus:ring-1 focus:ring-red-500 cursor-pointer"
                       aria-label={`Remove ${file.name}`}
                     >
-                      &times;
+                      <XMarkIcon className="h-4 w-4 text-btnRed hover:text-red-700" />
                     </button>
-                  </li>
+                  </div>
                 );
               })}
-            </ul>
-          )}
-        </div>
+            </div>
+          </div>
+        )}
       </div>
       {/* End Container for Selected Files List */}
     </div>

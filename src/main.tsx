@@ -5,10 +5,12 @@ import "./index.css"; // Your global styles
 import Router from "./router/MainRouter";
 import { ApolloProvider } from "@apollo/client";
 import { apolloClient } from "./graphql/client";
+import { ToastContainer } from "react-toastify";
 
 createRoot(document.getElementById("root")!).render(
   <ApolloProvider client={apolloClient}>
     <StrictMode>
+      <ToastContainer />
       <Router />
     </StrictMode>
   </ApolloProvider>

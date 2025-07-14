@@ -52,6 +52,8 @@ const ImagePreviewModal: React.FC<ImagePreviewProps> = ({
     return false;
   }, [fileName]);
 
+  const isPreviewable = isImageFile || isPdfFile;
+
   // Reset the error state when the image URL changes
   useEffect(() => {
     setImageError(false);
@@ -101,7 +103,21 @@ const ImagePreviewModal: React.FC<ImagePreviewProps> = ({
       <Dialog.Trigger asChild>{trigger}</Dialog.Trigger>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/50 z-[9999]" />
-        <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-xl z-[10000] overflow-hidden flex flex-col w-[95%] max-w-4xl h-[90vh]">
+        <Dialog.Content
+          className={`
+            fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 
+            bg-white rounded-lg shadow-xl z-[10000] overflow-hidden 
+            flex flex-col
+            ${
+              isAvatar
+                ? "w-auto h-auto max-w-[90vw] max-h-[90vh]"
+                : isPreviewable
+                ? "w-[95%] max-w-4xl h-[90vh]"
+                : "w-auto max-w-lg"
+            }
+          `}
+        >
+          {" "}
           <header className="flex justify-between items-center p-4 border-b border-gray-200 flex-shrink-0">
             <ArrowDownTrayIcon
               className="h-6 w-6 text-gray-500 hover:text-gray-700 cursor-pointer"
@@ -125,7 +141,6 @@ const ImagePreviewModal: React.FC<ImagePreviewProps> = ({
               </button>
             </Dialog.Close>
           </header>
-
           <div className="flex justify-center items-center flex-1 p-4 overflow-auto">
             {isImageFile ? (
               imageError ? (
@@ -144,7 +159,10 @@ const ImagePreviewModal: React.FC<ImagePreviewProps> = ({
                 <img
                   src={imageUrl}
                   alt={isAvatar ? `${displayName}'s avatar` : "Preview"}
-                  className="max-w-full max-h-full object-contain rounded-md"
+                  className={`
+                    object-contain rounded-md
+                    ${isAvatar ? "w-80 h-80" : "max-w-full max-h-full"}
+                  `}
                   onError={() => setImageError(true)}
                 />
               )
@@ -214,16 +232,23 @@ const ImagePreviewModal: React.FC<ImagePreviewProps> = ({
                 </div>
               )
             ) : (
-              <div className="text-center text-gray-500 flex flex-col items-center gap-3">
-                <DocumentIcon className="h-12 w-12 text-gray-300" />
-                <div>
-                  <p className="font-semibold text-gray-600">
+              <div className="text-center text-gray-600 flex flex-col items-center justify-center gap-6 p-8 sm:p-12">
+                <DocumentIcon className="h-24 w-24 text-gray-300" />
+                <div className="flex flex-col gap-2">
+                  <p className="font-semibold text-lg text-gray-700">
                     Визуализацията не е налична
                   </p>
-                  <p className="text-sm mt-1">
+                  <p className="text-sm">
                     Може да свалите файла, за да го видите.
                   </p>
                 </div>
+                <button
+                  onClick={handleDownload}
+                  className="cursor-pointer flex items-center gap-2 px-6 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all"
+                >
+                  <ArrowDownTrayIcon className="h-5 w-5" />
+                  Сваляне на файл
+                </button>
               </div>
             )}
           </div>

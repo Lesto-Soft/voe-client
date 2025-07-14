@@ -123,10 +123,6 @@
 
 @import "tailwindcss";
 
-@tailwind utilities;
-@tailwind base;
-@tailwind components;
-
 @layer utilities {
   .animate-fadeIn {
     animation: fadeIn 0.3s ease-in-out;

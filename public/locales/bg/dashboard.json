@@ -55,5 +55,6 @@
   "content": "Съдържание",
   "attachments": "Прикачени файлове",
   "writeAnswer": "Напиши отговор...",
-  "delete_case": "Изтрий сигнал"
+  "delete_case": "Изтрий сигнал",
+  "answerSubmitted": "Отговорът е изпратен"
 }

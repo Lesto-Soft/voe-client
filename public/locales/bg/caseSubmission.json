@@ -25,6 +25,9 @@
     "userSearchLoading": "Търсене...",
     "userSearchError": "Грешка: {{message}}",
     "userNotFoundError": "Потребител \"{{username}}\" не е намерен.",
+    "noMoreAttachmentsAllowed": "Максимум {{max}} прикачени файла е достигнат.",
+    "currentFiles": "Текущи файлове ({{count}} от {{max}} макс.):",
+    "success": "Успешно изпратено!",
     "priority": {
       "low": "Нисък",
       "medium": "Среден",

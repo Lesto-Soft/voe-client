@@ -345,8 +345,10 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
     <div className="flex flex-col flex-1 min-h-0 h-full">
       {/* Animated Search Bar Container - Removed relative, z-20, overflow-hidden */}
       <div
-        className={`overflow-hidden transition-all duration-300 ease-in-out ${
-          filter ? "max-h-screen opacity-100" : "max-h-0 opacity-0"
+        className={` transition-all duration-300 ease-in-out ${
+          filter
+            ? "max-h-screen opacity-100"
+            : "max-h-0 opacity-0 pointer-events-none"
         }`}
       >
         <CaseSearchBar

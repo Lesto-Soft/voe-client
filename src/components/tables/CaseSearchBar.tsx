@@ -10,29 +10,8 @@ import DateRangeSelector from "../features/userAnalytics/DateRangeSelector";
 interface ILeanUser {
   _id: string;
   name: string;
+  username: string;
 }
-
-// --- End Mock Data & Types ---
-
-// --- Custom Hook: useDebounce ---
-function useDebounce<T>(value: T, delay: number): T {
-  const [debouncedValue, setDebouncedValue] = useState<T>(value);
-
-  useEffect(() => {
-    // Update debounced value after delay
-    const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-
-    // Cancel the timeout if value changes (also on delay change or unmount)
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [value, delay]);
-
-  return debouncedValue;
-}
-// --- End Custom Hook ---
 
 // Define the shape of the props
 interface CaseSearchBarProps {
@@ -89,7 +68,6 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
 
   // --- Debounce Creator Input ---
   // Delays triggering the filter fetch until user stops typing for 300ms
-  const debouncedCreatorInput = useDebounce(creatorInput, 300);
 
   // --- GraphQL Query for Users ---
   const [
@@ -97,17 +75,9 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
     { loading: loadingUsers, error: usersError, data: usersData },
   ] = useLazyQuery<{ getLeanUsers: ILeanUser[] }>(GET_LEAN_USERS, {
     onCompleted: (data) => {
-      console.log("Fetch completed, updating serverFetchedUsers");
       setServerFetchedUsers(data?.getLeanUsers || []);
     },
   });
-
-  // --- Effect: Reset initial fetch flag if input is cleared ---
-  useEffect(() => {
-    if (fetchedInitialCreator && creatorInput === "") {
-      setFetchedInitialCreator(false);
-    }
-  }, [debouncedCreatorInput, fetchedInitialCreator, creatorInput]);
 
   // --- Effect: Fetch initial creator name if creatorId is provided ---
   useEffect(() => {
@@ -125,7 +95,7 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
         (u) => u._id === creatorId
       );
       if (initialUser) {
-        setCreatorInput(initialUser.name);
+        setCreatorInput(initialUser.name + `(${initialUser.username})`);
         setIsDropdownVisible(false);
         setServerFetchedUsers(usersData.getLeanUsers);
       } else {
@@ -156,6 +126,7 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
   // --- Event Handlers ---
   const handleCreatorInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
+    console.log("Creator input changed:", newValue);
     setCreatorInput(newValue);
     if (creatorId && fetchedInitialCreator) {
       setCreatorId("");
@@ -176,7 +147,7 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
 
   const handleUserSelect = (user: ILeanUser) => {
     setCreatorId(user._id);
-    setCreatorInput(user.name);
+    setCreatorInput(user.name + `(${user.username})`);
     setIsDropdownVisible(false);
     setFetchedInitialCreator(true);
   };
@@ -199,8 +170,10 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
       return serverFetchedUsers;
     }
     const lowerCaseInput = creatorInput.toLowerCase();
-    return serverFetchedUsers.filter((user) =>
-      user.name.toLowerCase().includes(lowerCaseInput)
+    return serverFetchedUsers.filter(
+      (user) =>
+        user.name.toLowerCase().includes(lowerCaseInput) ||
+        user.username.toLowerCase().includes(lowerCaseInput)
     );
   }, [creatorInput, serverFetchedUsers]);
 
@@ -217,11 +190,7 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
   // --- GraphQL Query for Categories ---
   const [
     fetchCategories,
-    {
-      loading: loadingCategories,
-      error: categoriesError,
-      data: categoriesData,
-    },
+    { loading: loadingCategories, error: categoriesError },
   ] = useLazyQuery<{ getLeanActiveCategories: ICategory[] }>(
     GET_ACTIVE_CATEGORIES,
     {
@@ -230,6 +199,13 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
       },
     }
   );
+
+  // Fetch categories on component mount if categoryIds are provided from URL
+  useEffect(() => {
+    if (categoryIds.length > 0 && serverFetchedCategories.length === 0) {
+      fetchCategories();
+    }
+  }, [categoryIds, serverFetchedCategories.length, fetchCategories]);
 
   // Fetch categories on dropdown open if not already fetched
   useEffect(() => {
@@ -297,7 +273,6 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
 
   // --- Render Logic ---
   const showDropdown = isDropdownVisible;
-  const showClearButton = !!creatorId && fetchedInitialCreator;
 
   return (
     <div className="px-4 sm:px-6 lg:px-8 py-5">
@@ -379,7 +354,6 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
           </div>
         </div>
 
-        {/* Creator (Autocomplete) */}
         <div className="relative">
           <label
             htmlFor="creator"
@@ -433,7 +407,7 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
                     className="px-3 py-2 text-sm text-gray-800 hover:bg-indigo-50 cursor-pointer"
                     onMouseDown={() => handleUserSelect(user)}
                   >
-                    {user.name}
+                    {user.name + `(${user.username})`}
                   </div>
                 ))
               )}

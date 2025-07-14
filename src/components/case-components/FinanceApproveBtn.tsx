@@ -44,7 +44,7 @@ const FinanceApproveBtn: React.FC<{
     <Dialog.Root open={open} onOpenChange={setOpen}>
       <Dialog.Trigger asChild>
         <button
-          className={`w-26 hover:cursor-pointer flex items-center justify-center gap-2 px-2 py-1 rounded-lg text-xs font-medium shadow-md transition-all duration-200 ${
+          className={`w-32 hover:cursor-pointer flex items-center justify-center gap-2 px-2 py-1 rounded-lg text-xs font-medium shadow-md transition-all duration-200 ${
             !approved
               ? "bg-blue-500 text-white hover:bg-blue-600 focus:ring-2 focus:ring-blue-300"
               : "bg-btnRed text-white hover:bg-btnRedHover focus:ring-2 focus:ring-red-300"

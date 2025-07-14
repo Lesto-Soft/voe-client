@@ -96,7 +96,7 @@ const ContentDialog: React.FC<ContentDialogProps> = ({
             <div className="md:w-1/3 lg:w-1/4 flex-shrink-0 flex flex-col gap-4 overflow-y-auto custom-scrollbar pr-2">
               <div className="flex flex-col items-center justify-center w-full gap-1">
                 <Creator creator={creator} />
-                {date && <ShowDate date={date} centered={true} />}
+                {date && <ShowDate date={date} centered={true} isCase={true} />}
               </div>
 
               {/* Info boxes */}

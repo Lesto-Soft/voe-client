@@ -56,10 +56,6 @@ const EditAnswerButton: React.FC<EditButtonProps> = ({
     }
   }, [isOpen, answer]);
 
-  const handleRemoveExistingAttachment = (urlToRemove: string) => {
-    setExistingAttachments((prev) => prev.filter((url) => url !== urlToRemove));
-  };
-
   const handleSave = async () => {
     setError(null); // Clear previous errors
 
@@ -143,42 +139,14 @@ const EditAnswerButton: React.FC<EditButtonProps> = ({
           )}
 
           <div className="space-y-3">
-            {/* List of existing files */}
-            {existingAttachments.length > 0 && (
-              <div className="mb-4">
-                <p className="text-xs font-semibold text-gray-600 mb-1">
-                  Текущи файлове:
-                </p>
-                <ul className="text-sm text-gray-800 space-y-1 rounded p-2 border border-gray-200 bg-gray-50 max-h-28 overflow-y-auto">
-                  {existingAttachments.map((url) => {
-                    const filename = url.split("/").pop() || url;
-                    return (
-                      <li
-                        key={url}
-                        className="flex justify-between items-center group p-1 rounded hover:bg-gray-200"
-                      >
-                        <span className="truncate pr-2" title={filename}>
-                          {filename}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveExistingAttachment(url)}
-                          className="text-red-500 hover:text-red-700"
-                          aria-label={`Remove ${filename}`}
-                        >
-                          <XMarkIcon className="h-5 w-5" />
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            )}
-
             {/* Your FileAttachmentBtn now handles ONLY new files */}
             <FileAttachmentBtn
               attachments={newAttachments}
               setAttachments={setNewAttachments}
+              existingAttachments={existingAttachments}
+              setExistingAttachments={setExistingAttachments}
+              type="answers"
+              objectId={answer._id}
             />
           </div>
 

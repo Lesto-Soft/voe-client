@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import Comment from "./Comment";
 import ShowDate from "../global/ShowDate";
 import { useTranslation } from "react-i18next";
-import { admin_check } from "../../utils/rowStringCheckers";
 import Creator from "./Creator";
 import UserLink from "../global/UserLink";
 import ApproveBtn from "./ApproveBtn";
@@ -44,7 +43,14 @@ const Answer: React.FC<{
   );
   const canInteractWithGeneralApproval =
     (!isCreator && isCategoryManagerForCase) || isAdmin;
-  const { deleteAnswer, error, loading } = useDeleteAnswer(caseNumber);
+  const { deleteAnswer } = useDeleteAnswer(caseNumber);
+
+  const canEditOrDelete =
+    (isCreator || isAdmin) &&
+    (status === "OPEN" ||
+      status === "IN_PROGRESS" ||
+      isAdmin ||
+      isCategoryManagerForCase);
 
   const canApproveNow =
     !approved && status !== "CLOSED" && status !== "AWAITING_FINANCE";
@@ -183,14 +189,12 @@ const Answer: React.FC<{
                 </div>
               )}
               <div className="flex items-center gap-2">
-                {me &&
-                  me.role &&
-                  (me._id === answer.creator._id ||
-                    admin_check(me.role.name)) && (
+                {canEditOrDelete && (
+                  <>
+                    {answer.history && answer.history.length > 0 && (
+                      <AnswerHistoryModal history={answer.history} />
+                    )}
                     <>
-                      {answer.history && answer.history.length > 0 && (
-                        <AnswerHistoryModal history={answer.history} />
-                      )}
                       <EditAnswerButton
                         {...{ answer, caseNumber, me }}
                         currentAttachments={answer.attachments || []}
@@ -201,7 +205,8 @@ const Answer: React.FC<{
                         onDelete={() => deleteAnswer(answer._id.toString())}
                       />
                     </>
-                  )}
+                  </>
+                )}
               </div>
               <ShowDate date={answer.date} centered={true} />
             </div>
@@ -234,25 +239,22 @@ const Answer: React.FC<{
                   <div className="h-10" /> // This empty div acts as a placeholder to maintain spacing
                 )}
                 <div className="flex items-center gap-2 ml-4">
-                  {me &&
-                    me.role &&
-                    (me._id === answer.creator._id ||
-                      admin_check(me.role.name)) && (
-                      <>
-                        {answer.history && answer.history.length > 0 && (
-                          <AnswerHistoryModal history={answer.history} />
-                        )}
-                        <EditAnswerButton
-                          {...{ answer, caseNumber, me }}
-                          currentAttachments={answer.attachments || []}
-                        />
-                        <DeleteModal
-                          title="deleteAnswer"
-                          content="deleteAnswerInfo"
-                          onDelete={() => deleteAnswer(answer._id.toString())}
-                        />
-                      </>
-                    )}
+                  {canEditOrDelete && (
+                    <>
+                      {answer.history && answer.history.length > 0 && (
+                        <AnswerHistoryModal history={answer.history} />
+                      )}
+                      <EditAnswerButton
+                        {...{ answer, caseNumber, me }}
+                        currentAttachments={answer.attachments || []}
+                      />
+                      <DeleteModal
+                        title="deleteAnswer"
+                        content="deleteAnswerInfo"
+                        onDelete={() => deleteAnswer(answer._id.toString())}
+                      />
+                    </>
+                  )}
                   <ShowDate date={answer.date} />
                 </div>
               </div>

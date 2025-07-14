@@ -25,6 +25,9 @@
     "userSearchLoading": "Searching...",
     "userSearchError": "Error: {{message}}",
     "userNotFoundError": "User \"{{username}}\" not found.",
+    "noMoreAttachmentsAllowed": "Maximum {{max}} attachments reached.",
+    "currentFiles": "Current files ({{count}} of {{max}} max):",
+    "success": "Submitted successfully!",
     "priority": {
       "low": "Low",
       "medium": "Medium",

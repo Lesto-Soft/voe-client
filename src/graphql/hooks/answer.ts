@@ -19,8 +19,6 @@ export const useApproveAnswer = () => {
     userId: string,
     needsFinance: boolean
   ) => {
-    console.log(answerId, userId, needsFinance);
-
     try {
       const response = await approveAnswerMutation({
         variables: { answerId, userId, needsFinance },

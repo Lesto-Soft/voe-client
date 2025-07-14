@@ -6,6 +6,7 @@ import { ANSWER_CONTENT } from "../../utils/GLOBAL_PARAMETERS";
 import SimpleTextEditor from "../forms/partials/SimplifiedTextEditor";
 import { getTextLength } from "../../utils/contentRenderer";
 import ImagePreviewModal from "../modals/ImagePreviewModal";
+import { toast } from "react-toastify";
 
 // Interface for the props of the AddAnswer component
 interface AddAnswerProps {
@@ -28,11 +29,6 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
   const [content, setContent] = useState<string>("");
   const [submissionError, setSubmissionError] = useState<string | null>(null);
 
-  // State for controlling success message visibility and fade-out
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [fadeSuccess, setFadeSuccess] = useState(false);
-  const [mountSuccess, setMountSuccess] = useState(false); // for smooth appear
-
   // Using the actual useCreateAnswer hook
   const {
     createAnswer,
@@ -51,31 +47,6 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
       );
     }
   }, [apiError, t]);
-
-  // Show success message when data is set and no error/loading
-  useEffect(() => {
-    if (data && !loading && !submissionError) {
-      setMountSuccess(true); // mount first (opacity-0)
-      setShowSuccess(true); // render the element
-      setFadeSuccess(false); // ensure not fading out
-
-      // Next tick, trigger fade-in
-      const appearTimeout = setTimeout(() => setFadeSuccess(false), 10); // ensure transition
-      // Start fade-out after 4.5s
-      const fadeTimeout = setTimeout(() => setFadeSuccess(true), 4500);
-      // Hide after 5s
-      const hideTimeout = setTimeout(() => {
-        setShowSuccess(false);
-        setMountSuccess(false);
-      }, 5000);
-
-      return () => {
-        clearTimeout(appearTimeout);
-        clearTimeout(fadeTimeout);
-        clearTimeout(hideTimeout);
-      };
-    }
-  }, [data, loading, submissionError]);
 
   // Function to handle form submission
   const submitAnswer = async (event: React.FormEvent) => {
@@ -124,6 +95,18 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
       setAttachments([]);
       // Optionally, you can clear submissionError here or rely on API success to imply no error
       // setSubmissionError(null); // Or show a success message
+      toast.success(t("answerSubmitted"), {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        style: {
+          marginTop: "90px",
+        },
+      });
     } catch (error: any) {
       // Catch errors from the createAnswer promise itself (e.g., network issues if not handled by hook)
       console.error("Error creating answer:", error);
@@ -308,23 +291,6 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
           {submissionError}
         </div>
       }
-
-      {/* Optional: Success Message Display */}
-      {showSuccess && (
-        <div
-          className={`mx-5 mt-3 p-3 rounded-md border bg-green-100 border-green-400 text-green-700 transition-opacity duration-500 ${
-            mountSuccess
-              ? fadeSuccess
-                ? "opacity-0"
-                : "opacity-100"
-              : "opacity-0"
-          }`}
-          role="status"
-          aria-live="polite"
-        >
-          {t("caseSubmission.success") || "Answer submitted successfully!"}
-        </div>
-      )}
     </div>
   );
 };

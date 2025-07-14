@@ -1,9 +1,13 @@
-import React, { useState, useRef, useEffect, useMemo } from "react"; // Import useMemo
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { useLazyQuery } from "@apollo/client"; // Assuming Apollo Client
 import { ICase, ICategory } from "../../db/interfaces";
 import { GET_LEAN_USERS } from "../../graphql/query/user";
 import { GET_ACTIVE_CATEGORIES } from "../../graphql/query/category";
-import { ChevronDownIcon, XMarkIcon } from "@heroicons/react/24/outline"; // Import icons
+import {
+  ChevronDownIcon,
+  XMarkIcon,
+  CalendarDaysIcon,
+} from "@heroicons/react/24/outline"; // Import icons
 import DateRangeSelector from "../features/userAnalytics/DateRangeSelector";
 
 // Interface for Lean User (assuming structure)
@@ -83,6 +87,7 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
   const [fetchedInitialCreator, setFetchedInitialCreator] = useState(false); // Flag to prevent re-fetching initial creator
   const creatorInputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null); // Ref for the dropdown itself
+  const [isDateSelectorVisible, setIsDateSelectorVisible] = useState(false);
 
   // State to store the full list fetched from the server
   const [serverFetchedUsers, setServerFetchedUsers] = useState<ILeanUser[]>([]);
@@ -301,14 +306,7 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
 
   return (
     <div className="px-4 sm:px-6 lg:px-8 py-5">
-      <div className="mb-4">
-        <DateRangeSelector
-          dateRange={dateRange}
-          onDateRangeChange={setDateRange}
-        />
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-x-4 gap-y-3 items-end">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-8 gap-x-4 gap-y-3 items-end">
         <div>
           <label
             htmlFor="caseNumber"
@@ -325,7 +323,6 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
             placeholder={t("search_by_case_number")}
           />
         </div>
-
         {/* Priority */}
         <div className="group relative">
           <label
@@ -352,7 +349,6 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
             <ChevronDownIcon className="h-5 w-5 transition-transform duration-200 ease-in-out group-focus-within:rotate-180" />
           </div>
         </div>
-
         {/* Type */}
         <div className="group relative">
           <label
@@ -378,7 +374,6 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
             <ChevronDownIcon className="h-5 w-5 transition-transform duration-200 ease-in-out group-focus-within:rotate-180" />
           </div>
         </div>
-
         {/* Creator (Autocomplete) */}
         <div className="relative">
           <label
@@ -445,7 +440,6 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
             </div>
           )}
         </div>
-
         {/* Category (Checkbox Multi-Select Dropdown) */}
         <div className="relative">
           <label
@@ -512,7 +506,6 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
             </div>
           )}
         </div>
-
         {/* Content */}
         <div>
           <label
@@ -530,7 +523,28 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
             placeholder={t("search_by_description")}
           />
         </div>
-
+        {/* Date Filter Toggle */}
+        <div>
+          <label
+            htmlFor="date-filter-toggle"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            {t("date")}
+          </label>
+          <button
+            id="date-filter-toggle"
+            type="button"
+            onClick={() => setIsDateSelectorVisible((prev) => !prev)}
+            title={t("filter_by_date")}
+            className={`w-full h-10 flex items-center justify-center border rounded-md shadow-sm transition duration-150 ease-in-out text-sm cursor-pointer ${
+              isDateSelectorVisible
+                ? "bg-indigo-50 border-indigo-500 text-indigo-600"
+                : "bg-white text-gray-500 border-gray-300 hover:border-gray-400"
+            }`}
+          >
+            <CalendarDaysIcon className="h-5 w-5" />
+          </button>
+        </div>
         {/* Status */}
         <div className="group relative">
           <label
@@ -559,6 +573,15 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
           </div>
         </div>
       </div>
+
+      {isDateSelectorVisible && (
+        <div className="mt-4 border-t border-gray-200 pt-4">
+          <DateRangeSelector
+            dateRange={dateRange}
+            onDateRangeChange={setDateRange}
+          />
+        </div>
+      )}
     </div>
   );
 };

@@ -106,6 +106,9 @@ const NavBar: React.FC<{ me: IMe }> = ({ me }) => {
           withCredentials: true,
         }
       );
+      // Clear all session storage for this tab
+      sessionStorage.clear();
+
       window.location.href = "/";
     } catch (err) {
       console.error("Error during sign out:", err);

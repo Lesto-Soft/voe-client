@@ -82,11 +82,11 @@ const Case = () => {
 
   return (
     // --- MODIFIED: This container now defines the overall height for the two columns on desktop ---
-    <div className="flex flex-col lg:flex-row bg-gray-50 lg:h-[calc(100vh-6rem)]">
+    <div className="flex flex-col lg:flex-row bg-gray-50 lg:h-[calc(100vh-6rem)] w-full">
       {/* Left Panel for CaseInfo: This remains sticky and its own content can scroll if needed */}
       <div
         className={
-          "w-full lg:w-96 lg:shrink-0 lg:sticky lg:top-[6rem] order-1 lg:order-none lg:h-full lg:mb-0 z-2"
+          "max-w-full lg:w-96 lg:shrink-0 lg:sticky lg:top-[6rem] order-1 lg:order-none lg:h-full lg:mb-0 z-2"
         }
       >
         <CaseInfo

@@ -383,7 +383,7 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
               onMouseDown={(e) => e.stopPropagation()}
               className="fixed z-50 left-1/2 top-1/2 w-[90vw] max-w-4xl -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-stone-100 shadow-lg focus:outline-none max-h-[90vh] flex flex-col"
             >
-              <div className="sticky top-0 bg-stone-100 z-10 border-b border-gray-300">
+              <div className="sticky top-0 bg-stone-100 z-10 border-b border-gray-300 rounded-t-xl">
                 <div className="p-6">
                   <Dialog.Title className="text-2xl font-bold text-gray-800">
                     {renderTitle()}
@@ -414,9 +414,9 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
                   </div>
                 )}
               </div>
-              <div className="overflow-y-auto flex-grow rounded-lg ">
+              <div className="overflow-y-auto flex-grow rounded-b-xl">
                 <form onSubmit={handleSubmit} className="space-y-6">
-                  <div className="space-y-6 p-6 bg-white rounded-lg shadow">
+                  <div className="space-y-6 p-6 bg-white shadow">
                     <div>
                       <label
                         htmlFor="content"

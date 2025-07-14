@@ -69,6 +69,8 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
   onDateRangeChange,
 }) => {
   const [isDateFilterVisible, setIsDateFilterVisible] = useState(false);
+  // Check if a date filter is currently applied.
+  const isDateFilterActive = dateRange.startDate !== null;
   const isDataReady = !isLoading && !!user;
 
   // Add ref for the tabs container
@@ -375,10 +377,13 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
           <button
             onClick={() => setIsDateFilterVisible((prev) => !prev)}
             title="Filter by date"
+            // className logic to show active state when closed
             className={`hover:cursor-pointer p-2 rounded-md transition-colors duration-150 ${
               isDateFilterVisible
-                ? "bg-indigo-100 text-indigo-600"
-                : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                ? "bg-indigo-100 text-indigo-600" // Style when selector is OPEN
+                : isDateFilterActive
+                ? "bg-indigo-100 text-gray-500" // Style when selector is CLOSED but filter is ACTIVE
+                : "bg-gray-100 text-gray-500 hover:bg-gray-200" // Style when selector is CLOSED and INACTIVE
             }`}
           >
             <CalendarDaysIcon className="h-5 w-5" />

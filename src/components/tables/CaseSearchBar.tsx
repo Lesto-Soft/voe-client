@@ -88,6 +88,8 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
   const creatorInputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null); // Ref for the dropdown itself
   const [isDateSelectorVisible, setIsDateSelectorVisible] = useState(false);
+  // Check if a date filter is currently applied.
+  const isDateFilterActive = dateRange.startDate !== null;
 
   // State to store the full list fetched from the server
   const [serverFetchedUsers, setServerFetchedUsers] = useState<ILeanUser[]>([]);
@@ -536,10 +538,13 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
             type="button"
             onClick={() => setIsDateSelectorVisible((prev) => !prev)}
             title={t("filter_by_date")}
-            className={`w-full h-10 flex items-center justify-center border rounded-md shadow-sm transition duration-150 ease-in-out text-sm cursor-pointer ${
+            // className logic to show active state when closed
+            className={`cursor-pointer w-full h-10 flex items-center justify-center border rounded-md shadow-sm transition duration-150 ease-in-out text-sm ${
               isDateSelectorVisible
-                ? "bg-indigo-50 border-indigo-500 text-indigo-600"
-                : "bg-white text-gray-500 border-gray-300 hover:border-gray-400"
+                ? "bg-indigo-100 border-indigo-500 text-indigo-600" // Style when selector is OPEN
+                : isDateFilterActive
+                ? "bg-white border-indigo-400 text-indigo-600" // Style when selector is CLOSED but filter is ACTIVE
+                : "bg-white text-gray-500 border-gray-300 hover:border-gray-400" // Style when selector is CLOSED and INACTIVE
             }`}
           >
             <CalendarDaysIcon className="h-5 w-5" />

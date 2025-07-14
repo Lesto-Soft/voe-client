@@ -135,7 +135,7 @@ const UserSearchBar: React.FC<UserSearchBarProps> = ({
                 : "Показване на всички потребители (спрямо този критерий)"
             }
           >
-            {filterFinancial ? "Само такива" : "Нефилтрирани"}
+            {filterFinancial ? "Филтрирани" : "Нефилтрирани"}
           </button>
         </div>
 
@@ -165,7 +165,7 @@ const UserSearchBar: React.FC<UserSearchBarProps> = ({
                 : "Показване на всички потребители (спрямо този критерий)" // Tooltip when filter is OFF
             }
           >
-            {filterManager ? "Само такива" : "Нефилтрирани"}
+            {filterManager ? "Филтрирани" : "Нефилтрирани"}
           </button>
         </div>
       </div>

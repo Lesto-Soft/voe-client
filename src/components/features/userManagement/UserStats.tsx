@@ -37,7 +37,7 @@ const getRoleAppearance = (
   if (nameLower.includes("напуснал") || nameLower.includes("archived")) {
     return { icon: ArchiveBoxXMarkIcon, color: "text-red-400" };
   }
-  if (nameLower.includes("нормален")) {
+  if (nameLower.includes("базов")) {
     return { icon: UserIcon, color: "text-gray-500" };
   }
   // Fallback for "placeholder-skeleton" or any other unknown role

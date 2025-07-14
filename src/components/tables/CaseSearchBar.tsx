@@ -58,6 +58,9 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
 }) => {
   // --- State for Creator Search ---
   const [creatorInput, setCreatorInput] = useState(""); // Input field value
+  const [selectedCreator, setSelectedCreator] = useState<ILeanUser | null>(
+    null
+  );
   const [isDropdownVisible, setIsDropdownVisible] = useState(false); // Dropdown visibility
   const [fetchedInitialCreator, setFetchedInitialCreator] = useState(false); // Flag to prevent re-fetching initial creator
   const creatorInputRef = useRef<HTMLInputElement>(null);
@@ -95,12 +98,14 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
         (u) => u._id === creatorId
       );
       if (initialUser) {
+        setSelectedCreator(initialUser);
         setCreatorInput(initialUser.name + `(${initialUser.username})`);
         setIsDropdownVisible(false);
         setServerFetchedUsers(usersData.getLeanUsers);
       } else {
         setCreatorId("");
         setFetchedInitialCreator(false);
+        setSelectedCreator(null);
       }
     }
   }, [usersData, fetchedInitialCreator, creatorId, creatorInput, setCreatorId]);
@@ -130,6 +135,7 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
     setCreatorInput(newValue);
     if (creatorId && fetchedInitialCreator) {
       setCreatorId("");
+      setSelectedCreator(null);
     }
     setFetchedInitialCreator(false);
     setIsDropdownVisible(true);
@@ -147,6 +153,7 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
 
   const handleUserSelect = (user: ILeanUser) => {
     setCreatorId(user._id);
+    setSelectedCreator(user);
     setCreatorInput(user.name + `(${user.username})`);
     setIsDropdownVisible(false);
     setFetchedInitialCreator(true);
@@ -156,6 +163,7 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
   const clearCreatorSelection = () => {
     setCreatorId("");
     setCreatorInput("");
+    setSelectedCreator(null);
     setFetchedInitialCreator(false);
     setIsDropdownVisible(false); // Optionally hide dropdown
     // Optionally refocus the input
@@ -283,7 +291,7 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
         />
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-x-4 gap-y-3 items-end">
+      <div className="flex flex-wrap gap-x-4 gap-y-3 items-end">
         <div>
           <label
             htmlFor="caseNumber"
@@ -296,7 +304,7 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
             id="caseNumber"
             value={caseNumber}
             onChange={(e) => setCaseNumber(e.target.value)}
-            className="bg-white w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition duration-150 ease-in-out"
+            className="bg-white w-28 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition duration-150 ease-in-out"
             placeholder={t("search_by_case_number")}
           />
         </div>
@@ -316,7 +324,7 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
               setPriority(e.target.value as ICase["priority"] | "");
               (e.target as HTMLSelectElement).blur();
             }}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-white appearance-none"
+            className="w-32 pl-3 pr-8 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-white appearance-none truncate"
           >
             <option value=""> {t("all")}</option>
             <option value="LOW"> {t("LOW")}</option>
@@ -343,7 +351,7 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
               setType(e.target.value as ICase["type"] | "");
               (e.target as HTMLSelectElement).blur();
             }}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-white appearance-none"
+            className="w-32 pl-3 pr-8 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-white appearance-none truncate"
           >
             <option value=""> {t("all")}</option>
             <option value="PROBLEM"> {t("PROBLEM")}</option>
@@ -354,24 +362,33 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
           </div>
         </div>
 
-        <div className="relative">
+        <div className="relative flex-1 min-w-[200px]">
           <label
             htmlFor="creator"
             className="block text-sm font-medium text-gray-700 mb-1"
           >
             {t("creator")}
           </label>
-          <input
-            type="text"
-            id="creator"
-            ref={creatorInputRef}
-            value={creatorInput}
-            onChange={handleCreatorInputChange}
-            onFocus={handleCreatorInputFocus}
-            className="bg-white w-full px-3 pr-8 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition duration-150 ease-in-out"
-            placeholder={t("choose_creator")}
-            autoComplete="off"
-          />
+          {selectedCreator ? (
+            <div className="bg-white w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm flex justify-between items-center h-[38px]">
+              <span className="text-gray-800">{selectedCreator.name}</span>
+              <span className="font-semibold text-gray-500 mr-6">
+                {selectedCreator.username}
+              </span>
+            </div>
+          ) : (
+            <input
+              type="text"
+              id="creator"
+              ref={creatorInputRef}
+              value={creatorInput}
+              onChange={handleCreatorInputChange}
+              onFocus={handleCreatorInputFocus}
+              className="bg-white w-full px-3 pr-8 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition duration-150 ease-in-out"
+              placeholder={t("choose_creator")}
+              autoComplete="off"
+            />
+          )}
           {/* Clear Button */}
           {creatorId && (
             <button
@@ -407,7 +424,12 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
                     className="px-3 py-2 text-sm text-gray-800 hover:bg-indigo-50 cursor-pointer"
                     onMouseDown={() => handleUserSelect(user)}
                   >
-                    {user.name + `(${user.username})`}
+                    <div className="flex justify-between items-center w-full">
+                      <span className="text-gray-800">{user.name}</span>
+                      <span className="font-semibold text-gray-500">
+                        {user.username}
+                      </span>
+                    </div>
                   </div>
                 ))
               )}
@@ -421,7 +443,7 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
         </div>
 
         {/* Category (Checkbox Multi-Select Dropdown) */}
-        <div className="relative">
+        <div className="relative flex-1 min-w-[200px]">
           <label
             htmlFor="category"
             className="block text-sm font-medium text-gray-700 mb-1"
@@ -488,7 +510,7 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
         </div>
 
         {/* Content */}
-        <div>
+        <div className="flex-1 min-w-[200px]">
           <label
             htmlFor="content"
             className="block text-sm font-medium text-gray-700 mb-1"
@@ -520,7 +542,7 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
               setStatus(e.target.value as ICase["status"] | "");
               (e.target as HTMLSelectElement).blur();
             }}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-white appearance-none"
+            className="w-32 pl-3 pr-8 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-white appearance-none truncate"
           >
             <option value=""> {t("all")}</option>
             <option value="OPEN"> {t("OPEN")}</option>

@@ -28,6 +28,7 @@
   "no_categories": "No categories found",
   "description": "Description",
   "search_by_description": "Search by description",
+  "fiter_by_date": "Search by date",
   "search": "Search...",
   "choose_categories": "Choose categories",
   "choose_creator": "Choose creator",

@@ -11,6 +11,10 @@ import {
   DragEndEvent,
 } from "@dnd-kit/core";
 import {
+  restrictToVerticalAxis,
+  restrictToParentElement,
+} from "@dnd-kit/modifiers";
+import {
   arrayMove,
   SortableContext,
   verticalListSortingStrategy,
@@ -126,6 +130,7 @@ const RatingMetricTable: React.FC<RatingMetricTableProps> = ({
           sensors={sensors}
           collisionDetection={closestCenter}
           onDragEnd={handleDragEnd}
+          modifiers={[restrictToVerticalAxis, restrictToParentElement]}
         >
           <table className="min-w-full divide-y divide-gray-200 table-fixed">
             {renderTableHeader()}

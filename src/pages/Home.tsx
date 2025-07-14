@@ -3,7 +3,11 @@ import { useState } from "react";
 import { dev_endpoint } from "../db/config";
 import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
-import LanguageSwitcher from "../components/modals/LanguageSwitcher";
+// import LanguageSwitcher from "../components/modals/LanguageSwitcher";
+import {
+  LightBulbIcon,
+  ExclamationTriangleIcon,
+} from "@heroicons/react/24/solid";
 
 const FormHeader = ({ subtitleKey }: { subtitleKey: string }) => {
   const { t } = useTranslation();
@@ -35,15 +39,23 @@ const CaseForm = ({
         className={`flex flex-col justify-center items-stretch space-y-4 ${FORM_SECTION_MIN_HEIGHT}`}
       >
         <div>
-          <Link to={`/submit-case?type=problem`}>
-            <button className="bg-btnRed hover:bg-red-800 active:bg-red-500 hover:cursor-pointer  text-white rounded-lg w-full py-3 px-5 uppercase font-bold shadow-xl lg:text-2xl transition-all duration-300">
+          <Link
+            to={`/submit-case?type=problem`}
+            className="flex items-center gap-x-4 group"
+          >
+            <ExclamationTriangleIcon className="h-10 w-10 text-btnRed group-hover:scale-110 transition-transform duration-300" />
+            <button className="bg-btnRed hover:bg-red-800 active:bg-red-500 hover:cursor-pointer text-white rounded-lg w-full py-3 px-5 uppercase font-bold shadow-xl lg:text-2xl transition-all duration-300">
               {t("home.problem")}
             </button>
           </Link>
         </div>
         <div>
-          <Link to="/submit-case?type=suggestion">
-            <button className="bg-btnGreen hover:bg-green-700 active:bg-green-500 hover:cursor-pointer  text-white rounded-lg w-full py-3 px-5 uppercase font-bold shadow-xl lg:text-2xl transition-all duration-300">
+          <Link
+            to="/submit-case?type=suggestion"
+            className="flex items-center gap-x-4 group"
+          >
+            <LightBulbIcon className="h-10 w-10 text-btnGreen group-hover:scale-110 transition-transform duration-300" />
+            <button className="bg-btnGreen hover:bg-green-700 active:bg-green-500 hover:cursor-pointer text-white rounded-lg w-full py-3 px-5 uppercase font-bold shadow-xl lg:text-2xl transition-all duration-300">
               {t("home.suggestion")}
             </button>
           </Link>
@@ -173,9 +185,9 @@ const Home = () => {
 
   return (
     <div className="container mx-auto h-screen flex items-center justify-center">
-      <div className="absolute top-4 right-4 z-10">
+      {/* <div className="absolute top-4 right-4 z-10">
         <LanguageSwitcher />
-      </div>
+      </div> */}
       <div className="flex flex-col-reverse lg:flex-row justify-around items-start w-full max-w-6xl p-6 lg:p-12">
         <div className="w-full lg:w-1/2 flex flex-col items-center mt-8 lg:mt-0">
           <FormHeader subtitleKey={subtitleKey} />

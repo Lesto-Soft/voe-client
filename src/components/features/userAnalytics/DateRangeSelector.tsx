@@ -1,5 +1,5 @@
 // src/components/features/userAnalytics/DateRangeSelector.tsx
-import React, { useState, useEffect } from "react"; // 1. Import useState and useEffect from "react";
+import React, { useState, useEffect } from "react";
 import { startOfDay, endOfDay, subDays } from "../../../utils/dateUtils";
 import { customInputStyles } from "../../../utils/style-helpers";
 
@@ -27,12 +27,45 @@ const DateRangeSelector: React.FC<DateRangeSelectorProps> = ({
   dateRange,
   onDateRangeChange,
 }) => {
-  // 2. ADD STATE TO TRACK THE ACTIVE PRESET
-  // Initialize with "All Time" as the default.
   const [activePreset, setActivePreset] = useState<string | null>("All Time");
 
+  // ADDED: This effect syncs the highlighted button with the actual date range from props.
+  useEffect(() => {
+    const { startDate, endDate } = dateRange;
+
+    // Case 1: "All Time" is selected.
+    if (!startDate && !endDate) {
+      setActivePreset("All Time");
+      return;
+    }
+
+    // Helper to compare if two dates are the same day, ignoring time.
+    const isSameDay = (d1: Date | null, d2: Date | null): boolean => {
+      if (!d1 || !d2) return false;
+      return (
+        d1.getFullYear() === d2.getFullYear() &&
+        d1.getMonth() === d2.getMonth() &&
+        d1.getDate() === d2.getDate()
+      );
+    };
+
+    // Case 2: Check if the date range matches one of the presets.
+    // Our presets always end on the current day.
+    if (isSameDay(endDate, endOfDay(new Date()))) {
+      for (const preset of presets) {
+        const presetStartDate = startOfDay(subDays(new Date(), preset.days));
+        if (isSameDay(startDate, presetStartDate)) {
+          setActivePreset(preset.label);
+          return; // Found a matching preset, so we exit.
+        }
+      }
+    }
+
+    // Case 3: If no presets match, it's a custom date range.
+    setActivePreset(null);
+  }, [dateRange]); // This hook runs whenever the dateRange prop changes.
+
   const handlePresetClick = (preset: { label: string; days: number }) => {
-    // Set the active preset label
     setActivePreset(preset.label);
     onDateRangeChange({
       startDate: startOfDay(subDays(new Date(), preset.days)),
@@ -41,7 +74,6 @@ const DateRangeSelector: React.FC<DateRangeSelectorProps> = ({
   };
 
   const handleAllTimeClick = () => {
-    // Set the active preset to "All Time"
     setActivePreset("All Time");
     onDateRangeChange({ startDate: null, endDate: null });
   };
@@ -50,7 +82,6 @@ const DateRangeSelector: React.FC<DateRangeSelectorProps> = ({
     e: React.ChangeEvent<HTMLInputElement>,
     type: "start" | "end"
   ) => {
-    // A custom date change means no preset is active
     setActivePreset(null);
     const valueAsDate = e.target.value ? new Date(e.target.value) : null;
     if (type === "start") {
@@ -73,15 +104,11 @@ const DateRangeSelector: React.FC<DateRangeSelectorProps> = ({
         : "bg-gray-100 text-gray-700 hover:bg-gray-200"
     }`;
 
-  // This component doesn't know about "isAllTimeActive" directly anymore,
-  // it relies on the `activePreset` state.
-
   return (
     <>
       <style>{customInputStyles}</style>
-      <div className="flex flex-row justify-between">
+      <div className="flex flex-row justify-end space-x-5">
         <div className="flex items-center justify-center space-x-1 sm:space-x-2 overflow-x-auto custom-scrollbar-xs">
-          {/* 3. UPDATE THE ACTIVE CHECK FOR THE BUTTONS */}
           <button
             onClick={handleAllTimeClick}
             className={getButtonClass(activePreset === "All Time")}

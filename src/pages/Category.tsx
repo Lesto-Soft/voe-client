@@ -26,6 +26,7 @@ import useCategoryScrollPersistence from "../hooks/useCategoryScrollPersistence"
 
 // UI Components
 import PageStatusDisplay from "../components/global/PageStatusDisplay"; // Adjust path
+import CategoryPageSkeleton from "../components/skeletons/CategoryPageSkeleton";
 import CategoryHeader from "../components/features/categoryAnalytics/CategoryHeader"; // Adjust path
 import PersonnelInfoPanel from "../components/features/categoryAnalytics/PersonnelInfoPanel"; // Adjust path
 import CategoryCasesList from "../components/features/categoryAnalytics/CategoryCasesList"; // Adjust path
@@ -198,12 +199,13 @@ const Category: React.FC = () => {
 
   const pageError = categoryError || allUsersForFormError;
   if (categoryLoading || authLoading || allUsersForFormLoading) {
-    return (
-      <PageStatusDisplay
-        loading
-        message="Зареждане на данните за категорията..."
-      />
-    );
+    return <CategoryPageSkeleton />;
+    //   return (
+    //     <PageStatusDisplay
+    //       loading
+    //       message="Зареждане на данните за категорията..."
+    //     />
+    //   );
   }
   if (pageError || !category) {
     return <PageStatusDisplay notFound categoryName={categoryNameFromParams} />;

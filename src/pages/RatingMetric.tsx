@@ -11,6 +11,7 @@ import { ROLES } from "../utils/GLOBAL_PARAMETERS";
 
 // UI Components
 import PageStatusDisplay from "../components/global/PageStatusDisplay";
+import RatingMetricPageSkeleton from "../components/skeletons/RatingMetricSkeleton";
 import ForbiddenPage from "./ErrorPages/ForbiddenPage";
 import RatingMetricInformationPanel from "../components/features/ratingMetricAnalytics/RatingMetricInformationPanel";
 import MetricScoreList from "../components/features/ratingMetricAnalytics/MetricScoreList";
@@ -85,10 +86,12 @@ const RatingMetric: React.FC = () => {
     return (
       <PageStatusDisplay notFound message="ID на метриката липсва от адреса." />
     );
-  if (metricLoading || scoresLoading)
-    return (
-      <PageStatusDisplay loading message="Зареждане на данни за метриката..." />
-    );
+  if (metricLoading || scoresLoading) {
+    return <RatingMetricPageSkeleton />;
+    // return (
+    //   <PageStatusDisplay loading message="Зареждане на данни за метриката..." />
+    // );
+  }
   if (metricError || scoresError)
     return <PageStatusDisplay error={metricError || scoresError} />;
   if (!metric)

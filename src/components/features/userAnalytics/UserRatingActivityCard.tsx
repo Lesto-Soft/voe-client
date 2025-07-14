@@ -55,12 +55,12 @@ const UserRatingActivityCard: React.FC<UserRatingActivityCardProps> = ({
               >
                 {actor.name}
               </span>
-              <span className="ml-1 whitespace-nowrap">оцени сигнал</span>
+              <span className="ml-1 whitespace-nowrap">даде на сигнал</span>
               <div className="w-[70px] flex-shrink-0">
                 <CaseLink my_case={ratedCase} t={tFunctionForCaseLinkProp} />
               </div>
               <div className="mt-2 text-sm flex items-center">
-                <p className="text-gray-600"> със средна оценка:</p>
+                <p className="text-gray-700"> оценка:</p>
                 <p className={`ml-2 text-base ${scoreStyle}`}>
                   {averageScore.toFixed(2)}
                 </p>

@@ -11,6 +11,7 @@ import { useCurrentUser } from "../context/UserContext";
 
 // UI Components
 import PageStatusDisplay from "../components/global/PageStatusDisplay";
+import UserPageSkeleton from "../components/skeletons/UserPageSkeleton";
 import UserInformationPanel from "../components/features/userAnalytics/UserInformationPanel";
 import UserActivityList from "../components/features/userAnalytics/UserActivityList";
 import UserStatisticsPanel from "../components/features/userAnalytics/UserStatisticsPanel";
@@ -174,12 +175,13 @@ const User: React.FC = () => {
   const closeEditModal = () => setIsEditModalOpen(false);
 
   if (userLoading || authLoading) {
-    return (
-      <PageStatusDisplay
-        loading
-        message="Зареждане на потребителски данни..."
-      />
-    );
+    return <UserPageSkeleton />;
+    // return (
+    //   <PageStatusDisplay
+    //     loading
+    //     message="Зареждане на потребителски данни..."
+    //   />
+    // );
   }
 
   if (userUsernameFromParams === undefined) {

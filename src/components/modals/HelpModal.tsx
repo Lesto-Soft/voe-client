@@ -1,4 +1,5 @@
 import React from "react";
+import { XMarkIcon } from "@heroicons/react/24/solid";
 
 interface HelpModalProps {
   isOpen: boolean;
@@ -27,16 +28,16 @@ const HelpModal: React.FC<HelpModalProps> = ({
   return (
     // Overlay backdrop
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center  transition-opacity bg-gray-500/50 duration-300 ease-in-out"
+      className="fixed inset-0 z-50 flex items-center justify-center transition-opacity bg-gray-500/50 duration-300 ease-in-out"
       onClick={handleOverlayClick} // Close on overlay click
       aria-labelledby="modal-title"
       role="dialog"
       aria-modal="true"
     >
       {/* Modal Content Container */}
-      <div className="bg-white rounded-lg shadow-xl p-6 m-4 max-w-lg w-full transform transition-all duration-300 ease-in-out scale-100 opacity-100">
+      <div className="bg-white rounded-lg shadow-xl m-4 max-w-lg w-full flex flex-col transform transition-all duration-300 ease-in-out scale-100 opacity-100">
         {/* Modal Header */}
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex justify-between items-center p-4 border-b border-gray-200">
           {title && (
             <h2
               id="modal-title"
@@ -47,15 +48,20 @@ const HelpModal: React.FC<HelpModalProps> = ({
           )}
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 text-2xl leading-none"
+            className="p-1 cursor-pointer rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 transition-colors"
             aria-label="Close modal"
           >
-            &times; {/* Nice 'X' character */}
+            <XMarkIcon className="h-6 w-6" />
           </button>
         </div>
 
         {/* Modal Body */}
-        <div className="text-gray-700">{children}</div>
+        <div
+          className="px-6 py-5 overflow-y-auto"
+          style={{ maxHeight: "70vh" }}
+        >
+          <div className="text-gray-700">{children}</div>
+        </div>
       </div>
     </div>
   );

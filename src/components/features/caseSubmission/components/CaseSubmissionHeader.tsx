@@ -2,6 +2,10 @@
 import React from "react";
 import { Link } from "react-router"; // Corrected import
 import { TFunction } from "i18next";
+import {
+  LightBulbIcon,
+  ExclamationTriangleIcon,
+} from "@heroicons/react/24/solid";
 
 interface CaseSubmissionHeaderProps {
   caseTypeParam: "PROBLEM" | "SUGGESTION";
@@ -24,13 +28,22 @@ const CaseSubmissionHeader: React.FC<CaseSubmissionHeaderProps> = ({
 }) => {
   return (
     <div className="col-span-1 md:col-span-2 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-      <div>
-        <h2 className="text-xl font-semibold text-gray-800">
-          {t("caseSubmission.title", {
-            type: t(`caseSubmission.caseType.${caseTypeParam.toLowerCase()}`),
-          })}
-        </h2>
-        <p className="text-sm text-gray-500">{t("caseSubmission.subtitle")}</p>
+      <div className="flex items-center gap-3">
+        {caseTypeParam === "SUGGESTION" ? (
+          <LightBulbIcon className="h-7 w-7 text-green-600" />
+        ) : (
+          <ExclamationTriangleIcon className="h-7 w-7 text-red-600" />
+        )}
+        <div>
+          <h2 className="text-xl font-semibold text-gray-800">
+            {t("caseSubmission.title", {
+              type: t(`caseSubmission.caseType.${caseTypeParam.toLowerCase()}`),
+            })}
+          </h2>
+          <p className="text-sm text-gray-500">
+            {t("caseSubmission.subtitle")}
+          </p>
+        </div>
       </div>
       <div className="flex items-center space-x-2">
         <button

@@ -91,47 +91,51 @@ const ContentDialog: React.FC<ContentDialogProps> = ({
           </div>
 
           {/* Body with two columns */}
-          <div className="flex-grow flex flex-col md:flex-row gap-6 overflow-hidden p-4">
+          <div className="flex-grow flex flex-col md:flex-row overflow-hidden p-4">
             {/* Left Column: Metadata */}
             <div className="md:w-1/3 lg:w-1/4 flex-shrink-0 flex flex-col gap-4 overflow-y-auto custom-scrollbar pr-2">
               <div className="flex flex-col items-center justify-center w-full gap-1">
                 <Creator creator={creator} />
-                {date && <ShowDate date={date} centered={true} />}
+                {date && <ShowDate date={date} centered={true} isCase={true} />}
               </div>
 
               {/* Info boxes */}
               <div className="flex flex-col gap-3">
-                <div className={`${caseBoxClasses} ${priorityStyle} flex-1`}>
-                  <span className={labelTextClass}>
-                    {t("dashboard:priority")}:
-                  </span>
-                  <span className="flex items-center mt-1">
-                    <FlagIcon className="h-4 w-4 mr-1.5" />
-                    {t(`dashboard:${priority}`)}
-                  </span>
-                </div>
-                <div className={`${caseBoxClasses} ${typeBadgeStyle} flex-1`}>
-                  <span className={labelTextClass}>{t("dashboard:type")}:</span>
-                  <div className="mt-1">
-                    <span
-                      className={`px-2.5 py-0.5 rounded-full text-xs text-center font-medium ${typeBadgeStyle}`}
-                    >
-                      {t(`dashboard:${type}`)}
+                <div className="flex flex-row  justify-between">
+                  <div className={`${caseBoxClasses} ${priorityStyle} flex-1`}>
+                    <span className={labelTextClass}>
+                      {t("dashboard:priority")}:
                     </span>
+                    <span className="flex items-center mt-1">
+                      <FlagIcon className="h-4 w-4 mr-1.5" />
+                      {t(`dashboard:${priority}`)}
+                    </span>
+                  </div>
+                  <div className={`${caseBoxClasses} ${typeBadgeStyle} flex-1`}>
+                    <span className={labelTextClass}>
+                      {t("dashboard:type")}:
+                    </span>
+                    <div className="mt-1">
+                      <span
+                        className={`px-2.5 py-0.5 rounded-full text-xs text-center font-medium ${typeBadgeStyle}`}
+                      >
+                        {t(`dashboard:${type}`)}
+                      </span>
+                    </div>
                   </div>
                 </div>
                 {/* --- UPDATED: Rating Display Component --- */}
-                <div className={`${caseBoxClasses}`}>
+                {/* <div className={`${caseBoxClasses}`}>
                   <CaseRatingDisplay
                     metricScores={metricScores}
                     calculatedRating={calculatedRating}
                     onOpenModal={() => {
-                      /* The modal is opened from the main page, not the dialog */
+                      // The modal is opened from the main page, not the dialog
                     }}
                     disabled={true} // The button to add/edit a rating is disabled inside the dialog
                     hasUserRated={hasUserRated}
                   />
-                </div>
+                </div> */}
               </div>
 
               {/* Categories */}
@@ -175,7 +179,7 @@ const ContentDialog: React.FC<ContentDialogProps> = ({
               <div className="font-normal text-gray-500">
                 {t("dashboard:content")}
               </div>
-              <div className="bg-gray-50 rounded-md p-4 text-gray-900 overflow-y-auto custom-scrollbar break-words flex-grow">
+              <div className="bg-gray-50 rounded-md p-4 mb-2 text-gray-900 overflow-y-auto custom-scrollbar break-words flex-grow">
                 {renderContentSafely(content)}
               </div>
             </div>

@@ -354,7 +354,7 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
           {/* Container for the tabs - now with ref */}
           <div
             ref={tabsContainerRef}
-            className="flex space-x-1 sm:space-x-2 mr-5 overflow-x-auto custom-scrollbar-xs"
+            className="flex py-1 space-x-1 sm:space-x-2 mr-5 overflow-x-auto custom-scrollbar-xs"
           >
             {tabs.map((tab) => (
               <button

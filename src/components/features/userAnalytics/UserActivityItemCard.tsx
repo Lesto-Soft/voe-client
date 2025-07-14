@@ -31,7 +31,10 @@ import {
 } from "../../../utils/style-helpers"; // Adjust path to your style-helpers.ts
 
 import CategoryLink from "../../global/CategoryLink";
-import { getContentPreview } from "../../../utils/contentRenderer";
+import {
+  getContentPreview,
+  stripHtmlTags,
+} from "../../../utils/contentRenderer";
 
 type ActivityItem = ICase | IAnswer | IComment;
 
@@ -96,7 +99,7 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
       titleFragments.push(
         <span
           key="preposition"
-          className="ml-1 text-gray-500 whitespace-nowrap"
+          className="ml-1 text-gray-700 whitespace-nowrap"
         >
           по
         </span>
@@ -112,7 +115,7 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
     );
     caseToLinkForDisplay = answerItem.case;
     titleFragments.push(
-      <span key="preposition" className="ml-1 text-gray-500 whitespace-nowrap">
+      <span key="preposition" className="ml-1 text-gray-700 whitespace-nowrap">
         по
       </span>
     );
@@ -126,7 +129,7 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
     );
     caseToLinkForDisplay = answerItem.case;
     titleFragments.push(
-      <span key="preposition" className="ml-1 text-gray-500 whitespace-nowrap">
+      <span key="preposition" className="ml-1 text-gray-700 whitespace-nowrap">
          по
       </span>
     );
@@ -147,7 +150,7 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
       titleFragments.push(
         <span
           key="preposition"
-          className="ml-1 text-gray-500 whitespace-nowrap"
+          className="ml-1 text-gray-700 whitespace-nowrap"
         >
           към
         </span>
@@ -162,7 +165,7 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
       titleFragments.push(
         <span
           key="preposition"
-          className="ml-1 text-gray-500 whitespace-nowrap"
+          className="ml-1 text-gray-700 whitespace-nowrap"
         >
           по
         </span>
@@ -246,7 +249,10 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
           </div>
 
           {contentPreview && (
-            <p className="text-sm text-gray-600 leading-relaxed line-clamp-2 sm:line-clamp-3">
+            <p
+              className="text-sm text-gray-600 leading-relaxed line-clamp-2 sm:line-clamp-3"
+              title={stripHtmlTags(itemContent)}
+            >
               {contentPreview}
             </p>
           )}

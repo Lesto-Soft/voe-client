@@ -136,7 +136,7 @@ const RatingMetricFilters: React.FC<RatingMetricFiltersProps> = ({
         </div>
 
         {/* Status Dropdown Filter Trigger */}
-        <div className="relative">
+        <div className="relative lg:col-span-1 sm:col-span-2 xs:col-span-1">
           <label
             htmlFor="filterStatusDisplay"
             className="block text-sm font-medium text-gray-700 mb-1"

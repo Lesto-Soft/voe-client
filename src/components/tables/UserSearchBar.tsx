@@ -36,7 +36,7 @@ const UserSearchBar: React.FC<UserSearchBarProps> = ({
 
   return (
     <div className="pt-2.5">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6 gap-x-4 gap-y-3 items-start">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-x-4 gap-y-3 items-start">
         {/* Filter by Name */}
         <div>
           <label
@@ -115,7 +115,7 @@ const UserSearchBar: React.FC<UserSearchBarProps> = ({
             htmlFor={financialToggleId} // <-- ADDED htmlFor
             className="block text-sm font-medium text-gray-700 mb-1"
           >
-            Финансови одобрители
+            Финансови
           </label>
           <button
             type="button"
@@ -131,8 +131,8 @@ const UserSearchBar: React.FC<UserSearchBarProps> = ({
             aria-pressed={filterFinancial}
             title={
               filterFinancial
-                ? "Показване само на финансови одобрители"
-                : "Показване на всички потребители (спрямо този критерий)"
+                ? "Показване не само на финансови одобрители"
+                : "Показване само на финансови одобрители"
             }
           >
             {filterFinancial ? "Филтрирани" : "Нефилтрирани"}
@@ -161,8 +161,8 @@ const UserSearchBar: React.FC<UserSearchBarProps> = ({
             aria-pressed={filterManager} // Indicates the toggle state for accessibility
             title={
               filterManager
-                ? "Показване само на мениджъри" // Tooltip when filter is ON (changed from Ръководители to Мениджъри)
-                : "Показване на всички потребители (спрямо този критерий)" // Tooltip when filter is OFF
+                ? "Показване не само на мениджъри" // Tooltip when filter is ON (changed from Ръководители to Мениджъри)
+                : "Показване само на мениджъри" // Tooltip when filter is OFF
             }
           >
             {filterManager ? "Филтрирани" : "Нефилтрирани"}

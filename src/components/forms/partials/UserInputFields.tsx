@@ -58,7 +58,7 @@ const UserInputFields: React.FC<UserInputFieldsProps> = ({
   isAdmin,
 }) => {
   const roleChangeWarningText =
-    "ВНИМАНИЕ: Промяна на ролята ОТ Админ или Експерт КЪМ Нормален или Напуснал, ЩЕ ПРЕМАХНЕ потребителя от категориите, за които е експерт и/или мениджър.";
+    "ВНИМАНИЕ: Промяна на ролята ОТ Админ или Експерт КЪМ Базов или Напуснал, ЩЕ ПРЕМАХНЕ потребителя от категориите, за които е експерт и/или мениджър.";
 
   const canEditSensitiveFields = isAdmin;
   const isUsernameDisabled = isEditing && !isAdmin;

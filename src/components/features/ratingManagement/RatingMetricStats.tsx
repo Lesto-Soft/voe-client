@@ -55,19 +55,19 @@ const RatingMetricStats: React.FC<RatingMetricStatsProps> = ({
   }[] = [
     {
       tier: "gold",
-      title: "Отлични оценки",
+      title: "Отлични",
       icon: TrophyIcon,
       iconColor: "text-amber-500",
     },
     {
       tier: "silver",
-      title: "Добри оценки",
+      title: "Добри",
       icon: StarIcon,
       iconColor: "text-slate-400",
     },
     {
       tier: "bronze",
-      title: "Средни оценки",
+      title: "Средни",
       icon: StarIcon,
       iconColor: "text-orange-700",
     },
@@ -83,14 +83,14 @@ const RatingMetricStats: React.FC<RatingMetricStatsProps> = ({
     <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-start">
       <StatCard
         key="all"
-        title="Всички Метрики"
+        title="Общо Метрики"
         amount={tierCounts.all}
         icon={Bars4Icon}
         iconColor="text-slate-500"
         isActive={activeTier === "all"}
         onClick={() => onTierSelect("all")}
         isLoading={isLoading}
-        className="w-full lg:w-52"
+        className="w-full lg:w-40"
       />
 
       <div
@@ -98,7 +98,7 @@ const RatingMetricStats: React.FC<RatingMetricStatsProps> = ({
         className="hidden lg:block self-stretch w-px mx-1 bg-gradient-to-b from-transparent via-gray-300 to-transparent"
       ></div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 lg:flex lg:flex-row lg:flex-wrap lg:gap-3 lg:flex-1">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 lg:grid-cols-2 xl:grid-cols-4">
         {cardData.map(({ tier, title, icon, iconColor }) => (
           <StatCard
             key={tier}
@@ -109,7 +109,6 @@ const RatingMetricStats: React.FC<RatingMetricStatsProps> = ({
             isActive={activeTier === tier}
             onClick={() => onTierSelect(tier)}
             isLoading={isLoading}
-            className="w-full lg:w-45" // <-- UPDATED to match UserStats
           />
         ))}
       </div>

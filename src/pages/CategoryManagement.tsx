@@ -604,7 +604,7 @@ const CategoryManagement: React.FC = () => {
             <button
               type="button"
               onClick={openCreateCategoryModal}
-              className="w-full sm:w-[280px] flex flex-shrink-0 justify-center items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-green-500 text-white hover:bg-green-600 hover:cursor-pointer active:bg-green-700 active:shadow-inner disabled:cursor-not-allowed"
+              className="w-full sm:w-[280px] flex justify-center items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-green-500 text-white hover:bg-green-600 hover:cursor-pointer active:bg-green-700 active:shadow-inner disabled:cursor-not-allowed"
               disabled={mutationInProgress || isCurrentlyLoadingPageData}
             >
               <PlusIconSolid className="h-5 w-5 mr-1" />

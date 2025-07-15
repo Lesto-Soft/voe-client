@@ -41,7 +41,7 @@ const STATUS_APPEARANCE: Record<
   [CaseStatus.AwaitingFinance]: {
     icon: CurrencyDollarIcon,
     color: "text-blue-500",
-    label: "За Финансиране", // Translated
+    label: "За Финанси", // Translated
   },
   [CaseStatus.Closed]: {
     icon: ArchiveBoxXMarkIcon,
@@ -85,7 +85,7 @@ const CategoryStats: React.FC<CategoryStatsProps> = ({
         expectsOutOfTextFormat={true}
         isActive={isMainCardActive}
         onClick={() => onCaseStatusCardClick && onCaseStatusCardClick(null)} // Pass null to deselect
-        className="w-full lg:w-52" // Responsive width
+        className="w-full lg:w-40" // Responsive width
       />
 
       {showDivider && (
@@ -95,7 +95,7 @@ const CategoryStats: React.FC<CategoryStatsProps> = ({
         ></div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 lg:flex lg:flex-row lg:flex-wrap lg:gap-3 lg:flex-1">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 lg:grid-cols-2 xl:grid-cols-4">
         {displayOrder.map((status) => {
           const appearance = STATUS_APPEARANCE[status] || {
             icon: CubeTransparentIcon,
@@ -119,7 +119,6 @@ const CategoryStats: React.FC<CategoryStatsProps> = ({
               isActive={activeCaseStatusFilter === status}
               isLoading={isLoadingStatusSpecificCounts}
               expectsOutOfTextFormat={false}
-              className="w-full lg:w-45" // Responsive width
             />
           );
         })}

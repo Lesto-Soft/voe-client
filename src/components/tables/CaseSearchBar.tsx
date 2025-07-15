@@ -583,6 +583,7 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
           <DateRangeSelector
             dateRange={dateRange}
             onDateRangeChange={setDateRange}
+            justify="end"
           />
         </div>
       )}

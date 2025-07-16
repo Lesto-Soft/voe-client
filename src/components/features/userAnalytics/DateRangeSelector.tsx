@@ -167,10 +167,10 @@ const DateRangeSelector: React.FC<DateRangeSelectorProps> = ({
   };
 
   const getButtonClass = (isActive: boolean) =>
-    `hover:cursor-pointer px-3 py-1 text-xs sm:text-sm font-medium rounded-md whitespace-nowrap transition-colors duration-150 focus:outline-none ${
+    `border hover:cursor-pointer px-3 py-1 text-xs sm:text-sm font-medium rounded-md whitespace-nowrap transition-colors duration-150 focus:outline-none ${
       isActive
-        ? "bg-indigo-600 text-white shadow-sm"
-        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+        ? "bg-indigo-600 text-white shadow-sm border-indigo-700"
+        : "bg-white text-gray-700 hover:bg-gray-200 border-gray-200"
     }`;
 
   return (
@@ -216,6 +216,7 @@ const DateRangeSelector: React.FC<DateRangeSelectorProps> = ({
             yearDropdownItemNumber={15}
             renderCustomHeader={(props) => <CustomHeader {...props} />}
             className="p-1.5 pl-2 pr-7 border border-gray-300 rounded bg-white text-sm shadow-sm focus:outline-none focus:border-indigo-500 w-28 cursor-pointer"
+            calendarClassName="font-mulish"
             placeholderText="дд/мм/гг"
           />
           {dateRange.startDate && (
@@ -246,6 +247,7 @@ const DateRangeSelector: React.FC<DateRangeSelectorProps> = ({
             yearDropdownItemNumber={15}
             renderCustomHeader={(props) => <CustomHeader {...props} />}
             className="p-1.5 pl-2 pr-7 border border-gray-300 rounded bg-white text-sm shadow-sm focus:outline-none focus:border-indigo-500 w-28 cursor-pointer"
+            calendarClassName="font-mulish"
             placeholderText="дд/мм/гг"
           />
           {dateRange.endDate && (

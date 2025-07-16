@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect, useMemo } from "react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 // Removed IUser import as ILeanUserForForm is more specific here
 import TextEditor from "./TextEditor";
-import { ROLES } from "../../../utils/GLOBAL_PARAMETERS";
+import { CATEGORY_HELPERS, ROLES } from "../../../utils/GLOBAL_PARAMETERS";
 
 // Define a lean user type that includes the role ID for the form, matching what parent passes
 interface ILeanUserForForm {
@@ -13,19 +13,12 @@ interface ILeanUserForForm {
   role: { _id: string } | null; // Role can be null
 }
 
-// useDebounce function (can be kept if client-side search term debouncing is still desired, though less critical now)
-function useDebounce<T>(value: T, delay: number): T {
-  const [debouncedValue, setDebouncedValue] = useState<T>(value);
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [value, delay]);
-  return debouncedValue;
-}
+// --- Helper function to get plain text length from HTML ---
+const getTextLength = (html: string): number => {
+  const temp = document.createElement("div");
+  temp.innerHTML = html;
+  return temp.textContent?.trim().length || 0;
+};
 
 interface CategoryInputFieldsProps {
   name: string;
@@ -33,8 +26,10 @@ interface CategoryInputFieldsProps {
   nameError: string | null;
   problem: string;
   setProblem: (value: string) => void;
+  problemError: string | null;
   suggestion: string;
   setSuggestion: (value: string) => void;
+  suggestionError: string | null;
   expertIds: string[];
   setExpertIds: (ids: string[]) => void;
   managerIds: string[];
@@ -54,8 +49,10 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
   nameError,
   problem,
   setProblem,
+  problemError,
   suggestion,
   setSuggestion,
+  suggestionError,
   expertIds,
   setExpertIds,
   managerIds,
@@ -69,6 +66,30 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
   usersLoading,
 }) => {
   const t = (key: string) => key; // Placeholder for translations
+
+  // --- Calculate character counts and check all length limits ---
+  const problemCharCount = useMemo(() => getTextLength(problem), [problem]);
+  const isProblemTooLong = useMemo(
+    () => problemCharCount > CATEGORY_HELPERS.MAX,
+    [problemCharCount]
+  );
+  const isProblemTooShort = useMemo(
+    () => problemCharCount > 0 && problemCharCount < CATEGORY_HELPERS.MIN,
+    [problemCharCount]
+  );
+
+  const suggestionCharCount = useMemo(
+    () => getTextLength(suggestion),
+    [suggestion]
+  );
+  const isSuggestionTooLong = useMemo(
+    () => suggestionCharCount > CATEGORY_HELPERS.MAX,
+    [suggestionCharCount]
+  );
+  const isSuggestionTooShort = useMemo(
+    () => suggestionCharCount > 0 && suggestionCharCount < CATEGORY_HELPERS.MIN,
+    [suggestionCharCount]
+  );
 
   // Filter allUsersForAssigning to get only those with Expert or Admin roles
   const assignableUsers = useMemo(() => {
@@ -202,7 +223,8 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
           htmlFor="categoryName"
           className="mb-1 block text-sm font-medium text-gray-700"
         >
-          {t("Име на категория")} <span className="text-red-500">*</span>
+          {t("Име на категория")}
+          <span className="text-red-500">*</span>
         </label>
         <input
           type="text"
@@ -210,7 +232,7 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
-          className={`w-full rounded-md border p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
+          className={`w-full rounded-md border p-2 shadow-sm focus:outline-none focus:border-indigo-500 ${
             nameError ? "border-red-500" : "border-gray-300"
           }`}
         />
@@ -449,15 +471,34 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
           className="mb-1 block text-sm font-medium text-gray-700"
         >
           {t("Проблем")}
+          <span className="text-red-500">*</span>
         </label>
         <TextEditor
           content={problem}
           onUpdate={(html) => setProblem(html)}
           placeholder={t("Опишете проблема...")}
-          minHeight="120px"
-          maxHeight="120px"
+          height="120px"
+          maxLength={CATEGORY_HELPERS.MAX}
+          minLength={CATEGORY_HELPERS.MIN}
+          wrapperClassName="w-full rounded-md shadow-sm overflow-hidden bg-white"
         />
-        <p className={`${errorPlaceholderClass}`}>&nbsp;</p>
+        {/* UPDATED: Display more specific length errors */}
+        <p
+          className={`${errorPlaceholderClass} ${
+            problemError || isProblemTooLong || isProblemTooShort
+              ? "text-red-500"
+              : ""
+          }`}
+        >
+          {problemError}
+          {isProblemTooLong &&
+            `Съдържанието надвишава лимита от ${CATEGORY_HELPERS.MAX} символа.`}
+          {isProblemTooShort &&
+            `Съдържанието трябва да е поне ${CATEGORY_HELPERS.MIN} символа.`}
+          {!problemError && !isProblemTooLong && !isProblemTooShort && (
+            <>&nbsp;</>
+          )}
+        </p>
       </div>
 
       <div>
@@ -466,15 +507,34 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
           className="mb-1 block text-sm font-medium text-gray-700"
         >
           {t("Предложение")}
+          <span className="text-red-500">*</span>
         </label>
         <TextEditor
           content={suggestion}
           onUpdate={(html) => setSuggestion(html)}
           placeholder={t("Напишете предложение...")}
-          minHeight="120px"
-          maxHeight="120px"
+          height="120px"
+          maxLength={CATEGORY_HELPERS.MAX}
+          minLength={CATEGORY_HELPERS.MIN}
+          wrapperClassName="w-full rounded-md shadow-sm overflow-hidden bg-white"
         />
-        <p className={`${errorPlaceholderClass}`}>&nbsp;</p>
+        {/* UPDATED: Display more specific length errors */}
+        <p
+          className={`${errorPlaceholderClass} ${
+            suggestionError || isSuggestionTooLong || isSuggestionTooShort
+              ? "text-red-500"
+              : ""
+          }`}
+        >
+          {suggestionError}
+          {isSuggestionTooLong &&
+            `Съдържанието надвишава лимита от ${CATEGORY_HELPERS.MAX} символа.`}
+          {isSuggestionTooShort &&
+            `Съдържанието трябва да е поне ${CATEGORY_HELPERS.MIN} символа.`}
+          {!suggestionError &&
+            !isSuggestionTooLong &&
+            !isSuggestionTooShort && <>&nbsp;</>}
+        </p>
       </div>
     </>
   );

@@ -8,7 +8,8 @@ export const handleFileChange = (
   t: (key: string, options?: Record<string, any>) => string, // Updated type for t
   event: ChangeEvent<HTMLInputElement>,
   setAttachments: Dispatch<React.SetStateAction<File[]>>,
-  setFileError: Dispatch<React.SetStateAction<string | null>>
+  setFileError: Dispatch<React.SetStateAction<string | null>>,
+  existingAttachments: string[] = [] // Optional prop for existing attachments
 ) => {
   setFileError(null); // Clear previous errors (includes setFileError(null))
   const selectedFiles = event.target.files
@@ -24,7 +25,7 @@ export const handleFileChange = (
 
   // Use setAttachments callback form to reliably access previous state
   setAttachments((prevAttachments: any) => {
-    const currentCount = prevAttachments.length;
+    const currentCount = prevAttachments.length + existingAttachments.length;
     const availableSlots = MAX_FILES - currentCount;
 
     // --- Check 1: Max file count ---
@@ -42,14 +43,14 @@ export const handleFileChange = (
     const countLimitedFiles: string[] = [];
 
     // Create signatures of existing files for duplicate check
-    const existingFileSignatures = new Set(
-      prevAttachments.map((f: any) => `${f.name}-${f.size}-${f.lastModified}`)
-    );
+    const existingFileNames = new Set([
+      ...prevAttachments.map((f: File) => f.name),
+      ...existingAttachments.map((url: string) => url.split("/").pop() || url),
+    ]);
 
     // Process only as many selected files as there are available slots
     for (let i = 0; i < selectedFiles.length; i++) {
       const file = selectedFiles[i];
-      const signature = `${file.name}-${file.size}-${file.lastModified}`;
 
       // --- Check 2: Individual file size ---
       if (file.size > MAX_FILE_SIZE_BYTES) {
@@ -64,7 +65,7 @@ export const handleFileChange = (
       }
 
       // --- Check 4: Duplicates ---
-      if (existingFileSignatures.has(signature)) {
+      if (existingFileNames.has(file.name)) {
         duplicateFiles.push(file.name);
         continue; // Skip this file
       }
@@ -110,7 +111,6 @@ export const handleFileChange = (
     if (processingError) {
       setFileError(processingError);
     }
-
     // Return the new state array
     return [...prevAttachments, ...validFilesToAdd]; // Append valid files
   });

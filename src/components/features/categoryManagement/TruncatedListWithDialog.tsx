@@ -31,7 +31,6 @@ const overlayClass =
 const contentClass =
   "fixed z-50 top-1/2 left-1/2 w-[90vw] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-lg bg-white p-6 shadow-lg data-[state=open]:animate-contentShow focus:outline-none border border-gray-300";
 const titleClass = "text-lg font-semibold text-gray-800 mb-2";
-const descriptionClass = "mb-5 text-sm text-gray-600";
 const closeButtonClass =
   "absolute top-3 right-3 inline-flex h-7 w-7 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-purple-500 transition-colors";
 const listContainerClass =
@@ -89,7 +88,7 @@ function TruncatedListWithDialog({
             LIMITATION: UserLink will appear active (purple) even if isContextInactive is true.
             No onClick prop means we can't easily make it non-interactive here without more complex wrappers.
           */}
-          <UserLink user={userItem} type="table" />
+          <UserLink user={userItem} />
         </div>
       );
     }
@@ -103,7 +102,7 @@ function TruncatedListWithDialog({
             1. No e.stopPropagation(): Clicking UserLink will navigate AND may trigger the dialog.
             2. Styling is fixed by UserLink.
           */}
-          <UserLink user={userItem} type="table" />
+          <UserLink user={userItem} />
         </div>
       );
     } else {
@@ -111,7 +110,7 @@ function TruncatedListWithDialog({
       // If these are also meant to be links now via UserLink:
       return (
         <div key={key}>
-          <UserLink user={userItem} type="table" />
+          <UserLink user={userItem} />
         </div>
       );
     }
@@ -176,7 +175,7 @@ function TruncatedListWithDialog({
                 <UserLink
                   key={`dialog-${userItem._id}`}
                   user={userItem}
-                  type="table" // Or "case" if more appropriate for list view
+                  // Or "case" if more appropriate for list view
                 />
               );
             })}

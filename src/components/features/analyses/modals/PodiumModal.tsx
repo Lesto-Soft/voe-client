@@ -40,6 +40,8 @@ export const PodiumModal: React.FC<PodiumModalProps> = ({
   title,
   users,
 }) => {
+  const serverBaseUrl = import.meta.env.VITE_API_URL || "";
+
   if (!isOpen) {
     return null;
   }
@@ -113,8 +115,13 @@ export const PodiumModal: React.FC<PodiumModalProps> = ({
                       <div className="flex flex-col items-center mb-1">
                         <UserAvatar
                           name={userStat.user.name}
-                          imageUrl={userStat.user.avatar}
+                          imageUrl={
+                            userStat.user.avatar
+                              ? `${serverBaseUrl}/static/avatars/${userStat.user._id}/${userStat.user.avatar}`
+                              : null
+                          }
                           size={48}
+                          enablePreview={true}
                         />
                       </div>
                       <div
@@ -125,7 +132,7 @@ export const PodiumModal: React.FC<PodiumModalProps> = ({
                         className={`w-full ${podiumColors[index]} rounded-t-lg p-2 flex flex-col justify-start items-center border-b-4 shadow-md`}
                       >
                         <div className="text-center">
-                          <UserLink user={userStat.user} type="table" />
+                          <UserLink user={userStat.user} />
                           <p className="text-lg font-bold text-gray-800">
                             {userStat.count}
                           </p>
@@ -140,7 +147,7 @@ export const PodiumModal: React.FC<PodiumModalProps> = ({
               {otherUsers.length > 0 && (
                 <div>
                   <h3 className="text-lg font-semibold text-gray-700 mb-3 border-t pt-4">
-                    Останали участници
+                    Останали потребители:
                   </h3>
                   <ul className="space-y-2">
                     {otherUsers.map((userStat, index) => (
@@ -153,11 +160,16 @@ export const PodiumModal: React.FC<PodiumModalProps> = ({
                         </span>
                         <UserAvatar
                           name={userStat.user.name}
-                          imageUrl={userStat.user.avatar}
+                          imageUrl={
+                            userStat.user.avatar
+                              ? `${serverBaseUrl}/static/avatars/${userStat.user._id}/${userStat.user.avatar}`
+                              : null
+                          }
                           size={32}
+                          enablePreview={true}
                         />
                         <div className="ml-3 flex-grow">
-                          <UserLink user={userStat.user} type="table" />
+                          <UserLink user={userStat.user} />
                         </div>
                         <span className="font-bold text-gray-800">
                           {userStat.count}

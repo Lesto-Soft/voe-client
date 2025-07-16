@@ -5,7 +5,22 @@ export type ViewMode = "all" | "yearly" | "monthly" | "weekly" | "custom";
 
 export type BarChartDisplayMode = "type" | "priority";
 
-export type TopUserStat = { user: IUser; count: number } | null;
+/**
+ * Defines the types of leaderboards we can request from the server.
+ * This must match the enum on the GraphQL server.
+ */
+export enum RankingType {
+  CREATORS = "CREATORS",
+  SOLVERS = "SOLVERS",
+  APPROVERS = "APPROVERS",
+  RATERS = "RATERS",
+}
 
-// NEW: Add the formal type for a ranked user entry.
-export type RankedUser = { user: IUser; count: number };
+/**
+ * Represents a user in a ranked list, as returned by the getRankedUsers query.
+ * This replaces the old TopUserStat.
+ */
+export interface RankedUser {
+  user: IUser;
+  count: number;
+}

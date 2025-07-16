@@ -46,6 +46,7 @@ const CaseSubmissionRightPanel: React.FC<CaseSubmissionRightPanelProps> = ({
         <div>
           <p className="text-sm font-medium mb-3 text-gray-700">
             {t("caseSubmission.priorityLabel")}
+            <span className="text-red-500">*</span>
           </p>
           <div className="flex flex-wrap gap-x-4 gap-y-2">
             {priorityOptions.map(({ labelKey, value, color }) => (
@@ -74,7 +75,9 @@ const CaseSubmissionRightPanel: React.FC<CaseSubmissionRightPanelProps> = ({
         </div>
         <div>
           <p className="text-sm font-medium mb-3 text-gray-700">
-            {t("caseSubmission.categoriesLabel", {
+            {t("caseSubmission.categoriesLabel")}
+            <span className="text-red-500">*</span>{" "}
+            {t("caseSubmission.categoriesLabelMax", {
               maxSelect: MAX_SELECTED_CATEGORIES,
             })}
           </p>

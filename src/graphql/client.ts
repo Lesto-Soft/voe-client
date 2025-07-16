@@ -1,13 +1,33 @@
-import { ApolloClient, InMemoryCache, createHttpLink } from "@apollo/client";
-import { dev_endpoint, dev_graphqlEndpoint } from "../db/config";
+import { ApolloClient, ApolloLink, InMemoryCache } from "@apollo/client";
+import { graphqlEndpoint } from "../db/config";
+import createUploadLink from "apollo-upload-client/createUploadLink.mjs";
+import { onError } from "@apollo/client/link/error";
 
-const httpLink = createHttpLink({
-  uri: dev_graphqlEndpoint,
-  credentials: "include",
+const errorLink = onError(({ graphQLErrors, networkError }) => {
+  if (graphQLErrors) {
+    graphQLErrors.forEach(({ message, locations, path }) => {
+      console.error(
+        `[GraphQL error]: Message: ${message}, Location: ${locations}, Path: ${path}`
+      );
+    });
+  }
+  if (networkError) {
+    window.location.href = "/server-error";
+  }
 });
 
+const uploadLink = createUploadLink({
+  uri: graphqlEndpoint,
+  credentials: "include",
+  headers: {
+    "apollo-require-preflight": "true",
+  },
+});
+
+const link = ApolloLink.from([errorLink, uploadLink]);
+
 export const apolloClient = new ApolloClient({
-  link: httpLink,
+  link: link,
   cache: new InMemoryCache(),
   defaultOptions: {
     watchQuery: {

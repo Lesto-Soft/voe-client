@@ -1,5 +1,6 @@
+// src/graphql/hooks/case.ts (Corrected)
 import { useMutation, useQuery, QueryHookOptions } from "@apollo/client";
-import { CREATE_CASE, RATE_CASE } from "../mutation/case";
+import { CREATE_CASE, DELETE_CASE, UPDATE_CASE } from "../mutation/case"; // RATE_CASE removed from imports
 import {
   COUNT_CASES,
   COUNT_FILTERED_CASES,
@@ -8,10 +9,11 @@ import {
   GET_CASES,
   GET_CASES_BY_USER_CATEGORIES,
   GET_CASES_BY_USER_MANAGED_CATEGORIES,
+  GET_RELEVANT_CASES,
   GET_USER_ANSWERED_CASES,
   GET_USER_CASES,
   GET_USER_COMMENTED_CASES,
-  UPDATE_CASE,
+  // UPDATE_CASE, // This was duplicated, removed.
 } from "../query/case";
 
 export type AttachmentInput = {
@@ -23,7 +25,7 @@ export type CreateCaseInput = {
   content: string;
   type: "PROBLEM" | "SUGGESTION";
   priority: "LOW" | "MEDIUM" | "HIGH";
-  attachments?: AttachmentInput[];
+  attachments?: File[];
   categories: string[];
   creator: string;
 };
@@ -31,12 +33,12 @@ export type CreateCaseInput = {
 export type UpdateCaseInput = {
   content: string;
   priority: "LOW" | "MEDIUM" | "HIGH";
-  attachments?: AttachmentInput[];
-  categories: string[];
   type: "PROBLEM" | "SUGGESTION";
+  categories: string[];
+  attachments?: File[];
+  deletedAttachments?: string[];
 };
 
-// Define a more specific type for the data returned by the query
 interface CountFilteredCasesData {
   countFilteredCases: number;
 }
@@ -59,6 +61,8 @@ export function buildCaseQueryVariables(input: any) {
     categories,
     status,
     case_number,
+    startDate,
+    endDate,
   } = input || {};
 
   const variables: any = {
@@ -75,6 +79,8 @@ export function buildCaseQueryVariables(input: any) {
   if (categories && categories.length > 0)
     variables.input.categories = categories;
   if (status) variables.input.status = status;
+  if (startDate) variables.input.startDate = startDate;
+  if (endDate) variables.input.endDate = endDate;
 
   return variables;
 }
@@ -96,12 +102,31 @@ export const useGetAllCases = (input: any) => {
   };
 };
 
+export const useGetRelevantCases = (userId: string, input: any) => {
+  const variables = buildCaseQueryVariables(input);
+
+  const { loading, error, data, refetch } = useQuery(GET_RELEVANT_CASES, {
+    variables: {
+      ...variables,
+      userId,
+    },
+    skip: !userId,
+  });
+  const cases = data?.getRelevantCases.cases || [];
+  const count = data?.getRelevantCases.count || 0;
+
+  return {
+    cases,
+    count,
+    loading,
+    error,
+    refetch,
+  };
+};
+
 export const useGetAnalyticsDataCases = () => {
-  console.log("useGetAnalyticsDataCases called");
   const { loading, error, data } = useQuery(GET_ANALYTITCS_DATA_CASES);
   const cases = data?.getAnalyticsDataCases || 0;
-  console.log("useGetAnalyticsDataCases data 315:", cases[315]);
-  console.log("useGetAnalyticsDataCases data:", cases);
 
   return {
     cases,
@@ -137,6 +162,7 @@ export const useGetCasesByUserCategories = (userId: string, input: any) => {
 
   const cases = data?.getCasesByUserCategories.cases || [];
   const count = data?.getCasesByUserCategories.count || 0;
+
   return {
     cases,
     count,
@@ -177,12 +203,13 @@ export const useUserCases = (userId: string, input: any) => {
     userId,
     ...buildCaseQueryVariables(input),
   };
+
   const { loading, error, data, refetch } = useQuery(GET_USER_CASES, {
     variables,
   });
 
-  const cases = data?.getUserCases.cases || [];
   const count = data?.getUserCases.count || 0;
+  const cases = data?.getUserCases.cases || [];
   return {
     cases,
     count,
@@ -237,7 +264,9 @@ export const useCreateCase = () => {
 
   const createCase = async (input: CreateCaseInput) => {
     try {
-      const response = await createCaseMutation({ variables: { input } });
+      const response = await createCaseMutation({
+        variables: input,
+      });
       return response.data.createCase;
     } catch (err) {
       console.error("Failed to create case:", err);
@@ -264,28 +293,7 @@ export const useCountCases = () => {
   };
 };
 
-export const useRateCase = () => {
-  const [rateCaseMutation, { data, loading, error }] = useMutation(RATE_CASE);
-
-  const rateCase = async (caseId: string, userId: string, score: number) => {
-    try {
-      const response = await rateCaseMutation({
-        variables: { caseId, userId, score },
-      });
-      return response.data.createRating;
-    } catch (err) {
-      console.error("Failed to rate case:", err);
-      throw err;
-    }
-  };
-
-  return {
-    rateCase,
-    data,
-    loading,
-    error,
-  };
-};
+// The 'useRateCase' hook has been removed as it is now obsolete.
 
 export const useCountFilteredCases = (
   // The first argument is your custom object used to build the actual GraphQL variables
@@ -310,7 +318,6 @@ export const useCountFilteredCases = (
     }
   );
 
-  // Default count to 0 if data or countFilteredCases is not available
   const count = data?.countFilteredCases ?? 0;
 
   return {
@@ -350,6 +357,38 @@ export const useUpdateCase = (caseNumber: number) => {
 
   return {
     updateCase,
+    data,
+    loading,
+    error,
+  };
+};
+
+export const useDeleteCase = (
+  options: {
+    onCompleted?: () => void;
+  } = {}
+) => {
+  const [deleteCaseMutation, { data, loading, error }] = useMutation(
+    DELETE_CASE,
+    {
+      onCompleted: options.onCompleted,
+    }
+  );
+
+  const deleteCase = async (id: string) => {
+    try {
+      const response = await deleteCaseMutation({
+        variables: { id },
+      });
+      return response.data.deleteCase;
+    } catch (err) {
+      console.error("Failed to delete case:", err);
+      throw err;
+    }
+  };
+
+  return {
+    deleteCase,
     data,
     loading,
     error,

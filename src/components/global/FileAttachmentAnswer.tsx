@@ -1,5 +1,5 @@
 import React from "react";
-import { MAX_FILES, MAX_FILE_SIZE_MB } from "../../utils/attachment-handling";
+import { MAX_FILES } from "../../utils/attachment-handling";
 import { handleFileChange } from "../../utils/attachment-handling";
 import { useTranslation } from "react-i18next";
 import { PaperClipIcon } from "@heroicons/react/24/solid";
@@ -8,6 +8,7 @@ interface FileAttachmentBtnProps {
   attachments: File[];
   setAttachments: React.Dispatch<React.SetStateAction<File[]>>;
   setFileError: React.Dispatch<React.SetStateAction<string | null>>;
+  height?: number;
 }
 
 const FileAttachmentAnswer: React.FC<FileAttachmentBtnProps> = ({
@@ -15,6 +16,7 @@ const FileAttachmentAnswer: React.FC<FileAttachmentBtnProps> = ({
   setAttachments,
   setFileError,
   inputId,
+  height = 24,
 }) => {
   const { t } = useTranslation("caseSubmission"); // Assuming you have a translation function available
   return (
@@ -22,7 +24,7 @@ const FileAttachmentAnswer: React.FC<FileAttachmentBtnProps> = ({
       {/* Styled Label acting as Button - Disable visually if max files reached */}
       <label
         htmlFor={inputId}
-        className={`h-24 flex items-center justify-center w-full text-center  rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm ${
+        className={`h-${height} flex items-center justify-center w-full text-center  rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm ${
           attachments.length >= MAX_FILES
             ? "opacity-75 cursor-not-allowed" // Disabled style
             : "cursor-pointer hover:bg-gray-200 active:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2" // Enabled style
@@ -40,9 +42,9 @@ const FileAttachmentAnswer: React.FC<FileAttachmentBtnProps> = ({
         name="attachments"
         type="file"
         multiple
-        onChange={(event) =>
-          handleFileChange(t, event, setAttachments, setFileError)
-        }
+        onChange={(event) => {
+          handleFileChange(t, event, setAttachments, setFileError);
+        }}
         className="sr-only"
         disabled={attachments.length >= MAX_FILES} // HTML disabled attribute
         // Optional: Add accept attribute for client-side hint (doesn't enforce size)

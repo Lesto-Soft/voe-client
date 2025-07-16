@@ -3,6 +3,8 @@ import React, { ChangeEvent } from "react";
 import { TFunction } from "i18next"; // Import TFunction from i18next
 import { ApolloError } from "@apollo/client"; // Import ApolloError
 import FileAttachmentBtn from "../../../global/FileAttachmentBtn"; // Adjusted path
+import TextEditor from "../../../forms/partials/TextEditor";
+import { CASE_CONTENT } from "../../../../utils/GLOBAL_PARAMETERS";
 
 interface CaseSubmissionLeftPanelProps {
   t: TFunction<"caseSubmission", undefined>; // Expecting the namespaced t
@@ -43,12 +45,13 @@ const CaseSubmissionLeftPanel: React.FC<CaseSubmissionLeftPanelProps> = ({
               className="block text-sm font-medium text-gray-700 mb-1"
             >
               {t("caseSubmission.usernameLabel")}
+              <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
               id="username"
               placeholder={t("caseSubmission.usernamePlaceholder")}
-              className="w-full border border-gray-300 p-3 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+              className="w-full border border-gray-300 p-3 rounded-md focus:outline-none focus:border-indigo-500 "
               name="username"
               aria-label={t("caseSubmission.usernameLabel")}
               value={usernameInput}
@@ -86,6 +89,7 @@ const CaseSubmissionLeftPanel: React.FC<CaseSubmissionLeftPanelProps> = ({
               className="block text-sm font-medium text-gray-700 mb-1"
             >
               {t("caseSubmission.fullNameLabel")}
+              <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -107,19 +111,20 @@ const CaseSubmissionLeftPanel: React.FC<CaseSubmissionLeftPanelProps> = ({
             className="block text-sm font-medium text-gray-700 mb-1"
           >
             {t("caseSubmission.descriptionLabel")}
+            <span className="text-red-500">*</span>
           </label>
-          <textarea
-            id="description"
-            placeholder={t("caseSubmission.descriptionPlaceholder")}
-            className="w-full h-40 border border-gray-300 p-3 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-            name="description"
-            value={content}
-            onChange={(e) => {
+          <TextEditor
+            content={content}
+            onUpdate={(html) => {
               if (clearAllFormErrors) clearAllFormErrors();
-              onContentChange(e.target.value);
+              onContentChange(html);
             }}
-            maxLength={500}
-            aria-label={t("caseSubmission.descriptionLabel")}
+            placeholder={t("caseSubmission.descriptionPlaceholder")}
+            editable={true}
+            height="160px"
+            maxLength={CASE_CONTENT.MAX}
+            minLength={CASE_CONTENT.MIN}
+            wrapperClassName="w-full rounded-md shadow-sm overflow-hidden bg-white"
           />
         </div>
         <FileAttachmentBtn

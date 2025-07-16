@@ -1,25 +1,38 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 import { Role } from "../../types/userManagementTypes";
 import ImageCropModal from "../modals/ImageCropModal";
-import { useUserFormState } from "./hooks/useUserFormState"; // <-- Use renamed hook
+import { useUserFormState } from "./hooks/useUserFormState";
 import UserInputFields from "./partials/UserInputFields";
 import PasswordFields from "./partials/PasswordFields";
 import AvatarUploadSection from "./partials/AvatarUploadSection";
-import { IUser } from "../../db/interfaces";
+import CategorySelectionDropdown from "./partials/CategorySelectionDropdown";
+import { IUser, IMe } from "../../db/interfaces";
+import { useGetActiveCategories } from "../../graphql/hooks/category";
+import { ROLES } from "../../utils/GLOBAL_PARAMETERS";
+import { useCurrentUser } from "../../context/UserContext";
+
+const VALIDATION = {
+  USERNAME: { MIN: 3, MAX: 25 },
+  PASSWORD: { MIN: 6, MAX: 15 },
+  NAME: { MIN: 3, MAX: 50 },
+  POSITION: { MIN: 3, MAX: 50 },
+  EMAIL: { MAX: 50 },
+};
 
 const MAX_AVATAR_SIZE_MB = 3;
 const MAX_AVATAR_SIZE_BYTES = MAX_AVATAR_SIZE_MB * 1024 * 1024;
-
-interface AvatarInputData {
-  filename: string;
-  file: string; // base64 string
-}
 
 interface UserFormProps {
   onSubmit: (
     formData: any,
     editingUserId: string | null,
-    avatarData: AvatarInputData | null | undefined
+    avatarData: File | null | undefined
   ) => void;
   onClose: () => void;
   initialData: IUser | null;
@@ -27,39 +40,24 @@ interface UserFormProps {
   roles: Role[];
   rolesLoading: boolean;
   rolesError: any;
-  // --- NEW PROPS ---
   isAdmin: boolean;
 }
-
-const blobToBase64 = (blob: Blob): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const base64String = (reader.result as string)?.split(",")[1];
-      if (base64String) resolve(base64String);
-      else reject(new Error("Could not convert Blob to base64."));
-    };
-    reader.onerror = (error) => reject(error);
-    reader.readAsDataURL(blob);
-  });
-};
 
 const isValidEmailFormat = (emailToTest: string): boolean =>
   /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailToTest);
 
 const UserForm: React.FC<UserFormProps> = ({
   onSubmit,
-  onClose,
   initialData = null,
   submitButtonText = "Запази",
   roles = [],
   rolesLoading: propsRolesLoading = false,
   rolesError: propsRolesError = null,
-  // --- NEW PROP ---
   isAdmin,
 }) => {
   const serverBaseUrl = import.meta.env.VITE_API_URL || "";
   const isEditing = !!initialData;
+  const currentUser = useCurrentUser() as IMe | undefined;
 
   const {
     username,
@@ -82,6 +80,10 @@ const UserForm: React.FC<UserFormProps> = ({
     setRoleId,
     financialApprover,
     setFinancialApprover,
+    expertCategoryIds,
+    setExpertCategoryIds,
+    managedCategoryIds,
+    setManagedCategoryIds,
     usernameError,
     setUsernameError,
     emailError,
@@ -102,13 +104,69 @@ const UserForm: React.FC<UserFormProps> = ({
     isEmailFormatCurrentlyValid,
   } = useUserFormState({ initialData, serverBaseUrl });
 
+  const {
+    categories: activeCategories,
+    loading: categoriesLoading,
+    error: categoriesError,
+  } = useGetActiveCategories();
+
+  const [initialExpertCategories, setInitialExpertCategories] = useState<
+    string[]
+  >([]);
+  const [initialManagedCategories, setInitialManagedCategories] = useState<
+    string[]
+  >([]);
+
+  const filteredRoles = useMemo(() => {
+    if (currentUser?.role?._id !== ROLES.ADMIN) {
+      return roles.filter((role) => role._id !== ROLES.ADMIN);
+    }
+    return roles;
+  }, [roles, isAdmin]);
+
   const [isCropModalOpen, setIsCropModalOpen] = useState(false);
   const [imageToCrop, setImageToCrop] = useState<string | null>(null);
   const [formSubmitError, setFormSubmitError] = useState<string | null>(null);
   const [avatarError, setAvatarError] = useState<string | null>(null);
 
+  const [nameError, setNameError] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [positionError, setPositionError] = useState<string | null>(null);
+  const [submitEmailError, setSubmitEmailError] = useState<string | null>(null);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cropCompletedRef = useRef<boolean>(false);
+
+  useEffect(() => {
+    if (initialData) {
+      const expertIds =
+        initialData.expert_categories?.map((c: any) => c._id || c) || [];
+      const managedIds =
+        initialData.managed_categories?.map((c: any) => c._id || c) || [];
+      setInitialExpertCategories(expertIds);
+      setInitialManagedCategories(managedIds);
+    }
+  }, [initialData]);
+
+  const canManageCategories = useMemo(
+    () => roleId === ROLES.ADMIN || roleId === ROLES.EXPERT,
+    [roleId]
+  );
+
+  const handleRoleChange = (newRoleId: string) => {
+    const oldRoleIsPrivileged = canManageCategories;
+    const newRoleIsPrivileged =
+      newRoleId === ROLES.ADMIN || newRoleId === ROLES.EXPERT;
+
+    if (!oldRoleIsPrivileged && newRoleIsPrivileged) {
+      setExpertCategoryIds(initialExpertCategories);
+      setManagedCategoryIds(initialManagedCategories);
+    } else if (oldRoleIsPrivileged && !newRoleIsPrivileged) {
+      setExpertCategoryIds([]);
+      setManagedCategoryIds([]);
+    }
+    setRoleId(newRoleId);
+  };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setAvatarError(null);
@@ -184,55 +242,140 @@ const UserForm: React.FC<UserFormProps> = ({
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setFormSubmitError(null);
+    setNameError(null);
+    setPasswordError(null);
+    setPositionError(null);
+    setSubmitEmailError(null);
+
     let canSubmit = true;
 
+    if (usernameError || emailError) {
+      canSubmit = false;
+    }
+
     const finalTrimmedUsername = username.trim();
+    const finalTrimmedName = fullName.trim();
     const finalTrimmedEmail = email.trim();
+    const finalTrimmedPosition = position.trim();
 
     if (!finalTrimmedUsername) {
       setUsernameError("Потребителското име е задължително.");
       canSubmit = false;
-    }
-    if (finalTrimmedEmail && !isValidEmailFormat(finalTrimmedEmail)) {
-      setEmailError("Невалиден имейл формат.");
+    } else if (finalTrimmedUsername.length < VALIDATION.USERNAME.MIN) {
+      setUsernameError(
+        `Потребителското име трябва да е поне ${VALIDATION.USERNAME.MIN} символа.`
+      );
       canSubmit = false;
-    }
-    if (usernameError || usernameHookError) canSubmit = false;
-    if (
-      finalTrimmedEmail &&
-      isValidEmailFormat(finalTrimmedEmail) &&
-      (emailError || emailHookError)
-    )
-      canSubmit = false;
-    if (isCheckingUsername && finalTrimmedUsername) {
-      setFormSubmitError("Проверката на потребителско име е в ход.");
-      canSubmit = false;
-    }
-    if (
-      isCheckingEmail &&
-      finalTrimmedEmail &&
-      isValidEmailFormat(finalTrimmedEmail)
-    ) {
-      setFormSubmitError("Проверката на имейл е в ход.");
+    } else if (finalTrimmedUsername.length > VALIDATION.USERNAME.MAX) {
+      setUsernameError(
+        `Потребителското име не може да бъде по-дълго от ${VALIDATION.USERNAME.MAX} символа.`
+      );
       canSubmit = false;
     }
 
-    if (!initialData && !password) {
-      setFormSubmitError("Паролата е задължителна при създаване!");
+    if (!finalTrimmedName) {
+      setNameError("Името е задължително.");
+      canSubmit = false;
+    } else if (finalTrimmedName.length < VALIDATION.NAME.MIN) {
+      setNameError(`Името трябва да е поне ${VALIDATION.NAME.MIN} символа.`);
+      canSubmit = false;
+    } else if (finalTrimmedName.length > VALIDATION.NAME.MAX) {
+      setNameError(
+        `Името не може да бъде по-дълго от ${VALIDATION.NAME.MAX} символа.`
+      );
       canSubmit = false;
     }
-    if (!initialData && password !== confirmPassword) {
-      setFormSubmitError("Паролите не съвпадат!");
+
+    if (!roleId) {
+      setFormSubmitError("Ролята е задължителна.");
       canSubmit = false;
     }
-    if (initialData && newPassword && newPassword !== confirmNewPassword) {
-      setFormSubmitError("Новите пароли не съвпадат!");
+
+    if (finalTrimmedEmail) {
+      if (!isValidEmailFormat(finalTrimmedEmail)) {
+        setSubmitEmailError("Невалиден имейл формат.");
+        canSubmit = false;
+      } else if (finalTrimmedEmail.length > VALIDATION.EMAIL.MAX) {
+        setSubmitEmailError(
+          `Имейлът не може да бъде по-дълъг от ${VALIDATION.EMAIL.MAX} символа.`
+        );
+        canSubmit = false;
+      }
+    }
+
+    if (finalTrimmedPosition) {
+      if (finalTrimmedPosition.length < VALIDATION.POSITION.MIN) {
+        setPositionError(
+          `Позицията трябва да е поне ${VALIDATION.POSITION.MIN} символа.`
+        );
+        canSubmit = false;
+      } else if (finalTrimmedPosition.length > VALIDATION.POSITION.MAX) {
+        setPositionError(
+          `Позицията не може да бъде по-дълга от ${VALIDATION.POSITION.MAX} символа.`
+        );
+        canSubmit = false;
+      }
+    }
+
+    if (!isEditing) {
+      if (!password) {
+        setPasswordError("Паролата е задължителна.");
+        canSubmit = false;
+      } else if (password.length < VALIDATION.PASSWORD.MIN) {
+        setPasswordError(
+          `Паролата трябва да е поне ${VALIDATION.PASSWORD.MIN} символа.`
+        );
+        canSubmit = false;
+      } else if (password.length > VALIDATION.PASSWORD.MAX) {
+        setPasswordError(
+          `Паролата не може да бъде по-дълга от ${VALIDATION.PASSWORD.MAX} символа.`
+        );
+        canSubmit = false;
+      } else if (password !== confirmPassword) {
+        setPasswordError("Паролите не съвпадат.");
+        canSubmit = false;
+      }
+    } else {
+      if (newPassword) {
+        if (newPassword.length < VALIDATION.PASSWORD.MIN) {
+          setPasswordError(
+            `Новата парола трябва да е поне ${VALIDATION.PASSWORD.MIN} символа.`
+          );
+          canSubmit = false;
+        } else if (newPassword.length > VALIDATION.PASSWORD.MAX) {
+          setPasswordError(
+            `Новата парола не може да бъде по-дълга от ${VALIDATION.PASSWORD.MAX} символа.`
+          );
+          canSubmit = false;
+        } else if (newPassword !== confirmNewPassword) {
+          setPasswordError("Новите пароли не съвпадат.");
+          canSubmit = false;
+        }
+      }
+    }
+
+    if (usernameHookError || emailHookError) {
+      canSubmit = false;
+    }
+    if (isCheckingUsername || isCheckingEmail) {
+      setFormSubmitError(
+        "Проверката за уникалност все още е в ход. Моля изчакайте."
+      );
       canSubmit = false;
     }
 
     if (!canSubmit) {
-      if (!formSubmitError)
+      if (
+        !formSubmitError &&
+        !usernameError &&
+        !emailError &&
+        !nameError &&
+        !passwordError &&
+        !positionError &&
+        !submitEmailError
+      ) {
         setFormSubmitError("Моля, коригирайте грешките във формата.");
+      }
       return;
     }
 
@@ -240,54 +383,48 @@ const UserForm: React.FC<UserFormProps> = ({
       username: finalTrimmedUsername,
       name: fullName.trim(),
       email: finalTrimmedEmail || null,
-      position: position.trim() || null,
+      position: finalTrimmedPosition || null,
       role: roleId || null,
       financial_approver: financialApprover,
+      expert_categories: expertCategoryIds,
+      managed_categories: managedCategoryIds,
     };
-    if (!initialData) formDataObject.password = password;
+    if (!isEditing) formDataObject.password = password;
     else if (newPassword) formDataObject.password = newPassword;
 
-    let avatarInputData: AvatarInputData | null | undefined = undefined;
-    if (finalCroppedBlob) {
-      try {
-        const base64String = await blobToBase64(finalCroppedBlob);
-        const filename = originalAvatarFile?.name
-          ? `cropped_${originalAvatarFile.name.replace(
-              /[^a-zA-Z0-9._-]/g,
-              "_"
-            )}`
-          : "cropped_avatar.png";
+    let avatarFile: File | null | undefined = undefined;
 
-        avatarInputData = { filename, file: base64String };
-      } catch (error) {
-        setFormSubmitError(
-          `Грешка при обработка на изрязания аватар: ${
-            error instanceof Error ? error.message : "Неизвестна грешка"
-          }`
-        );
-        return;
-      }
-    } else if (isRemovingAvatar && initialData?._id) {
-      avatarInputData = null;
+    if (finalCroppedBlob) {
+      const filename = originalAvatarFile?.name
+        ? `cropped_${originalAvatarFile.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`
+        : "cropped_avatar.png";
+
+      avatarFile = new File([finalCroppedBlob], filename, {
+        type: finalCroppedBlob.type,
+      });
+    } else if (isRemovingAvatar && isEditing) {
+      avatarFile = null;
     }
 
-    onSubmit(formDataObject, initialData?._id || null, avatarInputData);
+    onSubmit(formDataObject, initialData?._id || null, avatarFile);
   };
 
   if (propsRolesLoading)
     return <div className="p-4 text-center">Зареждане на роли...</div>;
-  if (propsRolesError)
+  if (propsRolesError || categoriesError)
     return (
       <div className="p-4 text-center text-red-500">
-        Грешка при зареждане на роли:{" "}
-        {propsRolesError.message || "Неизвестна грешка"}
+        Грешка при зареждане на данни:{" "}
+        {propsRolesError?.message ||
+          categoriesError?.message ||
+          "Неизвестна грешка"}
       </div>
     );
 
   const overallLoading =
     (isCheckingUsername && !!username.trim()) ||
     (isCheckingEmail && !!email.trim() && isEmailFormatCurrentlyValid);
-  const errorPlaceholderClass = "mt-1 text-xs min-h-[2.4em]";
+  const errorPlaceholderClass = "mt-1 text-xs min-h-[1.2em]";
 
   return (
     <>
@@ -298,45 +435,39 @@ const UserForm: React.FC<UserFormProps> = ({
             setUsername={(v) => {
               setUsername(v);
               setUsernameError(null);
-              setFormSubmitError(null);
             }}
-            usernameError={usernameError}
-            usernameHookError={usernameHookError}
+            usernameError={usernameError || usernameHookError?.message}
             isCheckingUsername={isCheckingUsername}
             fullName={fullName}
             setFullName={(v) => {
               setFullName(v);
-              setFormSubmitError(null);
+              setNameError(null);
             }}
+            nameError={nameError}
             email={email}
             setEmail={(v) => {
               setEmail(v);
               setEmailError(null);
-              setFormSubmitError(null);
+              setSubmitEmailError(null);
             }}
-            emailError={emailError}
-            emailHookError={emailHookError}
+            emailError={
+              submitEmailError || emailError || emailHookError?.message
+            }
             isCheckingEmail={isCheckingEmail}
             isEmailFormatCurrentlyValid={isEmailFormatCurrentlyValid}
             trimmedDebouncedEmail={trimmedDebouncedEmail}
             position={position}
             setPosition={(v) => {
               setPosition(v);
-              setFormSubmitError(null);
+              setPositionError(null);
             }}
+            positionError={positionError}
             roleId={roleId}
-            setRoleId={(v) => {
-              setRoleId(v);
-              setFormSubmitError(null);
-            }}
-            roles={roles}
+            onRoleChange={handleRoleChange}
+            roles={filteredRoles}
             financialApprover={financialApprover}
-            setFinancialApprover={(v) => {
-              setFinancialApprover(v);
-              setFormSubmitError(null);
-            }}
+            setFinancialApprover={setFinancialApprover}
             errorPlaceholderClass={errorPlaceholderClass}
-            // --- PASS NEW PROPS ---
             isEditing={isEditing}
             isAdmin={isAdmin}
           />
@@ -354,28 +485,52 @@ const UserForm: React.FC<UserFormProps> = ({
             fileInputRef={fileInputRef}
           />
 
+          {canManageCategories && (
+            <>
+              <CategorySelectionDropdown
+                label="Експерт в категории"
+                allCategories={activeCategories}
+                selectedCategoryIds={expertCategoryIds}
+                onSelectionChange={setExpertCategoryIds}
+                isLoading={categoriesLoading}
+                errorPlaceholderClass={errorPlaceholderClass}
+                disabled={!isAdmin}
+              />
+              <CategorySelectionDropdown
+                label="Менажира категории"
+                allCategories={activeCategories}
+                selectedCategoryIds={managedCategoryIds}
+                onSelectionChange={setManagedCategoryIds}
+                isLoading={categoriesLoading}
+                errorPlaceholderClass={errorPlaceholderClass}
+                disabled={!isAdmin}
+              />
+            </>
+          )}
+
           <PasswordFields
             isEditing={isEditing}
             password={password}
             setPassword={(v) => {
               setPassword(v);
-              setFormSubmitError(null);
+              setPasswordError(null);
             }}
             confirmPassword={confirmPassword}
             setConfirmPassword={(v) => {
               setConfirmPassword(v);
-              setFormSubmitError(null);
+              setPasswordError(null);
             }}
             newPassword={newPassword}
             setNewPassword={(v) => {
               setNewPassword(v);
-              setFormSubmitError(null);
+              setPasswordError(null);
             }}
             confirmNewPassword={confirmNewPassword}
             setConfirmNewPassword={(v) => {
               setConfirmNewPassword(v);
-              setFormSubmitError(null);
+              setPasswordError(null);
             }}
+            passwordError={passwordError}
             errorPlaceholderClass={errorPlaceholderClass}
           />
         </div>

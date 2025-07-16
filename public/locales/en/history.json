@@ -13,5 +13,8 @@
   "MEDIUM": "MEDIUM",
   "HIGH": "HIGH",
   "priority": "Priority",
-  "categories": "Categories"
+  "categories": "Categories",
+  "PROBLEM": "PROBLEM",
+  "SUGGESTION": "SUGGESTION",
+  "type": "Type"
 }

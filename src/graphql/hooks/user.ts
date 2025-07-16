@@ -9,6 +9,7 @@ import {
   COUNT_USERS_BY_EXACT_USERNAME,
   GET_USER_BY_ID,
   GET_FULL_USER_BY_USERNAME,
+  GET_RANKED_USERS,
 } from "../query/user"; // Adjust path if needed
 import {
   CREATE_USER,
@@ -18,22 +19,10 @@ import {
   DELETE_USER,
 } from "../mutation/user"; // Adjust path if needed
 import { IUser } from "../../db/interfaces";
-
-// --- Define Input Types (These should match your GraphQL Schema!) ---
-// Interface for the filters used in UserManagementPage
-interface UserFiltersInput {
-  name?: string;
-  username?: string;
-  position?: string;
-  email?: string;
-  roleIds?: string[];
-  financial_approver?: boolean; // Note: your build function adds if truthy
-  is_manager?: boolean; // <-- ADDED for manager filter
-  itemsPerPage?: number;
-  currentPage?: number; // Expecting the 0-based index here
-  query?: string; // Include if your getAllInput still has/needs it
-  // Add any other filter fields your backend supports
-}
+import {
+  RankedUser,
+  RankingType,
+} from "../../components/features/analyses/types";
 
 export function buildUserQueryVariables(input: any) {
   const {
@@ -110,7 +99,6 @@ export const useGetFullUserByUsername = (username: string | undefined) => {
     skip: !username, // Skip the query if username is undefined or null
   });
 
-  // For debugging the hook's output
   useEffect(() => {
     if (!loading) {
       if (error) {
@@ -192,9 +180,7 @@ export const useDeleteUser = () => {
     useMutation(DELETE_USER);
   const deleteUser = async (id: string) => {
     try {
-      console.log("[HOOK] Deleting user with ID:", id);
       const response = await deleteUserMutation({ variables: { id } });
-      console.log("[HOOK PT2]");
       return response.data?.deleteUser;
     } catch (err) {
       console.error("Failed to delete user:", err);
@@ -326,5 +312,40 @@ export const useGetMe = () => {
     error,
     me: data, // <= CHECK YOUR QUERY RESPONSE FIELD NAME! (Maybe data?.me ?)
     refetch,
+  };
+};
+
+/**
+ * Fetches a ranked list of users from the new server-side aggregation query.
+ * @param startDate - The start of the period.
+ * @param endDate - The end of the period.
+ * @param type - The type of ranking to fetch.
+ * @param isAllTime - If true, startDate and endDate are ignored.
+ */
+export const useGetRankedUsers = (
+  startDate: Date | null,
+  endDate: Date | null,
+  type: RankingType,
+  isAllTime: boolean
+) => {
+  const { data, loading, error } = useQuery<{ getRankedUsers: RankedUser[] }>(
+    GET_RANKED_USERS,
+    {
+      variables: {
+        input: {
+          startDate: isAllTime ? null : startDate?.toISOString(),
+          endDate: isAllTime ? null : endDate?.toISOString(),
+          type,
+        },
+      },
+      // Skip the query if a date range is required but not yet available
+      skip: !isAllTime && (!startDate || !endDate),
+    }
+  );
+
+  return {
+    rankedUsers: data?.getRankedUsers || [],
+    loading,
+    error,
   };
 };

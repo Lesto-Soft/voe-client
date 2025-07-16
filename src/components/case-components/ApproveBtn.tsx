@@ -46,7 +46,7 @@ const ApproveBtn: React.FC<{
     <Dialog.Root open={open} onOpenChange={setOpen}>
       <Dialog.Trigger asChild>
         <button
-          className={`w-26 hover:cursor-pointer flex items-center justify-center gap-2 px-2 py-1 rounded-lg text-xs font-medium shadow-md transition-all duration-200 ${
+          className={`w-32 hover:cursor-pointer flex items-center justify-center gap-2 px-2 py-1 rounded-lg text-xs font-medium shadow-md transition-all duration-200 ${
             !approved
               ? "bg-btnGreen text-white hover:bg-btnGreenHover focus:ring-2 focus:ring-green-300"
               : "bg-btnRed text-white hover:bg-btnRedHover focus:ring-2 focus:ring-red-300"

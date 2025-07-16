@@ -1,42 +1,64 @@
+// src/components/global/UserLink.tsx
 import { Link } from "react-router";
 import { IUser } from "../../db/interfaces";
+import { canViewUserProfile } from "../../utils/rightUtils";
+import { useCurrentUser } from "../../context/UserContext"; // 1. Import the hook
 
-const types = {
-  case: "w-40",
-  table: "md:w-40 max-w-40",
-};
-const getCreatorBadgeClasses = (type: string) =>
-  `${type} inline-block px-2 py-0.5 rounded-md text-xs font-bold transition-colors duration-150 ease-in-out text-left hover:cursor-pointer bg-purple-100 text-purple-800 hover:bg-purple-200 border border-purple-200`;
+// Helper functions remain the same
+const getInitials = (name: string = ""): string =>
+  name
+    .split(" ")
+    .map((word) => word[0])
+    .join("")
+    .toUpperCase();
+const getFirstName = (name: string = ""): string => name.split(" ")[0];
 
-const UserLink: React.FC<{ user: IUser; type: keyof typeof types }> = ({
-  user,
-  type,
-}) => {
-  return (
-    <Link
-      to={`/user/${user.username}`}
-      // to={`/user/${user._id}`}
-      className={getCreatorBadgeClasses(types[type])}
-    >
-      {type === "table" && (
-        <span className="md:hidden text-center w-full block" title={user.name}>
-          {user.name
-            .split(" ")
-            .map((w) => w[0])
-            .join("")
-            .toUpperCase()}
-        </span>
-      )}
-      <p
-        className={`${
-          type === "table" ? "hidden md:block" : ""
-        }  text-center w-full truncate`}
-        // }  text-center w-full break-words whitespace-pre-line`}
-        title={user.name}
+const getCreatorBadgeClasses = () =>
+  `inline-flex items-center justify-center max-w-full px-2 py-0.5 rounded-md text-xs font-bold transition-colors duration-150 ease-in-out text-left bg-purple-100 text-purple-800 border border-purple-200`;
+
+// 2. Remove currentUser from the props interface
+interface UserLinkProps {
+  user: IUser;
+}
+
+const UserLink: React.FC<UserLinkProps> = ({ user }) => {
+  // 3. Get the current user directly from the context
+  const currentUser = useCurrentUser();
+
+  if (!user || !currentUser) return null;
+
+  const isAllowed = canViewUserProfile(currentUser, user);
+
+  const baseClasses = getCreatorBadgeClasses();
+  const disabledClasses = "opacity-60 cursor-not-allowed";
+  const title = isAllowed ? user.name : "Нямате права за достъп до този профил";
+
+  const linkContent = (
+    <>
+      <span className="block sm:hidden">{getInitials(user.name)}</span>
+      <span className="hidden sm:block lg:hidden truncate">
+        {getFirstName(user.name)}
+      </span>
+      <span className="hidden lg:block truncate">{user.name}</span>
+    </>
+  );
+
+  if (isAllowed) {
+    return (
+      <Link
+        to={`/user/${user.username}`}
+        className={`${baseClasses} hover:bg-purple-200 hover:cursor-pointer`}
+        title={title}
       >
-        {user.name}
-      </p>
-    </Link>
+        {linkContent}
+      </Link>
+    );
+  }
+
+  return (
+    <span className={`${baseClasses} ${disabledClasses}`} title={title}>
+      {linkContent}
+    </span>
   );
 };
 

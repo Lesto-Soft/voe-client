@@ -3,16 +3,16 @@ import React from "react";
 
 interface PasswordFieldsProps {
   isEditing: boolean;
-  password?: string; // Only used in create mode
-  setPassword?: (value: string) => void; // Only used in create mode
-  confirmPassword?: string; // Only used in create mode
-  setConfirmPassword?: (value: string) => void; // Only used in create mode
-  newPassword?: string; // Only used in edit mode
-  setNewPassword?: (value: string) => void; // Only used in edit mode
-  confirmNewPassword?: string; // Only used in edit mode
-  setConfirmNewPassword?: (value: string) => void; // Only used in edit mode
+  password?: string;
+  setPassword?: (value: string) => void;
+  confirmPassword?: string;
+  setConfirmPassword?: (value: string) => void;
+  newPassword?: string;
+  setNewPassword?: (value: string) => void;
+  confirmNewPassword?: string;
+  setConfirmNewPassword?: (value: string) => void;
+  passwordError: string | null; // ADDED: To display validation errors for passwords
   errorPlaceholderClass: string;
-  // Add t function if needed for labels/placeholders
 }
 
 const PasswordFields: React.FC<PasswordFieldsProps> = ({
@@ -25,6 +25,7 @@ const PasswordFields: React.FC<PasswordFieldsProps> = ({
   setNewPassword,
   confirmNewPassword,
   setConfirmNewPassword,
+  passwordError, // ADDED
   errorPlaceholderClass,
 }) => {
   const newPasswordFullLabel =
@@ -48,7 +49,9 @@ const PasswordFields: React.FC<PasswordFieldsProps> = ({
               value={password}
               onChange={(e) => setPassword?.(e.target.value)}
               required={!isEditing}
-              className="w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              className={`w-full rounded-md border p-2 shadow-sm focus:outline-none focus:border-indigo-500 ${
+                passwordError ? "border-red-500" : "border-gray-300" // MODIFIED
+              }`}
             />
             <p className={`${errorPlaceholderClass}`}>&nbsp;</p>
           </div>
@@ -65,9 +68,18 @@ const PasswordFields: React.FC<PasswordFieldsProps> = ({
               value={confirmPassword}
               onChange={(e) => setConfirmPassword?.(e.target.value)}
               required={!isEditing}
-              className="w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              className={`w-full rounded-md border p-2 shadow-sm focus:outline-none focus:border-indigo-500 ${
+                passwordError ? "border-red-500" : "border-gray-300" // MODIFIED
+              }`}
             />
-            <p className={`${errorPlaceholderClass}`}>&nbsp;</p>
+            {/* MODIFIED: Display passwordError */}
+            <p
+              className={`${errorPlaceholderClass} ${
+                passwordError ? "text-red-500" : ""
+              }`}
+            >
+              {passwordError || <>&nbsp;</>}
+            </p>
           </div>
         </>
       ) : (
@@ -76,8 +88,8 @@ const PasswordFields: React.FC<PasswordFieldsProps> = ({
           <div>
             <label
               htmlFor="newPassword"
-              className="mb-1 block text-sm font-medium text-gray-700 truncate" // Added truncate
-              title={newPasswordFullLabel} // Added title attribute
+              className="mb-1 block text-sm font-medium text-gray-700 truncate"
+              title={newPasswordFullLabel}
             >
               Нова парола{" "}
               <span className="text-xs text-gray-500">
@@ -89,7 +101,9 @@ const PasswordFields: React.FC<PasswordFieldsProps> = ({
               id="newPassword"
               value={newPassword}
               onChange={(e) => setNewPassword?.(e.target.value)}
-              className="w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              className={`w-full rounded-md border p-2 shadow-sm focus:outline-none focus:border-indigo-500 ${
+                passwordError ? "border-red-500" : "border-gray-300" // MODIFIED
+              }`}
               placeholder="Нова парола"
             />
             <p className={`${errorPlaceholderClass}`}>&nbsp;</p>
@@ -106,10 +120,19 @@ const PasswordFields: React.FC<PasswordFieldsProps> = ({
               id="confirmNewPassword"
               value={confirmNewPassword}
               onChange={(e) => setConfirmNewPassword?.(e.target.value)}
-              className="w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              className={`w-full rounded-md border p-2 shadow-sm focus:outline-none focus:border-indigo-500 ${
+                passwordError ? "border-red-500" : "border-gray-300" // MODIFIED
+              }`}
               placeholder="Потвърди нова парола"
             />
-            <p className={`${errorPlaceholderClass}`}>&nbsp;</p>
+            {/* MODIFIED: Display passwordError */}
+            <p
+              className={`${errorPlaceholderClass} ${
+                passwordError ? "text-red-500" : ""
+              }`}
+            >
+              {passwordError || <>&nbsp;</>}
+            </p>
           </div>
         </>
       )}

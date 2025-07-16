@@ -14,7 +14,7 @@ import {
   CreateCategoryInput,
   UpdateCategoryInput,
 } from "../graphql/mutation/category"; // Adjust path as needed
-import { ICategory, ICaseStatus as CaseStatus, IUser } from "../db/interfaces"; // Adjust path as needed, Added IUser
+import { ICategory, ICaseStatus as CaseStatus } from "../db/interfaces"; // Adjust path as needed, Added IUser
 import CategoryTable from "../components/features/categoryManagement/CategoryTable"; // Adjust path as needed
 import {
   useCategoryManagement,
@@ -350,11 +350,8 @@ const CategoryManagement: React.FC = () => {
     loading: updateCategoryLoading,
     error: updateCategoryErrorObj,
   } = useUpdateCategory();
-  const {
-    deleteCategory,
-    loading: deleteCategoryLoading,
-    error: deleteCategoryErrorObj,
-  } = useDeleteCategory();
+  const { deleteCategory, loading: deleteCategoryLoading } =
+    useDeleteCategory();
 
   const isLoadingOverallCaseCounts =
     totalCaseCountLoading ||
@@ -466,6 +463,11 @@ const CategoryManagement: React.FC = () => {
     setIsCategoryModalOpen(false);
     setEditingCategory(null);
     setFormHasUnsavedChanges(false);
+  };
+
+  const handleSuccessAndFormClose = () => {
+    setIsSuccessModalOpen(false); // First, close the success modal
+    closeCategoryModal(); // Then, close the form modal underneath
   };
 
   const handleCategoryFormSubmit = async (
@@ -602,7 +604,7 @@ const CategoryManagement: React.FC = () => {
             <button
               type="button"
               onClick={openCreateCategoryModal}
-              className="w-full sm:w-[280px] flex flex-shrink-0 justify-center items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-green-500 text-white hover:bg-green-600 hover:cursor-pointer active:bg-green-700 active:shadow-inner disabled:cursor-not-allowed"
+              className="w-full sm:w-[280px] flex justify-center items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-green-500 text-white hover:bg-green-600 hover:cursor-pointer active:bg-green-700 active:shadow-inner disabled:cursor-not-allowed"
               disabled={mutationInProgress || isCurrentlyLoadingPageData}
             >
               <PlusIconSolid className="h-5 w-5 mr-1" />
@@ -662,7 +664,12 @@ const CategoryManagement: React.FC = () => {
         hasUnsavedChanges={formHasUnsavedChanges}
       >
         {(createCategoryLoading || updateCategoryLoading) && (
-          <div className="p-4 text-center">Изпращане...</div>
+          <div
+            className="flex items-center justify-center p-4 text-center"
+            style={{ minHeight: "450px" }}
+          >
+            Изпращане...
+          </div>
         )}
         {mutationError && !(createCategoryLoading || updateCategoryLoading) && (
           <div className="p-4 mb-4 text-center text-red-600 bg-red-100 rounded-md">
@@ -702,7 +709,7 @@ const CategoryManagement: React.FC = () => {
 
       <SuccessConfirmationModal
         isOpen={isSuccessModalOpen}
-        onClose={() => setIsSuccessModalOpen(false)}
+        onClose={handleSuccessAndFormClose}
         message={successModalMessage}
       />
     </div>

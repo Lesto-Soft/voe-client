@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "@apollo/client";
+import { useMutation } from "@apollo/client";
 import {
   APPROVE_ANSWER,
   APPROVE_ANSWER_FINANCE,
@@ -19,8 +19,6 @@ export const useApproveAnswer = () => {
     userId: string,
     needsFinance: boolean
   ) => {
-    console.log(answerId, userId, needsFinance);
-
     try {
       const response = await approveAnswerMutation({
         variables: { answerId, userId, needsFinance },
@@ -126,9 +124,10 @@ export const useCreateAnswer = (caseNumber: number) => {
   );
 
   const createAnswer = async (input: any) => {
+    console.log(input);
     try {
       const response = await createAnswerMutation({
-        variables: { input: { ...input } },
+        variables: input,
       });
       return response.data.createAnswer;
     } catch (err) {

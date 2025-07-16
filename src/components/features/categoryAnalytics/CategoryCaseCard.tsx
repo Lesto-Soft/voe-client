@@ -19,8 +19,11 @@ import {
   translateStatus,
   translatePriority,
   translateCaseType,
-  tForCaseLink, // For CaseLink's title
 } from "../../../utils/categoryDisplayUtils"; // Adjust path
+import {
+  getContentPreview,
+  stripHtmlTags,
+} from "../../../utils/contentRenderer";
 
 interface CategoryCaseCardProps {
   caseItem: ICase;
@@ -70,6 +73,7 @@ const CategoryCaseCard: React.FC<CategoryCaseCardProps> = ({
           name={caseItem.creator.name || "Unknown User"}
           imageUrl={creatorImageUrl}
           size={40}
+          enablePreview={true}
         />
         <div className="flex-1 min-w-0">
           {/* Main info line: CaseLink, Status, Type, Priority, Creator, Date */}
@@ -111,17 +115,20 @@ const CategoryCaseCard: React.FC<CategoryCaseCardProps> = ({
             {/* Creator (no change to this specific element's structure) */}
             <div className="flex items-center text-gray-600 flex-shrink-0">
               <span className="mr-1 text-gray-500">от:</span>
-              <UserLink user={caseItem.creator} type="table" />
+              <UserLink user={caseItem.creator} />
             </div>
             {/* Date (no change to this specific element's structure) */}
             <div className="text-gray-500 whitespace-nowrap flex-shrink-0">
-              <ShowDate date={caseItem.date} />
+              <ShowDate date={caseItem.date} isCase={true} />
             </div>
           </div>
 
           {/* Content Preview */}
-          <p className="text-sm text-gray-700 leading-relaxed line-clamp-3 sm:line-clamp-4">
-            {caseItem.content}
+          <p
+            className="text-sm text-gray-700 leading-relaxed line-clamp-3 sm:line-clamp-4"
+            title={stripHtmlTags(caseItem.content)}
+          >
+            {getContentPreview(caseItem.content, 150)}
           </p>
         </div>
       </div>

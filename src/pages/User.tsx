@@ -1,40 +1,41 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react"; // Added useMemo to import
 import { useParams } from "react-router";
-import {
-  useGetFullUserByUsername,
-  useUpdateUser, // <-- Import hook for updating
-} from "../graphql/hooks/user";
-import { useGetRoles } from "../graphql/hooks/role"; // <-- Import hook for roles
-import { IUser, IMe } from "../db/interfaces";
-import { AttachmentInput, UpdateUserInput } from "../graphql/mutation/user";
+import { useGetFullUserByUsername, useUpdateUser } from "../graphql/hooks/user";
+import { useGetRoles } from "../graphql/hooks/role";
+import { IMe } from "../db/interfaces";
+import { UpdateUserInput } from "../graphql/mutation/user";
 
 // Hooks
 import useUserActivityStats from "../hooks/useUserActivityStats";
-import { useCurrentUser } from "../context/UserContext"; // <-- Import current user hook
+import { useCurrentUser } from "../context/UserContext";
 
 // UI Components
 import PageStatusDisplay from "../components/global/PageStatusDisplay";
+import UserPageSkeleton from "../components/skeletons/UserPageSkeleton";
 import UserInformationPanel from "../components/features/userAnalytics/UserInformationPanel";
 import UserActivityList from "../components/features/userAnalytics/UserActivityList";
 import UserStatisticsPanel from "../components/features/userAnalytics/UserStatisticsPanel";
-import UserModal from "../components/modals/UserModal"; // <-- Use renamed modal
-import UserForm from "../components/forms/UserForm"; // <-- Use renamed form
+import UserModal from "../components/modals/UserModal";
+import UserForm from "../components/forms/UserForm";
 import SuccessConfirmationModal from "../components/modals/SuccessConfirmationModal";
-
+import { useNavigate } from "react-router";
 // Constants
 import { ROLES } from "../utils/GLOBAL_PARAMETERS";
+import { containsAnyCategoryById } from "../utils/arrayUtils";
+
+import { useAuthorization } from "../hooks/useAuthorization";
+import ForbiddenPage from "./ErrorPages/ForbiddenPage";
 
 const User: React.FC = () => {
+  const navigate = useNavigate();
   const { username: userUsernameFromParams } = useParams<{
     username: string;
   }>();
 
-  // --- NEW: State for Modals and Data ---
+  // --- State and Other Hooks ---
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [successModalMessage, setSuccessModalMessage] = useState("");
-  const [avatarVersion, setAvatarVersion] = useState(Date.now());
-
   const [dateRange, setDateRange] = useState<{
     startDate: Date | null;
     endDate: Date | null;
@@ -50,8 +51,13 @@ const User: React.FC = () => {
     loading: userLoading,
     error: userError,
     user,
-    refetch: refetchUser, // <-- Get refetch function
+    refetch: refetchUser,
   } = useGetFullUserByUsername(userUsernameFromParams);
+
+  const { isAllowed, isLoading: authLoading } = useAuthorization({
+    type: "user",
+    data: user,
+  });
 
   const {
     updateUser,
@@ -73,17 +79,59 @@ const User: React.FC = () => {
 
   const serverBaseUrl = import.meta.env.VITE_API_URL || "";
 
-  // --- NEW: Edit Modal Handlers ---
-  const openEditModal = () => setIsEditModalOpen(true);
-  const closeEditModal = () => setIsEditModalOpen(false);
+  // --- MODIFIED: This calculation now respects the date range ---
+  const ratedCasesCount = useMemo(() => {
+    console.log("Metric Scores: ", user?.metricScores);
+    if (!user?.metricScores) return 0;
+    const isInDateRange = (itemDateStr: string) => {
+      if (!dateRange.startDate || !dateRange.endDate) return true;
+      const itemDate = new Date(itemDateStr);
+      return itemDate >= dateRange.startDate && itemDate <= dateRange.endDate;
+    };
+    const filteredScores = user.metricScores.filter((score) =>
+      isInDateRange(score.date)
+    );
+    const ratedCaseIds = new Set(filteredScores.map((score) => score.case._id));
+    return ratedCaseIds.size;
+  }, [user, dateRange]);
 
-  // --- NEW: Form Submit Handler ---
+  // --- MODIFIED: Now uses a fallback for legacy data ---
+  const approvalsCount = useMemo(() => {
+    if (!user?.approvedAnswers) return 0;
+    const isInDateRange = (dateStr: string) => {
+      if (!dateRange.startDate || !dateRange.endDate) return true;
+      const itemDate = new Date(dateStr);
+      return itemDate >= dateRange.startDate && itemDate <= dateRange.endDate;
+    };
+
+    return user.approvedAnswers.filter((a) => {
+      const dateToFilterBy = a.approved_date || a.date;
+      return isInDateRange(dateToFilterBy);
+    }).length;
+  }, [user, dateRange]);
+
+  // --- MODIFIED: Now uses a fallback for legacy data ---
+  const financesCount = useMemo(() => {
+    if (!user?.financialApprovedAnswers) return 0;
+    const isInDateRange = (dateStr: string) => {
+      if (!dateRange.startDate || !dateRange.endDate) return true;
+      const itemDate = new Date(dateStr);
+      return itemDate >= dateRange.startDate && itemDate <= dateRange.endDate;
+    };
+
+    return user.financialApprovedAnswers.filter((a) => {
+      const dateToFilterBy = a.financial_approved_date || a.date;
+      return isInDateRange(dateToFilterBy);
+    }).length;
+  }, [user, dateRange]);
+
+  // --- Form Submit Handler ---
   const handleFormSubmit = async (
     formData: any,
     editingUserId: string | null,
-    avatarData: AttachmentInput | null | undefined
+    avatarData: File | null | undefined
   ) => {
-    if (!editingUserId) return; // Should not happen in this context
+    if (!editingUserId) return;
 
     const finalInput: Partial<UpdateUserInput> = {
       username: formData.username,
@@ -92,11 +140,12 @@ const User: React.FC = () => {
       position: formData.position,
       role: formData.role,
       financial_approver: formData.financial_approver,
+      expert_categories: formData.expert_categories,
+      managed_categories: formData.managed_categories,
       ...(formData.password && { password: formData.password }),
       ...(avatarData !== undefined && { avatar: avatarData }),
     };
 
-    // Clean up undefined values
     Object.keys(finalInput).forEach((key) => {
       if (finalInput[key as keyof typeof finalInput] === undefined)
         delete finalInput[key as keyof typeof finalInput];
@@ -104,12 +153,14 @@ const User: React.FC = () => {
 
     try {
       await updateUser(editingUserId, finalInput as UpdateUserInput);
-      await refetchUser(); // Refetch user data to show changes
-      setAvatarVersion(Date.now()); // Force avatar refresh
+      if (finalInput.username) {
+        navigate(`/user/${finalInput.username}`);
+      }
+      await refetchUser();
       closeEditModal();
-
       setSuccessModalMessage("Потребителят е редактиран успешно!");
       setIsSuccessModalOpen(true);
+      refetchUser();
     } catch (err: any) {
       console.error("Error during user update:", err);
       const graphQLError = err.graphQLErrors?.[0]?.message;
@@ -120,57 +171,69 @@ const User: React.FC = () => {
     }
   };
 
+  const openEditModal = () => setIsEditModalOpen(true);
+  const closeEditModal = () => setIsEditModalOpen(false);
+
+  if (userLoading || authLoading) {
+    return <UserPageSkeleton />;
+    // return (
+    //   <PageStatusDisplay
+    //     loading
+    //     message="Зареждане на потребителски данни..."
+    //   />
+    // );
+  }
+
   if (userUsernameFromParams === undefined) {
     return (
       <PageStatusDisplay
         notFound
-        message="User Username не е намерен в URL адреса."
-        height="h-screen"
+        message="Потребителското име не беше намерено в адреса."
       />
     );
   }
 
-  if (userLoading && !user) {
-    return (
-      <PageStatusDisplay
-        loading
-        message="Зареждане на потребителски данни..."
-        height="h-[calc(100vh-6rem)]"
-      />
-    );
+  if (userError || !user) {
+    return <PageStatusDisplay error={userError} />;
   }
 
-  if (userError) {
-    return (
-      <PageStatusDisplay
-        error={{ message: userError.message }}
-        message={`Грешка при зареждане на потребител с ID: ${userUsernameFromParams}.`}
-        height="h-[calc(100vh-6rem)]"
-      />
-    );
+  if (!isAllowed) {
+    return <ForbiddenPage />;
   }
 
-  if (!user) {
-    return (
-      <PageStatusDisplay
-        notFound
-        message={`Потребител с Username: ${userUsernameFromParams} не е намерен.`}
-        height="h-[calc(100vh-6rem)]"
-      />
-    );
-  }
-
+  // --- Logic after all hooks and returns ---
   const activityCounts = {
     cases: userStats?.totalSignals || 0,
     answers: userStats?.totalAnswers || 0,
     comments: userStats?.totalComments || 0,
+    ratings: ratedCasesCount,
+    approvals: approvalsCount,
+    finances: financesCount,
     all:
       (userStats?.totalSignals || 0) +
       (userStats?.totalAnswers || 0) +
-      (userStats?.totalComments || 0),
+      (userStats?.totalComments || 0) +
+      ratedCasesCount +
+      approvalsCount +
+      financesCount,
   };
 
   const isAdmin = currentUser?.role._id === ROLES.ADMIN;
+  const isManagerForCategory =
+    currentUser?.role?._id === ROLES.EXPERT &&
+    (containsAnyCategoryById(
+      currentUser?.managed_categories || [],
+      user?.expert_categories || []
+    ) ||
+      containsAnyCategoryById(
+        currentUser?.managed_categories || [],
+        user?.managed_categories || []
+      ));
+  const isSelf = currentUser?._id === user?._id;
+  const canEdit =
+    isAdmin ||
+    (isManagerForCategory && user?.role?._id !== ROLES.ADMIN) ||
+    isSelf;
 
   return (
     <>
@@ -180,7 +243,8 @@ const User: React.FC = () => {
             user={user}
             isLoading={userLoading && !!user}
             serverBaseUrl={serverBaseUrl}
-            onEditUser={openEditModal} // <-- Pass handler
+            onEditUser={openEditModal}
+            canEdit={canEdit}
           />
 
           <UserActivityList
@@ -200,13 +264,19 @@ const User: React.FC = () => {
         </div>
       </div>
 
-      {/* --- NEW: Render Modal for Editing --- */}
       <UserModal
         isOpen={isEditModalOpen}
         onClose={closeEditModal}
         title="Редактирай потребител"
       >
-        {updateLoading && <div className="p-4 text-center">Изпращане...</div>}
+        {updateLoading && (
+          <div
+            className="flex items-center justify-center p-4 text-center"
+            style={{ minHeight: "450px" }}
+          >
+            Изпращане...
+          </div>
+        )}
         {updateError && !updateLoading && (
           <div className="p-4 mb-4 text-center text-red-600 bg-red-100 rounded-md">
             Грешка при запис: {updateError?.message || "Неизвестна грешка"}
@@ -214,7 +284,7 @@ const User: React.FC = () => {
         )}
         {!updateLoading && (
           <UserForm
-            key={user._id} // Use user ID as key to re-mount on user change
+            key={user._id}
             onSubmit={handleFormSubmit}
             onClose={closeEditModal}
             initialData={user}
@@ -222,7 +292,7 @@ const User: React.FC = () => {
             roles={rolesData?.getAllLeanRoles || []}
             rolesLoading={rolesLoading}
             rolesError={rolesError}
-            isAdmin={isAdmin} // <-- Pass permission flag
+            isAdmin={isAdmin || isManagerForCategory}
           />
         )}
       </UserModal>

@@ -10,11 +10,17 @@ fragment CategoryFragment on Category {
         _id
         name
         username
+        expert_categories {
+          _id
+        }
       }
       managers {
         _id
         name
         username
+        managed_categories {
+          _id
+        }
       }
       cases {
         _id
@@ -51,6 +57,12 @@ export const GET_ACTIVE_CATEGORIES = gql`
       name
       problem
       suggestion
+      experts {
+        _id
+      }
+      managers {
+        _id
+      }
     }
   }
 `;
@@ -69,11 +81,17 @@ export const GET_CATEGORY_BY_NAME = gql`
         _id
         name
         username
+        expert_categories {
+          _id
+        }
       }
       managers {
         _id
         name
         username
+        managed_categories {
+          _id
+        }
       }
       cases {
         _id
@@ -88,6 +106,12 @@ export const GET_CATEGORY_BY_NAME = gql`
           name
           avatar
           username
+          expert_categories {
+            _id
+          }
+          managed_categories {
+            _id
+          }
         }
         answers {
           _id
@@ -96,6 +120,10 @@ export const GET_CATEGORY_BY_NAME = gql`
           approved {
             _id
           }
+          needs_finance
+        }
+        categories {
+          _id
         }
       }
       archived

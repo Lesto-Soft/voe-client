@@ -28,11 +28,12 @@
   "no_categories": "Няма намерени категории",
   "description": "Описание",
   "search_by_description": "Търси в описание...",
+  "fiter_by_date": "Филтрирай по дата...",
   "search": "Търси...",
   "choose_categories": "Избери категории...",
   "choose_creator": "Избери подател...",
   "clear_creator": "Изчисти подател",
-  "search_by_case_number": "Търси по номер...",
+  "search_by_case_number": "Номер...",
   "hide_filters": "Скрий филтри",
   "show_filters": "Покажи филтри",
   "actions": "Действия",
@@ -54,5 +55,7 @@
   "writeComment": "Напиши коментар...",
   "content": "Съдържание",
   "attachments": "Прикачени файлове",
-  "writeAnswer": "Напиши отговор..."
+  "writeAnswer": "Напиши отговор...",
+  "delete_case": "Изтрий сигнал",
+  "answerSubmitted": "Отговорът е изпратен"
 }

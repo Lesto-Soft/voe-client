@@ -3,6 +3,7 @@ import React, { useState } from "react";
 
 // Data Fetching
 import { useGetAnalyticsDataCases } from "../graphql/hooks/case";
+import { useGetRankedUsers } from "../graphql/hooks/user";
 
 // Custom Hooks for the Analyses Feature
 import { useAnalysesFilters } from "../components/features/analyses/hooks/useAnalysesFilters";
@@ -15,6 +16,11 @@ import DistributionChartCard from "../components/features/analyses/components/Di
 import SummaryCard from "../components/features/analyses/components/SummaryCard";
 import TopUserCard from "../components/features/analyses/components/TopUserCard";
 import { PodiumModal } from "../components/features/analyses/modals/PodiumModal";
+import PageStatusDisplay from "../components/global/PageStatusDisplay";
+import { RankingType } from "../components/features/analyses/types";
+import StatCardSkeleton from "../components/skeletons/StatCardSkeleton";
+import BarChartSkeleton from "../components/skeletons/BarChartSkeleton";
+import ControlsSkeleton from "../components/skeletons/ControlsSkeleton";
 
 // Constants and Types
 import {
@@ -42,11 +48,33 @@ const Analyses: React.FC = () => {
     typePieData,
     averageRatingData,
     periodCaseSummary,
-    rankedSignalGivers,
-    rankedSolutionGivers,
-    rankedApprovers,
-    rankedRaters,
   } = useProcessedAnalyticsData(allCases, filters);
+
+  // ADD calls to the new, efficient hook for each ranking type
+  const { rankedUsers: rankedCreators } = useGetRankedUsers(
+    filters.startDateForPies,
+    filters.endDateForPies,
+    RankingType.CREATORS,
+    filters.isAllTimePies
+  );
+  const { rankedUsers: rankedSolvers } = useGetRankedUsers(
+    filters.startDateForPies,
+    filters.endDateForPies,
+    RankingType.SOLVERS,
+    filters.isAllTimePies
+  );
+  const { rankedUsers: rankedApprovers } = useGetRankedUsers(
+    filters.startDateForPies,
+    filters.endDateForPies,
+    RankingType.APPROVERS,
+    filters.isAllTimePies
+  );
+  const { rankedUsers: rankedRaters } = useGetRankedUsers(
+    filters.startDateForPies,
+    filters.endDateForPies,
+    RankingType.RATERS,
+    filters.isAllTimePies
+  );
 
   // --- NEW: State for toggling the bar chart style ---
   const [barChartStyle, setBarChartStyle] = useState<"grouped" | "stacked">(
@@ -60,25 +88,27 @@ const Analyses: React.FC = () => {
     users: RankedUser[];
   } | null>(null);
 
-  // --- Render Loading/Error/Empty States ---
-  if (analyticsDataLoading) {
-    return (
-      <div className="flex items-center justify-center h-full min-h-[calc(100vh-200px)]">
-        <p>Зареждане на аналитични данни...</p>
-      </div>
-    );
-  }
+  // First, handle terminal states: error or no data after loading is complete.
   if (analyticsDataError) {
     return (
-      <div className="flex items-center justify-center h-full min-h-[calc(100vh-200px)]">
-        <p>Грешка при зареждане на данни: {analyticsDataError.message}</p>
+      <div className="p-2 md:p-5 bg-gray-100 min-h-full">
+        <PageStatusDisplay
+          error={analyticsDataError}
+          height="h-[calc(100vh-12rem)]"
+        />
       </div>
     );
   }
-  if (!allCases || allCases.length === 0) {
+
+  // --- Render Loading/Error/Empty States ---
+  if (!analyticsDataLoading && (!allCases || allCases.length === 0)) {
     return (
-      <div className="flex items-center justify-center h-full min-h-[calc(100vh-200px)]">
-        <p>Няма налични данни за анализ.</p>
+      <div className="p-2 md:p-5 bg-gray-100 min-h-full">
+        <PageStatusDisplay
+          notFound
+          message="Няма налични данни за анализ."
+          height="h-[calc(100vh-12rem)]"
+        />
       </div>
     );
   }
@@ -88,225 +118,252 @@ const Analyses: React.FC = () => {
     <>
       <div className="p-2 md:p-5 bg-gray-100 min-h-full space-y-5">
         <div className="bg-white rounded-md shadow-md">
-          {/* --- MODIFIED: Pass new props to AnalysesControls --- */}
-          <AnalysesControls
-            {...filters}
-            barChartStyle={barChartStyle}
-            setBarChartStyle={setBarChartStyle}
-          />
+          {analyticsDataLoading ? (
+            <ControlsSkeleton />
+          ) : (
+            <AnalysesControls
+              {...filters}
+              barChartStyle={barChartStyle}
+              setBarChartStyle={setBarChartStyle}
+            />
+          )}
         </div>
 
         <div className="bg-white rounded-lg shadow-md">
-          {/* --- MODIFIED: Pass new prop to BarChart --- */}
-          <BarChart
-            data={barChartDisplayData.data}
-            dataKeyX={barChartDisplayData.dataKeyX}
-            series={barChartDisplayData.seriesConfig}
-            title={barChartDisplayData.title}
-            barStyle={barChartStyle} // <-- Pass the style
-          />
+          {analyticsDataLoading ? (
+            // Use the new, detailed BarChartSkeleton here
+            <BarChartSkeleton />
+          ) : (
+            <BarChart
+              data={barChartDisplayData.data}
+              dataKeyX={barChartDisplayData.dataKeyX}
+              series={barChartDisplayData.seriesConfig}
+              title={barChartDisplayData.title}
+              barStyle={barChartStyle}
+            />
+          )}
         </div>
 
         <div>
           <div className="mb-4 flex items-center justify-center sm:justify-start">
-            <div className="inline-flex rounded-md shadow-sm" role="group">
-              <button
-                type="button"
-                onClick={() => setActiveStatView("case")}
-                className={`hover:cursor-pointer px-4 py-2 text-sm font-medium ${
-                  activeStatView === "case"
-                    ? "bg-sky-600 text-white z-10 ring-1 ring-sky-500"
-                    : "bg-white text-gray-900 hover:bg-gray-100"
-                } rounded-l-lg border border-gray-200 focus:z-10 focus:ring-1 focus:ring-sky-500`}
-              >
-                Статистики по сигнали
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveStatView("user")}
-                className={`hover:cursor-pointer px-4 py-2 text-sm font-medium ${
-                  activeStatView === "user"
-                    ? "bg-sky-600 text-white z-10 ring-1 ring-sky-500"
-                    : "bg-white text-gray-900 hover:bg-gray-100"
-                } rounded-r-md border border-gray-200 focus:z-10 focus:ring-1 focus:ring-sky-500`}
-              >
-                Потребителска класация
-              </button>
-            </div>
+            {analyticsDataLoading ? (
+              <div className="flex ">
+                <div className="animate-pulse h-10 w-50 bg-gray-200 rounded-l-lg border-gray-400"></div>
+                <div className="animate-pulse h-10 w-50 bg-white rounded-r-lg border-gray-400"></div>
+              </div>
+            ) : (
+              <div className="inline-flex rounded-md shadow-sm" role="group">
+                <button
+                  type="button"
+                  onClick={() => setActiveStatView("case")}
+                  className={`hover:cursor-pointer px-4 py-2 text-sm font-medium ${
+                    activeStatView === "case"
+                      ? "bg-sky-600 text-white z-10 ring-1 ring-sky-500"
+                      : "bg-white text-gray-900 hover:bg-gray-100"
+                  } rounded-l-lg border border-gray-200 focus:z-10 focus:ring-1 focus:ring-sky-500`}
+                >
+                  Статистики по сигнали
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveStatView("user")}
+                  className={`hover:cursor-pointer px-4 py-2 text-sm font-medium ${
+                    activeStatView === "user"
+                      ? "bg-sky-600 text-white z-10 ring-1 ring-sky-500"
+                      : "bg-white text-gray-900 hover:bg-gray-100"
+                  } rounded-r-md border border-gray-200 focus:z-10 focus:ring-1 focus:ring-sky-500`}
+                >
+                  Потребителска класация
+                </button>
+              </div>
+            )}
           </div>
 
-          {activeStatView === "case" ? (
-            // Case Statistics View
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-              <SummaryCard title="Общо сигнали" footerText="за избрания период">
-                <p className="text-4xl font-bold text-gray-700">
-                  {periodCaseSummary.totalCases}
-                </p>
-                {filters.barChartMode === "type" ? (
-                  <div className="flex space-x-3 mt-2 text-center">
-                    <p className="text-xs sm:text-sm">
-                      <span
-                        style={{ color: TYPE_COLORS.PROBLEM }}
-                        className="font-semibold block"
-                      >
-                        Проблеми
-                      </span>
-                      <span
-                        style={{ color: TYPE_COLORS.PROBLEM }}
-                        className="font-bold text-lg"
-                      >
-                        {(periodCaseSummary as any).problems}
-                      </span>
-                    </p>
-                    <p className="text-xs sm:text-sm">
-                      <span
-                        style={{ color: TYPE_COLORS.SUGGESTION }}
-                        className="font-semibold block"
-                      >
-                        Предложения
-                      </span>
-                      <span
-                        style={{ color: TYPE_COLORS.SUGGESTION }}
-                        className="font-bold text-lg"
-                      >
-                        {(periodCaseSummary as any).suggestions}
-                      </span>
-                    </p>
-                  </div>
-                ) : (
-                  <div className="flex space-x-2 mt-2 text-center">
-                    <p className="text-xs sm:text-sm">
-                      <span
-                        style={{ color: PRIORITY_COLORS.HIGH }}
-                        className="font-semibold block"
-                      >
-                        Висок
-                      </span>
-                      <span
-                        style={{ color: PRIORITY_COLORS.HIGH }}
-                        className="font-bold text-lg"
-                      >
-                        {(periodCaseSummary as any).high}
-                      </span>
-                    </p>
-                    <p className="text-xs sm:text-sm">
-                      <span
-                        style={{ color: PRIORITY_COLORS.MEDIUM }}
-                        className="font-semibold block"
-                      >
-                        Среден
-                      </span>
-                      <span
-                        style={{ color: PRIORITY_COLORS.MEDIUM }}
-                        className="font-bold text-lg"
-                      >
-                        {(periodCaseSummary as any).medium}
-                      </span>
-                    </p>
-                    <p className="text-xs sm:text-sm">
-                      <span
-                        style={{ color: PRIORITY_COLORS.LOW }}
-                        className="font-semibold block"
-                      >
-                        Нисък
-                      </span>
-                      <span
-                        style={{ color: PRIORITY_COLORS.LOW }}
-                        className="font-bold text-lg"
-                      >
-                        {(periodCaseSummary as any).low}
-                      </span>
-                    </p>
-                  </div>
-                )}
-              </SummaryCard>
-              <DistributionChartCard
-                title={
-                  filters.barChartMode === "type"
-                    ? "Разпределение по приоритет"
-                    : "Разпределение по тип"
-                }
-                pieData={
-                  filters.barChartMode === "type"
-                    ? priorityPieData
-                    : typePieData
-                }
-              />
-              <DistributionChartCard
-                title="Разпределение по категории"
-                pieData={categoryPieData}
-              />
-              <SummaryCard
-                title="Среден рейтинг на сигнал"
-                footerText="за избрания период"
-              >
-                {averageRatingData.average !== null ? (
-                  <>
-                    <p className="text-4xl font-bold text-sky-600">
-                      {averageRatingData.average.toFixed(2)}
-                      <span className="text-lg font-normal text-gray-500 ml-1">
-                        / 5
-                      </span>
-                    </p>
-                    <p className="text-sm text-gray-600 mt-1">
-                      (от {averageRatingData.count}{" "}
-                      {averageRatingData.count === 1 ? "оценка" : "оценки"})
-                    </p>
-                  </>
-                ) : (
-                  <p className="text-xl text-gray-500 mt-4">Няма оценки</p>
-                )}
-              </SummaryCard>
-            </div>
-          ) : (
-            // User Leaderboard View
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-              <TopUserCard
-                title="Най-активен подател на сигнали"
-                stat={rankedSignalGivers[0]}
-                actionText="сигнала"
-                onPodiumClick={() =>
-                  setPodiumState({
-                    title: "Класация: Подали сигнали",
-                    users: rankedSignalGivers,
-                  })
-                }
-              />
-              <TopUserCard
-                title="Най-активен даващ решения"
-                stat={rankedSolutionGivers[0]}
-                actionText="решения"
-                onPodiumClick={() =>
-                  setPodiumState({
-                    title: "Класация: Дали решения",
-                    users: rankedSolutionGivers,
-                  })
-                }
-              />
-              <TopUserCard
-                title="Най-активен одобрител"
-                stat={rankedApprovers[0]}
-                actionText="одобрения"
-                onPodiumClick={() =>
-                  setPodiumState({
-                    title: "Класация: Одобрили решения",
-                    users: rankedApprovers,
-                  })
-                }
-              />
-              <TopUserCard
-                title="Най-активен оценител"
-                stat={rankedRaters[0]}
-                actionText="оценки"
-                onPodiumClick={() =>
-                  setPodiumState({
-                    title: "Класация: Оценили сигнали",
-                    users: rankedRaters,
-                  })
-                }
-              />
-            </div>
-          )}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {analyticsDataLoading ? (
+              <>
+                <StatCardSkeleton type="text" />
+                <StatCardSkeleton type="pieChart" />
+                <StatCardSkeleton type="pieChart" />
+                <StatCardSkeleton type="text" />
+              </>
+            ) : activeStatView === "case" ? (
+              <>
+                <SummaryCard
+                  title="Общо сигнали"
+                  footerText="за избрания период"
+                >
+                  <p className="text-4xl font-bold text-gray-700">
+                    {periodCaseSummary.totalCases}
+                  </p>
+                  {filters.barChartMode === "type" ? (
+                    <div className="flex space-x-3 mt-2 text-center">
+                      <p className="text-xs sm:text-sm">
+                        <span
+                          style={{ color: TYPE_COLORS.PROBLEM }}
+                          className="font-semibold block"
+                        >
+                          Проблеми
+                        </span>
+                        <span
+                          style={{ color: TYPE_COLORS.PROBLEM }}
+                          className="font-bold text-lg"
+                        >
+                          {(periodCaseSummary as any).problems}
+                        </span>
+                      </p>
+                      <p className="text-xs sm:text-sm">
+                        <span
+                          style={{ color: TYPE_COLORS.SUGGESTION }}
+                          className="font-semibold block"
+                        >
+                          Предложения
+                        </span>
+                        <span
+                          style={{ color: TYPE_COLORS.SUGGESTION }}
+                          className="font-bold text-lg"
+                        >
+                          {(periodCaseSummary as any).suggestions}
+                        </span>
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="flex space-x-2 mt-2 text-center">
+                      <p className="text-xs sm:text-sm">
+                        <span
+                          style={{ color: PRIORITY_COLORS.HIGH }}
+                          className="font-semibold block"
+                        >
+                          Висок
+                        </span>
+                        <span
+                          style={{ color: PRIORITY_COLORS.HIGH }}
+                          className="font-bold text-lg"
+                        >
+                          {(periodCaseSummary as any).high}
+                        </span>
+                      </p>
+                      <p className="text-xs sm:text-sm">
+                        <span
+                          style={{ color: PRIORITY_COLORS.MEDIUM }}
+                          className="font-semibold block"
+                        >
+                          Среден
+                        </span>
+                        <span
+                          style={{ color: PRIORITY_COLORS.MEDIUM }}
+                          className="font-bold text-lg"
+                        >
+                          {(periodCaseSummary as any).medium}
+                        </span>
+                      </p>
+                      <p className="text-xs sm:text-sm">
+                        <span
+                          style={{ color: PRIORITY_COLORS.LOW }}
+                          className="font-semibold block"
+                        >
+                          Нисък
+                        </span>
+                        <span
+                          style={{ color: PRIORITY_COLORS.LOW }}
+                          className="font-bold text-lg"
+                        >
+                          {(periodCaseSummary as any).low}
+                        </span>
+                      </p>
+                    </div>
+                  )}
+                </SummaryCard>
+                <DistributionChartCard
+                  title={
+                    filters.barChartMode === "type"
+                      ? "Разпределение по приоритет"
+                      : "Разпределение по тип"
+                  }
+                  pieData={
+                    filters.barChartMode === "type"
+                      ? priorityPieData
+                      : typePieData
+                  }
+                />
+                <DistributionChartCard
+                  title="Разпределение по категории"
+                  pieData={categoryPieData}
+                />
+                <SummaryCard
+                  title="Среден рейтинг на сигнал"
+                  footerText="за избрания период"
+                >
+                  {averageRatingData.average !== null ? (
+                    <>
+                      <p className="text-4xl font-bold text-sky-600">
+                        {averageRatingData.average.toFixed(2)}
+                        <span className="text-lg font-normal text-gray-500 ml-1">
+                          / 5
+                        </span>
+                      </p>
+                      <p className="text-sm text-gray-600 mt-1">
+                        (от {averageRatingData.count}{" "}
+                        {averageRatingData.count === 1
+                          ? "оценен сигнал"
+                          : "оценени сигнали"}
+                        )
+                      </p>
+                    </>
+                  ) : (
+                    <p className="text-xl text-gray-500 mt-4">Няма оценки</p>
+                  )}
+                </SummaryCard>
+              </>
+            ) : (
+              <>
+                <TopUserCard
+                  title="Най-активен подател на сигнали"
+                  stat={rankedCreators[0]}
+                  actionText="сигнала"
+                  onPodiumClick={() =>
+                    setPodiumState({
+                      title: "Класация: Подали сигнали",
+                      users: rankedCreators,
+                    })
+                  }
+                />
+                <TopUserCard
+                  title="Най-активен даващ решения"
+                  stat={rankedSolvers[0]}
+                  actionText="подадени и одобрени отговора"
+                  onPodiumClick={() =>
+                    setPodiumState({
+                      title: "Класация: Дали решения",
+                      users: rankedSolvers,
+                    })
+                  }
+                />
+                <TopUserCard
+                  title="Най-активен одобрител"
+                  stat={rankedApprovers[0]}
+                  actionText="одобрения на отговори"
+                  onPodiumClick={() =>
+                    setPodiumState({
+                      title: "Класация: Одобрили решения",
+                      users: rankedApprovers,
+                    })
+                  }
+                />
+                <TopUserCard
+                  title="Най-активен оценител"
+                  stat={rankedRaters[0]}
+                  actionText="оценени сигнала"
+                  onPodiumClick={() =>
+                    setPodiumState({
+                      title: "Класация: Оценили сигнали",
+                      users: rankedRaters,
+                    })
+                  }
+                />
+              </>
+            )}
+          </div>
         </div>
       </div>
 

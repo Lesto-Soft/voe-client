@@ -1,8 +1,10 @@
-// src/components/case-components/CaseInfo.tsx (Modified to be responsive)
-import React from "react";
-import { ICategory, IMe } from "../../db/interfaces";
+// src/components/case-components/CaseInfo.tsx (Corrected)
+
+import React, { useState, useMemo } from "react";
+import { ApolloError } from "@apollo/client";
+import { ICategory, IMe, IMetricScore } from "../../db/interfaces";
 import CategoryLink from "../global/CategoryLink";
-import { FlagIcon } from "@heroicons/react/24/solid";
+import { FlagIcon, PencilSquareIcon } from "@heroicons/react/24/solid";
 import {
   getPriorityStyle,
   getStatusStyle,
@@ -11,16 +13,16 @@ import {
 import { labelTextClass, caseBoxClasses } from "../../ui/reusable-styles";
 import { useTranslation } from "react-i18next";
 import Creator from "./Creator";
-import CaseRating from "./Rating";
 import ShowDate from "../global/ShowDate";
 import ImagePreviewModal from "../modals/ImagePreviewModal";
 import { createFileUrl } from "../../utils/fileUtils";
 import FullScreenContentDialog from "../modals/ContentDialog";
-import EditCaseDialog from "../modals/EditCaseDialog";
 import { CASE_STATUS, USER_RIGHTS } from "../../utils/GLOBAL_PARAMETERS";
 import CaseDialog from "../modals/CaseDialog";
-import { PencilSquareIcon } from "@heroicons/react/24/outline";
 import { useGetActiveCategories } from "../../graphql/hooks/category";
+import { renderContentSafely } from "../../utils/contentRenderer";
+import RateCaseModal from "../modals/RateCaseModal";
+import CaseRatingDisplay from "./CaseRatingDisplay";
 
 interface ICaseInfoProps {
   content: string;
@@ -30,14 +32,16 @@ interface ICaseInfoProps {
   status: string;
   categories: ICategory[];
   creator: any;
-  rating: any;
+  metricScores?: IMetricScore[];
+  calculatedRating?: number | null;
   date?: string;
   me: IMe;
   caseNumber: number;
   refetch: () => void;
   attachments?: string[];
+  isLoading: boolean;
+  error?: ApolloError | undefined; // <-- ADD THIS PROP
   rights: string[];
-  availableCategories: ICategory[];
 }
 
 const CaseInfo: React.FC<ICaseInfoProps> = ({
@@ -48,201 +52,387 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
   status,
   categories,
   creator,
-  rating,
+  metricScores = [],
+  calculatedRating,
   date,
   me,
   caseNumber,
   refetch,
   attachments = [],
   rights = [],
-  availableCategories,
+  isLoading,
+  error,
 }) => {
   const { t } = useTranslation("dashboard");
+  const [isRatingModalOpen, setRatingModalOpen] = useState(false);
+
+  // --- THIS LINE IS NOW CORRECT ---
+  const { categories: categoriesDataFromHook } = useGetActiveCategories();
+
   const statusStyle = getStatusStyle(status);
   const priorityStyle = getPriorityStyle(priority);
   const typeBadgeStyle = getTypeBadgeStyle(type);
-  const isCurrentUserCreator = creator?._id === me?._id;
+
+  const hasUserRated = useMemo(
+    () => metricScores.some((score) => score.user._id === me._id),
+    [metricScores, me._id]
+  );
+
+  const isCurrentUserCreator = creator?._id === me._id;
+
   const caseInitialDataForEdit = {
     content,
     type,
     priority,
     status,
-    categories, // Pass the array of ICategory objects
+    categories,
     attachments,
   };
 
-  const {
-    categories: categoriesDataFromHook,
-    loading: categoriesLoading,
-    error: categoriesError,
-  } = useGetActiveCategories();
+  const handleSuccessfulRatingSubmit = () => {
+    refetch();
+  };
 
   return (
-    // This root div will fill its parent. The parent in Case.tsx handles stickiness, width, and height for desktop.
-    <div className="flex flex-col gap-4 bg-white shadow-md p-4 rounded-lg w-full h-full lg:overflow-y-auto custom-scrollbar">
-      {/* Creator & Date */}
-      <div className="flex flex-col items-center gap-2">
-        {" "}
-        {/* Mobile: centered column. Desktop: still centered column but in sidebar */}
-        <Creator creator={creator} />
-        {date && <ShowDate date={date} />}
-      </div>
-      {/* Content Section */}
-      <div>
-        <div className="flex justify-between items-center mb-1.5 px-1">
-          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-            {t("content")}
-          </h3>
-          {/* FullScreenContentDialog: Show only on desktop, or style differently for mobile if needed */}
-          <div className="hidden lg:flex lg:gap-2">
-            {(rights.includes(USER_RIGHTS.CREATOR) ||
-              rights.includes(USER_RIGHTS.ADMIN)) &&
-              status !== CASE_STATUS.AWAITING_FINANCE &&
-              status !== CASE_STATUS.CLOSED && (
-                // <EditCaseDialog
-                //   caseId={caseId}
-                //   caseNumber={caseNumber}
-                //   initialData={caseInitialDataForEdit}
-                //   me={me}
-                // />
-                <CaseDialog
-                  mode="edit"
-                  caseId={caseId}
-                  caseNumber={caseNumber}
-                  initialData={{
-                    content: caseInitialDataForEdit.content,
-                    priority: caseInitialDataForEdit.priority,
-                    type: caseInitialDataForEdit.type,
-                    categories: caseInitialDataForEdit.categories,
-                    attachments: caseInitialDataForEdit.attachments.map(
-                      (a) => a
-                    ),
-                  }}
-                  me={me}
-                  availableCategories={categoriesDataFromHook || []}
-                >
-                  {/* This is the trigger button */}
-                  <button
-                    type="button"
-                    title="Edit case"
-                    className="p-1 rounded hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                  >
-                    <PencilSquareIcon className="h-5 w-5 text-gray-500" />
-                  </button>
-                </CaseDialog>
-              )}
-            <FullScreenContentDialog content={content} />
+    <>
+      {/* MODIFIED: The entire panel is now one scrollable container.
+          Flexbox classes have been removed. */}
+      <div className="w-full h-full bg-white shadow-md overflow-y-auto custom-scrollbar">
+        {/* --- Top and Middle sections are in a simple content wrapper --- */}
+        <div className="p-4 flex flex-col gap-3">
+          {/* Top Section */}
+          <div className="flex flex-col items-center gap-1">
+            <Creator creator={creator} />
+            {date && <ShowDate date={date} centered={true} isCase={true} />}
           </div>
-        </div>
-        <div
-          className={`
-            bg-gray-50 rounded-md p-3 text-gray-900 overflow-y-auto custom-scrollbar
-            max-h-60 lg:max-h-70 whitespace-pre-line break-words
-          `}
-        >
-          {content}
-        </div>
-      </div>
-      {/* Attachments: Show only on desktop by default. For mobile, a different UI/UX might be needed. */}
-      {attachments && attachments.length > 0 && (
-        <div className="hidden lg:flex flex-wrap gap-2 mb-2">
-          {attachments.map((file) => (
-            <ImagePreviewModal
-              key={file}
-              imageUrl={createFileUrl("cases", caseId, file)}
-              fileName={file}
-            />
-          ))}
-        </div>
-      )}
 
-      <div className="flex flex-wrap gap-x-4 gap-y-3">
-        {" "}
-        {/* Parent container uses flex-wrap for all screen sizes */}
-        {/* Priority */}
-        <div
-          className={`
-    ${caseBoxClasses} ${priorityStyle} 
-    grow basis-[140px]                       // MOBILE FIRST: Fluid basis, allows item to grow. Adjust '140px' as needed.
-    sm:basis-[160px]                         // On 'sm' screens, slightly larger basis if desired.
-    lg:w-[calc(50%-0.5rem)] lg:basis-auto    // DESKTOP ('lg' and up): Set explicit width for 2-per-row. Reset basis to auto.
-  `}
-        >
-          <span className={labelTextClass}>{t("priority")}:</span>
-          <span className="flex items-center mt-0.5 sm:mt-1">
-            <FlagIcon className="h-4 w-4 mr-1.5" />
-            {t(priority)}
-          </span>
+          {/* Middle Section */}
+          {/* Content Box */}
+          <div>
+            <div className="flex justify-between items-center mb-1.5 px-1">
+              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                {t("content")}
+              </h3>
+              <div className="flex lg:gap-2">
+                {(rights.includes(USER_RIGHTS.CREATOR) ||
+                  rights.includes(USER_RIGHTS.ADMIN) ||
+                  rights.includes(USER_RIGHTS.MANAGER)) &&
+                  status !== CASE_STATUS.AWAITING_FINANCE &&
+                  status !== CASE_STATUS.CLOSED && (
+                    <CaseDialog
+                      mode="edit"
+                      caseId={caseId}
+                      caseNumber={caseNumber}
+                      initialData={{
+                        content: caseInitialDataForEdit.content,
+                        priority: caseInitialDataForEdit.priority,
+                        type: caseInitialDataForEdit.type,
+                        categories: caseInitialDataForEdit.categories,
+                        attachments: caseInitialDataForEdit.attachments.map(
+                          (a) => a
+                        ),
+                      }}
+                      me={me}
+                      availableCategories={categoriesDataFromHook || []}
+                    >
+                      <button
+                        type="button"
+                        title="Edit case"
+                        className="p-1 rounded text-gray-500 hover:text-blue-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400 hover:cursor-pointer"
+                      >
+                        <PencilSquareIcon className="h-5 w-5" />
+                      </button>
+                    </CaseDialog>
+                  )}
+                <FullScreenContentDialog
+                  content={content}
+                  title={`${t("case", "Сигнал")} #${caseNumber}`}
+                  creator={creator}
+                  date={date}
+                  type={type}
+                  priority={priority}
+                  categories={categories}
+                  metricScores={metricScores}
+                  calculatedRating={calculatedRating}
+                  attachments={attachments}
+                  caseId={caseId}
+                  me={me}
+                  refetch={refetch}
+                  isCurrentUserCreator={isCurrentUserCreator}
+                />
+              </div>
+            </div>
+            <div className="bg-gray-50 rounded-md p-3 text-gray-900 break-words">
+              {renderContentSafely(content)}
+            </div>
+          </div>
+
+          {/* Attachments */}
+          {attachments && attachments.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {attachments.map((file) => (
+                <ImagePreviewModal
+                  key={file}
+                  imageUrl={createFileUrl("cases", caseId, file)}
+                  fileName={file}
+                />
+              ))}
+            </div>
+          )}
         </div>
-        {/* Type */}
-        <div
-          className={`
-    ${caseBoxClasses} ${typeBadgeStyle} 
-    grow basis-[140px]
-    sm:basis-[160px]
-    lg:w-[calc(50%-0.5rem)] lg:basis-auto
-  `}
-        >
-          <span className={labelTextClass}>{t("type")}:</span>
-          <div className="mt-0.5 sm:mt-1">
-            <span
-              className={`px-2.5 py-0.5 rounded-full text-xs text-center font-medium ${typeBadgeStyle}`}
-            >
-              {t(type)}
-            </span>
+
+        {/* --- Bottom Section (Now Sticky) --- */}
+        {/* MODIFIED: This wrapper is now sticky. It scrolls with the content until
+            it hits the bottom of the container, where it will "stick".
+            The background color is important so content doesn't show through. */}
+        <div className="sticky bottom-0 bg-white p-4 pt-2">
+          <div className="flex flex-col gap-3">
+            {/* Info Grid (Priority, Type, etc.) */}
+            <div className="flex flex-wrap gap-x-4 gap-y-3">
+              <div
+                className={`${caseBoxClasses} ${priorityStyle} grow basis-[140px] sm:basis-[160px] lg:w-[calc(50%-0.5rem)] lg:basis-auto`}
+              >
+                <span className={labelTextClass}>{t("priority")}:</span>
+                <span className="flex items-center mt-0.5 sm:mt-1">
+                  <FlagIcon className="h-4 w-4 mr-1.5" />
+                  {t(priority)}
+                </span>
+              </div>
+              <div
+                className={`${caseBoxClasses} ${typeBadgeStyle} grow basis-[140px] sm:basis-[160px] lg:w-[calc(50%-0.5rem)] lg:basis-auto`}
+              >
+                <span className={labelTextClass}>{t("type")}:</span>
+                <div className="mt-0.5 sm:mt-1">
+                  <span
+                    className={`px-2.5 py-0.5 rounded-full text-xs text-center font-medium ${typeBadgeStyle}`}
+                  >
+                    {t(type)}
+                  </span>
+                </div>
+              </div>
+              <div
+                className={`${caseBoxClasses} grow basis-[140px] sm:basis-[160px] lg:w-[calc(50%-0.5rem)] lg:basis-auto`}
+              >
+                <span className={labelTextClass}>{t("status")}:</span>
+                <span className="flex items-center mt-0.5 sm:mt-1">
+                  <span
+                    className={`h-2.5 w-2.5 rounded-full ${statusStyle.dotBgColor} mr-1.5`}
+                  />
+                  <span className={`${statusStyle.textColor}`}>
+                    {t(status)}
+                  </span>
+                </span>
+              </div>
+              <div className="grow basis-[140px] sm:basis-[160px] lg:w-[calc(50%-0.5rem)] lg:basis-auto">
+                <CaseRatingDisplay
+                  metricScores={metricScores}
+                  calculatedRating={calculatedRating}
+                  onOpenModal={() => setRatingModalOpen(true)}
+                  disabled={isCurrentUserCreator}
+                  hasUserRated={hasUserRated}
+                />
+              </div>
+            </div>
+
+            {/* Categories */}
+            <div className={`${caseBoxClasses} flex-col bg-white`}>
+              <span className={labelTextClass}>{t("categories")}:</span>
+              <span className="flex flex-wrap gap-1">
+                {categories.length > 0 ? (
+                  categories.map((cat: ICategory) => (
+                    <CategoryLink key={cat._id} {...cat} />
+                  ))
+                ) : (
+                  <span className="text-gray-400 italic">
+                    {t("no_categories")}
+                  </span>
+                )}
+              </span>
+            </div>
           </div>
         </div>
-        {/* Status */}
-        <div
-          className={`
-    ${caseBoxClasses} 
-    grow basis-[140px]
-    sm:basis-[160px]
-    lg:w-[calc(50%-0.5rem)] lg:basis-auto
-  `}
-        >
-          <span className={labelTextClass}>{t("status")}:</span>
-          <span className="flex items-center mt-0.5 sm:mt-1">
-            <span
-              className={`h-2.5 w-2.5 rounded-full ${statusStyle.dotBgColor} mr-1.5`}
-            />
-            <span className={`${statusStyle.textColor}`}>{t(status)}</span>
-          </span>
-        </div>
-        {/* Rating */}
-        <div
-          className={`
-    ${caseBoxClasses} 
-    grow basis-[140px]
-    sm:basis-[160px]
-    lg:w-[calc(50%-0.5rem)] lg:basis-auto
-  `}
-        >
-          <CaseRating
-            ratings={rating}
-            t={t}
-            caseId={caseId}
-            me={me}
-            refetch={refetch}
-            disabled={isCurrentUserCreator}
-          />
-        </div>
       </div>
-      {/* Categories */}
-      <div className={`${caseBoxClasses} flex-col bg-white`}>
-        <span className={labelTextClass}>{t("categories")}:</span>
-        <span className="flex flex-wrap gap-1">
-          {categories.length > 0 ? (
-            categories.map((cat: ICategory) => (
-              <CategoryLink key={cat._id} {...cat} />
-            ))
-          ) : (
-            <span className="text-gray-400 italic">{t("no_categories")}</span>
-          )}
-        </span>
-      </div>
-    </div>
+
+      <RateCaseModal
+        isOpen={isRatingModalOpen}
+        onClose={() => setRatingModalOpen(false)}
+        onSuccessfulSubmit={handleSuccessfulRatingSubmit}
+        caseId={caseId}
+        caseNumber={caseNumber}
+        currentUser={me}
+        caseScores={metricScores}
+        isLoadingScores={isLoading}
+        errorScores={error}
+      />
+    </>
   );
 };
+
+// <>
+//       <div className="flex flex-col bg-white shadow-md p-4 w-full h-full">
+
+//         {/* MODIFIED: This scrollable container now wraps BOTH the header and the middle content. */}
+//         <div className="flex-1 flex flex-col gap-3 overflow-y-auto custom-scrollbar min-h-0">
+//           {/* --- Top Section (MOVED) --- */}
+//           {/* This part is now inside the scrollable area. */}
+//           <div className="flex flex-col items-center gap-1">
+//             <Creator creator={creator} />
+//             {date && <ShowDate date={date} centered={true} isCase={true} />}
+//           </div>
+
+//           {/* --- Middle Section --- */}
+//           {/* Content Box */}
+//           <div>
+//             <div className="flex justify-between items-center mb-1.5 px-1">
+//               <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+//                 {t("content")}
+//               </h3>
+//               <div className="flex lg:gap-2">
+//                 {(rights.includes(USER_RIGHTS.CREATOR) ||
+//                   rights.includes(USER_RIGHTS.ADMIN) ||
+//                   rights.includes(USER_RIGHTS.MANAGER)) &&
+//                   status !== CASE_STATUS.AWAITING_FINANCE &&
+//                   status !== CASE_STATUS.CLOSED && (
+//                     <CaseDialog
+//                       mode="edit"
+//                       caseId={caseId}
+//                       caseNumber={caseNumber}
+//                       initialData={{
+//                         content: caseInitialDataForEdit.content,
+//                         priority: caseInitialDataForEdit.priority,
+//                         type: caseInitialDataForEdit.type,
+//                         categories: caseInitialDataForEdit.categories,
+//                         attachments: caseInitialDataForEdit.attachments.map(
+//                           (a) => a
+//                         ),
+//                       }}
+//                       me={me}
+//                       availableCategories={categoriesDataFromHook || []}
+//                     >
+//                       <button
+//                         type="button"
+//                         title="Edit case"
+//                         className="p-1 rounded text-gray-500 hover:text-blue-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400 hover:cursor-pointer"
+//                       >
+//                         <PencilSquareIcon className="h-5 w-5" />
+//                       </button>
+//                     </CaseDialog>
+//                   )}
+//                 <FullScreenContentDialog
+//                   content={content}
+//                   title={`${t("case", "Сигнал")} #${caseNumber}`}
+//                   creator={creator}
+//                   date={date}
+//                   type={type}
+//                   priority={priority}
+//                   categories={categories}
+//                   metricScores={metricScores}
+//                   calculatedRating={calculatedRating}
+//                   attachments={attachments}
+//                   caseId={caseId}
+//                   me={me}
+//                   refetch={refetch}
+//                   isCurrentUserCreator={isCurrentUserCreator}
+//                 />
+//               </div>
+//             </div>
+//             <div className="bg-gray-50 rounded-md p-3 text-gray-900 break-words">
+//               {renderContentSafely(content)}
+//             </div>
+//           </div>
+
+//           {/* Attachments */}
+//           {attachments && attachments.length > 0 && (
+//             <div className="flex flex-wrap gap-2">
+//               {attachments.map((file) => (
+//                 <ImagePreviewModal
+//                   key={file}
+//                   imageUrl={createFileUrl("cases", caseId, file)}
+//                   fileName={file}
+//                 />
+//               ))}
+//             </div>
+//           )}
+//         </div>
+
+//         {/* --- Bottom Section (Static Height) --- */}
+//         {/* This part remains outside and below the scrollable area.
+//             A top margin is added for spacing. */}
+//         <div className="flex-shrink-0 flex flex-col gap-3 pt-3">
+//           {/* Info Grid (Priority, Type, etc.) */}
+//           <div className="flex flex-wrap gap-x-4 gap-y-3">
+//             <div
+//               className={`${caseBoxClasses} ${priorityStyle} grow basis-[140px] sm:basis-[160px] lg:w-[calc(50%-0.5rem)] lg:basis-auto`}
+//             >
+//               <span className={labelTextClass}>{t("priority")}:</span>
+//               <span className="flex items-center mt-0.5 sm:mt-1">
+//                 <FlagIcon className="h-4 w-4 mr-1.5" />
+//                 {t(priority)}
+//               </span>
+//             </div>
+//             <div
+//               className={`${caseBoxClasses} ${typeBadgeStyle} grow basis-[140px] sm:basis-[160px] lg:w-[calc(50%-0.5rem)] lg:basis-auto`}
+//             >
+//               <span className={labelTextClass}>{t("type")}:</span>
+//               <div className="mt-0.5 sm:mt-1">
+//                 <span
+//                   className={`px-2.5 py-0.5 rounded-full text-xs text-center font-medium ${typeBadgeStyle}`}
+//                 >
+//                   {t(type)}
+//                 </span>
+//               </div>
+//             </div>
+//             <div
+//               className={`${caseBoxClasses} grow basis-[140px] sm:basis-[160px] lg:w-[calc(50%-0.5rem)] lg:basis-auto`}
+//             >
+//               <span className={labelTextClass}>{t("status")}:</span>
+//               <span className="flex items-center mt-0.5 sm:mt-1">
+//                 <span
+//                   className={`h-2.5 w-2.5 rounded-full ${statusStyle.dotBgColor} mr-1.5`}
+//                 />
+//                 <span className={`${statusStyle.textColor}`}>{t(status)}</span>
+//               </span>
+//             </div>
+//             <div className="grow basis-[140px] sm:basis-[160px] lg:w-[calc(50%-0.5rem)] lg:basis-auto">
+//               <CaseRatingDisplay
+//                 metricScores={metricScores}
+//                 calculatedRating={calculatedRating}
+//                 onOpenModal={() => setRatingModalOpen(true)}
+//                 disabled={isCurrentUserCreator}
+//                 hasUserRated={hasUserRated}
+//               />
+//             </div>
+//           </div>
+
+//           {/* Categories */}
+//           <div className={`${caseBoxClasses} flex-col bg-white`}>
+//             <span className={labelTextClass}>{t("categories")}:</span>
+//             <span className="flex flex-wrap gap-1">
+//               {categories.length > 0 ? (
+//                 categories.map((cat: ICategory) => (
+//                   <CategoryLink key={cat._id} {...cat} />
+//                 ))
+//               ) : (
+//                 <span className="text-gray-400 italic">
+//                   {t("no_categories")}
+//                 </span>
+//               )}
+//             </span>
+//           </div>
+//         </div>
+//       </div>
+
+//       <RateCaseModal
+//         isOpen={isRatingModalOpen}
+//         onClose={() => setRatingModalOpen(false)}
+//         onSuccessfulSubmit={handleSuccessfulRatingSubmit}
+//         caseId={caseId}
+//         caseNumber={caseNumber}
+//         currentUser={me}
+//         caseScores={metricScores}
+//         isLoadingScores={isLoading}
+//         errorScores={error}
+//       />
+//     </>
 
 export default CaseInfo;

@@ -37,8 +37,20 @@ export const UNAPPROVE_ANSWER_FINANCE = gql`
 `;
 
 export const CREATE_ANSWER = gql`
-  mutation Mutation($input: createAnswerInput!) {
-    createAnswer(input: $input) {
+  mutation Mutation(
+    $case: ID!
+    $content: String!
+    $creator: ID!
+    $attachments: [Upload!]
+  ) {
+    createAnswer(
+      input: {
+        creator: $creator
+        content: $content
+        attachments: $attachments
+        case: $case
+      }
+    ) {
       _id
     }
   }

@@ -25,7 +25,7 @@ export const useAnalysesFilters = (allCases: ICase[] | undefined) => {
     const yearsSet = new Set<number>();
     allCases.forEach((c: ICase) => {
       if (c.date) {
-        const dateObj = new Date(c.date);
+        const dateObj = new Date(parseInt(c.date));
         if (!isNaN(dateObj.getTime())) {
           yearsSet.add(dateObj.getFullYear());
         }

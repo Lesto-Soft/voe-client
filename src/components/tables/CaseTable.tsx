@@ -1,9 +1,13 @@
 import React from "react";
-import { EllipsisHorizontalIcon, FlagIcon } from "@heroicons/react/24/solid";
+import {
+  EllipsisHorizontalIcon,
+  FlagIcon,
+  TrashIcon,
+} from "@heroicons/react/24/solid";
 import moment from "moment";
 // @ts-ignore
 import "moment/dist/locale/bg";
-import { useTranslation } from "react-i18next"; // Import useTranslation
+import { useTranslation } from "react-i18next";
 import { ICase } from "../../db/interfaces";
 import { useEffect, useState } from "react";
 import UserLink from "../global/UserLink";
@@ -14,19 +18,39 @@ import {
   getStatusStyle,
   getTypeBadgeStyle,
 } from "../../utils/style-helpers";
+import { getContentPreview, stripHtmlTags } from "../../utils/contentRenderer";
+import { useCurrentUser } from "../../context/UserContext";
+import { ROLES } from "../../utils/GLOBAL_PARAMETERS";
+import { useDeleteCase } from "../../graphql/hooks/case";
+import ErrorModal from "../modals/ErrorModal";
+import LoadingModal from "../modals/LoadingModal";
+
+interface ICaseTableProps {
+  cases: ICase[];
+  t: (word: string) => string;
+  onCaseDeleted?: () => void;
+}
 
 // --- Main CaseTable Component ---
-const CaseTable: React.FC<{ cases: ICase[]; t: (word: string) => string }> = ({
-  cases,
-  t,
-}) => {
+const CaseTable: React.FC<ICaseTableProps> = ({ cases, t, onCaseDeleted }) => {
   const { i18n } = useTranslation();
   const currentLanguage = i18n.language;
+  const currentUser = useCurrentUser();
+  const { deleteCase, loading, error } = useDeleteCase({
+    onCompleted: () => {
+      if (onCaseDeleted) {
+        onCaseDeleted();
+      }
+    },
+  });
 
   // State to hold the current window width (still needed for description truncation)
   const [windowWidth, setWindowWidth] = useState(
     typeof window !== "undefined" ? window.innerWidth : 0
   );
+
+  // State for dropdown menu
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
   // Effect to update window width on resize
   useEffect(() => {
@@ -56,6 +80,35 @@ const CaseTable: React.FC<{ cases: ICase[]; t: (word: string) => string }> = ({
     }
   };
 
+  // Function to handle dropdown toggle
+  const toggleDropdown = (caseId: string) => {
+    setOpenDropdown((prev) => (prev === caseId ? null : caseId));
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    // Function to close the dropdown
+    const handleClickOutside = () => {
+      setOpenDropdown(null);
+    };
+
+    // If a dropdown is open, add a click listener to the document
+    if (openDropdown) {
+      document.addEventListener("click", handleClickOutside);
+      // Cleanup: remove the listener when the component unmounts or the dropdown closes
+      return () => {
+        document.removeEventListener("click", handleClickOutside);
+      };
+    }
+  }, [openDropdown]);
+
+  if (error) {
+    return <ErrorModal message="Проблем с изтриването на сигнал." />;
+  }
+  if (loading) {
+    return <LoadingModal message="Изтриване на сигнал..." />;
+  }
+
   return (
     <div className="flex-1 flex flex-col min-h-0 px-4 sm:px-6 lg:px-8">
       <div className="flex flex-col shadow-md rounded-lg overflow-hidden bg-white border border-gray-200 overflow-x-auto">
@@ -66,7 +119,7 @@ const CaseTable: React.FC<{ cases: ICase[]; t: (word: string) => string }> = ({
               {/* First Header (No separator) */}
               <th
                 scope="col"
-                className="w-24 px-3 py-4 text-left text-sm font-semibold text-white uppercase tracking-wide cursor-pointer hover:bg-gray-600"
+                className="w-24 px-3 py-4 text-center text-sm font-semibold text-white uppercase tracking-wide cursor-pointer hover:bg-gray-600"
               >
                 {t("case_number")}
               </th>
@@ -75,7 +128,7 @@ const CaseTable: React.FC<{ cases: ICase[]; t: (word: string) => string }> = ({
                 scope="col"
                 className="w-3 px-3 py-4 text-center text-sm font-semibold text-white uppercase tracking-wide relative"
               >
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 pr-2 text-gray-400">
+                <span className="absolute left-0 top-1/2 -translate-y-1/2 pr-2 text-gray-400">
                   |
                 </span>
                 {t("priority")}
@@ -84,7 +137,7 @@ const CaseTable: React.FC<{ cases: ICase[]; t: (word: string) => string }> = ({
                 scope="col"
                 className="w-28 px-3 py-4 text-center text-sm font-semibold text-white uppercase tracking-wide relative"
               >
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 pr-2 text-gray-400">
+                <span className="absolute left-0 top-1/2 -translate-y-1/2 pr-2 text-gray-400">
                   |
                 </span>
                 {t("type")}
@@ -93,7 +146,7 @@ const CaseTable: React.FC<{ cases: ICase[]; t: (word: string) => string }> = ({
                 scope="col"
                 className="max-w-[150px] px-3 py-4 text-center text-sm font-semibold text-white uppercase tracking-wide relative"
               >
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 pr-2 text-gray-400">
+                <span className="absolute left-0 top-1/2 -translate-y-1/2 pr-2 text-gray-400">
                   |
                 </span>
                 {t("creator")}
@@ -102,7 +155,7 @@ const CaseTable: React.FC<{ cases: ICase[]; t: (word: string) => string }> = ({
                 scope="col"
                 className="max-w-[180px] px-3 py-4 text-center text-sm font-semibold text-white uppercase tracking-wide hidden md:table-cell relative"
               >
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 pr-2 text-gray-400 hidden md:inline-block">
+                <span className="absolute left-0 top-1/2 -translate-y-1/2 pr-2 text-gray-400 hidden md:inline-block">
                   |
                 </span>
                 {t("categories")}
@@ -111,7 +164,7 @@ const CaseTable: React.FC<{ cases: ICase[]; t: (word: string) => string }> = ({
                 scope="col"
                 className="max-w-[200px] sm:max-w-[250px] lg:max-w-[300px] px-3 py-4 text-center text-sm font-semibold text-white uppercase tracking-wide relative"
               >
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 pr-2 text-gray-400">
+                <span className="absolute left-0 top-1/2 -translate-y-1/2 pr-2 text-gray-400">
                   |
                 </span>
                 {t("description")}
@@ -120,7 +173,7 @@ const CaseTable: React.FC<{ cases: ICase[]; t: (word: string) => string }> = ({
                 scope="col"
                 className="w-32 px-3 py-4 text-center text-sm font-semibold text-white uppercase tracking-wide relative"
               >
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 pr-2 text-gray-400">
+                <span className="absolute left-0 top-1/2 -translate-y-1/2 pr-2 text-gray-400">
                   |
                 </span>
                 {t("date")}
@@ -129,14 +182,14 @@ const CaseTable: React.FC<{ cases: ICase[]; t: (word: string) => string }> = ({
                 scope="col"
                 className="w-32 px-3 py-4 text-center text-sm font-semibold text-white uppercase tracking-wide relative"
               >
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 pr-2 text-gray-400">
+                <span className="absolute left-0 top-1/2 -translate-y-1/2 pr-2 text-gray-400">
                   |
                 </span>
                 {t("status")}
               </th>
               {/* Last Header */}
               <th scope="col" className="relative w-16 px-3 py-4">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 pr-2 text-gray-400">
+                <span className="absolute left-0 top-1/2 -translate-y-1/2 pr-2 text-gray-400">
                   |
                 </span>
                 <span className="sr-only">{t("actions")}</span>
@@ -153,10 +206,11 @@ const CaseTable: React.FC<{ cases: ICase[]; t: (word: string) => string }> = ({
 
               // Dynamic truncation based on window width
               const truncateLength = getContentTruncateLength();
-              const displayContent =
-                my_case.content.length > truncateLength
-                  ? `${my_case.content.substring(0, truncateLength)}...`
-                  : my_case.content;
+
+              const displayContent = getContentPreview(
+                my_case.content,
+                truncateLength
+              );
 
               return (
                 <tr
@@ -195,7 +249,7 @@ const CaseTable: React.FC<{ cases: ICase[]; t: (word: string) => string }> = ({
                   </td>
                   {/* Creator Cell - Now a Link */}
                   <td className="max-w-[150px] px-3 py-4 text-sm break-words">
-                    <UserLink user={my_case.creator} type="table" />
+                    <UserLink user={my_case.creator} />
                   </td>
                   {/* Category Cell - Now Links */}
                   <td className="max-w-[180px] px-3 py-4 text-sm hidden md:table-cell">
@@ -210,17 +264,17 @@ const CaseTable: React.FC<{ cases: ICase[]; t: (word: string) => string }> = ({
                       )}
                     </div>
                   </td>
-                  {/* Description Cell */}
                   <td
                     className="max-w-[200px] sm:max-w-[250px] lg:max-w-[300px] px-3 py-4 text-sm break-words"
-                    title={my_case.content}
+                    title={stripHtmlTags(my_case.content)} // Show plain text in tooltip
                   >
                     {displayContent}
                   </td>
+
                   {/* Date Cell */}
                   <td className="w-32 px-3 py-4 whitespace-nowrap text-sm">
                     <div className="flex items-center" title={my_case.date}>
-                      {`${moment(my_case.date)
+                      {`${moment(parseInt(my_case.date))
                         .locale(currentLanguage)
                         .format("lll")}`}
                     </div>
@@ -240,23 +294,54 @@ const CaseTable: React.FC<{ cases: ICase[]; t: (word: string) => string }> = ({
                     </div>
                   </td>
                   {/* Actions Cell */}
-                  <td className="w-16 px-3 py-4 whitespace-nowrap text-center text-sm font-medium">
-                    <button
-                      className={`p-1 rounded-md transition-colors duration-150 ease-in-out inline-flex items-center justify-center ${
-                        isClosed
-                          ? "text-gray-400 cursor-not-allowed"
-                          : "text-gray-500 hover:text-gray-800 hover:bg-gray-200"
-                      }`}
-                      disabled={isClosed}
-                      title={
-                        isClosed ? t("no_more_actions") : t("more_actions")
-                      }
-                    >
-                      <EllipsisHorizontalIcon className="h-5 w-5" />
-                      <span className="sr-only">
-                        {t("actions")} {my_case.case_number}
-                      </span>
-                    </button>
+                  <td className="w-16 px-3 py-4 whitespace-nowrap text-center text-sm font-medium relative">
+                    <div>
+                      <button
+                        className={`cursor-pointer p-1 rounded-md transition-colors duration-150 ease-in-out inline-flex items-center justify-center ${
+                          currentUser.role._id !== ROLES.ADMIN
+                            ? "text-gray-400 cursor-not-allowed"
+                            : "text-gray-500 hover:text-gray-800 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                        }`}
+                        disabled={currentUser.role._id !== ROLES.ADMIN}
+                        onClick={(e) => {
+                          e.stopPropagation(); // <-- IMPORTANT: Stops the click from closing the menu immediately
+                          toggleDropdown(my_case._id);
+                        }}
+                        title={
+                          currentUser.role._id !== ROLES.ADMIN
+                            ? t("no_more_actions")
+                            : t("more_actions")
+                        }
+                      >
+                        <EllipsisHorizontalIcon className="h-5 w-5" />
+                        <span className="sr-only">
+                          {t("actions")} {my_case.case_number}
+                        </span>
+                      </button>
+
+                      {/* --- DROPDOWN MENU (FIXED) --- */}
+                      {openDropdown === my_case._id &&
+                        currentUser.role._id === ROLES.ADMIN && (
+                          <div
+                            onClick={(e) => e.stopPropagation()} // <-- IMPORTANT: Stops clicks inside the menu from closing it
+                            className="origin-top-right absolute right-1 mt-2 w-42 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50"
+                            role="menu"
+                            aria-orientation="vertical"
+                            aria-labelledby="menu-button"
+                          >
+                            <div className="py-1" role="none">
+                              <button
+                                onClick={() => deleteCase(my_case._id)}
+                                className="cursor-pointer w-full text-left px-4 py-2 text-sm text-btnRed hover:bg-red-50 hover:text-btnRedHover flex items-center gap-2 transition-colors duration-150"
+                                role="menuitem"
+                              >
+                                <TrashIcon className="h-4 w-4" />
+                                {t("delete_case") || "Delete Case"}
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                    </div>
                   </td>
                 </tr>
               );

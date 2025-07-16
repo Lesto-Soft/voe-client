@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { IUser, ICategory, IMe } from "../../../db/interfaces";
+import { IUser, ICategory } from "../../../db/interfaces";
 import UserAvatar from "../../../components/cards/UserAvatar";
 import CategoryLink from "../../../components/global/CategoryLink";
 import {
@@ -11,15 +11,13 @@ import {
   CogIcon,
   PencilSquareIcon, // <-- Import Pencil Icon
 } from "@heroicons/react/24/outline";
-import { useCurrentUser } from "../../../context/UserContext";
-import { ROLES } from "../../../utils/GLOBAL_PARAMETERS";
 
 interface UserInformationPanelProps {
   user: IUser | undefined | null;
   isLoading?: boolean;
   serverBaseUrl: string;
-  // --- NEW PROP ---
   onEditUser: () => void;
+  canEdit: boolean;
 }
 
 type CategoryRoleTab = "manages" | "expertIn";
@@ -28,12 +26,11 @@ const UserInformationPanel: React.FC<UserInformationPanelProps> = ({
   user,
   isLoading,
   serverBaseUrl,
-  // --- NEW PROP ---
   onEditUser,
+  canEdit,
 }) => {
   const [activeCategoryRoleTab, setActiveCategoryRoleTab] =
     useState<CategoryRoleTab>("manages");
-  const currentUser = useCurrentUser() as IMe | undefined;
 
   useEffect(() => {
     if (user) {
@@ -71,11 +68,6 @@ const UserInformationPanel: React.FC<UserInformationPanelProps> = ({
       </aside>
     );
   }
-
-  // --- NEW: Permission Logic ---
-  const isAdmin = currentUser?.role?._id === ROLES.ADMIN;
-  const isSelf = currentUser?._id === user?._id;
-  const canEdit = isAdmin || isSelf;
 
   const avatarUrl = user.avatar
     ? `${serverBaseUrl}/static/avatars/${user._id}/${user.avatar}`
@@ -147,7 +139,12 @@ const UserInformationPanel: React.FC<UserInformationPanelProps> = ({
               <PencilSquareIcon className="h-6 w-6" />
             </button>
           )}
-          <UserAvatar name={user.name} imageUrl={avatarUrl} size={96} />
+          <UserAvatar
+            name={user.name}
+            imageUrl={avatarUrl}
+            size={96}
+            enablePreview={true}
+          />
           <h1 className="text-xl font-bold text-gray-800">{user.name}</h1>
           {user.username && (
             <p className="text-sm text-gray-500">@{user.username}</p>

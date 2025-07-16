@@ -37,7 +37,7 @@ const getRoleAppearance = (
   if (nameLower.includes("напуснал") || nameLower.includes("archived")) {
     return { icon: ArchiveBoxXMarkIcon, color: "text-red-400" };
   }
-  if (nameLower.includes("нормален")) {
+  if (nameLower.includes("базов")) {
     return { icon: UserIcon, color: "text-gray-500" };
   }
   // Fallback for "placeholder-skeleton" or any other unknown role
@@ -71,7 +71,7 @@ const UserStats: React.FC<UserStatsProps> = ({
         onClick={onShowAllUsers}
         isLoading={isLoadingOverallCounts}
         expectsOutOfTextFormat={true}
-        className="w-full lg:w-52" // Responsive width
+        className="w-full lg:w-40" // Responsive width
       />
 
       {showDivider && (
@@ -81,7 +81,7 @@ const UserStats: React.FC<UserStatsProps> = ({
         ></div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 lg:flex lg:flex-row lg:flex-wrap lg:gap-3 lg:flex-1">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 lg:grid-cols-2 xl:grid-cols-4">
         {isLoadingRoleDefinitions && roles.length === 0
           ? // Pre-load 4 skeleton role cards
             Array.from({ length: 4 }).map((_, index) => {
@@ -95,7 +95,6 @@ const UserStats: React.FC<UserStatsProps> = ({
                   iconColor={appearance.color}
                   isLoading={true}
                   expectsOutOfTextFormat={false}
-                  className="w-full lg:w-45" // Responsive width
                 />
               );
             })
@@ -116,7 +115,6 @@ const UserStats: React.FC<UserStatsProps> = ({
                   isActive={isActive}
                   isLoading={isLoadingRoleDefinitions}
                   expectsOutOfTextFormat={false}
-                  className="w-full lg:w-45" // Responsive width
                 />
               );
             })}

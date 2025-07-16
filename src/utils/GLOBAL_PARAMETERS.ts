@@ -14,6 +14,12 @@ export const ROLES = {
   LEFT: "650000000000000000000004",
   EXPERT: "650000000000000000000002",
 };
+// Define thresholds for each tier
+export const TIERS = {
+  GOLD: 4.25,
+  SILVER: 3.5,
+  BRONZE: 2.5,
+};
 
 export const CASE_STATUS = {
   OPEN: "OPEN",

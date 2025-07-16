@@ -6,10 +6,7 @@ interface CategoryHeaderProps {
   categoryName?: string; // Potentially for displaying the category name in the future
 }
 
-const CategoryHeader: React.FC<CategoryHeaderProps> = ({
-  isArchived,
-  categoryName,
-}) => {
+const CategoryHeader: React.FC<CategoryHeaderProps> = ({ isArchived }) => {
   if (!isArchived) {
     return null; // Don't render anything if the category is not archived
   }

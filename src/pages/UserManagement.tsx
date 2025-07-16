@@ -10,11 +10,7 @@ import {
   useUpdateUser,
   useDeleteUser,
 } from "../graphql/hooks/user"; // Adjust path
-import {
-  AttachmentInput,
-  CreateUserInput,
-  UpdateUserInput,
-} from "../graphql/mutation/user"; // Adjust path
+import { CreateUserInput, UpdateUserInput } from "../graphql/mutation/user"; // Adjust path
 import { useGetRoles } from "../graphql/hooks/role"; // Adjust path
 
 // Context & Interfaces
@@ -116,6 +112,7 @@ const UserManagement: React.FC = () => {
     users: usersForRoleCountsData,
     loading: loadingUsersForRoleCounts,
     error: errorUsersForRoleCounts,
+    refetch: refetchUsersForRoleCounts,
   } = useGetAllUsers(textAttributeFiltersOnlyInput);
 
   const {
@@ -204,7 +201,7 @@ const UserManagement: React.FC = () => {
   const handleFormSubmit = async (
     formData: any,
     editingUserId: string | null,
-    avatarData: AttachmentInput | null | undefined
+    avatarData: File | null | undefined
   ) => {
     const finalInput: Partial<CreateUserInput | UpdateUserInput> = {
       username: formData.username,
@@ -213,9 +210,8 @@ const UserManagement: React.FC = () => {
       position: formData.position,
       role: formData.role,
       financial_approver: formData.financial_approver,
-      ...(formData.managed_categories && {
-        managed_categories: formData.managed_categories,
-      }),
+      expert_categories: formData.expert_categories, // NEW
+      managed_categories: formData.managed_categories, // NEW
       ...(formData.password && { password: formData.password }),
       ...(avatarData !== undefined && { avatar: avatarData }),
     };
@@ -243,12 +239,20 @@ const UserManagement: React.FC = () => {
       await Promise.all([
         refetchUsers(),
         refetchUserCount(),
+        refetchUsersForRoleCounts(), // added since we can now change user.expert_categories / user.managed_categories through the UserForm
         refetchRoles ? refetchRoles() : Promise.resolve(),
       ]);
-      setAvatarVersion(Date.now());
+      // --- MODIFIED ORDER ---
+      // 1. Close the form modal immediately
       closeModal();
+      // 2. Show the success message immediately
       setSuccessModalMessage(successMessage);
       setIsSuccessModalOpen(true);
+      // 3. Update avatar version and refetch data in the background
+      setAvatarVersion(Date.now());
+      refetchUsers();
+      refetchUserCount();
+      if (refetchRoles) refetchRoles();
     } catch (err: any) {
       console.error(`Error during user ${context}:`, err);
       const graphQLError = err.graphQLErrors?.[0]?.message;

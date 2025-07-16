@@ -1,6 +1,6 @@
 // components/features/analyses/hooks/useProcessedAnalyticsData.ts
 import { useMemo } from "react";
-import { ICase, ICategory, IUser } from "../../../../db/interfaces";
+import { ICase, ICategory } from "../../../../db/interfaces";
 import {
   getDaysInMonth,
   getStartAndEndOfWeek,
@@ -29,46 +29,6 @@ interface AnalyticsFilters {
   isAllTimePies: boolean;
 }
 
-// We'll use this type for the new ranked lists.
-// We can formally add this to the types/index.ts file in the next step.
-type RankedUser = {
-  user: IUser;
-  count: number;
-};
-
-// --- NEW HELPER FUNCTION ---
-const getRankedUsers = (
-  cases: ICase[],
-  getUserArray: (c: ICase) => (IUser | null | undefined)[]
-): RankedUser[] => {
-  if (!cases || cases.length === 0) return [];
-
-  const userCounts = new Map<string, { user: IUser; count: number }>();
-
-  cases.forEach((caseItem) => {
-    const users = getUserArray(caseItem);
-    users.forEach((user) => {
-      // Ensure user and user._id exist to count them
-      if (user && user._id && user.name) {
-        const existing = userCounts.get(user._id);
-        if (existing) {
-          existing.count++;
-        } else {
-          // If the user object is encountered for the first time, store it.
-          userCounts.set(user._id, { user, count: 1 });
-        }
-      }
-    });
-  });
-
-  if (userCounts.size === 0) return [];
-
-  // Convert map to array and sort by count descending
-  const rankedList = [...userCounts.values()].sort((a, b) => b.count - a.count);
-
-  return rankedList;
-};
-
 // --- THE HOOK ---
 export const useProcessedAnalyticsData = (
   allCases: ICase[] | undefined,
@@ -90,43 +50,10 @@ export const useProcessedAnalyticsData = (
     if (isAllTimePies) return allCases;
     if (!startDateForPies || !endDateForPies) return [];
     return allCases.filter((c: ICase) => {
-      const caseDate = new Date(c.date);
+      const caseDate = new Date(parseInt(c.date));
       return caseDate >= startDateForPies && caseDate <= endDateForPies;
     });
   }, [allCases, startDateForPies, endDateForPies, isAllTimePies]);
-
-  // --- MODIFIED: Top User Calculations (now returns ranked lists) ---
-  const rankedSignalGivers = useMemo(
-    (): RankedUser[] =>
-      getRankedUsers(filteredCasesForPieCharts, (c) =>
-        c.creator ? [c.creator] : []
-      ),
-    [filteredCasesForPieCharts]
-  );
-
-  const rankedSolutionGivers = useMemo(
-    (): RankedUser[] =>
-      getRankedUsers(filteredCasesForPieCharts, (c) =>
-        (c.answers || []).map((a) => a.creator)
-      ),
-    [filteredCasesForPieCharts]
-  );
-
-  const rankedApprovers = useMemo(
-    (): RankedUser[] =>
-      getRankedUsers(filteredCasesForPieCharts, (c) =>
-        (c.answers || []).map((a) => a.approved).filter((u): u is IUser => !!u)
-      ),
-    [filteredCasesForPieCharts]
-  );
-
-  const rankedRaters = useMemo(
-    (): RankedUser[] =>
-      getRankedUsers(filteredCasesForPieCharts, (c) =>
-        (c.rating || []).map((r) => r.user)
-      ),
-    [filteredCasesForPieCharts]
-  );
 
   // --- The rest of the data processing remains unchanged ---
   const barChartDisplayData = useMemo(() => {
@@ -204,11 +131,12 @@ export const useProcessedAnalyticsData = (
       })`;
       const yearlyDataAggregated: { [year: string]: any } = {};
       allCases.forEach((c: ICase) => {
-        const year = new Date(c.date).getFullYear().toString();
+        const year = new Date(parseInt(c.date)).getFullYear().toString();
         if (!yearlyDataAggregated[year]) {
           yearlyDataAggregated[year] = aggregateCases(
             allCases.filter(
-              (cs: ICase) => new Date(cs.date).getFullYear().toString() === year
+              (cs: ICase) =>
+                new Date(parseInt(cs.date)).getFullYear().toString() === year
             )
           );
         }
@@ -221,11 +149,11 @@ export const useProcessedAnalyticsData = (
         barChartMode === "type" ? "по тип" : "по приоритет"
       })`;
       const yearCases = allCases.filter(
-        (c: ICase) => new Date(c.date).getFullYear() === currentYear
+        (c: ICase) => new Date(parseInt(c.date)).getFullYear() === currentYear
       );
       dataForChart = MONTH_NAMES.map((monthName, index) => {
         const monthCases = yearCases.filter(
-          (c: ICase) => new Date(c.date).getMonth() === index
+          (c: ICase) => new Date(parseInt(c.date)).getMonth() === index
         );
         return { periodLabel: monthName, ...aggregateCases(monthCases) };
       });
@@ -236,7 +164,7 @@ export const useProcessedAnalyticsData = (
         barChartMode === "type" ? "по тип" : "по приоритет"
       })`;
       const monthCasesFiltered = allCases.filter((c: ICase) => {
-        const caseDate = new Date(c.date);
+        const caseDate = new Date(parseInt(c.date));
         return (
           caseDate.getFullYear() === currentYear &&
           caseDate.getMonth() === currentMonth - 1
@@ -246,7 +174,7 @@ export const useProcessedAnalyticsData = (
       dataForChart = Array.from({ length: daysInSelectedMonth }, (_, i) => {
         const dayNumber = i + 1;
         const dayCases = monthCasesFiltered.filter(
-          (c: ICase) => new Date(c.date).getDate() === dayNumber
+          (c: ICase) => new Date(parseInt(c.date)).getDate() === dayNumber
         );
         return {
           periodLabel: dayNumber.toString(),
@@ -259,12 +187,13 @@ export const useProcessedAnalyticsData = (
       })`;
       const { start, end } = getStartAndEndOfWeek(currentWeek, currentYear);
       const weekCasesFiltered = allCases.filter((c: ICase) => {
-        const d = new Date(c.date);
+        const d = new Date(parseInt(c.date));
         return d >= start && d <= end;
       });
       dataForChart = DAY_NAMES_FULL.map((dayName, index) => {
         const dayCases = weekCasesFiltered.filter(
-          (c: ICase) => (new Date(c.date).getUTCDay() + 6) % 7 === index
+          (c: ICase) =>
+            (new Date(parseInt(c.date)).getUTCDay() + 6) % 7 === index
         );
         return { periodLabel: dayName, ...aggregateCases(dayCases) };
       });
@@ -275,13 +204,14 @@ export const useProcessedAnalyticsData = (
         barChartMode === "type" ? "по тип" : "по приоритет"
       })`;
       const rangeCasesFiltered = allCases.filter((c: ICase) => {
-        const d = new Date(c.date);
+        const d = new Date(parseInt(c.date));
         return d >= startDateForPies && d <= endDateForPies;
       });
       dataForChart = DAY_NAMES_FULL.map((name) => {
         const dayCases = rangeCasesFiltered.filter(
           (c: ICase) =>
-            DAY_NAMES_FULL[(new Date(c.date).getUTCDay() + 6) % 7] === name
+            DAY_NAMES_FULL[(new Date(parseInt(c.date)).getUTCDay() + 6) % 7] ===
+            name
         );
         return { periodLabel: name, ...aggregateCases(dayCases) };
       });
@@ -424,10 +354,5 @@ export const useProcessedAnalyticsData = (
     typePieData,
     averageRatingData,
     periodCaseSummary,
-    // MODIFIED: Export ranked lists instead of single top users
-    rankedSignalGivers,
-    rankedSolutionGivers,
-    rankedApprovers,
-    rankedRaters,
   };
 };

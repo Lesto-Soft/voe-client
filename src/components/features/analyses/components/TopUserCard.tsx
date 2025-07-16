@@ -2,23 +2,24 @@ import React from "react";
 import { TrophyIcon } from "@heroicons/react/24/outline"; // <-- NEW: Import from Heroicons
 import UserAvatar from "../../../cards/UserAvatar";
 import UserLink from "../../../global/UserLink";
-import { TopUserStat } from "../types";
+import { RankedUser } from "../types";
 
 // The local TrophyIcon SVG component has been removed.
 
 interface TopUserCardProps {
   title: string;
-  stat: TopUserStat;
+  stat: RankedUser | undefined; // Changed from TopUserStat
   actionText: string;
   onPodiumClick?: () => void;
 }
-
 const TopUserCard: React.FC<TopUserCardProps> = ({
   title,
   stat,
   actionText,
   onPodiumClick,
 }) => {
+  const serverBaseUrl = import.meta.env.VITE_API_URL || "";
+
   return (
     <div className="bg-white p-4 rounded-lg shadow-md flex flex-col items-center min-h-[270px] relative">
       {stat && onPodiumClick && (
@@ -40,11 +41,16 @@ const TopUserCard: React.FC<TopUserCardProps> = ({
           <>
             <UserAvatar
               name={stat.user.name}
-              imageUrl={stat.user.avatar}
+              imageUrl={
+                stat.user.avatar
+                  ? `${serverBaseUrl}/static/avatars/${stat.user._id}/${stat.user.avatar}`
+                  : null
+              }
               size={48}
+              enablePreview={true}
             />
             <div className="mt-2">
-              <UserLink user={stat.user} type="table" />
+              <UserLink user={stat.user} />
             </div>
             <p className="text-sm text-gray-600 mt-1">
               <span className="font-bold">{stat.count}</span> {actionText}

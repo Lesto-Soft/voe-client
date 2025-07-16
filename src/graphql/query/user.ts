@@ -18,9 +18,12 @@ fragment UserFragment on User {
       comments {_id}
       expert_categories {_id}
       managed_categories {_id}
-     
+      
 }`;
 
+// we do so many populates since in UserActivityItemCard we need to get case.creator._id, case.categories._id, and case.answers.needs_finance
+// for each case, answers.case, comment.case, and comment.answers.case and yeah
+// we do this to get the proper CaseLink authorization
 const fullUserFragment = `
 fragment FullUserFragment on User {
       _id
@@ -42,9 +45,22 @@ fragment FullUserFragment on User {
         status
         type
         priority
+        calculatedRating
+        creator {
+          _id
+        }
         categories {
           _id
           name
+          experts {
+            _id
+          }
+          managers {
+            _id
+          }
+        }
+        answers {
+          needs_finance
         }
       }
       answers {
@@ -62,6 +78,60 @@ fragment FullUserFragment on User {
           _id
           case_number
           status
+          creator {
+            _id
+          }
+          categories {
+            _id
+            name
+          }
+          answers {
+            needs_finance
+          }
+        }
+      }
+      approvedAnswers {
+        _id
+        content
+        date
+        approved_date
+        approved {_id}
+        case {
+          _id
+          case_number
+          status
+          creator {
+            _id
+          }
+          categories {
+            _id
+            name
+          }
+          answers {
+            needs_finance
+          }
+        }
+      }
+      financialApprovedAnswers {
+        _id
+        content
+        date
+        financial_approved_date
+        financial_approved {_id}
+        case {
+          _id
+          case_number
+          status
+          creator {
+            _id
+          }
+          categories {
+            _id
+            name
+          }
+          answers {
+            needs_finance
+          }
         }
       }
       comments {
@@ -71,22 +141,80 @@ fragment FullUserFragment on User {
         case {
           _id
           case_number
+          status
+          creator {
+            _id
+          }
+          categories {
+            _id
+            name
+          }
+          answers {
+            needs_finance
+          }
         }
         answer {
           _id
           case {
             _id
             case_number
+            status
+            creator {
+              _id
+            }
+            categories {
+              _id
+              name
+            }
+            answers {
+              needs_finance
+            }
           }
         }
       }
       expert_categories {
         _id
         name
+        experts {
+          _id
+        }
+        managers {
+          _id
+        }
       }
       managed_categories {
         _id
         name
+        experts {
+          _id
+        }
+        managers {
+          _id
+        }
+      }
+      metricScores {
+        _id
+        score
+        date
+        metric {
+          _id
+          name
+        }
+        case {
+          _id
+          case_number
+          status
+          creator {
+            _id
+          }
+          categories {
+            _id
+            name
+          }
+          answers {
+            needs_finance
+          }
+        }
       }
 }`;
 
@@ -184,4 +312,24 @@ export const GET_ME = gql`
     }
   }
   ${userFragment}
+`;
+
+export const GET_RANKED_USERS = gql`
+  query GetRankedUsers($input: RankedUsersInput!) {
+    getRankedUsers(input: $input) {
+      user {
+        _id
+        name
+        username
+        avatar
+        expert_categories {
+          _id
+        }
+        managed_categories {
+          _id
+        }
+      }
+      count
+    }
+  }
 `;

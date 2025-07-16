@@ -13,5 +13,8 @@
   "MEDIUM": "СРЕДЕН",
   "HIGH": "ВИСОК",
   "priority": "Приоритет",
-  "categories": "Категории"
+  "categories": "Категории",
+  "PROBLEM": "ПРОБЛЕМ",
+  "SUGGESTION": "ПРЕДЛОЖЕНИЕ",
+  "type": "Тип"
 }

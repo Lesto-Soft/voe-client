@@ -1,10 +1,12 @@
 import { useState, useMemo, useEffect } from "react";
-import FileAttachmentAnswer from "../global/FileAttachmentAnswer"; // Actual component
+import FileAttachmentAnswer from "../global/FileAttachmentAnswer";
 import { PaperAirplaneIcon, XMarkIcon } from "@heroicons/react/24/solid";
-import { AttachmentInput } from "../../graphql/mutation/user"; // Actual type
-import { readFileAsBase64 } from "../../utils/attachment-handling"; // Actual utility
-import { useCreateAnswer } from "../../graphql/hooks/answer"; // Actual hook
-import { ANSWER_CONTENT } from "../../utils/GLOBAL_PARAMETERS"; // Actual constant for MAX_CHARS
+import { useCreateAnswer } from "../../graphql/hooks/answer";
+import { ANSWER_CONTENT } from "../../utils/GLOBAL_PARAMETERS";
+import SimpleTextEditor from "../forms/partials/SimplifiedTextEditor";
+import { getTextLength } from "../../utils/contentRenderer";
+import ImagePreviewModal from "../modals/ImagePreviewModal";
+import { toast } from "react-toastify";
 
 // Interface for the props of the AddAnswer component
 interface AddAnswerProps {
@@ -27,25 +29,12 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
   const [content, setContent] = useState<string>("");
   const [submissionError, setSubmissionError] = useState<string | null>(null);
 
-  // State for controlling success message visibility and fade-out
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [fadeSuccess, setFadeSuccess] = useState(false);
-  const [mountSuccess, setMountSuccess] = useState(false); // for smooth appear
-
   // Using the actual useCreateAnswer hook
   const {
     createAnswer,
-    data,
     loading,
     error: apiError,
   } = useCreateAnswer(caseNumber);
-
-  // Memoized character count and check if content is too long
-  const charCount = useMemo(() => content.length, [content]);
-  const isContentTooLong = useMemo(
-    () => charCount > ANSWER_CONTENT.MAX,
-    [charCount]
-  );
 
   // Effect to handle API errors from the useCreateAnswer hook
   useEffect(() => {
@@ -58,67 +47,35 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
     }
   }, [apiError, t]);
 
-  // Show success message when data is set and no error/loading
-  useEffect(() => {
-    if (data && !loading && !submissionError) {
-      setMountSuccess(true); // mount first (opacity-0)
-      setShowSuccess(true); // render the element
-      setFadeSuccess(false); // ensure not fading out
-
-      // Next tick, trigger fade-in
-      const appearTimeout = setTimeout(() => setFadeSuccess(false), 10); // ensure transition
-      // Start fade-out after 4.5s
-      const fadeTimeout = setTimeout(() => setFadeSuccess(true), 4500);
-      // Hide after 5s
-      const hideTimeout = setTimeout(() => {
-        setShowSuccess(false);
-        setMountSuccess(false);
-      }, 5000);
-
-      return () => {
-        clearTimeout(appearTimeout);
-        clearTimeout(fadeTimeout);
-        clearTimeout(hideTimeout);
-      };
-    }
-  }, [data, loading, submissionError]);
-
   // Function to handle form submission
   const submitAnswer = async (event: React.FormEvent) => {
     event.preventDefault();
     setSubmissionError(null); // Clear previous errors
 
-    // Validate content length
-    if (isContentTooLong) {
+    // Validate content length using plain text length
+    const textLength = getTextLength(content);
+    if (textLength > ANSWER_CONTENT.MAX) {
       setSubmissionError(
-        t("caseSubmission.errors.submission.contentTooLong") ||
-          "Content is too long."
-      );
-      return;
-    }
-    // Validate if content or attachments are present
-    if (!content.trim() && attachments.length === 0) {
-      setSubmissionError(
-        t("caseSubmission.errors.submission.emptyContent") ||
-          "Cannot submit empty answer."
+        // t("caseSubmission.errors.submission.contentTooLong") ||
+        "Отговорът е прекалено дълъг."
       );
       return;
     }
 
-    let attachmentInputs: AttachmentInput[] = [];
-    try {
-      // Process attachments to base64
-      attachmentInputs = await Promise.all(
-        attachments.map(async (file): Promise<AttachmentInput> => {
-          const base64Data = await readFileAsBase64(file); // Using actual utility
-          return { filename: file.name, file: base64Data };
-        })
-      );
-    } catch (fileReadError) {
-      console.error("Client: Error reading files to base64:", fileReadError);
+    if (textLength < ANSWER_CONTENT.MIN) {
       setSubmissionError(
-        t("caseSubmission.errors.submission.fileProcessingError") ||
-          "Error processing file attachments."
+        // t("caseSubmission.errors.submission.contentTooShort") ||
+        `Отговорът трябва да е поне ${ANSWER_CONTENT.MIN} символа.`
+      );
+      return;
+    }
+
+    // Validate if content or attachments are present
+    const hasContent = content.trim() && textLength > 0;
+    if (!hasContent && attachments.length === 0) {
+      setSubmissionError(
+        t("caseSubmission.errors.submission.emptyContent") ||
+          "Cannot submit empty answer."
       );
       return;
     }
@@ -127,7 +84,7 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
       // Call the createAnswer mutation
       await createAnswer({
         case: caseId,
-        attachments: attachmentInputs,
+        attachments,
         content,
         creator: me._id,
       });
@@ -137,6 +94,18 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
       setAttachments([]);
       // Optionally, you can clear submissionError here or rely on API success to imply no error
       // setSubmissionError(null); // Or show a success message
+      toast.success(t("answerSubmitted"), {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        style: {
+          marginTop: "90px",
+        },
+      });
     } catch (error: any) {
       // Catch errors from the createAnswer promise itself (e.g., network issues if not handled by hook)
       console.error("Error creating answer:", error);
@@ -156,69 +125,65 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
     );
   };
 
-  // Function to handle changes in the textarea content
-  const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setContent(e.target.value);
+  // Updated to handle TextEditor content changes
+  const handleContentChange = (html: string) => {
+    setContent(html);
     // Clear submission error related to length if user corrects it
-    if (submissionError && e.target.value.length <= ANSWER_CONTENT.MAX) {
+    if (submissionError && getTextLength(html) <= ANSWER_CONTENT.MAX) {
       setSubmissionError(null);
     }
   };
 
-  // Determine if the submit button should be disabled
+  // Updated submit button disabled condition
   const isSubmitDisabled =
-    isContentTooLong || loading || content.length < ANSWER_CONTENT.MIN;
+    loading || getTextLength(content) < ANSWER_CONTENT.MIN;
+
+  // Memoize object URLs for each file
+  const fileObjectUrls = useMemo(() => {
+    const map = new Map<string, string>();
+    attachments.forEach((file) => {
+      map.set(file.name + "-" + file.lastModified, URL.createObjectURL(file));
+    });
+    return map;
+  }, [attachments]);
+
+  // Cleanup object URLs on unmount or when attachments change
+  useEffect(() => {
+    return () => {
+      fileObjectUrls.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [fileObjectUrls]);
 
   return (
     <div>
       {/* Main container for the input area */}
       <div className="flex flex-col gap-2 mx-5">
-        {/* Flex container for textarea, attachment button, and submit button */}
-        {/* items-start will align the tops of the flex items */}
-        <div className="flex items-start gap-2">
-          {" "}
-          {/* Removed inner mx-5, added items-start */}
-          {/* Container for the textarea and character counter */}
-          <div className="flex-grow relative">
-            <textarea
-              className={`border border-gray-300 rounded-lg p-3 w-full h-24 resize-none focus:outline-none focus:ring-2 ${
-                isContentTooLong
-                  ? "ring-red-500 border-red-500" // Style for content too long
-                  : "focus:ring-btnRedHover focus:border-btnRedHover" // Standard focus style
-              } transition-colors duration-150`}
-              placeholder={t("writeAnswer") || "Write your answer here..."}
-              value={content}
-              onChange={handleContentChange}
-              aria-invalid={isContentTooLong}
-              aria-describedby="char-counter submission-error-display"
+        <div className="flex items-stretch gap-2">
+          {/* Container for the TextEditor and character counter */}
+          <div className="flex-grow relative min-w-0 max-w-full">
+            <SimpleTextEditor
+              content={content}
+              onUpdate={handleContentChange}
+              placeholder={"Напишете отговор..."}
+              maxLength={ANSWER_CONTENT.MAX}
+              minLength={ANSWER_CONTENT.MIN}
+              wrapperClassName="transition-colors duration-150 h-36"
             />
-            {/* Character counter display */}
-            <div
-              id="char-counter"
-              className={`absolute bottom-2 right-2 text-xs ${
-                isContentTooLong
-                  ? "text-red-600 font-semibold" // Style for counter when content is too long
-                  : "text-gray-500" // Standard counter style
-              }`}
-            >
-              {charCount}/{ANSWER_CONTENT.MAX}
-            </div>
           </div>
           {/* File attachment component */}
-          {/* For FileAttachmentAnswer to match height, its internal button should also be h-28 or it should be wrapped appropriately */}
           <FileAttachmentAnswer
             inputId="file-upload-answer"
             attachments={attachments}
             setAttachments={setAttachments}
             setFileError={setFileError}
-            // You might need to pass a className or style to FileAttachmentAnswer if it supports it, e.g., className="h-28"
+            height={36}
           />
           {/* Submit button */}
           <button
             onClick={submitAnswer}
             disabled={isSubmitDisabled}
             aria-label={t("submitAnswer") || "Submit Answer"}
-            className={`flex items-center justify-center h-24 w-24 rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-btnRedHover disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150`}
+            className={`flex items-center justify-center h-36 w-24 min-w-24 rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-btnRedHover disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150`}
           >
             {loading ? (
               // Loading spinner
@@ -266,28 +231,42 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
       {attachments.length > 0 && (
         <div className="mx-5 mt-2 text-sm text-gray-600 space-y-1 overflow-y-auto rounded p-2 bg-gray-100 border border-gray-200 max-h-32">
           <div className="flex flex-wrap gap-2">
-            {attachments.map((file) => (
-              <div
-                key={file.name + "-" + file.lastModified + "-" + file.size} // Enhanced key for better uniqueness
-                className="flex items-center gap-2 px-3 py-1.5 text-sm bg-gray-200 rounded-full hover:bg-gray-300"
-                title={file.name}
-              >
-                <span className="truncate max-w-[150px] sm:max-w-xs">
-                  {file.name}
-                </span>{" "}
-                {/* Truncate long file names */}
-                <button
-                  type="button"
-                  onClick={() => handleRemoveAttachment(file.name)}
-                  className="p-0.5 rounded-full hover:bg-red-100 focus:outline-none focus:ring-1 focus:ring-red-500"
-                  aria-label={`${t("removeFile") || "Remove file"} ${
-                    file.name
-                  }`}
+            {attachments.map((file) => {
+              const fileKey = file.name + "-" + file.lastModified;
+              const fileUrl = fileObjectUrls.get(fileKey) || "";
+
+              return (
+                <div
+                  key={file.name + "-" + file.lastModified + "-" + file.size}
+                  className="flex items-center gap-2 px-3 py-1.5 text-sm bg-gray-200 rounded-full hover:bg-gray-300"
+                  title={file.name}
                 >
-                  <XMarkIcon className="h-4 w-4 text-btnRed hover:text-red-700" />
-                </button>
-              </div>
-            ))}
+                  <ImagePreviewModal
+                    imageUrl={fileUrl}
+                    fileName={file.name}
+                    triggerElement={
+                      <button
+                        type="button"
+                        className="truncate max-w-[150px] sm:max-w-xs cursor-pointer"
+                        title={file.name}
+                      >
+                        {file.name}
+                      </button>
+                    }
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveAttachment(file.name)}
+                    className="p-0.5 rounded-full hover:bg-red-100 focus:outline-none focus:ring-1 focus:ring-red-500 cursor-pointer"
+                    aria-label={`${t("removeFile") || "Remove file"} ${
+                      file.name
+                    }`}
+                  >
+                    <XMarkIcon className="h-4 w-4 text-btnRed hover:text-red-700" />
+                  </button>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
@@ -311,23 +290,6 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
           {submissionError}
         </div>
       }
-
-      {/* Optional: Success Message Display */}
-      {showSuccess && (
-        <div
-          className={`mx-5 mt-3 p-3 rounded-md border bg-green-100 border-green-400 text-green-700 transition-opacity duration-500 ${
-            mountSuccess
-              ? fadeSuccess
-                ? "opacity-0"
-                : "opacity-100"
-              : "opacity-0"
-          }`}
-          role="status"
-          aria-live="polite"
-        >
-          {t("caseSubmission.success") || "Answer submitted successfully!"}
-        </div>
-      )}
     </div>
   );
 };

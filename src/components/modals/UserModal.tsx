@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import * as AlertDialog from "@radix-ui/react-alert-dialog";
 
@@ -17,6 +17,7 @@ const UserModal: React.FC<ModalProps> = ({
 }) => {
   const [hasInteracted, setHasInteracted] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const isMouseDownOnBackdrop = useRef(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -48,6 +49,21 @@ const UserModal: React.FC<ModalProps> = ({
     setShowConfirmDialog(false);
   };
 
+  const handleBackdropMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    // MODIFIED: Only set the flag if the click is on the backdrop itself, not a child.
+    if (e.target === e.currentTarget) {
+      isMouseDownOnBackdrop.current = true;
+    }
+  };
+
+  const handleBackdropMouseUp = (e: React.MouseEvent<HTMLDivElement>) => {
+    // MODIFIED: Only attempt to close if the click is on the backdrop itself.
+    if (e.target === e.currentTarget && isMouseDownOnBackdrop.current) {
+      attemptClose();
+    }
+    isMouseDownOnBackdrop.current = false;
+  };
+
   const interactionProps = {
     onChange: handleInteraction,
     onKeyDown: handleInteraction,
@@ -62,11 +78,12 @@ const UserModal: React.FC<ModalProps> = ({
     >
       <div
         className="fixed inset-0 z-50 flex items-center justify-center bg-stone-500/75 p-4"
-        onClick={attemptClose}
+        onMouseDown={handleBackdropMouseDown}
+        onMouseUp={handleBackdropMouseUp}
       >
         <div
           className="relative w-full max-w-md md:max-w-lg lg:max-w-2xl rounded-lg bg-white p-4 md:p-6 shadow-xl max-h-[85vh] overflow-y-auto"
-          onClick={(e) => e.stopPropagation()}
+          //onMouseDown={(e) => e.stopPropagation()}
           {...interactionProps}
         >
           <button

@@ -28,11 +28,12 @@
   "no_categories": "No categories found",
   "description": "Description",
   "search_by_description": "Search by description",
+  "fiter_by_date": "Search by date",
   "search": "Search...",
   "choose_categories": "Choose categories",
   "choose_creator": "Choose creator",
   "clear_creator": "Clear creator",
-  "search_by_case_number": "Search by case number",
+  "search_by_case_number": "Number",
   "hide_filters": "Hide filters",
   "show_filters": "Show filters",
   "actions": "Actions",
@@ -54,5 +55,7 @@
   "writeComment": "Write a comment...",
   "content": "Content",
   "attachments": "Attachments",
-  "writeAnswer": "Write an answer..."
+  "writeAnswer": "Write an answer...",
+  "delete_case": "Delete case",
+  "answerSubmitted": "The answer has been sent"
 }

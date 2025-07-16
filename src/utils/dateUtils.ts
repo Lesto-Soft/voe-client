@@ -112,3 +112,10 @@ export const subDays = (date: Date, days: number): Date => {
   newDate.setDate(newDate.getDate() - days);
   return newDate;
 };
+
+export const parseActivityDate = (dateValue: string | number): Date => {
+  if (typeof dateValue === "string" && /^\d+$/.test(dateValue)) {
+    return new Date(parseInt(dateValue, 10));
+  }
+  return new Date(dateValue);
+};

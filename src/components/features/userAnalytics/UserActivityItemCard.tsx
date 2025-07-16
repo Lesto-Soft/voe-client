@@ -6,6 +6,7 @@ import CaseLink from "../../../components/global/CaseLink"; // Adjust path
 import {
   ChatBubbleLeftEllipsisIcon,
   ChatBubbleLeftRightIcon,
+  BanknotesIcon,
   DocumentTextIcon,
   CheckBadgeIcon,
   ClockIcon,
@@ -13,7 +14,7 @@ import {
   XCircleIcon,
   InformationCircleIcon,
 } from "@heroicons/react/24/outline";
-import { FlagIcon } from "@heroicons/react/24/solid"; // Use solid FlagIcon as in CaseInfo
+import { FlagIcon, StarIcon } from "@heroicons/react/24/solid"; // Use solid FlagIcon as in CaseInfo
 import {
   // Utilities from categoryDisplayUtils for translations
   translateStatus as translateStatusUtil,
@@ -26,36 +27,45 @@ import {
   getStatusStyle as getStatusStyleFromHelper,
   getPriorityStyle as getPriorityStyleFromHelper,
   getTypeBadgeStyle as getTypeBadgeStyleFromHelper,
+  getCalculatedRatingStyle as getCalculatedRatingStyleFromHelper,
 } from "../../../utils/style-helpers"; // Adjust path to your style-helpers.ts
 
 import CategoryLink from "../../global/CategoryLink";
+import {
+  getContentPreview,
+  stripHtmlTags,
+} from "../../../utils/contentRenderer";
 
 type ActivityItem = ICase | IAnswer | IComment;
 
 interface UserActivityItemCardProps {
   item: ActivityItem;
-  activityType: "case" | "answer" | "comment";
+  activityType:
+    | "case"
+    | "answer"
+    | "comment"
+    | "base_approval"
+    | "finance_approval";
   actor: IUser;
+  date: string;
 }
 
 const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
   item,
   activityType,
   actor,
+  date,
 }) => {
   let icon: React.ReactNode;
   let titleFragments: React.ReactNode[] = [];
-  let contentPreview = "";
   let caseToLinkForDisplay: Partial<ICase> | undefined;
 
-  const date = item.date;
   const itemContent =
     (item as ICase)?.content ||
     (item as IAnswer)?.content ||
     (item as IComment)?.content ||
     "";
-  contentPreview =
-    itemContent.substring(0, 150) + (itemContent.length > 150 ? "..." : "");
+  const contentPreview = getContentPreview(itemContent, 150);
 
   titleFragments.push(
     <span
@@ -89,12 +99,40 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
       titleFragments.push(
         <span
           key="preposition"
-          className="ml-1 text-gray-500 whitespace-nowrap"
+          className="ml-1 text-gray-700 whitespace-nowrap"
         >
           по
         </span>
       );
     }
+  } else if (activityType === "base_approval" && "case" in item) {
+    const answerItem = item as IAnswer;
+    icon = <CheckBadgeIcon className="h-5 w-5 text-sky-500" />;
+    titleFragments.push(
+      <span key="action" className="ml-1 whitespace-nowrap">
+        одобри отговор
+      </span>
+    );
+    caseToLinkForDisplay = answerItem.case;
+    titleFragments.push(
+      <span key="preposition" className="ml-1 text-gray-700 whitespace-nowrap">
+        по
+      </span>
+    );
+  } else if (activityType === "finance_approval" && "case" in item) {
+    const answerItem = item as IAnswer;
+    icon = <BanknotesIcon className="h-5 w-5 text-emerald-500" />;
+    titleFragments.push(
+      <span key="action" className="ml-1 whitespace-nowrap">
+        финансира отговор
+      </span>
+    );
+    caseToLinkForDisplay = answerItem.case;
+    titleFragments.push(
+      <span key="preposition" className="ml-1 text-gray-700 whitespace-nowrap">
+         по
+      </span>
+    );
   } else if (activityType === "comment" && "content" in item) {
     const commentItem = item as IComment;
     icon = <ChatBubbleLeftEllipsisIcon className="h-5 w-5 text-purple-500" />;
@@ -112,7 +150,7 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
       titleFragments.push(
         <span
           key="preposition"
-          className="ml-1 text-gray-500 whitespace-nowrap"
+          className="ml-1 text-gray-700 whitespace-nowrap"
         >
           към
         </span>
@@ -127,7 +165,7 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
       titleFragments.push(
         <span
           key="preposition"
-          className="ml-1 text-gray-500 whitespace-nowrap"
+          className="ml-1 text-gray-700 whitespace-nowrap"
         >
           по
         </span>
@@ -157,7 +195,8 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
   // Prepare styles for case-specific details if activityType is "case"
   let statusStyleFromHelper,
     typeBadgeClassesFromHelper,
-    priorityTextColorClassFromHelper;
+    priorityTextColorClassFromHelper,
+    calculatedRatingTextColorClassFromHelper;
   if (activityType === "case" && "status" in item) {
     statusStyleFromHelper = getStatusStyleFromHelper(item.status as string);
     typeBadgeClassesFromHelper = getTypeBadgeStyleFromHelper(
@@ -167,6 +206,14 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
       priorityTextColorClassFromHelper = getPriorityStyleFromHelper(
         (item as ICase).priority
       );
+    }
+    if ((item as ICase).calculatedRating) {
+      const calculatedRating = (item as ICase).calculatedRating;
+      if (calculatedRating != null) {
+        // This checks for both null and undefined
+        calculatedRatingTextColorClassFromHelper =
+          getCalculatedRatingStyleFromHelper(calculatedRating);
+      }
     }
   }
 
@@ -196,13 +243,16 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
             </div>
             {date && (
               <span className="text-xs text-gray-400 whitespace-nowrap flex-shrink-0 mt-1 sm:mt-0 self-start sm:self-baseline">
-                <ShowDate date={date} />
+                <ShowDate date={date} isCase={activityType === "case"} />
               </span>
             )}
           </div>
 
           {contentPreview && (
-            <p className="text-sm text-gray-600 leading-relaxed line-clamp-2 sm:line-clamp-3">
+            <p
+              className="text-sm text-gray-600 leading-relaxed line-clamp-2 sm:line-clamp-3"
+              title={stripHtmlTags(itemContent)}
+            >
               {contentPreview}
             </p>
           )}
@@ -248,13 +298,27 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
                       <div className="flex-shrink-0">
                         {/* Wrapper to help with spacing */}
                         <span
-                          className={`inline-flex items-center px-2 py-0.5 rounded-full font-medium ${priorityTextColorClassFromHelper}`}
+                          className={`inline-flex items-center pl-2 py-0.5 rounded-full font-medium ${priorityTextColorClassFromHelper}`}
                         >
                           <FlagIcon className="h-3.5 w-3.5 mr-1 flex-shrink-0" />
                           {translatePriorityUtil(item.priority)}
                         </span>
                       </div>
                     )}
+                  {/* Calculated Rating Badge/Text */}
+                  {item.calculatedRating && (
+                    <div className="flex-shrink-0">
+                      {/* Wrapper to help with spacing */}
+                      <span
+                        className={`inline-flex items-center px-1 py-0.5 rounded-full font-medium ${calculatedRatingTextColorClassFromHelper}`}
+                      >
+                        <StarIcon className="h-3.5 w-3.5 mr-1 flex-shrink-0" />
+                        <span className="brightness-75">
+                          {item.calculatedRating.toFixed(2)}
+                        </span>
+                      </span>
+                    </div>
+                  )}
                 </div>
                 {/* Line 2: Categories */}
                 {"categories" in item &&

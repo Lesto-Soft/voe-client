@@ -1,9 +1,11 @@
 // src/components/forms/CategoryForm.tsx
 // NOTE: This file was renamed from CreateCategoryForm.tsx
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { ICategory } from "../../db/interfaces"; // Adjust path
 import { useCategoryFormState } from "./hooks/useCategoryFormState"; // Adjust path
 import CategoryInputFields from "./partials/CategoryInputFields"; // Adjust path
+import { getTextLength } from "../../utils/contentRenderer";
+import { CATEGORY_HELPERS } from "../../utils/GLOBAL_PARAMETERS";
 
 export interface CategoryFormData {
   name: string;
@@ -39,7 +41,6 @@ interface CategoryFormProps {
 // Component name updated
 const CategoryForm: React.FC<CategoryFormProps> = ({
   onSubmit,
-  onClose,
   initialData = null,
   submitButtonText,
   isSubmitting = false,
@@ -67,22 +68,68 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
   } = useCategoryFormState({ initialData, onDirtyChange });
 
   const [formSubmitError, setFormSubmitError] = useState<string | null>(null);
+  const [problemError, setProblemError] = useState<string | null>(null);
+  const [suggestionError, setSuggestionError] = useState<string | null>(null);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setFormSubmitError(null);
     setNameError(null);
+    setProblemError(null);
+    setSuggestionError(null);
 
     const finalTrimmedName = name.trim();
+    const problemLength = getTextLength(problem);
+    const suggestionLength = getTextLength(suggestion);
+    let hasValidationErrors = false;
+
     if (!finalTrimmedName) {
       setNameError("Името на категорията е задължително.");
+      hasValidationErrors = true;
+    } else if (finalTrimmedName.length < 3) {
+      setNameError("Името на категорията трябва да е поне 3 символа.");
+      hasValidationErrors = true;
+    } else if (finalTrimmedName.length > 25) {
+      setNameError(
+        "Името на категорията не може да бъде по-дълго от 25 символа."
+      );
+      hasValidationErrors = true;
+    }
+
+    // UPDATED validation for 'problem' field
+    if (problemLength < CATEGORY_HELPERS.MIN) {
+      setProblemError(
+        `Описанието на проблема е задължително и трябва да е поне ${CATEGORY_HELPERS.MIN} символа.`
+      );
+      hasValidationErrors = true;
+    } else if (problemLength > CATEGORY_HELPERS.MAX) {
+      setProblemError(
+        `Описанието на проблема не може да надвишава ${CATEGORY_HELPERS.MAX} символа.`
+      );
+      hasValidationErrors = true;
+    }
+
+    // UPDATED validation for 'suggestion' field
+    if (suggestionLength < CATEGORY_HELPERS.MIN) {
+      setSuggestionError(
+        `Описанието на предложението е задължително и трябва да е поне ${CATEGORY_HELPERS.MIN} символа.`
+      );
+      hasValidationErrors = true;
+    } else if (suggestionLength > CATEGORY_HELPERS.MAX) {
+      setSuggestionError(
+        `Описанието на предложението не може да надвишава ${CATEGORY_HELPERS.MAX} символа.`
+      );
+      hasValidationErrors = true;
+    }
+
+    if (hasValidationErrors) {
       return;
     }
 
     const formDataObject: CategoryFormData = {
       name: finalTrimmedName,
-      problem: problem.trim() || undefined,
-      suggestion: suggestion.trim() || undefined,
+      problem: problem, // Send the full HTML
+      suggestion: suggestion, // Send the full HTML
       expertIds: expertIds.length > 0 ? expertIds : undefined,
       managerIds: managerIds.length > 0 ? managerIds : undefined,
       archived: archived,
@@ -115,8 +162,10 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
           nameError={nameError}
           problem={problem}
           setProblem={setProblem}
+          problemError={problemError}
           suggestion={suggestion}
           setSuggestion={setSuggestion}
+          suggestionError={suggestionError}
           expertIds={expertIds}
           setExpertIds={setExpertIds}
           managerIds={managerIds}

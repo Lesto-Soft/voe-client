@@ -1,12 +1,11 @@
 import { useState, useEffect } from "react";
-import { PencilIcon } from "@heroicons/react/24/outline";
+import { PencilIcon, ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import * as Dialog from "@radix-ui/react-dialog";
 import { useTranslation } from "react-i18next";
 import FileAttachmentBtn from "./FileAttachmentBtn";
 import { IComment } from "../../db/interfaces";
 import { useUpdateComment } from "../../graphql/hooks/comment";
-import { readFileAsBase64 } from "../../utils/attachment-handling";
-import { AttachmentInput } from "../../graphql/hooks/case";
+import { COMMENT_CONTENT } from "../../utils/GLOBAL_PARAMETERS";
 
 interface EditButtonProps {
   comment: IComment;
@@ -14,114 +13,162 @@ interface EditButtonProps {
   caseNumber: number;
 }
 
-const EditButton: React.FC<EditButtonProps> = ({
-  comment,
-  currentAttachments,
-  caseNumber,
-}) => {
+export interface UpdateCommentInput {
+  content?: string;
+  attachments?: File[];
+  deletedAttachments?: string[];
+}
+
+const EditButton: React.FC<EditButtonProps> = ({ comment, caseNumber }) => {
   if (!comment) {
     return <div>Loading...</div>;
   }
 
   const { t } = useTranslation("modals");
+  const [isOpen, setIsOpen] = useState(false);
   const [content, setContent] = useState<string>(comment.content || "");
-  const [attachments, setAttachments] = useState<File[]>([]);
-  const { updateComment, loading, error } = useUpdateComment(caseNumber);
+  const [charCount, setCharCount] = useState<number>(0);
+  const [existingAttachments, setExistingAttachments] = useState<string[]>([]);
+  const [newAttachments, setNewAttachments] = useState<File[]>([]);
+  const [error, setError] = useState<string | null>(null);
+
+  const {
+    updateComment,
+    loading,
+    error: apiError,
+  } = useUpdateComment(caseNumber);
+
+  const isInvalid =
+    charCount > COMMENT_CONTENT.MAX ||
+    charCount == 0 ||
+    charCount < COMMENT_CONTENT.MIN;
 
   useEffect(() => {
-    if (currentAttachments && currentAttachments.length > 0) {
-      Promise.all(
-        currentAttachments.map(async (url) => {
-          const response = await fetch(url);
-          const blob = await response.blob();
-          // Extract filename from URL or use a fallback
-          const filename = url.split("/").pop() || "attachment";
-          return new File([blob], filename, { type: blob.type });
-        })
-      ).then(setAttachments);
-    } else {
-      setAttachments([]);
+    if (isOpen) {
+      const initialContent = comment.content || "";
+      setContent(initialContent);
+      setCharCount(initialContent.length);
+      setExistingAttachments(comment.attachments || []);
+      setNewAttachments([]);
+      setError(null);
     }
-  }, [currentAttachments]);
+  }, [isOpen, comment]);
+
+  const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setContent(e.target.value);
+    setCharCount(e.target.value.length);
+  };
 
   const handleSave = async () => {
-    // --- Prepare Attachments ---
-    let attachmentInputs: AttachmentInput[] = [];
-    try {
-      attachmentInputs = await Promise.all(
-        attachments.map(async (file): Promise<AttachmentInput> => {
-          const base64Data = await readFileAsBase64(file);
-          return { filename: file.name, file: base64Data };
-        })
+    setError(null);
+    if (isInvalid) {
+      setError(
+        `Коментарът трябва да е между ${COMMENT_CONTENT.MIN} и ${COMMENT_CONTENT.MAX} символа.`
       );
-    } catch (fileReadError) {
-      console.error("Client: Error reading files to base64:", fileReadError);
-
       return;
     }
 
+    const initialUrls = comment.attachments || [];
+    const deletedAttachments = initialUrls.filter(
+      (url) => !existingAttachments.includes(url)
+    );
+
+    const input: UpdateCommentInput = {
+      content,
+      attachments: newAttachments.length > 0 ? newAttachments : undefined,
+      deletedAttachments:
+        deletedAttachments.length > 0 ? deletedAttachments : undefined,
+    };
+
     try {
-      await updateComment(
-        {
-          content,
-          attachments: attachmentInputs,
-        },
-        comment._id
-      );
-    } catch (error) {
-      console.error("Error updating comment:", error);
+      await updateComment(input, comment._id);
+      setIsOpen(false);
+    } catch (err: any) {
+      console.error("Error updating comment:", err);
+      setError(err.message || "Грешка при запис на коментар.");
     }
   };
 
   if (loading) return <div>Loading...</div>;
-  if (error) return <div>Error updating comment</div>;
+  if (apiError && !isOpen) return <div>Error updating comment</div>;
 
   return (
-    <Dialog.Root>
+    <Dialog.Root open={isOpen} onOpenChange={setIsOpen}>
       <Dialog.Trigger asChild>
         <button
           className="hover:cursor-pointer ml-2 flex items-center px-2 py-1 rounded text-xs font-medium border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 transition"
           type="button"
           title="Редактирай"
         >
-          <PencilIcon className="h-4 w-4 " />
+          <PencilIcon className="h-4 w-4" />
         </button>
       </Dialog.Trigger>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-black/50" />
-        <Dialog.Content className="fixed top-1/2 left-1/2 w-[90%] max-w-md -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg shadow-lg">
-          <Dialog.Title className="text-lg font-medium text-gray-900">
+        <Dialog.Overlay className="fixed inset-0 bg-black/50 z-40" />
+        <Dialog.Content className="fixed top-1/2 left-1/2 w-[90%] max-w-2xl -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg shadow-lg z-50 max-h-[85vh] overflow-y-auto">
+          <Dialog.Title className="text-lg font-medium text-gray-900 mb-2">
             {t("editComment")}
           </Dialog.Title>
           <Dialog.Description className="text-sm text-gray-500 mb-4">
             {t("editCommentInfo")}
           </Dialog.Description>
-          <textarea
-            className="w-full h-24 border border-gray-300 rounded-lg p-2 mb-4 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder={t("writeHere")}
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-          />
-          <FileAttachmentBtn
-            attachments={attachments}
-            setAttachments={setAttachments}
-          />
 
-          <div className="flex justify-end gap-2 mt-4">
+          <div className="relative mb-4">
+            <textarea
+              className={`w-full h-24 border rounded-lg p-2 resize-none focus:outline-none focus:ring-1 ${
+                isInvalid
+                  ? "border-red-500 ring-red-500"
+                  : "border-gray-300 focus:ring-blue-500"
+              }`}
+              placeholder={t("writeHere")}
+              value={content}
+              onChange={handleContentChange}
+              minLength={COMMENT_CONTENT.MIN}
+              maxLength={COMMENT_CONTENT.MAX}
+            />
+            <div
+              className={`absolute bottom-3 right-4 text-xs ${
+                isInvalid ? "text-red-600 font-semibold" : "text-gray-500"
+              } bg-white px-1 rounded shadow-sm`}
+            >
+              {charCount}/{COMMENT_CONTENT.MAX}
+            </div>
+          </div>
+
+          {error && (
+            <div className="mb-4 flex items-start p-3 bg-red-50 border border-red-200 rounded-lg">
+              <ExclamationCircleIcon className="h-5 w-5 text-red-400 mr-2 mt-0.5 flex-shrink-0" />
+              <p className="text-sm text-red-800">{error}</p>
+            </div>
+          )}
+          <div className="space-y-3">
+            {/* Your FileAttachmentBtn now handles ONLY new files */}
+            <FileAttachmentBtn
+              attachments={newAttachments}
+              setAttachments={setNewAttachments}
+              existingAttachments={existingAttachments}
+              setExistingAttachments={setExistingAttachments}
+              type="comments"
+              objectId={comment._id}
+            />
+          </div>
+
+          <div className="flex justify-end gap-2 mt-6">
             <Dialog.Close asChild>
               <button
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded hover:bg-gray-200"
+                className="hover:cursor-pointer px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded hover:bg-gray-200"
                 type="button"
               >
-                Cancel
+                {t("cancel")}
               </button>
             </Dialog.Close>
             <button
               onClick={handleSave}
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-500 rounded hover:bg-blue-600"
+              disabled={loading}
+              className={`hover:cursor-pointer px-4 py-2 text-sm font-medium text-white bg-blue-500 rounded hover:bg-blue-600 disabled:bg-blue-300`}
               type="button"
             >
-              Save
+              {loading ? t("saving") : t("save")}
             </button>
           </div>
         </Dialog.Content>

@@ -1,3 +1,4 @@
+// src/components/forms/partials/UserInputFields.tsx
 import React from "react";
 import { InformationCircleIcon } from "@heroicons/react/20/solid";
 import * as Tooltip from "@radix-ui/react-tooltip";
@@ -7,26 +8,25 @@ interface UserInputFieldsProps {
   username: string;
   setUsername: (value: string) => void;
   usernameError: string | null;
-  usernameHookError: any | null;
   isCheckingUsername: boolean;
   fullName: string;
   setFullName: (value: string) => void;
+  nameError: string | null;
   email: string;
   setEmail: (value: string) => void;
   emailError: string | null;
-  emailHookError: any | null;
   isCheckingEmail: boolean;
   isEmailFormatCurrentlyValid: boolean;
   trimmedDebouncedEmail: string;
   position: string;
   setPosition: (value: string) => void;
+  positionError: string | null; // <-- NEW
   roleId: string;
-  setRoleId: (value: string) => void;
+  onRoleChange: (value: string) => void;
   roles: Role[];
   financialApprover: boolean;
   setFinancialApprover: (value: boolean) => void;
   errorPlaceholderClass: string;
-  // --- NEW PROPS ---
   isEditing: boolean;
   isAdmin: boolean;
 }
@@ -35,35 +35,32 @@ const UserInputFields: React.FC<UserInputFieldsProps> = ({
   username,
   setUsername,
   usernameError,
-  usernameHookError,
   isCheckingUsername,
   fullName,
   setFullName,
+  nameError,
   email,
   setEmail,
   emailError,
-  emailHookError,
   isCheckingEmail,
   isEmailFormatCurrentlyValid,
   trimmedDebouncedEmail,
   position,
   setPosition,
+  positionError, // <-- NEW
   roleId,
-  setRoleId,
+  onRoleChange,
   roles,
   financialApprover,
   setFinancialApprover,
   errorPlaceholderClass,
-  // --- NEW PROPS ---
   isEditing,
   isAdmin,
 }) => {
   const roleChangeWarningText =
-    "ВНИМАНИЕ: Промяна на ролята ОТ Админ или Експерт КЪМ Нормален или Напуснал, ЩЕ ПРЕМАХНЕ потребителя от категориите, за които е експерт и/или мениджър.";
+    "ВНИМАНИЕ: Промяна на ролята ОТ Админ или Експерт КЪМ Базов или Напуснал, ЩЕ ПРЕМАХНЕ потребителя от категориите, за които е експерт и/или мениджър.";
 
-  // --- NEW: Logic to disable fields ---
   const canEditSensitiveFields = isAdmin;
-  // Username cannot be changed after creation, except by an admin.
   const isUsernameDisabled = isEditing && !isAdmin;
 
   const disabledClasses =
@@ -87,28 +84,21 @@ const UserInputFields: React.FC<UserInputFieldsProps> = ({
             onChange={(e) => setUsername(e.target.value)}
             required
             disabled={isUsernameDisabled}
-            className={`w-full rounded-md border p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
-              usernameError || usernameHookError
-                ? "border-red-500"
-                : "border-gray-300"
+            className={`w-full rounded-md border p-2 shadow-sm focus:outline-none focus:border-indigo-500 ${
+              usernameError ? "border-red-500" : "border-gray-300"
             } ${
               isCheckingUsername ? "opacity-70 animate-pulse" : ""
             } ${disabledClasses}`}
           />
           <p
             className={`${errorPlaceholderClass} ${
-              usernameError || usernameHookError
-                ? "text-red-500"
-                : "text-blue-500"
+              usernameError ? "text-red-500" : "text-blue-500"
             }`}
           >
             {isCheckingUsername ? (
               "Проверка на потребителско име..."
             ) : usernameError ? (
               usernameError
-            ) : usernameHookError ? (
-              usernameHookError.message ||
-              "Грешка от сървъра при проверка на потребителско име."
             ) : (
               <>&nbsp;</>
             )}
@@ -129,9 +119,17 @@ const UserInputFields: React.FC<UserInputFieldsProps> = ({
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
             required
-            className={`w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${disabledClasses}`}
+            className={`w-full rounded-md border p-2 shadow-sm focus:outline-none focus:border-indigo-500 ${
+              nameError ? "border-red-500" : "border-gray-300"
+            } ${disabledClasses}`}
           />
-          <p className={`${errorPlaceholderClass}`}>&nbsp;</p>
+          <p
+            className={`${errorPlaceholderClass} ${
+              nameError ? "text-red-500" : ""
+            }`}
+          >
+            {nameError || <>&nbsp;</>}
+          </p>
         </div>
 
         {/* Email Input - Optional */}
@@ -147,10 +145,8 @@ const UserInputFields: React.FC<UserInputFieldsProps> = ({
             id="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className={`w-full rounded-md border p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
-              emailError || emailHookError
-                ? "border-red-500"
-                : "border-gray-300"
+            className={`w-full rounded-md border p-2 shadow-sm focus:outline-none focus:border-indigo-500 ${
+              emailError ? "border-red-500" : "border-gray-300"
             } ${
               isCheckingEmail &&
               trimmedDebouncedEmail &&
@@ -161,7 +157,7 @@ const UserInputFields: React.FC<UserInputFieldsProps> = ({
           />
           <p
             className={`${errorPlaceholderClass} ${
-              emailError || emailHookError ? "text-red-500" : "text-blue-500"
+              emailError ? "text-red-500" : "text-blue-500"
             }`}
           >
             {isCheckingEmail &&
@@ -170,9 +166,6 @@ const UserInputFields: React.FC<UserInputFieldsProps> = ({
               "Проверка на имейл..."
             ) : emailError ? (
               emailError
-            ) : emailHookError ? (
-              emailHookError.message ||
-              "Грешка от сървъра при проверка на имейл."
             ) : (
               <>&nbsp;</>
             )}
@@ -192,9 +185,17 @@ const UserInputFields: React.FC<UserInputFieldsProps> = ({
             id="position"
             value={position}
             onChange={(e) => setPosition(e.target.value)}
-            className={`w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${disabledClasses}`}
+            className={`w-full rounded-md border p-2 shadow-sm focus:outline-none focus:border-indigo-500 ${
+              positionError ? "border-red-500" : "border-gray-300"
+            } ${disabledClasses}`}
           />
-          <p className={`${errorPlaceholderClass}`}>&nbsp;</p>
+          <p
+            className={`${errorPlaceholderClass} ${
+              positionError ? "text-red-500" : ""
+            }`}
+          >
+            {positionError || <>&nbsp;</>}
+          </p>
         </div>
 
         {/* Combined Row for Role and Financial Approver */}
@@ -236,10 +237,10 @@ const UserInputFields: React.FC<UserInputFieldsProps> = ({
                 id="role"
                 name="role"
                 value={roleId}
-                onChange={(e) => setRoleId(e.target.value)}
+                onChange={(e) => onRoleChange(e.target.value)}
                 required
                 disabled={!canEditSensitiveFields}
-                className={`w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${disabledClasses}`}
+                className={`w-full rounded-md border border-gray-300 p-2 shadow-sm focus:outline-none focus:border-indigo-500 ${disabledClasses}`}
               >
                 <option value="">Изберете роля</option>
                 {roles.map((r) => (
@@ -264,7 +265,7 @@ const UserInputFields: React.FC<UserInputFieldsProps> = ({
                   checked={financialApprover}
                   onChange={(e) => setFinancialApprover(e.target.checked)}
                   disabled={!canEditSensitiveFields}
-                  className={`h-5 w-5 rounded border-gray-300 text-blue-600 shadow-sm focus:ring-blue-500 ${disabledClasses}`}
+                  className={`h-5 w-5 rounded border-gray-300 text-blue-600 shadow-sm focus:outline-none focus:border-indigo-500 ${disabledClasses}`}
                 />
                 <label
                   htmlFor="financial_approver"

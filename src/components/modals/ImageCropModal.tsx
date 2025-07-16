@@ -20,7 +20,7 @@ const ImageCropModal: React.FC<ImageCropModalProps> = ({
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
 
   const onCropCompleteCallback = useCallback(
-    (croppedArea: Area, croppedAreaPixelsResult: Area) => {
+    (_: Area, croppedAreaPixelsResult: Area) => {
       setCroppedAreaPixels(croppedAreaPixelsResult);
     },
     []

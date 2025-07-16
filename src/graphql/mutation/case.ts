@@ -1,32 +1,54 @@
+// src/graphql/mutation/case.ts (Corrected)
 import { gql } from "@apollo/client";
 
-// Make sure this fragment requests fields needed immediately after creation,
-// OR ensure the fragment definition here matches any used elsewhere if necessary.
-// The minimal fragment below is likely okay, but confirm.
-const caseFragment = `
-fragment CaseFragment on Case {
-  _id # Often useful to get the ID back
-  content
-  type
-  priority
-  status # Added status as it's set automatically
-  case_number # Added case_number as it's set automatically
-  # Add other fields if your UI needs them immediately after creation
-}`;
+const caseFragment = gql`
+  fragment CaseFragmentCreation on Case {
+    _id
+    content
+    type
+    priority
+    status
+    case_number
+  }
+`;
 
 export const CREATE_CASE = gql`
-  mutation CreateCase($input: createCaseInput!) {
-    # <-- CORRECTED: lowercase 'c'
-    createCase(input: $input) {
-      ...CaseFragment
+  mutation CreateCase(
+    $creator: ID!
+    $content: String!
+    $type: CaseType!
+    $priority: CasePriority!
+    $categories: [ID!]!
+    $attachments: [Upload!]
+  ) {
+    # It then assembles them into the single 'input' object the backend expects
+    createCase(
+      input: {
+        creator: $creator
+        content: $content
+        type: $type
+        priority: $priority
+        categories: $categories
+        attachments: $attachments
+      }
+    ) {
+      ...CaseFragmentCreation
     }
   }
   ${caseFragment}
 `;
 
-export const RATE_CASE = gql`
-  mutation Mutation($caseId: ID!, $userId: ID!, $score: Int!) {
-    createRating(caseId: $caseId, userId: $userId, score: $score) {
+export const UPDATE_CASE = gql`
+  mutation UpdateCase($caseId: ID!, $userId: ID!, $input: updateCaseInput!) {
+    updateCase(caseId: $caseId, userId: $userId, input: $input) {
+      _id
+    }
+  }
+`;
+
+export const DELETE_CASE = gql`
+  mutation DeleteCase($id: ID!) {
+    deleteCase(_id: $id) {
       _id
     }
   }

@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
-import { PencilIcon } from "@heroicons/react/24/outline";
+import { PencilIcon, ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import * as Dialog from "@radix-ui/react-dialog";
 import { useTranslation } from "react-i18next";
 import FileAttachmentBtn from "./FileAttachmentBtn";
+import SimpleTextEditor from "../forms/partials/SimplifiedTextEditor";
 import { IAnswer } from "../../db/interfaces";
-import { readFileAsBase64 } from "../../utils/attachment-handling";
-import { AttachmentInput } from "../../graphql/hooks/case";
 import { useUpdateAnswer } from "../../graphql/hooks/answer";
+import { ANSWER_CONTENT } from "../../utils/GLOBAL_PARAMETERS";
+import { getTextLength } from "../../utils/contentRenderer";
 
 interface EditButtonProps {
   answer: IAnswer;
@@ -15,9 +16,14 @@ interface EditButtonProps {
   me: any;
 }
 
-const EditAnswerBtn: React.FC<EditButtonProps> = ({
+export interface UpdateAnswerInput {
+  content?: string;
+  attachments?: File[];
+  deletedAttachments?: string[];
+}
+
+const EditAnswerButton: React.FC<EditButtonProps> = ({
   answer,
-  currentAttachments,
   caseNumber,
   me,
 }) => {
@@ -26,61 +32,68 @@ const EditAnswerBtn: React.FC<EditButtonProps> = ({
   }
 
   const { t } = useTranslation("modals");
+  const [isOpen, setIsOpen] = useState(false);
   const [content, setContent] = useState<string>(answer.content || "");
-  const [attachments, setAttachments] = useState<File[]>([]);
-  const { updateAnswer, loading, error } = useUpdateAnswer(caseNumber);
+  const [existingAttachments, setExistingAttachments] = useState<string[]>([]);
+  const [newAttachments, setNewAttachments] = useState<File[]>([]);
+  const [error, setError] = useState<string | null>(null); // State for validation errors
+  const {
+    updateAnswer,
+    loading,
+    error: apiError,
+  } = useUpdateAnswer(caseNumber);
 
   useEffect(() => {
-    if (currentAttachments && currentAttachments.length > 0) {
-      Promise.all(
-        currentAttachments.map(async (url) => {
-          const response = await fetch(url);
-          const blob = await response.blob();
-          // Extract filename from URL or use a fallback
-          const filename = url.split("/").pop() || "attachment";
-          return new File([blob], filename, { type: blob.type });
-        })
-      ).then(setAttachments);
-    } else {
-      setAttachments([]);
+    if (isOpen) {
+      setContent(answer.content || "");
+      setExistingAttachments(answer.attachments || []);
+      setNewAttachments([]);
+      setError(null); // Clear errors when modal opens
     }
-  }, [currentAttachments]);
+  }, [isOpen, answer]);
 
   const handleSave = async () => {
-    // --- Prepare Attachments ---
-    let attachmentInputs: AttachmentInput[] = [];
-    try {
-      attachmentInputs = await Promise.all(
-        attachments.map(async (file): Promise<AttachmentInput> => {
-          const base64Data = await readFileAsBase64(file);
-          return { filename: file.name, file: base64Data };
-        })
-      );
-    } catch (fileReadError) {
-      console.error("Client: Error reading files to base64:", fileReadError);
+    setError(null); // Clear previous errors
 
-      return;
+    // --- Validation Block ---
+    const textLength = getTextLength(content);
+    if (textLength < ANSWER_CONTENT.MIN) {
+      setError(`Отговорът трябва да е поне ${ANSWER_CONTENT.MIN} символа.`);
+      return; // Stop the submission
     }
+    if (textLength > ANSWER_CONTENT.MAX) {
+      setError(`Отговорът не може да надвишава ${ANSWER_CONTENT.MAX} символа.`);
+      return; // Stop the submission
+    }
+    // --- End Validation ---
+
+    const initialUrls = answer.attachments || [];
+    const deletedAttachments = initialUrls.filter(
+      (url) => !existingAttachments.includes(url)
+    );
+
+    const input: UpdateAnswerInput = {
+      content,
+      attachments: newAttachments.length > 0 ? newAttachments : undefined,
+      deletedAttachments:
+        deletedAttachments.length > 0 ? deletedAttachments : undefined,
+    };
 
     try {
-      await updateAnswer(
-        {
-          content,
-          attachments: attachmentInputs,
-        },
-        answer._id,
-        me._id
-      );
-    } catch (error) {
-      console.error("Error updating answer:", error);
+      await updateAnswer(input, answer._id, me._id);
+      setIsOpen(false); // Close dialog on success
+    } catch (err: any) {
+      console.error("Error updating answer:", err);
+      // Set the error state with the message from the backend
+      setError(err.message || "Възникна грешка при записа.");
     }
   };
 
   if (loading) return <div>Loading...</div>;
-  if (error) return <div>Error updating comment</div>;
+  if (apiError && !isOpen) return <div>Error updating answer</div>;
 
   return (
-    <Dialog.Root>
+    <Dialog.Root open={isOpen} onOpenChange={setIsOpen}>
       <Dialog.Trigger asChild>
         <button
           className="hover:cursor-pointer ml-2 flex items-center px-2 py-1 rounded text-xs font-medium border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 transition"
@@ -91,40 +104,68 @@ const EditAnswerBtn: React.FC<EditButtonProps> = ({
         </button>
       </Dialog.Trigger>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-black/50" />
-        <Dialog.Content className="fixed top-1/2 left-1/2 w-[90%] max-w-md -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg shadow-lg">
-          <Dialog.Title className="text-lg font-medium text-gray-900">
-            {t("editComment")}
+        <Dialog.Overlay className="fixed inset-0 bg-black/50 z-40" />
+        <Dialog.Content className="fixed top-1/2 left-1/2 w-[90%] max-w-2xl -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg shadow-lg z-50 max-h-[85vh] overflow-y-auto">
+          <Dialog.Title className="text-lg font-medium text-gray-900 mb-2">
+            {t("editAnswer", "Edit Answer")}
           </Dialog.Title>
           <Dialog.Description className="text-sm text-gray-500 mb-4">
-            {t("editCommentInfo")}
+            {t("editAnswerInfo", "Update your answer content and attachments.")}
           </Dialog.Description>
-          <textarea
-            className="w-full h-24 border border-gray-300 rounded-lg p-2 mb-4 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder={t("writeHere")}
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-          />
-          <FileAttachmentBtn
-            attachments={attachments}
-            setAttachments={setAttachments}
-          />
 
-          <div className="flex justify-end gap-2 mt-4">
+          {/* SimpleTextEditor replacing the textarea */}
+          <div className="mb-4">
+            <SimpleTextEditor
+              content={content}
+              onUpdate={(html) => setContent(html)}
+              placeholder={t("writeHere", "Пишете тук...")}
+              height="123px"
+              minLength={ANSWER_CONTENT.MIN}
+              maxLength={ANSWER_CONTENT.MAX}
+              wrapperClassName="w-full rounded-lg shadow-sm overflow-hidden bg-white"
+            />
+          </div>
+
+          {/* Error display */}
+          {error && (
+            <div className="mt-4 flex items-start p-3 bg-red-50 border border-red-200 rounded-lg">
+              <ExclamationCircleIcon className="h-5 w-5 text-red-400 mr-2 mt-0.5 flex-shrink-0" />
+              <p className="text-sm text-red-800">{error}</p>
+            </div>
+          )}
+
+          <div className="space-y-3">
+            {/* Your FileAttachmentBtn now handles ONLY new files */}
+            <FileAttachmentBtn
+              attachments={newAttachments}
+              setAttachments={setNewAttachments}
+              existingAttachments={existingAttachments}
+              setExistingAttachments={setExistingAttachments}
+              type="answers"
+              objectId={answer._id}
+            />
+          </div>
+
+          <div className="flex justify-end gap-2 mt-6">
             <Dialog.Close asChild>
               <button
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded hover:bg-gray-200"
+                className="hover:cursor-pointer px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
                 type="button"
               >
-                Cancel
+                {t("cancel", "Cancel")}
               </button>
             </Dialog.Close>
             <button
               onClick={handleSave}
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-500 rounded hover:bg-blue-600"
+              disabled={loading}
+              className={`hover:cursor-pointer px-4 py-2 text-sm font-medium text-white rounded focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
+                loading
+                  ? "bg-blue-400 cursor-not-allowed"
+                  : "bg-blue-500 hover:bg-blue-600"
+              }`}
               type="button"
             >
-              Save
+              {loading ? t("saving", "Saving...") : t("save", "Save")}
             </button>
           </div>
         </Dialog.Content>
@@ -133,4 +174,4 @@ const EditAnswerBtn: React.FC<EditButtonProps> = ({
   );
 };
 
-export default EditAnswerBtn;
+export default EditAnswerButton;

@@ -1,7 +1,14 @@
 // src/hooks/useUserActivityScrollPersistence.ts
 import { useState, useRef, useCallback, useEffect } from "react";
 
-type ActivityTab = "all" | "cases" | "answers" | "comments";
+type ActivityTab =
+  | "all"
+  | "cases"
+  | "answers"
+  | "comments"
+  | "ratings"
+  | "approvals"
+  | "finances";
 
 interface ScrollState {
   scrollTop: number;
@@ -13,6 +20,9 @@ interface TabScrollStates {
   cases: ScrollState;
   answers: ScrollState;
   comments: ScrollState;
+  ratings: ScrollState;
+  approvals: ScrollState;
+  finances: ScrollState;
 }
 
 const INITIAL_VISIBLE_COUNT = 10;
@@ -24,6 +34,9 @@ const getInitialTabStates = () => ({
   cases: { scrollTop: 0, visibleCount: INITIAL_VISIBLE_COUNT },
   answers: { scrollTop: 0, visibleCount: INITIAL_VISIBLE_COUNT },
   comments: { scrollTop: 0, visibleCount: INITIAL_VISIBLE_COUNT },
+  ratings: { scrollTop: 0, visibleCount: INITIAL_VISIBLE_COUNT },
+  approvals: { scrollTop: 0, visibleCount: INITIAL_VISIBLE_COUNT },
+  finances: { scrollTop: 0, visibleCount: INITIAL_VISIBLE_COUNT },
 });
 
 const useUserActivityScrollPersistence = (
@@ -108,7 +121,15 @@ const useUserActivityScrollPersistence = (
       ) as ActivityTab;
       if (
         savedActiveTab &&
-        ["all", "cases", "answers", "comments"].includes(savedActiveTab)
+        [
+          "all",
+          "cases",
+          "answers",
+          "comments",
+          "ratings",
+          "approvals",
+          "finances",
+        ].includes(savedActiveTab)
       ) {
         setActiveTab(savedActiveTab);
       }
@@ -139,6 +160,21 @@ const useUserActivityScrollPersistence = (
             scrollTop: parsedStates.comments?.scrollTop || 0,
             visibleCount:
               parsedStates.comments?.visibleCount || INITIAL_VISIBLE_COUNT,
+          },
+          ratings: {
+            scrollTop: parsedStates.ratings?.scrollTop || 0,
+            visibleCount:
+              parsedStates.ratings?.visibleCount || INITIAL_VISIBLE_COUNT,
+          },
+          approvals: {
+            scrollTop: parsedStates.approvals?.scrollTop || 0,
+            visibleCount:
+              parsedStates.approvals?.visibleCount || INITIAL_VISIBLE_COUNT,
+          },
+          finances: {
+            scrollTop: parsedStates.finances?.scrollTop || 0,
+            visibleCount:
+              parsedStates.finances?.visibleCount || INITIAL_VISIBLE_COUNT,
           },
         };
 
@@ -256,6 +292,9 @@ const useUserActivityScrollPersistence = (
     cases: tabScrollStates.cases.visibleCount,
     answers: tabScrollStates.answers.visibleCount,
     comments: tabScrollStates.comments.visibleCount,
+    ratings: tabScrollStates.ratings.visibleCount,
+    approvals: tabScrollStates.approvals.visibleCount,
+    finances: tabScrollStates.finances.visibleCount,
   };
 
   // 2. EXPORT THE NEW FUNCTION

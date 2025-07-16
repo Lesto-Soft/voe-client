@@ -5,24 +5,27 @@ import Dashboard from "../pages/Dashboard";
 import LoadingTestPage from "../pages/LoadingTestPage";
 import UserManagement from "../pages/UserManagement";
 import NavBar from "../components/menu/NavBar";
-import Profile from "../pages/Profile";
 import Analyses from "../pages/Analyses";
-import NotFoundPage from "../pages/NotFound";
+import NotFoundPage from "../pages/ErrorPages/NotFound";
 import User from "../pages/User";
 import Category from "../pages/Category";
 import Case from "../pages/Case";
 import CategoryManagement from "../pages/CategoryManagement";
+import RatingManagement from "../pages/RatingManagement";
+import RatingMetric from "../pages/RatingMetric";
 import { useGetMe } from "../graphql/hooks/user";
 import { IMe } from "../db/interfaces";
 import { UserProvider } from "../context/UserContext";
 import ProtectedRoute from "../components/auth/ProtectedRoute";
 import { ROLES } from "../utils/GLOBAL_PARAMETERS";
+import ServerErrorPage from "../pages/ErrorPages/ServerErrorPage";
+import NavbarSkeleton from "../components/skeletons/NavbarSkeleton";
 
 const AppLayout = () => {
   const { me, error, loading } = useGetMe();
 
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error.message}</div>;
+  if (loading) return <NavbarSkeleton />;
+  if (error) return (window.location.href = "/");
   if (!me || !me.me) return <div>Неуспешно зареждане на потребител.</div>;
   const currentUserData: IMe = me.me;
 
@@ -54,6 +57,10 @@ const mainRouter = createBrowserRouter([
     element: <LoadingTestPage />,
   },
   {
+    path: "/server-error",
+    element: <ServerErrorPage />,
+  },
+  {
     element: <AppLayout />,
     children: [
       {
@@ -77,8 +84,12 @@ const mainRouter = createBrowserRouter([
         ),
       },
       {
-        path: "/profile",
-        element: <Profile />,
+        path: "/rating-management",
+        element: (
+          <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.EXPERT]}>
+            <RatingManagement />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "/analyses",
@@ -95,6 +106,14 @@ const mainRouter = createBrowserRouter([
       {
         path: "/case/:number",
         element: <Case />,
+      },
+      {
+        path: "/rating-metric/:id",
+        element: (
+          <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.EXPERT]}>
+            <RatingMetric />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "*",

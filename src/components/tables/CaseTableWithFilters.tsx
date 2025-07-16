@@ -3,7 +3,9 @@ import { useLocation, useNavigate } from "react-router";
 import CaseTable from "./CaseTable";
 import CaseSearchBar from "./CaseSearchBar";
 import Pagination from "./Pagination";
-import CaseTableSkeleton from "../skeletons/CaseTableSkeleton"; // Import the skeleton
+import CaseTableSkeleton from "../skeletons/CaseTableSkeleton";
+import { ICase } from "../../db/interfaces";
+import moment from "moment";
 
 // Accepts a fetch hook as a prop
 type FetchHook = (input: any) => {
@@ -44,6 +46,8 @@ function getFiltersFromParams(params: URLSearchParams) {
     categoryIds, // use array
     content: params.get("content") || "",
     status: params.get("status") || "",
+    startDate: params.get("startDate"),
+    endDate: params.get("endDate"),
   };
 }
 
@@ -55,6 +59,8 @@ function setFiltersToParams(params: URLSearchParams, filters: any) {
       } else {
         params.delete("categoryIds");
       }
+    } else if (value instanceof Date) {
+      params.set(key, moment(value).format("DD-MM-YYYY"));
     } else if (value) {
       params.set(key, String(value));
     } else {
@@ -83,14 +89,29 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
 
   // Filter state
   const [caseNumber, setCaseNumber] = useState(initialFilters.caseNumber);
-  const [priority, setPriority] = useState(initialFilters.priority);
-  const [type, setType] = useState(initialFilters.type);
+  const [priority, setPriority] = useState<"" | ICase["priority"]>(
+    initialFilters.priority as "" | ICase["priority"]
+  );
+  const [type, setType] = useState<"" | ICase["type"]>(
+    initialFilters.type as "" | ICase["type"]
+  );
   const [creatorId, setCreatorId] = useState(initialFilters.creatorId);
   const [categoryIds, setCategoryIds] = useState<string[]>(
     initialFilters.categoryIds
   );
   const [content, setContent] = useState(initialFilters.content);
   const [status, setStatus] = useState(initialFilters.status);
+  const [dateRange, setDateRange] = useState<{
+    startDate: Date | null;
+    endDate: Date | null;
+  }>({
+    startDate: initialFilters.startDate
+      ? moment(initialFilters.startDate, "DD-MM-YYYY").toDate()
+      : null,
+    endDate: initialFilters.endDate
+      ? moment(initialFilters.endDate, "DD-MM-YYYY").toDate()
+      : null,
+  });
 
   // Debounced values for inputs that should trigger fetch after delay
   const debouncedCaseNumber = useDebounce(caseNumber, 500); // Adjust delay as needed
@@ -105,32 +126,43 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
     categoryIds: initialFilters.categoryIds,
     content: initialFilters.content,
     status: initialFilters.status,
+    dateRange: {
+      startDate: initialFilters.startDate
+        ? moment(initialFilters.startDate, "DD-MM-YYYY").toDate()
+        : null,
+      endDate: initialFilters.endDate
+        ? moment(initialFilters.endDate, "DD-MM-YYYY").toDate()
+        : null,
+    },
   });
 
-  function clearFilters() {
-    setCaseNumber("");
-    setPriority("");
-    setType("");
-    setCreatorId("");
-    setCategoryIds([]);
-    setContent("");
-    setStatus("");
-    setCurrentPage(1);
-    const params = new URLSearchParams(location.search);
-    params.set("perPage", String(itemsPerPage));
-    params.set("page", "1");
-    // Remove filter params
-    [
-      "caseNumber",
-      "priority",
-      "type",
-      "creatorId",
-      "categoryIds",
-      "content",
-      "status",
-    ].forEach((key) => params.delete(key));
-    navigate(`${location.pathname}?${params.toString()}`, { replace: true });
-  }
+  // function clearFilters() {
+  //   setCaseNumber("");
+  //   setPriority("");
+  //   setType("");
+  //   setCreatorId("");
+  //   setCategoryIds([]);
+  //   setContent("");
+  //   setStatus("");
+  //   setDateRange({ startDate: null, endDate: null });
+  //   setCurrentPage(1);
+  //   const params = new URLSearchParams(location.search);
+  //   params.set("perPage", String(itemsPerPage));
+  //   params.set("page", "1");
+  //   // Remove filter params
+  //   [
+  //     "caseNumber",
+  //     "priority",
+  //     "type",
+  //     "creatorId",
+  //     "categoryIds",
+  //     "content",
+  //     "status",
+  //     "startDate",
+  //     "endDate",
+  //   ].forEach((key) => params.delete(key));
+  //   navigate(`${location.pathname}?${params.toString()}`, { replace: true });
+  // }
 
   // Sync currentPage with URL
   useEffect(() => {
@@ -150,11 +182,17 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
       categoryIds, // use array
       content: debouncedContent,
       status,
+      startDate: dateRange.startDate,
+      endDate: dateRange.endDate,
     };
 
     const prevFilters = prevFiltersRef.current;
     const categoryIdsChanged =
       JSON.stringify(categoryIds) !== JSON.stringify(prevFilters.categoryIds);
+    const dateRangeChanged =
+      dateRange.startDate?.getTime() !==
+        prevFilters.dateRange.startDate?.getTime() ||
+      dateRange.endDate?.getTime() !== prevFilters.dateRange.endDate?.getTime();
 
     const filtersChanged =
       caseNumber !== prevFilters.caseNumber ||
@@ -163,7 +201,8 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
       creatorId !== prevFilters.creatorId ||
       categoryIdsChanged ||
       content !== prevFilters.content ||
-      status !== prevFilters.status;
+      status !== prevFilters.status ||
+      dateRangeChanged;
 
     if (filtersChanged) {
       const params = new URLSearchParams(location.search);
@@ -178,7 +217,6 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
       setFiltersToParams(params, filtersForUrl); // Use potentially debounced values for URL consistency with fetch
       navigate(`${location.pathname}?${params.toString()}`, { replace: true });
 
-      // Update ref with current non-debounced values
       prevFiltersRef.current = {
         caseNumber,
         priority,
@@ -187,9 +225,9 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
         categoryIds,
         content,
         status,
+        dateRange,
       };
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     debouncedCaseNumber,
     priority,
@@ -202,6 +240,7 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
     navigate,
     location.search,
     location.pathname,
+    dateRange,
   ]); // Add debounced values to dependencies
 
   // Handle page change (updates URL immediately)
@@ -219,6 +258,8 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
       categoryIds,
       content: debouncedContent,
       status,
+      startDate: dateRange.startDate,
+      endDate: dateRange.endDate,
     });
     navigate(`${location.pathname}?${params.toString()}`);
   };
@@ -237,6 +278,11 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
     if (creatorId) input.creatorId = creatorId;
     if (categoryIds && categoryIds.length > 0) input.categories = categoryIds; // Assuming backend expects array
     if (status) input.status = status;
+    if (dateRange.startDate)
+      input.startDate = moment(dateRange.startDate).format("DD-MM-YYYY");
+    if (dateRange.endDate)
+      input.endDate = moment(dateRange.endDate).format("DD-MM-YYYY");
+
     return input;
   }, [
     itemsPerPage,
@@ -248,6 +294,7 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
     creatorId,
     categoryIds,
     status,
+    dateRange,
   ]);
 
   // Use the provided fetch hook. It will receive debounced inputs via buildInput.
@@ -298,8 +345,10 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
     <div className="flex flex-col flex-1 min-h-0 h-full">
       {/* Animated Search Bar Container - Removed relative, z-20, overflow-hidden */}
       <div
-        className={`transition-all duration-300 ease-in-out ${
-          filter ? "max-h-screen opacity-100" : "max-h-0 opacity-0"
+        className={` transition-all duration-300 ease-in-out ${
+          filter
+            ? "max-h-screen opacity-100"
+            : "max-h-0 opacity-0 pointer-events-none"
         }`}
       >
         <CaseSearchBar
@@ -317,6 +366,8 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
           setContent={setContent}
           status={status}
           setStatus={setStatus}
+          dateRange={dateRange}
+          setDateRange={setDateRange}
           t={t}
         />
       </div>
@@ -325,7 +376,7 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
         {showSkeleton ? (
           <CaseTableSkeleton rows={itemsPerPage} />
         ) : cases && cases.length > 0 ? (
-          <CaseTable cases={cases} t={t} />
+          <CaseTable cases={cases} t={t} onCaseDeleted={refetch} />
         ) : (
           <div className="text-center py-10 text-gray-500">
             {t("no_cases_found")}

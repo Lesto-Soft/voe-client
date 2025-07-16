@@ -1,3 +1,5 @@
+import { TIERS } from "./GLOBAL_PARAMETERS";
+
 // Status
 export const getStatusStyle = (status: string) => {
   switch (status) {
@@ -25,6 +27,18 @@ export const getPriorityStyle = (priority: string) => {
       return "text-yellow-600";
     default:
       return "text-gray-500";
+  }
+};
+
+export const getCalculatedRatingStyle = (calculatedRating: number) => {
+  if (calculatedRating >= TIERS.GOLD) {
+    return "text-yellow-400"; // Closest to #FFD700 (gold)
+  } else if (calculatedRating >= TIERS.SILVER) {
+    return "text-gray-400"; // Closest to #C0C0C0 (silver)
+  } else if (calculatedRating >= TIERS.BRONZE) {
+    return "text-amber-600"; // Closest to #CD7F32 (bronze)
+  } else {
+    return "text-red-500"; // Exact match for #EF4444 (red)
   }
 };
 

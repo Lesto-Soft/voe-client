@@ -53,7 +53,7 @@ const useCategoryScrollPersistence = (
   }, [visibleCasesCount]);
 
   const saveDataToSessionStorage = useCallback(
-    (source: string, targetCategoryName: string | undefined) => {
+    (_: string, targetCategoryName: string | undefined) => {
       //   console.log(
       //     `[SAVE_DATA] Attempting: source="<span class="math-inline">\{source\}", category\="</span>{targetCategoryName}"`
       //   );

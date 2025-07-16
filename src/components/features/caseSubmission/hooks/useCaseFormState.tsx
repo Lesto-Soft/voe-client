@@ -7,15 +7,14 @@ import React, {
   ChangeEvent,
   FormEvent,
 } from "react";
-import { useNavigate } from "react-router"; // Corrected import
+import { CASE_CONTENT } from "../../../../utils/GLOBAL_PARAMETERS";
+import { getTextLength } from "../../../../utils/contentRenderer";
 import { useLazyQuery, ApolloError } from "@apollo/client";
 import { useTranslation } from "react-i18next";
 import { TFunction } from "i18next";
 import { GET_USER_BY_USERNAME } from "../../../../graphql/query/user"; // Adjust path
-import { readFileAsBase64 } from "../../../../utils/attachment-handling"; // Adjust path
 import {
   FormCategory,
-  CaseAttachmentInput,
   CreateCaseMutationInput,
   UserQueryResult,
   UserQueryVars,
@@ -76,7 +75,6 @@ export const useCaseFormState = ({
   caseTypeParam,
   categoriesData,
   executeCreateCase,
-  createCaseLoadingHook,
   createCaseErrorHook,
   onSuccess,
 }: HookProps): UseCaseFormStateReturn => {
@@ -281,28 +279,28 @@ export const useCaseFormState = ({
       );
       return;
     }
+    // --- Content Length Validation ---
+    const textLength = getTextLength(content);
+    if (content.trim().length > 0 && textLength < CASE_CONTENT.MIN) {
+      setSubmissionError(
+        `Описанието трябва да е поне ${CASE_CONTENT.MIN} символа.`
+      );
+      return;
+    }
+    if (textLength > CASE_CONTENT.MAX) {
+      setSubmissionError(
+        `Описанието не може да бъде по-дълго от ${CASE_CONTENT.MAX} символа.`
+      );
+      return;
+    }
+    // --- End Validation ---
+
     if (selectedCategories.length === 0) {
       setSubmissionError(t("caseSubmission.errors.submission.missingCategory"));
       return;
     }
 
     setIsSubmittingForm(true);
-    let attachmentInputs: CaseAttachmentInput[] = [];
-    try {
-      attachmentInputs = await Promise.all(
-        attachments.map(async (file) => ({
-          filename: file.name,
-          file: await readFileAsBase64(file),
-        }))
-      );
-    } catch (fileReadError) {
-      console.error("Client: Error reading files to base64:", fileReadError);
-      setSubmissionError(
-        t("caseSubmission.errors.submission.fileProcessingError")
-      );
-      setIsSubmittingForm(false);
-      return;
-    }
 
     const categoryIds = findCategoryIdsByName(selectedCategories, categoryList);
     if (categoryIds.length !== selectedCategories.length) {
@@ -319,7 +317,7 @@ export const useCaseFormState = ({
       priority,
       categories: categoryIds,
       creator: fetchedCreatorId,
-      attachments: attachmentInputs,
+      attachments,
     };
 
     try {

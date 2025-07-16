@@ -7,18 +7,19 @@ import React, {
   ChangeEvent,
   FormEvent,
 } from "react";
+import { toast } from "react-toastify";
 import { CASE_CONTENT } from "../../../../utils/GLOBAL_PARAMETERS";
 import { getTextLength } from "../../../../utils/contentRenderer";
 import { useLazyQuery, ApolloError } from "@apollo/client";
 import { useTranslation } from "react-i18next";
 import { TFunction } from "i18next";
-import { GET_USER_BY_USERNAME } from "../../../../graphql/query/user"; // Adjust path
+import { GET_USER_BY_USERNAME } from "../../../../graphql/query/user";
 import {
   FormCategory,
   CreateCaseMutationInput,
   UserQueryResult,
   UserQueryVars,
-} from "../types"; // Adjust path
+} from "../types";
 
 const MAX_SELECTED_CATEGORIES = 3;
 const DEBOUNCE_DELAY = 500;
@@ -45,7 +46,6 @@ export interface UseCaseFormStateReturn {
   notFoundUsername: string | null;
   isUserLoading: boolean;
   userLookupError: ApolloError | undefined;
-  submissionError: string | null;
   isSubmittingForm: boolean;
   setContent: React.Dispatch<React.SetStateAction<string>>;
   setPriority: React.Dispatch<
@@ -54,7 +54,6 @@ export interface UseCaseFormStateReturn {
   toggleCategory: (categoryName: string) => void;
   setAttachments: React.Dispatch<React.SetStateAction<File[]>>;
   handleUsernameChange: (event: ChangeEvent<HTMLInputElement>) => void;
-  clearAllFormErrors: () => void;
   handleSubmit: (event: FormEvent<HTMLFormElement>) => Promise<void>;
   getCategoryClass: (categoryName: string) => string;
   getSubmitButtonClass: (isMutationLoading: boolean) => string;
@@ -79,7 +78,6 @@ export const useCaseFormState = ({
   onSuccess,
 }: HookProps): UseCaseFormStateReturn => {
   const { t } = useTranslation("caseSubmission");
-  // const navigate = useNavigate(); // REMOVED: navigate will be handled by the page
 
   const [content, setContent] = useState<string>("");
   const [priority, setPriority] =
@@ -92,7 +90,6 @@ export const useCaseFormState = ({
   const [notFoundUsername, setNotFoundUsername] = useState<string | null>(null);
   const [searchedUsername, setSearchedUsername] = useState<string | null>(null);
   const [isSubmittingForm, setIsSubmittingForm] = useState<boolean>(false);
-  const [submissionError, setSubmissionError] = useState<string | null>(null);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [
@@ -102,11 +99,8 @@ export const useCaseFormState = ({
 
   const categoryList = useMemo(() => categoriesData ?? [], [categoriesData]);
 
-  const clearAllFormErrors = (): void => setSubmissionError(null);
-
   const handleUsernameChange = (event: ChangeEvent<HTMLInputElement>): void => {
     setNotFoundUsername(null);
-    setSubmissionError(null);
     setUsernameInput(event.target.value);
   };
 
@@ -167,7 +161,6 @@ export const useCaseFormState = ({
   ]);
 
   const toggleCategory = (categoryName: string): void => {
-    clearAllFormErrors();
     setSelectedCategories((prev) => {
       if (prev.includes(categoryName))
         return prev.filter((c) => c !== categoryName);
@@ -263,40 +256,51 @@ export const useCaseFormState = ({
     event: FormEvent<HTMLFormElement>
   ): Promise<void> => {
     event.preventDefault();
-    clearAllFormErrors();
 
     if (!caseTypeParam) {
-      setSubmissionError(t("caseSubmission.errors.submission.invalidCaseType"));
+      toast.error(t("caseSubmission.errors.submission.invalidCaseType"), {
+        className: "submission-toast",
+        toastId: "invalid-case-type",
+      });
       return;
     }
     if (!fetchedCreatorId) {
-      setSubmissionError(t("caseSubmission.errors.submission.missingUsername"));
+      toast.error(t("caseSubmission.errors.submission.missingUsername"), {
+        className: "submission-toast",
+        toastId: "missing-username",
+      });
       return;
     }
     if (!content.trim()) {
-      setSubmissionError(
-        t("caseSubmission.errors.submission.missingDescription")
-      );
+      toast.error(t("caseSubmission.errors.submission.missingDescription"), {
+        className: "submission-toast",
+        toastId: "missing-description",
+      });
       return;
     }
-    // --- Content Length Validation ---
     const textLength = getTextLength(content);
     if (content.trim().length > 0 && textLength < CASE_CONTENT.MIN) {
-      setSubmissionError(
-        `Описанието трябва да е поне ${CASE_CONTENT.MIN} символа.`
-      );
+      toast.error(`Описанието трябва да е поне ${CASE_CONTENT.MIN} символа.`, {
+        className: "submission-toast",
+        toastId: "content-too-short",
+      });
       return;
     }
     if (textLength > CASE_CONTENT.MAX) {
-      setSubmissionError(
-        `Описанието не може да бъде по-дълго от ${CASE_CONTENT.MAX} символа.`
+      toast.error(
+        `Описанието не може да бъде по-дълго от ${CASE_CONTENT.MAX} символа.`,
+        {
+          className: "submission-toast",
+          toastId: "content-too-long",
+        }
       );
       return;
     }
-    // --- End Validation ---
-
     if (selectedCategories.length === 0) {
-      setSubmissionError(t("caseSubmission.errors.submission.missingCategory"));
+      toast.error(t("caseSubmission.errors.submission.missingCategory"), {
+        className: "submission-toast",
+        toastId: "missing-category",
+      });
       return;
     }
 
@@ -304,8 +308,12 @@ export const useCaseFormState = ({
 
     const categoryIds = findCategoryIdsByName(selectedCategories, categoryList);
     if (categoryIds.length !== selectedCategories.length) {
-      setSubmissionError(
-        t("caseSubmission.errors.submission.categoryProcessingError")
+      toast.error(
+        t("caseSubmission.errors.submission.categoryProcessingError"),
+        {
+          className: "submission-toast",
+          toastId: "category-processing-error",
+        }
       );
       setIsSubmittingForm(false);
       return;
@@ -336,9 +344,6 @@ export const useCaseFormState = ({
       setFetchedCreatorId(null);
       setSearchedUsername(null);
       setNotFoundUsername(null);
-      clearAllFormErrors();
-
-      // REMOVED: navigate("/");
     } catch (err) {
       console.error("Submission error caught by form:", err);
       const errorMsg =
@@ -346,10 +351,14 @@ export const useCaseFormState = ({
         (err instanceof Error
           ? err.message
           : t("caseSubmission.errors.submission.unexpectedError"));
-      setSubmissionError(
+      toast.error(
         t("caseSubmission.errors.submission.generalSubmissionError", {
           message: errorMsg,
-        })
+        }),
+        {
+          className: "submission-toast",
+          toastId: "general-submission-error",
+        }
       );
     } finally {
       setIsSubmittingForm(false);
@@ -367,14 +376,12 @@ export const useCaseFormState = ({
     notFoundUsername,
     isUserLoading,
     userLookupError,
-    submissionError,
     isSubmittingForm,
     setContent,
     setPriority,
     toggleCategory,
     setAttachments,
     handleUsernameChange,
-    clearAllFormErrors,
     handleSubmit,
     getCategoryClass,
     getSubmitButtonClass,

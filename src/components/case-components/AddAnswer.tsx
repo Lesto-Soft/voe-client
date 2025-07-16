@@ -105,6 +105,7 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
         style: {
           marginTop: "90px",
         },
+        className: "answer-toast",
       });
     } catch (error: any) {
       // Catch errors from the createAnswer promise itself (e.g., network issues if not handled by hook)

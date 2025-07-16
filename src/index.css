@@ -609,3 +609,41 @@ body,
 .react-datepicker__navigation-icon::before {
   border-color: #4b5563 !important; /* gray-600 */
 }
+
+/* Custom styles for toasts on the Case Submission page */
+.submission-toast {
+  font-family: "Mulish", sans-serif !important;
+  width: 100% !important; /* Let's give it a specific width */
+  top: 7.5rem;
+}
+
+@media (min-width: 768px) {
+  .submission-toast {
+    /* Desktop-specific dimensions */
+    width: 100% !important;
+    font-size: 1rem; /* Restore default font size */
+    top: 5rem;
+  }
+}
+
+.answer-toast {
+  font-family: "Mulish", sans-serif !important;
+}
+
+/*
+  This is the container that holds all toasts in a specific position
+  (e.g., top-right). We make it "invisible" to mouse clicks so that
+  you can click on header buttons or other elements that are behind it.
+*/
+.Toastify__toast-container {
+  pointer-events: none;
+}
+
+/*
+  This is the individual toast message. We must re-enable pointer
+  events on it so that you can interact with the toast itself
+  (e.g., click it, dismiss it, or select text).
+*/
+.Toastify__toast {
+  pointer-events: auto;
+}

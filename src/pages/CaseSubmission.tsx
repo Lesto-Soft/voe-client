@@ -1,42 +1,40 @@
 // src/pages/CaseSubmission.tsx
-// src/pages/CaseSubmissionPage.tsx
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
+import "react-toastify/dist/ReactToastify.css"; // Ensure toast styles are imported
 
-import { useGetActiveCategories } from "../graphql/hooks/category"; // Adjust path
-import { useCreateCase } from "../graphql/hooks/case"; // Adjust path
-import { useCaseFormState } from "../components/features/caseSubmission/hooks/useCaseFormState"; // Adjust path
-import { FormCategory } from "../components/features/caseSubmission/types"; // Adjust path
+import { useGetActiveCategories } from "../graphql/hooks/category";
+import { useCreateCase } from "../graphql/hooks/case";
+import { useCaseFormState } from "../components/features/caseSubmission/hooks/useCaseFormState";
+import { FormCategory } from "../components/features/caseSubmission/types";
 
-import CaseSubmissionHeader from "../components/features/caseSubmission/components/CaseSubmissionHeader"; // Adjust path
-import CaseSubmissionLeftPanel from "../components/features/caseSubmission/components/CaseSubmissionLeftPanel"; // Adjust path
-import CaseSubmissionRightPanel from "../components/features/caseSubmission/components/CaseSubmissionRightPanel"; // Adjust path
-import HelpModal from "../components/modals/HelpModal"; // Adjust path
+import CaseSubmissionHeader from "../components/features/caseSubmission/components/CaseSubmissionHeader";
+import CaseSubmissionLeftPanel from "../components/features/caseSubmission/components/CaseSubmissionLeftPanel";
+import CaseSubmissionRightPanel from "../components/features/caseSubmission/components/CaseSubmissionRightPanel";
+import HelpModal from "../components/modals/HelpModal";
 import SuccessConfirmationModal from "../components/modals/SuccessConfirmationModal";
 import CaseSubmissionSkeleton from "../components/skeletons/CaseSubmissionSkeleton";
 
 const CaseSubmissionPage: React.FC = () => {
   const { t } = useTranslation("caseSubmission");
   const { search } = useLocation();
-  const navigate = useNavigate(); // ADDED: useNavigate hook
+  const navigate = useNavigate();
 
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [successModalMessage, setSuccessModalMessage] = useState("");
+  const [showSkeleton, setShowSkeleton] = useState(true);
 
   const handleSubmissionSuccess = (message?: string) => {
     setSuccessModalMessage(
       message || t("caseSubmission.submissionSuccessAlert")
     );
     setIsSuccessModalOpen(true);
-    // Form reset will be handled by useCaseFormState
-    // Navigation will be handled by handleSuccessModalClose
   };
 
-  // ADDED: Handler for when the success modal closes
   const handleSuccessModalClose = () => {
     setIsSuccessModalOpen(false);
-    navigate("/"); // Navigate to home page after modal closes
+    navigate("/");
   };
 
   const {
@@ -79,7 +77,15 @@ const CaseSubmissionPage: React.FC = () => {
 
   const [isHelpModalOpen, setIsHelpModalOpen] = useState<boolean>(false);
 
-  if (categoriesLoading) {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowSkeleton(false);
+    }, 500); // Minimum skeleton display time: 500ms
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (categoriesLoading || showSkeleton) {
     return <CaseSubmissionSkeleton />;
   }
 
@@ -107,12 +113,7 @@ const CaseSubmissionPage: React.FC = () => {
 
   return (
     <>
-      {/* The skeleton is now always active with low opacity for comparison */}
-      {/* <div className="absolute inset-0 z-50 opacity-95 pointer-events-none">
-        <CaseSubmissionSkeleton />
-      </div> */}
-
-      <div className="min-h-screen p-6 grid grid-cols-1 md:grid-cols-2 gap-6 bg-stone-200">
+      <div className="min-h-screen p-6 grid grid-cols-1 md:grid-cols-2 gap-6 bg-stone-200 grid-rows-[auto_1fr]">
         <CaseSubmissionHeader
           caseTypeParam={caseTypeParam}
           t={t}
@@ -124,17 +125,6 @@ const CaseSubmissionPage: React.FC = () => {
           isSubmittingText={t("caseSubmission.submittingButton")}
           submitText={t("caseSubmission.submitButton")}
         />
-
-        <div
-          className={`col-span-1 md:col-span-2 p-3 rounded-md border transition-opacity duration-300 ${
-            formState.submissionError
-              ? "bg-red-100 border-red-400 text-red-700 opacity-100"
-              : "border-transparent text-transparent opacity-0"
-          }`}
-          aria-live="polite"
-        >
-          {formState.submissionError || "\u00A0"}
-        </div>
 
         <form
           id="case-form"
@@ -151,19 +141,17 @@ const CaseSubmissionPage: React.FC = () => {
             fetchedName={formState.fetchedName}
             content={formState.content}
             onContentChange={formState.setContent}
-            attachments={formState.attachments}
-            onAttachmentsChange={formState.setAttachments}
-            clearAllFormErrors={formState.clearAllFormErrors}
+            priority={formState.priority}
+            onPriorityChange={formState.setPriority}
           />
           <CaseSubmissionRightPanel
             t={t}
-            priority={formState.priority}
-            onPriorityChange={formState.setPriority}
             categoryList={formCategories}
             selectedCategories={formState.selectedCategories}
             toggleCategory={formState.toggleCategory}
             getCategoryClass={formState.getCategoryClass}
-            clearAllFormErrors={formState.clearAllFormErrors}
+            attachments={formState.attachments}
+            onAttachmentsChange={formState.setAttachments}
           />
         </form>
       </div>
@@ -178,7 +166,7 @@ const CaseSubmissionPage: React.FC = () => {
 
       <SuccessConfirmationModal
         isOpen={isSuccessModalOpen}
-        onClose={handleSuccessModalClose} // MODIFIED: Use the new handler
+        onClose={handleSuccessModalClose}
         message={successModalMessage}
         title={t("caseSubmission.successModalTitle", "Изпратено Успешно!")}
       />

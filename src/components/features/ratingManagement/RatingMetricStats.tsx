@@ -107,7 +107,7 @@ const RatingMetricStats: React.FC<RatingMetricStatsProps> = ({
             icon={icon}
             iconColor={iconColor}
             isActive={activeTier === tier}
-            onClick={() => onTierSelect(tier)}
+            onClick={() => onTierSelect(activeTier === tier ? "all" : tier)}
             isLoading={isLoading}
           />
         ))}

@@ -45,17 +45,18 @@ const ServerErrorPage = () => {
       <div className="text-center">
         <ServerIcon />
         <h1 className="mb-3 text-4xl font-bold text-slate-800 md:text-5xl">
-          500 - Internal Server Error
+          500 - Вътрешна грешка в сървъра
         </h1>
         <p className="mx-auto mb-8 max-w-lg text-lg leading-relaxed text-gray-600">
-          Oops! Something went wrong on our end. We're working hard to fix it.
-          Please try refreshing the page or come back later.
+          Опа! Нещо се обърка от наша страна. Моля, опитайте да презаредите
+          страницата и, ако проблемът все още е наличен, се свържете със
+          системния администратор.
         </p>
         <button
           onClick={goToHomepage}
           className="rounded-full bg-blue-500 px-6 py-3 font-semibold text-white shadow-lg shadow-blue-500/40 transition-transform duration-200 ease-in-out hover:bg-blue-600 hover:shadow-xl hover:-translate-y-1"
         >
-          Go to Homepage
+          Върнете се към началото
         </button>
       </div>
     </div>

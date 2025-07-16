@@ -1,4 +1,5 @@
 // src/utils/categoryDisplayUtils.ts
+import moment from "moment";
 import { ICase, IAnswer } from "../db/interfaces"; // Adjust path as needed
 
 export const STATUS_COLORS: Record<string, string> = {
@@ -163,13 +164,8 @@ export const calculateResolutionStats = (cases: ICase[]) => {
 
       if (caseItem.answers && caseItem.answers.length > 0) {
         caseItem.answers.forEach((answer: IAnswer) => {
-          // answer is IAnswer
           if (answer.approved) {
-            // This means answer.approved (IUser) exists
             try {
-              // Using answer.date (creation date of the answer) to determine "latest" approved answer
-              // This was the logic in the version you pasted as "working".
-              // If you intended to use answer.approved_date, that would be a different logic path.
               const currentApprovedDate = new Date(answer.date);
               if (!isNaN(currentApprovedDate.getTime())) {
                 if (
@@ -193,29 +189,28 @@ export const calculateResolutionStats = (cases: ICase[]) => {
 
       // Explicit check and access
       if (resolvingAnswerVariable !== null) {
-        const finalResolvingAnswer: IAnswer = resolvingAnswerVariable; // Explicitly typed after null check
+        const finalResolvingAnswer: IAnswer = resolvingAnswerVariable;
+        const answerDateString: string = finalResolvingAnswer.date;
 
-        // If the error still occurs on the next line, it's deeply puzzling.
-        const answerDate: string = finalResolvingAnswer.date; // Accessing .date from an explicitly typed IAnswer
-
-        if (answerDate && caseItem.date) {
+        if (answerDateString && caseItem.date) {
           try {
-            const caseStartDate = new Date(caseItem.date);
-            const resolutionActualEndDate = new Date(answerDate);
-            if (
-              !isNaN(caseStartDate.getTime()) &&
-              !isNaN(resolutionActualEndDate.getTime())
-            ) {
-              const diffTimeMs =
-                resolutionActualEndDate.getTime() - caseStartDate.getTime();
-              if (diffTimeMs >= 0) {
-                const diffDays = diffTimeMs / (1000 * 60 * 60 * 24);
-                totalResolutionTimeInDays += diffDays;
-                if (diffDays <= 1) resolutionTimeCounts.UNDER_1_DAY++;
-                else if (diffDays <= 5) resolutionTimeCounts.UNDER_5_DAYS++;
-                else if (diffDays <= 10) resolutionTimeCounts.UNDER_10_DAYS++;
-                else resolutionTimeCounts.OVER_10_DAYS++;
-              }
+            const endDate = moment.utc(
+              answerDateString,
+              "DD-MMM-YYYY HH:mm",
+              "en"
+            );
+
+            const startDate = moment.utc(parseInt(caseItem.date, 10));
+            const diffTimeMs = endDate.diff(startDate);
+            if (diffTimeMs >= 0) {
+              const diffDays = diffTimeMs / (1000 * 60 * 60 * 24);
+
+              totalResolutionTimeInDays += diffDays;
+
+              if (diffDays <= 1) resolutionTimeCounts.UNDER_1_DAY++;
+              else if (diffDays <= 5) resolutionTimeCounts.UNDER_5_DAYS++;
+              else if (diffDays <= 10) resolutionTimeCounts.UNDER_10_DAYS++;
+              else resolutionTimeCounts.OVER_10_DAYS++;
             }
           } catch (e) {
             console.error(

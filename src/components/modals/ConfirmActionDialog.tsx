@@ -37,7 +37,7 @@ const ConfirmActionDialog: React.FC<ConfirmActionDialogProps> = ({
             </AlertDialog.Title>
             <AlertDialog.Cancel asChild>
               <button
-                className="p-1 rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-colors"
+                className="cursor-pointer p-1 rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-colors"
                 aria-label="Close"
                 onClick={() => onOpenChange(false)} // Ensure cancel button also triggers onOpenChange
               >
@@ -50,14 +50,14 @@ const ConfirmActionDialog: React.FC<ConfirmActionDialogProps> = ({
           </AlertDialog.Description>
           <div className="flex justify-end gap-3">
             <AlertDialog.Cancel asChild>
-              <button className="rounded bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2">
+              <button className="cursor-pointer rounded bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2">
                 {cancelButtonText}
               </button>
             </AlertDialog.Cancel>
             <AlertDialog.Action asChild>
               <button
                 onClick={onConfirm}
-                className={`rounded px-4 py-2 text-sm font-medium text-white transition-colors focus:outline-none focus-visible:ring-2  focus-visible:ring-offset-2 ${
+                className={`cursor-pointer rounded px-4 py-2 text-sm font-medium text-white transition-colors focus:outline-none focus-visible:ring-2  focus-visible:ring-offset-2 ${
                   isDestructiveAction // Changed from is위험Action
                     ? "bg-red-600 hover:bg-red-700 focus-visible:ring-red-500"
                     : "bg-blue-600 hover:bg-blue-700 focus-visible:ring-blue-500" // Default to a non-destructive color like blue

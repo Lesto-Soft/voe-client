@@ -1,4 +1,4 @@
-// components/features/analyses/hooks/useAnalysesFilters.ts
+// src/components/features/analyses/hooks/useAnalysesFilters.ts
 import { useState, useMemo, useEffect } from "react";
 import { ICase } from "../../../../db/interfaces";
 import {
@@ -91,20 +91,12 @@ export const useAnalysesFilters = (allCases: ICase[] | undefined) => {
   ]);
 
   // --- Event Handler ---
-  const handleDateInputChange = (
-    e: React.ChangeEvent<HTMLInputElement>,
-    type: "start" | "end"
-  ) => {
-    const dateValue = e.target.value ? new Date(e.target.value) : null;
-    if (type === "start") {
-      setCustomStartDate(dateValue);
-      // Reset end date if it's before the new start date
-      if (dateValue && customEndDate && dateValue > customEndDate) {
-        setCustomEndDate(null);
-      }
-    } else {
-      setCustomEndDate(dateValue);
-    }
+  const handleCustomDateRangeChange = (range: {
+    startDate: Date | null;
+    endDate: Date | null;
+  }) => {
+    setCustomStartDate(range.startDate);
+    setCustomEndDate(range.endDate);
   };
 
   // --- Return Values ---
@@ -128,8 +120,6 @@ export const useAnalysesFilters = (allCases: ICase[] | undefined) => {
     setCurrentYear,
     setCurrentMonth,
     setCurrentWeek,
-    setCustomStartDate,
-    setCustomEndDate,
-    handleDateInputChange,
+    handleCustomDateRangeChange,
   };
 };

@@ -506,74 +506,76 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
             </div>
           )}
         </div>
-        {/* Content */}
-        <div className="flex-1 min-w-[200px]">
-          <label
-            htmlFor="content"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            {t("description")}
-          </label>
-          <input
-            type="text"
-            id="content"
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            className="bg-white w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition duration-150 ease-in-out"
-            placeholder={t("search_by_description")}
-          />
-        </div>
-        {/* Date Filter Toggle */}
-        <div>
-          <label
-            htmlFor="date-filter-toggle"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            {t("date")}
-          </label>
-          <button
-            id="date-filter-toggle"
-            type="button"
-            onClick={() => setIsDateSelectorVisible((prev) => !prev)}
-            title={t("filter_by_date")}
-            // By replacing h-10 with py-2 and px-3, the button's height
-            // will now match the other input fields.
-            className={`cursor-pointer px-3 py-2 flex items-center justify-center border rounded-md shadow-sm transition duration-150 ease-in-out text-sm ${
-              isDateSelectorVisible
-                ? "bg-indigo-100 border-indigo-500 text-indigo-600" // Style when selector is OPEN
-                : isDateFilterActive
-                ? "bg-white border-indigo-400 text-indigo-600" // Style when selector is CLOSED but filter is ACTIVE
-                : "bg-white text-gray-500 border-gray-300 hover:border-gray-400" // Style when selector is CLOSED and INACTIVE
-            }`}
-          >
-            <CalendarDaysIcon className="h-5 w-5" />
-          </button>
-        </div>
-        {/* Status */}
-        <div className="group relative">
-          <label
-            htmlFor="status"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            {t("status")}
-          </label>
-          <select
-            id="status"
-            value={status}
-            onChange={(e) => {
-              setStatus(e.target.value as ICase["status"] | "");
-              (e.target as HTMLSelectElement).blur();
-            }}
-            className="w-32 pl-3 pr-8 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-white appearance-none truncate"
-          >
-            <option value=""> {t("all")}</option>
-            <option value="OPEN"> {t("OPEN")}</option>
-            <option value="IN_PROGRESS"> {t("IN_PROGRESS")}</option>
-            <option value="AWAITING_FINANCE"> {t("AWAITING_FINANCE")}</option>
-            <option value="CLOSED"> {t("CLOSED")}</option>
-          </select>
-          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 top-[calc(1.75rem+1px)]">
-            <ChevronDownIcon className="h-5 w-5 transition-transform duration-200 ease-in-out group-focus-within:rotate-180" />
+        <div className="flex w-full items-end gap-x-4 xl:flex-1 xl:w-auto">
+          {/* Content */}
+          <div className="flex-1 min-w-[200px]">
+            <label
+              htmlFor="content"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              {t("description")}
+            </label>
+            <input
+              type="text"
+              id="content"
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              className="bg-white w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition duration-150 ease-in-out"
+              placeholder={t("search_by_description")}
+            />
+          </div>
+          {/* Date Filter Toggle */}
+          <div>
+            <label
+              htmlFor="date-filter-toggle"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              {t("date")}
+            </label>
+            <button
+              id="date-filter-toggle"
+              type="button"
+              onClick={() => setIsDateSelectorVisible((prev) => !prev)}
+              title={t("filter_by_date")}
+              // By replacing h-10 with py-2 and px-3, the button's height
+              // will now match the other input fields.
+              className={`cursor-pointer px-3 py-2 flex items-center justify-center border rounded-md shadow-sm transition duration-150 ease-in-out text-sm ${
+                isDateSelectorVisible
+                  ? "bg-indigo-100 border-indigo-500 text-indigo-600" // Style when selector is OPEN
+                  : isDateFilterActive
+                  ? "bg-white border-indigo-400 text-indigo-600" // Style when selector is CLOSED but filter is ACTIVE
+                  : "bg-white text-gray-500 border-gray-300 hover:border-gray-400" // Style when selector is CLOSED and INACTIVE
+              }`}
+            >
+              <CalendarDaysIcon className="h-5 w-5" />
+            </button>
+          </div>
+          {/* Status */}
+          <div className="group relative">
+            <label
+              htmlFor="status"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              {t("status")}
+            </label>
+            <select
+              id="status"
+              value={status}
+              onChange={(e) => {
+                setStatus(e.target.value as ICase["status"] | "");
+                (e.target as HTMLSelectElement).blur();
+              }}
+              className="w-32 pl-3 pr-8 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-white appearance-none truncate"
+            >
+              <option value=""> {t("all")}</option>
+              <option value="OPEN"> {t("OPEN")}</option>
+              <option value="IN_PROGRESS"> {t("IN_PROGRESS")}</option>
+              <option value="AWAITING_FINANCE"> {t("AWAITING_FINANCE")}</option>
+              <option value="CLOSED"> {t("CLOSED")}</option>
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 top-[calc(1.75rem+1px)]">
+              <ChevronDownIcon className="h-5 w-5 transition-transform duration-200 ease-in-out group-focus-within:rotate-180" />
+            </div>
           </div>
         </div>
       </div>

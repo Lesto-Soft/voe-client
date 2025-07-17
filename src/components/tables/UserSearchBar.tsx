@@ -121,10 +121,10 @@ const UserSearchBar: React.FC<UserSearchBarProps> = ({
             type="button"
             id={financialToggleId} // <-- ADDED id
             onClick={() => setFilterFinancial(!filterFinancial)}
-            className={`w-full px-3 py-2 rounded-md shadow-sm text-sm font-normal transition-colors duration-150 ease-in-out
+            className={`hover:cursor-pointer w-full px-3 py-2 rounded-md shadow-sm text-sm font-normal transition-colors duration-150 ease-in-out
               ${
                 filterFinancial
-                  ? "bg-blue-600 text-white hover:bg-blue-700 border-transparent"
+                  ? "bg-indigo-600 text-white hover:bg-indigo-700 border-transparent"
                   : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-300"
               }
             `}
@@ -151,10 +151,10 @@ const UserSearchBar: React.FC<UserSearchBarProps> = ({
             type="button"
             id={managerToggleId} // <-- ADDED id
             onClick={() => setFilterManager(!filterManager)}
-            className={`w-full px-3 py-2 rounded-md shadow-sm text-sm font-normal transition-colors duration-150 ease-in-out
+            className={`hover:cursor-pointer w-full px-3 py-2 rounded-md shadow-sm text-sm font-normal transition-colors duration-150 ease-in-out
               ${
                 filterManager
-                  ? "bg-blue-600 text-white hover:bg-blue-700 border-transparent" // Active state styling
+                  ? "bg-indigo-600 text-white hover:bg-indigo-700 border-transparent" // Active state styling
                   : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-300" // Inactive state styling
               }
             `}

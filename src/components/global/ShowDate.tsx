@@ -35,9 +35,10 @@ const ShowDate = ({
   const [showDate, setShowDate] = useState(false);
   let parseDate;
   if (isCase) {
-    parseDate = parseInt(date);
+    parseDate = moment.utc(parseInt(date, 10));
   } else parseDate = date;
 
+  console.log(parseDate);
   return (
     <div
       className={`w-36 whitespace-nowrap text-sm text-gray-500 flex items-center ${
@@ -47,7 +48,7 @@ const ShowDate = ({
     >
       <CalendarIcon className="!h-4 !w-4 min-w-4 min-h-4" />
       {!showDate && <span>{moment(parseDate).fromNow()}</span>}
-      {showDate && <span>{moment(parseDate).format("lll")}</span>}
+      {showDate && <span>{moment(parseDate).local().format("lll")}</span>}
     </div>
   );
 };

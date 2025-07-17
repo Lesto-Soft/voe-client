@@ -274,8 +274,9 @@ const CaseTable: React.FC<ICaseTableProps> = ({ cases, t, onCaseDeleted }) => {
                   {/* Date Cell */}
                   <td className="w-32 px-3 py-4 whitespace-nowrap text-sm">
                     <div className="flex items-center" title={my_case.date}>
-                      {`${moment(parseInt(my_case.date))
-                        .locale(currentLanguage)
+                      {`${moment
+                        .utc(parseInt(my_case.date, 10))
+                        .local()
                         .format("lll")}`}
                     </div>
                   </td>

@@ -453,7 +453,7 @@ const RateCaseModal: React.FC<RateCaseModalProps> = ({
                                         <div className="flex justify-center gap-3 w-full">
                                           <button
                                             onClick={handleConfirmDelete}
-                                            className="w-full text-sm font-bold text-white bg-red-600 hover:bg-red-700 px-4 py-1.5 rounded-md transition-colors"
+                                            className="cursor-pointer w-full text-sm font-bold text-white bg-red-600 hover:bg-red-700 px-4 py-1.5 rounded-md transition-colors"
                                           >
                                             Да
                                           </button>
@@ -461,7 +461,7 @@ const RateCaseModal: React.FC<RateCaseModalProps> = ({
                                             onClick={() =>
                                               setConfirmingDelete(null)
                                             }
-                                            className="w-full text-sm font-bold text-gray-700 bg-gray-200 hover:bg-gray-300 px-4 py-1.5 rounded-md transition-colors"
+                                            className="cursor-pointer w-full text-sm font-bold text-gray-700 bg-gray-200 hover:bg-gray-300 px-4 py-1.5 rounded-md transition-colors"
                                           >
                                             Не
                                           </button>

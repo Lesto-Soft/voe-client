@@ -99,7 +99,7 @@ const CategoryModal: React.FC<ModalProps> = ({
             <AlertDialog.Cancel asChild>
               <button
                 onClick={handleCancelClose}
-                className="rounded bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2"
+                className="cursor-pointer rounded bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2"
               >
                 Отказ
               </button>
@@ -107,7 +107,7 @@ const CategoryModal: React.FC<ModalProps> = ({
             <AlertDialog.Action asChild>
               <button
                 onClick={handleConfirmClose}
-                className="rounded bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
+                className="cursor-pointer rounded bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
               >
                 Излез
               </button>

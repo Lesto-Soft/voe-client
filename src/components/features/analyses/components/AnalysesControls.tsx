@@ -1,4 +1,4 @@
-// components/features/analyses/components/AnalysesControls.tsx
+// src/components/features/analyses/components/AnalysesControls.tsx
 import React from "react";
 import { ViewMode, BarChartDisplayMode } from "../types";
 import { MONTH_NAMES } from "../constants";
@@ -8,16 +8,15 @@ import {
   Square3Stack3DIcon,
 } from "@heroicons/react/24/outline";
 import { customInputStyles } from "../../../../utils/style-helpers";
+import DateRangeSelector from "../../userAnalytics/DateRangeSelector";
 
 interface AnalysesControlsProps {
   viewMode: ViewMode;
   setViewMode: (mode: ViewMode) => void;
   barChartMode: BarChartDisplayMode;
   setBarChartMode: (mode: BarChartDisplayMode) => void;
-  // --- NEW: Add props for the new toggle ---
   barChartStyle: "grouped" | "stacked";
   setBarChartStyle: (style: "grouped" | "stacked") => void;
-  // -----------------------------------------
   currentYear: number;
   setCurrentYear: (year: number) => void;
   uniqueYears: number[];
@@ -27,10 +26,10 @@ interface AnalysesControlsProps {
   setCurrentWeek: (week: number) => void;
   customStartDate: Date | null;
   customEndDate: Date | null;
-  handleDateInputChange: (
-    e: React.ChangeEvent<HTMLInputElement>,
-    type: "start" | "end"
-  ) => void;
+  handleCustomDateRangeChange: (range: {
+    startDate: Date | null;
+    endDate: Date | null;
+  }) => void;
   startDateForPies: Date | null;
   endDateForPies: Date | null;
 }
@@ -41,10 +40,8 @@ const AnalysesControls: React.FC<AnalysesControlsProps> = (props) => {
     setViewMode,
     barChartMode,
     setBarChartMode,
-    // --- NEW: Destructure the new props ---
     barChartStyle,
     setBarChartStyle,
-    // ------------------------------------
     currentYear,
     setCurrentYear,
     uniqueYears,
@@ -54,15 +51,13 @@ const AnalysesControls: React.FC<AnalysesControlsProps> = (props) => {
     setCurrentWeek,
     customStartDate,
     customEndDate,
-    handleDateInputChange,
+    handleCustomDateRangeChange,
     startDateForPies,
     endDateForPies,
   } = props;
 
-  // This is a shared part of the UI for toggles, let's create a helper component/function for it
   const renderToggles = () => (
     <div className="flex items-center space-x-4 ml-auto">
-      {/* === REPLACE THIS ENTIRE BLOCK === */}
       <div className="flex items-center space-x-2">
         <span className="text-sm font-medium text-gray-600">
           Стил на графиката:
@@ -92,9 +87,7 @@ const AnalysesControls: React.FC<AnalysesControlsProps> = (props) => {
           <Square3Stack3DIcon className="h-5 w-5" aria-hidden="true" />
         </button>
       </div>
-      {/* === END OF REPLACEMENT === */}
 
-      {/* This part for "Покажи по:" remains the same */}
       <div className="flex items-center space-x-2">
         <span className="text-sm font-medium text-gray-600">Покажи по:</span>
         <button
@@ -213,32 +206,13 @@ const AnalysesControls: React.FC<AnalysesControlsProps> = (props) => {
         )}
         {/* Custom date inputs */}
         {viewMode === "custom" && (
-          <>
-            <input
-              type="date"
-              value={
-                customStartDate
-                  ? customStartDate.toISOString().split("T")[0]
-                  : ""
-              }
-              onChange={(e) => handleDateInputChange(e, "start")}
-              className="custom-date-input p-2 border border-gray-300 rounded bg-white text-sm shadow-sm focus:ring-sky-500 focus:border-sky-500"
-            />
-            <span className="text-gray-500">-</span>
-            <input
-              type="date"
-              value={
-                customEndDate ? customEndDate.toISOString().split("T")[0] : ""
-              }
-              onChange={(e) => handleDateInputChange(e, "end")}
-              min={
-                customStartDate
-                  ? customStartDate.toISOString().split("T")[0]
-                  : undefined
-              }
-              className="custom-date-input p-2 border border-gray-300 rounded bg-white text-sm shadow-sm focus:ring-sky-500 focus:border-sky-500"
-            />
-          </>
+          <DateRangeSelector
+            dateRange={{
+              startDate: customStartDate,
+              endDate: customEndDate,
+            }}
+            onDateRangeChange={handleCustomDateRangeChange}
+          />
         )}
 
         <div
@@ -249,7 +223,6 @@ const AnalysesControls: React.FC<AnalysesControlsProps> = (props) => {
           {displayedPeriod}
         </div>
 
-        {/* --- MODIFIED: Use the new renderToggles function --- */}
         {renderToggles()}
       </div>
     );
@@ -290,7 +263,6 @@ const AnalysesControls: React.FC<AnalysesControlsProps> = (props) => {
           <div className="text-sm text-gray-700 font-medium bg-sky-100 px-2 py-1 rounded">
             Всички данни
           </div>
-          {/* --- MODIFIED: Use the new renderToggles function --- */}
           {renderToggles()}
         </div>
       ) : (

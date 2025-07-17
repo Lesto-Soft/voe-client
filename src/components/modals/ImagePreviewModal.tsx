@@ -293,7 +293,7 @@ const ImagePreviewModal: React.FC<ImagePreviewProps> = ({
               isAvatar
                 ? "w-auto h-auto max-w-[90vw] max-h-[90vh]"
                 : isPreviewable
-                ? "w-[95%] max-w-4xl h-[90vh]"
+                ? "w-[95%] max-w-5xl h-[90vh]"
                 : "w-auto max-w-lg"
             }
           `}

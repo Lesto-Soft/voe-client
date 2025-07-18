@@ -3,6 +3,8 @@ import {
   EllipsisHorizontalIcon,
   FlagIcon,
   TrashIcon,
+  EnvelopeIcon,
+  EnvelopeOpenIcon,
 } from "@heroicons/react/24/solid";
 import moment from "moment";
 // @ts-ignore
@@ -21,7 +23,10 @@ import {
 import { getContentPreview, stripHtmlTags } from "../../utils/contentRenderer";
 import { useCurrentUser } from "../../context/UserContext";
 import { ROLES } from "../../utils/GLOBAL_PARAMETERS";
-import { useDeleteCase } from "../../graphql/hooks/case";
+import {
+  useDeleteCase,
+  useToggleCaseReadStatus,
+} from "../../graphql/hooks/case";
 import ErrorModal from "../modals/ErrorModal";
 import LoadingModal from "../modals/LoadingModal";
 
@@ -32,14 +37,31 @@ interface ICaseTableProps {
 }
 
 // --- Main CaseTable Component ---
-const CaseTable: React.FC<ICaseTableProps> = ({ cases, t, onCaseDeleted }) => {
+const CaseTable: React.FC<ICaseTableProps> = ({
+  cases,
+  t,
+  onCaseDeleted: onActionComplete,
+}) => {
   const { i18n } = useTranslation();
   const currentLanguage = i18n.language;
   const currentUser = useCurrentUser();
-  const { deleteCase, loading, error } = useDeleteCase({
+  const {
+    deleteCase,
+    loading: deleteLoading,
+    error: deleteError,
+  } = useDeleteCase({
     onCompleted: () => {
-      if (onCaseDeleted) {
-        onCaseDeleted();
+      if (onActionComplete) {
+        onActionComplete();
+      }
+    },
+  });
+
+  // ADDED: Hook for the toggle functionality
+  const { toggleReadStatus, loading: toggleLoading } = useToggleCaseReadStatus({
+    onCompleted: () => {
+      if (onActionComplete) {
+        onActionComplete();
       }
     },
   });
@@ -102,11 +124,12 @@ const CaseTable: React.FC<ICaseTableProps> = ({ cases, t, onCaseDeleted }) => {
     }
   }, [openDropdown]);
 
-  if (error) {
+  if (deleteError) {
     return <ErrorModal message="Проблем с изтриването на сигнал." />;
   }
-  if (loading) {
-    return <LoadingModal message="Изтриване на сигнал..." />;
+  // MODIFIED: Combine loading states
+  if (deleteLoading || toggleLoading) {
+    return <LoadingModal message="Обработване..." />;
   }
 
   return (
@@ -330,17 +353,32 @@ const CaseTable: React.FC<ICaseTableProps> = ({ cases, t, onCaseDeleted }) => {
                         </span>
                       </button>
 
-                      {/* --- DROPDOWN MENU (FIXED) --- */}
-                      {openDropdown === my_case._id &&
-                        currentUser.role._id === ROLES.ADMIN && (
-                          <div
-                            onClick={(e) => e.stopPropagation()} // <-- IMPORTANT: Stops clicks inside the menu from closing it
-                            className="origin-top-right absolute right-1 mt-2 w-42 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50"
-                            role="menu"
-                            aria-orientation="vertical"
-                            aria-labelledby="menu-button"
-                          >
-                            <div className="py-1" role="none">
+                      {/* --- DROPDOWN MENU (MODIFIED) --- */}
+                      {openDropdown === my_case._id && (
+                        <div
+                          onClick={(e) => e.stopPropagation()}
+                          className="origin-top-right absolute right-1 mt-2 w-53 rounded-md shadow-lg bg-white ring-2 ring-gray-100 focus:outline-none z-50"
+                          role="menu"
+                        >
+                          <div className="py-1" role="none">
+                            {/* ADDED: Toggle Read/Unread Button */}
+                            <button
+                              onClick={() => toggleReadStatus(my_case._id)}
+                              className="cursor-pointer w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 flex items-center gap-2 transition-colors duration-150"
+                              role="menuitem"
+                            >
+                              {isUnread ? (
+                                <EnvelopeOpenIcon className="h-4 w-4" />
+                              ) : (
+                                <EnvelopeIcon className="h-4 w-4" />
+                              )}
+                              {isUnread
+                                ? "Направи прочетено"
+                                : "Направи непрочетено"}
+                            </button>
+
+                            {/* Existing Delete Button */}
+                            {currentUser.role._id === ROLES.ADMIN && (
                               <button
                                 onClick={() => deleteCase(my_case._id)}
                                 className="cursor-pointer w-full text-left px-4 py-2 text-sm text-btnRed hover:bg-red-50 hover:text-btnRedHover flex items-center gap-2 transition-colors duration-150"
@@ -349,9 +387,10 @@ const CaseTable: React.FC<ICaseTableProps> = ({ cases, t, onCaseDeleted }) => {
                                 <TrashIcon className="h-4 w-4" />
                                 {t("delete_case") || "Delete Case"}
                               </button>
-                            </div>
+                            )}
                           </div>
-                        )}
+                        </div>
+                      )}
                     </div>
                   </td>
                 </tr>

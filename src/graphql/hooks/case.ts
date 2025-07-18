@@ -5,6 +5,7 @@ import {
   DELETE_CASE,
   UPDATE_CASE,
   MARK_CASE_AS_READ,
+  TOGGLE_CASE_READ_STATUS,
 } from "../mutation/case"; // RATE_CASE removed from imports
 import {
   COUNT_CASES,
@@ -415,4 +416,26 @@ export const useMarkCaseAsRead = () => {
   };
 
   return { markCaseAsRead };
+};
+
+export const useToggleCaseReadStatus = (
+  options: { onCompleted?: () => void } = {}
+) => {
+  const [toggleCaseReadStatusMutation, { loading, error }] = useMutation(
+    TOGGLE_CASE_READ_STATUS,
+    {
+      onCompleted: options.onCompleted,
+    }
+  );
+
+  const toggleReadStatus = async (caseId: string) => {
+    try {
+      await toggleCaseReadStatusMutation({ variables: { caseId } });
+    } catch (err) {
+      console.error("Failed to toggle case read status:", err);
+      // Optionally handle the error in the UI
+    }
+  };
+
+  return { toggleReadStatus, loading, error };
 };

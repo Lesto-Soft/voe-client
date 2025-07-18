@@ -1,6 +1,11 @@
 // src/graphql/hooks/case.ts (Corrected)
 import { useMutation, useQuery, QueryHookOptions } from "@apollo/client";
-import { CREATE_CASE, DELETE_CASE, UPDATE_CASE } from "../mutation/case"; // RATE_CASE removed from imports
+import {
+  CREATE_CASE,
+  DELETE_CASE,
+  UPDATE_CASE,
+  MARK_CASE_AS_READ,
+} from "../mutation/case"; // RATE_CASE removed from imports
 import {
   COUNT_CASES,
   COUNT_FILTERED_CASES,
@@ -393,4 +398,21 @@ export const useDeleteCase = (
     loading,
     error,
   };
+};
+
+export const useMarkCaseAsRead = () => {
+  const [markCaseAsReadMutation] = useMutation(MARK_CASE_AS_READ);
+
+  const markCaseAsRead = async (caseId: string) => {
+    try {
+      // This is a "fire and forget" mutation. We don't need to wait for the
+      // result or handle loading states extensively in the UI.
+      await markCaseAsReadMutation({ variables: { caseId } });
+    } catch (err) {
+      console.error("Failed to mark case as read:", err);
+      // We don't re-throw because this is not a critical UI-blocking error.
+    }
+  };
+
+  return { markCaseAsRead };
 };

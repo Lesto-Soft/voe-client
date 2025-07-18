@@ -11,9 +11,9 @@ export interface ICase {
   creator: IUser;
   comments?: IComment[];
   answers?: IAnswer[];
-  metricScores?: IMetricScore[]; // <-- UPDATED from 'rating'
-  calculatedRating?: number | null; // This is useful as it's provided by the backend
-  readBy?: IUser[];
+  metricScores?: IMetricScore[];
+  calculatedRating?: number | null;
+  readBy?: IReadBy[]; // MODIFIED
   history?: ICaseHistory[];
   last_update?: string;
 }
@@ -130,6 +130,14 @@ export interface ICaseHistory {
   new_type?: string;
   old_categories: ICategory[];
   new_categories: ICategory[];
+}
+
+export interface IReadBy {
+  _id: string;
+  user: {
+    _id: string;
+  };
+  date: string;
 }
 
 export enum ICaseStatus {

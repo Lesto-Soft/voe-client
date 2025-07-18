@@ -53,3 +53,9 @@ export const DELETE_CASE = gql`
     }
   }
 `;
+
+export const MARK_CASE_AS_READ = gql`
+  mutation MarkCaseAsRead($caseId: ID!) {
+    markCaseAsRead(caseId: $caseId)
+  }
+`;

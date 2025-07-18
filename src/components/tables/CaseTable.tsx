@@ -199,6 +199,9 @@ const CaseTable: React.FC<ICaseTableProps> = ({ cases, t, onCaseDeleted }) => {
           {/* Table Body */}
           <tbody className="bg-white divide-y divide-gray-200">
             {cases.map((my_case) => {
+              const isUnread = !my_case.readBy?.some(
+                (entry) => entry.user._id === currentUser._id
+              );
               const statusStyle = getStatusStyle(my_case.status);
               const priorityStyle = getPriorityStyle(my_case.priority);
               const typeBadgeStyle = getTypeBadgeStyle(my_case.type);
@@ -221,10 +224,17 @@ const CaseTable: React.FC<ICaseTableProps> = ({ cases, t, onCaseDeleted }) => {
                 >
                   {/* Case Number Cell - Now a Button-like Link */}
                   <td
-                    className={`w-24 px-3 py-4 whitespace-nowrap text-sm ${
+                    className={`relative w-24 px-3 py-4 whitespace-nowrap text-sm ${
+                      // ADDED 'relative'
                       isClosed ? "text-gray-500" : "font-medium"
                     }`}
                   >
+                    {isUnread && ( // ADDED THIS BLOCK
+                      <span
+                        className="absolute left-2 top-1/2 -translate-y-1/2 h-7 w-2 rounded-l-full bg-blue-500"
+                        title={"Непрочетен"}
+                      ></span>
+                    )}
                     <CaseLink my_case={my_case} t={t} />
                   </td>
                   {/* Priority Cell - Text hidden on medium and below */}

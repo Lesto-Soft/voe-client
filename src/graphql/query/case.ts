@@ -57,6 +57,11 @@ const caseFragment = gql`
     answers {
       needs_finance
     }
+    readBy {
+      user {
+        _id
+      }
+    }
   }
 `;
 
@@ -280,6 +285,12 @@ export const GET_CASE_BY_CASE_NUMBER = gql`
         comments {
           ...CommentFragment
         }
+      }
+      readBy {
+        user {
+          _id
+        }
+        date
       }
     }
   }

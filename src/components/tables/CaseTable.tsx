@@ -244,9 +244,17 @@ const CaseTable: React.FC<ICaseTableProps> = ({
               return (
                 <tr
                   key={my_case._id}
-                  className={`${
-                    isClosed ? "bg-gray-100 text-gray-500" : "hover:bg-gray-100"
-                  }`}
+                  className={
+                    isClosed
+                      ? "bg-gray-100 text-gray-500"
+                      : isUnread
+                      ? "bg-blue-50 hover:bg-blue-100 font-semibold"
+                      : "hover:bg-gray-50"
+                  }
+
+                  // className={`${
+                  //   isClosed ? "bg-gray-100 text-gray-500" : "hover:bg-gray-100"
+                  // }`}
                 >
                   {/* Case Number Cell - Now a Button-like Link */}
                   <td
@@ -255,13 +263,7 @@ const CaseTable: React.FC<ICaseTableProps> = ({
                       isClosed ? "text-gray-500" : "font-medium"
                     }`}
                   >
-                    {isUnread && ( // ADDED THIS BLOCK
-                      <span
-                        className="absolute left-2 top-1/2 -translate-y-1/2 h-7 w-2 rounded-l-full bg-blue-500"
-                        title={"Непрочетен"}
-                      ></span>
-                    )}
-                    <CaseLink my_case={my_case} t={t} />
+                    <CaseLink my_case={my_case} t={t} isUnread={isUnread} />
                   </td>
                   {/* Priority Cell - Text hidden on medium and below */}
                   <td className="w-28 px-3 py-4 whitespace-nowrap text-sm">
@@ -301,7 +303,11 @@ const CaseTable: React.FC<ICaseTableProps> = ({
                     </div>
                   </td>
                   <td
-                    className="max-w-[200px] sm:max-w-[250px] lg:max-w-[300px] px-3 py-4 text-sm break-words"
+                    className={
+                      isUnread && !isClosed
+                        ? "max-w-[200px] sm:max-w-[250px] lg:max-w-[300px] px-3 py-4 text-sm break-words"
+                        : "max-w-[200px] sm:max-w-[250px] lg:max-w-[300px] px-3 py-4 text-sm break-words"
+                    }
                     title={stripHtmlTags(my_case.content)} // Show plain text in tooltip
                   >
                     {displayContent}
@@ -337,7 +343,7 @@ const CaseTable: React.FC<ICaseTableProps> = ({
                         className={`cursor-pointer p-1 rounded-md transition-colors duration-150 ease-in-out inline-flex items-center justify-center ${
                           currentUser.role._id == ROLES.LEFT
                             ? "text-gray-400 cursor-not-allowed"
-                            : "text-gray-500 hover:text-gray-800 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                            : "text-gray-500 hover:text-gray-800 hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                         }`}
                         disabled={currentUser.role._id == ROLES.LEFT}
                         onClick={(e) => {

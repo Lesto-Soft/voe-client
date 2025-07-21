@@ -263,10 +263,42 @@ export const GET_ANALYTITCS_DATA_CASES = gql`
 export const GET_CASE_BY_CASE_NUMBER = gql`
   query GET_CASE_BY_CASE_NUMBER($caseNumber: Int!, $roleId: String) {
     getCaseByNumber(case_number: $caseNumber, roleId: $roleId) {
-      ...CaseFragment
+      # REMOVED: ...CaseFragment
+
+      # ADDED: All required top-level fields from the fragment
+      _id
+      case_number
+      content
+      date
+      type
+      attachments
+      priority
+      status
+
+      # Fields that were already explicitly defined
       calculatedRating
       creator {
+        _id
+        name
+        position
+        username
         avatar
+        expert_categories {
+          _id
+        }
+        managed_categories {
+          _id
+        }
+      }
+      categories {
+        _id
+        name
+        experts {
+          _id
+        }
+        managers {
+          _id
+        }
       }
       metricScores {
         ...MetricScoreFragment
@@ -286,15 +318,24 @@ export const GET_CASE_BY_CASE_NUMBER = gql`
           ...CommentFragment
         }
       }
+      # The full, detailed readBy field we need for the modal
       readBy {
         user {
           _id
+          name
+          username
+          avatar
+          expert_categories {
+            _id
+          }
+          managed_categories {
+            _id
+          }
         }
         date
       }
     }
   }
-  ${caseFragment}
   ${metricScoreFragment}
   ${caseHistoryFragment}
   ${answerFragment}

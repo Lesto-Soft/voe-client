@@ -290,6 +290,20 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
     setCategorySearch(e.target.value);
   };
 
+  const handleReopenCreatorDropdown = () => {
+    // Clear the previous selection state
+    setSelectedCreator(null);
+    setCreatorId("");
+    setCreatorInput("");
+    setFetchedInitialCreator(false);
+
+    // Open the dropdown and fetch all users if they're not already loaded
+    setIsDropdownVisible(true);
+    if (serverFetchedUsers.length === 0) {
+      fetchUsers({ variables: { search: "" } });
+    }
+  };
+
   // --- Render Logic ---
   const showDropdown = isDropdownVisible;
 
@@ -373,8 +387,17 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
             {t("creator")}
           </label>
           {selectedCreator ? (
-            <div className="bg-white w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm flex justify-between items-center">
-              <span className="text-gray-800">{selectedCreator.name}</span>
+            <div
+              // MODIFIED: Use the new handler function
+              onClick={handleReopenCreatorDropdown}
+              className="cursor-pointer bg-white w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm flex justify-between items-center"
+            >
+              <span
+                className="text-gray-800 truncate max-w-[170px]"
+                title={selectedCreator.name}
+              >
+                {selectedCreator.name}
+              </span>
               <span className="font-semibold text-gray-500 mr-6">
                 {selectedCreator.username}
               </span>
@@ -387,7 +410,7 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
               value={creatorInput}
               onChange={handleCreatorInputChange}
               onFocus={handleCreatorInputFocus}
-              className="bg-white w-full px-3 pr-8 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition duration-150 ease-in-out"
+              className="cursor-pointer bg-white w-full px-3 pr-8 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition duration-150 ease-in-out"
               placeholder={t("choose_creator")}
               autoComplete="off"
             />
@@ -408,6 +431,7 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
               ref={dropdownRef}
               className="absolute z-50 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto"
             >
+              {/* ... (dropdown content is unchanged) ... */}
               {loadingUsers && serverFetchedUsers.length === 0 ? (
                 <div className="px-3 py-2 text-sm text-gray-500">
                   {t("loading")}
@@ -428,7 +452,12 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
                     onMouseDown={() => handleUserSelect(user)}
                   >
                     <div className="flex justify-between items-center w-full">
-                      <span className="text-gray-800">{user.name}</span>
+                      <span
+                        className="text-gray-800 truncate max-w-[170px]"
+                        title={user.name}
+                      >
+                        {user.name}
+                      </span>
                       <span className="font-semibold text-gray-500">
                         {user.username}
                       </span>

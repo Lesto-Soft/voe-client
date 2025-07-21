@@ -136,6 +136,9 @@ export interface IReadBy {
   _id: string;
   user: {
     _id: string;
+    name: string;
+    username: string;
+    avatar?: string;
   };
   date: string;
 }

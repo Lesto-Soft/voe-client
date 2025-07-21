@@ -23,6 +23,9 @@ import { useGetActiveCategories } from "../../graphql/hooks/category";
 import { renderContentSafely } from "../../utils/contentRenderer";
 import RateCaseModal from "../modals/RateCaseModal";
 import CaseRatingDisplay from "./CaseRatingDisplay";
+import { IReadBy } from "../../db/interfaces";
+import { EyeIcon } from "@heroicons/react/24/outline";
+import CaseReadByModal from "../modals/CaseReadByModal";
 
 interface ICaseInfoProps {
   content: string;
@@ -42,6 +45,7 @@ interface ICaseInfoProps {
   isLoading: boolean;
   error?: ApolloError | undefined; // <-- ADD THIS PROP
   rights: string[];
+  readBy?: IReadBy[];
 }
 
 const CaseInfo: React.FC<ICaseInfoProps> = ({
@@ -62,9 +66,13 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
   rights = [],
   isLoading,
   error,
+  readBy = [],
 }) => {
+  console.log("caseinfo readby:", readBy);
   const { t } = useTranslation("dashboard");
   const [isRatingModalOpen, setRatingModalOpen] = useState(false);
+  // 2. ADD STATE FOR THE NEW MODAL
+  const [isReadByModalOpen, setReadByModalOpen] = useState(false);
 
   // --- THIS LINE IS NOW CORRECT ---
   const { categories: categoriesDataFromHook } = useGetActiveCategories();
@@ -77,6 +85,12 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
     () => metricScores.some((score) => score.user._id === me._id),
     [metricScores, me._id]
   );
+
+  // 3. ADD AUTHORIZATION LOGIC
+  const canViewReadBy =
+    rights.includes("admin") ||
+    rights.includes("manager") ||
+    rights.includes("expert");
 
   const isCurrentUserCreator = creator?._id === me._id;
 
@@ -113,7 +127,19 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
               <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
                 {t("content")}
               </h3>
-              <div className="flex lg:gap-2">
+              <div className="flex items-center lg:gap-2">
+                {/* Added items-center */}
+                {/* 4. ADD THE TRIGGER BUTTON HERE */}
+                {canViewReadBy && (
+                  <button
+                    type="button"
+                    title="Виж кой е прочел сигнала"
+                    onClick={() => setReadByModalOpen(true)}
+                    className="p-1 rounded text-gray-500 hover:text-blue-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400 hover:cursor-pointer"
+                  >
+                    <EyeIcon className="h-5 w-5" />
+                  </button>
+                )}
                 {(rights.includes(USER_RIGHTS.CREATOR) ||
                   rights.includes(USER_RIGHTS.ADMIN) ||
                   rights.includes(USER_RIGHTS.MANAGER)) &&
@@ -263,6 +289,13 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
         caseScores={metricScores}
         isLoadingScores={isLoading}
         errorScores={error}
+      />
+
+      <CaseReadByModal
+        isOpen={isReadByModalOpen}
+        onClose={() => setReadByModalOpen(false)}
+        readByData={readBy}
+        caseNumber={caseNumber}
       />
     </>
   );

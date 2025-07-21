@@ -127,6 +127,7 @@ const Case = () => {
           isLoading={loadingCase}
           error={errorCase}
           rights={userRights}
+          readBy={c.readBy}
         />
       </div>
 

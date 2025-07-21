@@ -9,6 +9,13 @@ import {
   CalendarDaysIcon,
 } from "@heroicons/react/24/outline"; // Import icons
 import DateRangeSelector from "../features/userAnalytics/DateRangeSelector";
+import CustomDropdown from "../global/CustomDropdown";
+import {
+  getPriorityOptions,
+  getReadStatusOptions,
+  getStatusOptions,
+  getTypeOptions,
+} from "../../utils/dashboardFilterUtils";
 
 // Interface for Lean User (assuming structure)
 interface ILeanUser {
@@ -307,6 +314,11 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
   // --- Render Logic ---
   const showDropdown = isDropdownVisible;
 
+  const priorityOptions = getPriorityOptions(t);
+  const typeOptions = getTypeOptions(t);
+  const statusOptions = getStatusOptions(t);
+  const readStatusOptions = getReadStatusOptions(t);
+
   return (
     <div className="px-4 sm:px-6 lg:px-8 py-5">
       <div className="flex flex-wrap gap-x-4 gap-y-3 items-end">
@@ -328,56 +340,19 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
           />
         </div>
         {/* Priority */}
-        <div className="group relative">
-          <label
-            htmlFor="priority"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            {t("priority")}
-          </label>
-          <select
-            id="priority"
-            value={priority}
-            onChange={(e) => {
-              setPriority(e.target.value as ICase["priority"] | "");
-              (e.target as HTMLSelectElement).blur();
-            }}
-            className="w-32 pl-3 pr-8 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-white appearance-none truncate"
-          >
-            <option value=""> {t("all")}</option>
-            <option value="LOW"> {t("LOW")}</option>
-            <option value="MEDIUM"> {t("MEDIUM")}</option>
-            <option value="HIGH"> {t("HIGH")}</option>
-          </select>
-          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 top-[calc(1.75rem+1px)]">
-            <ChevronDownIcon className="h-5 w-5 transition-transform duration-200 ease-in-out group-focus-within:rotate-180" />
-          </div>
-        </div>
+        <CustomDropdown
+          label={t("priority")}
+          options={priorityOptions}
+          value={priority}
+          onChange={(value) => setPriority(value as ICase["priority"] | "")}
+        />
         {/* Type */}
-        <div className="group relative">
-          <label
-            htmlFor="type"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            {t("type")}
-          </label>
-          <select
-            id="type"
-            value={type}
-            onChange={(e) => {
-              setType(e.target.value as ICase["type"] | "");
-              (e.target as HTMLSelectElement).blur();
-            }}
-            className="w-32 pl-3 pr-8 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-white appearance-none truncate"
-          >
-            <option value=""> {t("all")}</option>
-            <option value="PROBLEM"> {t("PROBLEM")}</option>
-            <option value="SUGGESTION"> {t("SUGGESTION")}</option>
-          </select>
-          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 top-[calc(1.75rem+1px)]">
-            <ChevronDownIcon className="h-5 w-5 transition-transform duration-200 ease-in-out group-focus-within:rotate-180" />
-          </div>
-        </div>
+        <CustomDropdown
+          label={t("type")}
+          options={typeOptions}
+          value={type}
+          onChange={(value) => setType(value as ICase["type"] | "")}
+        />
         {/* Creator (Autocomplete) */}
         <div className="relative flex-1 min-w-[200px]">
           <label
@@ -584,57 +559,19 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
             </button>
           </div>
           {/* Status */}
-          <div className="group relative">
-            <label
-              htmlFor="status"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              {t("status")}
-            </label>
-            <select
-              id="status"
-              value={status}
-              onChange={(e) => {
-                setStatus(e.target.value as ICase["status"] | "");
-                (e.target as HTMLSelectElement).blur();
-              }}
-              className="w-32 pl-3 pr-8 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-white appearance-none truncate"
-            >
-              <option value=""> {t("all")}</option>
-              <option value="OPEN"> {t("OPEN")}</option>
-              <option value="IN_PROGRESS"> {t("IN_PROGRESS")}</option>
-              <option value="AWAITING_FINANCE"> {t("AWAITING_FINANCE")}</option>
-              <option value="CLOSED"> {t("CLOSED")}</option>
-            </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 top-[calc(1.75rem+1px)]">
-              <ChevronDownIcon className="h-5 w-5 transition-transform duration-200 ease-in-out group-focus-within:rotate-180" />
-            </div>
-          </div>
+          <CustomDropdown
+            label={t("status")}
+            options={statusOptions}
+            value={status}
+            onChange={(value) => setStatus(value as ICase["status"] | "")}
+          />
           {/* Read Status -- MODIFIED */}
-          <div className="group relative">
-            <label
-              htmlFor="readStatus"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Прочетени
-            </label>
-            <select
-              id="readStatus"
-              value={readStatus}
-              onChange={(e) => {
-                setReadStatus(e.target.value as "READ" | "UNREAD" | "");
-                (e.target as HTMLSelectElement).blur();
-              }}
-              className="w-32 pl-3 pr-8 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-white appearance-none truncate"
-            >
-              <option value="">{t("all")}</option>
-              <option value="READ">Прочетени</option>
-              <option value="UNREAD">Непрочетени</option>
-            </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 top-[calc(1.75rem+1px)]">
-              <ChevronDownIcon className="h-5 w-5 transition-transform duration-200 ease-in-out group-focus-within:rotate-180" />
-            </div>
-          </div>
+          <CustomDropdown
+            label={"Прочетени"}
+            options={readStatusOptions}
+            value={readStatus === "" ? "ALL" : readStatus} // Handle default case
+            onChange={(value) => setReadStatus(value as "READ" | "UNREAD" | "")}
+          />
         </div>
       </div>
 

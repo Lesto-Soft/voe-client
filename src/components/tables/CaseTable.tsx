@@ -128,9 +128,9 @@ const CaseTable: React.FC<ICaseTableProps> = ({
     return <ErrorModal message="Проблем с изтриването на сигнал." />;
   }
   // MODIFIED: Combine loading states
-  if (deleteLoading || toggleLoading) {
-    return <LoadingModal message="Обработване..." />;
-  }
+  // if (deleteLoading || toggleLoading) {
+  // return <LoadingModal message="Обработване..." />;
+  // }
 
   return (
     <div className="flex-1 flex flex-col min-h-0 px-4 sm:px-6 lg:px-8">
@@ -221,7 +221,7 @@ const CaseTable: React.FC<ICaseTableProps> = ({
           </thead>
           {/* Table Body */}
           <tbody className="bg-white divide-y divide-gray-200">
-            {cases.map((my_case) => {
+            {cases.map((my_case, index) => {
               const isUnread = !my_case.readBy?.some(
                 (entry) => entry.user._id === currentUser._id
               );
@@ -237,6 +237,9 @@ const CaseTable: React.FC<ICaseTableProps> = ({
                 my_case.content,
                 truncateLength
               );
+
+              // Add a check to see if it's one of the last row
+              const isLastRow = index >= cases.length - 1;
 
               return (
                 <tr
@@ -332,17 +335,17 @@ const CaseTable: React.FC<ICaseTableProps> = ({
                     <div>
                       <button
                         className={`cursor-pointer p-1 rounded-md transition-colors duration-150 ease-in-out inline-flex items-center justify-center ${
-                          currentUser.role._id !== ROLES.ADMIN
+                          currentUser.role._id == ROLES.LEFT
                             ? "text-gray-400 cursor-not-allowed"
                             : "text-gray-500 hover:text-gray-800 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                         }`}
-                        disabled={currentUser.role._id !== ROLES.ADMIN}
+                        disabled={currentUser.role._id == ROLES.LEFT}
                         onClick={(e) => {
                           e.stopPropagation(); // <-- IMPORTANT: Stops the click from closing the menu immediately
                           toggleDropdown(my_case._id);
                         }}
                         title={
-                          currentUser.role._id !== ROLES.ADMIN
+                          currentUser.role._id == ROLES.LEFT
                             ? t("no_more_actions")
                             : t("more_actions")
                         }
@@ -357,7 +360,12 @@ const CaseTable: React.FC<ICaseTableProps> = ({
                       {openDropdown === my_case._id && (
                         <div
                           onClick={(e) => e.stopPropagation()}
-                          className="origin-top-right absolute right-1 mt-2 w-53 rounded-md shadow-lg bg-white ring-2 ring-gray-100 focus:outline-none z-50"
+                          // --- CONDITIONAL CLASS LOGIC ---
+                          className={`absolute right-1 w-53 rounded-md shadow-lg bg-white ring-2 ring-gray-100 focus:outline-none z-50 ${
+                            isLastRow
+                              ? "bottom-full mb-0 origin-bottom-right" // Opens upwards
+                              : "mt-2 origin-top-right" // Opens downwards (default)
+                          }`}
                           role="menu"
                         >
                           <div className="py-1" role="none">

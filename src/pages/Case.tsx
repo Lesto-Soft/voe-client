@@ -46,7 +46,8 @@ const Case = () => {
     refetch,
   } = useGetCaseByCaseNumber(numericCaseNumber, currentUser.role?._id);
 
-  const { markCaseAsRead } = useMarkCaseAsRead(); // ADDED
+  // Pass the case number to the hook
+  const { markCaseAsRead } = useMarkCaseAsRead(numericCaseNumber);
 
   // ADDED: This effect marks the case as read by the current user
   useEffect(() => {

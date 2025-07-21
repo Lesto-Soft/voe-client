@@ -403,18 +403,25 @@ export const useDeleteCase = (
     error,
   };
 };
-
-export const useMarkCaseAsRead = () => {
-  const [markCaseAsReadMutation] = useMutation(MARK_CASE_AS_READ);
+export const useMarkCaseAsRead = (caseNumber: number) => {
+  // Step 1: Accept caseNumber
+  const [markCaseAsReadMutation] = useMutation(MARK_CASE_AS_READ, {
+    // Step 2: Add refetchQueries option
+    refetchQueries: [
+      {
+        query: GET_CASE_BY_CASE_NUMBER,
+        variables: { caseNumber },
+      },
+    ],
+    // This ensures the UI doesn't flicker or show stale data
+    awaitRefetchQueries: true,
+  });
 
   const markCaseAsRead = async (caseId: string) => {
     try {
-      // This is a "fire and forget" mutation. We don't need to wait for the
-      // result or handle loading states extensively in the UI.
       await markCaseAsReadMutation({ variables: { caseId } });
     } catch (err) {
       console.error("Failed to mark case as read:", err);
-      // We don't re-throw because this is not a critical UI-blocking error.
     }
   };
 

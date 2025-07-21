@@ -53,6 +53,11 @@ export const GET_METRIC_SCORES_BY_METRIC = gql`
             _id
           }
         }
+        readBy {
+          user {
+            _id
+          }
+        }
       }
     }
   }

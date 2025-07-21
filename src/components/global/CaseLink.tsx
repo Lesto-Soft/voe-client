@@ -7,19 +7,18 @@ import { canViewCase } from "../../utils/rightUtils";
 interface ICaseLinkProps {
   my_case: ICase;
   t: (key: string) => string;
-  isUnread?: boolean;
 }
 
-const CaseLink: React.FC<ICaseLinkProps> = ({
-  my_case,
-  t,
-  isUnread = false,
-}) => {
+const CaseLink: React.FC<ICaseLinkProps> = ({ my_case, t }) => {
   const currentUser = useCurrentUser();
 
   if (!my_case || !currentUser) {
     return null;
   }
+
+  const isUnread =
+    // my_case.creator?._id !== currentUser._id &&
+    !my_case.readBy?.some((entry) => entry.user._id === currentUser._id);
 
   const isAllowed = canViewCase(currentUser, my_case);
   const isClosed = my_case.status === "CLOSED";

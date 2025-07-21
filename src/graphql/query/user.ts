@@ -62,6 +62,11 @@ fragment FullUserFragment on User {
         answers {
           needs_finance
         }
+        readBy {
+          user {
+            _id
+          }
+        }
       }
       answers {
         _id
@@ -87,6 +92,11 @@ fragment FullUserFragment on User {
           }
           answers {
             needs_finance
+          }
+          readBy {
+            user {
+              _id
+            }
           }
         }
       }
@@ -152,6 +162,11 @@ fragment FullUserFragment on User {
           answers {
             needs_finance
           }
+          readBy {
+            user {
+              _id
+            }
+          }
         }
         answer {
           _id
@@ -168,6 +183,11 @@ fragment FullUserFragment on User {
             }
             answers {
               needs_finance
+            }
+            readBy {
+              user {
+                _id
+              }
             }
           }
         }
@@ -213,6 +233,11 @@ fragment FullUserFragment on User {
           }
           answers {
             needs_finance
+          }
+          readBy {
+            user {
+              _id
+            }
           }
         }
       }

@@ -263,7 +263,7 @@ const CaseTable: React.FC<ICaseTableProps> = ({
                       isClosed ? "text-gray-500" : "font-medium"
                     }`}
                   >
-                    <CaseLink my_case={my_case} t={t} isUnread={isUnread} />
+                    <CaseLink my_case={my_case} t={t} />
                   </td>
                   {/* Priority Cell - Text hidden on medium and below */}
                   <td className="w-28 px-3 py-4 whitespace-nowrap text-sm">

@@ -29,6 +29,7 @@ import {
 } from "../../graphql/hooks/case";
 import ErrorModal from "../modals/ErrorModal";
 import LoadingModal from "../modals/LoadingModal";
+import ConfirmActionDialog from "../modals/ConfirmActionDialog";
 
 interface ICaseTableProps {
   cases: ICase[];
@@ -73,6 +74,8 @@ const CaseTable: React.FC<ICaseTableProps> = ({
 
   // State for dropdown menu
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  // 3. Add state to hold the ID of the case to be deleted
+  const [caseToDelete, setCaseToDelete] = useState<string | null>(null);
 
   // Effect to update window width on resize
   useEffect(() => {
@@ -105,6 +108,13 @@ const CaseTable: React.FC<ICaseTableProps> = ({
   // Function to handle dropdown toggle
   const toggleDropdown = (caseId: string) => {
     setOpenDropdown((prev) => (prev === caseId ? null : caseId));
+  };
+
+  const handleConfirmDelete = () => {
+    if (caseToDelete) {
+      deleteCase(caseToDelete);
+      setCaseToDelete(null); // Close the modal
+    }
   };
 
   // Close dropdown when clicking outside
@@ -394,7 +404,8 @@ const CaseTable: React.FC<ICaseTableProps> = ({
                             {/* Existing Delete Button */}
                             {currentUser.role._id === ROLES.ADMIN && (
                               <button
-                                onClick={() => deleteCase(my_case._id)}
+                                // 4. Change onClick to open the modal instead of deleting directly
+                                onClick={() => setCaseToDelete(my_case._id)}
                                 className="cursor-pointer w-full text-left px-4 py-2 text-sm text-btnRed hover:bg-red-50 hover:text-btnRedHover flex items-center gap-2 transition-colors duration-150"
                                 role="menuitem"
                               >
@@ -421,6 +432,19 @@ const CaseTable: React.FC<ICaseTableProps> = ({
           </tbody>
         </table>
       </div>
+      {/* 5. Add the confirmation dialog component at the end of the main div */}
+      <ConfirmActionDialog
+        isOpen={!!caseToDelete}
+        onOpenChange={() => setCaseToDelete(null)} // CHANGED: from onClose
+        onConfirm={handleConfirmDelete}
+        title="Потвърдете изтриването"
+        description={`Сигурни ли сте, че искате да изтриете сигнал #${
+          // CHANGED: from message
+          cases.find((c) => c._id === caseToDelete)?.case_number
+        }? Това действие не може да бъде отменено.`}
+        confirmButtonText="Изтрий"
+        isDestructiveAction={true} // CHANGED: from variant="danger"
+      />
     </div>
   );
 };

@@ -20,8 +20,8 @@ const ConfirmActionDialog: React.FC<ConfirmActionDialogProps> = ({
   onConfirm,
   title,
   description,
-  confirmButtonText = "Confirm",
-  cancelButtonText = "Cancel",
+  confirmButtonText = "Потвърди",
+  cancelButtonText = "Отмени",
   isDestructiveAction = false, // Changed from is위험Action
 }) => {
   if (!isOpen) return null;

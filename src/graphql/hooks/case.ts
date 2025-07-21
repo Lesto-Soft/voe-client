@@ -69,6 +69,7 @@ export function buildCaseQueryVariables(input: any) {
     case_number,
     startDate,
     endDate,
+    readStatus,
   } = input || {};
 
   const variables: any = {
@@ -87,6 +88,8 @@ export function buildCaseQueryVariables(input: any) {
   if (status) variables.input.status = status;
   if (startDate) variables.input.startDate = startDate;
   if (endDate) variables.input.endDate = endDate;
+  if (readStatus && readStatus !== "ALL")
+    variables.input.readStatus = readStatus;
 
   return variables;
 }

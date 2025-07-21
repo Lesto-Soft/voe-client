@@ -361,10 +361,10 @@ const CaseTable: React.FC<ICaseTableProps> = ({
                         <div
                           onClick={(e) => e.stopPropagation()}
                           // --- CONDITIONAL CLASS LOGIC ---
-                          className={`absolute right-1 w-53 rounded-md shadow-lg bg-white ring-2 ring-gray-100 focus:outline-none z-50 ${
+                          className={`absolute w-53 rounded-md shadow-lg bg-white ring-2 ring-gray-100 focus:outline-none z-50 ${
                             isLastRow
-                              ? "bottom-full mb-0 origin-bottom-right" // Opens upwards
-                              : "mt-2 origin-top-right" // Opens downwards (default)
+                              ? "right-full mr-2 top-0 origin-right" // MODIFIED: Opens to the left
+                              : "right-1 mt-2 origin-top-right" // Opens downwards (default)
                           }`}
                           role="menu"
                         >

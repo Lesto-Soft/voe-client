@@ -33,6 +33,8 @@ interface CaseSearchBarProps {
   setContent: (v: string) => void;
   status: ICase["status"] | "";
   setStatus: (v: ICase["status"] | "") => void;
+  readStatus: string;
+  setReadStatus: (v: string) => void;
   dateRange: { startDate: Date | null; endDate: Date | null };
   setDateRange: (range: {
     startDate: Date | null;
@@ -56,6 +58,8 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
   setContent,
   status,
   setStatus,
+  readStatus,
+  setReadStatus,
   dateRange,
   setDateRange,
   t,
@@ -572,6 +576,31 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
               <option value="IN_PROGRESS"> {t("IN_PROGRESS")}</option>
               <option value="AWAITING_FINANCE"> {t("AWAITING_FINANCE")}</option>
               <option value="CLOSED"> {t("CLOSED")}</option>
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 top-[calc(1.75rem+1px)]">
+              <ChevronDownIcon className="h-5 w-5 transition-transform duration-200 ease-in-out group-focus-within:rotate-180" />
+            </div>
+          </div>
+          {/* Read Status -- MODIFIED */}
+          <div className="group relative">
+            <label
+              htmlFor="readStatus"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Прочетени
+            </label>
+            <select
+              id="readStatus"
+              value={readStatus}
+              onChange={(e) => {
+                setReadStatus(e.target.value as "READ" | "UNREAD" | "");
+                (e.target as HTMLSelectElement).blur();
+              }}
+              className="w-32 pl-3 pr-8 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-white appearance-none truncate"
+            >
+              <option value="">{t("all")}</option>
+              <option value="READ">Прочетени</option>
+              <option value="UNREAD">Непрочетени</option>
             </select>
             <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 top-[calc(1.75rem+1px)]">
               <ChevronDownIcon className="h-5 w-5 transition-transform duration-200 ease-in-out group-focus-within:rotate-180" />

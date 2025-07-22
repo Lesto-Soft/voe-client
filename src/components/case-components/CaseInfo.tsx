@@ -68,7 +68,6 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
   error,
   readBy = [],
 }) => {
-  console.log("caseinfo readby:", readBy);
   const { t } = useTranslation("dashboard");
   const [isRatingModalOpen, setRatingModalOpen] = useState(false);
   // 2. ADD STATE FOR THE NEW MODAL

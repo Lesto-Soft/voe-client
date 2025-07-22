@@ -1,5 +1,6 @@
 // src/components/modals/CaseReadByModal.tsx
 import React, { useMemo } from "react";
+import ReactDOM from "react-dom";
 import { IReadBy } from "../../db/interfaces";
 import UserAvatar from "../cards/UserAvatar";
 import UserLink from "../global/UserLink";
@@ -33,9 +34,9 @@ const CaseReadByModal: React.FC<CaseReadByModalProps> = ({
 
   const serverBaseUrl = import.meta.env.VITE_API_URL || "";
 
-  return (
+  return ReactDOM.createPortal(
     <div
-      className="fixed inset-0 bg-black/25 flex justify-center items-center z-99 p-4"
+      className="fixed inset-0 bg-black/50 flex justify-center items-center z-[99] p-4" //backdrop-blur-sm
       onClick={onClose}
     >
       <div
@@ -47,13 +48,12 @@ const CaseReadByModal: React.FC<CaseReadByModalProps> = ({
           <div className="flex items-center gap-3">
             <EyeIcon className="h-6 w-6 text-gray-500" />
             <h2 className="text-lg font-semibold text-gray-800">
-              {/* Видяно от ({sortedData.length}) - Сигнал #{caseNumber} */}
               Видяно от ({sortedData.length})
             </h2>
           </div>
           <button
             onClick={onClose}
-            className="cursor-pointer p-1 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 transition-colors"
+            className="cursor-pointer p-1 rounded-full text-gray-500 hover:text-gray-800 transition-colors"
             title="Затвори"
           >
             <XMarkIcon className="cursor-pointer h-6 w-6" />
@@ -100,7 +100,8 @@ const CaseReadByModal: React.FC<CaseReadByModalProps> = ({
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

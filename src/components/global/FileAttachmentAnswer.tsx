@@ -20,7 +20,7 @@ const FileAttachmentAnswer: React.FC<FileAttachmentBtnProps> = ({
 }) => {
   const { t } = useTranslation("caseSubmission"); // Assuming you have a translation function available
   return (
-    <div className="">
+    <div className="" title="Прикачи файл(ове)">
       {/* Styled Label acting as Button - Disable visually if max files reached */}
       <label
         htmlFor={inputId}

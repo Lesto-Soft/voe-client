@@ -67,22 +67,22 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
     "";
   const contentPreview = getContentPreview(itemContent, 150);
 
-  titleFragments.push(
-    <span
-      key="actor"
-      className="font-medium text-gray-800 truncate group-hover:text-blue-600 transition-colors"
-      title={actor.name}
-    >
-      {actor.name}
-    </span>
-  );
+  // titleFragments.push(
+  //   <span
+  //     key="actor"
+  //     className="font-medium text-gray-800 truncate group-hover:text-blue-600 transition-colors"
+  //     title={actor.name}
+  //   >
+  //     {actor.name}
+  //   </span>
+  // );
 
   if (activityType === "case" && "case_number" in item) {
     const caseItem = item as ICase;
     icon = <DocumentTextIcon className="h-5 w-5 text-blue-500" />;
     titleFragments.push(
-      <span key="action" className="ml-1 whitespace-nowrap">
-        създаде сигнал
+      <span key="action" className=" whitespace-nowrap">
+        Създаде сигнал
       </span>
     );
     caseToLinkForDisplay = caseItem;
@@ -90,8 +90,8 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
     const answerItem = item as IAnswer;
     icon = <ChatBubbleLeftRightIcon className="h-5 w-5 text-green-500" />;
     titleFragments.push(
-      <span key="action" className="ml-1 whitespace-nowrap">
-        написа отговор
+      <span key="action" className=" whitespace-nowrap">
+        Написа решение
       </span>
     );
     if (answerItem.case && answerItem.case.case_number) {
@@ -109,8 +109,8 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
     const answerItem = item as IAnswer;
     icon = <CheckBadgeIcon className="h-5 w-5 text-sky-500" />;
     titleFragments.push(
-      <span key="action" className="ml-1 whitespace-nowrap">
-        одобри отговор
+      <span key="action" className="whitespace-nowrap">
+        Одобри решение
       </span>
     );
     caseToLinkForDisplay = answerItem.case;
@@ -123,8 +123,8 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
     const answerItem = item as IAnswer;
     icon = <BanknotesIcon className="h-5 w-5 text-emerald-500" />;
     titleFragments.push(
-      <span key="action" className="ml-1 whitespace-nowrap">
-        финансира отговор
+      <span key="action" className="whitespace-nowrap">
+        Финансира решение
       </span>
     );
     caseToLinkForDisplay = answerItem.case;
@@ -142,8 +142,8 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
       commentItem.answer.case.case_number
     ) {
       titleFragments.push(
-        <span key="action" className="ml-1 text-gray-700 whitespace-nowrap">
-          написа коментар по отговор
+        <span key="action" className="text-gray-700 whitespace-nowrap">
+          Написа коментар по решение
         </span>
       );
       caseToLinkForDisplay = commentItem.answer.case;
@@ -157,8 +157,8 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
       );
     } else if (commentItem.case && commentItem.case.case_number) {
       titleFragments.push(
-        <span key="action" className="ml-1 text-gray-700 whitespace-nowrap">
-          написа коментар
+        <span key="action" className="text-gray-700 whitespace-nowrap">
+          Написа коментар
         </span>
       );
       caseToLinkForDisplay = commentItem.case;
@@ -172,8 +172,8 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
       );
     } else {
       titleFragments.push(
-        <span key="action" className="ml-1 text-gray-700 whitespace-nowrap">
-          написа коментар
+        <span key="action" className="text-gray-700 whitespace-nowrap">
+          Написа коментар
         </span>
       );
     }

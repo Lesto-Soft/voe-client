@@ -36,7 +36,7 @@ const AnswerHistoryModal: React.FC<{
         <Dialog.Overlay className="fixed inset-0 bg-black/50 z-40" />
         <Dialog.Content className="fixed z-50 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg p-6 w-full max-w-2xl max-h-[80vh] overflow-hidden focus:outline-none">
           <Dialog.Title className="text-lg font-bold mb-4 text-gray-900 shadow-xs">
-            {t("answerHistory", "История на отговора")}
+            {t("answerHistory", "История на решението")}
           </Dialog.Title>
 
           <div className="max-h-96 overflow-y-auto pr-2">

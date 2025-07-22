@@ -74,7 +74,7 @@ const FinanceApproveBtn: React.FC<{
               ? t("areYouSureUnapproveFinance") ||
                 "Сигурни ли сте, че искате да отмените финансовото одобрение?"
               : t("areYouSureApproveFinance") ||
-                "Сигурни ли сте, че искате да финансирате този отговор?"}
+                "Сигурни ли сте, че искате да финансирате това решение?"}
           </div>
           <hr className="my-4 border-gray-200" />
 

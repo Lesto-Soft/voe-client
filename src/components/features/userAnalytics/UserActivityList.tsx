@@ -289,7 +289,7 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
   const tabs: { key: ActivityTab; label: string; count: number }[] = [
     { key: "all", label: "Всички", count: counts.all },
     { key: "cases", label: "Сигнали", count: counts.cases },
-    { key: "answers", label: "Отговори", count: counts.answers },
+    { key: "answers", label: "Решения", count: counts.answers },
     { key: "comments", label: "Коментари", count: counts.comments },
     { key: "ratings", label: "Оценки", count: counts.ratings },
     { key: "approvals", label: "Одобрени", count: counts.approvals },

@@ -149,7 +149,7 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
           />
           <StatItem
             icon={ChatBubbleLeftRightIcon}
-            label="Отговори"
+            label="Решения"
             value={userStats.totalAnswers}
             iconColorClass="text-green-500"
           />

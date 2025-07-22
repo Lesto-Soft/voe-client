@@ -124,8 +124,8 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
           {/* Content Box */}
           <div>
             <div className="flex justify-between items-center mb-1.5 px-1">
-              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                {t("content")}
+              <h3 className="text-sm font-semibold text-gray-400">
+                {t("content")}:
               </h3>
               <div className="flex items-center lg:gap-2">
                 {/* Added items-center */}

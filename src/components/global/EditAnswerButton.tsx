@@ -58,11 +58,11 @@ const EditAnswerButton: React.FC<EditButtonProps> = ({
     // --- Validation Block ---
     const textLength = getTextLength(content);
     if (textLength < ANSWER_CONTENT.MIN) {
-      setError(`Отговорът трябва да е поне ${ANSWER_CONTENT.MIN} символа.`);
+      setError(`Решението трябва да е поне ${ANSWER_CONTENT.MIN} символа.`);
       return; // Stop the submission
     }
     if (textLength > ANSWER_CONTENT.MAX) {
-      setError(`Отговорът не може да надвишава ${ANSWER_CONTENT.MAX} символа.`);
+      setError(`Решението не може да надвишава ${ANSWER_CONTENT.MAX} символа.`);
       return; // Stop the submission
     }
     // --- End Validation ---
@@ -107,10 +107,13 @@ const EditAnswerButton: React.FC<EditButtonProps> = ({
         <Dialog.Overlay className="fixed inset-0 bg-black/50 z-40" />
         <Dialog.Content className="fixed top-1/2 left-1/2 w-[90%] max-w-2xl -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg shadow-lg z-50 max-h-[85vh] overflow-y-auto">
           <Dialog.Title className="text-lg font-medium text-gray-900 mb-2">
-            {t("editAnswer", "Edit Answer")}
+            {t("editAnswer", "Редактирай решението")}
           </Dialog.Title>
           <Dialog.Description className="text-sm text-gray-500 mb-4">
-            {t("editAnswerInfo", "Update your answer content and attachments.")}
+            {t(
+              "editAnswerInfo",
+              "Редайктирай текстовото съдържанието и/или прикачените файлове."
+            )}
           </Dialog.Description>
 
           {/* SimpleTextEditor replacing the textarea */}

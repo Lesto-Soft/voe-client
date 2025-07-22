@@ -31,7 +31,7 @@ const DeleteModal: React.FC<DeleteModalProps> = ({
             {t(title, "Изтриване")}
           </Dialog.Title>
           <Dialog.Description className="mb-6">
-            {t(content, "Сигурни ли сте, че искате да изтриете отговора?")}
+            {t(content, "Сигурни ли сте, че искате да изтриете решението?")}
           </Dialog.Description>
           <div className="flex justify-end gap-2">
             <Dialog.Close asChild>

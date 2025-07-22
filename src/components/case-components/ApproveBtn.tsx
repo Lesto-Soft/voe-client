@@ -78,7 +78,7 @@ const ApproveBtn: React.FC<{
               ? t("areYouSureUnapprove") ||
                 "Сигурни ли сте, че искате да отмените одобрението?"
               : t("areYouSureApprove") ||
-                "Сигурни ли сте, че искате да одобрите този отговор?"}
+                "Сигурни ли сте, че искате да одобрите това решение?"}
           </div>
           {/* NeedsFinance Toggle with Radix Switch */}
           {!approved && (

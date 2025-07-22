@@ -48,7 +48,7 @@ const HelpModal: React.FC<HelpModalProps> = ({
           )}
           <button
             onClick={onClose}
-            className="p-1 cursor-pointer rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 transition-colors"
+            className="p-1 cursor-pointer rounded-full text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 transition-colors"
             aria-label="Close modal"
           >
             <XMarkIcon className="h-6 w-6" />

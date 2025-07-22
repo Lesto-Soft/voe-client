@@ -9,6 +9,7 @@ import React, {
 import { useLazyQuery } from "@apollo/client";
 import { GET_LEAN_USERS } from "../../graphql/query/user"; // Adjust path
 import { ChevronDownIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import CustomDropdown from "../global/CustomDropdown";
 
 interface ILeanUser {
   _id: string;
@@ -85,7 +86,6 @@ const CategorySearchBar: React.FC<CategorySearchBarProps> = ({
   // --- Refs for Labels ---
   const expertLabelRef = useRef<HTMLLabelElement>(null);
   const managerLabelRef = useRef<HTMLLabelElement>(null);
-  const statusLabelRef = useRef<HTMLLabelElement>(null);
 
   // --- State & Logic for Experts Dropdown ---
   const [isExpertDropdownVisible, setIsExpertDropdownVisible] = useState(false);
@@ -235,11 +235,6 @@ const CategorySearchBar: React.FC<CategorySearchBarProps> = ({
     ensureUsersFetched,
   ]);
 
-  // --- State & Logic for Status Dropdown ---
-  const [isStatusDropdownVisible, setIsStatusDropdownVisible] = useState(false);
-  const statusDisplayRef = useRef<HTMLDivElement>(null);
-  const statusDropdownRef = useRef<HTMLDivElement>(null);
-
   const statusOptions = useMemo(
     () => [
       { label: "Всички", value: undefined },
@@ -248,44 +243,6 @@ const CategorySearchBar: React.FC<CategorySearchBarProps> = ({
     ],
     []
   );
-
-  const selectedStatusLabel = useMemo(() => {
-    return (
-      statusOptions.find((opt) => opt.value === filterArchived)?.label ||
-      "Всички"
-    );
-  }, [filterArchived, statusOptions]);
-
-  const toggleStatusDropdown = useCallback(() => {
-    setIsStatusDropdownVisible((prev) => !prev);
-  }, []);
-
-  const handleStatusSelect = useCallback(
-    (value: boolean | undefined) => {
-      // Wrapped in useCallback
-      setFilterArchived(value);
-      setIsStatusDropdownVisible(false); // Close dropdown on selection
-    },
-    [setFilterArchived]
-  ); // Added dependencies
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as Node;
-      if (
-        statusLabelRef.current?.contains(target) ||
-        statusDisplayRef.current?.contains(target) ||
-        statusDropdownRef.current?.contains(target)
-      ) {
-        return;
-      }
-      setIsStatusDropdownVisible(false);
-    };
-    if (isStatusDropdownVisible) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [isStatusDropdownVisible]);
 
   const t_hardcoded = (key: string) => key;
 
@@ -577,68 +534,13 @@ const CategorySearchBar: React.FC<CategorySearchBarProps> = ({
         </div>
 
         {/* Status Filter */}
-        <div className="relative">
-          <label
-            htmlFor="filterStatusDisplay"
-            ref={statusLabelRef}
-            className="block text-sm font-medium text-gray-700 mb-1 cursor-pointer"
-            onClick={toggleStatusDropdown}
-          >
-            {t_hardcoded("Статус")}
-          </label>
-          <div
-            id="filterStatusDisplay"
-            ref={statusDisplayRef}
-            onClick={toggleStatusDropdown}
-            className="bg-white w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm cursor-pointer flex items-center justify-between"
-            role="button"
-            tabIndex={0}
-            aria-haspopup="listbox"
-            aria-expanded={isStatusDropdownVisible}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") toggleStatusDropdown();
-            }}
-          >
-            <span className="text-gray-900">{selectedStatusLabel}</span>
-            <ChevronDownIcon
-              className={`h-5 w-5 text-gray-400 transition-transform duration-200 ${
-                isStatusDropdownVisible ? "transform rotate-180" : ""
-              }`}
-              aria-hidden="true"
-            />
-          </div>
-          {isStatusDropdownVisible && (
-            <div
-              ref={statusDropdownRef}
-              className="absolute z-50 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto"
-              role="listbox"
-              aria-labelledby="filterStatusDisplay"
-            >
-              {statusOptions.map((option) => (
-                <div
-                  key={option.label}
-                  onClick={() => handleStatusSelect(option.value)}
-                  className={`px-3 py-2 text-sm cursor-pointer hover:bg-indigo-50 ${
-                    filterArchived === option.value
-                      ? "bg-indigo-100 text-indigo-700 font-semibold"
-                      : "text-gray-800"
-                  }`}
-                  role="option"
-                  aria-selected={filterArchived === option.value}
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      handleStatusSelect(option.value);
-                    }
-                  }}
-                >
-                  {option.label}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        <CustomDropdown
+          label={t_hardcoded("Статус")}
+          options={statusOptions}
+          value={filterArchived}
+          onChange={setFilterArchived}
+          widthClass="w-full"
+        />
       </div>
     </div>
   );

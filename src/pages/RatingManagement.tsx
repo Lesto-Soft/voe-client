@@ -295,8 +295,10 @@ const RatingManagement: React.FC = () => {
 
       {/* --- FILTERS SECTION --- */}
       <div
-        className={`transition-all duration-300 ease-in-out overflow-hidden ${
-          showFilters ? "max-h-screen opacity-100 mb-6" : "max-h-0 opacity-0"
+        className={`transition-all duration-300 ease-in-out ${
+          showFilters
+            ? "max-h-screen opacity-100 mb-6"
+            : "max-h-0 opacity-0 overflow-hidden"
         }`}
       >
         <RatingMetricFilters

@@ -105,7 +105,7 @@ const RatingMetricTable: React.FC<RatingMetricTableProps> = ({
         </th>
         <th
           scope="col"
-          className="w-36 px-3 py-4 text-center text-sm font-semibold text-white uppercase tracking-wider relative"
+          className="w-38 px-3 py-4 text-center text-sm font-semibold text-white uppercase tracking-wider relative"
         >
           <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-px bg-gray-400"></span>
           СРЕДНА ОЦЕНКА

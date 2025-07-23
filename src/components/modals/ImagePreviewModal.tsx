@@ -37,7 +37,6 @@ const ImagePreviewModal: React.FC<ImagePreviewProps> = ({
   const [imageError, setImageError] = useState(false);
   const [numPages, setNumPages] = useState<number | null>(null);
   const [pageNumber, setPageNumber] = useState(1);
-  const [pdfError, setPdfError] = useState(false);
 
   // State for zoom and pan functionality
   const [zoomLevel, setZoomLevel] = useState(1);
@@ -78,7 +77,6 @@ const ImagePreviewModal: React.FC<ImagePreviewProps> = ({
   // Reset state when the modal is opened with a new file
   useEffect(() => {
     setImageError(false);
-    setPdfError(false);
     setPageNumber(1);
     // Reset zoom and pan state for the new image
     setZoomLevel(1);
@@ -100,12 +98,10 @@ const ImagePreviewModal: React.FC<ImagePreviewProps> = ({
   // Handlers for PDF loading
   const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
     setNumPages(numPages);
-    setPdfError(false);
   };
 
   const onDocumentLoadError = (error: Error) => {
     console.error("Error loading PDF:", error);
-    setPdfError(true);
   };
 
   // Handlers for image zoom controls

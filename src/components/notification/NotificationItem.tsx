@@ -4,7 +4,6 @@ import {
   ChatBubbleBottomCenterTextIcon,
   ChatBubbleLeftEllipsisIcon,
   DocumentTextIcon,
-  ExclamationTriangleIcon,
   CheckCircleIcon,
   InformationCircleIcon,
   CurrencyDollarIcon,

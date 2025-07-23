@@ -53,7 +53,6 @@ interface UserActivityItemCardProps {
 const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
   item,
   activityType,
-  actor,
   date,
 }) => {
   let icon: React.ReactNode;

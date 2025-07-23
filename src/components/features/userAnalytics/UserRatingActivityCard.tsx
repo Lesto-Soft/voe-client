@@ -28,7 +28,6 @@ const UserRatingActivityCard: React.FC<UserRatingActivityCardProps> = ({
   ratedCase,
   averageScore,
   date,
-  actor,
 }) => {
   // A simple t-function for CaseLink, as it expects one.
   function tFunctionForCaseLinkProp(key: string): string {

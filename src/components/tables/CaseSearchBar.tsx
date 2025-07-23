@@ -3,11 +3,7 @@ import { useLazyQuery } from "@apollo/client"; // Assuming Apollo Client
 import { ICase, ICategory } from "../../db/interfaces";
 import { GET_LEAN_USERS } from "../../graphql/query/user";
 import { GET_ACTIVE_CATEGORIES } from "../../graphql/query/category";
-import {
-  ChevronDownIcon,
-  XMarkIcon,
-  CalendarDaysIcon,
-} from "@heroicons/react/24/outline"; // Import icons
+import { XMarkIcon, CalendarDaysIcon } from "@heroicons/react/24/outline"; // Import icons
 import DateRangeSelector from "../features/userAnalytics/DateRangeSelector";
 import CustomDropdown from "../global/CustomDropdown";
 import {

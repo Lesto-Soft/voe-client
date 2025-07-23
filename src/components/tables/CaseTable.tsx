@@ -9,7 +9,6 @@ import {
 import moment from "moment";
 // @ts-ignore
 import "moment/dist/locale/bg";
-import { useTranslation } from "react-i18next";
 import { ICase } from "../../db/interfaces";
 import { useEffect, useState } from "react";
 import UserLink from "../global/UserLink";
@@ -28,7 +27,6 @@ import {
   useToggleCaseReadStatus,
 } from "../../graphql/hooks/case";
 import ErrorModal from "../modals/ErrorModal";
-import LoadingModal from "../modals/LoadingModal";
 import ConfirmActionDialog from "../modals/ConfirmActionDialog";
 
 interface ICaseTableProps {
@@ -43,14 +41,8 @@ const CaseTable: React.FC<ICaseTableProps> = ({
   t,
   onCaseDeleted: onActionComplete,
 }) => {
-  const { i18n } = useTranslation();
-  const currentLanguage = i18n.language;
   const currentUser = useCurrentUser();
-  const {
-    deleteCase,
-    loading: deleteLoading,
-    error: deleteError,
-  } = useDeleteCase({
+  const { deleteCase, error: deleteError } = useDeleteCase({
     onCompleted: () => {
       if (onActionComplete) {
         onActionComplete();
@@ -59,7 +51,7 @@ const CaseTable: React.FC<ICaseTableProps> = ({
   });
 
   // ADDED: Hook for the toggle functionality
-  const { toggleReadStatus, loading: toggleLoading } = useToggleCaseReadStatus({
+  const { toggleReadStatus } = useToggleCaseReadStatus({
     onCompleted: () => {
       if (onActionComplete) {
         onActionComplete();

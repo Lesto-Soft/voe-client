@@ -19,7 +19,6 @@ const CaseReadByModal: React.FC<CaseReadByModalProps> = ({
   isOpen,
   onClose,
   readByData = [],
-  caseNumber,
 }) => {
   // 1. MODIFIED: The sorting logic now handles missing dates
   const sortedData = useMemo(() => {

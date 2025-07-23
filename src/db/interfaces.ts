@@ -142,6 +142,15 @@ export interface IReadBy {
   };
   date: string;
 }
+export interface INotification {
+  _id: string;
+  content: string;
+  read: boolean;
+  date: string;
+  userId: string;
+  caseId: string;
+  caseNumber: number;
+}
 
 export enum ICaseStatus {
   Open = "OPEN",

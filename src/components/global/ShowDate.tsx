@@ -38,7 +38,6 @@ const ShowDate = ({
     parseDate = moment.utc(parseInt(date, 10));
   } else parseDate = date;
 
-  // console.log(parseDate);
   return (
     <div
       className={`w-36 whitespace-nowrap text-sm text-gray-500 flex items-center ${

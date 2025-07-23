@@ -27,6 +27,7 @@ import { capitalizeFirstLetter } from "../../utils/stringUtils";
 import { useGetActiveCategories } from "../../graphql/hooks/category";
 import CaseDialog from "../modals/CaseDialog";
 import UserAvatar from "../cards/UserAvatar";
+import NotificationCenter from "../notification/NotificationCenter";
 
 export interface NavLinkProps {
   to: string;
@@ -376,6 +377,7 @@ const NavBar: React.FC<{ me: IMe }> = ({ me }) => {
               </DropdownMenu.Portal>
             </DropdownMenu.Root>
           </div>
+          <NotificationCenter userId={me._id} />
         </div>
 
         <div className="md:hidden">

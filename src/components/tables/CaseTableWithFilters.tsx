@@ -60,6 +60,12 @@ function setFiltersToParams(params: URLSearchParams, filters: any) {
       } else {
         params.delete("categoryIds");
       }
+    } else if (key === "readStatus") {
+      if (value && value !== "ALL") {
+        params.set(key, String(value));
+      } else {
+        params.delete(key);
+      }
     } else if (value instanceof Date) {
       params.set(key, moment(value).format("DD-MM-YYYY"));
     } else if (value) {
@@ -128,6 +134,7 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
     categoryIds: initialFilters.categoryIds,
     content: initialFilters.content,
     status: initialFilters.status,
+    readStatus: initialFilters.readStatus,
     dateRange: {
       startDate: initialFilters.startDate
         ? moment(initialFilters.startDate, "DD-MM-YYYY").toDate()
@@ -184,6 +191,7 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
       categoryIds, // use array
       content: debouncedContent,
       status,
+      readStatus,
       startDate: dateRange.startDate,
       endDate: dateRange.endDate,
     };
@@ -204,6 +212,7 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
       categoryIdsChanged ||
       content !== prevFilters.content ||
       status !== prevFilters.status ||
+      readStatus !== prevFilters.readStatus ||
       dateRangeChanged;
 
     if (filtersChanged) {
@@ -227,6 +236,7 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
         categoryIds,
         content,
         status,
+        readStatus,
         dateRange,
       };
     }
@@ -238,6 +248,7 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
     categoryIds,
     debouncedContent,
     status,
+    readStatus,
     itemsPerPage,
     navigate,
     location.search,
@@ -260,6 +271,7 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
       categoryIds,
       content: debouncedContent,
       status,
+      readStatus,
       startDate: dateRange.startDate,
       endDate: dateRange.endDate,
     });

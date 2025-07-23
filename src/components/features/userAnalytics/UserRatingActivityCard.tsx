@@ -48,14 +48,14 @@ const UserRatingActivityCard: React.FC<UserRatingActivityCardProps> = ({
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between text-sm mb-1">
-            <div className="flex items-baseline gap-x-1.5 min-w-0 mr-2">
-              <span
+            <div className="flex items-baseline gap-x-1.5 min-w-0 mr-2 text-gray-700">
+              {/* <span
                 className="font-medium text-gray-800 truncate group-hover:text-blue-600 transition-colors"
                 title={actor.name}
               >
                 {actor.name}
-              </span>
-              <span className="ml-1 whitespace-nowrap">даде на сигнал</span>
+              </span> */}
+              <span className="whitespace-nowrap">Даде на сигнал</span>
               <div className="w-[70px] flex-shrink-0">
                 <CaseLink my_case={ratedCase} t={tFunctionForCaseLinkProp} />
               </div>

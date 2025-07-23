@@ -21,11 +21,15 @@ const CaseReadByModal: React.FC<CaseReadByModalProps> = ({
   readByData = [],
   caseNumber,
 }) => {
-  // Sort the data by most recent date first
+  // 1. MODIFIED: The sorting logic now handles missing dates
   const sortedData = useMemo(() => {
-    return [...readByData].sort(
-      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-    );
+    return [...readByData].sort((a, b) => {
+      // Provide a fallback value of 0 if a date is missing.
+      // This treats dateless entries as the oldest and pushes them to the bottom.
+      const dateA = a.date ? new Date(a.date).getTime() : 0;
+      const dateB = b.date ? new Date(b.date).getTime() : 0;
+      return dateB - dateA; // Sorts newest to oldest
+    });
   }, [readByData]);
 
   if (!isOpen) {
@@ -36,12 +40,12 @@ const CaseReadByModal: React.FC<CaseReadByModalProps> = ({
 
   return ReactDOM.createPortal(
     <div
-      className="fixed inset-0 bg-black/50 flex justify-center items-center z-[99] p-4" //backdrop-blur-sm
+      className="fixed inset-0 bg-black/50 flex justify-center items-center z-[99] p-4"
       onClick={onClose}
     >
       <div
         className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[80vh] flex flex-col"
-        onClick={(e) => e.stopPropagation()} // Prevent closing modal when clicking inside
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex justify-between items-center p-4 border-b border-gray-200">
@@ -87,8 +91,13 @@ const CaseReadByModal: React.FC<CaseReadByModalProps> = ({
                       </span>
                     </div>
                   </div>
+                  {/* 2. MODIFIED: Conditionally render the date or a placeholder */}
                   <div className="pr-5">
-                    <ShowDate date={entry.date} />
+                    {entry.date ? (
+                      <ShowDate date={entry.date} />
+                    ) : (
+                      <span className="text-sm text-gray-400">—</span>
+                    )}
                   </div>
                 </li>
               ))}

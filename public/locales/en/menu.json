@@ -20,5 +20,26 @@
   "category_desc": "Category {{categoryName}}",
   "submit_case_desc": "Submit a case to the system",
   "ratings_desc": "Manage rating metrics",
-  "ratings": "Ratings"
+  "ratings": "Ratings",
+  "notifications": "Notifications",
+  "unread_count": "Unread Count",
+  "notification_contents": {
+    "all_removed": "All notifications removed",
+    "remove_title": "Remove All Notifications",
+    "remove_desc": "Are you sure you want to remove all notifications? This action cannot be undone.",
+    "cancel": "Cancel",
+    "new_notification": "🔔New notification: ",
+    "remove_all": "Remove All",
+    "new_case": "New case with number {{caseNumber}}",
+    "new_answer": "New answer added to case {{caseNumber}}",
+    "case_updated": "Case {{caseNumber}} updated",
+    "approve_answer_close_case": "Case {{caseNumber}} was closed",
+    "approve_answer_await_finance_case": "Case {{caseNumber}} was approved and is awaiting finance",
+    "approve_answer_finance_case": "Case {{caseNumber}} was approved for finance",
+    "case_reopened": "Case {{caseNumber}} reopened",
+    "new_comment": "New comment added to case {{caseNumber}}",
+    "rating_received": "New rating received for case {{caseNumber}}",
+    "account_created": "New account created for user {{username}}",
+    "profile_updated": "Profile updated for user {{username}}"
+  }
 }

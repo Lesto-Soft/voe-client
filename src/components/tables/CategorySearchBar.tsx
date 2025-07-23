@@ -294,7 +294,7 @@ const CategorySearchBar: React.FC<CategorySearchBarProps> = ({
               id="filterExpertsDisplay"
               ref={expertDisplayInputRef}
               onClick={toggleExpertDropdown}
-              className="bg-white w-full px-3 py-2 pr-14 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm cursor-pointer truncate"
+              className="bg-white w-full px-3 py-2 pr-14 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:border-indigo-500 sm:text-sm cursor-pointer truncate"
               role="button"
               tabIndex={0}
               aria-haspopup="listbox"
@@ -320,7 +320,7 @@ const CategorySearchBar: React.FC<CategorySearchBarProps> = ({
                     setExpertIds([]);
                     setExpertSearchTerm("");
                   }}
-                  className="text-gray-500 hover:text-gray-700 p-1 pointer-events-auto"
+                  className="text-gray-500 hover:text-gray-700 p-1 pointer-events-auto cursor-pointer"
                   title={t_hardcoded("Изчисти експерти")}
                 >
                   <XMarkIcon className="h-5 w-5" />
@@ -348,7 +348,7 @@ const CategorySearchBar: React.FC<CategorySearchBarProps> = ({
                     value={expertSearchTerm}
                     onChange={(e) => setExpertSearchTerm(e.target.value)}
                     placeholder={t_hardcoded("Търси експерт...")}
-                    className="w-full px-2 py-1 pr-8 mb-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                    className="w-full px-2 py-1 pr-8 mb-2 border border-gray-200 rounded focus:outline-none focus:border-indigo-500 text-sm"
                     autoFocus
                     aria-label={t_hardcoded("Търсене на експерт")}
                   />
@@ -391,7 +391,7 @@ const CategorySearchBar: React.FC<CategorySearchBarProps> = ({
                       // id={`expert-checkbox-${user._id}`} // Optional: if label used htmlFor
                       checked={expertIds.includes(user._id)}
                       onChange={() => handleExpertToggle(user)} // Pass the function reference
-                      className="form-checkbox h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                      className="form-checkbox h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer"
                     />
                     <span className="ml-2 text-sm flex justify-between items-center w-full">
                       <span className="text-gray-800">{user.name}</span>{" "}
@@ -421,7 +421,7 @@ const CategorySearchBar: React.FC<CategorySearchBarProps> = ({
               id="filterManagersDisplay"
               ref={managerDisplayInputRef}
               onClick={toggleManagerDropdown}
-              className="bg-white w-full px-3 py-2 pr-14 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm cursor-pointer truncate"
+              className="bg-white w-full px-3 py-2 pr-14 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:border-indigo-500 sm:text-sm cursor-pointer truncate"
               role="button"
               tabIndex={0}
               aria-haspopup="listbox"
@@ -447,7 +447,7 @@ const CategorySearchBar: React.FC<CategorySearchBarProps> = ({
                     setManagerIds([]);
                     setManagerSearchTerm("");
                   }}
-                  className="text-gray-500 hover:text-gray-700 p-1 pointer-events-auto"
+                  className="text-gray-500 hover:text-gray-700 p-1 pointer-events-auto cursor-pointer"
                   title={t_hardcoded("Изчисти мениджъри")}
                 >
                   <XMarkIcon className="h-5 w-5" />
@@ -475,7 +475,7 @@ const CategorySearchBar: React.FC<CategorySearchBarProps> = ({
                     value={managerSearchTerm}
                     onChange={(e) => setManagerSearchTerm(e.target.value)}
                     placeholder={t_hardcoded("Търси мениджър...")}
-                    className="w-full px-2 py-1 pr-8 mb-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                    className="w-full px-2 py-1 pr-8 mb-2 border border-gray-200 rounded focus:outline-none focus:border-indigo-500 text-sm"
                     autoFocus
                     aria-label={t_hardcoded("Търсене на мениджър")}
                   />
@@ -518,7 +518,7 @@ const CategorySearchBar: React.FC<CategorySearchBarProps> = ({
                       // id={`manager-checkbox-${user._id}`} // Optional: if label used htmlFor
                       checked={managerIds.includes(user._id)}
                       onChange={() => handleManagerToggle(user)} // Pass the function reference
-                      className="form-checkbox h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                      className="form-checkbox h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer"
                     />
                     <span className="ml-2 text-sm flex justify-between items-center w-full">
                       <span className="text-gray-800">{user.name}</span>{" "}

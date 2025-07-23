@@ -99,7 +99,7 @@ export const translateStatus = (status: string | any): string => {
   const map: Record<string, string> = {
     OPEN: "Отворен",
     IN_PROGRESS: "В процес",
-    AWAITING_FINANCE: "Финанси",
+    AWAITING_FINANCE: "Финансов",
     CLOSED: "Затворен",
   };
   return map[statusString] || statusString;

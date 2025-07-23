@@ -276,7 +276,7 @@ const CaseTable: React.FC<ICaseTableProps> = ({
                     <CaseLink my_case={my_case} t={t} />
                   </td>
                   {/* Priority Cell - Text hidden on medium and below */}
-                  <td className="w-28 px-3 py-4 whitespace-nowrap text-sm">
+                  <td className="w-28 px-3 py-4 whitespace-nowrap text-xs">
                     <div className="flex items-center" title={my_case.priority}>
                       <FlagIcon
                         className={`mr-1.5 h-4 w-4 flex-shrink-0 ${priorityStyle}`}
@@ -288,9 +288,9 @@ const CaseTable: React.FC<ICaseTableProps> = ({
                     </div>
                   </td>
                   {/* Type Cell */}
-                  <td className="w-28 px-3 py-4 whitespace-nowrap text-sm">
+                  <td className="w-28 px-3 py-4 whitespace-nowrap text-xs">
                     <span
-                      className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${typeBadgeStyle}`}
+                      className={`px-2.5 py-0.5 rounded-full font-medium ${typeBadgeStyle}`}
                     >
                       {t(`${my_case.type}`)}
                     </span>
@@ -333,7 +333,7 @@ const CaseTable: React.FC<ICaseTableProps> = ({
                     </div>
                   </td>
                   {/* Status Cell - Text hidden on medium and below */}
-                  <td className="w-32 px-3 py-4 whitespace-nowrap text-sm">
+                  <td className="w-32 px-3 py-4 whitespace-nowrap text-xs">
                     <div className="flex items-center" title={my_case.status}>
                       <div
                         className={`mr-1.5 h-2.5 w-2.5 rounded-full flex-shrink-0 ${statusStyle.dotBgColor}`}

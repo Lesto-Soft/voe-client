@@ -8,7 +8,7 @@ import {
 } from "../../graphql/hooks/notificationHook";
 import { INotification } from "../../db/interfaces";
 import { toast } from "react-toastify";
-import { useTranslation } from "react-i18next";
+import { useTranslation, Trans } from "react-i18next";
 import NotificationItem from "./NotificationItem";
 import ConfirmActionDialog from "../modals/ConfirmActionDialog";
 
@@ -30,15 +30,22 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }) => {
       const newNotification = data.data?.notificationAdded;
       if (newNotification) {
         setNotifications((prev) => [newNotification, ...prev]);
-        toast.info(
-          `${t("notification_contents.new_notification")} ${t(
-            `notification_contents.${newNotification.content}`,
-            { caseNumber: newNotification.caseNumber }
-          )}`,
-          {
-            className: "notification-toast",
-          }
+        const toastMessage = (
+          <div>
+            <Trans
+              i18nKey={`notification_contents.${newNotification.content}`}
+              ns="menu"
+              values={{
+                caseNumber: newNotification.caseNumber,
+                // username: newNotification.username,
+              }}
+              components={{ 1: <span className="font-bold" /> }}
+            />
+          </div>
         );
+        toast.info(toastMessage, {
+          className: "notification-toast",
+        });
       }
     },
     onError: (error) => {

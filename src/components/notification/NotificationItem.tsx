@@ -11,7 +11,7 @@ import {
 import { INotification } from "../../db/interfaces";
 import { clsx } from "clsx";
 import moment from "moment";
-import { useTranslation } from "react-i18next";
+import { useTranslation, Trans } from "react-i18next";
 import { useNavigate } from "react-router";
 import { useMarkAsRead } from "../../graphql/hooks/notificationHook";
 
@@ -48,14 +48,6 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
     }
   };
 
-  const getNotificationContent = (notification: INotification) => {
-    // ... (This function remains unchanged)
-    return t(`notification_contents.${notification.content}`, {
-      caseNumber: notification.caseNumber,
-      defaultValue: notification.content,
-    });
-  };
-
   return (
     <DropdownMenu.Item
       key={notification._id}
@@ -81,7 +73,20 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
             "text-gray-600": notification.read,
           })}
         >
-          {getNotificationContent(notification)}
+          <Trans
+            i18nKey={`notification_contents.${notification.content}`}
+            ns="menu"
+            values={{
+              caseNumber: notification.caseNumber,
+            }}
+            components={{
+              1: (
+                <span
+                  className={!notification.read ? "font-bold" : "font-normal"}
+                />
+              ),
+            }}
+          />
         </div>
         <small
           className={clsx("mt-1 text-xs", {

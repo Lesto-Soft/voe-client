@@ -634,6 +634,31 @@ body,
   font-family: "Mulish", sans-serif !important;
 }
 
+/* Custom styles for notification toasts */
+.notification-toast {
+  font-family: "Mulish", sans-serif !important;
+  /* Apply offset by default when at the top */
+  top: 5rem;
+  /* Add a transition for a smooth position change */
+  transition: top 0.3s ease-in-out;
+}
+
+/* When the body has the 'scrolled' class, move the toast up */
+body.scrolled .notification-toast {
+  top: 1rem;
+}
+
+@media (min-width: 768px) {
+  .notification-toast {
+    font-size: 1rem;
+    top: 5rem; /* Desktop default offset */
+  }
+
+  body.scrolled .notification-toast {
+    top: 0.5rem; /* Desktop scrolled offset */
+  }
+}
+
 /*
   This is the container that holds all toasts in a specific position
   (e.g., top-right). We make it "invisible" to mouse clicks so that

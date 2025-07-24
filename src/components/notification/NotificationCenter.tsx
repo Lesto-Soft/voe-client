@@ -34,7 +34,10 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }) => {
           `${t("notification_contents.new_notification")} ${t(
             `notification_contents.${newNotification.content}`,
             { caseNumber: newNotification.caseNumber }
-          )}`
+          )}`,
+          {
+            className: "notification-toast",
+          }
         );
       }
     },
@@ -48,6 +51,27 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }) => {
       setNotifications(initialData.getUserNotifications);
     }
   }, [initialData]);
+
+  useEffect(() => {
+    let isThrottled = false;
+    const handleScroll = () => {
+      if (isThrottled) return;
+
+      isThrottled = true;
+      setTimeout(() => {
+        if (window.scrollY > 50) {
+          document.body.classList.add("scrolled");
+        } else {
+          document.body.classList.remove("scrolled");
+        }
+        isThrottled = false;
+      }, 100); // Throttle to execute at most once every 100ms
+    };
+
+    window.addEventListener("scroll", handleScroll); // Cleanup listener on component unmount
+
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 

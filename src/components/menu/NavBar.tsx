@@ -212,188 +212,192 @@ const NavBar: React.FC<{ me: IMe }> = ({ me }) => {
           </div>
         </div>
 
-        <div className="hidden md:flex space-x-4 items-center">
-          {(isAdmin || isManagerExpert) && (
-            <DropdownMenu.Root
-              open={isMgmtDropdownOpen}
-              onOpenChange={setIsMgmtDropdownOpen}
-            >
-              <DropdownMenu.Trigger asChild>
-                <button
-                  className={`w-40 flex items-center justify-between p-3 rounded-lg shadow-lg transition-colors duration-150 ease-in-out hover:cursor-pointer ${
-                    isMgmtPageActive
-                      ? "bg-btnBlueHover text-white"
-                      : "bg-white text-black hover:bg-gray-100"
-                  }`}
-                >
-                  <div className="flex items-center space-x-2">
-                    <WrenchScrewdriverIcon className="h-6 w-6" />
-                    <span className="text-sm font-semibold">
-                      {t("management", "Управление")}
-                    </span>
-                  </div>
-                  <ChevronDownIcon
-                    className={`h-5 w-5 transition-transform duration-200 ${
-                      isMgmtDropdownOpen ? "rotate-180" : ""
+        {/* --- REFACTORED RIGHT-SIDE CONTROLS --- */}
+        <div className="flex items-center space-x-2 md:space-x-4">
+          {/* This container holds desktop-only items */}
+          <div className="hidden md:flex items-center space-x-4">
+            {(isAdmin || isManagerExpert) && (
+              <DropdownMenu.Root
+                open={isMgmtDropdownOpen}
+                onOpenChange={setIsMgmtDropdownOpen}
+              >
+                <DropdownMenu.Trigger asChild>
+                  <button
+                    className={`w-40 flex items-center justify-between p-3 rounded-lg shadow-lg transition-colors duration-150 ease-in-out hover:cursor-pointer ${
+                      isMgmtPageActive
+                        ? "bg-btnBlueHover text-white"
+                        : "bg-white text-black hover:bg-gray-100"
                     }`}
-                  />
-                </button>
-              </DropdownMenu.Trigger>
-              <DropdownMenu.Portal>
-                <DropdownMenu.Content
-                  className="bg-white rounded-md shadow-lg p-2 w-56 z-20"
-                  sideOffset={8}
-                  align="end"
-                >
-                  <DropdownMenu.Item asChild className="focus:outline-none">
-                    <NavLink
-                      to="/user-management"
-                      dropdown={true}
-                      label={t("accounts")}
-                      icon={<UsersIcon className="h-6 w-6" />}
-                      onClick={() => setIsMgmtDropdownOpen(false)}
-                      theme="blue"
-                    />
-                  </DropdownMenu.Item>
-                  <DropdownMenu.Item asChild className="focus:outline-none">
-                    <NavLink
-                      to="/category-management"
-                      dropdown={true}
-                      label={t("categories")}
-                      icon={<TagIcon className="h-6 w-6" />}
-                      onClick={() => setIsMgmtDropdownOpen(false)}
-                      theme="blue"
-                    />
-                  </DropdownMenu.Item>
-                  <DropdownMenu.Item asChild className="focus:outline-none">
-                    <NavLink
-                      to="/rating-management"
-                      dropdown={true}
-                      label={t("ratings")}
-                      icon={<StarIcon className="h-6 w-6" />}
-                      onClick={() => setIsMgmtDropdownOpen(false)}
-                      theme="blue"
-                    />
-                  </DropdownMenu.Item>
-                </DropdownMenu.Content>
-              </DropdownMenu.Portal>
-            </DropdownMenu.Root>
-          )}
-
-          <NavLink
-            to="/dashboard"
-            icon={<ClipboardDocumentListIcon className="h-6 w-6" />}
-            label={t("dashboard")}
-            theme="red"
-          />
-
-          <NavLink
-            to="/analyses"
-            icon={<ChartPieIcon className="h-6 w-6" />}
-            label={t("analyses")}
-            theme="red"
-          />
-
-          <div className="relative">
-            <DropdownMenu.Root
-              open={isUserDropdownOpen}
-              onOpenChange={setIsUserDropdownOpen}
-            >
-              <DropdownMenu.Trigger asChild className="focus:outline-none">
-                <button className="flex items-center space-x-3 p-2 rounded-lg transition-colors hover:bg-gray-300 hover:cursor-pointer">
-                  <div className="rounded-full shadow-lg">
-                    <UserAvatar
-                      name={me.name}
-                      imageUrl={
-                        me.avatar
-                          ? `${endpoint}/static/avatars/${me._id}/${me.avatar}`
-                          : null
-                      }
-                      size={48}
-                    />
-                  </div>
-                  <div
-                    className="text-left max-w-32 hidden lg:block"
-                    title={me.name}
                   >
-                    <p className="font-bold text-xs text-gray-800 truncate">
-                      {me.name}
-                    </p>
-                    <p className="text-xs text-gray-600 truncate">
-                      {me.username}
-                    </p>
-                  </div>
-                  <ChevronDownIcon
-                    className={`h-5 w-5 text-gray-600 transition-transform duration-300 ${
-                      isUserDropdownOpen ? "rotate-180" : ""
-                    }`}
-                  />
-                </button>
-              </DropdownMenu.Trigger>
-              <DropdownMenu.Portal>
-                <DropdownMenu.Content
-                  className="bg-white rounded-md shadow-lg p-2 w-56 z-20"
-                  align="end"
-                  side="bottom"
-                  sideOffset={8}
-                >
-                  <DropdownMenu.Item className="p-2 focus:outline-none">
-                    <div className="text-left">
-                      <p className="text-sm font-semibold text-gray-800">
-                        {me.position || "N/A"}
+                    <div className="flex items-center space-x-2">
+                      <WrenchScrewdriverIcon className="h-6 w-6" />
+                      <span className="text-sm font-semibold">
+                        {t("management", "Управление")}
+                      </span>
+                    </div>
+                    <ChevronDownIcon
+                      className={`h-5 w-5 transition-transform duration-200 ${
+                        isMgmtDropdownOpen ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
+                </DropdownMenu.Trigger>
+                <DropdownMenu.Portal>
+                  <DropdownMenu.Content
+                    className="bg-white rounded-md shadow-lg p-2 w-56 z-20"
+                    sideOffset={8}
+                    align="end"
+                  >
+                    <DropdownMenu.Item asChild className="focus:outline-none">
+                      <NavLink
+                        to="/user-management"
+                        dropdown={true}
+                        label={t("accounts")}
+                        icon={<UsersIcon className="h-6 w-6" />}
+                        onClick={() => setIsMgmtDropdownOpen(false)}
+                        theme="blue"
+                      />
+                    </DropdownMenu.Item>
+                    <DropdownMenu.Item asChild className="focus:outline-none">
+                      <NavLink
+                        to="/category-management"
+                        dropdown={true}
+                        label={t("categories")}
+                        icon={<TagIcon className="h-6 w-6" />}
+                        onClick={() => setIsMgmtDropdownOpen(false)}
+                        theme="blue"
+                      />
+                    </DropdownMenu.Item>
+                    <DropdownMenu.Item asChild className="focus:outline-none">
+                      <NavLink
+                        to="/rating-management"
+                        dropdown={true}
+                        label={t("ratings")}
+                        icon={<StarIcon className="h-6 w-6" />}
+                        onClick={() => setIsMgmtDropdownOpen(false)}
+                        theme="blue"
+                      />
+                    </DropdownMenu.Item>
+                  </DropdownMenu.Content>
+                </DropdownMenu.Portal>
+              </DropdownMenu.Root>
+            )}
+
+            <NavLink
+              to="/dashboard"
+              icon={<ClipboardDocumentListIcon className="h-6 w-6" />}
+              label={t("dashboard")}
+              theme="red"
+            />
+
+            <NavLink
+              to="/analyses"
+              icon={<ChartPieIcon className="h-6 w-6" />}
+              label={t("analyses")}
+              theme="red"
+            />
+
+            <div className="relative">
+              <DropdownMenu.Root
+                open={isUserDropdownOpen}
+                onOpenChange={setIsUserDropdownOpen}
+              >
+                <DropdownMenu.Trigger asChild className="focus:outline-none">
+                  <button className="flex items-center space-x-3 p-2 rounded-lg transition-colors hover:bg-gray-300 hover:cursor-pointer">
+                    <div className="rounded-full shadow-lg">
+                      <UserAvatar
+                        name={me.name}
+                        imageUrl={
+                          me.avatar
+                            ? `${endpoint}/static/avatars/${me._id}/${me.avatar}`
+                            : null
+                        }
+                        size={48}
+                      />
+                    </div>
+                    <div
+                      className="text-left max-w-32 hidden lg:block"
+                      title={me.name}
+                    >
+                      <p className="font-bold text-xs text-gray-800 truncate">
+                        {me.name}
                       </p>
-                      <p className="text-xs text-gray-500">
-                        <span>
-                          {" " + capitalizeFirstLetter(me.role.name) || "N/A"}
-                          {me.managed_categories.length > 0 && " - Мениджър"}
-                        </span>
-                        <span>
-                          {me.financial_approver && " (финансов одобрител)"}
-                        </span>
+                      <p className="text-xs text-gray-600 truncate">
+                        {me.username}
                       </p>
                     </div>
-                  </DropdownMenu.Item>
-                  <DropdownMenu.Separator className="h-px bg-gray-200 my-2" />
-                  <DropdownMenu.Item asChild className="focus:outline-none">
-                    <NavLink
-                      to={`/user/${me.username}`}
-                      dropdown={true}
-                      label={t("profile")}
-                      icon={<UserIcon className="h-6 w-6" />}
-                      onClick={() => setIsUserDropdownOpen(false)}
-                      theme="red"
+                    <ChevronDownIcon
+                      className={`h-5 w-5 text-gray-600 transition-transform duration-300 ${
+                        isUserDropdownOpen ? "rotate-180" : ""
+                      }`}
                     />
-                  </DropdownMenu.Item>
-                  <DropdownMenu.Item asChild className="focus:outline-none">
-                    <button
-                      onClick={handleSignOut}
-                      className="p-2 text-sm text-gray-700 rounded-md w-full flex items-center text-left hover:scale-105 hover:text-btnRedHover hover:cursor-pointer space-x-2"
-                    >
-                      <ArrowRightCircleIcon className="h-6 w-6" />
-                      <span>{t("signOut")}</span>
-                    </button>
-                  </DropdownMenu.Item>
-                </DropdownMenu.Content>
-              </DropdownMenu.Portal>
-            </DropdownMenu.Root>
+                  </button>
+                </DropdownMenu.Trigger>
+                <DropdownMenu.Portal>
+                  <DropdownMenu.Content
+                    className="bg-white rounded-md shadow-lg p-2 w-56 z-20"
+                    align="end"
+                    side="bottom"
+                    sideOffset={8}
+                  >
+                    <DropdownMenu.Item className="p-2 focus:outline-none">
+                      <div className="text-left">
+                        <p className="text-sm font-semibold text-gray-800">
+                          {me.position || "N/A"}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          <span>
+                            {" " + capitalizeFirstLetter(me.role.name) || "N/A"}
+                            {me.managed_categories.length > 0 && " - Мениджър"}
+                          </span>
+                          <span>
+                            {me.financial_approver && " (финансов одобрител)"}
+                          </span>
+                        </p>
+                      </div>
+                    </DropdownMenu.Item>
+                    <DropdownMenu.Separator className="h-px bg-gray-200 my-2" />
+                    <DropdownMenu.Item asChild className="focus:outline-none">
+                      <NavLink
+                        to={`/user/${me.username}`}
+                        dropdown={true}
+                        label={t("profile")}
+                        icon={<UserIcon className="h-6 w-6" />}
+                        onClick={() => setIsUserDropdownOpen(false)}
+                        theme="red"
+                      />
+                    </DropdownMenu.Item>
+                    <DropdownMenu.Item asChild className="focus:outline-none">
+                      <button
+                        onClick={handleSignOut}
+                        className="p-2 text-sm text-gray-700 rounded-md w-full flex items-center text-left hover:scale-105 hover:text-btnRedHover hover:cursor-pointer space-x-2"
+                      >
+                        <ArrowRightCircleIcon className="h-6 w-6" />
+                        <span>{t("signOut")}</span>
+                      </button>
+                    </DropdownMenu.Item>
+                  </DropdownMenu.Content>
+                </DropdownMenu.Portal>
+              </DropdownMenu.Root>
+            </div>
           </div>
-          <NotificationCenter userId={me._id} />
-        </div>
 
-        <div className="md:hidden flex items-center space-x-2">
-          {/* Notification Center for Mobile */}
+          {/* This NotificationCenter is now rendered once on all screen sizes */}
           <NotificationCenter userId={me._id} />
-          {/* Hamburger Menu Button */}
-          <button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="text-gray-800 focus:outline-none "
-          >
-            {isMenuOpen ? (
-              <XMarkIcon className="h-8 w-8 hover:cursor-pointer" />
-            ) : (
-              <Bars3Icon className="h-8 w-8 hover:cursor-pointer" />
-            )}
-          </button>
+
+          {/* This hamburger button is now only visible on mobile */}
+          <div className="md:hidden">
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="text-gray-800 focus:outline-none "
+            >
+              {isMenuOpen ? (
+                <XMarkIcon className="h-8 w-8 hover:cursor-pointer" />
+              ) : (
+                <Bars3Icon className="h-8 w-8 hover:cursor-pointer" />
+              )}
+            </button>
+          </div>
         </div>
       </div>
       <MobileMenu

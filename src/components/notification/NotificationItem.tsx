@@ -58,13 +58,6 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
     }
   };
 
-  const getNotificationContent = (notification: INotification) => {
-    return t(`notification_contents.${notification.content}`, {
-      caseNumber: notification.caseNumber,
-      defaultValue: notification.content,
-    });
-  };
-
   const handleMarkAsRead = (e: React.MouseEvent) => {
     e.stopPropagation();
     markAsRead({ variables: { notificationIds: [notification._id] } });

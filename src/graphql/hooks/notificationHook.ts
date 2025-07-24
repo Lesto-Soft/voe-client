@@ -3,7 +3,9 @@ import { GET_NOTIFICATIONS } from "../query/notificationQuery";
 import { NOTIFICATION_SUBSCRIPTION } from "../subscription/notification";
 import {
   DELETE_ALL_NOTIFICATIONS,
+  DELETE_NOTIFICATION,
   MARK_NOTIFICATIONS_AS_READ,
+  MARK_NOTIFICATIONS_AS_UNREAD,
 } from "../mutation/notificationMutation";
 
 export const useGetNotifications = () => {
@@ -32,6 +34,25 @@ export const useDeleteNotifications = () => {
     refetchQueries: [GET_NOTIFICATIONS],
     onError: (error) => {
       console.error("Error deleting notifications:", error);
+    },
+  });
+};
+
+export const useDeleteNotification = () => {
+  return useMutation(DELETE_NOTIFICATION, {
+    refetchQueries: [GET_NOTIFICATIONS],
+    onError: (error) => {
+      alert("Error deleting notification");
+      console.error("Error deleting notification:", error);
+    },
+  });
+};
+
+export const useMarkAsUnread = () => {
+  return useMutation(MARK_NOTIFICATIONS_AS_UNREAD, {
+    refetchQueries: [GET_NOTIFICATIONS],
+    onError: (error) => {
+      console.error("Error marking notifications as unread:", error);
     },
   });
 };

@@ -12,3 +12,17 @@ export const DELETE_ALL_NOTIFICATIONS = gql`
     deleteNotifications(notificationIds: $notificationIds)
   }
 `;
+
+export const DELETE_NOTIFICATION = gql`
+  mutation DeleteNotification($notificationId: ID!) {
+    deleteNotification(notificationId: $notificationId)
+  }
+`;
+
+export const MARK_NOTIFICATIONS_AS_UNREAD = gql`
+  mutation MarkNotificationAsUnread($notificationId: ID!) {
+    markNotificationAsUnread(notificationId: $notificationId) {
+      _id
+    }
+  }
+`;

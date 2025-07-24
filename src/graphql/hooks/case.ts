@@ -21,6 +21,7 @@ import {
   GET_USER_COMMENTED_CASES,
   // UPDATE_CASE, // This was duplicated, removed.
 } from "../query/case";
+import { GET_NOTIFICATIONS } from "../query/notificationQuery";
 
 export type AttachmentInput = {
   filename: string;
@@ -381,6 +382,7 @@ export const useDeleteCase = (
     DELETE_CASE,
     {
       onCompleted: options.onCompleted,
+      refetchQueries: [GET_NOTIFICATIONS],
     }
   );
 

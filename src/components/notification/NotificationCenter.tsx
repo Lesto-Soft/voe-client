@@ -30,12 +30,13 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }) => {
       const newNotification = data.data?.notificationAdded;
       if (newNotification) {
         setNotifications((prev) => [newNotification, ...prev]);
-        toast.info(
-          `${t("notification_contents.new_notification")} ${t(
-            `notification_contents.${newNotification.content}`,
-            { caseNumber: newNotification.caseNumber }
-          )}`
-        );
+        if (!isDropdownOpen)
+          toast.info(
+            `${t("notification_contents.new_notification")} ${t(
+              `notification_contents.${newNotification.content}`,
+              { caseNumber: newNotification.caseNumber }
+            )}`
+          );
       }
     },
     onError: (error) => {

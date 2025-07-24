@@ -380,7 +380,10 @@ const NavBar: React.FC<{ me: IMe }> = ({ me }) => {
           <NotificationCenter userId={me._id} />
         </div>
 
-        <div className="md:hidden">
+        <div className="md:hidden flex items-center space-x-2">
+          {/* Notification Center for Mobile */}
+          <NotificationCenter userId={me._id} />
+          {/* Hamburger Menu Button */}
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             className="text-gray-800 focus:outline-none "

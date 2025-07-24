@@ -4,11 +4,11 @@ import { ICase, IAnswer, IComment, IUser } from "../../../db/interfaces"; // Adj
 import ShowDate from "../../../components/global/ShowDate"; // Adjust path
 import CaseLink from "../../../components/global/CaseLink"; // Adjust path
 import {
-  ChatBubbleLeftEllipsisIcon,
-  ChatBubbleLeftRightIcon,
+  ChatBubbleOvalLeftEllipsisIcon,
+  ChatBubbleBottomCenterTextIcon,
   BanknotesIcon,
   DocumentTextIcon,
-  CheckBadgeIcon,
+  HandThumbUpIcon,
   ClockIcon,
   LinkIcon,
   XCircleIcon,
@@ -87,7 +87,9 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
     caseToLinkForDisplay = caseItem;
   } else if (activityType === "answer" && "case" in item) {
     const answerItem = item as IAnswer;
-    icon = <ChatBubbleLeftRightIcon className="h-5 w-5 text-green-500" />;
+    icon = (
+      <ChatBubbleBottomCenterTextIcon className="h-5 w-5 text-green-500" />
+    );
     titleFragments.push(
       <span key="action" className=" whitespace-nowrap">
         Написа решение
@@ -106,7 +108,7 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
     }
   } else if (activityType === "base_approval" && "case" in item) {
     const answerItem = item as IAnswer;
-    icon = <CheckBadgeIcon className="h-5 w-5 text-sky-500" />;
+    icon = <HandThumbUpIcon className="h-5 w-5 text-sky-500" />;
     titleFragments.push(
       <span key="action" className="whitespace-nowrap">
         Одобри решение
@@ -134,7 +136,9 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
     );
   } else if (activityType === "comment" && "content" in item) {
     const commentItem = item as IComment;
-    icon = <ChatBubbleLeftEllipsisIcon className="h-5 w-5 text-purple-500" />;
+    icon = (
+      <ChatBubbleOvalLeftEllipsisIcon className="h-5 w-5 text-purple-500" />
+    );
     if (
       commentItem.answer &&
       commentItem.answer.case &&
@@ -379,7 +383,7 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
                   else if (isExpertApproved) {
                     return (
                       <span className="inline-flex items-center px-2 py-0.5 rounded-full font-medium text-green-700 bg-green-100 border border-green-200">
-                        <CheckBadgeIcon className="h-4 w-4 mr-1" />
+                        <HandThumbUpIcon className="h-4 w-4 mr-1" />
                         Одобрен
                       </span>
                     );

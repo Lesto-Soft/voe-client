@@ -1,7 +1,7 @@
 import React, { useLayoutEffect, useState } from "react";
 import {
   ChatBubbleBottomCenterTextIcon,
-  ChatBubbleLeftEllipsisIcon,
+  ChatBubbleOvalLeftEllipsisIcon,
   ClockIcon,
 } from "@heroicons/react/24/solid";
 import { IAnswer, ICase, IComment, IMe } from "../../db/interfaces";
@@ -64,7 +64,7 @@ const Submenu: React.FC<SubmenuProps> = ({
           <sup>{caseData?.comments?.length || 0}</sup>
         </>
       ),
-      icon: <ChatBubbleLeftEllipsisIcon className="h-5 w-5 mr-2" />,
+      icon: <ChatBubbleOvalLeftEllipsisIcon className="h-5 w-5 mr-2" />,
     },
     {
       key: "history",

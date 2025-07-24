@@ -2,8 +2,8 @@ import React, { useState } from "react";
 import {
   ChartPieIcon,
   DocumentTextIcon,
-  ChatBubbleLeftRightIcon,
-  ChatBubbleLeftEllipsisIcon,
+  ChatBubbleBottomCenterTextIcon,
+  ChatBubbleOvalLeftEllipsisIcon,
   InformationCircleIcon,
   StarIcon,
 } from "@heroicons/react/24/outline";
@@ -148,13 +148,13 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
             iconColorClass="text-blue-500"
           />
           <StatItem
-            icon={ChatBubbleLeftRightIcon}
+            icon={ChatBubbleBottomCenterTextIcon}
             label="Решения"
             value={userStats.totalAnswers}
             iconColorClass="text-green-500"
           />
           <StatItem
-            icon={ChatBubbleLeftEllipsisIcon}
+            icon={ChatBubbleOvalLeftEllipsisIcon}
             label="Коментари"
             value={userStats.totalComments}
             iconColorClass="text-purple-500"

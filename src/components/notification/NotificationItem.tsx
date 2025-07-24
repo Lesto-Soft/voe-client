@@ -2,16 +2,16 @@ import React from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import {
   ChatBubbleBottomCenterTextIcon,
-  ChatBubbleLeftEllipsisIcon,
+  ChatBubbleOvalLeftEllipsisIcon,
   DocumentTextIcon,
-  CheckCircleIcon,
   InformationCircleIcon,
-  CurrencyDollarIcon,
+  BanknotesIcon,
+  HandThumbUpIcon,
 } from "@heroicons/react/24/outline";
 import { INotification } from "../../db/interfaces";
 import { clsx } from "clsx";
 import moment from "moment";
-import { useTranslation, Trans } from "react-i18next";
+import { Trans } from "react-i18next";
 import { useNavigate } from "react-router";
 import { useMarkAsRead } from "../../graphql/hooks/notificationHook";
 
@@ -22,27 +22,28 @@ interface NotificationItemProps {
 const NotificationItem: React.FC<NotificationItemProps> = ({
   notification,
 }) => {
-  const { t } = useTranslation("menu");
+  // const { t } = useTranslation("menu");
   const navigate = useNavigate();
   const [markAsRead] = useMarkAsRead();
 
   const getNotificationIcon = (type: string) => {
-    // ... (This function remains unchanged)
     switch (type) {
       case "new_comment":
-        return <ChatBubbleLeftEllipsisIcon className="h-5 w-5 text-gray-500" />;
+        return (
+          <ChatBubbleOvalLeftEllipsisIcon className="h-5 w-5 text-purple-500" />
+        );
       case "new_case":
-        return <DocumentTextIcon className="h-5 w-5 text-gray-500" />;
+        return <DocumentTextIcon className="h-5 w-5 text-blue-500" />;
       case "new_answer":
         return (
-          <ChatBubbleBottomCenterTextIcon className="h-5 w-5 text-gray-500" />
+          <ChatBubbleBottomCenterTextIcon className="h-5 w-5 text-green-500" />
         );
       case "approve_answer_close_case":
-        return <CheckCircleIcon className="h-5 w-5 text-green-600" />;
+        return <HandThumbUpIcon className="h-5 w-5 text-green-600" />;
       case "approve_answer_await_finance_case":
-        return <CurrencyDollarIcon className="h-5 w-5 text-blue-500" />;
+        return <BanknotesIcon className="h-5 w-5 text-gray-500" />;
       case "approve_answer_finance_case":
-        return <CurrencyDollarIcon className="h-5 w-5 text-green-500" />;
+        return <BanknotesIcon className="h-5 w-5 text-green-500" />;
       default:
         return <InformationCircleIcon className="h-5 w-5 text-gray-500" />;
     }

@@ -43,9 +43,12 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }) => {
             />
           </div>
         );
-        toast.info(toastMessage, {
-          className: "notification-toast",
-        });
+        // only show notifications if the notification dropdown is not open
+        if (!isDropdownOpen) {
+          toast.info(toastMessage, {
+            className: "notification-toast",
+          });
+        }
       }
     },
     onError: (error) => {
@@ -89,7 +92,9 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }) => {
       },
     });
     setNotifications([]);
-    toast.success(t("notification_contents.all_removed"));
+    toast.success(t("notification_contents.all_removed"), {
+      className: "notification-toast",
+    });
   };
 
   return (
@@ -97,8 +102,9 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }) => {
       <DropdownMenu.Root open={isDropdownOpen} onOpenChange={setDropdownOpen}>
         <DropdownMenu.Trigger asChild>
           <button
-            className="cursor-pointer inline-flex items-center justify-center p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            aria-label="View notifications"
+            className="cursor-pointer inline-flex items-center justify-center p-2 text-gray-600 focus:outline-none hover:text-gray-900 rounded-full transition-colors duration-150 hover:bg-gray-300 data-[state=open]:bg-gray-500 data-[state=open]:text-gray-100"
+            aria-label={t("notification_contents.view_notifications")}
+            title={t("notification_contents.view_notifications")}
           >
             {/* This wrapper ensures the dot is positioned relative to the icon */}
             <div className="relative">
@@ -120,9 +126,12 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }) => {
             align="end"
           >
             <div className="p-3 border-b border-gray-200 flex justify-between">
-              <h3 className="text-lg font-semibold text-gray-800">
+              <h3 className="text-md font-semibold text-gray-800">
                 {t("notifications")}
-                <span className="text-gray-400">({unreadCount})</span>
+                <span className="text-md font-normal text-gray-400">
+                  {" "}
+                  ({unreadCount})
+                </span>
               </h3>
               <button
                 className="cursor-pointer text-sm text-blue-500 hover:underline"
@@ -130,6 +139,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }) => {
                   setShowConfirmModal(true);
                   setDropdownOpen(false);
                 }}
+                title={t("notification_contents.remove_all_title")}
               >
                 {t("notification_contents.remove_all")}
               </button>
@@ -137,12 +147,14 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }) => {
 
             <div className="max-h-96 overflow-y-auto">
               {initialLoading && (
-                <div className="p-4 text-center text-gray-500">Loading...</div>
+                <div className="p-4 text-center text-gray-500">
+                  Зареждане...
+                </div>
               )}
 
               {!initialLoading && notifications.length === 0 && (
                 <div className="p-4 text-center text-gray-500">
-                  You're all caught up! ✨
+                  {t("notification_contents.no_notifications")}
                 </div>
               )}
 

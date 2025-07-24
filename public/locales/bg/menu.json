@@ -25,6 +25,7 @@
   "notifications": "Известия",
   "unread_count": "Брой непрочетени",
   "notification_contents": {
+    "view_notifications": "Вижте известията",
     "all_removed": "Всички известия са премахнати",
     "new_notification": "",
     "remove_title": "Премахни всички известия",

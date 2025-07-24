@@ -24,6 +24,7 @@
   "notifications": "Notifications",
   "unread_count": "Unread Count",
   "notification_contents": {
+    "view_notifications": "View notifications",
     "all_removed": "All notifications removed",
     "remove_title": "Remove All Notifications",
     "remove_desc": "Are you sure you want to remove all notifications? This action cannot be undone.",

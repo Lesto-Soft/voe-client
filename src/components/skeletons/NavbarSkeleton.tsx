@@ -33,10 +33,16 @@ const NavbarSkeleton = () => {
               <div className="bg-gray-300 h-3 w-20 rounded-md mt-1"></div>
             </div>
           </div>
+
+          {/* Notification Bell Skeleton (Desktop) */}
+          <div className="bg-gray-300 h-10 w-10 rounded-full"></div>
         </div>
 
-        {/* Right Side: Mobile Hamburger Menu */}
-        <div className="md:hidden">
+        {/* Right Side: Mobile Icons */}
+        <div className="md:hidden flex items-center space-x-2">
+          {/* Notification Bell Skeleton (Mobile) */}
+          <div className="bg-gray-300 h-10 w-10 rounded-full"></div>
+          {/* Hamburger Skeleton */}
           <div className="bg-gray-300 h-8 w-8 rounded-md"></div>
         </div>
       </div>

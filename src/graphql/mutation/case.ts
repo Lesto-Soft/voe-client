@@ -53,3 +53,15 @@ export const DELETE_CASE = gql`
     }
   }
 `;
+
+export const MARK_CASE_AS_READ = gql`
+  mutation MarkCaseAsRead($caseId: ID!) {
+    markCaseAsRead(caseId: $caseId)
+  }
+`;
+
+export const TOGGLE_CASE_READ_STATUS = gql`
+  mutation ToggleCaseReadStatus($caseId: ID!) {
+    toggleCaseReadStatus(caseId: $caseId)
+  }
+`;

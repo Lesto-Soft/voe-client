@@ -3,12 +3,15 @@ import { useLazyQuery } from "@apollo/client"; // Assuming Apollo Client
 import { ICase, ICategory } from "../../db/interfaces";
 import { GET_LEAN_USERS } from "../../graphql/query/user";
 import { GET_ACTIVE_CATEGORIES } from "../../graphql/query/category";
-import {
-  ChevronDownIcon,
-  XMarkIcon,
-  CalendarDaysIcon,
-} from "@heroicons/react/24/outline"; // Import icons
+import { XMarkIcon, CalendarDaysIcon } from "@heroicons/react/24/outline"; // Import icons
 import DateRangeSelector from "../features/userAnalytics/DateRangeSelector";
+import CustomDropdown from "../global/CustomDropdown";
+import {
+  getPriorityOptions,
+  getReadStatusOptions,
+  getStatusOptions,
+  getTypeOptions,
+} from "../../utils/dashboardFilterUtils";
 
 // Interface for Lean User (assuming structure)
 interface ILeanUser {
@@ -33,6 +36,8 @@ interface CaseSearchBarProps {
   setContent: (v: string) => void;
   status: ICase["status"] | "";
   setStatus: (v: ICase["status"] | "") => void;
+  readStatus: string;
+  setReadStatus: (v: string) => void;
   dateRange: { startDate: Date | null; endDate: Date | null };
   setDateRange: (range: {
     startDate: Date | null;
@@ -56,6 +61,8 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
   setContent,
   status,
   setStatus,
+  readStatus,
+  setReadStatus,
   dateRange,
   setDateRange,
   t,
@@ -286,8 +293,27 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
     setCategorySearch(e.target.value);
   };
 
+  const handleReopenCreatorDropdown = () => {
+    // Clear the previous selection state
+    setSelectedCreator(null);
+    setCreatorId("");
+    setCreatorInput("");
+    setFetchedInitialCreator(false);
+
+    // Open the dropdown and fetch all users if they're not already loaded
+    setIsDropdownVisible(true);
+    if (serverFetchedUsers.length === 0) {
+      fetchUsers({ variables: { search: "" } });
+    }
+  };
+
   // --- Render Logic ---
   const showDropdown = isDropdownVisible;
+
+  const priorityOptions = getPriorityOptions(t);
+  const typeOptions = getTypeOptions(t);
+  const statusOptions = getStatusOptions(t);
+  const readStatusOptions = getReadStatusOptions(t);
 
   return (
     <div className="px-4 sm:px-6 lg:px-8 py-5">
@@ -310,56 +336,19 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
           />
         </div>
         {/* Priority */}
-        <div className="group relative">
-          <label
-            htmlFor="priority"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            {t("priority")}
-          </label>
-          <select
-            id="priority"
-            value={priority}
-            onChange={(e) => {
-              setPriority(e.target.value as ICase["priority"] | "");
-              (e.target as HTMLSelectElement).blur();
-            }}
-            className="w-32 pl-3 pr-8 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-white appearance-none truncate"
-          >
-            <option value=""> {t("all")}</option>
-            <option value="LOW"> {t("LOW")}</option>
-            <option value="MEDIUM"> {t("MEDIUM")}</option>
-            <option value="HIGH"> {t("HIGH")}</option>
-          </select>
-          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 top-[calc(1.75rem+1px)]">
-            <ChevronDownIcon className="h-5 w-5 transition-transform duration-200 ease-in-out group-focus-within:rotate-180" />
-          </div>
-        </div>
+        <CustomDropdown
+          label={t("priority")}
+          options={priorityOptions}
+          value={priority}
+          onChange={(value) => setPriority(value as ICase["priority"] | "")}
+        />
         {/* Type */}
-        <div className="group relative">
-          <label
-            htmlFor="type"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            {t("type")}
-          </label>
-          <select
-            id="type"
-            value={type}
-            onChange={(e) => {
-              setType(e.target.value as ICase["type"] | "");
-              (e.target as HTMLSelectElement).blur();
-            }}
-            className="w-32 pl-3 pr-8 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-white appearance-none truncate"
-          >
-            <option value=""> {t("all")}</option>
-            <option value="PROBLEM"> {t("PROBLEM")}</option>
-            <option value="SUGGESTION"> {t("SUGGESTION")}</option>
-          </select>
-          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 top-[calc(1.75rem+1px)]">
-            <ChevronDownIcon className="h-5 w-5 transition-transform duration-200 ease-in-out group-focus-within:rotate-180" />
-          </div>
-        </div>
+        <CustomDropdown
+          label={t("type")}
+          options={typeOptions}
+          value={type}
+          onChange={(value) => setType(value as ICase["type"] | "")}
+        />
         {/* Creator (Autocomplete) */}
         <div className="relative flex-1 min-w-[200px]">
           <label
@@ -369,8 +358,17 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
             {t("creator")}
           </label>
           {selectedCreator ? (
-            <div className="bg-white w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm flex justify-between items-center">
-              <span className="text-gray-800">{selectedCreator.name}</span>
+            <div
+              // MODIFIED: Use the new handler function
+              onClick={handleReopenCreatorDropdown}
+              className="cursor-pointer bg-white w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm flex justify-between items-center"
+            >
+              <span
+                className="text-gray-800 truncate max-w-[170px]"
+                title={selectedCreator.name}
+              >
+                {selectedCreator.name}
+              </span>
               <span className="font-semibold text-gray-500 mr-6">
                 {selectedCreator.username}
               </span>
@@ -383,7 +381,7 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
               value={creatorInput}
               onChange={handleCreatorInputChange}
               onFocus={handleCreatorInputFocus}
-              className="bg-white w-full px-3 pr-8 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition duration-150 ease-in-out"
+              className="cursor-pointer bg-white w-full px-3 pr-8 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition duration-150 ease-in-out"
               placeholder={t("choose_creator")}
               autoComplete="off"
             />
@@ -404,6 +402,7 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
               ref={dropdownRef}
               className="absolute z-50 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto"
             >
+              {/* ... (dropdown content is unchanged) ... */}
               {loadingUsers && serverFetchedUsers.length === 0 ? (
                 <div className="px-3 py-2 text-sm text-gray-500">
                   {t("loading")}
@@ -424,7 +423,12 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
                     onMouseDown={() => handleUserSelect(user)}
                   >
                     <div className="flex justify-between items-center w-full">
-                      <span className="text-gray-800">{user.name}</span>
+                      <span
+                        className="text-gray-800 truncate max-w-[170px]"
+                        title={user.name}
+                      >
+                        {user.name}
+                      </span>
                       <span className="font-semibold text-gray-500">
                         {user.username}
                       </span>
@@ -551,32 +555,19 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
             </button>
           </div>
           {/* Status */}
-          <div className="group relative">
-            <label
-              htmlFor="status"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              {t("status")}
-            </label>
-            <select
-              id="status"
-              value={status}
-              onChange={(e) => {
-                setStatus(e.target.value as ICase["status"] | "");
-                (e.target as HTMLSelectElement).blur();
-              }}
-              className="w-32 pl-3 pr-8 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-white appearance-none truncate"
-            >
-              <option value=""> {t("all")}</option>
-              <option value="OPEN"> {t("OPEN")}</option>
-              <option value="IN_PROGRESS"> {t("IN_PROGRESS")}</option>
-              <option value="AWAITING_FINANCE"> {t("AWAITING_FINANCE")}</option>
-              <option value="CLOSED"> {t("CLOSED")}</option>
-            </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 top-[calc(1.75rem+1px)]">
-              <ChevronDownIcon className="h-5 w-5 transition-transform duration-200 ease-in-out group-focus-within:rotate-180" />
-            </div>
-          </div>
+          <CustomDropdown
+            label={t("status")}
+            options={statusOptions}
+            value={status}
+            onChange={(value) => setStatus(value as ICase["status"] | "")}
+          />
+          {/* Read Status -- MODIFIED */}
+          <CustomDropdown
+            label={"Прочетени"}
+            options={readStatusOptions}
+            value={readStatus === "" ? "ALL" : readStatus} // Handle default case
+            onChange={(value) => setReadStatus(value as "READ" | "UNREAD" | "")}
+          />
         </div>
       </div>
 

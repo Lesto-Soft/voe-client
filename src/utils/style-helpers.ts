@@ -46,9 +46,11 @@ export const getCalculatedRatingStyle = (calculatedRating: number) => {
 export const getTypeBadgeStyle = (type: string) => {
   switch (type) {
     case "PROBLEM":
-      return "bg-red-100 text-btnRedHover";
+      return "bg-red-100 text-red-700";
+    // return "bg-red-100 text-btnRedHover";
     case "SUGGESTION":
-      return "bg-green-100 text-btnGreenHover";
+      return "bg-green-100 text-green-700";
+    // return "bg-green-100 text-btnGreenHover";
     default:
       return "bg-gray-100 text-gray-800";
   }

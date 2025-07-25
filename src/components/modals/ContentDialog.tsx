@@ -65,7 +65,7 @@ const ContentDialog: React.FC<ContentDialogProps> = ({
           <div className="flex items-center gap-4 p-4 border-b border-gray-200 flex-shrink-0">
             <Dialog.Close asChild>
               <button
-                className="p-2 rounded-full text-gray-400 hover:text-red-600 hover:bg-gray-100 focus:outline-none hover:cursor-pointer"
+                className="p-2 rounded-full text-gray-500 hover:text-gray-800 focus:outline-none hover:cursor-pointer"
                 aria-label="Close"
                 type="button"
               >
@@ -163,8 +163,8 @@ const ContentDialog: React.FC<ContentDialogProps> = ({
 
             {/* Right Column: Main Content */}
             <div className="flex-grow md:w-2/3 lg:w-3/4 flex flex-col gap-4 border-l border-gray-100 pl-6">
-              <div className="font-normal text-gray-500">
-                {t("dashboard:content")}
+              <div className="text-sm font-semibold text-gray-400">
+                {t("dashboard:content")}:
               </div>
               <div className="bg-gray-50 rounded-md p-4 mb-2 text-gray-900 overflow-y-auto custom-scrollbar break-words flex-grow">
                 {renderContentSafely(content)}

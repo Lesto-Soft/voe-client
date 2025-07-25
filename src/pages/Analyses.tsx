@@ -331,7 +331,7 @@ const Analyses: React.FC = () => {
                 <TopUserCard
                   title="Най-активен даващ решения"
                   stat={rankedSolvers[0]}
-                  actionText="подадени и одобрени отговора"
+                  actionText="подадени и одобрени решения"
                   onPodiumClick={() =>
                     setPodiumState({
                       title: "Класация: Дали решения",
@@ -342,7 +342,7 @@ const Analyses: React.FC = () => {
                 <TopUserCard
                   title="Най-активен одобрител"
                   stat={rankedApprovers[0]}
-                  actionText="одобрения на отговори"
+                  actionText="одобрения на решения"
                   onPodiumClick={() =>
                     setPodiumState({
                       title: "Класация: Одобрили решения",

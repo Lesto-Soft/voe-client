@@ -20,5 +20,29 @@
   "category_desc": "Category {{categoryName}}",
   "submit_case_desc": "Submit a case to the system",
   "ratings_desc": "Manage rating metrics",
-  "ratings": "Ratings"
+  "ratings": "Ratings",
+  "notifications": "Notifications",
+  "unread_count": "Unread Count",
+  "notification_contents": {
+    "view_notifications": "View notifications",
+    "all_removed": "All notifications removed",
+    "remove_title": "Remove All Notifications",
+    "remove_desc": "Are you sure you want to remove all notifications? This action cannot be undone.",
+    "cancel": "Cancel",
+    "new_notification": "New notification: ",
+    "remove_all": "Remove All",
+    "remove_all_title": "Remove all notifications",
+    "new_case": "<1>New case</1> with number <1>{{caseNumber}}</1>",
+    "new_answer": "<1>New answer</1> added to case <1>{{caseNumber}}</1>",
+    "case_updated": "Case <1>{{caseNumber}}</1> updated",
+    "approve_answer_close_case": "Case <1>{{caseNumber}}</1> was <1>closed</1>",
+    "approve_answer_await_finance_case": "Case <1>{{caseNumber}}</1> was <1>approved and is awaiting finance</1>",
+    "approve_answer_finance_case": "Case <1>{{caseNumber}}</1> was <1>approved for finance</1>",
+    "case_reopened": "Case <1>{{caseNumber}}</1> <1>reopened</1>",
+    "new_comment": "<1>New comment</1> added to case <1>{{caseNumber}}</1>",
+    "rating_received": "<1>New rating</1> received for case <1>{{caseNumber}}</1>",
+    "account_created": "<1>New account</1> created for user <1>{{username}}</1>",
+    "profile_updated": "Profile updated for user <1>{{username}}</1>",
+    "no_notifications": "No new notifications."
+  }
 }

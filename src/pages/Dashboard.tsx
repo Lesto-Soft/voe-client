@@ -13,7 +13,7 @@ import {
   ListBulletIcon,
   UserCircleIcon,
   AcademicCapIcon,
-  ChatBubbleLeftRightIcon,
+  ChatBubbleBottomCenterTextIcon,
   ChatBubbleOvalLeftEllipsisIcon,
   ChevronUpIcon,
   ChevronDownIcon,
@@ -91,7 +91,7 @@ const Dashboard = () => {
         label: t("answered"),
         hookKey: "answered",
         hook: null,
-        icon: <ChatBubbleLeftRightIcon className="h-5 w-5 mr-2" />,
+        icon: <ChatBubbleBottomCenterTextIcon className="h-5 w-5 mr-2" />,
       },
       {
         label: t("commented"),

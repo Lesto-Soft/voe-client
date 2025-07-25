@@ -44,9 +44,18 @@ const useUserActivityStats = (
       return itemDate >= startDate && itemDate <= endDate;
     };
 
+    const isDateInDateRange = (itemDate: Date) => {
+      // If no dates are set, every item is included
+      if (!startDate || !endDate) return true;
+
+      // Directly compare the Date objects
+      return itemDate >= startDate && itemDate <= endDate;
+    };
+
     // 3. APPLY THE FILTER BEFORE COUNTING
     const filteredCases =
-      user.cases?.filter((c) => isInDateRange(c.date)) || [];
+      user.cases?.filter((c) => isDateInDateRange(c.date as unknown as Date)) ||
+      [];
     const filteredAnswers =
       user.answers?.filter((a) => isInDateRange(a.date)) || [];
     const filteredComments =

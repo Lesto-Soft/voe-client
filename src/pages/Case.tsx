@@ -1,13 +1,17 @@
 // src/pages/Case.tsx
-import { useGetCaseByCaseNumber } from "../graphql/hooks/case";
+import {
+  useGetCaseByCaseNumber,
+  useMarkCaseAsRead,
+} from "../graphql/hooks/case";
 import { useParams } from "react-router";
 import { useTranslation } from "react-i18next";
 import CaseInfo from "../components/case-components/CaseInfo";
 import Submenu from "../components/case-components/Submenu";
-import { ICase } from "../db/interfaces";
+import { ICase, IReadBy } from "../db/interfaces";
 import { useCurrentUser } from "../context/UserContext";
 import { determineUserRightsForCase } from "../utils/rightUtils";
 import { ROLES } from "../utils/GLOBAL_PARAMETERS";
+import { useEffect } from "react"; // ADDED
 
 // Authorization
 import { useAuthorization } from "../hooks/useAuthorization";
@@ -41,6 +45,22 @@ const Case = () => {
     error: errorCase,
     refetch,
   } = useGetCaseByCaseNumber(numericCaseNumber, currentUser.role?._id);
+
+  // Pass the case number to the hook
+  const { markCaseAsRead } = useMarkCaseAsRead(numericCaseNumber);
+
+  // ADDED: This effect marks the case as read by the current user
+  useEffect(() => {
+    if (caseData && currentUser) {
+      const hasRead = caseData.readBy?.some(
+        (entry: IReadBy) => entry.user._id === currentUser._id
+      );
+
+      if (!hasRead) {
+        markCaseAsRead(caseData._id);
+      }
+    }
+  }, [caseData, currentUser, markCaseAsRead]);
 
   const { isAllowed, isLoading: authLoading } = useAuthorization({
     type: "case",
@@ -107,6 +127,7 @@ const Case = () => {
           isLoading={loadingCase}
           error={errorCase}
           rights={userRights}
+          readBy={c.readBy}
         />
       </div>
 

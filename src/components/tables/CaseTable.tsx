@@ -3,11 +3,12 @@ import {
   EllipsisHorizontalIcon,
   FlagIcon,
   TrashIcon,
+  EnvelopeIcon,
+  EnvelopeOpenIcon,
 } from "@heroicons/react/24/solid";
 import moment from "moment";
 // @ts-ignore
 import "moment/dist/locale/bg";
-import { useTranslation } from "react-i18next";
 import { ICase } from "../../db/interfaces";
 import { useEffect, useState } from "react";
 import UserLink from "../global/UserLink";
@@ -21,9 +22,12 @@ import {
 import { getContentPreview, stripHtmlTags } from "../../utils/contentRenderer";
 import { useCurrentUser } from "../../context/UserContext";
 import { ROLES } from "../../utils/GLOBAL_PARAMETERS";
-import { useDeleteCase } from "../../graphql/hooks/case";
+import {
+  useDeleteCase,
+  useToggleCaseReadStatus,
+} from "../../graphql/hooks/case";
 import ErrorModal from "../modals/ErrorModal";
-import LoadingModal from "../modals/LoadingModal";
+import ConfirmActionDialog from "../modals/ConfirmActionDialog";
 
 interface ICaseTableProps {
   cases: ICase[];
@@ -32,14 +36,25 @@ interface ICaseTableProps {
 }
 
 // --- Main CaseTable Component ---
-const CaseTable: React.FC<ICaseTableProps> = ({ cases, t, onCaseDeleted }) => {
-  const { i18n } = useTranslation();
-  const currentLanguage = i18n.language;
+const CaseTable: React.FC<ICaseTableProps> = ({
+  cases,
+  t,
+  onCaseDeleted: onActionComplete,
+}) => {
   const currentUser = useCurrentUser();
-  const { deleteCase, loading, error } = useDeleteCase({
+  const { deleteCase, error: deleteError } = useDeleteCase({
     onCompleted: () => {
-      if (onCaseDeleted) {
-        onCaseDeleted();
+      if (onActionComplete) {
+        onActionComplete();
+      }
+    },
+  });
+
+  // ADDED: Hook for the toggle functionality
+  const { toggleReadStatus } = useToggleCaseReadStatus({
+    onCompleted: () => {
+      if (onActionComplete) {
+        onActionComplete();
       }
     },
   });
@@ -51,6 +66,8 @@ const CaseTable: React.FC<ICaseTableProps> = ({ cases, t, onCaseDeleted }) => {
 
   // State for dropdown menu
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  // 3. Add state to hold the ID of the case to be deleted
+  const [caseToDelete, setCaseToDelete] = useState<string | null>(null);
 
   // Effect to update window width on resize
   useEffect(() => {
@@ -85,6 +102,13 @@ const CaseTable: React.FC<ICaseTableProps> = ({ cases, t, onCaseDeleted }) => {
     setOpenDropdown((prev) => (prev === caseId ? null : caseId));
   };
 
+  const handleConfirmDelete = () => {
+    if (caseToDelete) {
+      deleteCase(caseToDelete);
+      setCaseToDelete(null); // Close the modal
+    }
+  };
+
   // Close dropdown when clicking outside
   useEffect(() => {
     // Function to close the dropdown
@@ -102,12 +126,13 @@ const CaseTable: React.FC<ICaseTableProps> = ({ cases, t, onCaseDeleted }) => {
     }
   }, [openDropdown]);
 
-  if (error) {
+  if (deleteError) {
     return <ErrorModal message="Проблем с изтриването на сигнал." />;
   }
-  if (loading) {
-    return <LoadingModal message="Изтриване на сигнал..." />;
-  }
+  // MODIFIED: Combine loading states
+  // if (deleteLoading || toggleLoading) {
+  // return <LoadingModal message="Обработване..." />;
+  // }
 
   return (
     <div className="flex-1 flex flex-col min-h-0 px-4 sm:px-6 lg:px-8">
@@ -198,7 +223,10 @@ const CaseTable: React.FC<ICaseTableProps> = ({ cases, t, onCaseDeleted }) => {
           </thead>
           {/* Table Body */}
           <tbody className="bg-white divide-y divide-gray-200">
-            {cases.map((my_case) => {
+            {cases.map((my_case, index) => {
+              const isUnread = !my_case.readBy?.some(
+                (entry) => entry.user._id === currentUser._id
+              );
               const statusStyle = getStatusStyle(my_case.status);
               const priorityStyle = getPriorityStyle(my_case.priority);
               const typeBadgeStyle = getTypeBadgeStyle(my_case.type);
@@ -212,23 +240,35 @@ const CaseTable: React.FC<ICaseTableProps> = ({ cases, t, onCaseDeleted }) => {
                 truncateLength
               );
 
+              // Add a check to see if it's one of the last row
+              const isLastRow = index >= cases.length - 1;
+
               return (
                 <tr
                   key={my_case._id}
-                  className={`${
-                    isClosed ? "bg-gray-100 text-gray-500" : "hover:bg-gray-100"
-                  }`}
+                  className={
+                    isClosed
+                      ? "bg-gray-100 text-gray-500"
+                      : isUnread
+                      ? "bg-blue-50 hover:bg-blue-100 font-semibold"
+                      : "hover:bg-gray-50"
+                  }
+
+                  // className={`${
+                  //   isClosed ? "bg-gray-100 text-gray-500" : "hover:bg-gray-100"
+                  // }`}
                 >
                   {/* Case Number Cell - Now a Button-like Link */}
                   <td
-                    className={`w-24 px-3 py-4 whitespace-nowrap text-sm ${
+                    className={`relative w-24 px-3 py-4 whitespace-nowrap text-sm ${
+                      // ADDED 'relative'
                       isClosed ? "text-gray-500" : "font-medium"
                     }`}
                   >
                     <CaseLink my_case={my_case} t={t} />
                   </td>
                   {/* Priority Cell - Text hidden on medium and below */}
-                  <td className="w-28 px-3 py-4 whitespace-nowrap text-sm">
+                  <td className="w-28 px-3 py-4 whitespace-nowrap text-xs">
                     <div className="flex items-center" title={my_case.priority}>
                       <FlagIcon
                         className={`mr-1.5 h-4 w-4 flex-shrink-0 ${priorityStyle}`}
@@ -240,9 +280,9 @@ const CaseTable: React.FC<ICaseTableProps> = ({ cases, t, onCaseDeleted }) => {
                     </div>
                   </td>
                   {/* Type Cell */}
-                  <td className="w-28 px-3 py-4 whitespace-nowrap text-sm">
+                  <td className="w-28 px-3 py-4 whitespace-nowrap text-xs">
                     <span
-                      className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${typeBadgeStyle}`}
+                      className={`px-2.5 py-0.5 rounded-full font-medium ${typeBadgeStyle}`}
                     >
                       {t(`${my_case.type}`)}
                     </span>
@@ -265,7 +305,11 @@ const CaseTable: React.FC<ICaseTableProps> = ({ cases, t, onCaseDeleted }) => {
                     </div>
                   </td>
                   <td
-                    className="max-w-[200px] sm:max-w-[250px] lg:max-w-[300px] px-3 py-4 text-sm break-words"
+                    className={
+                      isUnread && !isClosed
+                        ? "max-w-[200px] sm:max-w-[250px] lg:max-w-[300px] px-3 py-4 text-sm break-words"
+                        : "max-w-[200px] sm:max-w-[250px] lg:max-w-[300px] px-3 py-4 text-sm break-words"
+                    }
                     title={stripHtmlTags(my_case.content)} // Show plain text in tooltip
                   >
                     {displayContent}
@@ -281,7 +325,7 @@ const CaseTable: React.FC<ICaseTableProps> = ({ cases, t, onCaseDeleted }) => {
                     </div>
                   </td>
                   {/* Status Cell - Text hidden on medium and below */}
-                  <td className="w-32 px-3 py-4 whitespace-nowrap text-sm">
+                  <td className="w-32 px-3 py-4 whitespace-nowrap text-xs">
                     <div className="flex items-center" title={my_case.status}>
                       <div
                         className={`mr-1.5 h-2.5 w-2.5 rounded-full flex-shrink-0 ${statusStyle.dotBgColor}`}
@@ -299,17 +343,17 @@ const CaseTable: React.FC<ICaseTableProps> = ({ cases, t, onCaseDeleted }) => {
                     <div>
                       <button
                         className={`cursor-pointer p-1 rounded-md transition-colors duration-150 ease-in-out inline-flex items-center justify-center ${
-                          currentUser.role._id !== ROLES.ADMIN
+                          currentUser.role._id == ROLES.LEFT
                             ? "text-gray-400 cursor-not-allowed"
-                            : "text-gray-500 hover:text-gray-800 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                            : "text-gray-500 hover:text-gray-800 hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                         }`}
-                        disabled={currentUser.role._id !== ROLES.ADMIN}
+                        disabled={currentUser.role._id == ROLES.LEFT}
                         onClick={(e) => {
                           e.stopPropagation(); // <-- IMPORTANT: Stops the click from closing the menu immediately
                           toggleDropdown(my_case._id);
                         }}
                         title={
-                          currentUser.role._id !== ROLES.ADMIN
+                          currentUser.role._id == ROLES.LEFT
                             ? t("no_more_actions")
                             : t("more_actions")
                         }
@@ -320,28 +364,50 @@ const CaseTable: React.FC<ICaseTableProps> = ({ cases, t, onCaseDeleted }) => {
                         </span>
                       </button>
 
-                      {/* --- DROPDOWN MENU (FIXED) --- */}
-                      {openDropdown === my_case._id &&
-                        currentUser.role._id === ROLES.ADMIN && (
-                          <div
-                            onClick={(e) => e.stopPropagation()} // <-- IMPORTANT: Stops clicks inside the menu from closing it
-                            className="origin-top-right absolute right-1 mt-2 w-42 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50"
-                            role="menu"
-                            aria-orientation="vertical"
-                            aria-labelledby="menu-button"
-                          >
-                            <div className="py-1" role="none">
+                      {/* --- DROPDOWN MENU (MODIFIED) --- */}
+                      {openDropdown === my_case._id && (
+                        <div
+                          onClick={(e) => e.stopPropagation()}
+                          // --- CONDITIONAL CLASS LOGIC ---
+                          className={`absolute w-53 rounded-md shadow-lg bg-white ring-2 ring-gray-100 focus:outline-none z-50 ${
+                            isLastRow
+                              ? "right-full mr-2 top-0 origin-right" // MODIFIED: Opens to the left
+                              : "right-1 mt-2 origin-top-right" // Opens downwards (default)
+                          }`}
+                          role="menu"
+                        >
+                          <div className="py-1" role="none">
+                            {/* ADDED: Toggle Read/Unread Button */}
+                            <button
+                              onClick={() => toggleReadStatus(my_case._id)}
+                              className="cursor-pointer w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 flex items-center gap-2 transition-colors duration-150"
+                              role="menuitem"
+                            >
+                              {isUnread ? (
+                                <EnvelopeOpenIcon className="h-4 w-4" />
+                              ) : (
+                                <EnvelopeIcon className="h-4 w-4" />
+                              )}
+                              {isUnread
+                                ? "Направи прочетено"
+                                : "Направи непрочетено"}
+                            </button>
+
+                            {/* Existing Delete Button */}
+                            {currentUser.role._id === ROLES.ADMIN && (
                               <button
-                                onClick={() => deleteCase(my_case._id)}
+                                // 4. Change onClick to open the modal instead of deleting directly
+                                onClick={() => setCaseToDelete(my_case._id)}
                                 className="cursor-pointer w-full text-left px-4 py-2 text-sm text-btnRed hover:bg-red-50 hover:text-btnRedHover flex items-center gap-2 transition-colors duration-150"
                                 role="menuitem"
                               >
                                 <TrashIcon className="h-4 w-4" />
                                 {t("delete_case") || "Delete Case"}
                               </button>
-                            </div>
+                            )}
                           </div>
-                        )}
+                        </div>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -358,6 +424,19 @@ const CaseTable: React.FC<ICaseTableProps> = ({ cases, t, onCaseDeleted }) => {
           </tbody>
         </table>
       </div>
+      {/* 5. Add the confirmation dialog component at the end of the main div */}
+      <ConfirmActionDialog
+        isOpen={!!caseToDelete}
+        onOpenChange={() => setCaseToDelete(null)} // CHANGED: from onClose
+        onConfirm={handleConfirmDelete}
+        title="Потвърдете изтриването"
+        description={`Сигурни ли сте, че искате да изтриете сигнал #${
+          // CHANGED: from message
+          cases.find((c) => c._id === caseToDelete)?.case_number
+        }? Това действие не може да бъде отменено.`}
+        confirmButtonText="Изтрий"
+        isDestructiveAction={true} // CHANGED: from variant="danger"
+      />
     </div>
   );
 };

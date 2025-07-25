@@ -46,6 +46,7 @@ function getFiltersFromParams(params: URLSearchParams) {
     categoryIds, // use array
     content: params.get("content") || "",
     status: params.get("status") || "",
+    readStatus: params.get("readStatus") || "ALL", // Add this
     startDate: params.get("startDate"),
     endDate: params.get("endDate"),
   };
@@ -58,6 +59,12 @@ function setFiltersToParams(params: URLSearchParams, filters: any) {
         params.set("categoryIds", value.join(","));
       } else {
         params.delete("categoryIds");
+      }
+    } else if (key === "readStatus") {
+      if (value && value !== "ALL") {
+        params.set(key, String(value));
+      } else {
+        params.delete(key);
       }
     } else if (value instanceof Date) {
       params.set(key, moment(value).format("DD-MM-YYYY"));
@@ -101,6 +108,7 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
   );
   const [content, setContent] = useState(initialFilters.content);
   const [status, setStatus] = useState(initialFilters.status);
+  const [readStatus, setReadStatus] = useState(initialFilters.readStatus);
   const [dateRange, setDateRange] = useState<{
     startDate: Date | null;
     endDate: Date | null;
@@ -126,6 +134,7 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
     categoryIds: initialFilters.categoryIds,
     content: initialFilters.content,
     status: initialFilters.status,
+    readStatus: initialFilters.readStatus,
     dateRange: {
       startDate: initialFilters.startDate
         ? moment(initialFilters.startDate, "DD-MM-YYYY").toDate()
@@ -182,6 +191,7 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
       categoryIds, // use array
       content: debouncedContent,
       status,
+      readStatus,
       startDate: dateRange.startDate,
       endDate: dateRange.endDate,
     };
@@ -202,6 +212,7 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
       categoryIdsChanged ||
       content !== prevFilters.content ||
       status !== prevFilters.status ||
+      readStatus !== prevFilters.readStatus ||
       dateRangeChanged;
 
     if (filtersChanged) {
@@ -225,6 +236,7 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
         categoryIds,
         content,
         status,
+        readStatus,
         dateRange,
       };
     }
@@ -236,6 +248,7 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
     categoryIds,
     debouncedContent,
     status,
+    readStatus,
     itemsPerPage,
     navigate,
     location.search,
@@ -258,6 +271,7 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
       categoryIds,
       content: debouncedContent,
       status,
+      readStatus,
       startDate: dateRange.startDate,
       endDate: dateRange.endDate,
     });
@@ -278,6 +292,7 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
     if (creatorId) input.creatorId = creatorId;
     if (categoryIds && categoryIds.length > 0) input.categories = categoryIds; // Assuming backend expects array
     if (status) input.status = status;
+    if (readStatus && readStatus !== "ALL") input.readStatus = readStatus; // Add this
     if (dateRange.startDate)
       input.startDate = moment(dateRange.startDate).format("DD-MM-YYYY");
     if (dateRange.endDate)
@@ -294,6 +309,7 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
     creatorId,
     categoryIds,
     status,
+    readStatus,
     dateRange,
   ]);
 
@@ -366,6 +382,8 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
           setContent={setContent}
           status={status}
           setStatus={setStatus}
+          readStatus={readStatus}
+          setReadStatus={setReadStatus}
           dateRange={dateRange}
           setDateRange={setDateRange}
           t={t}

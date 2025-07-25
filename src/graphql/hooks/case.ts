@@ -1,6 +1,12 @@
 // src/graphql/hooks/case.ts (Corrected)
 import { useMutation, useQuery, QueryHookOptions } from "@apollo/client";
-import { CREATE_CASE, DELETE_CASE, UPDATE_CASE } from "../mutation/case"; // RATE_CASE removed from imports
+import {
+  CREATE_CASE,
+  DELETE_CASE,
+  UPDATE_CASE,
+  MARK_CASE_AS_READ,
+  TOGGLE_CASE_READ_STATUS,
+} from "../mutation/case"; // RATE_CASE removed from imports
 import {
   COUNT_CASES,
   COUNT_FILTERED_CASES,
@@ -15,6 +21,7 @@ import {
   GET_USER_COMMENTED_CASES,
   // UPDATE_CASE, // This was duplicated, removed.
 } from "../query/case";
+import { GET_NOTIFICATIONS } from "../query/notificationQuery";
 
 export type AttachmentInput = {
   filename: string;
@@ -63,6 +70,7 @@ export function buildCaseQueryVariables(input: any) {
     case_number,
     startDate,
     endDate,
+    readStatus,
   } = input || {};
 
   const variables: any = {
@@ -81,6 +89,8 @@ export function buildCaseQueryVariables(input: any) {
   if (status) variables.input.status = status;
   if (startDate) variables.input.startDate = startDate;
   if (endDate) variables.input.endDate = endDate;
+  if (readStatus && readStatus !== "ALL")
+    variables.input.readStatus = readStatus;
 
   return variables;
 }
@@ -372,6 +382,7 @@ export const useDeleteCase = (
     DELETE_CASE,
     {
       onCompleted: options.onCompleted,
+      refetchQueries: [GET_NOTIFICATIONS],
     }
   );
 
@@ -393,4 +404,50 @@ export const useDeleteCase = (
     loading,
     error,
   };
+};
+export const useMarkCaseAsRead = (caseNumber: number) => {
+  // Step 1: Accept caseNumber
+  const [markCaseAsReadMutation] = useMutation(MARK_CASE_AS_READ, {
+    // Step 2: Add refetchQueries option
+    refetchQueries: [
+      {
+        query: GET_CASE_BY_CASE_NUMBER,
+        variables: { caseNumber },
+      },
+    ],
+    // This ensures the UI doesn't flicker or show stale data
+    awaitRefetchQueries: true,
+  });
+
+  const markCaseAsRead = async (caseId: string) => {
+    try {
+      await markCaseAsReadMutation({ variables: { caseId } });
+    } catch (err) {
+      console.error("Failed to mark case as read:", err);
+    }
+  };
+
+  return { markCaseAsRead };
+};
+
+export const useToggleCaseReadStatus = (
+  options: { onCompleted?: () => void } = {}
+) => {
+  const [toggleCaseReadStatusMutation, { loading, error }] = useMutation(
+    TOGGLE_CASE_READ_STATUS,
+    {
+      onCompleted: options.onCompleted,
+    }
+  );
+
+  const toggleReadStatus = async (caseId: string) => {
+    try {
+      await toggleCaseReadStatusMutation({ variables: { caseId } });
+    } catch (err) {
+      console.error("Failed to toggle case read status:", err);
+      // Optionally handle the error in the UI
+    }
+  };
+
+  return { toggleReadStatus, loading, error };
 };

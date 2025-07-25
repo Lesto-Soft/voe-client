@@ -123,7 +123,7 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
     const isInDateRange = (itemDateStr: string | number) => {
       if (!dateRange.startDate || !dateRange.endDate) return true;
       const itemDate = parseActivityDate(itemDateStr);
-      console.log(itemDate, dateRange.startDate, dateRange.endDate);
+      // console.log(itemDate, dateRange.startDate, dateRange.endDate);
 
       return itemDate >= dateRange.startDate && itemDate <= dateRange.endDate;
     };
@@ -289,7 +289,7 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
   const tabs: { key: ActivityTab; label: string; count: number }[] = [
     { key: "all", label: "Всички", count: counts.all },
     { key: "cases", label: "Сигнали", count: counts.cases },
-    { key: "answers", label: "Отговори", count: counts.answers },
+    { key: "answers", label: "Решения", count: counts.answers },
     { key: "comments", label: "Коментари", count: counts.comments },
     { key: "ratings", label: "Оценки", count: counts.ratings },
     { key: "approvals", label: "Одобрени", count: counts.approvals },

@@ -125,6 +125,11 @@ export const GET_CATEGORY_BY_NAME = gql`
         categories {
           _id
         }
+        readBy {
+          user {
+            _id
+          }
+        }
       }
       archived
     }

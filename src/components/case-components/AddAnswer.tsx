@@ -57,7 +57,7 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
     if (textLength > ANSWER_CONTENT.MAX) {
       setSubmissionError(
         // t("caseSubmission.errors.submission.contentTooLong") ||
-        "Отговорът е прекалено дълъг."
+        "Решението е прекалено дълъг."
       );
       return;
     }
@@ -65,7 +65,7 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
     if (textLength < ANSWER_CONTENT.MIN) {
       setSubmissionError(
         // t("caseSubmission.errors.submission.contentTooShort") ||
-        `Отговорът трябва да е поне ${ANSWER_CONTENT.MIN} символа.`
+        `Решението трябва да е поне ${ANSWER_CONTENT.MIN} символа.`
       );
       return;
     }
@@ -165,7 +165,7 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
             <SimpleTextEditor
               content={content}
               onUpdate={handleContentChange}
-              placeholder={"Напишете отговор..."}
+              placeholder={"Напишете решение..."}
               maxLength={ANSWER_CONTENT.MAX}
               minLength={ANSWER_CONTENT.MIN}
               wrapperClassName="transition-colors duration-150 h-36"
@@ -185,6 +185,7 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
             disabled={isSubmitDisabled}
             aria-label={t("submitAnswer") || "Submit Answer"}
             className={`flex items-center justify-center h-36 w-24 min-w-24 rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-btnRedHover disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150`}
+            title="Изпрати"
           >
             {loading ? (
               // Loading spinner

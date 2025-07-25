@@ -81,7 +81,7 @@ const User: React.FC = () => {
 
   // --- MODIFIED: This calculation now respects the date range ---
   const ratedCasesCount = useMemo(() => {
-    console.log("Metric Scores: ", user?.metricScores);
+    // console.log("Metric Scores: ", user?.metricScores);
     if (!user?.metricScores) return 0;
     const isInDateRange = (itemDateStr: string) => {
       if (!dateRange.startDate || !dateRange.endDate) return true;

@@ -18,7 +18,7 @@ interface SimpleTextEditorProps {
 const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
   content,
   onUpdate,
-  placeholder = "Напишете отговор...",
+  placeholder = "Напишете решение...",
   wrapperClassName,
   maxLength,
   minLength,

@@ -21,5 +21,29 @@
   "category_desc": "Категория {{categoryName}}",
   "submit_case_desc": "Подай сигнал в системата",
   "ratings_desc": "Управление на метрики за оценки",
-  "ratings": "Оценки"
+  "ratings": "Оценки",
+  "notifications": "Известия",
+  "unread_count": "Брой непрочетени",
+  "notification_contents": {
+    "view_notifications": "Вижте известията",
+    "all_removed": "Всички известия са премахнати",
+    "new_notification": "",
+    "remove_title": "Премахни всички известия",
+    "remove_desc": "Сигурни ли сте, че искате да премахнете всички известия? Тази операция не може да бъде отменена.",
+    "cancel": "Отказ",
+    "remove_all": "Премахни",
+    "remove_all_title": "Премахни всички известия",
+    "new_case": "<1>Нов сигнал</1> с номер <1>{{caseNumber}}</1>",
+    "new_answer": "<1>Ново решение</1> добавено към сигнал <1>{{caseNumber}}</1>",
+    "case_updated": "Сигнал <1>{{caseNumber}}</1> е актуализиран",
+    "approve_answer_close_case": "Сигнал <1>{{caseNumber}}</1> бе <1>затворен</1>",
+    "approve_answer_await_finance_case": "Сигнал <1>{{caseNumber}}</1> бе <1>одобрен и чака финансиране</1>",
+    "approve_answer_finance_case": "Сигнал <1>{{caseNumber}}</1> бе <1>одобрен за финансиране</1>",
+    "case_reopened": "Сигнал <1>{{caseNumber}}</1> е <1>отворен отново</1>",
+    "new_comment": "<1>Нов коментар</1> добавен към сигнал <1>{{caseNumber}}</1>",
+    "rating_received": "Получена е <1>нова оценка</1> за сигнал <1>{{caseNumber}}</1>",
+    "account_created": "Създаден е <1>нов акаунт</1> за потребител <1>{{username}}</1>",
+    "profile_updated": "Профилът на потребител <1>{{username}}</1> е актуализиран",
+    "no_notifications": "Нямате известия."
+  }
 }

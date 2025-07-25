@@ -20,9 +20,9 @@ const ConfirmActionDialog: React.FC<ConfirmActionDialogProps> = ({
   onConfirm,
   title,
   description,
-  confirmButtonText = "Confirm",
-  cancelButtonText = "Cancel",
-  isDestructiveAction = false, // Changed from is위험Action
+  confirmButtonText = "Потвърди",
+  cancelButtonText = "Отмени",
+  isDestructiveAction = false,
 }) => {
   if (!isOpen) return null;
 
@@ -58,7 +58,7 @@ const ConfirmActionDialog: React.FC<ConfirmActionDialogProps> = ({
               <button
                 onClick={onConfirm}
                 className={`cursor-pointer rounded px-4 py-2 text-sm font-medium text-white transition-colors focus:outline-none focus-visible:ring-2  focus-visible:ring-offset-2 ${
-                  isDestructiveAction // Changed from is위험Action
+                  isDestructiveAction
                     ? "bg-red-600 hover:bg-red-700 focus-visible:ring-red-500"
                     : "bg-blue-600 hover:bg-blue-700 focus-visible:ring-blue-500" // Default to a non-destructive color like blue
                 }`}

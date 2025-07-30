@@ -169,6 +169,7 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
               maxLength={ANSWER_CONTENT.MAX}
               minLength={ANSWER_CONTENT.MIN}
               wrapperClassName="transition-colors duration-150 h-36"
+              height="36"
             />
           </div>
           {/* File attachment component */}

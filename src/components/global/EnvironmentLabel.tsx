@@ -10,7 +10,7 @@ const EnvironmentLabel: React.FC = () => {
 
   return (
     <div
-      className="fixed top-0 left-2/5 -translate-x-1/2 bg-blue-600 text-white text-md font-bold px-4 py-1 rounded-b-lg shadow-lg z-[9999]"
+      className="fixed top-0 left-12 bg-blue-600 text-white text-sm font-bold px-2 py-0 rounded-b-lg shadow-lg z-[9999]"
       title="Вие сте на версия, предвидена за тестване"
     >
       ТЕСТОВА СРЕДА

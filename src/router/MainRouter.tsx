@@ -20,6 +20,8 @@ import ProtectedRoute from "../components/auth/ProtectedRoute";
 import { ROLES } from "../utils/GLOBAL_PARAMETERS";
 import ServerErrorPage from "../pages/ErrorPages/ServerErrorPage";
 import NavbarSkeleton from "../components/skeletons/NavbarSkeleton";
+import TasksDashboard from "../pages/TasksDashboard";
+import TaskPage from "../pages/Task";
 
 const AppLayout = () => {
   const { me, error, loading } = useGetMe();
@@ -66,6 +68,24 @@ const mainRouter = createBrowserRouter([
       {
         path: "/dashboard",
         element: <Dashboard />,
+      },
+      // 2. ДОБАВЕТЕ НОВИЯ МАРШРУТ ТУК
+      {
+        path: "/tasks-dashboard",
+        element: (
+          <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.EXPERT]}>
+            <TasksDashboard />
+          </ProtectedRoute>
+        ),
+      },
+      // ДОБАВЯМЕ НОВИЯ МАРШРУТ ЗА СТРАНИЦАТА НА ЗАДАЧАТА
+      {
+        path: "/task/:taskId",
+        element: (
+          <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.EXPERT]}>
+            <TaskPage />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "/user-management",

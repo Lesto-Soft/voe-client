@@ -15,6 +15,7 @@ import {
   ExclamationTriangleIcon,
   StarIcon,
   WrenchScrewdriverIcon,
+  ClipboardDocumentCheckIcon,
 } from "@heroicons/react/24/solid";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { endpoint } from "../../db/config";
@@ -282,6 +283,13 @@ const NavBar: React.FC<{ me: IMe }> = ({ me }) => {
                 </DropdownMenu.Portal>
               </DropdownMenu.Root>
             )}
+
+            <NavLink
+              to="/tasks-dashboard" // <-- Нов маршрут
+              icon={<ClipboardDocumentCheckIcon className="h-6 w-6" />}
+              label={"Задачи"}
+              theme="red"
+            />
 
             <NavLink
               to="/dashboard"

@@ -1,8 +1,11 @@
+// src/components/case-components/Submenu.tsx
+
 import React, { useLayoutEffect, useState } from "react";
 import {
   ChatBubbleBottomCenterTextIcon,
   ChatBubbleOvalLeftEllipsisIcon,
   ClockIcon,
+  ClipboardDocumentListIcon, // <-- Import a suitable icon for Tasks
 } from "@heroicons/react/24/solid";
 import { IAnswer, ICase, IComment, IMe } from "../../db/interfaces";
 import CaseHistoryContent from "./CaseHistoryContent";
@@ -11,6 +14,7 @@ import Answer from "./Answer";
 import AddComment from "./AddComment";
 import AddAnswer from "./AddAnswer";
 import { USER_RIGHTS } from "../../utils/GLOBAL_PARAMETERS";
+import CaseTasksTab from "./CaseTasksTab"; // <-- Import the new component
 
 const LOCAL_STORAGE_KEY = "case-submenu-view";
 
@@ -29,9 +33,17 @@ const Submenu: React.FC<SubmenuProps> = ({
   refetch,
   userRights,
 }) => {
-  const [view, setView] = useState<"answers" | "comments" | "history">(() => {
+  const [view, setView] = useState<
+    "answers" | "comments" | "history" | "tasks"
+  >(() => {
+    // <-- Add "tasks" to view state
     const stored = sessionStorage.getItem(LOCAL_STORAGE_KEY);
-    if (stored === "answers" || stored === "comments" || stored === "history") {
+    if (
+      stored === "answers" ||
+      stored === "comments" ||
+      stored === "history" ||
+      stored === "tasks"
+    ) {
       return stored;
     }
     return "answers";
@@ -44,6 +56,9 @@ const Submenu: React.FC<SubmenuProps> = ({
   const isCreatorAndNothingElse =
     userRights.length === 1 && userRights.includes("creator");
 
+  // NEW: Check if there's an approved answer to show the Tasks tab
+  const hasApprovedAnswer = caseData.answers?.some((answer) => answer.approved);
+
   const submenu = [
     {
       key: "answers",
@@ -53,7 +68,6 @@ const Submenu: React.FC<SubmenuProps> = ({
           <sup>{caseData?.answers?.length || 0}</sup>
         </>
       ),
-      // --- FIXED: Added mr-2 for spacing ---
       icon: <ChatBubbleBottomCenterTextIcon className="h-5 w-5 mr-2" />,
     },
     {
@@ -66,6 +80,21 @@ const Submenu: React.FC<SubmenuProps> = ({
       ),
       icon: <ChatBubbleOvalLeftEllipsisIcon className="h-5 w-5 mr-2" />,
     },
+    // NEW: Conditionally add the Tasks tab
+    ...(hasApprovedAnswer
+      ? [
+          {
+            key: "tasks",
+            label: (
+              <>
+                Задачи
+                <sup>2</sup>
+              </>
+            ),
+            icon: <ClipboardDocumentListIcon className="h-5 w-5 mr-2" />,
+          },
+        ]
+      : []),
     {
       key: "history",
       label: (
@@ -83,9 +112,7 @@ const Submenu: React.FC<SubmenuProps> = ({
   }
 
   return (
-    // --- NEW: Flex container for sticky layout ---
     <div className="flex flex-col h-full">
-      {/* --- NEW: Sticky Header --- */}
       <div className="flex-shrink-0 sticky top-0 z-1 bg-white border-b border-gray-200">
         <div className="flex justify-center gap-2 py-4">
           {submenu.map((item) => (
@@ -99,7 +126,9 @@ const Submenu: React.FC<SubmenuProps> = ({
               }`}
               type="button"
               onClick={() =>
-                setView(item.key as "answers" | "comments" | "history")
+                setView(
+                  item.key as "answers" | "comments" | "history" | "tasks"
+                )
               }
             >
               {item.icon}
@@ -109,7 +138,6 @@ const Submenu: React.FC<SubmenuProps> = ({
         </div>
       </div>
 
-      {/* Scrollable Content Area */}
       <div className="flex-grow overflow-y-auto pt-6">
         {view === "answers" && (
           <>
@@ -193,6 +221,9 @@ const Submenu: React.FC<SubmenuProps> = ({
             )}
           </>
         )}
+
+        {/* NEW: Render the CaseTasksTab component when the view is "tasks" */}
+        {view === "tasks" && <CaseTasksTab caseData={caseData} />}
 
         {view === "history" &&
           (caseData.history && caseData.history.length > 0 ? (

@@ -8,6 +8,7 @@ import {
   StarIcon,
   UserIcon,
   ArrowRightCircleIcon,
+  ClipboardDocumentCheckIcon,
 } from "@heroicons/react/24/solid";
 import { useTranslation } from "react-i18next";
 import { NavLinkProps } from "./NavBar";
@@ -101,6 +102,12 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
             />
           </>
         )}
+        <MobileNavLink
+          to="/tasks-dashboard" // <-- Нов маршрут
+          icon={<ClipboardDocumentCheckIcon className="h-6 w-6" />}
+          label={"Задачи"}
+          onClick={onLinkClick}
+        />
         <MobileNavLink
           to="/dashboard"
           icon={<ClipboardDocumentListIcon className="h-6 w-6" />}

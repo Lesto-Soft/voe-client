@@ -162,7 +162,7 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
                     >
                       <button
                         type="button"
-                        title="Edit case"
+                        title="Редактирай сигнала"
                         className="p-1 rounded text-gray-500 hover:text-blue-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400 hover:cursor-pointer"
                       >
                         <PencilSquareIcon className="h-5 w-5" />

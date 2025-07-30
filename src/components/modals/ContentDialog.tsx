@@ -53,6 +53,7 @@ const ContentDialog: React.FC<ContentDialogProps> = ({
         <button
           className="hidden lg:flex p-1.5 rounded-md text-gray-500 hover:text-blue-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition hover:cursor-pointer"
           type="button"
+          title="Отвори сигнала на цял екран"
           aria-label={t("showFullScreen") || "Show full screen"}
         >
           <ArrowTopRightOnSquareIcon className="h-5 w-5" />

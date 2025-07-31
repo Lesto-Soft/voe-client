@@ -14,7 +14,7 @@ import CaseLink from "../components/global/CaseLink";
 import { ICase, IUser } from "../db/interfaces";
 import { Link } from "react-router";
 
-// --- Разширени Макетирани Данни ---
+// --- Mock Data ---
 const mockUsers: IUser[] = [
   { _id: "1", name: "Иван Петров", username: "ivan.petrov" },
   { _id: "2", name: "Мари Анеева", username: "mari.aneeva" },
@@ -27,95 +27,103 @@ const mockTasks = [
     id: 1,
     title: "Актуализация на драйверите за принтери в офиса",
     caseNumber: 123,
-    priority: "HIGH",
+    priority: "ВИСОК",
     dueDate: "2025-08-15",
     status: "Процес",
     assignees: [mockUsers[0], mockUsers[1]],
+    creator: mockUsers[2],
     assignedByMe: true,
   },
   {
     id: 2,
     title: "Поръчка на нова кафе машина за кухнята на",
     caseNumber: 183,
-    priority: "MEDIUM",
+    priority: "СРЕДЕН",
     dueDate: "2025-08-20",
     status: "За изпълнение",
     assignees: [mockUsers[0]],
+    creator: mockUsers[1],
     assignedByMe: false,
   },
   {
     id: 3,
     title: "Проучване на нов софтуер за CRM системата",
     caseNumber: 139,
-    priority: "LOW",
+    priority: "НИСЪК",
     dueDate: null,
     status: "Завършена",
     assignees: [mockUsers[2]],
+    creator: mockUsers[0],
     assignedByMe: true,
   },
   {
     id: 4,
     title: "Организация на тиймбилдинг за Q3",
     caseNumber: 156,
-    priority: "MEDIUM",
+    priority: "СРЕДЕН",
     dueDate: "2025-09-01",
     status: "За изпълнение",
     assignees: [mockUsers[3]],
+    creator: mockUsers[2],
     assignedByMe: false,
   },
   {
     id: 5,
     title: "Подмяна на дефектните офис столове",
     caseNumber: 131,
-    priority: "HIGH",
+    priority: "ВИСОК",
     dueDate: "2025-08-10",
     status: "Завършена",
     assignees: [mockUsers[0]],
+    creator: mockUsers[3],
     assignedByMe: true,
   },
   {
     id: 6,
     title: "Проверка на пожарогасителите",
     caseNumber: 125,
-    priority: "MEDIUM",
+    priority: "СРЕДЕН",
     dueDate: "2025-09-05",
     status: "За изпълнение",
     assignees: [mockUsers[2]],
+    creator: mockUsers[0],
     assignedByMe: false,
   },
   {
     id: 7,
     title: "Планиране на бюджет за следващата година",
     caseNumber: 127,
-    priority: "HIGH",
+    priority: "ВИСОК",
     dueDate: "2025-10-01",
     status: "Процес",
     assignees: [mockUsers[1]],
+    creator: mockUsers[2],
     assignedByMe: true,
   },
   {
     id: 8,
     title: "Създаване на нова onboarding процедура",
     caseNumber: 126,
-    priority: "LOW",
+    priority: "НИСЪК",
     dueDate: null,
     status: "За изпълнение",
     assignees: [mockUsers[3]],
+    creator: mockUsers[1],
     assignedByMe: false,
   },
 ];
 
-// --- Помощни компоненти за Таблото ---
+// --- Dashboard Helper Components ---
 
-// "Sticky Note" Карта
+// "Sticky Note" Card
 const TaskCard: React.FC<{ task: any }> = ({ task }) => {
   const getPriorityBorderStyle = (priority: string) => {
     switch (priority) {
-      case "HIGH":
+      case "ВИСОК":
         return "border-t-red-500";
-      case "MEDIUM":
+      case "СРЕДЕН":
         return "border-t-yellow-500";
-      case "LOW":
+      case "НИСЪК":
         return "border-t-green-500";
       default:
         return "border-t-gray-400";
@@ -144,49 +152,73 @@ const TaskCard: React.FC<{ task: any }> = ({ task }) => {
 
   return (
     <Link to={`/task/${task.id}`} className="block">
-      {" "}
-      {/* Обгръщаме всичко с Link */}
+      {/* --- CHANGE START: Reworked card layout for consistent alignment --- */}
       <div
         className={`bg-white p-4 rounded-lg shadow-md border-t-8 ${getPriorityBorderStyle(
           task.priority
-        )} hover:shadow-xl transition-shadow duration-200 flex flex-col`}
+        )} hover:shadow-xl transition-shadow duration-200 flex flex-col h-52`} // Fixed height is crucial
       >
-        <div className="flex justify-between items-start mb-2">
-          <h3 className="text-base font-bold text-gray-800 flex-1 pr-2">
-            {task.title}
-          </h3>
-          <span
-            className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusStyle(
-              task.status
-            )} flex-shrink-0`}
-          >
-            {task.status}
-          </span>
-        </div>
-        <div className="text-sm text-gray-500 mb-3  w-20">
-          От Сигнал: <CaseLink my_case={mockCase} t={t} />
+        {/* Top Section: Title and Status (variable height) */}
+        <div className="flex-shrink-0">
+          <div className="flex justify-between items-start">
+            <h3 className="text-base font-bold text-gray-800 flex-1 pr-2 line-clamp-3">
+              {task.title}
+            </h3>
+            <span
+              className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusStyle(
+                task.status
+              )} flex-shrink-0`}
+            >
+              {task.status}
+            </span>
+          </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm mt-auto pt-3 border-t border-gray-100">
-          <div className="text-gray-600">
-            <strong className="w-full">Краен срок:</strong>{" "}
-            <div>{task.dueDate ? task.dueDate : "-"}</div>
-          </div>
-          <div className="flex-grow"></div>
-          <div className="flex space-x-2">
-            {task.assignees.map((user: IUser) => (
-              <div key={user._id} title={user.name}>
-                <UserLink user={user} />
+        {/* Spacer: This div will grow and push the bottom content down */}
+        <div className="flex-grow"></div>
+
+        {/* Bottom Section: All metadata grouped here for consistent alignment */}
+        <div className="flex-shrink-0 divide-y divide-gray-100">
+          {/* Upper part of the bottom section */}
+          <div className="pb-3 text-xs text-gray-500 space-y-2">
+            <div className="flex items-center gap-2">
+              <span>Сигнал:</span>
+              <div>
+                <CaseLink my_case={mockCase} t={t} />
               </div>
-            ))}
+            </div>
+            <div className="flex items-center gap-2">
+              <span>Възложена от:</span>
+              <UserLink user={task.creator} />
+            </div>
+          </div>
+
+          {/* Lower part of the bottom section */}
+          <div className="pt-3 text-sm">
+            <div className="flex justify-between items-end">
+              <div className="text-gray-600">
+                <strong className="text-gray-500 text-xs">Краен срок:</strong>
+                <p className="text-sm font-medium">
+                  {task.dueDate ? task.dueDate : "Няма"}
+                </p>
+              </div>
+              <div className="flex -space-x-2 overflow-hidden">
+                {task.assignees.map((user: IUser) => (
+                  <div key={user._id} title={user.name}>
+                    <UserLink user={user} />
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </div>
+      {/* --- CHANGE END --- */}
     </Link>
   );
 };
 
-// Списък със задачи (Мрежа)
+// Task List (Grid View)
 const TaskListGrid: React.FC<{ tasks: any[] }> = ({ tasks }) => {
   if (tasks.length === 0) {
     return (
@@ -206,7 +238,7 @@ const TaskListGrid: React.FC<{ tasks: any[] }> = ({ tasks }) => {
   );
 };
 
-// Списък със задачи (Таблица)
+// Task List (Table View)
 const TaskTable: React.FC<{ tasks: any[] }> = ({ tasks }) => {
   const t = (key: string) =>
     key === "details_for" ? "Детайли за сигнал" : key;
@@ -235,6 +267,9 @@ const TaskTable: React.FC<{ tasks: any[] }> = ({ tasks }) => {
               Краен Срок
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Възложена от
+            </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Възложена на
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -253,7 +288,7 @@ const TaskTable: React.FC<{ tasks: any[] }> = ({ tasks }) => {
                   {task.title}
                 </Link>
                 <div className="text-xs text-gray-500 w-25">
-                  От Сигнал:{" "}
+                  Сигнал:{" "}
                   <CaseLink
                     my_case={
                       {
@@ -267,22 +302,25 @@ const TaskTable: React.FC<{ tasks: any[] }> = ({ tasks }) => {
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
                 <span
-                  className={`font-semibold ${
-                    task.priority === "HIGH"
+                  className={`font-semibold text-sm flex gap-2 items-center ${
+                    task.priority === "ВИСОК"
                       ? "text-red-600"
-                      : task.priority === "MEDIUM"
+                      : task.priority === "СРЕДЕН"
                       ? "text-yellow-600"
                       : "text-green-600"
                   }`}
                 >
-                  {task.priority}
+                  <FlagIcon className="h-4 w-4" /> {task.priority}
                 </span>
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                 {task.dueDate || "Няма"}
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
-                <div className="flex space-x-2">
+                <UserLink user={task.creator} />
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                <div className="flex -space-x-2">
                   {task.assignees.map((user: IUser) => (
                     <div key={user._id} title={user.name}>
                       <UserLink user={user} />
@@ -311,7 +349,7 @@ const TaskTable: React.FC<{ tasks: any[] }> = ({ tasks }) => {
   );
 };
 
-// --- Основен Компонент на Страницата ---
+// --- Main Page Component ---
 const TasksDashboard: React.FC = () => {
   const [filter, setFilter] = useState<"assignedToMe" | "assignedByMe">(
     "assignedToMe"
@@ -336,7 +374,7 @@ const TasksDashboard: React.FC = () => {
         </p>
       </header>
 
-      {/* Филтри и контроли за изглед */}
+      {/* Filters and View Controls */}
       <div className="mb-6 p-4 bg-white rounded-lg shadow-sm flex flex-col sm:flex-row justify-between items-center gap-4">
         <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-lg">
           <button
@@ -344,7 +382,7 @@ const TasksDashboard: React.FC = () => {
             className={`px-4 py-2 text-sm font-semibold rounded-md flex items-center gap-2 transition-colors ${
               filter === "assignedToMe"
                 ? "bg-blue-600 text-white shadow"
-                : "text-gray-700 hover:bg-gray-200"
+                : "text-gray-700 hover:bg-gray-200 cursor-pointer"
             }`}
           >
             <UserCircleIcon className="h-5 w-5" /> Възложени на мен
@@ -354,7 +392,7 @@ const TasksDashboard: React.FC = () => {
             className={`px-4 py-2 text-sm font-semibold rounded-md flex items-center gap-2 transition-colors ${
               filter === "assignedByMe"
                 ? "bg-blue-600 text-white shadow"
-                : "text-gray-700 hover:bg-gray-200"
+                : "text-gray-700 hover:bg-gray-200 cursor-pointer"
             }`}
           >
             <UsersIcon className="h-5 w-5" /> Възложени от мен
@@ -398,7 +436,7 @@ const TasksDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Списък със Задачи (условно рендиране на изгледа) */}
+      {/* Task List (conditionally rendering the view) */}
       <main>
         {viewMode === "grid" ? (
           <TaskListGrid tasks={filteredTasks} />

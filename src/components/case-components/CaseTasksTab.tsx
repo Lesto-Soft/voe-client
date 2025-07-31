@@ -2,12 +2,12 @@
 
 import React, { useState } from "react";
 import { Link } from "react-router";
-import { ICase, IAnswer } from "../../db/interfaces";
+import { ICase, IAnswer, IUser } from "../../db/interfaces";
 import { renderContentSafely } from "../../utils/contentRenderer";
 import CreateTaskModal from "../modals/CreateTaskModal";
 import { ClipboardDocumentCheckIcon } from "@heroicons/react/24/outline";
+import UserLink from "../global/UserLink";
 
-// --- ОБНОВЕН КОМПОНЕНТ: Елемент от списъка със съществуващи задачи ---
 const TaskListItem: React.FC<{ task: any }> = ({ task }) => {
   const getPriorityBorderStyle = (priority: string) => {
     switch (priority) {
@@ -38,28 +38,64 @@ const TaskListItem: React.FC<{ task: any }> = ({ task }) => {
   return (
     <Link to={`/task/${task.id}`} className="block">
       <div
-        className={`bg-white p-3 rounded-lg h-20 shadow-md border-t-8 ${getPriorityBorderStyle(
+        className={`bg-white p-3 rounded-lg shadow-md border-t-8 ${getPriorityBorderStyle(
           task.priority
-        )} hover:shadow-lg transition-shadow duration-200`}
+        )} hover:shadow-lg transition-shadow duration-200 flex flex-col h-42`}
       >
-        <div className="flex justify-between items-center h-10">
-          <p className="text-sm font-semibold text-gray-800 break-normal pr-2">
-            {task.title}
-          </p>
-          <span
-            className={`px-2 py-0.5 w-30 h-5 text-xs font-semibold rounded-full ${getStatusStyle(
-              task.status
-            )}`}
-          >
-            {task.status}
-          </span>
+        {/* Top Section */}
+        <div className="flex-shrink-0">
+          <div className="flex justify-between items-start">
+            <p className="text-sm font-semibold text-gray-800 break-normal pr-2 line-clamp-2">
+              {task.title}
+            </p>
+            <span
+              className={`px-2 py-0.5 text-xs font-semibold rounded-full ${getStatusStyle(
+                task.status
+              )} flex-shrink-0`}
+            >
+              {task.status}
+            </span>
+          </div>
+        </div>
+
+        {/* Spacer */}
+        <div className="flex-grow"></div>
+
+        {/* Bottom Section */}
+        <div className="flex-shrink-0 divide-y divide-gray-100 text-xs">
+          <div className="pb-2 text-gray-500 space-y-1.5">
+            <div className="flex items-center gap-2">
+              <span>Възложена от:</span>
+              <UserLink user={task.creator} />
+            </div>
+          </div>
+          <div className="pt-2">
+            <div className="flex justify-between items-end">
+              <div>
+                <strong className="text-gray-500 font-medium">
+                  Краен срок:
+                </strong>
+                <p className="text-sm font-semibold text-gray-700">
+                  {task.dueDate ? task.dueDate : "Няма"}
+                </p>
+              </div>
+              <div className="flex space-x-2 overflow-hidden">
+                {/* --- CHANGE START: Added fallback for assignees to prevent crash --- */}
+                {(task.assignees || []).map((user: IUser) => (
+                  <div key={user._id} title={user.name}>
+                    <UserLink user={user} />
+                  </div>
+                ))}
+                {/* --- CHANGE END --- */}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </Link>
   );
 };
 
-// Компонент, който представя единичен отговор в списъка
 const AnswerItem: React.FC<{ answer: IAnswer; caseData: ICase }> = ({
   answer,
   caseData,
@@ -108,25 +144,15 @@ const AnswerItem: React.FC<{ answer: IAnswer; caseData: ICase }> = ({
 
 interface CaseTasksTabProps {
   caseData: ICase;
+  tasks: any[];
+  onShowMockTasks: () => void;
 }
 
-const CaseTasksTab: React.FC<CaseTasksTabProps> = ({ caseData }) => {
-  // --- Макетирани данни за съществуващи задачи ---
-  const existingTasks = [
-    {
-      id: 1,
-      title: "Актуализация на драйверите за принтери в офиса",
-      status: "Процес",
-      priority: "ВИСОК",
-    },
-    {
-      id: 5,
-      title: "Подмяна на дефектните офис столове",
-      status: "Завършена",
-      priority: "НИСЪК",
-    },
-  ];
-
+const CaseTasksTab: React.FC<CaseTasksTabProps> = ({
+  caseData,
+  tasks,
+  onShowMockTasks,
+}) => {
   const sortedAnswers = [...(caseData.answers || [])].sort((a, b) => {
     if (a.approved && !b.approved) return -1;
     if (!a.approved && b.approved) return 1;
@@ -135,29 +161,35 @@ const CaseTasksTab: React.FC<CaseTasksTabProps> = ({ caseData }) => {
 
   return (
     <div className="px-4">
-      {/* --- Секция: Съществуващи Задачи --- */}
+      {/* --- Existing Tasks Section --- */}
       <div className="mb-8">
         <h3 className="text-lg font-semibold text-gray-800 mb-3">
           Съществуващи Задачи по Сигнала
         </h3>
-        {existingTasks.length > 0 ? (
-          <div className="grid grid-cols-3 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {existingTasks.map((task) => (
+        {tasks.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {tasks.map((task) => (
               <TaskListItem key={task.id} task={task} />
             ))}
           </div>
         ) : (
-          <div className="text-center text-gray-500 py-6 bg-gray-50 rounded-md">
-            <ClipboardDocumentCheckIcon className="h-8 w-8 mx-auto text-gray-400 mb-2" />
-            <p className="text-sm">
+          <div className="text-center text-gray-500 bg-gray-50 p-6 rounded-md">
+            <ClipboardDocumentCheckIcon className="h-12 w-12 mx-auto text-gray-400" />
+            <p className="text-sm mt-2">
               Все още няма създадени задачи по този сигнал.
             </p>
+            <button
+              onClick={onShowMockTasks}
+              className="mt-3 px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-100 rounded-md hover:bg-blue-200 transition-colors cursor-pointer"
+            >
+              Покажи примерни задачи (за демонстрация)
+            </button>
           </div>
         )}
       </div>
 
-      {/* --- Секция за Създаване на Нова Задача --- */}
-      <div className="mb-6 border-t pt-6">
+      {/* --- Create New Task Section --- */}
+      <div className="mb-6 border-t border-gray-300 pt-6">
         <h3 className="text-lg font-semibold text-gray-800">
           Създайте нова задача от отговор
         </h3>

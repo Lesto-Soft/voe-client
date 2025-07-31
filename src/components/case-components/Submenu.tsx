@@ -5,18 +5,26 @@ import {
   ChatBubbleBottomCenterTextIcon,
   ChatBubbleOvalLeftEllipsisIcon,
   ClockIcon,
-  ClipboardDocumentListIcon, // <-- Import a suitable icon for Tasks
+  ClipboardDocumentListIcon,
 } from "@heroicons/react/24/solid";
-import { IAnswer, ICase, IComment, IMe } from "../../db/interfaces";
+import { IAnswer, ICase, IComment, IMe, IUser } from "../../db/interfaces"; // Added IUser
 import CaseHistoryContent from "./CaseHistoryContent";
 import Comment from "./Comment";
 import Answer from "./Answer";
 import AddComment from "./AddComment";
 import AddAnswer from "./AddAnswer";
 import { USER_RIGHTS } from "../../utils/GLOBAL_PARAMETERS";
-import CaseTasksTab from "./CaseTasksTab"; // <-- Import the new component
+import CaseTasksTab from "./CaseTasksTab";
 
 const LOCAL_STORAGE_KEY = "case-submenu-view";
+
+// --- CHANGE START: Added mock users to provide data for tasks ---
+const mockUsers: IUser[] = [
+  { _id: "1", name: "Иван Петров", username: "ivan.petrov" },
+  { _id: "2", name: "Мари Анеева", username: "mari.aneeva" },
+  { _id: "3", name: "Петър Иванов", username: "petar.ivanov" },
+];
+// --- CHANGE END ---
 
 interface SubmenuProps {
   caseData: ICase;
@@ -36,7 +44,6 @@ const Submenu: React.FC<SubmenuProps> = ({
   const [view, setView] = useState<
     "answers" | "comments" | "history" | "tasks"
   >(() => {
-    // <-- Add "tasks" to view state
     const stored = sessionStorage.getItem(LOCAL_STORAGE_KEY);
     if (
       stored === "answers" ||
@@ -49,6 +56,35 @@ const Submenu: React.FC<SubmenuProps> = ({
     return "answers";
   });
 
+  const [tasksForCase, setTasksForCase] = useState<any[]>([]);
+
+  // --- CHANGE START: Mock task data is now enriched with user info ---
+  const mockTasksData = [
+    {
+      id: 1,
+      title: "Актуализация на драйверите за принтери в офиса",
+      status: "Процес",
+      priority: "ВИСОК",
+      creator: mockUsers[0],
+      assignees: [mockUsers[1], mockUsers[2]],
+      dueDate: "2025-08-15",
+    },
+    {
+      id: 5,
+      title: "Подмяна на дефектните офис столове",
+      status: "Завършена",
+      priority: "НИСЪК",
+      creator: mockUsers[2],
+      assignees: [mockUsers[0]],
+      dueDate: "2025-08-10",
+    },
+  ];
+  // --- CHANGE END ---
+
+  const handleShowMockTasks = () => {
+    setTasksForCase(mockTasksData);
+  };
+
   useLayoutEffect(() => {
     sessionStorage.setItem(LOCAL_STORAGE_KEY, view);
   }, [view]);
@@ -56,7 +92,6 @@ const Submenu: React.FC<SubmenuProps> = ({
   const isCreatorAndNothingElse =
     userRights.length === 1 && userRights.includes("creator");
 
-  // NEW: Check if there's an approved answer to show the Tasks tab
   const hasApprovedAnswer = caseData.answers?.some((answer) => answer.approved);
 
   const submenu = [
@@ -80,7 +115,6 @@ const Submenu: React.FC<SubmenuProps> = ({
       ),
       icon: <ChatBubbleOvalLeftEllipsisIcon className="h-5 w-5 mr-2" />,
     },
-    // NEW: Conditionally add the Tasks tab
     ...(hasApprovedAnswer
       ? [
           {
@@ -88,7 +122,7 @@ const Submenu: React.FC<SubmenuProps> = ({
             label: (
               <>
                 Задачи
-                <sup>2</sup>
+                <sup>{tasksForCase.length}</sup>
               </>
             ),
             icon: <ClipboardDocumentListIcon className="h-5 w-5 mr-2" />,
@@ -119,11 +153,11 @@ const Submenu: React.FC<SubmenuProps> = ({
             <button
               key={item.key}
               className={`flex items-center px-4 py-2 rounded-lg font-semibold text-sm transition-colors duration-150 border
-              ${
-                view === item.key
-                  ? "border-btnRedHover text-btnRedHover shadow"
-                  : "border-gray-300 shadow-sm bg-gray-100 text-gray-700 hover:bg-red-100 hover:text-btnRedHover hover:cursor-pointer"
-              }`}
+                ${
+                  view === item.key
+                    ? "border-btnRedHover text-btnRedHover shadow"
+                    : "border-gray-300 shadow-sm bg-gray-100 text-gray-700 hover:bg-red-100 hover:text-btnRedHover hover:cursor-pointer"
+                }`}
               type="button"
               onClick={() =>
                 setView(
@@ -167,7 +201,6 @@ const Submenu: React.FC<SubmenuProps> = ({
                       userRights.includes(USER_RIGHTS.EXPERT) ||
                       userRights.includes(USER_RIGHTS.MANAGER) ||
                       userRights.includes(USER_RIGHTS.ADMIN);
-                    // --- SIMPLIFIED LOGIC ---
                     return showThisAnswer ? (
                       <Answer
                         key={answer._id}
@@ -205,7 +238,6 @@ const Submenu: React.FC<SubmenuProps> = ({
                       new Date(b.date).getTime() - new Date(a.date).getTime()
                   )
                   .map((comment: IComment) => (
-                    // --- SIMPLIFIED LOGIC ---
                     <Comment
                       key={comment._id}
                       comment={comment}
@@ -222,8 +254,13 @@ const Submenu: React.FC<SubmenuProps> = ({
           </>
         )}
 
-        {/* NEW: Render the CaseTasksTab component when the view is "tasks" */}
-        {view === "tasks" && <CaseTasksTab caseData={caseData} />}
+        {view === "tasks" && (
+          <CaseTasksTab
+            caseData={caseData}
+            tasks={tasksForCase}
+            onShowMockTasks={handleShowMockTasks}
+          />
+        )}
 
         {view === "history" &&
           (caseData.history && caseData.history.length > 0 ? (

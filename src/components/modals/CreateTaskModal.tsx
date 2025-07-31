@@ -13,6 +13,14 @@ interface SubTask {
   title: string;
 }
 
+// --- CHANGE START ---
+// The data structure for a single "Why/Because" pair
+interface FiveWhysPair {
+  why: string;
+  because: string;
+}
+// --- CHANGE END ---
+
 // --- Стъпка 1: Компонент за Дефиниране на Задачата ---
 const Step1_TaskDefinition: React.FC<{
   formData: any;
@@ -46,6 +54,7 @@ const Step1_TaskDefinition: React.FC<{
           content={formData.description}
           onUpdate={(html) => setFormData({ ...formData, description: html })}
           height="150px"
+          wrapperClassName="m-1"
         />
       </div>
       <div className="grid grid-cols-2 gap-4">
@@ -91,39 +100,84 @@ const Step1_TaskDefinition: React.FC<{
   );
 };
 
-// --- Стъпка 2: Компонент за "5 Защо" Анализ ---
+// --- Стъпка 2: Компонент за "5 Защо" Анализ (MODIFIED) ---
 const Step2_FiveWhys: React.FC<{
   formData: any;
   setFormData: React.Dispatch<React.SetStateAction<any>>;
 }> = ({ formData, setFormData }) => {
-  const handleWhyChange = (index: number, value: string) => {
-    const newWhys = [...formData.whys];
-    newWhys[index] = value;
-    setFormData({ ...formData, whys: newWhys });
+  // --- CHANGE START ---
+  const handleAnalysisChange = (
+    index: number,
+    field: "why" | "because",
+    value: string
+  ) => {
+    // Create a new array from the current state to avoid direct mutation
+    const newAnalysis = formData.fiveWhysAnalysis.map(
+      (item: FiveWhysPair, i: number) => {
+        if (i === index) {
+          // If it's the item we're changing, return a new object with the updated field
+          return { ...item, [field]: value };
+        }
+        // Otherwise, return the item as is
+        return item;
+      }
+    );
+
+    // Update the form state with the new array
+    setFormData({ ...formData, fiveWhysAnalysis: newAnalysis });
   };
+  // --- CHANGE END ---
+
   return (
-    <div className="space-y-3">
+    <div className="space-y-4 max-h-50">
       <p className="text-sm text-gray-600">
         Анализирайте първопричината на проблема, като си зададете въпроса
-        "Защо?" пет пъти.
+        "Защо?" и отговорите с "Защото..." пет пъти.
       </p>
-      {[...Array(5)].map((_, i) => (
-        <div key={i}>
-          <label
-            htmlFor={`why-${i + 1}`}
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Защо #{i + 1}?
-          </label>
-          <input
-            type="text"
-            id={`why-${i + 1}`}
-            value={formData.whys[i]}
-            onChange={(e) => handleWhyChange(i, e.target.value)}
-            className="w-full rounded-md border p-2 shadow-sm focus:outline-none focus:border-indigo-500 border-gray-300"
-          />
+      {/* --- CHANGE START --- */}
+      {formData.fiveWhysAnalysis.map((pair: FiveWhysPair, i: number) => (
+        <div
+          key={i}
+          className="p-3 border-gray-300 border-2 rounded-md bg-gray-50/50 space-y-2"
+        >
+          <h4 className="font-semibold text-gray-500 text-sm">Защо #{i + 1}</h4>
+          <div>
+            <label
+              htmlFor={`why-${i + 1}`}
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Защо?
+            </label>
+            <input
+              type="text"
+              id={`why-${i + 1}`}
+              value={pair.why}
+              onChange={(e) => handleAnalysisChange(i, "why", e.target.value)}
+              className="w-full rounded-md border p-2 shadow-sm focus:outline-none focus:border-indigo-500 border-gray-300"
+              placeholder="..."
+            />
+          </div>
+          <div>
+            <label
+              htmlFor={`because-${i + 1}`}
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Защото...
+            </label>
+            <input
+              type="text"
+              id={`because-${i + 1}`}
+              value={pair.because}
+              onChange={(e) =>
+                handleAnalysisChange(i, "because", e.target.value)
+              }
+              className="w-full rounded-md border p-2 shadow-sm focus:outline-none focus:border-indigo-500 border-gray-300"
+              placeholder="..."
+            />
+          </div>
         </div>
       ))}
+      {/* --- CHANGE END --- */}
     </div>
   );
 };
@@ -230,7 +284,13 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
     description: originatingAnswer.content || "",
     priority: "MEDIUM",
     dueDate: "",
-    whys: ["", "", "", "", ""],
+    // --- CHANGE START ---
+    // Updated state structure for the 5 Whys analysis
+    fiveWhysAnalysis: Array.from({ length: 5 }, () => ({
+      why: "",
+      because: "",
+    })),
+    // --- CHANGE END ---
     subtasks: [] as SubTask[],
     assignees: [] as IUser[],
   });
@@ -253,7 +313,6 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
             </Dialog.Close>
           </div>
 
-          {/* КОРЕКЦИЯ: Добавен е контейнер с минимална височина */}
           <div
             className="flex-grow overflow-y-auto pr-2"
             style={{ minHeight: "525px" }}
@@ -275,12 +334,12 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
             )}
           </div>
 
-          <div className="flex justify-between items-center mt-6 pt-4 border-t">
+          <div className="flex justify-between items-center mt-3 pt-4">
             <div>
               {step > 1 && (
                 <button
                   onClick={() => setStep(step - 1)}
-                  className="px-4 py-2 bg-gray-200 text-gray-800 font-semibold rounded-md hover:bg-gray-300"
+                  className="px-4 py-2 bg-gray-200 text-gray-800 font-semibold rounded-md hover:bg-gray-300 cursor-pointer"
                 >
                   Назад
                 </button>
@@ -290,14 +349,14 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
               {step < totalSteps ? (
                 <button
                   onClick={() => setStep(step + 1)}
-                  className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700"
+                  className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 cursor-pointer"
                 >
                   Напред
                 </button>
               ) : (
                 <button
                   onClick={onClose}
-                  className="px-4 py-2 bg-green-600 text-white font-semibold rounded-md hover:bg-green-700"
+                  className="px-4 py-2 bg-green-600 text-white font-semibold rounded-md hover:bg-green-700 cursor-pointer"
                 >
                   Създай задача
                 </button>

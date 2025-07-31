@@ -90,7 +90,7 @@ const mockTaskDetail = {
     {
       type: "status_change",
       user: mockUsers[0],
-      text: 'Промени статуса на "В процес"',
+      text: 'Промени статуса на "Процес"',
       date: "2025-08-02 15:31",
     },
     {

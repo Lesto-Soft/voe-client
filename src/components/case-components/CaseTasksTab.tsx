@@ -24,7 +24,7 @@ const TaskListItem: React.FC<{ task: any }> = ({ task }) => {
 
   const getStatusStyle = (status: string) => {
     switch (status) {
-      case "В процес":
+      case "Процес":
         return "bg-yellow-100 text-yellow-800";
       case "За изпълнение":
         return "bg-blue-100 text-blue-800";
@@ -116,7 +116,7 @@ const CaseTasksTab: React.FC<CaseTasksTabProps> = ({ caseData }) => {
     {
       id: 1,
       title: "Актуализация на драйверите за принтери в офиса",
-      status: "В процес",
+      status: "Процес",
       priority: "ВИСОК",
     },
     {

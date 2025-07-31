@@ -29,14 +29,14 @@ const mockTasks = [
     caseNumber: 123,
     priority: "HIGH",
     dueDate: "2025-08-15",
-    status: "В процес",
+    status: "Процес",
     assignees: [mockUsers[0], mockUsers[1]],
     assignedByMe: true,
   },
   {
     id: 2,
     title: "Поръчка на нова кафе машина за кухнята на",
-    caseNumber: 12348,
+    caseNumber: 183,
     priority: "MEDIUM",
     dueDate: "2025-08-20",
     status: "За изпълнение",
@@ -46,7 +46,7 @@ const mockTasks = [
   {
     id: 3,
     title: "Проучване на нов софтуер за CRM системата",
-    caseNumber: 12349,
+    caseNumber: 139,
     priority: "LOW",
     dueDate: null,
     status: "Завършена",
@@ -56,7 +56,7 @@ const mockTasks = [
   {
     id: 4,
     title: "Организация на тиймбилдинг за Q3",
-    caseNumber: 12350,
+    caseNumber: 156,
     priority: "MEDIUM",
     dueDate: "2025-09-01",
     status: "За изпълнение",
@@ -66,7 +66,7 @@ const mockTasks = [
   {
     id: 5,
     title: "Подмяна на дефектните офис столове",
-    caseNumber: 12351,
+    caseNumber: 131,
     priority: "HIGH",
     dueDate: "2025-08-10",
     status: "Завършена",
@@ -76,27 +76,27 @@ const mockTasks = [
   {
     id: 6,
     title: "Проверка на пожарогасителите",
-    caseNumber: 12352,
+    caseNumber: 125,
     priority: "MEDIUM",
     dueDate: "2025-09-05",
     status: "За изпълнение",
-    assignees: [mockUsers[2], mockUsers[3]],
+    assignees: [mockUsers[2]],
     assignedByMe: false,
   },
   {
     id: 7,
     title: "Планиране на бюджет за следващата година",
-    caseNumber: 12355,
+    caseNumber: 127,
     priority: "HIGH",
     dueDate: "2025-10-01",
-    status: "В процес",
+    status: "Процес",
     assignees: [mockUsers[1]],
     assignedByMe: true,
   },
   {
     id: 8,
-    title: "Създаване на нова onboarding процедура за нови служители",
-    caseNumber: 12356,
+    title: "Създаване на нова onboarding процедура",
+    caseNumber: 126,
     priority: "LOW",
     dueDate: null,
     status: "За изпълнение",
@@ -124,7 +124,7 @@ const TaskCard: React.FC<{ task: any }> = ({ task }) => {
 
   const getStatusStyle = (status: string) => {
     switch (status) {
-      case "В процес":
+      case "Процес":
         return "bg-yellow-100 text-yellow-800";
       case "За изпълнение":
         return "bg-blue-100 text-blue-800";
@@ -293,7 +293,7 @@ const TaskTable: React.FC<{ tasks: any[] }> = ({ tasks }) => {
               <td className="px-6 py-4 whitespace-nowrap">
                 <span
                   className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                    task.status === "В процес"
+                    task.status === "Процес"
                       ? "bg-yellow-100 text-yellow-800"
                       : task.status === "За изпълнение"
                       ? "bg-blue-100 text-blue-800"
@@ -368,7 +368,7 @@ const TasksDashboard: React.FC = () => {
           >
             <option value="all">Всички статуси</option>
             <option value="За изпълнение">За изпълнение</option>
-            <option value="В процес">В процес</option>
+            <option value="Процес">В процес</option>
             <option value="Завършена">Завършена</option>
           </select>
           <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-lg">

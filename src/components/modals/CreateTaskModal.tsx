@@ -202,16 +202,21 @@ const Step3_SubtasksAndAssignment: React.FC<{
     setNewSubtask("");
   };
 
+  {
+    /* 
   const handleRemoveSubtask = (id: number) => {
     setFormData({
       ...formData,
       subtasks: formData.subtasks.filter((st: SubTask) => st.id !== id),
     });
   };
+  */
+  }
 
   return (
     <div className="space-y-4">
       {/* Секция за подзадачи */}
+      {/*
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
           Подзадачи (Опционално)
@@ -247,7 +252,8 @@ const Step3_SubtasksAndAssignment: React.FC<{
             -&gt;
           </button>
         </div>
-      </div>
+      </div> 
+      */}
       {/* Секция за възлагане */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -256,7 +262,7 @@ const Step3_SubtasksAndAssignment: React.FC<{
         <p className="text-sm text-gray-500"> (Търсене на потребител)</p>
         <div className="bg-gray-200 p-4 rounded-md h-32 flex items-center justify-center">
           <p className="text-gray-500">
-            Тук ще се намира компонентът за избор на потребител.
+            Тук ще се намира компонентът за избор на потребител(и).
           </p>
         </div>
       </div>

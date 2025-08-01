@@ -829,7 +829,8 @@ const TaskPage: React.FC = () => {
           <div className="bg-white p-4 rounded-lg shadow-md">
             <div className="flex justify-between items-start gap-4">
               <h2 className="text-xl font-bold text-gray-800 flex-1">
-                {task.title}
+                {task.title}{" "}
+                <span className="text-gray-500 font-normal">#1</span>
               </h2>
             </div>
             <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2">

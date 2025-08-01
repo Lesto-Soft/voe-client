@@ -7,6 +7,7 @@ import { renderContentSafely } from "../../utils/contentRenderer";
 import CreateTaskModal from "../modals/CreateTaskModal";
 import { ClipboardDocumentCheckIcon } from "@heroicons/react/24/outline";
 import UserLink from "../global/UserLink";
+import TaskLink from "../global/TaskLink";
 
 const TaskListItem: React.FC<{ task: any }> = ({ task }) => {
   const getPriorityBorderStyle = (priority: string) => {
@@ -65,6 +66,10 @@ const TaskListItem: React.FC<{ task: any }> = ({ task }) => {
         <div className="flex-shrink-0 divide-y divide-gray-100 text-xs">
           <div className="pb-2 text-gray-500 space-y-1.5">
             <div className="flex items-center gap-2">
+              <span>Задача:</span>
+              <TaskLink task={task} />
+            </div>
+            <div className="flex items-center gap-2">
               <span>Възложена от:</span>
               <UserLink user={task.creator} />
             </div>
@@ -75,7 +80,7 @@ const TaskListItem: React.FC<{ task: any }> = ({ task }) => {
                 <strong className="text-gray-500 font-medium">
                   Краен срок:
                 </strong>
-                <p className="text-sm font-semibold text-gray-700">
+                <p className="text-xs font-normal text-gray-700">
                   {task.dueDate ? task.dueDate : "Няма"}
                 </p>
               </div>

@@ -13,6 +13,7 @@ import UserLink from "../components/global/UserLink";
 import CaseLink from "../components/global/CaseLink";
 import { ICase, IUser } from "../db/interfaces";
 import { Link } from "react-router";
+import TaskLink from "../components/global/TaskLink";
 
 // --- Mock Data ---
 const mockUsers: IUser[] = [
@@ -181,7 +182,13 @@ const TaskCard: React.FC<{ task: any }> = ({ task }) => {
         <div className="flex-shrink-0 divide-y divide-gray-100">
           {/* Upper part of the bottom section */}
           <div className="pb-3 text-xs text-gray-500 space-y-2">
+            <div className="flex items-center gap-2"></div>
             <div className="flex items-center gap-2">
+              <span>Задача:</span>
+              <div>
+                <TaskLink task={task} />
+              </div>
+
               <span>Сигнал:</span>
               <div>
                 <CaseLink my_case={mockCase} t={t} />
@@ -202,7 +209,7 @@ const TaskCard: React.FC<{ task: any }> = ({ task }) => {
                   {task.dueDate ? task.dueDate : "Няма"}
                 </p>
               </div>
-              <div className="flex -space-x-2 overflow-hidden">
+              <div className="flex space-x-2 overflow-hidden">
                 {task.assignees.map((user: IUser) => (
                   <div key={user._id} title={user.name}>
                     <UserLink user={user} />
@@ -257,8 +264,16 @@ const TaskTable: React.FC<{ tasks: any[] }> = ({ tasks }) => {
       <table className="min-w-full divide-y divide-gray-200">
         <thead className="bg-gray-50">
           <tr>
+            {/* --- CHANGE START: Added "Номер" column header --- */}
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Номер
+            </th>
+            {/* --- CHANGE END --- */}
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Задача
+            </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              От Сигнал
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Приоритет
@@ -280,15 +295,25 @@ const TaskTable: React.FC<{ tasks: any[] }> = ({ tasks }) => {
         <tbody className="bg-white divide-y divide-gray-200">
           {tasks.map((task) => (
             <tr key={task.id} className="hover:bg-gray-50 group">
+              {/* --- CHANGE START: Added new first cell for TaskLink --- */}
+              <td className="px-6 py-4 whitespace-nowrap">
+                <TaskLink task={task} />
+              </td>
+              {/* --- CHANGE END --- */}
+
+              {/* --- CHANGE START: Simplified "Задача" cell --- */}
               <td className="px-6 py-4 whitespace-nowrap">
                 <Link
                   to={`/task/${task.id}`}
                   className="text-sm font-semibold text-gray-900 group-hover:text-blue-600 transition-colors"
+                  title={task.title}
                 >
                   {task.title}
                 </Link>
-                <div className="text-xs text-gray-500 w-25">
-                  Сигнал:{" "}
+              </td>
+              {/* --- CHANGE END --- */}
+              <td className="px-6 py-4 whitespace-nowrap">
+                <div className="w-15 ">
                   <CaseLink
                     my_case={
                       {
@@ -320,7 +345,7 @@ const TaskTable: React.FC<{ tasks: any[] }> = ({ tasks }) => {
                 <UserLink user={task.creator} />
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
-                <div className="flex -space-x-2">
+                <div className="flex space-x-2">
                   {task.assignees.map((user: IUser) => (
                     <div key={user._id} title={user.name}>
                       <UserLink user={user} />
@@ -416,7 +441,7 @@ const TasksDashboard: React.FC = () => {
               className={`p-2 rounded-md transition-colors ${
                 viewMode === "grid"
                   ? "bg-blue-600 text-white shadow"
-                  : "text-gray-600 hover:bg-gray-200"
+                  : "text-gray-600 hover:bg-gray-200 cursor-pointer"
               }`}
             >
               <Squares2X2Icon className="h-5 w-5" />
@@ -427,7 +452,7 @@ const TasksDashboard: React.FC = () => {
               className={`p-2 rounded-md transition-colors ${
                 viewMode === "table"
                   ? "bg-blue-600 text-white shadow"
-                  : "text-gray-600 hover:bg-gray-200"
+                  : "text-gray-600 hover:bg-gray-200 cursor-pointer"
               }`}
             >
               <Bars3Icon className="h-5 w-5" />

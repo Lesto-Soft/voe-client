@@ -6,6 +6,7 @@ import { GET_ACTIVE_CATEGORIES } from "../../graphql/query/category";
 import { XMarkIcon, CalendarDaysIcon } from "@heroicons/react/24/outline"; // Import icons
 import DateRangeSelector from "../features/userAnalytics/DateRangeSelector";
 import CustomDropdown from "../global/CustomDropdown";
+import CustomMultiSelectDropdown from "../global/CustomMultiSelectDropdown";
 import {
   getPriorityOptions,
   getReadStatusOptions,
@@ -34,8 +35,8 @@ interface CaseSearchBarProps {
   setCategoryIds: (v: string[]) => void;
   content: string;
   setContent: (v: string) => void;
-  status: ICase["status"] | "";
-  setStatus: (v: ICase["status"] | "") => void;
+  status: (ICase["status"] | "")[];
+  setStatus: (v: (ICase["status"] | "")[]) => void;
   readStatus: string;
   setReadStatus: (v: string) => void;
   dateRange: { startDate: Date | null; endDate: Date | null };
@@ -555,11 +556,12 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
             </button>
           </div>
           {/* Status */}
-          <CustomDropdown
+          <CustomMultiSelectDropdown
             label={t("status")}
             options={statusOptions}
-            value={status}
-            onChange={(value) => setStatus(value as ICase["status"] | "")}
+            selectedValues={status}
+            onChange={(values) => setStatus(values as ICase["status"][])}
+            placeholder="Всички"
           />
           {/* Read Status -- MODIFIED */}
           <CustomDropdown

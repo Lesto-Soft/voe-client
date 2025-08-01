@@ -38,6 +38,8 @@ function getFiltersFromParams(params: URLSearchParams) {
   const categoryIds = categoryIdsParam
     ? categoryIdsParam.split(",").filter(Boolean)
     : [];
+  const statusParam = params.get("status");
+  const status = statusParam ? statusParam.split(",").filter(Boolean) : [];
   return {
     caseNumber: params.get("caseNumber") || "",
     priority: params.get("priority") || "",
@@ -45,7 +47,7 @@ function getFiltersFromParams(params: URLSearchParams) {
     creatorId: params.get("creatorId") || "",
     categoryIds, // use array
     content: params.get("content") || "",
-    status: params.get("status") || "",
+    status,
     readStatus: params.get("readStatus") || "ALL", // Add this
     startDate: params.get("startDate"),
     endDate: params.get("endDate"),
@@ -59,6 +61,12 @@ function setFiltersToParams(params: URLSearchParams, filters: any) {
         params.set("categoryIds", value.join(","));
       } else {
         params.delete("categoryIds");
+      }
+    } else if (key === "status") {
+      if (Array.isArray(value) && value.length > 0) {
+        params.set("status", value.join(","));
+      } else {
+        params.delete("status");
       }
     } else if (key === "readStatus") {
       if (value && value !== "ALL") {
@@ -107,7 +115,9 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
     initialFilters.categoryIds
   );
   const [content, setContent] = useState(initialFilters.content);
-  const [status, setStatus] = useState(initialFilters.status);
+  const [status, setStatus] = useState<(ICase["status"] | "")[]>(
+    initialFilters.status as (ICase["status"] | "")[]
+  );
   const [readStatus, setReadStatus] = useState(initialFilters.readStatus);
   const [dateRange, setDateRange] = useState<{
     startDate: Date | null;
@@ -212,6 +222,7 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
       categoryIdsChanged ||
       content !== prevFilters.content ||
       status !== prevFilters.status ||
+      JSON.stringify(status) !== JSON.stringify(prevFilters.status) ||
       readStatus !== prevFilters.readStatus ||
       dateRangeChanged;
 

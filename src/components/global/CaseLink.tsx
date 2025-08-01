@@ -33,10 +33,11 @@ const CaseLink: React.FC<ICaseLinkProps> = ({ my_case, t }) => {
     : "Нямате права за достъп до този сигнал";
 
   // 2. Define the classes for the accent bar pseudo-element
-  const unreadAccentClasses =
-    isUnread && !isClosed
-      ? "before:content-[''] before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1 before:bg-blue-500 before:rounded-l-md"
-      : "";
+  const unreadAccentClasses = isUnread
+    ? `before:content-[''] before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1 before:rounded-l-md ${
+        isClosed ? "before:bg-blue-300" : "before:bg-blue-500"
+      }`
+    : ""; // Return an empty string if not unread
 
   const linkContent = (
     <>

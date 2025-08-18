@@ -120,6 +120,11 @@ fragment FullUserFragment on User {
           answers {
             needs_finance
           }
+          readBy {
+            user {
+              _id
+            }
+          }
         }
       }
       financialApprovedAnswers {
@@ -141,6 +146,11 @@ fragment FullUserFragment on User {
           }
           answers {
             needs_finance
+          }
+          readBy {
+            user {
+              _id
+            }
           }
         }
       }

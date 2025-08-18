@@ -23,6 +23,7 @@ interface UserInputFieldsProps {
   positionError: string | null; // <-- NEW
   roleId: string;
   onRoleChange: (value: string) => void;
+  roleError: string | null; // <-- ADDED
   roles: Role[];
   financialApprover: boolean;
   setFinancialApprover: (value: boolean) => void;
@@ -50,6 +51,7 @@ const UserInputFields: React.FC<UserInputFieldsProps> = ({
   positionError, // <-- NEW
   roleId,
   onRoleChange,
+  roleError, // <-- ADDED
   roles,
   financialApprover,
   setFinancialApprover,
@@ -240,7 +242,9 @@ const UserInputFields: React.FC<UserInputFieldsProps> = ({
                 onChange={(e) => onRoleChange(e.target.value)}
                 required
                 disabled={!canEditSensitiveFields}
-                className={`w-full rounded-md border border-gray-300 p-2 shadow-sm focus:outline-none focus:border-indigo-500 ${disabledClasses}`}
+                className={`w-full rounded-md border p-2 shadow-sm focus:outline-none focus:border-indigo-500 ${disabledClasses} ${
+                  roleError ? "border-red-500" : "border-gray-300"
+                }`}
               >
                 <option value="">Изберете роля</option>
                 {roles.map((r) => (
@@ -249,7 +253,13 @@ const UserInputFields: React.FC<UserInputFieldsProps> = ({
                   </option>
                 ))}
               </select>
-              <p className={`${errorPlaceholderClass}`}>&nbsp;</p>
+              <p
+                className={`${errorPlaceholderClass} ${
+                  roleError ? "text-red-500" : ""
+                }`}
+              >
+                {roleError || <>&nbsp;</>}
+              </p>
             </div>
 
             {/* Financial Approver Checkbox */}

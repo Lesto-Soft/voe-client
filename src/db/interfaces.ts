@@ -48,6 +48,7 @@ export interface IUser {
   financialApprovedAnswers?: IAnswer[];
   metricScores?: IMetricScore[];
   financial_approver?: boolean;
+  last_login?: Date;
 }
 
 /**

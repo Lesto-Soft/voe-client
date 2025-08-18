@@ -36,6 +36,7 @@ fragment FullUserFragment on User {
         _id
         name
       }
+      last_login
       avatar
       cases {
         _id

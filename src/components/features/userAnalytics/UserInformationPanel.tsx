@@ -9,7 +9,8 @@ import {
   CurrencyDollarIcon,
   AcademicCapIcon,
   CogIcon,
-  PencilSquareIcon, // <-- Import Pencil Icon
+  PencilSquareIcon,
+  ClockIcon, // <-- Import ClockIcon
 } from "@heroicons/react/24/outline";
 
 interface UserInformationPanelProps {
@@ -54,12 +55,17 @@ const UserInformationPanel: React.FC<UserInformationPanelProps> = ({
           </div>
           <hr className="my-4 border-gray-200" />
           <div className="space-y-3">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="flex items-center space-x-3">
-                <div className="h-5 w-5 bg-gray-300 rounded-full"></div>
-                <div className="h-4 bg-gray-300 rounded w-5/6"></div>
-              </div>
-            ))}
+            {[...Array(5)].map(
+              (
+                _,
+                i // Changed to 5 for the new item
+              ) => (
+                <div key={i} className="flex items-center space-x-3">
+                  <div className="h-5 w-5 bg-gray-300 rounded-full"></div>
+                  <div className="h-4 bg-gray-300 rounded w-5/6"></div>
+                </div>
+              )
+            )}
           </div>
           <hr className="my-4 border-gray-200" />
           <div className="h-10 bg-gray-300 rounded w-full mb-2"></div>
@@ -128,7 +134,6 @@ const UserInformationPanel: React.FC<UserInformationPanelProps> = ({
   return (
     <aside className="lg:col-span-3 bg-white rounded-lg shadow-lg flex flex-col overflow-hidden">
       <div className="p-6 space-y-4 overflow-y-auto custom-scrollbar">
-        {/* --- MODIFIED: Added Edit Button --- */}
         <div className="relative flex flex-col items-center text-center space-y-2">
           {canEdit && (
             <button
@@ -176,7 +181,12 @@ const UserInformationPanel: React.FC<UserInformationPanelProps> = ({
           <InfoItem
             icon={ShieldCheckIcon}
             label="Роля"
-            value={capitalizedRoleName}
+            value={
+              capitalizedRoleName +
+              (user.managed_categories && user.managed_categories.length > 0
+                ? " - Мениджър"
+                : "")
+            }
           />
           <InfoItem
             icon={CurrencyDollarIcon}
@@ -186,6 +196,24 @@ const UserInformationPanel: React.FC<UserInformationPanelProps> = ({
               user.financial_approver ? "text-green-600" : "text-red-600"
             }
           />
+          {/* --- MODIFIED BLOCK --- */}
+          {canEdit && user.last_login && (
+            <InfoItem
+              icon={ClockIcon}
+              label="Последно влизане"
+              value={
+                user.last_login
+                  ? new Date(Number(user.last_login)).toLocaleString("bg-BG", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "numeric",
+                      // hour: "2-digit",
+                      // minute: "2-digit",
+                    })
+                  : "-" // Fallback if last_login is not defined (functionality was implemented around 18.08.2025)
+              }
+            />
+          )}
         </div>
 
         {(hasManagedCategories || hasExpertCategories) && (

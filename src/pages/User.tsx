@@ -285,7 +285,7 @@ const User: React.FC = () => {
             roles={rolesData?.getAllLeanRoles || []}
             rolesLoading={rolesLoading}
             rolesError={rolesError}
-            isAdmin={isAdmin || isManagerForCategory}
+            isAdmin={isAdmin} // || isManagerForCategory}
           />
         )}
       </UserModal>

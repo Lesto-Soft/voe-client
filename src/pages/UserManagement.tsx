@@ -436,7 +436,7 @@ const UserManagement: React.FC = () => {
             roles={roles}
             rolesLoading={rolesLoadingHook}
             rolesError={rolesErrorHook}
-            isAdmin={true} // we assume that whoever can see this page should have admin rights
+            isAdmin={isAdmin} // we assume that whoever can see this page should have admin rights
             //isAdmin={isAdmin} // <-- MODIFIED: Pass the isAdmin flag
           />
         )}

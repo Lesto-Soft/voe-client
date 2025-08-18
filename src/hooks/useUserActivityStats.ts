@@ -4,6 +4,8 @@ import { IUser, ICase, ICategory } from "../db/interfaces";
 import { getCategoryColorForUserChart } from "../utils/userDisplayUtils";
 import { PieSegmentData } from "../components/charts/PieChart";
 import { TIERS } from "../utils/GLOBAL_PARAMETERS";
+// ✅ ADDED: Import our robust date parsing utility
+import { parseActivityDate } from "../utils/dateUtils";
 
 export interface UserActivityStats {
   totalSignals: number;
@@ -12,10 +14,9 @@ export interface UserActivityStats {
   ratedCasesCount: number; // How many of the user's cases have been rated
   averageCaseRating: number | null; // The average rating of the user's cases
   signalsByCategoryChartData: PieSegmentData[];
-  ratingTierDistributionData: PieSegmentData[]; // <-- Add new data field
+  ratingTierDistributionData: PieSegmentData[];
 }
 
-// 1. UPDATE THE HOOK'S SIGNATURE TO ACCEPT DATES
 const useUserActivityStats = (
   user: IUser | undefined | null,
   startDate: Date | null,
@@ -29,33 +30,32 @@ const useUserActivityStats = (
       ratedCasesCount: 0,
       averageCaseRating: null,
       signalsByCategoryChartData: [],
-      ratingTierDistributionData: [], // <-- Default to empty array
+      ratingTierDistributionData: [],
     };
 
     if (!user) {
       return defaultStats;
     }
 
-    // 2. CREATE A REUSABLE FILTERING FUNCTION
-    const isInDateRange = (itemDateStr: string) => {
-      // If no dates are set, every item is included
-      if (!startDate || !endDate) return true;
-      const itemDate = new Date(itemDateStr);
-      return itemDate >= startDate && itemDate <= endDate;
+    // ✅ MODIFIED: Replaced the two old, buggy helpers with one correct function.
+    // This function now handles all cases (no dates, one date, or both)
+    // and uses our robust `parseActivityDate` utility.
+    const isInDateRange = (itemDateStr: string | number) => {
+      if (!startDate && !endDate) return true;
+      const itemDate = parseActivityDate(itemDateStr);
+
+      if (startDate && itemDate < startDate) {
+        return false;
+      }
+      if (endDate && itemDate > endDate) {
+        return false;
+      }
+      return true;
     };
 
-    const isDateInDateRange = (itemDate: Date) => {
-      // If no dates are set, every item is included
-      if (!startDate || !endDate) return true;
-
-      // Directly compare the Date objects
-      return itemDate >= startDate && itemDate <= endDate;
-    };
-
-    // 3. APPLY THE FILTER BEFORE COUNTING
+    // ✅ MODIFIED: Apply the corrected filter to all activity types.
     const filteredCases =
-      user.cases?.filter((c) => isDateInDateRange(c.date as unknown as Date)) ||
-      [];
+      user.cases?.filter((c) => isInDateRange(c.date)) || [];
     const filteredAnswers =
       user.answers?.filter((a) => isInDateRange(a.date)) || [];
     const filteredComments =
@@ -65,13 +65,11 @@ const useUserActivityStats = (
     const totalAnswers = filteredAnswers.length;
     const totalComments = filteredComments.length;
 
-    // 4. PERFORM CATEGORY ANALYSIS ON THE *FILTERED* CASES
     const categoryCounts: Record<
       string,
       { id: string; name: string; count: number }
     > = {};
 
-    // This logic now correctly uses the filtered list
     filteredCases.forEach((caseItem: ICase) => {
       if (caseItem.categories && caseItem.categories.length > 0) {
         caseItem.categories.forEach((category: ICategory) => {
@@ -110,7 +108,6 @@ const useUserActivityStats = (
       .filter((segment) => segment.value > 0)
       .sort((a, b) => b.value - a.value);
 
-    // --- NEW: Calculate stats for ratings RECEIVED by the user's cases ---
     let ratedCasesSum = 0;
     let ratedCasesCount = 0;
     filteredCases.forEach((c) => {
@@ -127,7 +124,6 @@ const useUserActivityStats = (
     const averageCaseRating =
       ratedCasesCount > 0 ? ratedCasesSum / ratedCasesCount : null;
 
-    // --- NEW: Calculate Rating Tier Distribution ---
     const tierCounts = { Gold: 0, Silver: 0, Bronze: 0, Problematic: 0 };
     filteredCases.forEach((c) => {
       if (c.calculatedRating !== null && c.calculatedRating !== undefined) {
@@ -170,7 +166,7 @@ const useUserActivityStats = (
       signalsByCategoryChartData,
       ratingTierDistributionData,
     };
-  }, [user, startDate, endDate]); // 5. ADD DATES TO THE DEPENDENCY ARRAY
+  }, [user, startDate, endDate]);
 
   return stats;
 };

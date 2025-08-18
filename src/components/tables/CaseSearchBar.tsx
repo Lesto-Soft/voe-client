@@ -68,26 +68,22 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
   setDateRange,
   t,
 }) => {
-  // --- State for Creator Search ---
-  const [creatorInput, setCreatorInput] = useState(""); // Input field value
+  const [creatorInput, setCreatorInput] = useState("");
   const [selectedCreator, setSelectedCreator] = useState<ILeanUser | null>(
     null
   );
-  const [isDropdownVisible, setIsDropdownVisible] = useState(false); // Dropdown visibility
-  const [fetchedInitialCreator, setFetchedInitialCreator] = useState(false); // Flag to prevent re-fetching initial creator
+  const [isDropdownVisible, setIsDropdownVisible] = useState(false);
+  const [fetchedInitialCreator, setFetchedInitialCreator] = useState(false);
   const creatorInputRef = useRef<HTMLInputElement>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null); // Ref for the dropdown itself
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const [isDateSelectorVisible, setIsDateSelectorVisible] = useState(false);
-  // Check if a date filter is currently applied.
-  const isDateFilterActive = dateRange.startDate !== null;
 
-  // State to store the full list fetched from the server
+  // ✅ MODIFIED: Changed from && to || to show active state if at least one date is selected.
+  const isDateFilterActive =
+    dateRange.startDate !== null || dateRange.endDate !== null;
+
   const [serverFetchedUsers, setServerFetchedUsers] = useState<ILeanUser[]>([]);
 
-  // --- Debounce Creator Input ---
-  // Delays triggering the filter fetch until user stops typing for 300ms
-
-  // --- GraphQL Query for Users ---
   const [
     fetchUsers,
     { loading: loadingUsers, error: usersError, data: usersData },
@@ -97,7 +93,6 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
     },
   });
 
-  // --- Effect: Fetch initial creator name if creatorId is provided ---
   useEffect(() => {
     if (creatorId && !creatorInput && !fetchedInitialCreator) {
       fetchUsers({ variables: { userId: creatorId } });
@@ -106,7 +101,6 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
     }
   }, [creatorId, creatorInput, fetchedInitialCreator, fetchUsers]);
 
-  // --- Effect: Populate input field after initial creator fetch ---
   useEffect(() => {
     if (fetchedInitialCreator && !creatorInput && usersData?.getLeanUsers) {
       const initialUser = usersData.getLeanUsers.find(
@@ -125,7 +119,6 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
     }
   }, [usersData, fetchedInitialCreator, creatorId, creatorInput, setCreatorId]);
 
-  // --- Effect: Handle clicks outside the creator input/dropdown ---
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -143,7 +136,6 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
     };
   }, []);
 
-  // --- Event Handlers ---
   const handleCreatorInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     console.log("Creator input changed:", newValue);
@@ -174,20 +166,15 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
     setFetchedInitialCreator(true);
   };
 
-  // Handler to clear the creator selection
   const clearCreatorSelection = () => {
     setCreatorId("");
     setCreatorInput("");
     setSelectedCreator(null);
     setFetchedInitialCreator(false);
-    setIsDropdownVisible(false); // Optionally hide dropdown
-    // Optionally refocus the input
+    setIsDropdownVisible(false);
     creatorInputRef.current?.focus();
-    // Fetch all users again if desired after clearing
-    // fetchUsers({ variables: { search: "" } });
   };
 
-  // --- Client-side Filtering Logic ---
   const filteredDisplayUsers = useMemo(() => {
     if (!creatorInput) {
       return serverFetchedUsers;
@@ -200,7 +187,6 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
     );
   }, [creatorInput, serverFetchedUsers]);
 
-  // --- State for Category Search ---
   const [isCategoryDropdownVisible, setIsCategoryDropdownVisible] =
     useState(false);
   const categoryInputRef = useRef<HTMLInputElement>(null);
@@ -208,9 +194,8 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
   const [serverFetchedCategories, setServerFetchedCategories] = useState<
     ICategory[]
   >([]);
-  const [categorySearch, setCategorySearch] = useState(""); // For filtering in dropdown
+  const [categorySearch, setCategorySearch] = useState("");
 
-  // --- GraphQL Query for Categories ---
   const [
     fetchCategories,
     { loading: loadingCategories, error: categoriesError },
@@ -223,14 +208,12 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
     }
   );
 
-  // Fetch categories on component mount if categoryIds are provided from URL
   useEffect(() => {
     if (categoryIds.length > 0 && serverFetchedCategories.length === 0) {
       fetchCategories();
     }
   }, [categoryIds, serverFetchedCategories.length, fetchCategories]);
 
-  // Fetch categories on dropdown open if not already fetched
   useEffect(() => {
     if (isCategoryDropdownVisible && serverFetchedCategories.length === 0) {
       fetchCategories();
@@ -241,7 +224,6 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
     fetchCategories,
   ]);
 
-  // Close dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -257,7 +239,6 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Filtered categories for dropdown
   const filteredCategories = useMemo(() => {
     const search = categorySearch.trim().toLowerCase();
     return serverFetchedCategories.filter((cat) =>
@@ -265,7 +246,6 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
     );
   }, [serverFetchedCategories, categorySearch]);
 
-  // Display selected categories as comma-separated names
   const selectedCategoryNames = useMemo(() => {
     return serverFetchedCategories
       .filter((cat) => categoryIds.includes(cat._id))
@@ -273,7 +253,6 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
       .join(", ");
   }, [categoryIds, serverFetchedCategories]);
 
-  // Handle checkbox toggle
   const handleCategoryToggle = (catId: string) => {
     if (categoryIds.includes(catId)) {
       setCategoryIds(categoryIds.filter((id) => id !== catId));
@@ -282,12 +261,10 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
     }
   };
 
-  // Handle input click to open/close dropdown
   const handleCategoryInputClick = () => {
     setIsCategoryDropdownVisible((v) => !v);
   };
 
-  // Handle search in dropdown
   const handleCategorySearchChange = (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -295,22 +272,17 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
   };
 
   const handleReopenCreatorDropdown = () => {
-    // Clear the previous selection state
     setSelectedCreator(null);
     setCreatorId("");
     setCreatorInput("");
     setFetchedInitialCreator(false);
-
-    // Open the dropdown and fetch all users if they're not already loaded
     setIsDropdownVisible(true);
     if (serverFetchedUsers.length === 0) {
       fetchUsers({ variables: { search: "" } });
     }
   };
 
-  // --- Render Logic ---
   const showDropdown = isDropdownVisible;
-
   const priorityOptions = getPriorityOptions(t);
   const typeOptions = getTypeOptions(t);
   const statusOptions = getStatusOptions(t);
@@ -319,7 +291,6 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
   return (
     <div className="px-4 sm:px-6 lg:px-8 py-5">
       <div className="flex flex-wrap gap-x-4 gap-y-3 items-end">
-        {/* <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-8 gap-x-4 gap-y-3 items-end"> */}
         <div>
           <label
             htmlFor="caseNumber"
@@ -336,21 +307,18 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
             placeholder={t("search_by_case_number")}
           />
         </div>
-        {/* Priority */}
         <CustomDropdown
           label={t("priority")}
           options={priorityOptions}
           value={priority}
           onChange={(value) => setPriority(value as ICase["priority"] | "")}
         />
-        {/* Type */}
         <CustomDropdown
           label={t("type")}
           options={typeOptions}
           value={type}
           onChange={(value) => setType(value as ICase["type"] | "")}
         />
-        {/* Creator (Autocomplete) */}
         <div className="relative flex-1 min-w-[200px]">
           <label
             htmlFor="creator"
@@ -360,7 +328,6 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
           </label>
           {selectedCreator ? (
             <div
-              // MODIFIED: Use the new handler function
               onClick={handleReopenCreatorDropdown}
               className="cursor-pointer bg-white w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm flex justify-between items-center"
             >
@@ -387,7 +354,6 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
               autoComplete="off"
             />
           )}
-          {/* Clear Button */}
           {creatorId && (
             <button
               type="button"
@@ -403,7 +369,6 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
               ref={dropdownRef}
               className="absolute z-50 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto"
             >
-              {/* ... (dropdown content is unchanged) ... */}
               {loadingUsers && serverFetchedUsers.length === 0 ? (
                 <div className="px-3 py-2 text-sm text-gray-500">
                   {t("loading")}
@@ -445,7 +410,6 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
             </div>
           )}
         </div>
-        {/* Category (Checkbox Multi-Select Dropdown) */}
         <div className="relative flex-1 min-w-[200px]">
           <label
             htmlFor="category"
@@ -512,7 +476,6 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
           )}
         </div>
         <div className="flex w-full items-end gap-x-4 xl:flex-1 xl:w-auto">
-          {/* Content */}
           <div className="flex-1 min-w-[200px]">
             <label
               htmlFor="content"
@@ -529,7 +492,6 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
               placeholder={t("search_by_description")}
             />
           </div>
-          {/* Date Filter Toggle */}
           <div>
             <label
               htmlFor="date-filter-toggle"
@@ -542,20 +504,17 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
               type="button"
               onClick={() => setIsDateSelectorVisible((prev) => !prev)}
               title={t("filter_by_date")}
-              // By replacing h-10 with py-2 and px-3, the button's height
-              // will now match the other input fields.
               className={`cursor-pointer px-3 py-2 flex items-center justify-center border rounded-md shadow-sm transition duration-150 ease-in-out text-sm ${
                 isDateSelectorVisible
-                  ? "bg-indigo-100 border-indigo-500 text-indigo-600" // Style when selector is OPEN
+                  ? "bg-indigo-100 border-indigo-500 text-indigo-600"
                   : isDateFilterActive
-                  ? "bg-white border-indigo-400 text-indigo-600" // Style when selector is CLOSED but filter is ACTIVE
-                  : "bg-white text-gray-500 border-gray-300 hover:border-gray-400" // Style when selector is CLOSED and INACTIVE
+                  ? "bg-white border-indigo-400 text-indigo-600"
+                  : "bg-white text-gray-500 border-gray-300 hover:border-gray-400"
               }`}
             >
               <CalendarDaysIcon className="h-5 w-5" />
             </button>
           </div>
-          {/* Status */}
           <CustomMultiSelectDropdown
             label={t("status")}
             options={statusOptions}
@@ -563,11 +522,10 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
             onChange={(values) => setStatus(values as ICase["status"][])}
             placeholder="Всички"
           />
-          {/* Read Status -- MODIFIED */}
           <CustomDropdown
             label={"Прочетени"}
             options={readStatusOptions}
-            value={readStatus === "" ? "ALL" : readStatus} // Handle default case
+            value={readStatus === "" ? "ALL" : readStatus}
             onChange={(value) => setReadStatus(value as "READ" | "UNREAD" | "")}
           />
         </div>

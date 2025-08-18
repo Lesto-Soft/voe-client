@@ -108,15 +108,28 @@ const Category: React.FC = () => {
 
   const dateFilteredCases = useMemo(() => {
     const allCases = category?.cases || [];
-    if (!dateRange.startDate || !dateRange.endDate) {
+    const { startDate, endDate } = dateRange;
+
+    if (!startDate && !endDate) {
       return allCases;
     }
+
     return allCases.filter((c) => {
-      const caseDate = new Date(c.date);
-      return caseDate >= dateRange.startDate! && caseDate <= dateRange.endDate!;
+      // ✅ MODIFIED: Changed `new Date(c.date)` to `new Date(parseInt(c.date, 10))`.
+      // This correctly parses the timestamp string into a valid Date object.
+      const caseDate = new Date(parseInt(c.date, 10));
+
+      if (startDate && caseDate < startDate) {
+        return false;
+      }
+      if (endDate && caseDate > endDate) {
+        return false;
+      }
+      return true;
     });
   }, [category?.cases, dateRange]);
 
+  // This logic was already correct and now consumes the fixed dateFilteredCases
   const finalFilteredCases = useMemo(() => {
     if (activeStatus === "all") {
       return dateFilteredCases;
@@ -196,12 +209,6 @@ const Category: React.FC = () => {
   const pageError = categoryError || allUsersForFormError;
   if (categoryLoading || authLoading || allUsersForFormLoading) {
     return <CategoryPageSkeleton />;
-    //   return (
-    //     <PageStatusDisplay
-    //       loading
-    //       message="Зареждане на данните за категорията..."
-    //     />
-    //   );
   }
   if (pageError || !category) {
     return <PageStatusDisplay notFound categoryName={categoryNameFromParams} />;

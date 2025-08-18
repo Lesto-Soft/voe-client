@@ -1,5 +1,5 @@
 // src/components/features/userAnalytics/UserActivityList.tsx
-import React, { useMemo, useEffect, useState, useRef } from "react"; // Added useRef
+import React, { useMemo, useEffect, useState, useRef } from "react";
 import { IUser, ICase, IAnswer, IComment } from "../../../db/interfaces";
 import UserActivityItemCard from "./UserActivityItemCard";
 import UserRatingActivityCard from "./UserRatingActivityCard";
@@ -69,8 +69,11 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
   onDateRangeChange,
 }) => {
   const [isDateFilterVisible, setIsDateFilterVisible] = useState(false);
-  // Check if a date filter is currently applied.
-  const isDateFilterActive = dateRange.startDate !== null;
+
+  // ✅ MODIFIED: Changed from && to || to show active state if at least one date is selected.
+  const isDateFilterActive =
+    dateRange.startDate !== null || dateRange.endDate !== null;
+
   const isDataReady = !isLoading && !!user;
 
   // Add ref for the tabs container
@@ -98,12 +101,9 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
     if (!scrollContainer) return;
 
     const handleWheel = (e: WheelEvent) => {
-      // Only prevent default if we're actually going to scroll horizontally
       if (e.deltaY !== 0) {
         e.preventDefault();
-
-        // Smooth horizontal scroll
-        const scrollAmount = e.deltaY * 1.5; // Adjust multiplier for scroll speed
+        const scrollAmount = e.deltaY * 1.5;
         scrollContainer.scrollBy({
           left: scrollAmount,
           behavior: "smooth",
@@ -116,16 +116,24 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
     return () => {
       scrollContainer.removeEventListener("wheel", handleWheel);
     };
-  }, []); // Empty dependency array since ref won't change
+  }, []);
 
   const allActivities = useMemo((): CombinedActivity[] => {
     if (!user) return [];
-    const isInDateRange = (itemDateStr: string | number) => {
-      if (!dateRange.startDate || !dateRange.endDate) return true;
-      const itemDate = parseActivityDate(itemDateStr);
-      // console.log(itemDate, dateRange.startDate, dateRange.endDate);
 
-      return itemDate >= dateRange.startDate && itemDate <= dateRange.endDate;
+    const isInDateRange = (itemDateStr: string | number) => {
+      const { startDate, endDate } = dateRange;
+      if (!startDate && !endDate) return true;
+
+      const itemDate = parseActivityDate(itemDateStr);
+
+      if (startDate && itemDate < startDate) {
+        return false;
+      }
+      if (endDate && itemDate > endDate) {
+        return false;
+      }
+      return true;
     };
 
     const ratedCases: Map<
@@ -353,7 +361,6 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
     <div className="lg:col-span-6 bg-white rounded-lg shadow-lg flex flex-col overflow-hidden max-h-full">
       <div className="p-1 sm:p-2 border-b border-gray-200">
         <div className="flex items-center justify-between pb-1">
-          {/* Container for the tabs - now with ref */}
           <div
             ref={tabsContainerRef}
             className="flex py-1 space-x-1 sm:space-x-2 mr-5 overflow-x-auto custom-scrollbar-xs"
@@ -377,7 +384,6 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
           <button
             onClick={() => setIsDateFilterVisible((prev) => !prev)}
             title="Filter by date"
-            // className logic to show active state when closed
             className={`hover:cursor-pointer p-2 rounded-md transition-colors duration-150 ${
               isDateFilterVisible
                 ? "bg-indigo-100 text-indigo-600" // Style when selector is OPEN

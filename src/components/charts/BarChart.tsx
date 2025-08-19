@@ -18,6 +18,7 @@ interface BarChartProps {
   title: string;
   // --- NEW: Add prop for rendering style ---
   barStyle?: "grouped" | "stacked";
+  onBarClick?: (dataPoint: BarDataPoint) => void;
 }
 
 interface TooltipData {
@@ -34,6 +35,7 @@ const BarChart: React.FC<BarChartProps> = ({
   title,
   // --- NEW: Default to 'grouped' for backward compatibility ---
   barStyle = "grouped",
+  onBarClick,
 }) => {
   const [tooltipData, setTooltipData] = useState<TooltipData>({
     visible: false,
@@ -183,6 +185,9 @@ const BarChart: React.FC<BarChartProps> = ({
       <style>{`
         .bar-chart-tooltip { position: absolute; background-color: rgba(30, 30, 30, 0.92); color: white; padding: 8px 12px; border-radius: 5px; font-size: 12px; line-height: 1.5; pointer-events: none; z-index: 1000; box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2); white-space: nowrap; opacity: 0; transform: translate(-50%, calc(-100% - 12px)); transition: opacity 0.1s ease-out, transform 0.1s ease-out; }
         .bar-chart-tooltip.visible { opacity: 1; transform: translate(-50%, calc(-100% - 18px)); }
+        .bar-group, .bar-stack {
+          cursor: ${onBarClick ? "pointer" : "default"}; // <-- ADD THIS STYLE
+        }
       `}</style>
       <p className="text-sm font-semibold mb-1 text-center text-gray-700">
         {title ? title : "Няма дефиниран период"}
@@ -283,6 +288,7 @@ const BarChart: React.FC<BarChartProps> = ({
                           key={`stack-group-${groupIndex}`}
                           className="bar-stack"
                           onMouseEnter={(e) => handleBarMouseEnter(e, item)}
+                          onClick={() => onBarClick && onBarClick(item)}
                         >
                           {series.map((s) => {
                             const val = item[s.dataKey] || 0;
@@ -329,6 +335,7 @@ const BarChart: React.FC<BarChartProps> = ({
                       <g
                         key={`group-${groupIndex}-${item[dataKeyX]}`}
                         className="bar-group"
+                        onClick={() => onBarClick && onBarClick(item)}
                       >
                         {series.map((s, barIndex) => {
                           const val = item[s.dataKey] || 0;

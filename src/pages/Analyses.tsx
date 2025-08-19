@@ -24,6 +24,7 @@ import ControlsSkeleton from "../components/skeletons/ControlsSkeleton";
 
 // Constants and Types
 import {
+  MONTH_NAMES,
   PRIORITY_COLORS,
   TYPE_COLORS,
 } from "../components/features/analyses/constants";
@@ -88,6 +89,51 @@ const Analyses: React.FC = () => {
     users: RankedUser[];
   } | null>(null);
 
+  const handleBarChartClick = (dataPoint: { [key: string]: any }) => {
+    if (!dataPoint) return;
+
+    switch (filters.viewMode) {
+      // If viewing ALL years, click drills down to a specific YEAR
+      case "all": {
+        const year = parseInt(dataPoint.periodLabel, 10);
+        if (!isNaN(year)) {
+          filters.setCurrentYear(year);
+          filters.setViewMode("yearly");
+        }
+        break;
+      }
+      // If viewing a YEAR (by months), click drills down to a specific MONTH
+      case "yearly": {
+        const monthIndex = MONTH_NAMES.indexOf(dataPoint.periodLabel);
+        if (monthIndex > -1) {
+          filters.setCurrentMonth(monthIndex + 1);
+          filters.setViewMode("monthly");
+        }
+        break;
+      }
+      // If viewing a MONTH (by days), click drills down to a specific DAY
+      case "monthly": {
+        const day = parseInt(dataPoint.periodLabel, 10);
+        if (!isNaN(day)) {
+          const clickedDate = new Date(
+            filters.currentYear,
+            filters.currentMonth - 1,
+            day
+          );
+          filters.handleCustomDateRangeChange({
+            startDate: clickedDate,
+            endDate: clickedDate,
+          });
+          filters.setViewMode("custom");
+        }
+        break;
+      }
+      // No drill-down action for weekly or custom views
+      default:
+        break;
+    }
+  };
+
   // First, handle terminal states: error or no data after loading is complete.
   if (analyticsDataError) {
     return (
@@ -140,6 +186,7 @@ const Analyses: React.FC = () => {
               series={barChartDisplayData.seriesConfig}
               title={barChartDisplayData.title}
               barStyle={barChartStyle}
+              onBarClick={handleBarChartClick}
             />
           )}
         </div>

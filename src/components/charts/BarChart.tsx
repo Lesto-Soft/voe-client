@@ -19,6 +19,7 @@ interface BarChartProps {
   // --- NEW: Add prop for rendering style ---
   barStyle?: "grouped" | "stacked";
   onBarClick?: (dataPoint: BarDataPoint) => void;
+  onChartAreaRightClick?: (event: React.MouseEvent) => void;
 }
 
 interface TooltipData {
@@ -36,6 +37,7 @@ const BarChart: React.FC<BarChartProps> = ({
   // --- NEW: Default to 'grouped' for backward compatibility ---
   barStyle = "grouped",
   onBarClick,
+  onChartAreaRightClick,
 }) => {
   const [tooltipData, setTooltipData] = useState<TooltipData>({
     visible: false,
@@ -152,7 +154,7 @@ const BarChart: React.FC<BarChartProps> = ({
     }
   };
 
-  const handleMouseLeaveChart = () => {
+  const hideTooltip = () => {
     setTooltipData({ visible: false, x: 0, y: 0, contentHtml: null });
   };
 
@@ -218,7 +220,10 @@ const BarChart: React.FC<BarChartProps> = ({
               width={svgContainerWidth > 0 ? svgContainerWidth : 300}
               height={chartHeight}
               onMouseMove={handleMouseMove}
-              onMouseLeave={handleMouseLeaveChart}
+              onMouseLeave={hideTooltip}
+              onContextMenu={(e) =>
+                onChartAreaRightClick && onChartAreaRightClick(e)
+              }
             >
               <g transform={`translate(${marginLeft}, ${marginTop})`}>
                 {/* Y-axis Ticks and Grid Lines (remain the same) */}
@@ -288,6 +293,7 @@ const BarChart: React.FC<BarChartProps> = ({
                           key={`stack-group-${groupIndex}`}
                           className="bar-stack"
                           onMouseEnter={(e) => handleBarMouseEnter(e, item)}
+                          onMouseLeave={hideTooltip}
                           onClick={() => onBarClick && onBarClick(item)}
                         >
                           {series.map((s) => {
@@ -335,6 +341,8 @@ const BarChart: React.FC<BarChartProps> = ({
                       <g
                         key={`group-${groupIndex}-${item[dataKeyX]}`}
                         className="bar-group"
+                        onMouseEnter={(e) => handleBarMouseEnter(e, item)}
+                        onMouseLeave={hideTooltip}
                         onClick={() => onBarClick && onBarClick(item)}
                       >
                         {series.map((s, barIndex) => {
@@ -355,7 +363,6 @@ const BarChart: React.FC<BarChartProps> = ({
                               width={groupedBarWidth > 0 ? groupedBarWidth : 0}
                               height={barHeight}
                               fill={s.color}
-                              onMouseEnter={(e) => handleBarMouseEnter(e, item)}
                               className="cursor-pointer transition-opacity hover:opacity-80"
                             />
                           );

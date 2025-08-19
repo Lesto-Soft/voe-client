@@ -134,6 +134,27 @@ const Analyses: React.FC = () => {
     }
   };
 
+  const handleChartAreaRightClick = (event: React.MouseEvent) => {
+    event.preventDefault(); // Prevents the browser's context menu
+
+    switch (filters.viewMode) {
+      // If viewing a MONTH or a custom DAY, zoom out to the YEARLY view
+      case "custom":
+      case "monthly":
+        filters.setViewMode("yearly");
+        break;
+
+      // If viewing a YEAR, zoom out to the ALL years view
+      case "yearly":
+        filters.setViewMode("all");
+        break;
+
+      // No zoom-out action for 'all' or 'weekly' views
+      default:
+        break;
+    }
+  };
+
   // First, handle terminal states: error or no data after loading is complete.
   if (analyticsDataError) {
     return (
@@ -187,6 +208,7 @@ const Analyses: React.FC = () => {
               title={barChartDisplayData.title}
               barStyle={barChartStyle}
               onBarClick={handleBarChartClick}
+              onChartAreaRightClick={handleChartAreaRightClick}
             />
           )}
         </div>

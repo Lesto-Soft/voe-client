@@ -20,6 +20,11 @@ interface BarChartProps {
   barStyle?: "grouped" | "stacked";
   onBarClick?: (dataPoint: BarDataPoint) => void;
   onChartAreaRightClick?: (event: React.MouseEvent) => void;
+  onBarMiddleClick?: (
+    dataPoint: BarDataPoint,
+    event: React.MouseEvent,
+    seriesKey?: string
+  ) => void;
 }
 
 interface TooltipData {
@@ -38,6 +43,7 @@ const BarChart: React.FC<BarChartProps> = ({
   barStyle = "grouped",
   onBarClick,
   onChartAreaRightClick,
+  onBarMiddleClick,
 }) => {
   const [tooltipData, setTooltipData] = useState<TooltipData>({
     visible: false,
@@ -295,6 +301,12 @@ const BarChart: React.FC<BarChartProps> = ({
                           onMouseEnter={(e) => handleBarMouseEnter(e, item)}
                           onMouseLeave={hideTooltip}
                           onClick={() => onBarClick && onBarClick(item)}
+                          onMouseDown={(e) => {
+                            if (e.button === 1) {
+                              // Check for middle mouse button
+                              onBarMiddleClick?.(item, e);
+                            }
+                          }}
                         >
                           {series.map((s) => {
                             const val = item[s.dataKey] || 0;
@@ -344,6 +356,13 @@ const BarChart: React.FC<BarChartProps> = ({
                         onMouseEnter={(e) => handleBarMouseEnter(e, item)}
                         onMouseLeave={hideTooltip}
                         onClick={() => onBarClick && onBarClick(item)}
+                        onMouseDown={(e) => {
+                          // This now acts as a FALLBACK
+                          if (e.button === 1) {
+                            // Check for middle mouse button
+                            onBarMiddleClick?.(item, e); // Called with NO seriesKey
+                          }
+                        }}
                       >
                         {series.map((s, barIndex) => {
                           const val = item[s.dataKey] || 0;
@@ -364,6 +383,13 @@ const BarChart: React.FC<BarChartProps> = ({
                               height={barHeight}
                               fill={s.color}
                               className="cursor-pointer transition-opacity hover:opacity-80"
+                              onMouseDown={(e) => {
+                                // This is the PRIMARY handler for individual bars
+                                if (e.button === 1) {
+                                  e.stopPropagation(); // Stop event from bubbling to the parent <g>
+                                  onBarMiddleClick?.(item, e, s.dataKey); // Called WITH seriesKey
+                                }
+                              }}
                             />
                           );
                         })}

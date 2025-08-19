@@ -1,5 +1,6 @@
 // pages/Analyses.tsx
 import React, { useState } from "react";
+import moment from "moment";
 
 // Data Fetching
 import { useGetAnalyticsDataCases } from "../graphql/hooks/case";
@@ -24,11 +25,13 @@ import ControlsSkeleton from "../components/skeletons/ControlsSkeleton";
 
 // Constants and Types
 import {
+  DAY_NAMES_FULL,
   MONTH_NAMES,
   PRIORITY_COLORS,
   TYPE_COLORS,
 } from "../components/features/analyses/constants";
 import { RankedUser } from "../components/features/analyses/types";
+import { getStartAndEndOfWeek } from "../utils/dateUtils";
 
 const Analyses: React.FC = () => {
   // 1. Fetch raw data
@@ -155,6 +158,84 @@ const Analyses: React.FC = () => {
     }
   };
 
+  const handleBarChartMiddleClick = (
+    dataPoint: { [key: string]: any },
+    event: React.MouseEvent,
+    seriesKey?: string
+  ) => {
+    event.preventDefault();
+    let startDate: Date | null = null;
+    let endDate: Date | null = null;
+    const year = filters.currentYear;
+
+    switch (filters.viewMode) {
+      case "all": {
+        const clickedYear = parseInt(dataPoint.periodLabel, 10);
+        if (!isNaN(clickedYear)) {
+          startDate = new Date(clickedYear, 0, 1);
+          endDate = new Date(clickedYear, 11, 31);
+        }
+        break;
+      }
+      case "yearly": {
+        const monthIndex = MONTH_NAMES.indexOf(dataPoint.periodLabel);
+        if (monthIndex > -1) {
+          startDate = new Date(year, monthIndex, 1);
+          endDate = new Date(year, monthIndex + 1, 0); // Day 0 of next month is last day of current
+        }
+        break;
+      }
+      case "monthly": {
+        const day = parseInt(dataPoint.periodLabel, 10);
+        if (!isNaN(day)) {
+          startDate = new Date(year, filters.currentMonth - 1, day);
+          endDate = new Date(year, filters.currentMonth - 1, day);
+        }
+        break;
+      }
+      case "weekly": {
+        const dayName = dataPoint.periodLabel;
+        const dayIndex = DAY_NAMES_FULL.indexOf(dayName);
+        if (dayIndex !== -1) {
+          const weekInfo = getStartAndEndOfWeek(filters.currentWeek, year);
+          const clickedDate = new Date(weekInfo.start);
+          clickedDate.setDate(clickedDate.getDate() + dayIndex);
+          startDate = clickedDate;
+          endDate = clickedDate;
+        }
+        break;
+      }
+      case "custom": {
+        // For custom view, use the entire selected range
+        startDate = filters.startDateForPies;
+        endDate = filters.endDateForPies;
+        break;
+      }
+    }
+
+    if (startDate && endDate) {
+      const format = "DD-MM-YYYY";
+      const formattedStart = moment(startDate).format(format);
+      const formattedEnd = moment(endDate).format(format);
+
+      let extraParams = "";
+      if (seriesKey && barChartStyle === "grouped") {
+        // Only apply for grouped charts
+        if (filters.barChartMode === "priority") {
+          if (seriesKey === "highPriority") extraParams = "&priority=HIGH";
+          if (seriesKey === "mediumPriority") extraParams = "&priority=MEDIUM";
+          if (seriesKey === "lowPriority") extraParams = "&priority=LOW";
+        } else if (filters.barChartMode === "type") {
+          if (seriesKey === "problems") extraParams = "&type=PROBLEM";
+          if (seriesKey === "suggestions") extraParams = "&type=SUGGESTION";
+        }
+      }
+
+      const url = `/dashboard?startDate=${formattedStart}&endDate=${formattedEnd}${extraParams}`;
+      window.open(url, "_blank");
+    }
+  };
+
   // First, handle terminal states: error or no data after loading is complete.
   if (analyticsDataError) {
     return (
@@ -209,6 +290,7 @@ const Analyses: React.FC = () => {
               barStyle={barChartStyle}
               onBarClick={handleBarChartClick}
               onChartAreaRightClick={handleChartAreaRightClick}
+              onBarMiddleClick={handleBarChartMiddleClick}
             />
           )}
         </div>

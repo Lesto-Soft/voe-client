@@ -41,8 +41,7 @@ const Answer: React.FC<{
   const isCategoryManagerForCase = managedCategoryIds.some(
     (managedId: string) => caseCategoryIdsForThisCase.includes(managedId)
   );
-  const canInteractWithGeneralApproval =
-    (!isCreator && isCategoryManagerForCase) || isAdmin;
+  const canInteractWithGeneralApproval = isCategoryManagerForCase || isAdmin;
   const { deleteAnswer } = useDeleteAnswer(caseNumber);
 
   const canEditOrDelete =

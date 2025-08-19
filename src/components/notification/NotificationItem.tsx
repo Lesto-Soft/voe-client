@@ -14,7 +14,7 @@ import {
 import { INotification } from "../../db/interfaces";
 import { clsx } from "clsx";
 import moment from "moment";
-import { Trans, useTranslation } from "react-i18next";
+import { Trans } from "react-i18next";
 import { useNavigate } from "react-router";
 import {
   useDeleteNotification,
@@ -29,7 +29,6 @@ interface NotificationItemProps {
 const NotificationItem: React.FC<NotificationItemProps> = ({
   notification,
 }) => {
-  const { t } = useTranslation("menu");
   const navigate = useNavigate();
   const [markAsRead] = useMarkAsRead();
   const [deleteNotification] = useDeleteNotification();

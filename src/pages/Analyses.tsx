@@ -5,6 +5,7 @@ import moment from "moment";
 // Data Fetching
 import { useGetAnalyticsDataCases } from "../graphql/hooks/case";
 import { useGetRankedUsers } from "../graphql/hooks/user";
+import { useCurrentUser } from "../context/UserContext";
 
 // Custom Hooks for the Analyses Feature
 import { useAnalysesFilters } from "../components/features/analyses/hooks/useAnalysesFilters";
@@ -32,9 +33,14 @@ import {
 } from "../components/features/analyses/constants";
 import { RankedUser } from "../components/features/analyses/types";
 import { getStartAndEndOfWeek } from "../utils/dateUtils";
+import { ROLES } from "../utils/GLOBAL_PARAMETERS";
+import { IMe } from "../db/interfaces";
 
 const Analyses: React.FC = () => {
   // 1. Fetch raw data
+  const currentUser = useCurrentUser() as IMe; // <-- ADD THIS
+  const isAdmin = currentUser?.role?._id === ROLES.ADMIN; // <-- AND THIS
+
   const {
     loading: analyticsDataLoading,
     error: analyticsDataError,
@@ -290,7 +296,7 @@ const Analyses: React.FC = () => {
               barStyle={barChartStyle}
               onBarClick={handleBarChartClick}
               onChartAreaRightClick={handleChartAreaRightClick}
-              onBarMiddleClick={handleBarChartMiddleClick}
+              onBarMiddleClick={isAdmin ? handleBarChartMiddleClick : undefined}
             />
           )}
         </div>

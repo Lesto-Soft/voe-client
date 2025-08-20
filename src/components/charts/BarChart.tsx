@@ -1,5 +1,6 @@
 // components/charts/BarChart.tsx
 import React, { useState, useRef, useEffect } from "react";
+import { QuestionMarkCircleIcon } from "@heroicons/react/24/outline";
 
 interface BarDataPoint {
   [key: string]: any;
@@ -204,6 +205,29 @@ const BarChart: React.FC<BarChartProps> = ({
       ref={containerRef}
       className="w-full p-4 rounded-lg shadow-sm bg-white relative"
     >
+      <div className="group absolute top-2 right-2 z-10">
+        <QuestionMarkCircleIcon className="h-5 w-5 text-gray-400 cursor-help group-hover:text-sky-600 transition-colors" />
+        <div className="absolute bottom-full right-0 mb-2 w-max p-3 rounded-md shadow-lg bg-gray-800 text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+          <ul className="space-y-1 text-left">
+            <li>
+              <strong className="font-semibold">Ляв клик:</strong> Увеличаване
+            </li>
+            <li>
+              <strong className="font-semibold">Десен клик:</strong>{" "}
+              Отдалечаване
+            </li>
+            {onBarMiddleClick && (
+              <li>
+                <strong className="font-semibold">Среден клик:</strong>{" "}
+                Прегледай конкретните сигнали
+              </li>
+            )}
+          </ul>
+          {/* Tooltip Arrow */}
+          <div className="absolute top-full right-2 w-0 h-0 border-x-4 border-x-transparent border-t-4 border-t-gray-800"></div>
+        </div>
+      </div>
+
       <style>{`
         .bar-chart-tooltip { position: absolute; background-color: rgba(30, 30, 30, 0.92); color: white; padding: 8px 12px; border-radius: 5px; font-size: 12px; line-height: 1.5; pointer-events: none; z-index: 1000; box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2); white-space: nowrap; opacity: 0; transform: translate(-50%, calc(-100% - 12px)); transition: opacity 0.1s ease-out, transform 0.1s ease-out; }
         .bar-chart-tooltip.visible { opacity: 1; transform: translate(-50%, calc(-100% - 18px)); }

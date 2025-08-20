@@ -228,13 +228,14 @@ const AnalysesControls: React.FC<AnalysesControlsProps> = (props) => {
           />
         )}
 
-        <div
+        {/* we do not need this displayed period for anything other than the total period
+         <div
           className="text-sm text-gray-700 font-medium bg-sky-100 px-2 py-1 rounded whitespace-nowrap overflow-hidden text-ellipsis"
           style={{ maxWidth: "300px" }}
           title={displayedPeriod}
         >
           {displayedPeriod}
-        </div>
+        </div> */}
 
         {renderToggles()}
       </div>

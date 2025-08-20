@@ -136,10 +136,10 @@ const CaseTable: React.FC<ICaseTableProps> = ({
 
   return (
     <div className="flex-1 flex flex-col min-h-0 px-4 sm:px-6 lg:px-8">
-      <div className="flex flex-col shadow-md rounded-lg overflow-hidden bg-white border border-gray-200 overflow-x-auto">
+      <div className="flex-1 min-h-0 overflow-y-auto shadow-md rounded-lg border border-gray-200">
         <table className="min-w-full divide-y divide-gray-200">
           {/* Table Head */}
-          <thead className="bg-gray-500">
+          <thead className="bg-gray-500 sticky top-0 z-10">
             <tr>
               {/* First Header (No separator) */}
               <th

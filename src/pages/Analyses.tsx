@@ -1,30 +1,24 @@
-// pages/Analyses.tsx
+// src/pages/Analyses.tsx
 import React, { useState } from "react";
 import moment from "moment";
-
-// Data Fetching
+import { useCurrentUser } from "../context/UserContext";
+import { ROLES } from "../utils/GLOBAL_PARAMETERS";
 import { useGetAnalyticsDataCases } from "../graphql/hooks/case";
 import { useGetRankedUsers } from "../graphql/hooks/user";
-import { useCurrentUser } from "../context/UserContext";
-
-// Custom Hooks for the Analyses Feature
 import { useAnalysesFilters } from "../components/features/analyses/hooks/useAnalysesFilters";
 import { useProcessedAnalyticsData } from "../components/features/analyses/hooks/useProcessedAnalyticsData";
-
-// Reusable UI Components
 import AnalysesControls from "../components/features/analyses/components/AnalysesControls";
 import BarChart from "../components/charts/BarChart";
 import DistributionChartCard from "../components/features/analyses/components/DistributionChartCard";
 import SummaryCard from "../components/features/analyses/components/SummaryCard";
 import TopUserCard from "../components/features/analyses/components/TopUserCard";
 import { PodiumModal } from "../components/features/analyses/modals/PodiumModal";
+import CaseViewerModal from "../components/modals/CaseViewerModal";
 import PageStatusDisplay from "../components/global/PageStatusDisplay";
 import { RankingType } from "../components/features/analyses/types";
 import StatCardSkeleton from "../components/skeletons/StatCardSkeleton";
 import BarChartSkeleton from "../components/skeletons/BarChartSkeleton";
 import ControlsSkeleton from "../components/skeletons/ControlsSkeleton";
-
-// Constants and Types
 import {
   DAY_NAMES_FULL,
   MONTH_NAMES,
@@ -33,13 +27,19 @@ import {
 } from "../components/features/analyses/constants";
 import { RankedUser } from "../components/features/analyses/types";
 import { getStartAndEndOfWeek } from "../utils/dateUtils";
-import { ROLES } from "../utils/GLOBAL_PARAMETERS";
-import { IMe } from "../db/interfaces";
+import { ICase, IMe, CasePriority, CaseType } from "../db/interfaces"; // Import IMe
+
+// Define the shape of the filters object for clarity
+type CaseFilters = {
+  priority?: ICase["priority"] | "";
+  type?: ICase["type"] | "";
+  startDate?: Date | null;
+  endDate?: Date | null;
+};
 
 const Analyses: React.FC = () => {
-  // 1. Fetch raw data
-  const currentUser = useCurrentUser() as IMe; // <-- ADD THIS
-  const isAdmin = currentUser?.role?._id === ROLES.ADMIN; // <-- AND THIS
+  const currentUser = useCurrentUser() as IMe;
+  const isAdmin = currentUser?.role?._id === ROLES.ADMIN;
 
   const {
     loading: analyticsDataLoading,
@@ -47,10 +47,8 @@ const Analyses: React.FC = () => {
     cases: allCases,
   } = useGetAnalyticsDataCases();
 
-  // 2. Manage all filter states
   const filters = useAnalysesFilters(allCases);
 
-  // 3. Get all processed data
   const {
     barChartDisplayData,
     categoryPieData,
@@ -60,7 +58,6 @@ const Analyses: React.FC = () => {
     periodCaseSummary,
   } = useProcessedAnalyticsData(allCases, filters);
 
-  // ADD calls to the new, efficient hook for each ranking type
   const { rankedUsers: rankedCreators } = useGetRankedUsers(
     filters.startDateForPies,
     filters.endDateForPies,
@@ -86,23 +83,25 @@ const Analyses: React.FC = () => {
     filters.isAllTimePies
   );
 
-  // --- NEW: State for toggling the bar chart style ---
   const [barChartStyle, setBarChartStyle] = useState<"grouped" | "stacked">(
     "grouped"
   );
-  // --------------------------------------------------
-
   const [activeStatView, setActiveStatView] = useState<"case" | "user">("case");
   const [podiumState, setPodiumState] = useState<{
     title: string;
     users: RankedUser[];
   } | null>(null);
 
+  // <-- CHANGED: State now holds the filter object and title for the modal
+  const [modalData, setModalData] = useState<{
+    initialFilters: CaseFilters;
+    title: string;
+  } | null>(null);
+
   const handleBarChartClick = (dataPoint: { [key: string]: any }) => {
     if (!dataPoint) return;
 
     switch (filters.viewMode) {
-      // If viewing ALL years, click drills down to a specific YEAR
       case "all": {
         const year = parseInt(dataPoint.periodLabel, 10);
         if (!isNaN(year)) {
@@ -111,7 +110,6 @@ const Analyses: React.FC = () => {
         }
         break;
       }
-      // If viewing a YEAR (by months), click drills down to a specific MONTH
       case "yearly": {
         const monthIndex = MONTH_NAMES.indexOf(dataPoint.periodLabel);
         if (monthIndex > -1) {
@@ -120,7 +118,6 @@ const Analyses: React.FC = () => {
         }
         break;
       }
-      // If viewing a MONTH (by days), click drills down to a specific DAY
       case "monthly": {
         const day = parseInt(dataPoint.periodLabel, 10);
         if (!isNaN(day)) {
@@ -137,33 +134,27 @@ const Analyses: React.FC = () => {
         }
         break;
       }
-      // No drill-down action for weekly or custom views
       default:
         break;
     }
   };
 
   const handleChartAreaRightClick = (event: React.MouseEvent) => {
-    event.preventDefault(); // Prevents the browser's context menu
-
+    event.preventDefault();
     switch (filters.viewMode) {
-      // If viewing a MONTH or a custom DAY, zoom out to the YEARLY view
       case "custom":
       case "monthly":
         filters.setViewMode("yearly");
         break;
-
-      // If viewing a YEAR, zoom out to the ALL years view
       case "yearly":
         filters.setViewMode("all");
         break;
-
-      // No zoom-out action for 'all' or 'weekly' views
       default:
         break;
     }
   };
 
+  // <-- CHANGED: The logic is updated to create a filter OBJECT
   const handleBarChartMiddleClick = (
     dataPoint: { [key: string]: any },
     event: React.MouseEvent,
@@ -173,6 +164,7 @@ const Analyses: React.FC = () => {
     let startDate: Date | null = null;
     let endDate: Date | null = null;
     const year = filters.currentYear;
+    let modalTitle = `Сигнали за ${dataPoint.periodLabel}`;
 
     switch (filters.viewMode) {
       case "all": {
@@ -187,7 +179,8 @@ const Analyses: React.FC = () => {
         const monthIndex = MONTH_NAMES.indexOf(dataPoint.periodLabel);
         if (monthIndex > -1) {
           startDate = new Date(year, monthIndex, 1);
-          endDate = new Date(year, monthIndex + 1, 0); // Day 0 of next month is last day of current
+          endDate = new Date(year, monthIndex + 1, 0);
+          modalTitle = `Сигнали за ${dataPoint.periodLabel} ${year}`;
         }
         break;
       }
@@ -196,6 +189,7 @@ const Analyses: React.FC = () => {
         if (!isNaN(day)) {
           startDate = new Date(year, filters.currentMonth - 1, day);
           endDate = new Date(year, filters.currentMonth - 1, day);
+          modalTitle = `Сигнали за ${startDate.toLocaleDateString("bg-BG")}`;
         }
         break;
       }
@@ -208,41 +202,40 @@ const Analyses: React.FC = () => {
           clickedDate.setDate(clickedDate.getDate() + dayIndex);
           startDate = clickedDate;
           endDate = clickedDate;
+          modalTitle = `Сигнали за ${startDate.toLocaleDateString("bg-BG")}`;
         }
         break;
       }
       case "custom": {
-        // For custom view, use the entire selected range
         startDate = filters.startDateForPies;
         endDate = filters.endDateForPies;
+        modalTitle = "Сигнали за избран период";
         break;
       }
     }
 
     if (startDate && endDate) {
-      const format = "DD-MM-YYYY";
-      const formattedStart = moment(startDate).format(format);
-      const formattedEnd = moment(endDate).format(format);
+      const initialFilters: CaseFilters = { startDate, endDate };
 
-      let extraParams = "";
       if (seriesKey && barChartStyle === "grouped") {
-        // Only apply for grouped charts
         if (filters.barChartMode === "priority") {
-          if (seriesKey === "highPriority") extraParams = "&priority=HIGH";
-          if (seriesKey === "mediumPriority") extraParams = "&priority=MEDIUM";
-          if (seriesKey === "lowPriority") extraParams = "&priority=LOW";
+          if (seriesKey === "highPriority")
+            initialFilters.priority = CasePriority.High;
+          if (seriesKey === "mediumPriority")
+            initialFilters.priority = CasePriority.Medium;
+          if (seriesKey === "lowPriority")
+            initialFilters.priority = CasePriority.Low;
         } else if (filters.barChartMode === "type") {
-          if (seriesKey === "problems") extraParams = "&type=PROBLEM";
-          if (seriesKey === "suggestions") extraParams = "&type=SUGGESTION";
+          if (seriesKey === "problems") initialFilters.type = CaseType.Problem;
+          if (seriesKey === "suggestions")
+            initialFilters.type = CaseType.Suggestion;
         }
       }
 
-      const url = `/dashboard?startDate=${formattedStart}&endDate=${formattedEnd}${extraParams}`;
-      window.open(url, "_blank");
+      setModalData({ initialFilters, title: modalTitle });
     }
   };
 
-  // First, handle terminal states: error or no data after loading is complete.
   if (analyticsDataError) {
     return (
       <div className="p-2 md:p-5 bg-gray-100 min-h-full">
@@ -254,7 +247,6 @@ const Analyses: React.FC = () => {
     );
   }
 
-  // --- Render Loading/Error/Empty States ---
   if (!analyticsDataLoading && (!allCases || allCases.length === 0)) {
     return (
       <div className="p-2 md:p-5 bg-gray-100 min-h-full">
@@ -267,7 +259,6 @@ const Analyses: React.FC = () => {
     );
   }
 
-  // --- Main Render ---
   return (
     <>
       <div className="p-2 md:p-5 bg-gray-100 min-h-full space-y-5">
@@ -282,10 +273,8 @@ const Analyses: React.FC = () => {
             />
           )}
         </div>
-
         <div className="bg-white rounded-lg shadow-md">
           {analyticsDataLoading ? (
-            // Use the new, detailed BarChartSkeleton here
             <BarChartSkeleton />
           ) : (
             <BarChart
@@ -529,6 +518,14 @@ const Analyses: React.FC = () => {
         onClose={() => setPodiumState(null)}
         title={podiumState?.title || ""}
         users={podiumState?.users || []}
+      />
+
+      {/* <-- CHANGED: Pass the filter object to the modal --> */}
+      <CaseViewerModal
+        isOpen={!!modalData}
+        onClose={() => setModalData(null)}
+        initialFilters={modalData?.initialFilters || {}}
+        title={modalData?.title || ""}
       />
     </>
   );

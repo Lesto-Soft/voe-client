@@ -16,7 +16,6 @@ interface BarChartProps {
   dataKeyX: string;
   series: BarSeriesConfig[];
   title: string;
-  // --- NEW: Add prop for rendering style ---
   barStyle?: "grouped" | "stacked";
   onBarClick?: (dataPoint: BarDataPoint) => void;
   onChartAreaRightClick?: (event: React.MouseEvent) => void;
@@ -39,7 +38,6 @@ const BarChart: React.FC<BarChartProps> = ({
   dataKeyX,
   series,
   title,
-  // --- NEW: Default to 'grouped' for backward compatibility ---
   barStyle = "grouped",
   onBarClick,
   onChartAreaRightClick,
@@ -51,6 +49,10 @@ const BarChart: React.FC<BarChartProps> = ({
     y: 0,
     contentHtml: null,
   });
+  const [hoverOverlay, setHoverOverlay] = useState<{
+    x: number;
+    width: number;
+  } | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [svgContainerWidth, setSvgContainerWidth] = useState(0);
@@ -80,10 +82,14 @@ const BarChart: React.FC<BarChartProps> = ({
     }
   }, []);
 
+  useEffect(() => {
+    setHoverOverlay(null);
+    hideTooltip();
+  }, [data, title]);
+
   const plotWidth = Math.max(0, svgContainerWidth - marginLeft - marginRight);
   const plotHeight = Math.max(0, chartHeight - marginTop - marginBottom);
 
-  // --- MODIFIED: Calculate maxValue based on barStyle ---
   const maxValue =
     barStyle === "stacked"
       ? Math.max(
@@ -96,18 +102,15 @@ const BarChart: React.FC<BarChartProps> = ({
           1,
           ...data.map((d) => Math.max(...series.map((s) => d[s.dataKey] || 0)))
         );
-  // --------------------------------------------------------
 
   const numDataPoints = data.length;
   const numBarsInGroup = series.length;
 
-  // --- Bar width calculations (adjusted slightly for clarity) ---
   const groupAvailableWidth =
     plotWidth > 0 && numDataPoints > 0 ? plotWidth / numDataPoints : 0;
   const groupPaddingRatio = 0.2;
   const barAreaWidth = groupAvailableWidth * (1 - groupPaddingRatio);
 
-  // Grouped Style Calculations
   const individualBarPadding =
     numBarsInGroup > 1 ? Math.max(1, barAreaWidth * 0.05) : 0;
   const groupedBarWidth =
@@ -119,7 +122,6 @@ const BarChart: React.FC<BarChartProps> = ({
         )
       : 0;
 
-  // Stacked Style Calculation (it's simpler, one bar per group)
   const stackedBarWidth = Math.max(1, barAreaWidth);
 
   let yTickValues: number[] = [];
@@ -165,6 +167,13 @@ const BarChart: React.FC<BarChartProps> = ({
   };
 
   const handleBarMouseEnter = (event: React.MouseEvent, item: BarDataPoint) => {
+    const totalValue = series.reduce(
+      (sum, s) => sum + (item[s.dataKey] || 0),
+      0
+    );
+    if (totalValue === 0) {
+      return;
+    }
     if (!svgRef.current || !containerRef.current) return;
     const containerRect = containerRef.current.getBoundingClientRect();
 
@@ -185,6 +194,11 @@ const BarChart: React.FC<BarChartProps> = ({
     });
   };
 
+  const handleGroupMouseLeave = () => {
+    hideTooltip();
+    setHoverOverlay(null);
+  };
+
   return (
     <div
       ref={containerRef}
@@ -193,9 +207,6 @@ const BarChart: React.FC<BarChartProps> = ({
       <style>{`
         .bar-chart-tooltip { position: absolute; background-color: rgba(30, 30, 30, 0.92); color: white; padding: 8px 12px; border-radius: 5px; font-size: 12px; line-height: 1.5; pointer-events: none; z-index: 1000; box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2); white-space: nowrap; opacity: 0; transform: translate(-50%, calc(-100% - 12px)); transition: opacity 0.1s ease-out, transform 0.1s ease-out; }
         .bar-chart-tooltip.visible { opacity: 1; transform: translate(-50%, calc(-100% - 18px)); }
-        .bar-group, .bar-stack {
-          cursor: ${onBarClick ? "pointer" : "default"}; // <-- ADD THIS STYLE
-        }
       `}</style>
       <p className="text-sm font-semibold mb-1 text-center text-gray-700">
         {title ? title : "Няма дефиниран период"}
@@ -226,13 +237,12 @@ const BarChart: React.FC<BarChartProps> = ({
               width={svgContainerWidth > 0 ? svgContainerWidth : 300}
               height={chartHeight}
               onMouseMove={handleMouseMove}
-              onMouseLeave={hideTooltip}
+              onMouseLeave={handleGroupMouseLeave}
               onContextMenu={(e) =>
                 onChartAreaRightClick && onChartAreaRightClick(e)
               }
             >
               <g transform={`translate(${marginLeft}, ${marginTop})`}>
-                {/* Y-axis Ticks and Grid Lines (remain the same) */}
                 {yTicks.map((tick) => (
                   <g key={`y-tick-${tick.value}-${tick.yPos}`}>
                     <line
@@ -255,25 +265,20 @@ const BarChart: React.FC<BarChartProps> = ({
                   </g>
                 ))}
 
-                {/* Vertical Separator Lines */}
                 {plotWidth > 0 &&
                   numDataPoints > 1 &&
-                  Array.from({ length: numDataPoints - 1 }).map((_, i) => {
-                    const xPosition = (i + 1) * groupAvailableWidth;
-                    return (
-                      <line
-                        key={`v-sep-${i}`}
-                        x1={xPosition}
-                        y1={0}
-                        x2={xPosition}
-                        y2={plotHeight}
-                        stroke="#e0e0e0"
-                        strokeWidth="1"
-                      />
-                    );
-                  })}
+                  Array.from({ length: numDataPoints - 1 }).map((_, i) => (
+                    <line
+                      key={`v-sep-${i}`}
+                      x1={(i + 1) * groupAvailableWidth}
+                      y1={0}
+                      x2={(i + 1) * groupAvailableWidth}
+                      y2={plotHeight}
+                      stroke="#e0e0e0"
+                      strokeWidth="1"
+                    />
+                  ))}
 
-                {/* X-axis Line */}
                 <line
                   x1={0}
                   y1={plotHeight}
@@ -282,7 +287,18 @@ const BarChart: React.FC<BarChartProps> = ({
                   stroke="gray"
                 />
 
-                {/* --- MODIFIED: Conditional Rendering for Bars --- */}
+                {hoverOverlay && (
+                  <rect
+                    x={hoverOverlay.x}
+                    y={0}
+                    width={hoverOverlay.width}
+                    height={plotHeight}
+                    fill="gray"
+                    opacity="0.1"
+                    style={{ pointerEvents: "none" }}
+                  />
+                )}
+
                 {plotWidth > 0 &&
                   numDataPoints > 0 &&
                   data.map((item, groupIndex) => {
@@ -291,108 +307,124 @@ const BarChart: React.FC<BarChartProps> = ({
                       groupXStartOuter +
                       (groupAvailableWidth * groupPaddingRatio) / 2;
 
-                    // --- STACKED BAR RENDERING LOGIC ---
-                    if (barStyle === "stacked") {
-                      let cumulativeHeight = 0; // Track height for stacking
-                      return (
-                        <g
-                          key={`stack-group-${groupIndex}`}
-                          className="bar-stack"
-                          onMouseEnter={(e) => handleBarMouseEnter(e, item)}
-                          onMouseLeave={hideTooltip}
-                          onClick={() => onBarClick && onBarClick(item)}
-                          onMouseDown={(e) => {
-                            if (e.button === 1) {
-                              // Check for middle mouse button
-                              onBarMiddleClick?.(item, e);
-                            }
-                          }}
-                        >
-                          {series.map((s) => {
-                            const val = item[s.dataKey] || 0;
-                            if (val === 0) return null;
-
-                            const barHeight =
-                              maxValue > 0
-                                ? Math.max(0, (val / maxValue) * plotHeight)
-                                : 0;
-                            const barY =
-                              plotHeight - barHeight - cumulativeHeight;
-                            cumulativeHeight += barHeight; // Add to stack
-
-                            return (
-                              <rect
-                                key={s.dataKey}
-                                x={groupContentXStart}
-                                y={barY}
-                                width={
-                                  stackedBarWidth > 0 ? stackedBarWidth : 0
-                                }
-                                height={barHeight}
-                                fill={s.color}
-                                className="cursor-pointer transition-opacity hover:opacity-80"
-                              />
-                            );
-                          })}
-                          <text
-                            x={groupXStartOuter + groupAvailableWidth / 2}
-                            y={plotHeight + 25}
-                            fontSize="18px"
-                            fontWeight="normal"
-                            textAnchor="middle"
-                            fill="#555555"
-                          >
-                            {item[dataKeyX]}
-                          </text>
-                        </g>
-                      );
-                    }
-
-                    // --- GROUPED BAR RENDERING LOGIC (Original) ---
                     return (
-                      <g
-                        key={`group-${groupIndex}-${item[dataKeyX]}`}
-                        className="bar-group"
-                        onMouseEnter={(e) => handleBarMouseEnter(e, item)}
-                        onMouseLeave={hideTooltip}
-                        onClick={() => onBarClick && onBarClick(item)}
-                        onMouseDown={(e) => {
-                          // This now acts as a FALLBACK
-                          if (e.button === 1) {
-                            // Check for middle mouse button
-                            onBarMiddleClick?.(item, e); // Called with NO seriesKey
-                          }
-                        }}
-                      >
-                        {series.map((s, barIndex) => {
-                          const val = item[s.dataKey] || 0;
-                          const barHeight =
-                            maxValue > 0
-                              ? Math.max(0, (val / maxValue) * plotHeight)
-                              : 0;
-                          const barX =
-                            groupContentXStart +
-                            barIndex * (groupedBarWidth + individualBarPadding);
+                      <g key={`group-${groupIndex}-${item[dataKeyX]}`}>
+                        <g style={{ pointerEvents: "none" }}>
+                          {barStyle === "stacked"
+                            ? (() => {
+                                let cumulativeHeight = 0;
+                                return series.map((s) => {
+                                  const val = item[s.dataKey] || 0;
+                                  if (val === 0) return null;
+                                  const barHeight =
+                                    maxValue > 0
+                                      ? (val / maxValue) * plotHeight
+                                      : 0;
+                                  const barY =
+                                    plotHeight - barHeight - cumulativeHeight;
+                                  cumulativeHeight += barHeight;
+                                  return (
+                                    <rect
+                                      key={s.dataKey}
+                                      x={groupContentXStart}
+                                      y={barY}
+                                      width={stackedBarWidth}
+                                      height={barHeight}
+                                      fill={s.color}
+                                    />
+                                  );
+                                });
+                              })()
+                            : series.map((s, barIndex) => {
+                                const val = item[s.dataKey] || 0;
+                                const barHeight =
+                                  maxValue > 0
+                                    ? (val / maxValue) * plotHeight
+                                    : 0;
+                                const barX =
+                                  groupContentXStart +
+                                  barIndex *
+                                    (groupedBarWidth + individualBarPadding);
+                                return (
+                                  <rect
+                                    key={s.dataKey}
+                                    x={barX}
+                                    y={plotHeight - barHeight}
+                                    width={groupedBarWidth}
+                                    height={barHeight}
+                                    fill={s.color}
+                                  />
+                                );
+                              })}
+                        </g>
 
-                          return (
+                        {barStyle === "stacked" ? (
+                          <rect
+                            x={groupXStartOuter}
+                            y={0}
+                            width={groupAvailableWidth}
+                            height={plotHeight}
+                            fill="transparent"
+                            className="cursor-pointer"
+                            onMouseEnter={(e) => {
+                              handleBarMouseEnter(e, item);
+                              setHoverOverlay({
+                                x: groupXStartOuter,
+                                width: groupAvailableWidth,
+                              });
+                            }}
+                            onMouseLeave={handleGroupMouseLeave}
+                            onClick={() => onBarClick && onBarClick(item)}
+                            onMouseDown={(e) => {
+                              if (e.button === 1) onBarMiddleClick?.(item, e);
+                            }}
+                          />
+                        ) : (
+                          <>
                             <rect
-                              key={s.dataKey}
-                              x={barX}
-                              y={plotHeight - barHeight}
-                              width={groupedBarWidth > 0 ? groupedBarWidth : 0}
-                              height={barHeight}
-                              fill={s.color}
-                              className="cursor-pointer transition-opacity hover:opacity-80"
-                              onMouseDown={(e) => {
-                                // This is the PRIMARY handler for individual bars
-                                if (e.button === 1) {
-                                  e.stopPropagation(); // Stop event from bubbling to the parent <g>
-                                  onBarMiddleClick?.(item, e, s.dataKey); // Called WITH seriesKey
-                                }
-                              }}
+                              x={groupXStartOuter}
+                              y={0}
+                              width={groupAvailableWidth}
+                              height={plotHeight}
+                              fill="transparent"
+                              className="cursor-pointer"
+                              onClick={() => onBarClick && onBarClick(item)}
                             />
-                          );
-                        })}
+                            {series.map((s, barIndex) => {
+                              const barX =
+                                groupContentXStart +
+                                barIndex *
+                                  (groupedBarWidth + individualBarPadding);
+                              return (
+                                <rect
+                                  key={`hitbox-${s.dataKey}`}
+                                  x={barX}
+                                  y={0}
+                                  width={groupedBarWidth}
+                                  height={plotHeight}
+                                  fill="transparent"
+                                  className="cursor-pointer"
+                                  onMouseEnter={(e) => {
+                                    handleBarMouseEnter(e, item);
+                                    setHoverOverlay({
+                                      x: barX,
+                                      width: groupedBarWidth,
+                                    });
+                                  }}
+                                  onMouseLeave={handleGroupMouseLeave}
+                                  onClick={() => onBarClick && onBarClick(item)}
+                                  onMouseDown={(e) => {
+                                    if (e.button === 1) {
+                                      e.stopPropagation();
+                                      onBarMiddleClick?.(item, e, s.dataKey);
+                                    }
+                                  }}
+                                />
+                              );
+                            })}
+                          </>
+                        )}
+
                         <text
                           x={groupXStartOuter + groupAvailableWidth / 2}
                           y={plotHeight + 25}

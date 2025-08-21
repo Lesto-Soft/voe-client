@@ -266,17 +266,22 @@ export const useProcessedAnalyticsData = (
   const categoryPieData = useMemo(() => {
     if (!filteredCasesForPieCharts || filteredCasesForPieCharts.length === 0)
       return [];
-    const counts: { [key: string]: number } = {};
+    // Store the count and the ID
+    const counts: { [key: string]: { value: number; id: string } } = {};
     filteredCasesForPieCharts.forEach((c: ICase) => {
       (c.categories || []).forEach((cat: ICategory) => {
-        counts[cat.name] = (counts[cat.name] || 0) + 1;
+        if (!counts[cat.name]) {
+          counts[cat.name] = { value: 0, id: cat._id };
+        }
+        counts[cat.name].value++;
       });
     });
     return Object.entries(counts)
-      .sort(([, aValue], [, bValue]) => bValue - aValue)
-      .map(([label, value], index) => ({
+      .sort(([, aData], [, bData]) => bData.value - aData.value)
+      .map(([label, data], index) => ({
         label,
-        value,
+        value: data.value,
+        id: data.id,
         color: CATEGORY_COLORS[index % CATEGORY_COLORS.length],
       }));
   }, [filteredCasesForPieCharts]);

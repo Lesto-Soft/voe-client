@@ -4,13 +4,19 @@ export interface PieSegmentData {
   label: string;
   value: number;
   color: string;
+  id?: string;
 }
 
 interface PieChartProps {
   data: PieSegmentData[];
-  size?: number; // ViewBox size, e.g., 100
-  strokeWidth?: number; // For creating a doughnut chart effect if desired
-  strokeColor?: string; // Color for the stroke (e.g., background color for doughnut)
+  size?: number;
+  strokeWidth?: number;
+  strokeColor?: string;
+  onSegmentClick?: (segment: PieSegmentData) => void;
+  onSegmentMiddleClick?: (
+    segment: PieSegmentData,
+    event: React.MouseEvent
+  ) => void;
 }
 
 interface TooltipData {
@@ -27,6 +33,8 @@ const PieChart: React.FC<PieChartProps> = ({
   size = 100,
   strokeWidth = 0,
   strokeColor = "#fff",
+  onSegmentClick,
+  onSegmentMiddleClick,
 }) => {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [animationKey, setAnimationKey] = useState(0);
@@ -236,6 +244,14 @@ const PieChart: React.FC<PieChartProps> = ({
               }
               onMouseMove={handleSegmentMouseMove}
               onMouseLeave={handleSegmentMouseLeave}
+              onClick={() => onSegmentClick && onSegmentClick(segment)}
+              onMouseDown={(e) => {
+                // Only enter this block if it's a middle-click AND the handler prop exists
+                if (e.button === 1 && onSegmentMiddleClick) {
+                  e.preventDefault(); // Now it's only called when we have a custom action
+                  onSegmentMiddleClick(segment, e);
+                }
+              }}
             />
           </g>
         );

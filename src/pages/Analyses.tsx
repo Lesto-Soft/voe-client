@@ -28,6 +28,8 @@ import {
 import { RankedUser } from "../components/features/analyses/types";
 import { getStartAndEndOfWeek } from "../utils/dateUtils";
 import { ICase, IMe, CasePriority, CaseType } from "../db/interfaces"; // Import IMe
+import { PieSegmentData } from "../components/charts/PieChart";
+import { PRIORITY_TRANSLATIONS } from "../components/features/analyses/constants";
 
 // Define the shape of the filters object for clarity
 type CaseFilters = {
@@ -35,6 +37,7 @@ type CaseFilters = {
   type?: ICase["type"] | "";
   startDate?: Date | null;
   endDate?: Date | null;
+  categoryIds?: string[];
 };
 
 const Analyses: React.FC = () => {
@@ -236,6 +239,49 @@ const Analyses: React.FC = () => {
     }
   };
 
+  const handlePieChartMiddleClick = (
+    filter: Partial<CaseFilters>,
+    title: string
+  ) => {
+    const initialFilters: CaseFilters = {
+      startDate: filters.startDateForPies,
+      endDate: filters.endDateForPies,
+      ...filter,
+    };
+    setModalData({ initialFilters, title });
+  };
+
+  const handlePriorityPieMiddleClick = (segment: PieSegmentData) => {
+    let priority: CasePriority | undefined;
+    if (segment.label === PRIORITY_TRANSLATIONS.HIGH)
+      priority = CasePriority.High;
+    if (segment.label === PRIORITY_TRANSLATIONS.MEDIUM)
+      priority = CasePriority.Medium;
+    if (segment.label === PRIORITY_TRANSLATIONS.LOW)
+      priority = CasePriority.Low;
+    if (priority) {
+      const title = `Сигнали с "${segment.label}" приоритет`;
+      handlePieChartMiddleClick({ priority }, title);
+    }
+  };
+
+  const handleTypePieMiddleClick = (segment: PieSegmentData) => {
+    let type: CaseType | undefined;
+    if (segment.label === "Проблеми") type = CaseType.Problem;
+    if (segment.label === "Предложения") type = CaseType.Suggestion;
+    if (type) {
+      const title = `Сигнали от тип "${segment.label}"`;
+      handlePieChartMiddleClick({ type }, title);
+    }
+  };
+
+  const handleCategoryPieMiddleClick = (segment: PieSegmentData) => {
+    if (segment.id) {
+      const title = `Сигнали от категория "${segment.label}"`;
+      handlePieChartMiddleClick({ categoryIds: [segment.id] }, title);
+    }
+  };
+
   if (analyticsDataError) {
     return (
       <div className="p-2 md:p-5 bg-gray-100 min-h-full">
@@ -431,10 +477,22 @@ const Analyses: React.FC = () => {
                       ? priorityPieData
                       : typePieData
                   }
+                  onSegmentMiddleClick={
+                    isAdmin
+                      ? filters.barChartMode === "type"
+                        ? (segment) => handlePriorityPieMiddleClick(segment)
+                        : (segment) => handleTypePieMiddleClick(segment)
+                      : undefined
+                  }
                 />
                 <DistributionChartCard
                   title="Разпределение по категории"
                   pieData={categoryPieData}
+                  onSegmentMiddleClick={
+                    isAdmin
+                      ? (segment) => handleCategoryPieMiddleClick(segment)
+                      : undefined
+                  }
                 />
                 <SummaryCard
                   title="Среден рейтинг на сигнал"

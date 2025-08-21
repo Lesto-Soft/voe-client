@@ -157,7 +157,6 @@ const UserForm: React.FC<UserFormProps> = ({
     const oldRoleIsPrivileged = canManageCategories;
     const newRoleIsPrivileged =
       newRoleId === ROLES.ADMIN || newRoleId === ROLES.EXPERT;
-
     if (!oldRoleIsPrivileged && newRoleIsPrivileged) {
       setExpertCategoryIds(initialExpertCategories);
       setManagedCategoryIds(initialManagedCategories);

@@ -149,7 +149,9 @@ export interface INotification {
   date: string;
   userId: string;
   caseId: string;
-  caseNumber: number;
+  caseNumber?: number;
+  username?: string;
+  new_categories?: string[];
 }
 
 export enum ICaseStatus {

@@ -218,8 +218,8 @@ const BarChart: React.FC<BarChartProps> = ({
             </li>
             {onBarMiddleClick && (
               <li>
-                <strong className="font-semibold">Среден клик:</strong>{" "}
-                Прегледай конкретните сигнали
+                <strong className="font-semibold">Среден клик:</strong> Преглед
+                на конкретните сигнали
               </li>
             )}
           </ul>

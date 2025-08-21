@@ -167,6 +167,8 @@ const Analyses: React.FC = () => {
     let startDate: Date | null = null;
     let endDate: Date | null = null;
     const year = filters.currentYear;
+
+    // Default title
     let modalTitle = `Сигнали за ${dataPoint.periodLabel}`;
 
     switch (filters.viewMode) {
@@ -220,18 +222,35 @@ const Analyses: React.FC = () => {
     if (startDate && endDate) {
       const initialFilters: CaseFilters = { startDate, endDate };
 
+      // Refine modal title and filters if a specific series was clicked
       if (seriesKey && barChartStyle === "grouped") {
         if (filters.barChartMode === "priority") {
-          if (seriesKey === "highPriority")
+          let priorityLabel = "";
+          if (seriesKey === "highPriority") {
+            priorityLabel = PRIORITY_TRANSLATIONS.HIGH;
             initialFilters.priority = CasePriority.High;
-          if (seriesKey === "mediumPriority")
+          }
+          if (seriesKey === "mediumPriority") {
+            priorityLabel = PRIORITY_TRANSLATIONS.MEDIUM;
             initialFilters.priority = CasePriority.Medium;
-          if (seriesKey === "lowPriority")
+          }
+          if (seriesKey === "lowPriority") {
+            priorityLabel = PRIORITY_TRANSLATIONS.LOW;
             initialFilters.priority = CasePriority.Low;
+          }
+          const preposition = priorityLabel.startsWith("С") ? "със" : "с";
+          modalTitle = `Сигнали ${preposition} "${priorityLabel}" приоритет за ${dataPoint.periodLabel}`;
         } else if (filters.barChartMode === "type") {
-          if (seriesKey === "problems") initialFilters.type = CaseType.Problem;
-          if (seriesKey === "suggestions")
+          let typeLabel = "";
+          if (seriesKey === "problems") {
+            typeLabel = "Проблеми";
+            initialFilters.type = CaseType.Problem;
+          }
+          if (seriesKey === "suggestions") {
+            typeLabel = "Предложения";
             initialFilters.type = CaseType.Suggestion;
+          }
+          modalTitle = `${typeLabel} за ${dataPoint.periodLabel}`;
         }
       }
 
@@ -260,7 +279,8 @@ const Analyses: React.FC = () => {
     if (segment.label === PRIORITY_TRANSLATIONS.LOW)
       priority = CasePriority.Low;
     if (priority) {
-      const title = `Сигнали с "${segment.label}" приоритет`;
+      const preposition = segment.label.startsWith("С") ? "със" : "с";
+      const title = `Сигнали ${preposition} "${segment.label}" приоритет`;
       handlePieChartMiddleClick({ priority }, title);
     }
   };

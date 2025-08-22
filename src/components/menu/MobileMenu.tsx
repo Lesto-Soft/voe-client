@@ -2,11 +2,11 @@ import React from "react";
 import { Link, useLocation } from "react-router";
 import {
   ClipboardDocumentListIcon,
-  ChartPieIcon,
+  // ChartPieIcon,
   UsersIcon,
   TagIcon,
-  StarIcon,
-  UserIcon,
+  // StarIcon,
+  // UserIcon,
   ArrowRightCircleIcon,
 } from "@heroicons/react/24/solid";
 import { useTranslation } from "react-i18next";
@@ -92,13 +92,13 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
               onClick={onLinkClick}
               adminOnly={true}
             />
-            <MobileNavLink
+            {/* <MobileNavLink
               to="/rating-management"
               icon={<StarIcon className="h-6 w-6" />}
               label={t("ratings")}
               onClick={onLinkClick}
               adminOnly={true}
-            />
+            /> */}
           </>
         )}
         <MobileNavLink
@@ -107,18 +107,18 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
           label={t("dashboard")}
           onClick={onLinkClick}
         />
-        <MobileNavLink
+        {/* <MobileNavLink
           to="/analyses"
           icon={<ChartPieIcon className="h-6 w-6" />}
           label={t("analyses")}
           onClick={onLinkClick}
-        />
-        <MobileNavLink
+        /> */}
+        {/* <MobileNavLink
           to={`/user/${me.username}`}
           icon={<UserIcon className="h-6 w-6" />} // Add icon if desired
           label={t("profile")}
           onClick={onLinkClick}
-        />
+        /> */}
         <button
           onClick={() => {
             handleSignOut();

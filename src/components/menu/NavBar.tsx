@@ -3,17 +3,17 @@ import { useLocation } from "react-router";
 import { Link } from "react-router";
 import {
   ClipboardDocumentListIcon,
-  ChartPieIcon,
+  // ChartPieIcon,
   UsersIcon,
   TagIcon,
   Bars3Icon,
   XMarkIcon,
-  UserIcon,
+  // UserIcon,
   ArrowRightCircleIcon,
   ChevronDownIcon,
   LightBulbIcon,
   ExclamationTriangleIcon,
-  StarIcon,
+  // StarIcon,
   WrenchScrewdriverIcon,
 } from "@heroicons/react/24/solid";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
@@ -27,7 +27,7 @@ import { capitalizeFirstLetter } from "../../utils/stringUtils";
 import { useGetActiveCategories } from "../../graphql/hooks/category";
 import CaseDialog from "../modals/CaseDialog";
 import UserAvatar from "../cards/UserAvatar";
-import NotificationCenter from "../notification/NotificationCenter";
+// import NotificationCenter from "../notification/NotificationCenter";
 
 export interface NavLinkProps {
   to: string;
@@ -268,7 +268,7 @@ const NavBar: React.FC<{ me: IMe }> = ({ me }) => {
                         theme="blue"
                       />
                     </DropdownMenu.Item>
-                    <DropdownMenu.Item asChild className="focus:outline-none">
+                    {/* <DropdownMenu.Item asChild className="focus:outline-none">
                       <NavLink
                         to="/rating-management"
                         dropdown={true}
@@ -277,7 +277,7 @@ const NavBar: React.FC<{ me: IMe }> = ({ me }) => {
                         onClick={() => setIsMgmtDropdownOpen(false)}
                         theme="blue"
                       />
-                    </DropdownMenu.Item>
+                    </DropdownMenu.Item> */}
                   </DropdownMenu.Content>
                 </DropdownMenu.Portal>
               </DropdownMenu.Root>
@@ -290,12 +290,12 @@ const NavBar: React.FC<{ me: IMe }> = ({ me }) => {
               theme="red"
             />
 
-            <NavLink
+            {/* <NavLink
               to="/analyses"
               icon={<ChartPieIcon className="h-6 w-6" />}
               label={t("analyses")}
               theme="red"
-            />
+            /> */}
 
             <div className="relative">
               <DropdownMenu.Root
@@ -357,7 +357,7 @@ const NavBar: React.FC<{ me: IMe }> = ({ me }) => {
                       </div>
                     </DropdownMenu.Item>
                     <DropdownMenu.Separator className="h-px bg-gray-200 my-2" />
-                    <DropdownMenu.Item asChild className="focus:outline-none">
+                    {/* <DropdownMenu.Item asChild className="focus:outline-none">
                       <NavLink
                         to={`/user/${me.username}`}
                         dropdown={true}
@@ -366,7 +366,7 @@ const NavBar: React.FC<{ me: IMe }> = ({ me }) => {
                         onClick={() => setIsUserDropdownOpen(false)}
                         theme="red"
                       />
-                    </DropdownMenu.Item>
+                    </DropdownMenu.Item> */}
                     <DropdownMenu.Item asChild className="focus:outline-none">
                       <button
                         onClick={handleSignOut}
@@ -383,7 +383,7 @@ const NavBar: React.FC<{ me: IMe }> = ({ me }) => {
           </div>
 
           {/* This NotificationCenter is now rendered once on all screen sizes */}
-          <NotificationCenter userId={me._id} />
+          {/* <NotificationCenter userId={me._id} /> */}
 
           {/* This hamburger button is now only visible on mobile */}
           <div className="md:hidden">

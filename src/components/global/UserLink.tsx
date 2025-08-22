@@ -1,5 +1,5 @@
 // src/components/global/UserLink.tsx
-import { Link } from "react-router";
+// import { Link } from "react-router";
 import { IUser } from "../../db/interfaces";
 import { canViewUserProfile } from "../../utils/rightUtils";
 import { useCurrentUser } from "../../context/UserContext"; // 1. Import the hook
@@ -45,13 +45,13 @@ const UserLink: React.FC<UserLinkProps> = ({ user }) => {
 
   if (isAllowed) {
     return (
-      <Link
-        to={`/user/${user.username}`}
+      <div
+        // to={`/user/${user.username}`}
         className={`${baseClasses} hover:bg-purple-200 hover:cursor-pointer`}
         title={title}
       >
         {linkContent}
-      </Link>
+      </div>
     );
   }
 

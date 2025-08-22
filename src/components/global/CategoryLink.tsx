@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+// import { Link } from "react-router";
 import { ICategory } from "../../db/interfaces";
 import { useCurrentUser } from "../../context/UserContext";
 import { canViewCategory } from "../../utils/rightUtils";
@@ -20,15 +20,15 @@ const CategoryLink = (category: ICategory) => {
     : "Нямате права за достъп до тази категория";
 
   if (isAllowed) {
-    const encodedCategoryName = encodeURIComponent(category.name);
+    // const encodedCategoryName = encodeURIComponent(category.name);
     return (
-      <Link
-        to={`/category/${encodedCategoryName}`}
+      <div
+        // to={`/category/${encodedCategoryName}`}
         className={`${baseClasses} cursor-pointer hover:bg-sky-200`}
         title={title}
       >
         {category.name}
-      </Link>
+      </div>
     );
   }
 

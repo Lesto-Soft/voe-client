@@ -136,10 +136,10 @@ const CaseTable: React.FC<ICaseTableProps> = ({
 
   return (
     <div className="flex-1 flex flex-col min-h-0 px-4 sm:px-6 lg:px-8">
-      <div className="flex flex-col shadow-md rounded-lg overflow-hidden bg-white border border-gray-200 overflow-x-auto">
+      <div className="flex-1 min-h-0 overflow-y-auto shadow-md rounded-lg border border-gray-200">
         <table className="min-w-full divide-y divide-gray-200">
           {/* Table Head */}
-          <thead className="bg-gray-500">
+          <thead className="bg-gray-500 sticky top-0 z-10">
             <tr>
               {/* First Header (No separator) */}
               <th
@@ -371,7 +371,7 @@ const CaseTable: React.FC<ICaseTableProps> = ({
                           // --- CONDITIONAL CLASS LOGIC ---
                           className={`absolute w-53 rounded-md shadow-lg bg-white ring-2 ring-gray-100 focus:outline-none z-50 ${
                             isLastRow
-                              ? "right-full mr-2 top-0 origin-right" // MODIFIED: Opens to the left
+                              ? "right-full -top-3 origin-right" // MODIFIED: Opens to the left
                               : "right-1 mt-2 origin-top-right" // Opens downwards (default)
                           }`}
                           role="menu"

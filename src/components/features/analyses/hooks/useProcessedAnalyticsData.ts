@@ -5,7 +5,7 @@ import {
   getDaysInMonth,
   getStartAndEndOfWeek,
 } from "../../../../utils/dateUtils";
-import { BarChartDisplayMode, ViewMode } from "../types"; // TopUserStat is no longer used
+import { BarChartDisplayMode, ViewMode } from "../types";
 import { BarSeriesConfig } from "../../../charts/BarChart";
 import {
   DAY_NAMES_FULL,
@@ -47,17 +47,25 @@ export const useProcessedAnalyticsData = (
 
   const filteredCasesForPieCharts = useMemo(() => {
     if (!allCases) return [];
+    // This handles the main "Всички" (All) tab
     if (isAllTimePies) return allCases;
-    if (!startDateForPies || !endDateForPies) return [];
+
+    // ✅ REVISED: Simplified and corrected filtering logic.
+    // It now correctly handles a single start date, a single end date, or both.
+    // If both dates are null (e.g., "Entire Period" in custom view), it includes all cases.
     return allCases.filter((c: ICase) => {
       const caseDate = new Date(parseInt(c.date));
-      return caseDate >= startDateForPies && caseDate <= endDateForPies;
+      if (startDateForPies && caseDate < startDateForPies) {
+        return false;
+      }
+      if (endDateForPies && caseDate > endDateForPies) {
+        return false;
+      }
+      return true;
     });
   }, [allCases, startDateForPies, endDateForPies, isAllTimePies]);
 
-  // --- The rest of the data processing remains unchanged ---
   const barChartDisplayData = useMemo(() => {
-    // ... no changes here
     if (!allCases || allCases.length === 0) {
       return {
         data: [],
@@ -110,7 +118,6 @@ export const useProcessedAnalyticsData = (
           ).length,
         };
       } else {
-        // 'priority'
         return {
           highPriority: casesToAggregate.filter(
             (c) => c.priority.toUpperCase() === "HIGH"
@@ -197,15 +204,33 @@ export const useProcessedAnalyticsData = (
         );
         return { periodLabel: dayName, ...aggregateCases(dayCases) };
       });
-    } else if (viewMode === "custom" && startDateForPies && endDateForPies) {
-      chartTitle = `Общо по ден от седмицата (${startDateForPies.toLocaleDateString(
-        "bg-BG"
-      )} - ${endDateForPies.toLocaleDateString("bg-BG")}) (${
+    } else if (viewMode === "custom") {
+      let periodString = "Целия период"; // Default for custom view with no dates
+      const startStr = startDateForPies?.toLocaleDateString("bg-BG");
+      const endStr = endDateForPies?.toLocaleDateString("bg-BG");
+
+      if (startStr && endStr) {
+        periodString = `${startStr} - ${endStr}`;
+      } else if (startStr) {
+        periodString = `От ${startStr}`;
+      } else if (endStr) {
+        periodString = `До ${endStr}`;
+      }
+
+      chartTitle = `Общо по ден от седмицата (${periodString}) (${
         barChartMode === "type" ? "по тип" : "по приоритет"
       })`;
+
+      // ✅ REVISED: Simplified and corrected filtering logic for the bar chart.
       const rangeCasesFiltered = allCases.filter((c: ICase) => {
         const d = new Date(parseInt(c.date));
-        return d >= startDateForPies && d <= endDateForPies;
+        if (startDateForPies && d < startDateForPies) {
+          return false;
+        }
+        if (endDateForPies && d > endDateForPies) {
+          return false;
+        }
+        return true;
       });
       dataForChart = DAY_NAMES_FULL.map((name) => {
         const dayCases = rangeCasesFiltered.filter(
@@ -234,27 +259,34 @@ export const useProcessedAnalyticsData = (
     endDateForPies,
   ]);
 
+  // The rest of the hook is omitted as it remains unchanged...
+  // categoryPieData, priorityPieData, etc., will now correctly use the
+  // properly filtered `filteredCasesForPieCharts`.
+
   const categoryPieData = useMemo(() => {
-    // ... no changes here
     if (!filteredCasesForPieCharts || filteredCasesForPieCharts.length === 0)
       return [];
-    const counts: { [key: string]: number } = {};
+    // Store the count and the ID
+    const counts: { [key: string]: { value: number; id: string } } = {};
     filteredCasesForPieCharts.forEach((c: ICase) => {
       (c.categories || []).forEach((cat: ICategory) => {
-        counts[cat.name] = (counts[cat.name] || 0) + 1;
+        if (!counts[cat.name]) {
+          counts[cat.name] = { value: 0, id: cat._id };
+        }
+        counts[cat.name].value++;
       });
     });
     return Object.entries(counts)
-      .sort(([, aValue], [, bValue]) => bValue - aValue)
-      .map(([label, value], index) => ({
+      .sort(([, aData], [, bData]) => bData.value - aData.value)
+      .map(([label, data], index) => ({
         label,
-        value,
+        value: data.value,
+        id: data.id,
         color: CATEGORY_COLORS[index % CATEGORY_COLORS.length],
       }));
   }, [filteredCasesForPieCharts]);
 
   const priorityPieData = useMemo(() => {
-    // ... no changes here
     if (!filteredCasesForPieCharts || filteredCasesForPieCharts.length === 0)
       return [];
     const counts: { [key: string]: number } = { HIGH: 0, MEDIUM: 0, LOW: 0 };
@@ -274,7 +306,6 @@ export const useProcessedAnalyticsData = (
   }, [filteredCasesForPieCharts]);
 
   const typePieData = useMemo(() => {
-    // ... no changes here
     if (!filteredCasesForPieCharts || filteredCasesForPieCharts.length === 0)
       return [];
     const counts: Record<TypeColorKey, number> = { PROBLEM: 0, SUGGESTION: 0 };
@@ -294,7 +325,6 @@ export const useProcessedAnalyticsData = (
   }, [filteredCasesForPieCharts]);
 
   const averageRatingData = useMemo(() => {
-    // ... no changes here
     if (!filteredCasesForPieCharts || filteredCasesForPieCharts.length === 0) {
       return { average: null, count: 0 };
     }
@@ -317,7 +347,6 @@ export const useProcessedAnalyticsData = (
   }, [filteredCasesForPieCharts]);
 
   const periodCaseSummary = useMemo(() => {
-    // ... no changes here
     const totalCases = filteredCasesForPieCharts.length;
     if (barChartMode === "type") {
       const problemCount = filteredCasesForPieCharts.filter(

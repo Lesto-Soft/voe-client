@@ -1,9 +1,11 @@
-import React, { useState, useMemo } from "react"; // Added useMemo to import
+import React, { useState, useMemo } from "react";
 import { useParams } from "react-router";
 import { useGetFullUserByUsername, useUpdateUser } from "../graphql/hooks/user";
 import { useGetRoles } from "../graphql/hooks/role";
 import { IMe } from "../db/interfaces";
 import { UpdateUserInput } from "../graphql/mutation/user";
+// ✅ ADDED: Import our robust date parsing utility.
+import { parseActivityDate } from "../utils/dateUtils";
 
 // Hooks
 import useUserActivityStats from "../hooks/useUserActivityStats";
@@ -32,7 +34,6 @@ const User: React.FC = () => {
     username: string;
   }>();
 
-  // --- State and Other Hooks ---
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [successModalMessage, setSuccessModalMessage] = useState("");
@@ -46,7 +47,6 @@ const User: React.FC = () => {
 
   const currentUser = useCurrentUser() as IMe | undefined;
 
-  // --- GraphQL Hooks ---
   const {
     loading: userLoading,
     error: userError,
@@ -79,53 +79,53 @@ const User: React.FC = () => {
 
   const serverBaseUrl = import.meta.env.VITE_API_URL || "";
 
-  // --- MODIFIED: This calculation now respects the date range ---
   const ratedCasesCount = useMemo(() => {
-    // console.log("Metric Scores: ", user?.metricScores);
     if (!user?.metricScores) return 0;
-    const isInDateRange = (itemDateStr: string) => {
-      if (!dateRange.startDate || !dateRange.endDate) return true;
-      const itemDate = new Date(itemDateStr);
-      return itemDate >= dateRange.startDate && itemDate <= dateRange.endDate;
-    };
-    const filteredScores = user.metricScores.filter((score) =>
-      isInDateRange(score.date)
-    );
+    const { startDate, endDate } = dateRange;
+
+    const filteredScores = user.metricScores.filter((score) => {
+      if (!startDate && !endDate) return true;
+      const itemDate = parseActivityDate(score.date);
+      if (startDate && itemDate < startDate) return false;
+      if (endDate && itemDate > endDate) return false;
+      return true;
+    });
     const ratedCaseIds = new Set(filteredScores.map((score) => score.case._id));
     return ratedCaseIds.size;
-  }, [user, dateRange]);
+  }, [user?.metricScores, dateRange]);
 
-  // --- MODIFIED: Now uses a fallback for legacy data ---
+  // ✅ MODIFIED: Rewrote this entire block with the correct filtering logic.
   const approvalsCount = useMemo(() => {
     if (!user?.approvedAnswers) return 0;
-    const isInDateRange = (dateStr: string) => {
-      if (!dateRange.startDate || !dateRange.endDate) return true;
-      const itemDate = new Date(dateStr);
-      return itemDate >= dateRange.startDate && itemDate <= dateRange.endDate;
-    };
+    const { startDate, endDate } = dateRange;
 
     return user.approvedAnswers.filter((a) => {
       const dateToFilterBy = a.approved_date || a.date;
-      return isInDateRange(dateToFilterBy);
-    }).length;
-  }, [user, dateRange]);
+      if (!startDate && !endDate) return true;
 
-  // --- MODIFIED: Now uses a fallback for legacy data ---
+      const itemDate = parseActivityDate(dateToFilterBy);
+      if (startDate && itemDate < startDate) return false;
+      if (endDate && itemDate > endDate) return false;
+      return true;
+    }).length;
+  }, [user?.approvedAnswers, dateRange]);
+
+  // ✅ MODIFIED: Rewrote this entire block with the correct filtering logic.
   const financesCount = useMemo(() => {
     if (!user?.financialApprovedAnswers) return 0;
-    const isInDateRange = (dateStr: string) => {
-      if (!dateRange.startDate || !dateRange.endDate) return true;
-      const itemDate = new Date(dateStr);
-      return itemDate >= dateRange.startDate && itemDate <= dateRange.endDate;
-    };
+    const { startDate, endDate } = dateRange;
 
     return user.financialApprovedAnswers.filter((a) => {
       const dateToFilterBy = a.financial_approved_date || a.date;
-      return isInDateRange(dateToFilterBy);
-    }).length;
-  }, [user, dateRange]);
+      if (!startDate && !endDate) return true;
 
-  // --- Form Submit Handler ---
+      const itemDate = parseActivityDate(dateToFilterBy);
+      if (startDate && itemDate < startDate) return false;
+      if (endDate && itemDate > endDate) return false;
+      return true;
+    }).length;
+  }, [user?.financialApprovedAnswers, dateRange]);
+
   const handleFormSubmit = async (
     formData: any,
     editingUserId: string | null,
@@ -176,12 +176,6 @@ const User: React.FC = () => {
 
   if (userLoading || authLoading) {
     return <UserPageSkeleton />;
-    // return (
-    //   <PageStatusDisplay
-    //     loading
-    //     message="Зареждане на потребителски данни..."
-    //   />
-    // );
   }
 
   if (userUsernameFromParams === undefined) {
@@ -201,7 +195,6 @@ const User: React.FC = () => {
     return <ForbiddenPage />;
   }
 
-  // --- Logic after all hooks and returns ---
   const activityCounts = {
     cases: userStats?.totalSignals || 0,
     answers: userStats?.totalAnswers || 0,
@@ -292,7 +285,7 @@ const User: React.FC = () => {
             roles={rolesData?.getAllLeanRoles || []}
             rolesLoading={rolesLoading}
             rolesError={rolesError}
-            isAdmin={isAdmin || isManagerForCategory}
+            isAdmin={isAdmin} // || isManagerForCategory}
           />
         )}
       </UserModal>

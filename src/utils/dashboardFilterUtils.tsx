@@ -20,7 +20,6 @@ export const getTypeOptions = (t: TFunction): Option[] => [
 ];
 
 export const getStatusOptions = (t: TFunction): Option[] => [
-  { value: "", label: t("all") },
   { value: "OPEN", label: t("OPEN") },
   { value: "IN_PROGRESS", label: t("IN_PROGRESS") },
   { value: "AWAITING_FINANCE", label: t("AWAITING_FINANCE") },

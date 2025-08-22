@@ -4,13 +4,21 @@ export interface PieSegmentData {
   label: string;
   value: number;
   color: string;
+  id?: string;
 }
 
 interface PieChartProps {
   data: PieSegmentData[];
-  size?: number; // ViewBox size, e.g., 100
-  strokeWidth?: number; // For creating a doughnut chart effect if desired
-  strokeColor?: string; // Color for the stroke (e.g., background color for doughnut)
+  size?: number;
+  strokeWidth?: number;
+  strokeColor?: string;
+  onSegmentClick?: (segment: PieSegmentData) => void;
+  onSegmentMiddleClick?: (
+    segment: PieSegmentData,
+    event: React.MouseEvent
+  ) => void;
+  hoveredLabel: string | null;
+  onHover: (label: string | null) => void;
 }
 
 interface TooltipData {
@@ -27,8 +35,11 @@ const PieChart: React.FC<PieChartProps> = ({
   size = 100,
   strokeWidth = 0,
   strokeColor = "#fff",
+  onSegmentClick,
+  onSegmentMiddleClick,
+  hoveredLabel,
+  onHover,
 }) => {
-  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [animationKey, setAnimationKey] = useState(0);
   const [tooltipData, setTooltipData] = useState<TooltipData>({
     visible: false,
@@ -129,10 +140,9 @@ const PieChart: React.FC<PieChartProps> = ({
   const handleSegmentMouseEnter = (
     event: React.MouseEvent,
     segment: PieSegmentData,
-    percentage: number,
-    index: number
+    percentage: number
   ) => {
-    setHoveredIndex(index);
+    onHover(segment.label);
     if (containerRef.current) {
       const rect = containerRef.current.getBoundingClientRect();
       setTooltipData({
@@ -158,7 +168,7 @@ const PieChart: React.FC<PieChartProps> = ({
   };
 
   const handleSegmentMouseLeave = () => {
-    setHoveredIndex(null);
+    onHover(null);
     setTooltipData((prev) => ({ ...prev, visible: false }));
   };
 
@@ -215,6 +225,7 @@ const PieChart: React.FC<PieChartProps> = ({
         const segmentAnimationDuration = `${animationBaseDuration}s`;
         const segmentAnimationDelay = `${index * animationStagger}s`;
 
+        const isHovered = segment.label === hoveredLabel;
         return (
           <g
             key={`segment-group-${index}-${animationKey}`}
@@ -229,18 +240,26 @@ const PieChart: React.FC<PieChartProps> = ({
               d={pathData}
               fill={segment.color}
               className={`pie-segment-path-interactive ${
-                hoveredIndex === index ? "hovered" : ""
+                isHovered ? "hovered" : ""
               }`}
               onMouseEnter={(e) =>
-                handleSegmentMouseEnter(e, segment, percentage, index)
+                handleSegmentMouseEnter(e, segment, percentage)
               }
-              onMouseMove={handleSegmentMouseMove}
               onMouseLeave={handleSegmentMouseLeave}
+              onMouseMove={handleSegmentMouseMove}
+              onClick={() => onSegmentClick && onSegmentClick(segment)}
+              onMouseDown={(e) => {
+                // Only enter this block if it's a middle-click AND the handler prop exists
+                if (e.button === 1 && onSegmentMiddleClick) {
+                  e.preventDefault(); // Now it's only called when we have a custom action
+                  onSegmentMiddleClick(segment, e);
+                }
+              }}
             />
           </g>
         );
       });
-  }, [data, totalValue, radius, cx, cy, animationKey, hoveredIndex]);
+  }, [data, totalValue, radius, cx, cy, animationKey, hoveredLabel]);
 
   const doughnutHoleRadius = radius - strokeWidth;
 

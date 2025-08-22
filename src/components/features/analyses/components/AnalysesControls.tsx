@@ -143,12 +143,25 @@ const AnalysesControls: React.FC<AnalysesControlsProps> = (props) => {
       } ${startDateForPies.getFullYear()}`;
     } else if (viewMode === "weekly" && startDateForPies) {
       displayedPeriod = `Седмица ${currentWeek}, ${currentYear}${weekDateRangeStr}`;
-    } else if (viewMode === "custom" && startDateForPies && endDateForPies) {
-      displayedPeriod = `${startDateForPies.toLocaleDateString(
-        "bg-BG"
-      )} - ${endDateForPies.toLocaleDateString("bg-BG")}`;
     } else if (viewMode === "custom") {
-      displayedPeriod = "Изберете период";
+      // ✅ UPDATED: This logic now handles single-sided date ranges correctly.
+      // It uses the direct custom props for clarity.
+      const startStr = customStartDate
+        ? customStartDate.toLocaleDateString("bg-BG")
+        : null;
+      const endStr = customEndDate
+        ? customEndDate.toLocaleDateString("bg-BG")
+        : null;
+
+      if (startStr && endStr) {
+        displayedPeriod = `${startStr} - ${endStr}`;
+      } else if (startStr) {
+        displayedPeriod = `От ${startStr}`;
+      } else if (endStr) {
+        displayedPeriod = `До ${endStr}`;
+      } else {
+        displayedPeriod = "Изберете период";
+      }
     }
 
     return (
@@ -215,13 +228,14 @@ const AnalysesControls: React.FC<AnalysesControlsProps> = (props) => {
           />
         )}
 
-        <div
+        {/* we do not need this displayed period for anything other than the total period
+         <div
           className="text-sm text-gray-700 font-medium bg-sky-100 px-2 py-1 rounded whitespace-nowrap overflow-hidden text-ellipsis"
           style={{ maxWidth: "300px" }}
           title={displayedPeriod}
         >
           {displayedPeriod}
-        </div>
+        </div> */}
 
         {renderToggles()}
       </div>

@@ -384,7 +384,7 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
                     return (
                       <span className="inline-flex items-center px-2 py-0.5 rounded-full font-medium text-green-700 bg-green-100 border border-green-200">
                         <HandThumbUpIcon className="h-4 w-4 mr-1" />
-                        Одобрен
+                        Одобрено
                       </span>
                     );
                   }
@@ -398,7 +398,7 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
                     return (
                       <span className="inline-flex items-center px-2 py-0.5 rounded-full font-medium text-red-700 bg-red-100 border border-red-200">
                         <XCircleIcon className="h-4 w-4 mr-1" />
-                        Неодобрен
+                        Неодобрено
                       </span>
                     );
                   }

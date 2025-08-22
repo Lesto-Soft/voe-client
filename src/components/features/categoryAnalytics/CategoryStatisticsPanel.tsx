@@ -12,7 +12,7 @@ import {
   ClockIcon,
   DocumentTextIcon,
 } from "@heroicons/react/24/outline";
-import PieChart, { PieSegmentData } from "../../../components/charts/PieChart"; // Adjust path
+import StatisticPieChart from "../../charts/StatisticPieChart";
 import { SignalStats } from "../../../hooks/useCategorySignalStats"; // Adjust path
 import {
   translateStatus,
@@ -34,82 +34,6 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
   setActiveStatsView,
   isLoading,
 }) => {
-  const renderPieChartWithLegend = (
-    title: string,
-    pieData: PieSegmentData[]
-  ) => {
-    const totalValue = pieData.reduce((sum, item) => sum + item.value, 0);
-
-    if (isLoading) {
-      return (
-        // Keep skeleton as is
-        <div className="animate-pulse">
-          <div className="h-6 bg-gray-200 rounded w-3/4 mb-3"></div>
-          <div className="flex justify-center mb-3">
-            <div className="h-32 w-32 sm:h-36 sm:w-36 bg-gray-200 rounded-full"></div>
-          </div>
-          <div className="space-y-1">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="flex items-center justify-between px-2">
-                <div className="flex items-center w-3/5">
-                  <div className="h-2.5 w-2.5 rounded-full bg-gray-200 mr-2"></div>
-                  <div className="h-3 bg-gray-200 rounded w-full"></div>
-                </div>
-                <div className="h-3 bg-gray-200 rounded w-1/5"></div>
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-    }
-
-    if (!pieData || pieData.length === 0 || totalValue === 0) {
-      return (
-        <div>
-          <h4 className="text-md font-semibold text-gray-700 mb-3">{title}</h4>
-          <p className="text-sm text-gray-500 text-center py-4">
-            Няма данни за диаграмата.
-          </p>
-        </div>
-      );
-    }
-
-    return (
-      <div className="w-full">
-        <h4 className="text-md font-semibold text-gray-700 mb-3">{title}</h4>
-
-        {/* Chart Container: Centers the chart horizontally */}
-        <div className="flex justify-center mb-4">
-          <PieChart data={pieData} size={160} />
-        </div>
-
-        {/* Legend Container */}
-        <div className="w-full">
-          <ul className="text-xs max-h-21 overflow-y-auto custom-scrollbar pr-1">
-            {pieData.map((item) => (
-              <li
-                key={item.label}
-                className="flex items-center justify-between px-1"
-              >
-                <span className="flex items-center" title={item.label}>
-                  <span
-                    className="h-2.5 w-2.5 rounded-full mr-2 flex-shrink-0"
-                    style={{ backgroundColor: item.color }}
-                  />
-                  {/* Using a fixed max-width for the vertical layout */}
-                  <span className="truncate max-w-[200px]">{item.label}:</span>
-                </span>
-                <span className="font-medium whitespace-nowrap">
-                  {item.value} ({((item.value / totalValue) * 100).toFixed(1)}%)
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
-    );
-  };
-
   if (isLoading && !signalStats) {
     // Keep skeleton as is
     return (
@@ -230,10 +154,10 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
                   </strong>
                 </p>
               </div>
-              {renderPieChartWithLegend(
-                "Разпределение по Статус",
-                signalStats.statusPieChartData
-              )}
+              <StatisticPieChart
+                title="Разпределение по Статус"
+                pieData={signalStats.statusPieChartData}
+              />
             </div>
           )}
 
@@ -277,10 +201,10 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
                   </p>
                 )}
               </div>
-              {renderPieChartWithLegend(
-                "Разпределение по Тип",
-                signalStats.typePieChartData
-              )}
+              <StatisticPieChart
+                title="Разпределение по Тип"
+                pieData={signalStats.typePieChartData}
+              />
             </div>
           )}
 
@@ -320,10 +244,10 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
                   </p>
                 )}
               </div>
-              {renderPieChartWithLegend(
-                "Разпределение по Време на Резолюция",
-                signalStats.resolutionPieChartData
-              )}
+              <StatisticPieChart
+                title="Разпределение по Резолюция"
+                pieData={signalStats.resolutionPieChartData}
+              />
             </div>
           )}
         </div>

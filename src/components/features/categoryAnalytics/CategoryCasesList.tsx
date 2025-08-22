@@ -50,8 +50,10 @@ const CategoryCasesList: React.FC<CategoryCasesListProps> = ({
   onDateRangeChange,
 }) => {
   const [isDateFilterVisible, setIsDateFilterVisible] = useState(false);
-  // Check if a date filter is currently applied.
-  const isDateFilterActive = dateRange.startDate !== null;
+
+  // ✅ MODIFIED: Changed from && to || to show active state if at least one date is selected.
+  const isDateFilterActive =
+    dateRange.startDate !== null || dateRange.endDate !== null;
 
   const statusCounts = useMemo(() => {
     const counts: Record<CaseStatusTab, number> = {
@@ -139,7 +141,6 @@ const CategoryCasesList: React.FC<CategoryCasesListProps> = ({
           <button
             onClick={() => setIsDateFilterVisible((prev) => !prev)}
             title="Филтрирай по дата"
-            // UPDATED: className logic to show active state when closed
             className={`hover:cursor-pointer p-2 rounded-md transition-colors duration-150 ml-2 ${
               isDateFilterVisible
                 ? "bg-indigo-100 text-indigo-600" // Style when selector is OPEN

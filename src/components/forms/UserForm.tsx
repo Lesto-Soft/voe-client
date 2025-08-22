@@ -1,3 +1,4 @@
+// src/components/forms/UserForm.tsx
 import React, {
   useState,
   useEffect,
@@ -133,6 +134,7 @@ const UserForm: React.FC<UserFormProps> = ({
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [positionError, setPositionError] = useState<string | null>(null);
   const [submitEmailError, setSubmitEmailError] = useState<string | null>(null);
+  const [roleError, setRoleError] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cropCompletedRef = useRef<boolean>(false);
@@ -165,6 +167,7 @@ const UserForm: React.FC<UserFormProps> = ({
       setManagedCategoryIds([]);
     }
     setRoleId(newRoleId);
+    setRoleError(null);
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -245,6 +248,7 @@ const UserForm: React.FC<UserFormProps> = ({
     setPasswordError(null);
     setPositionError(null);
     setSubmitEmailError(null);
+    setRoleError(null);
 
     let canSubmit = true;
 
@@ -286,7 +290,7 @@ const UserForm: React.FC<UserFormProps> = ({
     }
 
     if (!roleId) {
-      setFormSubmitError("Ролята е задължителна.");
+      setRoleError("Ролята е задължителна.");
       canSubmit = false;
     }
 
@@ -371,7 +375,8 @@ const UserForm: React.FC<UserFormProps> = ({
         !nameError &&
         !passwordError &&
         !positionError &&
-        !submitEmailError
+        !submitEmailError &&
+        !roleError
       ) {
         setFormSubmitError("Моля, коригирайте грешките във формата.");
       }
@@ -463,6 +468,7 @@ const UserForm: React.FC<UserFormProps> = ({
             positionError={positionError}
             roleId={roleId}
             onRoleChange={handleRoleChange}
+            roleError={roleError}
             roles={filteredRoles}
             financialApprover={financialApprover}
             setFinancialApprover={setFinancialApprover}

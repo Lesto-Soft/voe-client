@@ -69,7 +69,7 @@ const Answer: React.FC<{
   const answerContentAndAttachments = (
     <>
       <div
-        className={`text-gray-800 whitespace-pre-line break-all overflow-y-auto rounded p-3 mt-4 ${
+        className={`text-gray-800 whitespace-pre-line break-all overflow-y-auto rounded p-3 mt-4 max-h-52 ${
           approved
             ? answer.needs_finance
               ? answer.financial_approved

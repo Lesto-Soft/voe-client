@@ -122,10 +122,10 @@ const EditAnswerButton: React.FC<EditButtonProps> = ({
               content={content}
               onUpdate={(html) => setContent(html)}
               placeholder={t("writeHere", "Пишете тук...")}
-              height="123px"
               minLength={ANSWER_CONTENT.MIN}
               maxLength={ANSWER_CONTENT.MAX}
-              wrapperClassName="w-full rounded-lg shadow-sm overflow-hidden bg-white"
+              wrapperClassName="transition-colors duration-150 h-36"
+              height="36"
             />
           </div>
 

@@ -59,7 +59,7 @@ export const useAnalysesFilters = (allCases: ICase[] | undefined) => {
         break;
       case "monthly":
         sDate = new Date(currentYear, currentMonth - 1, 1, 0, 0, 0, 0);
-        eDate = new Date(currentYear, currentMonth, 0, 23, 59, 59, 999); // Day 0 of next month is last day of current month
+        eDate = new Date(currentYear, currentMonth, 0, 23, 59, 59, 999);
         break;
       case "weekly":
         ({ start: sDate, end: eDate } = getStartAndEndOfWeek(
@@ -68,9 +68,13 @@ export const useAnalysesFilters = (allCases: ICase[] | undefined) => {
         ));
         break;
       case "custom":
-        if (customStartDate && customEndDate) {
+        // ✅ MODIFIED: Replaced the single `&&` check with two separate checks.
+        // This ensures that a single selected date is passed through correctly.
+        if (customStartDate) {
           sDate = new Date(customStartDate);
           sDate.setHours(0, 0, 0, 0);
+        }
+        if (customEndDate) {
           eDate = new Date(customEndDate);
           eDate.setHours(23, 59, 59, 999);
         }

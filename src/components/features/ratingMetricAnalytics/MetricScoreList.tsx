@@ -1,8 +1,9 @@
+// src/components/features/ratingMetricAnalytics/MetricScoreList.tsx
 import React, { useMemo, useState } from "react";
 import { IMetricScore } from "../../../db/interfaces";
 import MetricScoreItemCard from "./MetricScoreItemCard";
 import DateRangeSelector from "../userAnalytics/DateRangeSelector";
-import { InboxIcon, CalendarDaysIcon } from "@heroicons/react/24/outline"; // <-- Add CalendarDaysIcon
+import { InboxIcon, CalendarDaysIcon } from "@heroicons/react/24/outline";
 import { TIERS } from "../../../utils/GLOBAL_PARAMETERS";
 
 // Define the types for our filter tabs
@@ -33,20 +34,26 @@ const MetricScoreList: React.FC<MetricScoreListProps> = ({
   onDateRangeChange,
 }) => {
   const [activeTab, setActiveTab] = useState<TierTab>("all");
-  // State for the date filter visibility
   const [isDateFilterVisible, setIsDateFilterVisible] = useState(false);
-  // Check if a date filter is currently applied.
-  const isDateFilterActive = dateRange.startDate !== null;
+
+  // ✅ MODIFIED: Changed from && to || to show active state if at least one date is selected.
+  const isDateFilterActive =
+    dateRange.startDate !== null || dateRange.endDate !== null;
 
   const dateFilteredScores = useMemo(() => {
-    if (!dateRange.startDate || !dateRange.endDate) {
+    const { startDate, endDate } = dateRange;
+    if (!startDate && !endDate) {
       return scores;
     }
     return scores.filter((score) => {
       const scoreDate = new Date(score.date);
-      return (
-        scoreDate >= dateRange.startDate! && scoreDate <= dateRange.endDate!
-      );
+      if (startDate && scoreDate < startDate) {
+        return false;
+      }
+      if (endDate && scoreDate > endDate) {
+        return false;
+      }
+      return true;
     });
   }, [scores, dateRange]);
 
@@ -89,7 +96,6 @@ const MetricScoreList: React.FC<MetricScoreListProps> = ({
   ];
 
   if (isLoading) {
-    // ... skeleton loader remains the same
     return (
       <div className="lg:col-span-6 bg-white rounded-lg shadow-lg flex flex-col overflow-hidden">
         <div className="p-4 border-b border-gray-200 animate-pulse">
@@ -109,7 +115,6 @@ const MetricScoreList: React.FC<MetricScoreListProps> = ({
     <div className="lg:col-span-6 bg-white rounded-lg shadow-lg flex flex-col overflow-hidden max-h-full">
       <div className="p-1 sm:p-2 border-b border-gray-200">
         <div className="flex items-center justify-between pb-1">
-          {/* Tier Filter Tabs */}
           <div className="flex space-x-1 sm:space-x-2 overflow-x-auto custom-scrollbar-xs">
             {tabs.map((tab) => (
               <button
@@ -127,11 +132,9 @@ const MetricScoreList: React.FC<MetricScoreListProps> = ({
             ))}
           </div>
 
-          {/* The new button to toggle the date filter */}
           <button
             onClick={() => setIsDateFilterVisible((prev) => !prev)}
             title="Filter by date"
-            // className logic to show active state when closed
             className={`hover:cursor-pointer p-2 rounded-md transition-colors duration-150 ml-2 ${
               isDateFilterVisible
                 ? "bg-indigo-100 text-indigo-600" // Style when selector is OPEN
@@ -144,7 +147,6 @@ const MetricScoreList: React.FC<MetricScoreListProps> = ({
           </button>
         </div>
 
-        {/* Conditionally render the DateRangeSelector */}
         {isDateFilterVisible && (
           <div className=" border-t pt-1 border-gray-200">
             <DateRangeSelector

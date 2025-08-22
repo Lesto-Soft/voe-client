@@ -1,13 +1,19 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  useMemo,
+} from "react";
 import { useLocation, useNavigate } from "react-router";
 import CaseTable from "./CaseTable";
 import CaseSearchBar from "./CaseSearchBar";
 import Pagination from "./Pagination";
 import CaseTableSkeleton from "../skeletons/CaseTableSkeleton";
-import { ICase } from "../../db/interfaces";
+import PaginationSkeleton from "../skeletons/PaginationSkeleton";
+import { ICase, CasePriority, CaseType } from "../../db/interfaces";
 import moment from "moment";
 
-// Accepts a fetch hook as a prop
 type FetchHook = (input: any) => {
   cases: any[];
   count: number;
@@ -16,11 +22,26 @@ type FetchHook = (input: any) => {
   refetch: (args?: any) => void;
 };
 
+// Define a type for the filters for clarity
+type CaseFilters = {
+  caseNumber?: string;
+  priority?: ICase["priority"] | "";
+  type?: ICase["type"] | "";
+  creatorId?: string;
+  categoryIds?: string[];
+  content?: string;
+  status?: (ICase["status"] | "")[];
+  readStatus?: string;
+  startDate?: Date | null;
+  endDate?: Date | null;
+};
+
 interface CaseTableWithFiltersProps {
   fetchHook: FetchHook;
   clearFiltersSignal?: any;
   filter: boolean;
   t: (key: string) => string;
+  initialFiltersOverride?: CaseFilters; // New prop for "props mode"
 }
 
 function useDebounce<T>(value: T, delay: number): T {
@@ -32,33 +53,38 @@ function useDebounce<T>(value: T, delay: number): T {
   return debounced;
 }
 
-function getFiltersFromParams(params: URLSearchParams) {
-  // Parse categoryIds as array from comma-separated string
+function getFiltersFromParams(params: URLSearchParams): CaseFilters {
   const categoryIdsParam = params.get("categoryIds");
   const categoryIds = categoryIdsParam
     ? categoryIdsParam.split(",").filter(Boolean)
     : [];
+  const statusParam = params.get("status");
+  const status = statusParam ? statusParam.split(",").filter(Boolean) : [];
   return {
     caseNumber: params.get("caseNumber") || "",
-    priority: params.get("priority") || "",
-    type: params.get("type") || "",
+    priority: (params.get("priority") || "") as ICase["priority"] | "",
+    type: (params.get("type") || "") as ICase["type"] | "",
     creatorId: params.get("creatorId") || "",
-    categoryIds, // use array
+    categoryIds,
     content: params.get("content") || "",
-    status: params.get("status") || "",
-    readStatus: params.get("readStatus") || "ALL", // Add this
-    startDate: params.get("startDate"),
-    endDate: params.get("endDate"),
+    status,
+    readStatus: params.get("readStatus") || "ALL",
+    startDate: params.get("startDate")
+      ? moment(params.get("startDate"), "DD-MM-YYYY").toDate()
+      : null,
+    endDate: params.get("endDate")
+      ? moment(params.get("endDate"), "DD-MM-YYYY").toDate()
+      : null,
   };
 }
 
 function setFiltersToParams(params: URLSearchParams, filters: any) {
   Object.entries(filters).forEach(([key, value]) => {
-    if (key === "categoryIds") {
+    if (key === "categoryIds" || key === "status") {
       if (Array.isArray(value) && value.length > 0) {
-        params.set("categoryIds", value.join(","));
+        params.set(key, value.join(","));
       } else {
-        params.delete("categoryIds");
+        params.delete(key);
       }
     } else if (key === "readStatus") {
       if (value && value !== "ALL") {
@@ -80,115 +106,62 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
   fetchHook,
   filter,
   t,
+  initialFiltersOverride,
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  // Get current page from URL
-  const searchParams = new URLSearchParams(location.search);
-  const urlCurrentPage = Number(searchParams.get("page")) || 1;
+  // Determine initial filters based on prop or URL
+  const initialFilters = useMemo(() => {
+    if (initialFiltersOverride) {
+      return {
+        ...initialFiltersOverride,
+        readStatus: initialFiltersOverride.readStatus || "ALL",
+      };
+    }
+    const searchParams = new URLSearchParams(location.search);
+    return getFiltersFromParams(searchParams);
+  }, [initialFiltersOverride, location.search]);
 
-  // Initialize filters from URL
-  const initialFilters = getFiltersFromParams(searchParams);
+  const [currentPage, setCurrentPage] = useState(
+    Number(new URLSearchParams(location.search).get("page")) || 1
+  );
 
-  const [currentPage, setCurrentPage] = useState(urlCurrentPage);
-
-  // Filter state
-  const [caseNumber, setCaseNumber] = useState(initialFilters.caseNumber);
-  const [priority, setPriority] = useState<"" | ICase["priority"]>(
-    initialFilters.priority as "" | ICase["priority"]
+  const [caseNumber, setCaseNumber] = useState(initialFilters.caseNumber || "");
+  const [priority, setPriority] = useState<"" | CasePriority>(
+    initialFilters.priority || ""
   );
-  const [type, setType] = useState<"" | ICase["type"]>(
-    initialFilters.type as "" | ICase["type"]
+  const [type, setType] = useState<"" | CaseType>(initialFilters.type || "");
+  const [creatorId, setCreatorId] = useState(initialFilters.creatorId || "");
+  const [categoryIds, setCategoryIds] = useState(
+    initialFilters.categoryIds || []
   );
-  const [creatorId, setCreatorId] = useState(initialFilters.creatorId);
-  const [categoryIds, setCategoryIds] = useState<string[]>(
-    initialFilters.categoryIds
+  const [content, setContent] = useState(initialFilters.content || "");
+  const [status, setStatus] = useState(initialFilters.status || []);
+  const [readStatus, setReadStatus] = useState(
+    initialFilters.readStatus || "ALL"
   );
-  const [content, setContent] = useState(initialFilters.content);
-  const [status, setStatus] = useState(initialFilters.status);
-  const [readStatus, setReadStatus] = useState(initialFilters.readStatus);
-  const [dateRange, setDateRange] = useState<{
-    startDate: Date | null;
-    endDate: Date | null;
-  }>({
-    startDate: initialFilters.startDate
-      ? moment(initialFilters.startDate, "DD-MM-YYYY").toDate()
-      : null,
-    endDate: initialFilters.endDate
-      ? moment(initialFilters.endDate, "DD-MM-YYYY").toDate()
-      : null,
+  const [dateRange, setDateRange] = useState({
+    startDate: initialFilters.startDate || null,
+    endDate: initialFilters.endDate || null,
   });
 
-  // Debounced values for inputs that should trigger fetch after delay
-  const debouncedCaseNumber = useDebounce(caseNumber, 500); // Adjust delay as needed
+  const debouncedCaseNumber = useDebounce(caseNumber, 500);
   const debouncedContent = useDebounce(content, 500);
 
-  // Track previous filters to detect changes for URL update
-  const prevFiltersRef = useRef({
-    caseNumber: initialFilters.caseNumber,
-    priority: initialFilters.priority,
-    type: initialFilters.type,
-    creatorId: initialFilters.creatorId,
-    categoryIds: initialFilters.categoryIds,
-    content: initialFilters.content,
-    status: initialFilters.status,
-    readStatus: initialFilters.readStatus,
-    dateRange: {
-      startDate: initialFilters.startDate
-        ? moment(initialFilters.startDate, "DD-MM-YYYY").toDate()
-        : null,
-      endDate: initialFilters.endDate
-        ? moment(initialFilters.endDate, "DD-MM-YYYY").toDate()
-        : null,
-    },
-  });
+  const prevFiltersRef = useRef(initialFilters);
 
-  // function clearFilters() {
-  //   setCaseNumber("");
-  //   setPriority("");
-  //   setType("");
-  //   setCreatorId("");
-  //   setCategoryIds([]);
-  //   setContent("");
-  //   setStatus("");
-  //   setDateRange({ startDate: null, endDate: null });
-  //   setCurrentPage(1);
-  //   const params = new URLSearchParams(location.search);
-  //   params.set("perPage", String(itemsPerPage));
-  //   params.set("page", "1");
-  //   // Remove filter params
-  //   [
-  //     "caseNumber",
-  //     "priority",
-  //     "type",
-  //     "creatorId",
-  //     "categoryIds",
-  //     "content",
-  //     "status",
-  //     "startDate",
-  //     "endDate",
-  //   ].forEach((key) => params.delete(key));
-  //   navigate(`${location.pathname}?${params.toString()}`, { replace: true });
-  // }
-
-  // Sync currentPage with URL
   useEffect(() => {
-    if (urlCurrentPage !== currentPage) {
-      setCurrentPage(urlCurrentPage);
-    }
-  }, [urlCurrentPage]);
+    // If we are in props mode, don't ever update the main browser URL
+    if (initialFiltersOverride) return;
 
-  // Update URL when filters change (immediate or debounced)
-  useEffect(() => {
-    // Use debounced values for URL update if they are the trigger for the fetch
     const filtersForUrl = {
       caseNumber: debouncedCaseNumber,
       priority,
       type,
       creatorId,
-      categoryIds, // use array
+      categoryIds,
       content: debouncedContent,
       status,
       readStatus,
@@ -199,10 +172,11 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
     const prevFilters = prevFiltersRef.current;
     const categoryIdsChanged =
       JSON.stringify(categoryIds) !== JSON.stringify(prevFilters.categoryIds);
+    const statusChanged =
+      JSON.stringify(status) !== JSON.stringify(prevFilters.status);
     const dateRangeChanged =
-      dateRange.startDate?.getTime() !==
-        prevFilters.dateRange.startDate?.getTime() ||
-      dateRange.endDate?.getTime() !== prevFilters.dateRange.endDate?.getTime();
+      dateRange.startDate?.getTime() !== prevFilters.startDate?.getTime() ||
+      dateRange.endDate?.getTime() !== prevFilters.endDate?.getTime();
 
     const filtersChanged =
       caseNumber !== prevFilters.caseNumber ||
@@ -211,21 +185,16 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
       creatorId !== prevFilters.creatorId ||
       categoryIdsChanged ||
       content !== prevFilters.content ||
-      status !== prevFilters.status ||
+      statusChanged ||
       readStatus !== prevFilters.readStatus ||
       dateRangeChanged;
 
     if (filtersChanged) {
       const params = new URLSearchParams(location.search);
       params.set("perPage", String(itemsPerPage));
-      // Reset to page 1 only if filters (not page itself) changed
-      if (currentPage !== 1) {
-        setCurrentPage(1); // Reset page state
-        params.set("page", "1"); // Set page param for URL
-      } else {
-        params.set("page", String(currentPage)); // Keep current page if already 1
-      }
-      setFiltersToParams(params, filtersForUrl); // Use potentially debounced values for URL consistency with fetch
+      setCurrentPage(1);
+      params.set("page", "1");
+      setFiltersToParams(params, filtersForUrl);
       navigate(`${location.pathname}?${params.toString()}`, { replace: true });
 
       prevFiltersRef.current = {
@@ -237,7 +206,8 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
         content,
         status,
         readStatus,
-        dateRange,
+        startDate: dateRange.startDate,
+        endDate: dateRange.endDate,
       };
     }
   }, [
@@ -254,15 +224,20 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
     location.search,
     location.pathname,
     dateRange,
-  ]); // Add debounced values to dependencies
+    initialFiltersOverride,
+    caseNumber,
+    content,
+  ]);
 
-  // Handle page change (updates URL immediately)
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
+    // If in props mode, just update state. Do not navigate.
+    if (initialFiltersOverride) {
+      return;
+    }
     const params = new URLSearchParams(location.search);
     params.set("perPage", String(itemsPerPage));
     params.set("page", String(page));
-    // Use potentially debounced values consistent with current filter state for URL
     setFiltersToParams(params, {
       caseNumber: debouncedCaseNumber,
       priority,
@@ -278,26 +253,23 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
     navigate(`${location.pathname}?${params.toString()}`);
   };
 
-  // Build input for the fetch hook using debounced values
   const buildInput = useCallback(() => {
     const input: any = {
       itemsPerPage,
-      currentPage: currentPage - 1, // API might expect 0-based index
+      currentPage: currentPage - 1,
     };
-    // Use debounced values here
     if (debouncedContent) input.query = debouncedContent;
-    if (debouncedCaseNumber) input.case_number = parseInt(debouncedCaseNumber); // Ensure parsing if needed
+    if (debouncedCaseNumber) input.case_number = parseInt(debouncedCaseNumber);
     if (priority) input.priority = priority;
     if (type) input.type = type;
     if (creatorId) input.creatorId = creatorId;
-    if (categoryIds && categoryIds.length > 0) input.categories = categoryIds; // Assuming backend expects array
-    if (status) input.status = status;
-    if (readStatus && readStatus !== "ALL") input.readStatus = readStatus; // Add this
+    if (categoryIds && categoryIds.length > 0) input.categories = categoryIds;
+    if (status && status.length > 0) input.status = status;
+    if (readStatus && readStatus !== "ALL") input.readStatus = readStatus;
     if (dateRange.startDate)
       input.startDate = moment(dateRange.startDate).format("DD-MM-YYYY");
     if (dateRange.endDate)
       input.endDate = moment(dateRange.endDate).format("DD-MM-YYYY");
-
     return input;
   }, [
     itemsPerPage,
@@ -313,56 +285,43 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
     dateRange,
   ]);
 
-  // Use the provided fetch hook. It will receive debounced inputs via buildInput.
   const { cases, count, error, loading, refetch } = fetchHook(buildInput());
 
-  // State to control skeleton visibility with minimum display time
-  const [showSkeleton, setShowSkeleton] = useState(loading); // Initialize based on initial loading state
-  const skeletonTimerRef = useRef<number | null>(null); // Use number for browser timer ID
-  const MIN_SKELETON_TIME = 250; // Minimum time in ms to show skeleton
+  const [showSkeleton, setShowSkeleton] = useState(loading);
+  const skeletonTimerRef = useRef<number | null>(null);
+  const MIN_SKELETON_TIME = 250;
 
-  // Effect to manage skeleton visibility based on actual loading state
   useEffect(() => {
     if (loading) {
-      // If loading starts (or is true initially), immediately show skeleton
       setShowSkeleton(true);
-      // Clear any pending timer to hide skeleton prematurely
       if (skeletonTimerRef.current !== null) {
-        // Check if timer exists
         clearTimeout(skeletonTimerRef.current);
         skeletonTimerRef.current = null;
       }
     } else {
-      // If loading finishes, set a timer to hide the skeleton after 900ms
       skeletonTimerRef.current = window.setTimeout(() => {
-        // Use window.setTimeout for clarity
         setShowSkeleton(false);
         skeletonTimerRef.current = null;
       }, MIN_SKELETON_TIME);
     }
-
-    // Cleanup timer on unmount or if loading becomes true again
     return () => {
       if (skeletonTimerRef.current !== null) {
-        // Check if timer exists
         clearTimeout(skeletonTimerRef.current);
       }
     };
-  }, [loading]); // Depend only on the actual loading state from the hook
+  }, [loading]);
 
-  // Effect to trigger refetch when debounced values or pagination changes
   useEffect(() => {
-    buildInput();
+    refetch(buildInput());
   }, [buildInput, refetch]);
 
   if (error) return <div>Error: {error.message}</div>;
 
   return (
     <div className="flex flex-col flex-1 min-h-0 h-full">
-      {/* Animated Search Bar Container - Removed relative, z-20, overflow-hidden */}
       <div
         className={` transition-all duration-300 ease-in-out ${
-          filter
+          filter && !initialFiltersOverride // Also hide filters in modal view
             ? "max-h-screen opacity-100"
             : "max-h-0 opacity-0 pointer-events-none"
         }`}
@@ -390,7 +349,6 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
         />
       </div>
       <div className="flex-1 min-h-0 flex flex-col">
-        {/* Use showSkeleton state for conditional rendering */}
         {showSkeleton ? (
           <CaseTableSkeleton rows={itemsPerPage} />
         ) : cases && cases.length > 0 ? (
@@ -401,19 +359,23 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
           </div>
         )}
       </div>
-      {/* Render Pagination only when not showing skeleton and there are items */}
-      {!showSkeleton && count > 0 && (
-        <Pagination
-          totalPages={Math.ceil(Number(count) / itemsPerPage)}
-          totalCount={Number(count)}
-          currentPage={currentPage}
-          itemsPerPage={itemsPerPage}
-          onItemsPerPageChange={(newSize) => {
-            setItemsPerPage(newSize);
-            setCurrentPage(1); // Reset to page 1 on size change
-          }}
-          onPageChange={handlePageChange}
-        />
+      {/* This entire block is updated */}
+      {showSkeleton ? (
+        <PaginationSkeleton />
+      ) : (
+        count > 0 && (
+          <Pagination
+            totalPages={Math.ceil(Number(count) / itemsPerPage)}
+            totalCount={Number(count)}
+            currentPage={currentPage}
+            itemsPerPage={itemsPerPage}
+            onItemsPerPageChange={(newSize) => {
+              setItemsPerPage(newSize);
+              setCurrentPage(1);
+            }}
+            onPageChange={handlePageChange}
+          />
+        )
       )}
     </div>
   );

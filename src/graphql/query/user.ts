@@ -36,6 +36,7 @@ fragment FullUserFragment on User {
         _id
         name
       }
+      last_login
       avatar
       cases {
         _id
@@ -120,6 +121,11 @@ fragment FullUserFragment on User {
           answers {
             needs_finance
           }
+          readBy {
+            user {
+              _id
+            }
+          }
         }
       }
       financialApprovedAnswers {
@@ -141,6 +147,11 @@ fragment FullUserFragment on User {
           }
           answers {
             needs_finance
+          }
+          readBy {
+            user {
+              _id
+            }
           }
         }
       }

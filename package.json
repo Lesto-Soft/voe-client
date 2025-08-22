@@ -10,7 +10,8 @@
     "preview": "vite preview --host",
     "test": "playwright test",
     "test:headed": "playwright test --headed",
-    "test:report": "playwright show-report"
+    "test:report": "playwright show-report",
+    "test:ui": "playwright test --ui"
   },
   "dependencies": {
     "@apollo/client": "^3.13.6",

@@ -21,6 +21,7 @@ import {
   useMarkAsRead,
   useMarkAsUnread,
 } from "../../graphql/hooks/notificationHook";
+import { AcademicCapIcon } from "@heroicons/react/24/solid";
 
 interface NotificationItemProps {
   notification: INotification;
@@ -33,6 +34,8 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
   const [markAsRead] = useMarkAsRead();
   const [deleteNotification] = useDeleteNotification();
   const [markAsUnread] = useMarkAsUnread();
+
+  console.log("NotificationItem rendered", notification);
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
@@ -51,6 +54,12 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
       case "approve_answer_await_finance_case":
         return <BanknotesIcon className="h-5 w-5 text-gray-500" />;
       case "approve_answer_finance_case":
+        return <BanknotesIcon className="h-5 w-5 text-green-500" />;
+      case "add_expert_to_category":
+        return <AcademicCapIcon className="h-5 w-5 text-yellow-500" />;
+      case "add_manager_to_category":
+        return <AcademicCapIcon className="h-5 w-5 text-blue-600" />;
+      case "add_financial_approver":
         return <BanknotesIcon className="h-5 w-5 text-green-500" />;
       default:
         return <InformationCircleIcon className="h-5 w-5 text-gray-500" />;
@@ -87,7 +96,12 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
         className="flex flex-1 items-start gap-4 min-w-0"
         onClick={() => {
           markAsRead({ variables: { notificationIds: [notification._id] } });
-          navigate(`/case/${notification.caseNumber}`);
+          if (notification.caseNumber) {
+            navigate(`/case/${notification.caseNumber}`);
+          }
+          if (notification.username) {
+            navigate(`/user/${notification.username}`);
+          }
         }}
       >
         <div className="flex-shrink-0 mt-0.5">
@@ -107,6 +121,10 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
               ns="menu"
               values={{
                 caseNumber: notification.caseNumber,
+                username: notification.username,
+                categoryName: notification.new_categories
+                  ? notification.new_categories.join(", ")
+                  : "",
               }}
               components={{
                 1: (

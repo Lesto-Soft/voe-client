@@ -28,6 +28,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }) => {
     variables: { userId },
     onData: ({ data }) => {
       const newNotification = data.data?.notificationAdded;
+      console.log(data);
       if (newNotification) {
         setNotifications((prev) => [newNotification, ...prev]);
         const toastMessage = (
@@ -37,7 +38,10 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }) => {
               ns="menu"
               values={{
                 caseNumber: newNotification.caseNumber,
-                // username: newNotification.username,
+                username: newNotification.username,
+                categoryName: newNotification.new_categories
+                  ? newNotification.new_categories.join(", ")
+                  : "",
               }}
               components={{ 1: <span className="font-bold" /> }}
             />

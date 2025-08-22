@@ -8,6 +8,8 @@ export const GET_NOTIFICATIONS = gql`
       read
       date
       caseNumber
+      username
+      new_categories
     }
   }
 `;

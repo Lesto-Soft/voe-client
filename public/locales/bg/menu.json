@@ -42,10 +42,12 @@
     "case_reopened": "Сигнал <1>{{caseNumber}}</1> е <1>отворен отново</1>",
     "new_comment_case": "<1>Нов коментар</1> добавен към сигнал <1>{{caseNumber}}</1>",
     "new_answer_comment": "<1>Нов коментар</1> добавен към сигнал <1>{{caseNumber}}</1>",
-
     "rating_received": "Получена е <1>нова оценка</1> за сигнал <1>{{caseNumber}}</1>",
     "account_created": "Създаден е <1>нов акаунт</1> за потребител <1>{{username}}</1>",
     "profile_updated": "Профилът на потребител <1>{{username}}</1> е актуализиран",
-    "no_notifications": "Нямате известия."
+    "no_notifications": "Нямате известия.",
+    "add_expert_to_category": "Експерт <1>{{username}}</1> е добавен към: <1>{{categoryName}}</1>",
+    "add_manager_to_category": "Мениджър <1>{{username}}</1> е добавен към: <1>{{categoryName}}</1>",
+    "add_financial_approver": "<1>{{username}}</1> е добавен като финансов одобрител"
   }
 }

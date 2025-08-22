@@ -44,6 +44,9 @@
     "rating_received": "<1>New rating</1> received for case <1>{{caseNumber}}</1>",
     "account_created": "<1>New account</1> created for user <1>{{username}}</1>",
     "profile_updated": "Profile updated for user <1>{{username}}</1>",
-    "no_notifications": "No new notifications."
+    "no_notifications": "No new notifications.",
+    "add_expert_to_category": "Expert <1>{{username}}</1> added to: <1>{{categoryName}}</1>",
+    "add_manager_to_category": "Manager <1>{{username}}</1> added to: <1>{{categoryName}}</1>",
+    "add_financial_approver": "<1>{{username}}</1> added as financial approver"
   }
 }

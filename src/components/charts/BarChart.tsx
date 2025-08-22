@@ -168,13 +168,6 @@ const BarChart: React.FC<BarChartProps> = ({
   };
 
   const handleBarMouseEnter = (event: React.MouseEvent, item: BarDataPoint) => {
-    const totalValue = series.reduce(
-      (sum, s) => sum + (item[s.dataKey] || 0),
-      0
-    );
-    if (totalValue === 0) {
-      return;
-    }
     if (!svgRef.current || !containerRef.current) return;
     const containerRect = containerRef.current.getBoundingClientRect();
 
@@ -223,11 +216,9 @@ const BarChart: React.FC<BarChartProps> = ({
               </li>
             )}
           </ul>
-          {/* Tooltip Arrow */}
           <div className="absolute top-full right-2 w-0 h-0 border-x-4 border-x-transparent border-t-4 border-t-gray-800"></div>
         </div>
       </div>
-
       <style>{`
         .bar-chart-tooltip { position: absolute; background-color: rgba(30, 30, 30, 0.92); color: white; padding: 8px 12px; border-radius: 5px; font-size: 12px; line-height: 1.5; pointer-events: none; z-index: 1000; box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2); white-space: nowrap; opacity: 0; transform: translate(-50%, calc(-100% - 12px)); transition: opacity 0.1s ease-out, transform 0.1s ease-out; }
         .bar-chart-tooltip.visible { opacity: 1; transform: translate(-50%, calc(-100% - 18px)); }
@@ -330,6 +321,10 @@ const BarChart: React.FC<BarChartProps> = ({
                     const groupContentXStart =
                       groupXStartOuter +
                       (groupAvailableWidth * groupPaddingRatio) / 2;
+                    const totalValue = series.reduce(
+                      (sum, s) => sum + (item[s.dataKey] || 0),
+                      0
+                    );
 
                     return (
                       <g key={`group-${groupIndex}-${item[dataKeyX]}`}>
@@ -389,18 +384,23 @@ const BarChart: React.FC<BarChartProps> = ({
                             width={groupAvailableWidth}
                             height={plotHeight}
                             fill="transparent"
-                            className="cursor-pointer"
+                            className={totalValue > 0 ? "cursor-pointer" : ""}
                             onMouseEnter={(e) => {
-                              handleBarMouseEnter(e, item);
-                              setHoverOverlay({
-                                x: groupXStartOuter,
-                                width: groupAvailableWidth,
-                              });
+                              if (totalValue > 0) {
+                                handleBarMouseEnter(e, item);
+                                setHoverOverlay({
+                                  x: groupXStartOuter,
+                                  width: groupAvailableWidth,
+                                });
+                              }
                             }}
                             onMouseLeave={handleGroupMouseLeave}
-                            onClick={() => onBarClick && onBarClick(item)}
+                            onClick={() => {
+                              if (totalValue > 0) onBarClick?.(item);
+                            }}
                             onMouseDown={(e) => {
-                              if (e.button === 1) onBarMiddleClick?.(item, e);
+                              if (e.button === 1 && totalValue > 0)
+                                onBarMiddleClick?.(item, e);
                             }}
                           />
                         ) : (
@@ -411,8 +411,10 @@ const BarChart: React.FC<BarChartProps> = ({
                               width={groupAvailableWidth}
                               height={plotHeight}
                               fill="transparent"
-                              className="cursor-pointer"
-                              onClick={() => onBarClick && onBarClick(item)}
+                              className={totalValue > 0 ? "cursor-pointer" : ""}
+                              onClick={() => {
+                                if (totalValue > 0) onBarClick?.(item);
+                              }}
                             />
                             {series.map((s, barIndex) => {
                               const barX =
@@ -427,18 +429,24 @@ const BarChart: React.FC<BarChartProps> = ({
                                   width={groupedBarWidth}
                                   height={plotHeight}
                                   fill="transparent"
-                                  className="cursor-pointer"
+                                  className={
+                                    totalValue > 0 ? "cursor-pointer" : ""
+                                  }
                                   onMouseEnter={(e) => {
-                                    handleBarMouseEnter(e, item);
-                                    setHoverOverlay({
-                                      x: barX,
-                                      width: groupedBarWidth,
-                                    });
+                                    if (totalValue > 0) {
+                                      handleBarMouseEnter(e, item);
+                                      setHoverOverlay({
+                                        x: barX,
+                                        width: groupedBarWidth,
+                                      });
+                                    }
                                   }}
                                   onMouseLeave={handleGroupMouseLeave}
-                                  onClick={() => onBarClick && onBarClick(item)}
+                                  onClick={() => {
+                                    if (totalValue > 0) onBarClick?.(item);
+                                  }}
                                   onMouseDown={(e) => {
-                                    if (e.button === 1) {
+                                    if (e.button === 1 && totalValue > 0) {
                                       e.stopPropagation();
                                       onBarMiddleClick?.(item, e, s.dataKey);
                                     }

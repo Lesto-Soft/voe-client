@@ -1,6 +1,5 @@
 // src/pages/Analyses.tsx
 import React, { useState } from "react";
-import moment from "moment";
 import { useCurrentUser } from "../context/UserContext";
 import { ROLES } from "../utils/GLOBAL_PARAMETERS";
 import { useGetAnalyticsDataCases } from "../graphql/hooks/case";

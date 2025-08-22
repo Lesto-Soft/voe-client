@@ -76,7 +76,9 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
   const [fetchedInitialCreator, setFetchedInitialCreator] = useState(false);
   const creatorInputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const [isDateSelectorVisible, setIsDateSelectorVisible] = useState(false);
+  const [isDateSelectorVisible, setIsDateSelectorVisible] = useState(
+    !!(dateRange.startDate || dateRange.endDate)
+  );
 
   // ✅ MODIFIED: Changed from && to || to show active state if at least one date is selected.
   const isDateFilterActive =

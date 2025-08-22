@@ -96,11 +96,12 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
         className="flex flex-1 items-start gap-4 min-w-0"
         onClick={() => {
           markAsRead({ variables: { notificationIds: [notification._id] } });
+          console.log(notification.caseNumber);
           if (notification.caseNumber) {
-            navigate(`/case/${notification.caseNumber}`);
+            return navigate(`/case/${notification.caseNumber}`);
           }
           if (notification.username) {
-            navigate(`/user/${notification.username}`);
+            return navigate(`/user/${notification.username}`);
           }
         }}
       >

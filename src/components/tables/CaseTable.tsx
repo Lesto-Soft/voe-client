@@ -222,7 +222,7 @@ const CaseTable: React.FC<ICaseTableProps> = ({
             </tr>
           </thead>
           {/* Table Body */}
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="bg-white divide-y divide-gray-200 border-b border-gray-200">
             {cases.map((my_case, index) => {
               const isUnread = !my_case.readBy?.some(
                 (entry) => entry.user._id === currentUser._id

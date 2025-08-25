@@ -1,4 +1,4 @@
-// src/components/modals/CreateCategoryModal.tsx
+// src/components/modals/CategoryModal.tsx
 import React, { useState, useEffect, useRef } from "react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import * as AlertDialog from "@radix-ui/react-alert-dialog";
@@ -68,6 +68,10 @@ const CategoryModal: React.FC<ModalProps> = ({
         onMouseUp={handleBackdropMouseUp}
       >
         <div
+          // ADDED LINE: Explicitly set the role for Playwright to find.
+          role="dialog"
+          // ADDED LINE: Set the accessible name from the title prop.
+          aria-label={title}
           className="relative w-full max-w-xl md:max-w-3xl lg:max-w-5xl rounded-lg bg-white p-4 md:p-6 shadow-xl max-h-[85vh] overflow-y-auto"
           onMouseDown={(e) => e.stopPropagation()}
         >

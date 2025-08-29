@@ -1,5 +1,5 @@
 // src/components/features/categoryAnalytics/PersonnelInfoPanel.tsx
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { ICategory, IUser } from "../../../db/interfaces"; // Adjust path as needed
 import UserLink from "../../../components/global/UserLink"; // Adjust path as needed
 import {
@@ -7,8 +7,10 @@ import {
   LightBulbIcon,
   ExclamationTriangleIcon,
   TagIcon,
-  PencilSquareIcon, // --- NEW: Import edit icon ---
+  PencilSquareIcon,
+  XMarkIcon,
 } from "@heroicons/react/24/outline";
+import * as Tooltip from "@radix-ui/react-tooltip";
 
 // Note: No need for useCurrentUser or role checks here.
 // All permission logic is handled in the parent `Category.tsx` page.
@@ -22,6 +24,7 @@ interface PersonnelInfoPanelProps {
   // --- NEW: Props for editing functionality ---
   canEdit: boolean;
   onEditClick: () => void;
+  isMisconfigured?: boolean;
 }
 
 const PersonnelInfoPanel: React.FC<PersonnelInfoPanelProps> = ({
@@ -33,7 +36,16 @@ const PersonnelInfoPanel: React.FC<PersonnelInfoPanelProps> = ({
   // --- NEW: Destructure new props ---
   canEdit,
   onEditClick,
+  isMisconfigured = false,
 }) => {
+  const [isWarningVisible, setIsWarningVisible] = useState(true); // add state for warning
+
+  useEffect(() => {
+    if (isMisconfigured) {
+      setIsWarningVisible(true);
+    }
+  }, [isMisconfigured]);
+
   if (!category) {
     // Skeleton remains the same, no changes needed here.
     return (
@@ -84,11 +96,14 @@ const PersonnelInfoPanel: React.FC<PersonnelInfoPanelProps> = ({
               </span>
             </h1>
 
-            {/* --- NEW: Conditionally rendered Edit Button --- */}
+            {/* conditionally rendered Edit Button */}
             {canEdit && (
               <button
                 onClick={onEditClick}
-                className="hover:cursor-pointer flex-shrink-0 p-2 rounded-md text-gray-500 hover:bg-gray-100 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+                // conditionally apply animation class
+                className={`hover:cursor-pointer flex-shrink-0 p-2 rounded-full text-gray-500 hover:bg-gray-100 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors ${
+                  isMisconfigured ? "animate-pulse-glow" : ""
+                }`}
                 title="Редактирай категория"
               >
                 <PencilSquareIcon className="h-6 w-6" />
@@ -96,6 +111,25 @@ const PersonnelInfoPanel: React.FC<PersonnelInfoPanelProps> = ({
             )}
           </div>
         </div>
+
+        {isMisconfigured && isWarningVisible && (
+          <div className="p-3 text-sm text-yellow-800 bg-yellow-100 border border-yellow-300 rounded-md flex items-center justify-between">
+            <div className="flex items-center">
+              <ExclamationTriangleIcon className="h-5 w-5 mr-2 flex-shrink-0" />
+              <span>
+                <strong>Внимание:</strong> Тази категория няма назначени
+                експерти или мениджъри.
+              </span>
+            </div>
+            <button
+              onClick={() => setIsWarningVisible(false)}
+              className="p-1 rounded-md hover:bg-yellow-200 transition-colors cursor-pointer"
+              aria-label="Скрий предупреждението"
+            >
+              <XMarkIcon className="h-5 w-5" />
+            </button>
+          </div>
+        )}
 
         {/* Personnel Tabs (Managers/Experts) */}
         <div>
@@ -111,6 +145,9 @@ const PersonnelInfoPanel: React.FC<PersonnelInfoPanelProps> = ({
             >
               <UserGroupIcon className="h-5 w-5 mr-1.5 text-purple-600" />
               Мениджъри
+              {isMisconfigured && (
+                <ExclamationTriangleIcon className="h-5 w-5 ml-1.5 text-yellow-500" />
+              )}
             </button>
             <button
               onClick={() => setActivePersonnelTab("experts")}
@@ -122,6 +159,9 @@ const PersonnelInfoPanel: React.FC<PersonnelInfoPanelProps> = ({
             >
               <UserGroupIcon className="h-5 w-5 mr-1.5 text-teal-600" />
               Експерти
+              {isMisconfigured && (
+                <ExclamationTriangleIcon className="h-5 w-5 ml-1.5 text-yellow-500" />
+              )}
             </button>
           </div>
           <div className="mt-4 bg-gray-50 rounded-sm border border-gray-300 min-h-20 lg:h-37 flex flex-col justify-center items-center text-center">

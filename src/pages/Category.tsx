@@ -92,6 +92,16 @@ const Category: React.FC = () => {
     skip: !isEditModalOpen,
   });
 
+  // determine if the category is misconfigured
+  const isMisconfiguredCategory = useMemo(() => {
+    if (!category) return false;
+    return (
+      !category.archived &&
+      (!category.experts || category.experts.length === 0) &&
+      (!category.managers || category.managers.length === 0)
+    );
+  }, [category]);
+
   const canEdit = useMemo(() => {
     if (!currentUser || !category) return false;
     if (currentUser.role?._id === ROLES.ADMIN) {
@@ -233,6 +243,7 @@ const Category: React.FC = () => {
           setActiveInfoTab={setActiveInfoTab}
           canEdit={canEdit}
           onEditClick={openEditModal}
+          isMisconfigured={isMisconfiguredCategory}
         />
         <CategoryCasesList
           allCases={finalFilteredCases}

@@ -1,11 +1,13 @@
 // src/components/forms/CategoryForm.tsx
 // NOTE: This file was renamed from CreateCategoryForm.tsx
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { ICategory } from "../../db/interfaces"; // Adjust path
 import { useCategoryFormState } from "./hooks/useCategoryFormState"; // Adjust path
 import CategoryInputFields from "./partials/CategoryInputFields"; // Adjust path
 import { getTextLength } from "../../utils/contentRenderer";
 import { CATEGORY_HELPERS } from "../../utils/GLOBAL_PARAMETERS";
+import ConfirmActionDialog from "../modals/ConfirmActionDialog";
+import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 
 export interface CategoryFormData {
   name: string;
@@ -70,6 +72,22 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
   const [formSubmitError, setFormSubmitError] = useState<string | null>(null);
   const [problemError, setProblemError] = useState<string | null>(null);
   const [suggestionError, setSuggestionError] = useState<string | null>(null);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+
+  // add ref to hold form data while dialog is open
+  const pendingSubmitData = useRef<{
+    formData: CategoryFormData;
+    editingCategoryId: string | null;
+  } | null>(null);
+
+  // create handler for dialog confirmation
+  const handleConfirmSubmit = () => {
+    if (pendingSubmitData.current) {
+      const { formData, editingCategoryId } = pendingSubmitData.current;
+      onSubmit(formData, editingCategoryId);
+    }
+    setIsConfirmOpen(false);
+  };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -135,6 +153,18 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
       archived: archived,
     };
 
+    // add the pre-submit check
+    const isMisconfigured = expertIds.length === 0 && managerIds.length === 0;
+
+    if (isMisconfigured) {
+      pendingSubmitData.current = {
+        formData: formDataObject,
+        editingCategoryId: initialData?._id || null,
+      };
+      setIsConfirmOpen(true);
+      return; // stop submission until user confirms
+    }
+
     try {
       await onSubmit(formDataObject, initialData?._id || null);
     } catch (error: any) {
@@ -154,51 +184,74 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
   }
 
   return (
-    <form onSubmit={handleSubmit} noValidate>
-      <div className="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2">
-        <CategoryInputFields
-          name={name}
-          setName={setName}
-          nameError={nameError}
-          problem={problem}
-          setProblem={setProblem}
-          problemError={problemError}
-          suggestion={suggestion}
-          setSuggestion={setSuggestion}
-          suggestionError={suggestionError}
-          expertIds={expertIds}
-          setExpertIds={setExpertIds}
-          managerIds={managerIds}
-          setManagerIds={setManagerIds}
-          archived={archived}
-          setArchived={setArchived}
-          errorPlaceholderClass={errorPlaceholderClass}
-          initialExperts={initialExpertObjects as ILeanUserForForm[]}
-          initialManagers={initialManagerObjects as ILeanUserForForm[]}
-          allUsersForAssigning={allUsersForForm}
-          usersLoading={allUsersForFormLoading}
-        />
-      </div>
-
-      {formSubmitError && (
-        <div className="mt-6 p-3 text-sm text-red-700 bg-red-100 rounded-md text-center">
-          {formSubmitError}
+    <>
+      <form onSubmit={handleSubmit} noValidate>
+        <div className="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2">
+          <CategoryInputFields
+            name={name}
+            setName={setName}
+            nameError={nameError}
+            problem={problem}
+            setProblem={setProblem}
+            problemError={problemError}
+            suggestion={suggestion}
+            setSuggestion={setSuggestion}
+            suggestionError={suggestionError}
+            expertIds={expertIds}
+            setExpertIds={setExpertIds}
+            managerIds={managerIds}
+            setManagerIds={setManagerIds}
+            archived={archived}
+            setArchived={setArchived}
+            errorPlaceholderClass={errorPlaceholderClass}
+            initialExperts={initialExpertObjects as ILeanUserForForm[]}
+            initialManagers={initialManagerObjects as ILeanUserForForm[]}
+            allUsersForAssigning={allUsersForForm}
+            usersLoading={allUsersForFormLoading}
+          />
         </div>
-      )}
 
-      <div className="mt-8 text-center">
-        <button
-          type="submit"
-          disabled={isSubmitting || allUsersForFormLoading}
-          className="rounded-md bg-green-600 px-8 py-2 text-sm font-semibold text-white shadow-sm hover:cursor-pointer hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isSubmitting
-            ? "Запис..."
-            : submitButtonText ||
-              (initialData ? "Запази промените" : "Създай категория")}
-        </button>
-      </div>
-    </form>
+        {formSubmitError && (
+          <div className="mt-6 p-3 text-sm text-red-700 bg-red-100 rounded-md text-center">
+            {formSubmitError}
+          </div>
+        )}
+
+        <div className="mt-8 text-center">
+          <button
+            type="submit"
+            disabled={isSubmitting || allUsersForFormLoading}
+            className="rounded-md bg-green-600 px-8 py-2 text-sm font-semibold text-white shadow-sm hover:cursor-pointer hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isSubmitting
+              ? "Запис..."
+              : submitButtonText ||
+                (initialData ? "Запази промените" : "Създай категория")}
+          </button>
+        </div>
+      </form>
+      {/* add the dialog to the component's render output */}
+      <ConfirmActionDialog
+        isOpen={isConfirmOpen}
+        onOpenChange={setIsConfirmOpen}
+        onConfirm={handleConfirmSubmit}
+        title="Потвърждение за категория"
+        description={
+          <div className="flex items-start">
+            <ExclamationTriangleIcon className="h-10 w-10 text-yellow-500 mr-3 flex-shrink-0" />
+            <div>
+              Към тази категория няма назначени експерти или мениджъри.
+              Сигналите може да останат без надзор.
+              <br />
+              <br />
+              Сигурни ли сте, че искате да продължите?
+            </div>
+          </div>
+        }
+        confirmButtonText="Да, запази"
+        isDestructiveAction={false}
+      />
+    </>
   );
 };
 // Export name updated

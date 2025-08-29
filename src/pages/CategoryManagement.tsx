@@ -268,9 +268,11 @@ const CategoryManagement: React.FC = () => {
     }
     return allCategoriesMatchingBackendFilters.filter(
       (category) =>
-        !category.archived && // must not be archived
-        (!category.experts || category.experts.length === 0) &&
-        (!category.managers || category.managers.length === 0)
+        !category.archived &&
+        (!category.experts ||
+          category.experts.length === 0 || // changed to OR
+          !category.managers ||
+          category.managers.length === 0)
     ).length;
   }, [allCategoriesMatchingBackendFilters]);
 

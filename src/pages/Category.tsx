@@ -97,8 +97,10 @@ const Category: React.FC = () => {
     if (!category) return false;
     return (
       !category.archived &&
-      (!category.experts || category.experts.length === 0) &&
-      (!category.managers || category.managers.length === 0)
+      (!category.experts ||
+        category.experts.length === 0 || // changed to OR
+        !category.managers ||
+        category.managers.length === 0)
     );
   }, [category]);
 

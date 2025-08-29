@@ -187,8 +187,10 @@ const CategoryTable: React.FC<CategoryTableProps> = ({
                 // define check for misconfigured category
                 const isMisconfigured =
                   !isInactive &&
-                  (!category.experts || category.experts.length === 0) &&
-                  (!category.managers || category.managers.length === 0);
+                  (!category.experts ||
+                    category.experts.length === 0 || // changed to OR
+                    !category.managers ||
+                    category.managers.length === 0);
 
                 // update row styling logic
                 let rowClasses = "transition-colors duration-150";

@@ -154,7 +154,7 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
     };
 
     // add the pre-submit check
-    const isMisconfigured = expertIds.length === 0 && managerIds.length === 0;
+    const isMisconfigured = expertIds.length === 0 || managerIds.length === 0; // changed to OR
 
     if (isMisconfigured) {
       pendingSubmitData.current = {

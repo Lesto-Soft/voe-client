@@ -17,6 +17,8 @@ import { IUser, IMe } from "../../db/interfaces";
 import { useGetActiveCategories } from "../../graphql/hooks/category";
 import { ROLES } from "../../utils/GLOBAL_PARAMETERS";
 import { useCurrentUser } from "../../context/UserContext";
+import ConfirmActionDialog from "../modals/ConfirmActionDialog";
+import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 
 const VALIDATION = {
   USERNAME: { MIN: 3, MAX: 25 },
@@ -135,9 +137,16 @@ const UserForm: React.FC<UserFormProps> = ({
   const [positionError, setPositionError] = useState<string | null>(null);
   const [submitEmailError, setSubmitEmailError] = useState<string | null>(null);
   const [roleError, setRoleError] = useState<string | null>(null);
+  const [isExpertConfirmOpen, setIsExpertConfirmOpen] = useState(false); // add state for dialog
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cropCompletedRef = useRef<boolean>(false);
+  // add ref to hold form data while dialog is open
+  const pendingSubmitData = useRef<{
+    formData: any;
+    editingUserId: string | null;
+    avatarData: File | null | undefined;
+  } | null>(null);
 
   useEffect(() => {
     if (initialData) {
@@ -240,6 +249,14 @@ const UserForm: React.FC<UserFormProps> = ({
     setIsCropModalOpen(false);
     cropCompletedRef.current = false;
   }, [handleSetOriginalFile]);
+
+  const handleConfirmExpertSubmit = () => {
+    if (pendingSubmitData.current) {
+      const { formData, editingUserId, avatarData } = pendingSubmitData.current;
+      onSubmit(formData, editingUserId, avatarData);
+    }
+    setIsExpertConfirmOpen(false);
+  };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -410,6 +427,22 @@ const UserForm: React.FC<UserFormProps> = ({
       avatarFile = null;
     }
 
+    // add the pre-submit check
+    const isMisconfiguredExpert =
+      roleId === ROLES.EXPERT &&
+      expertCategoryIds.length === 0 &&
+      managedCategoryIds.length === 0;
+
+    if (isMisconfiguredExpert) {
+      pendingSubmitData.current = {
+        formData: formDataObject,
+        editingUserId: initialData?._id || null,
+        avatarData: avatarFile,
+      };
+      setIsExpertConfirmOpen(true);
+      return; // Stop submission until user confirms
+    }
+
     onSubmit(formDataObject, initialData?._id || null, avatarFile);
   };
 
@@ -562,6 +595,28 @@ const UserForm: React.FC<UserFormProps> = ({
         onClose={handleModalClose}
         imageSrc={imageToCrop}
         onCropComplete={handleCropComplete}
+      />
+
+      {/* add the dialog to the component's render output */}
+      <ConfirmActionDialog
+        isOpen={isExpertConfirmOpen}
+        onOpenChange={setIsExpertConfirmOpen}
+        onConfirm={handleConfirmExpertSubmit}
+        title="Потвърждение за експерт"
+        description={
+          <div className="flex items-start">
+            <ExclamationTriangleIcon className="h-10 w-10 text-yellow-500 mr-3 flex-shrink-0" />
+            <div>
+              Този потребител е с роля 'Експерт', но няма избрани категории, в
+              които да е експерт или които да управлява.
+              <br />
+              <br />
+              Сигурни ли сте, че искате да продължите?
+            </div>
+          </div>
+        }
+        confirmButtonText="Да, запази"
+        isDestructiveAction={false}
       />
     </>
   );

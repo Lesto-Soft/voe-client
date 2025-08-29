@@ -145,9 +145,9 @@ const UserInformationPanel: React.FC<UserInformationPanelProps> = ({
             // conditionally apply animation class
             <button
               onClick={onEditUser}
-              className={`hover:cursor-pointer absolute top-0 right-0 p-1 text-gray-500 rounded-md hover:bg-gray-100 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors ${
-                isMisconfigured ? "animate-pulse-glow" : ""
-              }`}
+              className="hover:cursor-pointer absolute top-0 right-0 p-1 text-gray-500 rounded-md hover:bg-gray-100 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+              //isMisconfigured ? "animate-pulse-glow" : ""
+
               title="Редактирай потребител"
             >
               <PencilSquareIcon className="h-6 w-6" />

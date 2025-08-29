@@ -690,7 +690,7 @@ body.scrolled .notification-toast {
 
 .animate-pulse-glow {
   animation: pulse-glow 2s infinite;
-  border-radius: 9999px; /* Ensure glow is rounded */
+  border-radius: 9999px;
   border: 2px solid rgba(59, 130, 246, 0.5); /* blue-500 */
   background-color: rgba(59, 130, 246, 0.05); /* blue-100 */
 }

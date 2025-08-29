@@ -470,13 +470,15 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
           htmlFor="categoryProblem"
           className="mb-1 block text-sm font-medium text-gray-700"
         >
-          {t("Проблем")}
+          {t("Помощен текст за проблем")}
           <span className="text-red-500">*</span>
         </label>
         <TextEditor
           content={problem}
           onUpdate={(html) => setProblem(html)}
-          placeholder={t("Опишете проблема...")}
+          placeholder={t(
+            "Опиши какво покрива един сигнал за проблем по тази категория..."
+          )}
           height="120px"
           maxLength={CATEGORY_HELPERS.MAX}
           minLength={CATEGORY_HELPERS.MIN}
@@ -506,13 +508,15 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
           htmlFor="categorySuggestion"
           className="mb-1 block text-sm font-medium text-gray-700"
         >
-          {t("Предложение")}
+          {t("Помощен текст за предложение")}
           <span className="text-red-500">*</span>
         </label>
         <TextEditor
           content={suggestion}
           onUpdate={(html) => setSuggestion(html)}
-          placeholder={t("Напишете предложение...")}
+          placeholder={t(
+            "Опиши какво покрива един сигнал за предложение по тази категория..."
+          )}
           height="120px"
           maxLength={CATEGORY_HELPERS.MAX}
           minLength={CATEGORY_HELPERS.MIN}

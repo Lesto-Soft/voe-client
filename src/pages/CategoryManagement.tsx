@@ -1,6 +1,11 @@
 // src/pages/CategoryManagement.tsx
 import React, { useState, useEffect, useMemo } from "react";
-import { ChevronUpIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
+import {
+  ChevronUpIcon,
+  ChevronDownIcon,
+  ExclamationTriangleIcon,
+  XMarkIcon,
+} from "@heroicons/react/24/outline";
 import { PlusIcon as PlusIconSolid } from "@heroicons/react/20/solid";
 import {
   useGetAllLeanCategories,
@@ -83,6 +88,7 @@ const CategoryManagement: React.FC = () => {
   );
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [successModalMessage, setSuccessModalMessage] = useState("");
+  const [isBannerVisible, setIsBannerVisible] = useState(true);
 
   // ADDED: State to trigger refetch of users in CategorySearchBar
   const [userFilterRefreshKey, setUserFilterRefreshKey] = useState(0);
@@ -255,6 +261,18 @@ const CategoryManagement: React.FC = () => {
     categoryFiltersWithoutPagination,
     activeCategoryFiltersExistForStats,
   ]);
+
+  const misconfiguredCategoriesCount = useMemo(() => {
+    if (!allCategoriesMatchingBackendFilters) {
+      return 0;
+    }
+    return allCategoriesMatchingBackendFilters.filter(
+      (category) =>
+        !category.archived && // must not be archived
+        (!category.experts || category.experts.length === 0) &&
+        (!category.managers || category.managers.length === 0)
+    ).length;
+  }, [allCategoriesMatchingBackendFilters]);
 
   const {
     count: totalCaseCountForStats,
@@ -633,6 +651,38 @@ const CategoryManagement: React.FC = () => {
           refetchKey={userFilterRefreshKey}
         />
       </div>
+
+      {misconfiguredCategoriesCount > 0 && (
+        <div
+          className={`transition-all duration-300 ease-in-out overflow-hidden ${
+            isBannerVisible ? "max-h-40 opacity-100 mb-4" : "max-h-0 opacity-0"
+          }`}
+        >
+          <div
+            className="p-3 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 rounded-r-lg shadow flex items-center justify-between"
+            role="alert"
+          >
+            <div className="flex items-center">
+              <ExclamationTriangleIcon className="h-6 w-6 mr-3 flex-shrink-0" />
+              <div>
+                <p className="font-bold">Внимание</p>
+                <p className="text-sm">
+                  Има {misconfiguredCategoriesCount} категори
+                  {misconfiguredCategoriesCount === 1 ? "я" : "и"} без назначени
+                  експерти или мениджъри.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setIsBannerVisible(false)}
+              className="p-1 rounded-md hover:bg-yellow-200 transition-colors cursor-pointer"
+              aria-label="Скрий предупреждението"
+            >
+              <XMarkIcon className="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+      )}
 
       <CategoryTable
         categories={displayCategoriesForTable}

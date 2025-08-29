@@ -12,6 +12,8 @@ import Pagination from "../../tables/Pagination";
 import CategoryTableSkeleton from "../../skeletons/CategoryTableSkeleton";
 import TruncatedListWithDialog from "./TruncatedListWithDialog";
 import { isNullOrEmptyArray } from "../../../utils/arrayUtils";
+import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
+import * as Tooltip from "@radix-ui/react-tooltip";
 
 // Import your custom Link components (ensure paths are correct)
 import CategoryLink from "../../global/CategoryLink";
@@ -181,13 +183,21 @@ const CategoryTable: React.FC<CategoryTableProps> = ({
             <tbody className="bg-white divide-y divide-gray-200 text-gray-700">
               {categories.map((category) => {
                 const isInactive = !!category.archived;
-                let rowClasses =
-                  "hover:bg-gray-100 transition-colors duration-150";
-                const inactiveClasses =
-                  "bg-gray-50 text-gray-400 hover:bg-gray-100";
 
-                if (isInactive) {
-                  rowClasses = inactiveClasses;
+                // define check for misconfigured category
+                const isMisconfigured =
+                  !isInactive &&
+                  (!category.experts || category.experts.length === 0) &&
+                  (!category.managers || category.managers.length === 0);
+
+                // update row styling logic
+                let rowClasses = "transition-colors duration-150";
+                if (isMisconfigured) {
+                  rowClasses += " bg-yellow-50 hover:bg-yellow-100";
+                } else if (isInactive) {
+                  rowClasses = "bg-gray-50 text-gray-400 hover:bg-gray-100";
+                } else {
+                  rowClasses += " hover:bg-gray-100";
                 }
 
                 const cases = category.cases || [];
@@ -280,7 +290,29 @@ const CategoryTable: React.FC<CategoryTableProps> = ({
                         - No 'onClick' prop forwarding (cannot prevent navigation for inactive).
                         - Styling (padding, font size) is fixed by CategoryLink (text-xs).
                       */}
-                      <CategoryLink {...category} />
+                      <div className="flex items-center">
+                        <CategoryLink {...category} />
+                        {isMisconfigured && (
+                          <Tooltip.Provider delayDuration={100}>
+                            <Tooltip.Root>
+                              <Tooltip.Trigger asChild>
+                                <span className="ml-2 flex-shrink-0">
+                                  <ExclamationTriangleIcon className="h-5 w-5 text-yellow-600" />
+                                </span>
+                              </Tooltip.Trigger>
+                              <Tooltip.Portal>
+                                <Tooltip.Content
+                                  sideOffset={5}
+                                  className="z-50 max-w-xs rounded-md bg-gray-800 px-3 py-1.5 text-sm text-white shadow-lg"
+                                >
+                                  Категория без експерти или мениджъри
+                                  <Tooltip.Arrow className="fill-gray-800" />
+                                </Tooltip.Content>
+                              </Tooltip.Portal>
+                            </Tooltip.Root>
+                          </Tooltip.Provider>
+                        )}
+                      </div>
                     </td>
                     <td className={`${columnWidths.experts} px-3 py-4 text-sm`}>
                       <TruncatedListWithDialog

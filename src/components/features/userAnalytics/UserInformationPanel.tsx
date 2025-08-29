@@ -9,9 +9,12 @@ import {
   CurrencyDollarIcon,
   AcademicCapIcon,
   CogIcon,
+  ExclamationTriangleIcon,
   PencilSquareIcon,
-  ClockIcon, // <-- Import ClockIcon
+  ClockIcon,
+  XMarkIcon,
 } from "@heroicons/react/24/outline";
+import * as Tooltip from "@radix-ui/react-tooltip";
 
 interface UserInformationPanelProps {
   user: IUser | undefined | null;
@@ -19,6 +22,7 @@ interface UserInformationPanelProps {
   serverBaseUrl: string;
   onEditUser: () => void;
   canEdit: boolean;
+  isMisconfigured?: boolean;
 }
 
 type CategoryRoleTab = "manages" | "expertIn";
@@ -29,9 +33,11 @@ const UserInformationPanel: React.FC<UserInformationPanelProps> = ({
   serverBaseUrl,
   onEditUser,
   canEdit,
+  isMisconfigured = false,
 }) => {
   const [activeCategoryRoleTab, setActiveCategoryRoleTab] =
     useState<CategoryRoleTab>("manages");
+  const [isWarningVisible, setIsWarningVisible] = useState(true); // add state for the warning message
 
   useEffect(() => {
     if (user) {
@@ -136,9 +142,12 @@ const UserInformationPanel: React.FC<UserInformationPanelProps> = ({
       <div className="p-6 space-y-4 overflow-y-auto custom-scrollbar">
         <div className="relative flex flex-col items-center text-center space-y-2">
           {canEdit && (
+            // conditionally apply animation class
             <button
               onClick={onEditUser}
-              className="hover:cursor-pointer absolute top-0 right-0 p-1 text-gray-500 rounded-md hover:bg-gray-100 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+              className={`hover:cursor-pointer absolute top-0 right-0 p-1 text-gray-500 rounded-md hover:bg-gray-100 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors ${
+                isMisconfigured ? "animate-pulse-glow" : ""
+              }`}
               title="Редактирай потребител"
             >
               <PencilSquareIcon className="h-6 w-6" />
@@ -155,6 +164,25 @@ const UserInformationPanel: React.FC<UserInformationPanelProps> = ({
             <p className="text-sm text-gray-500">@{user.username}</p>
           )}
         </div>
+
+        {/* conditionally render the warning message */}
+        {isMisconfigured && isWarningVisible && (
+          <div className="p-3 text-sm text-yellow-800 bg-yellow-100 border border-yellow-300 rounded-md flex items-center justify-between">
+            <div className="flex items-center">
+              <ExclamationTriangleIcon className="h-5 w-5 mr-2 flex-shrink-0" />
+              <span>
+                <strong>Внимание:</strong> Този експерт няма зададени категории.
+              </span>
+            </div>
+            <button
+              onClick={() => setIsWarningVisible(false)}
+              className="p-1 rounded-md hover:bg-yellow-200 transition-colors cursor-pointer"
+              aria-label="Скрий предупреждението"
+            >
+              <XMarkIcon className="h-5 w-5" />
+            </button>
+          </div>
+        )}
 
         <hr className="my-4 border-gray-200" />
 
@@ -182,10 +210,35 @@ const UserInformationPanel: React.FC<UserInformationPanelProps> = ({
             icon={ShieldCheckIcon}
             label="Роля"
             value={
-              capitalizedRoleName +
-              (user.managed_categories && user.managed_categories.length > 0
-                ? " - Мениджър"
-                : "")
+              <span className="inline-flex items-center">
+                <span>
+                  {capitalizedRoleName +
+                    (user.managed_categories &&
+                    user.managed_categories.length > 0
+                      ? " - Мениджър"
+                      : "")}
+                </span>
+                {isMisconfigured && (
+                  <Tooltip.Provider>
+                    <Tooltip.Root>
+                      <Tooltip.Trigger asChild>
+                        <span className="ml-2">
+                          <ExclamationTriangleIcon className="h-5 w-5 text-yellow-600" />
+                        </span>
+                      </Tooltip.Trigger>
+                      <Tooltip.Portal>
+                        <Tooltip.Content
+                          sideOffset={5}
+                          className="z-50 max-w-xs rounded-md bg-gray-800 px-3 py-1.5 text-sm text-white shadow-lg"
+                        >
+                          Експерт без зададени категории
+                          <Tooltip.Arrow className="fill-gray-800" />
+                        </Tooltip.Content>
+                      </Tooltip.Portal>
+                    </Tooltip.Root>
+                  </Tooltip.Provider>
+                )}
+              </span>
             }
           />
           <InfoItem

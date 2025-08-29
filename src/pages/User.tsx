@@ -126,6 +126,14 @@ const User: React.FC = () => {
     }).length;
   }, [user?.financialApprovedAnswers, dateRange]);
 
+  const isMisconfiguredExpert = useMemo(() => {
+    return (
+      user?.role?._id === ROLES.EXPERT &&
+      (!user.expert_categories || user.expert_categories.length === 0) &&
+      (!user.managed_categories || user.managed_categories.length === 0)
+    );
+  }, [user]);
+
   const handleFormSubmit = async (
     formData: any,
     editingUserId: string | null,
@@ -223,6 +231,7 @@ const User: React.FC = () => {
         user?.managed_categories || []
       ));
   const isSelf = currentUser?._id === user?._id;
+
   const canEdit =
     isAdmin ||
     (isManagerForCategory && user?.role?._id !== ROLES.ADMIN) ||
@@ -238,6 +247,7 @@ const User: React.FC = () => {
             serverBaseUrl={serverBaseUrl}
             onEditUser={openEditModal}
             canEdit={canEdit}
+            isMisconfigured={isMisconfiguredExpert}
           />
 
           <UserActivityList

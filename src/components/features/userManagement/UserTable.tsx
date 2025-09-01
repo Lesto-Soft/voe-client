@@ -11,6 +11,8 @@ import UserLink from "../../global/UserLink";
 import { IMe, IUser } from "../../../db/interfaces";
 import { useCurrentUser } from "../../../context/UserContext";
 import { ROLES } from "../../../utils/GLOBAL_PARAMETERS";
+import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
+import * as Tooltip from "@radix-ui/react-tooltip";
 
 interface UserTableProps {
   users: IUser[];
@@ -155,14 +157,35 @@ const UserTable: React.FC<UserTableProps> = ({
                   user.avatar && user._id
                     ? `${serverBaseUrl}/static/avatars/${user._id}/${user.avatar}?v=${avatarVersion}`
                     : null;
+                //  Define check for misconfigured expert
+                const isMisconfiguredExpert =
+                  user.role?.name === "експерт" &&
+                  (!user.expert_categories ||
+                    user.expert_categories.length === 0) &&
+                  (!user.managed_categories ||
+                    user.managed_categories.length === 0);
+
                 const isInactive = user.role?.name === "напуснал";
-                let rowClasses =
-                  "hover:bg-gray-100 transition-colors duration-150";
-                const inactiveClasses =
-                  "bg-gray-50 text-gray-400 hover:bg-gray-100";
+
+                // 👇 1. Define classes for the row (background color only)
+                let rowClasses = "transition-colors duration-150";
+
+                // 👇 2. Define classes for the first cell (border color and other styles)
+                let firstCellClasses = `w-full px-3 py-4 whitespace-nowrap flex justify-center items-center`;
+
+                if (isMisconfiguredExpert) {
+                  rowClasses += " bg-yellow-50 hover:bg-yellow-100";
+                  firstCellClasses += " shadow-[inset_4px_0_0_#EAB308]";
+                } else if (isInactive) {
+                  rowClasses = "bg-gray-50 text-gray-400 hover:bg-gray-100";
+                  firstCellClasses += " shadow-[inset_4px_0_0_transparent]";
+                } else {
+                  rowClasses += " hover:bg-gray-100";
+                  firstCellClasses += " shadow-[inset_4px_0_0_transparent]";
+                }
 
                 if (isInactive) {
-                  rowClasses = inactiveClasses;
+                  firstCellClasses += " opacity-50";
                 }
 
                 const canDeleteUser =
@@ -175,11 +198,7 @@ const UserTable: React.FC<UserTableProps> = ({
 
                 return (
                   <tr key={user._id} className={rowClasses}>
-                    <td
-                      className={`w-full px-3 py-4 whitespace-nowrap flex justify-center items-center ${
-                        isInactive ? "opacity-50" : ""
-                      }`}
-                    >
+                    <td className={firstCellClasses}>
                       <UserAvatar
                         name={user.name || user.username || "U"}
                         imageUrl={imageUrl}
@@ -211,20 +230,42 @@ const UserTable: React.FC<UserTableProps> = ({
                       className={`${columnWidths.role} px-3 py-4 whitespace-nowrap text-sm`}
                     >
                       <div className="flex items-center justify-between w-full">
-                        {" "}
-                        {/* Main flex container for role name and badges block */}
-                        {/* Role Name - takes available space on the left */}
-                        <span
-                          className={`${
-                            isInactive ? "opacity-70" : ""
-                          } truncate`}
-                          // Adjust the max-width calculation based on the total width of the badges container
-                          // Example: Each badge/placeholder is w-6 (1.5rem). space-x-1 is 0.25rem. Total ~3.25rem to 3.5rem.
-                          style={{ maxWidth: "calc(100% - 3.5rem)" }}
-                          title={capitalizeFirstLetter(user.role?.name) || "-"}
-                        >
-                          {capitalizeFirstLetter(user.role?.name) || "-"}
-                        </span>
+                        {/* Role Name and Warning Icon */}
+                        <div className="flex items-center truncate">
+                          <span
+                            className={`${
+                              isInactive ? "opacity-70" : ""
+                            } truncate`}
+                            title={
+                              capitalizeFirstLetter(user.role?.name) || "-"
+                            }
+                          >
+                            {capitalizeFirstLetter(user.role?.name) || "-"}
+                          </span>
+                          {/* 👇 5. Add Icon and Tooltip */}
+                          {isMisconfiguredExpert && (
+                            <Tooltip.Provider delayDuration={100}>
+                              <Tooltip.Root>
+                                <Tooltip.Trigger asChild>
+                                  <span className="ml-2 flex-shrink-0">
+                                    <ExclamationTriangleIcon className="h-5 w-5 text-yellow-600" />
+                                  </span>
+                                </Tooltip.Trigger>
+                                <Tooltip.Portal>
+                                  <Tooltip.Content
+                                    sideOffset={5}
+                                    className="z-50 max-w-xs rounded-md bg-gray-800 px-3 py-1.5 text-sm text-white shadow-lg"
+                                  >
+                                    Експерт без зададени категории
+                                    <Tooltip.Arrow className="fill-gray-800" />
+                                  </Tooltip.Content>
+                                </Tooltip.Portal>
+                              </Tooltip.Root>
+                            </Tooltip.Provider>
+                          )}
+                        </div>
+
+                        {/* Badges */}
                         {/* Container for both badges - this group will be on the right */}
                         <div className="flex items-center flex-shrink-0 space-x-1">
                           {" "}

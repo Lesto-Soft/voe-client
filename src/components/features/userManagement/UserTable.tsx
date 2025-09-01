@@ -171,17 +171,17 @@ const UserTable: React.FC<UserTableProps> = ({
                 let rowClasses = "transition-colors duration-150";
 
                 // 👇 2. Define classes for the first cell (border color and other styles)
-                let firstCellClasses = `w-full px-3 py-4 whitespace-nowrap flex justify-center items-center border-l-4`;
+                let firstCellClasses = `w-full px-3 py-4 whitespace-nowrap flex justify-center items-center`;
 
                 if (isMisconfiguredExpert) {
                   rowClasses += " bg-yellow-50 hover:bg-yellow-100";
-                  firstCellClasses += " border-yellow-400";
+                  firstCellClasses += " shadow-[inset_4px_0_0_#EAB308]";
                 } else if (isInactive) {
                   rowClasses = "bg-gray-50 text-gray-400 hover:bg-gray-100";
-                  firstCellClasses += " border-transparent";
+                  firstCellClasses += " shadow-[inset_4px_0_0_transparent]";
                 } else {
                   rowClasses += " hover:bg-gray-100";
-                  firstCellClasses += " border-transparent";
+                  firstCellClasses += " shadow-[inset_4px_0_0_transparent]";
                 }
 
                 if (isInactive) {

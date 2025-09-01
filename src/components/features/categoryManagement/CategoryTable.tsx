@@ -194,12 +194,18 @@ const CategoryTable: React.FC<CategoryTableProps> = ({
 
                 // update row styling logic
                 let rowClasses = "transition-colors duration-150";
+                let categoryCellClasses = `${columnWidths.name} px-3 py-4 whitespace-nowrap`; // Base classes
                 if (isMisconfigured) {
                   rowClasses += " bg-yellow-50 hover:bg-yellow-100";
+                  // Add the "inner border" using an inset box shadow
+                  categoryCellClasses += " shadow-[inset_4px_0_0_#EAB308]";
                 } else if (isInactive) {
                   rowClasses = "bg-gray-50 text-gray-400 hover:bg-gray-100";
+                  // Add a transparent shadow to maintain structure if ever needed
+                  categoryCellClasses += " shadow-[inset_4px_0_0_transparent]";
                 } else {
                   rowClasses += " hover:bg-gray-100";
+                  categoryCellClasses += " shadow-[inset_4px_0_0_transparent]";
                 }
 
                 const cases = category.cases || [];
@@ -278,9 +284,7 @@ const CategoryTable: React.FC<CategoryTableProps> = ({
 
                 return (
                   <tr key={category._id} className={rowClasses}>
-                    <td
-                      className={`${columnWidths.name} px-3 py-4 whitespace-nowrap`}
-                    >
+                    <td className={categoryCellClasses}>
                       {/*
                         IMPORTANT: For CategoryLink to work with JSX <CategoryLink category={...} />,
                         its definition MUST be: const CategoryLink = ({ category }: { category: ICategory }) => { ... }

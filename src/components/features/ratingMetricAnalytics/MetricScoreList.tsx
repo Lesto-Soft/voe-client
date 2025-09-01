@@ -3,13 +3,15 @@ import React, { useMemo, useState } from "react";
 import { IMetricScore } from "../../../db/interfaces";
 import MetricScoreItemCard from "./MetricScoreItemCard";
 import DateRangeSelector from "../userAnalytics/DateRangeSelector";
-import { InboxIcon, CalendarDaysIcon } from "@heroicons/react/24/outline";
+import {
+  InboxIcon,
+  CalendarDaysIcon,
+  XMarkIcon,
+} from "@heroicons/react/24/outline"; // <-- Import XMarkIcon
 import { TIERS } from "../../../utils/GLOBAL_PARAMETERS";
 
-// Define the types for our filter tabs
-type TierTab = "all" | "gold" | "silver" | "bronze" | "problematic";
+export type TierTab = "all" | "gold" | "silver" | "bronze" | "problematic";
 
-// Helper function to classify a score into a tier
 const getTierForScore = (score: number): TierTab => {
   if (score >= TIERS.GOLD) return "gold";
   if (score >= TIERS.SILVER) return "silver";
@@ -17,6 +19,25 @@ const getTierForScore = (score: number): TierTab => {
   return "problematic";
 };
 
+// --- NEW: A local component for rendering the filter tags ---
+const FilterTag: React.FC<{ label: string; onRemove: () => void }> = ({
+  label,
+  onRemove,
+}) => (
+  <span className="inline-flex items-center gap-x-1.5 rounded-full bg-indigo-100 px-2 py-1 text-xs font-medium text-indigo-700">
+    {label}
+    <button
+      type="button"
+      onClick={onRemove}
+      className="cursor-pointer group relative h-3.5 w-3.5 rounded-full hover:bg-indigo-600/20"
+    >
+      <span className="sr-only">Remove</span>
+      <XMarkIcon className="h-3.5 w-3.5 text-indigo-600/75 stroke-2 group-hover:text-indigo-600" />
+    </button>
+  </span>
+);
+
+// Update props to control the active tab from the parent
 interface MetricScoreListProps {
   scores: IMetricScore[];
   isLoading: boolean;
@@ -25,6 +46,14 @@ interface MetricScoreListProps {
     startDate: Date | null;
     endDate: Date | null;
   }) => void;
+  activeTierTab: TierTab;
+  onTabChange: (tab: TierTab) => void;
+  selectedUserId?: string | null;
+  // --- ADD THESE NEW PROPS FOR FILTER TAGS ---
+  isAnyFilterActive: boolean;
+  onClearAllFilters: () => void;
+  selectedUserName: string | null;
+  onClearUserFilter: () => void;
 }
 
 const MetricScoreList: React.FC<MetricScoreListProps> = ({
@@ -32,11 +61,18 @@ const MetricScoreList: React.FC<MetricScoreListProps> = ({
   isLoading,
   dateRange,
   onDateRangeChange,
+  activeTierTab,
+  onTabChange,
+  selectedUserId,
+  // --- DESTRUCTURE NEW PROPS ---
+  isAnyFilterActive,
+  onClearAllFilters,
+  selectedUserName,
+  onClearUserFilter,
 }) => {
-  const [activeTab, setActiveTab] = useState<TierTab>("all");
+  // --- REMOVED: The internal state for the active tab is gone ---
+  // const [activeTab, setActiveTab] = useState<TierTab>("all");
   const [isDateFilterVisible, setIsDateFilterVisible] = useState(false);
-
-  // ✅ MODIFIED: Changed from && to || to show active state if at least one date is selected.
   const isDateFilterActive =
     dateRange.startDate !== null || dateRange.endDate !== null;
 
@@ -57,6 +93,16 @@ const MetricScoreList: React.FC<MetricScoreListProps> = ({
     });
   }, [scores, dateRange]);
 
+  // this second memo filters by the selected user ID
+  const filteredScores = useMemo(() => {
+    if (!selectedUserId) {
+      return dateFilteredScores;
+    }
+    return dateFilteredScores.filter(
+      (score) => score.user._id === selectedUserId
+    );
+  }, [dateFilteredScores, selectedUserId]);
+
   const tierCounts = useMemo(() => {
     const counts: Record<TierTab, number> = {
       all: 0,
@@ -65,34 +111,30 @@ const MetricScoreList: React.FC<MetricScoreListProps> = ({
       bronze: 0,
       problematic: 0,
     };
-    counts.all = dateFilteredScores.length;
-    dateFilteredScores.forEach((score) => {
+    counts.all = filteredScores.length;
+    filteredScores.forEach((score) => {
       const tier = getTierForScore(score.score);
       counts[tier]++;
     });
     return counts;
-  }, [dateFilteredScores]);
+  }, [filteredScores]);
 
-  const finalFilteredScores = useMemo(() => {
-    if (activeTab === "all") {
-      return dateFilteredScores;
+  const finalScoresToDisplay = useMemo(() => {
+    if (activeTierTab === "all") {
+      return filteredScores;
     }
-    return dateFilteredScores.filter((score) => {
+    return filteredScores.filter((score) => {
       const tier = getTierForScore(score.score);
-      return tier === activeTab;
+      return tier === activeTierTab;
     });
-  }, [dateFilteredScores, activeTab]);
+  }, [filteredScores, activeTierTab]);
 
   const tabs: { key: TierTab; label: string; count: number }[] = [
     { key: "all", label: "Всички", count: tierCounts.all },
     { key: "gold", label: "Отлични", count: tierCounts.gold },
     { key: "silver", label: "Добри", count: tierCounts.silver },
     { key: "bronze", label: "Средни", count: tierCounts.bronze },
-    {
-      key: "problematic",
-      label: "Проблемни",
-      count: tierCounts.problematic,
-    },
+    { key: "problematic", label: "Проблемни", count: tierCounts.problematic },
   ];
 
   if (isLoading) {
@@ -119,10 +161,10 @@ const MetricScoreList: React.FC<MetricScoreListProps> = ({
             {tabs.map((tab) => (
               <button
                 key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
-                disabled={tab.count === 0 && activeTab !== tab.key}
+                onClick={() => onTabChange(tab.key)}
+                disabled={tab.count === 0 && activeTierTab !== tab.key}
                 className={`hover:cursor-pointer px-3 py-1.5 text-xs sm:text-sm font-medium rounded-md whitespace-nowrap transition-colors duration-150 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed ${
-                  activeTab === tab.key
+                  activeTierTab === tab.key
                     ? "bg-indigo-600 text-white shadow-sm"
                     : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                 }`}
@@ -131,16 +173,13 @@ const MetricScoreList: React.FC<MetricScoreListProps> = ({
               </button>
             ))}
           </div>
-
           <button
             onClick={() => setIsDateFilterVisible((prev) => !prev)}
-            title="Filter by date"
-            className={`hover:cursor-pointer p-2 rounded-md transition-colors duration-150 ml-2 ${
-              isDateFilterVisible
-                ? "bg-indigo-100 text-indigo-600" // Style when selector is OPEN
-                : isDateFilterActive
-                ? "bg-indigo-100 text-gray-500" // Style when selector is CLOSED but filter is ACTIVE
-                : "bg-gray-100 text-gray-500 hover:bg-gray-200" // Style when selector is CLOSED and INACTIVE
+            title="Филтрирай по дата"
+            className={`p-2 rounded-md transition-colors duration-150 ml-2 ${
+              isDateFilterActive
+                ? "bg-indigo-100 text-indigo-600 hover:bg-indigo-200"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
             }`}
           >
             <CalendarDaysIcon className="h-5 w-5" />
@@ -155,21 +194,58 @@ const MetricScoreList: React.FC<MetricScoreListProps> = ({
             />
           </div>
         )}
+
+        {/* --- NEW: Active Filters Display --- */}
+        {isAnyFilterActive && (
+          <div className="px-4 py-2 border-t mt-2 border-gray-200 bg-gray-50 flex flex-wrap items-center gap-2">
+            <span className="text-xs font-semibold text-gray-600 mr-2">
+              Активни филтри:
+            </span>
+            {activeTierTab !== "all" && (
+              <FilterTag
+                label={`Оценка: ${
+                  tabs.find((t) => t.key === activeTierTab)?.label
+                }`}
+                onRemove={() => onTabChange("all")}
+              />
+            )}
+            {selectedUserId && selectedUserName && (
+              <FilterTag
+                label={`Потребител: ${selectedUserName}`}
+                onRemove={onClearUserFilter}
+              />
+            )}
+            {isDateFilterActive && (
+              <FilterTag
+                label="Период"
+                onRemove={() =>
+                  onDateRangeChange({ startDate: null, endDate: null })
+                }
+              />
+            )}
+            <button
+              onClick={onClearAllFilters}
+              className="cursor-pointer ml-auto text-xs font-semibold text-indigo-600 hover:text-indigo-800 hover:underline"
+            >
+              Изчисти всички
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="flex-1 overflow-y-auto custom-scrollbar">
-        {finalFilteredScores.length > 0 ? (
+        {finalScoresToDisplay.length > 0 ? (
           <div>
-            {finalFilteredScores.map((score) => (
+            {finalScoresToDisplay.map((score) => (
               <MetricScoreItemCard key={score._id} score={score} />
             ))}
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center text-center p-10 text-gray-500 h-full">
-            <InboxIcon className="h-12 w-12 mb-3 text-gray-300" />
-            <p className="text-md font-medium">Няма намерени оценки</p>
+            <InboxIcon className="h-16 w-16 mb-4" />
+            <p className="text-lg font-semibold">Няма намерени оценки</p>
             <p className="text-sm">
-              Няма оценки за избрания период или за тази метрика.
+              Няма оценки, които да съвпадат с текущите филтри.
             </p>
           </div>
         )}

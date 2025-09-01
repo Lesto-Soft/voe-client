@@ -1,4 +1,6 @@
+// src/components/features/ratingMetricAnalytics/RatingMetricStatisticsPanel.tsx
 import React, { useState, useMemo } from "react";
+import * as Tooltip from "@radix-ui/react-tooltip"; // <-- ADD
 import { IMetricScore } from "../../../db/interfaces";
 import useRatingMetricStats from "../../../hooks/useRatingMetricStats";
 import {
@@ -8,7 +10,9 @@ import {
   UsersIcon,
 } from "@heroicons/react/24/outline";
 import StatisticPieChart from "../../charts/StatisticPieChart";
-import { TIERS } from "../../../utils/GLOBAL_PARAMETERS"; // <-- Import TIERS
+import { PieSegmentData } from "../../charts/PieChart";
+import { TIERS } from "../../../utils/GLOBAL_PARAMETERS";
+import { TierTab } from "./MetricScoreList"; // <-- ADD
 
 type StatsTab = "tier" | "user";
 
@@ -25,11 +29,27 @@ interface RatingMetricStatisticsPanelProps {
   scores: IMetricScore[];
   isLoading: boolean;
   dateRange: { startDate: Date | null; endDate: Date | null };
+  onTierClick?: (segment: PieSegmentData) => void;
+  onUserClick?: (segment: PieSegmentData) => void;
+  activeTierLabel?: string | null;
+  activeUserLabel?: string | null;
+  activeTierFilter: TierTab; // <-- ADD
+  activeUserFilter: string | null; // <-- ADD
 }
 
 const RatingMetricStatisticsPanel: React.FC<
   RatingMetricStatisticsPanelProps
-> = ({ scores, isLoading, dateRange }) => {
+> = ({
+  scores,
+  isLoading,
+  dateRange,
+  onTierClick,
+  onUserClick,
+  activeTierLabel,
+  activeUserLabel,
+  activeTierFilter, // <-- DESTRUCTURE
+  activeUserFilter,
+}) => {
   const [activeTab, setActiveTab] = useState<StatsTab>("tier");
 
   const filteredScores = useMemo(() => {
@@ -43,6 +63,7 @@ const RatingMetricStatisticsPanel: React.FC<
   }, [scores, dateRange]);
 
   const stats = useRatingMetricStats(filteredScores);
+  const isInteractive = onTierClick || onUserClick;
 
   if (isLoading) {
     return (
@@ -76,75 +97,106 @@ const RatingMetricStatisticsPanel: React.FC<
   }
 
   return (
-    <aside className="lg:col-span-3 bg-white rounded-lg shadow-lg flex flex-col overflow-hidden">
-      <div className="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1 custom-scrollbar">
-        <h3 className="text-xl font-semibold text-gray-700 mb-1 flex items-center">
-          <ChartPieIcon className="h-6 w-6 mr-2 text-teal-600" /> Статистика
-        </h3>
+    <Tooltip.Provider>
+      <aside className="lg:col-span-3 bg-white rounded-lg shadow-lg flex flex-col overflow-hidden">
+        <div className="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1 custom-scrollbar">
+          <h3 className="text-xl font-semibold text-gray-700 mb-1 flex items-center gap-x-2">
+            <ChartPieIcon className="h-6 w-6 mr-2 text-teal-600" />
+            <span>Статистика</span>
+            {isInteractive && (
+              <Tooltip.Root delayDuration={150}>
+                <Tooltip.Trigger asChild>
+                  <button className="cursor-help text-gray-400 hover:text-sky-600">
+                    <InformationCircleIcon className="h-5 w-5" />
+                  </button>
+                </Tooltip.Trigger>
+                <Tooltip.Portal>
+                  <Tooltip.Content
+                    className="select-none rounded-md bg-gray-800 px-3 py-2 text-sm leading-tight text-white shadow-lg z-50"
+                    sideOffset={5}
+                  >
+                    Кликнете върху диаграмите, за да филтрирате.
+                    <Tooltip.Arrow className="fill-gray-800" />
+                  </Tooltip.Content>
+                </Tooltip.Portal>
+              </Tooltip.Root>
+            )}
+          </h3>
 
-        <div className="space-y-1 text-sm text-gray-600">
-          <p className="flex items-center justify-between">
-            <span className="flex items-center">
-              <UsersIcon className="h-5 w-5 mr-2" />
-              Общо оценки:
-            </span>
-            <strong className="text-gray-800 text-base">
-              {stats.totalScores}
-            </strong>
-          </p>
-          {/* Apply the style to the average score */}
-          <p className="flex items-center justify-between">
-            <span className="flex items-center">
-              <StarIcon className="h-5 w-5 mr-2" />
-              Средна оценка:
-            </span>
-            <strong className={getScoreCellStyle(stats.averageScore)}>
-              {stats.averageScore.toFixed(2)}
-            </strong>
-          </p>
-        </div>
+          <div className="space-y-1 text-sm text-gray-600">
+            <p className="flex items-center justify-between">
+              <span className="flex items-center">
+                <UsersIcon className="h-5 w-5 mr-2" />
+                Общо оценки:
+              </span>
+              <strong className="text-gray-800 text-base">
+                {stats.totalScores}
+              </strong>
+            </p>
+            {/* Apply the style to the average score */}
+            <p className="flex items-center justify-between">
+              <span className="flex items-center">
+                <StarIcon className="h-5 w-5 mr-2" />
+                Средна оценка:
+              </span>
+              <strong className={getScoreCellStyle(stats.averageScore)}>
+                {stats.averageScore.toFixed(2)}
+              </strong>
+            </p>
+          </div>
 
-        <div className="mt-2">
-          <div className="flex border-b border-gray-200 text-xs sm:text-sm">
-            <button
-              onClick={() => setActiveTab("tier")}
-              className={`flex-1 py-2 px-1 text-center font-medium focus:outline-none transition-colors duration-150 ${
-                activeTab === "tier"
-                  ? "border-b-2 border-indigo-500 text-indigo-600"
-                  : "text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              По Оценка
-            </button>
-            <button
-              onClick={() => setActiveTab("user")}
-              className={`flex-1 py-2 px-1 text-center font-medium focus:outline-none transition-colors duration-150 ${
-                activeTab === "user"
-                  ? "border-b-2 border-indigo-500 text-indigo-600"
-                  : "text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              По Потребител
-            </button>
+          <div className="mt-2">
+            <div className="flex border-b border-gray-200 text-xs sm:text-sm">
+              <button
+                onClick={() => setActiveTab("tier")}
+                className={`cursor-pointer relative flex-1 py-2 px-1 text-center font-medium focus:outline-none transition-colors duration-150 ${
+                  activeTab === "tier"
+                    ? "border-b-2 border-indigo-500 text-indigo-600"
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                По Оценка
+                {activeTierFilter !== "all" && (
+                  <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-indigo-500"></span>
+                )}
+              </button>
+              <button
+                onClick={() => setActiveTab("user")}
+                className={`cursor-pointer relative flex-1 py-2 px-1 text-center font-medium focus:outline-none transition-colors duration-150 ${
+                  activeTab === "user"
+                    ? "border-b-2 border-indigo-500 text-indigo-600"
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                По Потребител
+                {activeUserFilter !== null && (
+                  <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-indigo-500"></span>
+                )}
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-3">
+            {activeTab === "tier" && (
+              <StatisticPieChart
+                title="Разпределение по Оценки"
+                pieData={stats.tierDistributionData}
+                onSegmentClick={onTierClick}
+                activeLabel={activeTierLabel}
+              />
+            )}
+            {activeTab === "user" && (
+              <StatisticPieChart
+                title="Разпределение по Потребители"
+                pieData={stats.userContributionData}
+                onSegmentClick={onUserClick}
+                activeLabel={activeUserLabel}
+              />
+            )}
           </div>
         </div>
-
-        <div className="mt-3">
-          {activeTab === "tier" && (
-            <StatisticPieChart
-              title="Разпределение по Оценки"
-              pieData={stats.tierDistributionData}
-            />
-          )}
-          {activeTab === "user" && (
-            <StatisticPieChart
-              title="Разпределение по Потребители"
-              pieData={stats.userContributionData}
-            />
-          )}
-        </div>
-      </div>
-    </aside>
+      </aside>
+    </Tooltip.Provider>
   );
 };
 

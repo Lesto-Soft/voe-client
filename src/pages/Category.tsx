@@ -8,7 +8,8 @@ import {
   useUpdateCategory,
 } from "../graphql/hooks/category"; // Adjust path
 import { GET_LEAN_USERS } from "../graphql/query/user"; // Adjust path
-import { IMe } from "../db/interfaces"; // Adjust path
+import { IMe, CaseType } from "../db/interfaces";
+import { PieSegmentData } from "../components/charts/PieChart";
 import { UpdateCategoryInput } from "../graphql/mutation/category";
 import CategoryModal from "../components/modals/CategoryModal"; // Adjust path
 import CategoryForm, {
@@ -34,6 +35,8 @@ import { ROLES } from "../utils/GLOBAL_PARAMETERS";
 
 import { useAuthorization } from "../hooks/useAuthorization";
 import ForbiddenPage from "./ErrorPages/ForbiddenPage";
+import { translateStatus } from "../utils/categoryDisplayUtils";
+import { translateCaseType } from "../utils/categoryDisplayUtils";
 
 interface ILeanUserForForm {
   _id: string;
@@ -59,6 +62,7 @@ const Category: React.FC = () => {
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [successModalMessage, setSuccessModalMessage] = useState("");
   const [activeStatus, setActiveStatus] = useState<CaseStatusTab>("all");
+  const [activeType, setActiveType] = useState<CaseType | "all">("all");
   const [dateRange, setDateRange] = useState<{
     startDate: Date | null;
     endDate: Date | null;
@@ -131,11 +135,18 @@ const Category: React.FC = () => {
 
   // This logic was already correct and now consumes the fixed dateFilteredCases
   const finalFilteredCases = useMemo(() => {
-    if (activeStatus === "all") {
-      return dateFilteredCases;
+    let casesToFilter = dateFilteredCases;
+
+    if (activeStatus !== "all") {
+      casesToFilter = casesToFilter.filter((c) => c.status === activeStatus);
     }
-    return dateFilteredCases.filter((c) => c.status === activeStatus);
-  }, [dateFilteredCases, activeStatus]);
+
+    if (activeType !== "all") {
+      casesToFilter = casesToFilter.filter((c) => c.type === activeType);
+    }
+
+    return casesToFilter;
+  }, [dateFilteredCases, activeStatus, activeType]); // <-- Add activeType to dependency array
 
   const isDataReady = !categoryLoading && !categoryError && !!category;
 
@@ -172,6 +183,31 @@ const Category: React.FC = () => {
     setIsEditModalOpen(false);
     setFormHasUnsavedChanges(false);
   };
+
+  const handleStatusClick = (segment: PieSegmentData) => {
+    const statusKey = segment.id as CaseStatusTab | undefined; // Use the ID
+    if (statusKey) {
+      // Toggle filter: if clicking the active one, reset to "all"
+      setActiveStatus((currentStatus) =>
+        currentStatus === statusKey ? "all" : statusKey
+      );
+    }
+  };
+
+  const handleTypeClick = (segment: PieSegmentData) => {
+    const typeKey = segment.id as CaseType | undefined; // Use the ID
+    if (typeKey) {
+      setActiveType((currentType) =>
+        currentType === typeKey ? "all" : typeKey
+      );
+    }
+  };
+
+  // Determine the active labels to pass down for styling
+  const activeStatusLabel =
+    activeStatus !== "all" ? translateStatus(activeStatus) : null;
+  const activeTypeLabel =
+    activeType !== "all" ? translateCaseType(activeType as string) : null;
 
   const handleCategoryFormSubmit = async (
     formData: CategoryFormData,
@@ -253,6 +289,10 @@ const Category: React.FC = () => {
           activeStatsView={activeStatsView}
           setActiveStatsView={setActiveStatsView}
           isLoading={categoryLoading && !!category}
+          onStatusClick={handleStatusClick}
+          onTypeClick={handleTypeClick}
+          activeStatusLabel={activeStatusLabel}
+          activeTypeLabel={activeTypeLabel}
         />
       </div>
       <CategoryModal

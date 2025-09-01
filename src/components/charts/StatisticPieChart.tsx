@@ -4,7 +4,6 @@ import { InformationCircleIcon } from "@heroicons/react/24/outline";
 import PieChart, { PieSegmentData } from "./PieChart";
 import { useDebounce } from "../../hooks/useDebounce";
 
-// Helper to create a safe ID for DOM elements
 const createIdFromLabel = (label: string) => {
   return `stat-legend-item-${label.replace(/\s+/g, "-")}`;
 };
@@ -12,15 +11,17 @@ const createIdFromLabel = (label: string) => {
 interface StatisticPieChartProps {
   title: string;
   pieData: PieSegmentData[] | undefined;
+  onSegmentClick?: (segment: PieSegmentData) => void; // <-- NEW: Add click handler prop
+  activeLabel?: string | null;
 }
 
 const StatisticPieChart: React.FC<StatisticPieChartProps> = ({
   title,
   pieData,
+  onSegmentClick, // <-- NEW: Destructure prop
+  activeLabel,
 }) => {
   const [hoveredLabel, setHoveredLabel] = useState<string | null>(null);
-
-  // auto scroll logic
   const debouncedHoveredLabel = useDebounce(hoveredLabel, 200);
   const legendScrollRef = useRef<HTMLUListElement>(null);
 
@@ -72,6 +73,8 @@ const StatisticPieChart: React.FC<StatisticPieChartProps> = ({
           size={160}
           hoveredLabel={hoveredLabel}
           onHover={setHoveredLabel}
+          onSegmentClick={onSegmentClick} // <-- NEW: Pass handler to PieChart
+          activeLabel={activeLabel}
         />
       </div>
 
@@ -82,15 +85,24 @@ const StatisticPieChart: React.FC<StatisticPieChartProps> = ({
         >
           {pieData.map((item) => {
             const isHovered = item.label === hoveredLabel;
+            const isActive = item.label === activeLabel; // <-- ADD THIS CHECK
             return (
               <li
-                id={createIdFromLabel(item.label)}
                 key={item.label}
                 className={`flex items-center justify-between px-1 py-0.5 rounded-md transition-colors ${
-                  isHovered ? "bg-sky-100" : ""
-                }`}
+                  onSegmentClick ? "cursor-pointer" : ""
+                } ${
+                  isHovered
+                    ? isActive
+                      ? "bg-sky-200 font-semibold" // Hovering an active item
+                      : "bg-sky-100" // Standard hover
+                    : isActive
+                    ? "bg-indigo-100 font-semibold" // Active but not hovered
+                    : ""
+                } active:bg-indigo-200`} // Style for while mouse is pressed`}
                 onMouseEnter={() => setHoveredLabel(item.label)}
                 onMouseLeave={() => setHoveredLabel(null)}
+                onClick={() => onSegmentClick?.(item)}
               >
                 <span className="flex items-center" title={item.label}>
                   <span

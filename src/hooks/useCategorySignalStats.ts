@@ -71,6 +71,7 @@ const useCategorySignalStats = (cases: ICase[] | undefined): SignalStats => {
 
     const statusPieChartData = Object.entries(statusCounts)
       .map(([statusKey, value]) => ({
+        id: statusKey,
         label: translateStatus(statusKey),
         value,
         color: getStatusStyle(statusKey).hexColor,
@@ -88,12 +89,14 @@ const useCategorySignalStats = (cases: ICase[] | undefined): SignalStats => {
     const typePieChartData = [];
     if (problemCasesCount > 0)
       typePieChartData.push({
+        id: "PROBLEM",
         label: translateCaseType("PROBLEM"),
         value: problemCasesCount,
         color: TYPE_COLORS.PROBLEM,
       });
     if (suggestionCasesCount > 0)
       typePieChartData.push({
+        id: "SUGGESTION",
         label: translateCaseType("SUGGESTION"),
         value: suggestionCasesCount,
         color: TYPE_COLORS.SUGGESTION,

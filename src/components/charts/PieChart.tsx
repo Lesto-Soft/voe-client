@@ -19,6 +19,7 @@ interface PieChartProps {
   ) => void;
   hoveredLabel: string | null;
   onHover: (label: string | null) => void;
+  activeLabel?: string | null;
 }
 
 interface TooltipData {
@@ -39,6 +40,7 @@ const PieChart: React.FC<PieChartProps> = ({
   onSegmentMiddleClick,
   hoveredLabel,
   onHover,
+  activeLabel,
 }) => {
   const [animationKey, setAnimationKey] = useState(0);
   const [tooltipData, setTooltipData] = useState<TooltipData>({
@@ -82,12 +84,32 @@ const PieChart: React.FC<PieChartProps> = ({
       transform-origin: var(--cx) var(--cy);
       transition: transform 0.2s cubic-bezier(0.25, 0.1, 0.25, 1), 
                   filter 0.2s cubic-bezier(0.25, 0.1, 0.25, 1),
-                  opacity 0.2s cubic-bezier(0.25, 0.1, 0.25, 1); /* Added opacity to transition */
+                  opacity 0.2s cubic-bezier(0.25, 0.1, 0.25, 1);
     }
+
+    .pie-segment-path-interactive.active {
+      transform: scale(1.02);
+      filter: brightness(1.08);
+      opacity: 1;
+    }
+
     .pie-segment-path-interactive.hovered {
-      transform: scale(${hoverEffectScale}); 
-      filter: brightness(1.12);
-      opacity: 1; /* Ensure hovered segment is fully opaque */
+      transform: scale(1.05); 
+      filter: brightness(1.15);
+      opacity: 1;
+    }
+
+    /* style for when hovering over an already active segment */
+    .pie-segment-path-interactive.active.hovered {
+      transform: scale(1.06); /* Slightly larger */
+      filter: brightness(1.20); /* Even brighter */
+    }
+
+    /* style for when the mouse button is pressed down */
+    .pie-segment-path-interactive:active {
+      transform: scale(1.01);
+      filter: brightness(0.95);
+      transition: transform 0.05s ease-out, filter 0.05s ease-out;
     }
     .pie-empty-circle-anim {
       transform-origin: var(--cx) var(--cy);
@@ -130,10 +152,14 @@ const PieChart: React.FC<PieChartProps> = ({
       font-weight: 600;
     }
 
-    /* New style for dimming unhovered segments */
+    .pie-segments-container:has(.pie-segment-path-interactive.active):not(:has(.pie-segment-path-interactive.hovered)) .pie-segment-path-interactive:not(.active) {
+      opacity: 0.5;
+      filter: saturate(0.7);
+    }
+
     .pie-segments-container:has(.pie-segment-path-interactive.hovered) .pie-segment-path-interactive:not(.hovered) {
       opacity: 0.4;
-      filter: saturate(0.6); /* Optional: desaturate further */
+      filter: saturate(0.6);
     }
   `;
 
@@ -226,6 +252,7 @@ const PieChart: React.FC<PieChartProps> = ({
         const segmentAnimationDelay = `${index * animationStagger}s`;
 
         const isHovered = segment.label === hoveredLabel;
+        const isActive = segment.label === activeLabel;
         return (
           <g
             key={`segment-group-${index}-${animationKey}`}
@@ -241,7 +268,7 @@ const PieChart: React.FC<PieChartProps> = ({
               fill={segment.color}
               className={`pie-segment-path-interactive ${
                 isHovered ? "hovered" : ""
-              }`}
+              } ${isActive ? "active" : ""}`}
               onMouseEnter={(e) =>
                 handleSegmentMouseEnter(e, segment, percentage)
               }
@@ -259,7 +286,16 @@ const PieChart: React.FC<PieChartProps> = ({
           </g>
         );
       });
-  }, [data, totalValue, radius, cx, cy, animationKey, hoveredLabel]);
+  }, [
+    data,
+    totalValue,
+    radius,
+    cx,
+    cy,
+    animationKey,
+    hoveredLabel,
+    activeLabel,
+  ]);
 
   const doughnutHoleRadius = radius - strokeWidth;
 

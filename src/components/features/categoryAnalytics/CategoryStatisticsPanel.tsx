@@ -13,26 +13,39 @@ import {
   DocumentTextIcon,
 } from "@heroicons/react/24/outline";
 import StatisticPieChart from "../../charts/StatisticPieChart";
-import { SignalStats } from "../../../hooks/useCategorySignalStats"; // Adjust path
+import { PieSegmentData } from "../../charts/PieChart";
+import { SignalStats } from "../../../hooks/useCategorySignalStats";
 import {
   translateStatus,
   translateCaseType,
-} from "../../../utils/categoryDisplayUtils"; // Adjust path
+} from "../../../utils/categoryDisplayUtils";
 
+// --- NEW: Add click handlers to the props interface ---
 interface CategoryStatisticsPanelProps {
   signalStats: SignalStats | undefined | null;
   activeStatsView: "status" | "type" | "resolution";
   setActiveStatsView: (view: "status" | "type" | "resolution") => void;
   isLoading?: boolean;
+  onStatusClick?: (segment: PieSegmentData) => void;
+  onTypeClick?: (segment: PieSegmentData) => void;
+  onResolutionClick?: (segment: PieSegmentData) => void;
+  activeStatusLabel?: string | null;
+  activeTypeLabel?: string | null;
 }
 
-const TEXT_STATS_AREA_HEIGHT = "h-28"; // Tailwind class for height: 7rem or 112px
+const TEXT_STATS_AREA_HEIGHT = "h-28";
 
 const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
   signalStats,
   activeStatsView,
   setActiveStatsView,
   isLoading,
+  // --- NEW: Destructure the new props ---
+  onStatusClick,
+  onTypeClick,
+  onResolutionClick,
+  activeStatusLabel,
+  activeTypeLabel,
 }) => {
   if (isLoading && !signalStats) {
     // Keep skeleton as is
@@ -113,7 +126,6 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
         <div className="mt-3">
           {activeStatsView === "status" && (
             <div className="space-y-2">
-              {/* This container already aligns content to top by default */}
               <div
                 className={`space-y-1 text-sm text-gray-600 mb-3 ${TEXT_STATS_AREA_HEIGHT}`}
               >
@@ -157,13 +169,14 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
               <StatisticPieChart
                 title="Разпределение по Статус"
                 pieData={signalStats.statusPieChartData}
+                onSegmentClick={onStatusClick}
+                activeLabel={activeStatusLabel}
               />
             </div>
           )}
 
           {activeStatsView === "type" && (
             <div className="space-y-2">
-              {/* MODIFIED: Removed flex flex-col justify-center. items-center for no-data case can be handled differently if needed. */}
               <div
                 className={`space-y-1 text-sm text-gray-600 mb-3 ${TEXT_STATS_AREA_HEIGHT} ${
                   signalStats.problemCasesCount === 0 &&
@@ -204,13 +217,14 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
               <StatisticPieChart
                 title="Разпределение по Тип"
                 pieData={signalStats.typePieChartData}
+                onSegmentClick={onTypeClick}
+                activeLabel={activeTypeLabel}
               />
             </div>
           )}
 
           {activeStatsView === "resolution" && (
             <div className="space-y-2">
-              {/* This container already aligns content to top by default */}
               <div
                 className={`space-y-1 text-sm text-gray-600 mb-3 ${TEXT_STATS_AREA_HEIGHT}`}
               >
@@ -247,6 +261,7 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
               <StatisticPieChart
                 title="Разпределение по Резолюция"
                 pieData={signalStats.resolutionPieChartData}
+                onSegmentClick={onResolutionClick}
               />
             </div>
           )}

@@ -6,6 +6,7 @@ import {
   ArrowDownCircleIcon,
   InboxIcon,
   CalendarDaysIcon,
+  BackspaceIcon,
 } from "@heroicons/react/24/outline";
 import { translateStatus } from "../../../utils/categoryDisplayUtils";
 import DateRangeSelector from "../userAnalytics/DateRangeSelector";
@@ -34,6 +35,8 @@ interface CategoryCasesListProps {
     startDate: Date | null;
     endDate: Date | null;
   }) => void;
+  isAnyFilterActive: boolean;
+  onClearAllFilters: () => void;
 }
 
 const CategoryCasesList: React.FC<CategoryCasesListProps> = ({
@@ -50,6 +53,8 @@ const CategoryCasesList: React.FC<CategoryCasesListProps> = ({
   setActiveStatus,
   dateRange,
   onDateRangeChange,
+  isAnyFilterActive,
+  onClearAllFilters,
 }) => {
   const [isDateFilterVisible, setIsDateFilterVisible] = useState(false);
 
@@ -141,19 +146,31 @@ const CategoryCasesList: React.FC<CategoryCasesListProps> = ({
               </button>
             ))}
           </div>
-          <button
-            onClick={() => setIsDateFilterVisible((prev) => !prev)}
-            title="Филтрирай по дата"
-            className={`hover:cursor-pointer p-2 rounded-md transition-colors duration-150 ml-2 ${
-              isDateFilterVisible
-                ? "bg-indigo-100 text-indigo-600" // Style when selector is OPEN
-                : isDateFilterActive
-                ? "bg-indigo-100 text-gray-500 border-indigo-300" // Style when selector is CLOSED but filter is ACTIVE
-                : "bg-gray-100 text-gray-500 hover:bg-gray-200" // Style when selector is CLOSED and INACTIVE
-            }`}
-          >
-            <CalendarDaysIcon className="h-5 w-5" />
-          </button>
+          {/* --- START: UPDATED SECTION FOR BUTTONS --- */}
+          <div className="flex items-center space-x-1 sm:space-x-2 ml-2">
+            {isAnyFilterActive && (
+              <button
+                onClick={onClearAllFilters}
+                title="Изчисти всички филтри"
+                className="cursor-pointer p-2 rounded-md transition-colors duration-150 bg-red-100 text-red-600 hover:bg-red-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+              >
+                <BackspaceIcon className="h-5 w-5" />
+              </button>
+            )}
+            <button
+              onClick={() => setIsDateFilterVisible((prev) => !prev)}
+              title="Филтрирай по дата"
+              className={`hover:cursor-pointer p-2 rounded-md transition-colors duration-150 ml-2 ${
+                isDateFilterVisible
+                  ? "bg-indigo-100 text-indigo-600" // Style when selector is OPEN
+                  : isDateFilterActive
+                  ? "bg-indigo-100 text-gray-500 border-indigo-300" // Style when selector is CLOSED but filter is ACTIVE
+                  : "bg-gray-100 text-gray-500 hover:bg-gray-200" // Style when selector is CLOSED and INACTIVE
+              }`}
+            >
+              <CalendarDaysIcon className="h-5 w-5" />
+            </button>
+          </div>
         </div>
         {isDateFilterVisible && (
           <div className=" border-t pt-1 border-gray-200">

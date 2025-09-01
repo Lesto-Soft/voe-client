@@ -256,6 +256,23 @@ const Category: React.FC = () => {
     setActiveInfoTab("suggestion");
   }, [categoryNameFromParams]);
 
+  const isAnyFilterActive = useMemo(() => {
+    return (
+      dateRange.startDate !== null ||
+      dateRange.endDate !== null ||
+      activeStatus !== "all" ||
+      activeType !== "all" ||
+      activeResolution !== "all"
+    );
+  }, [dateRange, activeStatus, activeType, activeResolution]);
+
+  const handleClearAllFilters = () => {
+    setDateRange({ startDate: null, endDate: null });
+    setActiveStatus("all");
+    setActiveType("all");
+    setActiveResolution("all");
+  };
+
   const serverBaseUrl = import.meta.env.VITE_API_URL || "";
 
   const openEditModal = () => {
@@ -387,6 +404,8 @@ const Category: React.FC = () => {
           setActiveStatus={setActiveStatus}
           dateRange={dateRange}
           onDateRangeChange={setDateRange}
+          isAnyFilterActive={isAnyFilterActive}
+          onClearAllFilters={handleClearAllFilters}
         />
         <CategoryStatisticsPanel
           statsForStatus={statusSignalStats}

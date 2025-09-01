@@ -1,6 +1,7 @@
 // src/utils/categoryDisplayUtils.ts
 import moment from "moment";
 import { ICase, IAnswer } from "../db/interfaces"; // Adjust path as needed
+import { parseActivityDate } from "./dateUtils";
 
 export const STATUS_COLORS: Record<string, string> = {
   OPEN: "#22C55E", // green-500
@@ -142,7 +143,90 @@ export const tForCaseLink = (
   return key;
 };
 
-// Helper function to calculate resolution statistics (extracted from the original signalStats logic)
+export const getCaseResolutionCategory = (
+  caseItem: ICase
+): ResolutionCategoryKey | null => {
+  // --- START OF DEBUGGING LOGIC ---
+  console.log(`[DEBUG] Processing Case #${caseItem.case_number}...`);
+  // --- END OF DEBUGGING LOGIC ---
+
+  if (
+    String(caseItem.status) !== "CLOSED" &&
+    String(caseItem.status) !== "AWAITING_FINANCE"
+  ) {
+    return null;
+  }
+
+  let latestResolutionDate: Date | null = null;
+
+  if (caseItem.answers && caseItem.answers.length > 0) {
+    caseItem.answers.forEach((answer) => {
+      if (answer.approved) {
+        const resolutionDateStr = answer.date;
+        if (resolutionDateStr) {
+          const currentResolutionDate = parseActivityDate(resolutionDateStr);
+          if (!isNaN(currentResolutionDate.getTime())) {
+            if (
+              !latestResolutionDate ||
+              currentResolutionDate > latestResolutionDate
+            ) {
+              latestResolutionDate = currentResolutionDate;
+            }
+          }
+        }
+      }
+    });
+  }
+
+  // --- START OF DEBUGGING LOGIC ---
+  if (!latestResolutionDate) {
+    console.log(
+      `%c[DEBUG] Case #${caseItem.case_number}: FAILED. No valid approved answer date was found.`,
+      "color: red; font-weight: bold;"
+    );
+    return null;
+  }
+  if (!caseItem.date) {
+    console.log(
+      `%c[DEBUG] Case #${caseItem.case_number}: FAILED. Case has no creation date.`,
+      "color: red; font-weight: bold;"
+    );
+    return null;
+  }
+  // --- END OF DEBUGGING LOGIC ---
+
+  try {
+    const endDate = moment.utc(latestResolutionDate);
+    const startDate = moment.utc(parseInt(caseItem.date, 10));
+    const diffTimeMs = endDate.diff(startDate);
+
+    // --- START OF DEBUGGING LOGIC ---
+    if (diffTimeMs < 0) {
+      console.log(
+        `%c[DEBUG] Case #${
+          caseItem.case_number
+        }: FAILED. Resolution date (${endDate.toISOString()}) is BEFORE creation date (${startDate.toISOString()}).`,
+        "color: red; font-weight: bold;"
+      );
+      return null;
+    }
+    // --- END OF DEBUGGING LOGIC ---
+
+    if (diffTimeMs >= 0) {
+      const diffDays = diffTimeMs / (1000 * 60 * 60 * 24);
+      if (diffDays <= 1) return "UNDER_1_DAY";
+      if (diffDays <= 5) return "UNDER_5_DAYS";
+      if (diffDays <= 10) return "UNDER_10_DAYS";
+      return "OVER_10_DAYS";
+    }
+  } catch (e) {
+    console.error("Error during final calculation:", e);
+    return null;
+  }
+
+  return null;
+};
+
 export const calculateResolutionStats = (cases: ICase[]) => {
   const resolutionTimeCounts: Record<ResolutionCategoryKey, number> = {
     UNDER_1_DAY: 0,
@@ -152,84 +236,61 @@ export const calculateResolutionStats = (cases: ICase[]) => {
   };
   let effectivelyResolvedCasesCount = 0;
   let totalResolutionTimeInDays = 0;
+  let casesWithCalculableTime = 0;
 
   cases.forEach((caseItem: ICase) => {
-    if (
-      String(caseItem.status) === "CLOSED" || // Explicitly stringify if status can be enum
-      String(caseItem.status) === "AWAITING_FINANCE"
-    ) {
-      effectivelyResolvedCasesCount++;
-      let resolvingAnswerVariable: IAnswer | null = null; // Use a different variable name temporarily
-      let latestApprovedDateTime: number | null = null;
+    const isCompleted =
+      String(caseItem.status) === "CLOSED" ||
+      String(caseItem.status) === "AWAITING_FINANCE";
 
+    if (isCompleted) {
+      effectivelyResolvedCasesCount++;
+    }
+
+    // This now uses the same simplified logic as the filter function
+    const resolutionCategory = getCaseResolutionCategory(caseItem);
+    if (resolutionCategory) {
+      resolutionTimeCounts[resolutionCategory]++;
+
+      let latestResolutionDate: Date | null = null;
       if (caseItem.answers && caseItem.answers.length > 0) {
-        caseItem.answers.forEach((answer: IAnswer) => {
+        caseItem.answers.forEach((answer) => {
           if (answer.approved) {
-            try {
-              const currentApprovedDate = new Date(answer.date);
-              if (!isNaN(currentApprovedDate.getTime())) {
-                if (
-                  latestApprovedDateTime === null ||
-                  currentApprovedDate.getTime() > latestApprovedDateTime
-                ) {
-                  latestApprovedDateTime = currentApprovedDate.getTime();
-                  resolvingAnswerVariable = answer; // assigning IAnswer to IAnswer | null
-                }
+            const resolutionDateStr = answer.date; // <-- SIMPLIFIED LOGIC
+            if (resolutionDateStr) {
+              const currentResolutionDate =
+                parseActivityDate(resolutionDateStr);
+              if (
+                !latestResolutionDate ||
+                currentResolutionDate > latestResolutionDate
+              ) {
+                latestResolutionDate = currentResolutionDate;
               }
-            } catch (e) {
-              console.error(
-                "Error parsing answer date for 'latestApprovedDateTime' check:",
-                e,
-                answer
-              );
             }
           }
         });
       }
 
-      // Explicit check and access
-      if (resolvingAnswerVariable !== null) {
-        const finalResolvingAnswer: IAnswer = resolvingAnswerVariable;
-        const answerDateString: string = finalResolvingAnswer.date;
-
-        if (answerDateString && caseItem.date) {
-          try {
-            const endDate = moment.utc(
-              answerDateString,
-              "DD-MMM-YYYY HH:mm",
-              "en"
-            );
-
-            const startDate = moment.utc(parseInt(caseItem.date, 10));
-            const diffTimeMs = endDate.diff(startDate);
-            if (diffTimeMs >= 0) {
-              const diffDays = diffTimeMs / (1000 * 60 * 60 * 24);
-
-              totalResolutionTimeInDays += diffDays;
-
-              if (diffDays <= 1) resolutionTimeCounts.UNDER_1_DAY++;
-              else if (diffDays <= 5) resolutionTimeCounts.UNDER_5_DAYS++;
-              else if (diffDays <= 10) resolutionTimeCounts.UNDER_10_DAYS++;
-              else resolutionTimeCounts.OVER_10_DAYS++;
-            }
-          } catch (e) {
-            console.error(
-              "Error calculating date difference for resolution:",
-              e
-            );
-          }
+      if (latestResolutionDate) {
+        casesWithCalculableTime++;
+        const endDate = moment.utc(latestResolutionDate);
+        const startDate = moment.utc(parseInt(caseItem.date, 10));
+        const diffTimeMs = endDate.diff(startDate);
+        if (diffTimeMs >= 0) {
+          totalResolutionTimeInDays += diffTimeMs / (1000 * 60 * 60 * 24);
         }
       }
     }
   });
 
   const averageResolutionTime =
-    effectivelyResolvedCasesCount > 0
-      ? totalResolutionTimeInDays / effectivelyResolvedCasesCount
+    casesWithCalculableTime > 0
+      ? totalResolutionTimeInDays / casesWithCalculableTime
       : 0;
 
   const resolutionPieChartData = RESOLUTION_CATEGORY_CONFIG.map(
     (catConfig) => ({
+      id: catConfig.key,
       label: catConfig.label,
       value: resolutionTimeCounts[catConfig.key],
       color: catConfig.color,
@@ -243,64 +304,4 @@ export const calculateResolutionStats = (cases: ICase[]) => {
     resolutionPieChartData,
     unresolvedCasesCount: cases.length - effectivelyResolvedCasesCount,
   };
-};
-
-export const getCaseResolutionCategory = (
-  caseItem: ICase
-): ResolutionCategoryKey | null => {
-  // Case must be resolved to have a resolution time
-  if (
-    String(caseItem.status) !== "CLOSED" &&
-    String(caseItem.status) !== "AWAITING_FINANCE"
-  ) {
-    return null;
-  }
-
-  let latestResolutionDate: Date | null = null;
-
-  // Find the most recent resolution date from all approved answers
-  if (caseItem.answers && caseItem.answers.length > 0) {
-    caseItem.answers.forEach((answer) => {
-      // An answer is considered resolved if it's approved
-      if (answer.approved) {
-        // --- NEW LOGIC: Prioritize the specific approval date, but fall back to the answer's creation date ---
-        const resolutionDateStr = answer.approved_date || answer.date;
-
-        if (resolutionDateStr) {
-          const currentResolutionDate = new Date(resolutionDateStr);
-          if (!isNaN(currentResolutionDate.getTime())) {
-            // Check if this answer's resolution date is the latest one found so far
-            if (
-              !latestResolutionDate ||
-              currentResolutionDate > latestResolutionDate
-            ) {
-              latestResolutionDate = currentResolutionDate;
-            }
-          }
-        }
-      }
-    });
-  }
-
-  // If we found a valid resolution date, calculate the difference
-  if (latestResolutionDate && caseItem.date) {
-    try {
-      const endDate = moment.utc(latestResolutionDate);
-      const startDate = moment.utc(parseInt(caseItem.date, 10));
-      const diffTimeMs = endDate.diff(startDate);
-
-      if (diffTimeMs >= 0) {
-        const diffDays = diffTimeMs / (1000 * 60 * 60 * 24);
-        if (diffDays <= 1) return "UNDER_1_DAY";
-        if (diffDays <= 5) return "UNDER_5_DAYS";
-        if (diffDays <= 10) return "UNDER_10_DAYS";
-        return "OVER_10_DAYS";
-      }
-    } catch (e) {
-      console.error("Error calculating date difference for resolution:", e);
-      return null;
-    }
-  }
-
-  return null; // Return null if no valid resolution time can be calculated
 };

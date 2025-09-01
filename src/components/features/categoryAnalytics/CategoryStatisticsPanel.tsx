@@ -18,7 +18,10 @@ import { SignalStats } from "../../../hooks/useCategorySignalStats";
 import {
   translateStatus,
   translateCaseType,
+  ResolutionCategoryKey,
 } from "../../../utils/categoryDisplayUtils";
+import { ICaseStatus, CaseType } from "../../../db/interfaces";
+import { CaseStatusTab } from "../../../pages/Category";
 
 interface CategoryStatisticsPanelProps {
   activeStatsView: "status" | "type" | "resolution";
@@ -29,10 +32,14 @@ interface CategoryStatisticsPanelProps {
   onResolutionClick?: (segment: PieSegmentData) => void;
   activeStatusLabel?: string | null;
   activeTypeLabel?: string | null;
-  activeResolutionLabel?: string | null; // <-- ADD THIS PROP
+  activeResolutionLabel?: string | null;
   statsForStatus: SignalStats | undefined | null;
   statsForType: SignalStats | undefined | null;
   statsForResolution: SignalStats | undefined | null;
+  // --- NEW PROPS FOR FILTER STATE ---
+  activeStatusFilter: CaseStatusTab;
+  activeTypeFilter: CaseType | "all";
+  activeResolutionFilter: ResolutionCategoryKey | "all";
 }
 
 const TEXT_STATS_AREA_HEIGHT = "h-28";
@@ -50,6 +57,10 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
   statsForStatus,
   statsForType,
   statsForResolution,
+  // --- DESTRUCTURE NEW PROPS ---
+  activeStatusFilter,
+  activeTypeFilter,
+  activeResolutionFilter,
 }) => {
   // Determine which stats object to use based on the active tab
   const activeSignalStats =
@@ -93,6 +104,20 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
     );
   }
 
+  const tabs = [
+    {
+      key: "status",
+      label: "По Статус",
+      isActive: activeStatusFilter !== "all",
+    },
+    { key: "type", label: "По Тип", isActive: activeTypeFilter !== "all" },
+    {
+      key: "resolution",
+      label: "По Време",
+      isActive: activeResolutionFilter !== "all",
+    },
+  ] as const;
+
   // --- The rest of the component is updated to use 'activeSignalStats' ---
   return (
     <aside className="lg:col-span-3 bg-white rounded-lg shadow-lg flex flex-col overflow-hidden">
@@ -114,23 +139,21 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
 
         <div className="mt-2">
           <div className="flex border-b border-gray-200 text-xs sm:text-sm">
-            {(
-              [
-                { key: "status", label: "По Статус" },
-                { key: "type", label: "По Тип" },
-                { key: "resolution", label: "По Време" },
-              ] as const
-            ).map((tab) => (
+            {tabs.map((tab) => (
               <button
                 key={tab.key}
                 onClick={() => setActiveStatsView(tab.key)}
-                className={`hover:cursor-pointer flex-1 py-2 px-1 text-center font-medium focus:outline-none transition-colors duration-150 whitespace-nowrap ${
+                className={`relative hover:cursor-pointer flex-1 py-2 px-1 text-center font-medium focus:outline-none transition-colors duration-150 whitespace-nowrap ${
                   activeStatsView === tab.key
                     ? "border-b-2 border-indigo-500 text-indigo-600"
                     : "text-gray-500 hover:text-gray-700 hover:border-gray-300 border-b-2 border-transparent"
                 }`}
               >
                 {tab.label}
+                {/* --- NEW: VISUAL INDICATOR DOT --- */}
+                {tab.isActive && (
+                  <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-indigo-500"></span>
+                )}
               </button>
             ))}
           </div>

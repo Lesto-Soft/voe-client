@@ -50,7 +50,7 @@ interface ILeanUserForForm {
   role: { _id: string } | null;
 }
 
-type CaseStatusTab =
+export type CaseStatusTab =
   | "all"
   | "OPEN"
   | "IN_PROGRESS"
@@ -216,6 +216,30 @@ const Category: React.FC = () => {
 
   const signalStats = useCategorySignalStats(dateFilteredCases);
 
+  useEffect(() => {
+    const closedCasesWithNoCalculableResolution = dateFilteredCases.filter(
+      (caseItem) => {
+        const isConsideredComplete =
+          String(caseItem.status) === "CLOSED" ||
+          String(caseItem.status) === "AWAITING_FINANCE";
+
+        // Check if a resolution category can be determined (which requires an approved answer)
+        const hasResolutionCategory =
+          getCaseResolutionCategory(caseItem) !== null;
+
+        // We are looking for cases that ARE complete but DO NOT have a resolution category
+        return isConsideredComplete && !hasResolutionCategory;
+      }
+    );
+
+    if (closedCasesWithNoCalculableResolution.length > 0) {
+      console.log(
+        "DEBUG: Closed/Awaiting Finance cases WITHOUT a calculable resolution time (likely no approved answer):",
+        closedCasesWithNoCalculableResolution
+      );
+    }
+  }, [dateFilteredCases]); // This runs whenever the list of cases changes
+
   const [activeStatsView, setActiveStatsView] = useState<
     "status" | "type" | "resolution"
   >("status");
@@ -377,6 +401,10 @@ const Category: React.FC = () => {
           activeStatusLabel={activeStatusLabel}
           activeTypeLabel={activeTypeLabel}
           activeResolutionLabel={activeResolutionLabel}
+          // --- ADD THESE THREE PROPS ---
+          activeStatusFilter={activeStatus}
+          activeTypeFilter={activeType}
+          activeResolutionFilter={activeResolution}
         />
       </div>
       <CategoryModal

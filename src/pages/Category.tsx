@@ -9,6 +9,11 @@ import {
 } from "../graphql/hooks/category"; // Adjust path
 import { GET_LEAN_USERS } from "../graphql/query/user"; // Adjust path
 import { IMe, CaseType } from "../db/interfaces";
+import {
+  ResolutionCategoryKey,
+  RESOLUTION_CATEGORY_CONFIG,
+} from "../utils/categoryDisplayUtils";
+import { getCaseResolutionCategory } from "../utils/categoryDisplayUtils";
 import { PieSegmentData } from "../components/charts/PieChart";
 import { UpdateCategoryInput } from "../graphql/mutation/category";
 import CategoryModal from "../components/modals/CategoryModal"; // Adjust path
@@ -63,6 +68,9 @@ const Category: React.FC = () => {
   const [successModalMessage, setSuccessModalMessage] = useState("");
   const [activeStatus, setActiveStatus] = useState<CaseStatusTab>("all");
   const [activeType, setActiveType] = useState<CaseType | "all">("all");
+  const [activeResolution, setActiveResolution] = useState<
+    ResolutionCategoryKey | "all"
+  >("all");
   const [dateRange, setDateRange] = useState<{
     startDate: Date | null;
     endDate: Date | null;
@@ -136,17 +144,70 @@ const Category: React.FC = () => {
   // This logic was already correct and now consumes the fixed dateFilteredCases
   const finalFilteredCases = useMemo(() => {
     let casesToFilter = dateFilteredCases;
-
     if (activeStatus !== "all") {
       casesToFilter = casesToFilter.filter((c) => c.status === activeStatus);
     }
-
     if (activeType !== "all") {
       casesToFilter = casesToFilter.filter((c) => c.type === activeType);
     }
-
+    if (activeResolution !== "all") {
+      casesToFilter = casesToFilter.filter(
+        (c) => getCaseResolutionCategory(c) === activeResolution
+      );
+    }
     return casesToFilter;
-  }, [dateFilteredCases, activeStatus, activeType]); // <-- Add activeType to dependency array
+  }, [dateFilteredCases, activeStatus, activeType, activeResolution]);
+
+  // --- START: ADD THE FOLLOWING NEW MEMOIZED VALUES ---
+
+  // Data for the Status Chart/Legend (respects Type and Resolution filters)
+  const dataForStatusCalculations = useMemo(() => {
+    let casesToFilter = dateFilteredCases;
+    if (activeType !== "all") {
+      casesToFilter = casesToFilter.filter((c) => c.type === activeType);
+    }
+    if (activeResolution !== "all") {
+      casesToFilter = casesToFilter.filter(
+        (c) => getCaseResolutionCategory(c) === activeResolution
+      );
+    }
+    return casesToFilter;
+  }, [dateFilteredCases, activeType, activeResolution]);
+
+  // Data for the Type Chart/Legend (respects Status and Resolution filters)
+  const dataForTypeCalculations = useMemo(() => {
+    let casesToFilter = dateFilteredCases;
+    if (activeStatus !== "all") {
+      casesToFilter = casesToFilter.filter((c) => c.status === activeStatus);
+    }
+    if (activeResolution !== "all") {
+      casesToFilter = casesToFilter.filter(
+        (c) => getCaseResolutionCategory(c) === activeResolution
+      );
+    }
+    return casesToFilter;
+  }, [dateFilteredCases, activeStatus, activeResolution]);
+
+  // Data for the Resolution Chart/Legend (respects Status and Type filters)
+  const dataForResolutionCalculations = useMemo(() => {
+    let casesToFilter = dateFilteredCases;
+    if (activeStatus !== "all") {
+      casesToFilter = casesToFilter.filter((c) => c.status === activeStatus);
+    }
+    if (activeType !== "all") {
+      casesToFilter = casesToFilter.filter((c) => c.type === activeType);
+    }
+    return casesToFilter;
+  }, [dateFilteredCases, activeStatus, activeType]);
+
+  // Now, call the stats hook for each dataset
+  const statusSignalStats = useCategorySignalStats(dataForStatusCalculations);
+  const typeSignalStats = useCategorySignalStats(dataForTypeCalculations);
+  const resolutionSignalStats = useCategorySignalStats(
+    dataForResolutionCalculations
+  );
+
+  // --- END: ADD THE NEW MEMOIZED VALUES ---
 
   const isDataReady = !categoryLoading && !categoryError && !!category;
 
@@ -203,11 +264,29 @@ const Category: React.FC = () => {
     }
   };
 
+  const handleResolutionClick = (segment: PieSegmentData) => {
+    const resolutionKey = RESOLUTION_CATEGORY_CONFIG.find(
+      (c) => c.label === segment.label
+    )?.key;
+
+    if (resolutionKey) {
+      setActiveResolution((currentRes) =>
+        currentRes === resolutionKey ? "all" : resolutionKey
+      );
+    }
+  };
+
   // Determine the active labels to pass down for styling
   const activeStatusLabel =
     activeStatus !== "all" ? translateStatus(activeStatus) : null;
   const activeTypeLabel =
     activeType !== "all" ? translateCaseType(activeType as string) : null;
+
+  const activeResolutionLabel =
+    activeResolution !== "all"
+      ? RESOLUTION_CATEGORY_CONFIG.find((c) => c.key === activeResolution)
+          ?.label || null
+      : null;
 
   const handleCategoryFormSubmit = async (
     formData: CategoryFormData,
@@ -272,7 +351,8 @@ const Category: React.FC = () => {
         />
         <CategoryCasesList
           allCases={finalFilteredCases}
-          dateFilteredCases={dateFilteredCases}
+          dateFilteredCases={dateFilteredCases} // This prop is no longer used for counts
+          casesForTabCounts={dataForStatusCalculations}
           visibleCasesCount={visibleCasesCount}
           handleLoadMoreCases={handleLoadMoreCases}
           scrollableRef={scrollableCasesListRef}
@@ -285,14 +365,18 @@ const Category: React.FC = () => {
           onDateRangeChange={setDateRange}
         />
         <CategoryStatisticsPanel
-          signalStats={signalStats}
+          statsForStatus={statusSignalStats}
+          statsForType={typeSignalStats}
+          statsForResolution={resolutionSignalStats}
           activeStatsView={activeStatsView}
           setActiveStatsView={setActiveStatsView}
           isLoading={categoryLoading && !!category}
           onStatusClick={handleStatusClick}
           onTypeClick={handleTypeClick}
+          onResolutionClick={handleResolutionClick}
           activeStatusLabel={activeStatusLabel}
           activeTypeLabel={activeTypeLabel}
+          activeResolutionLabel={activeResolutionLabel}
         />
       </div>
       <CategoryModal

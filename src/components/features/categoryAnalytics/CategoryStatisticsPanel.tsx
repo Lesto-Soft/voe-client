@@ -20,9 +20,7 @@ import {
   translateCaseType,
 } from "../../../utils/categoryDisplayUtils";
 
-// --- NEW: Add click handlers to the props interface ---
 interface CategoryStatisticsPanelProps {
-  signalStats: SignalStats | undefined | null;
   activeStatsView: "status" | "type" | "resolution";
   setActiveStatsView: (view: "status" | "type" | "resolution") => void;
   isLoading?: boolean;
@@ -31,23 +29,37 @@ interface CategoryStatisticsPanelProps {
   onResolutionClick?: (segment: PieSegmentData) => void;
   activeStatusLabel?: string | null;
   activeTypeLabel?: string | null;
+  activeResolutionLabel?: string | null; // <-- ADD THIS PROP
+  statsForStatus: SignalStats | undefined | null;
+  statsForType: SignalStats | undefined | null;
+  statsForResolution: SignalStats | undefined | null;
 }
 
 const TEXT_STATS_AREA_HEIGHT = "h-28";
 
 const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
-  signalStats,
   activeStatsView,
   setActiveStatsView,
   isLoading,
-  // --- NEW: Destructure the new props ---
   onStatusClick,
   onTypeClick,
   onResolutionClick,
   activeStatusLabel,
   activeTypeLabel,
+  activeResolutionLabel,
+  statsForStatus,
+  statsForType,
+  statsForResolution,
 }) => {
-  if (isLoading && !signalStats) {
+  // Determine which stats object to use based on the active tab
+  const activeSignalStats =
+    activeStatsView === "status"
+      ? statsForStatus
+      : activeStatsView === "type"
+      ? statsForType
+      : statsForResolution;
+
+  if (isLoading && !activeSignalStats) {
     // Keep skeleton as is
     return (
       <aside className="lg:col-span-3 bg-white rounded-lg shadow-lg flex flex-col overflow-hidden">
@@ -67,7 +79,7 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
     );
   }
 
-  if (!signalStats) {
+  if (!activeSignalStats) {
     // Keep "no stats" as is
     return (
       <aside className="lg:col-span-3 bg-white rounded-lg shadow-lg flex flex-col overflow-hidden">
@@ -81,6 +93,7 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
     );
   }
 
+  // --- The rest of the component is updated to use 'activeSignalStats' ---
   return (
     <aside className="lg:col-span-3 bg-white rounded-lg shadow-lg flex flex-col overflow-hidden">
       <div className="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1 custom-scrollbar">
@@ -94,7 +107,7 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
               сигнали:
             </span>
             <strong className="text-gray-800 text-base">
-              {signalStats.totalSignals}
+              {activeSignalStats.totalSignals}
             </strong>
           </p>
         </div>
@@ -135,7 +148,7 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
                     {translateStatus("OPEN")}:
                   </span>
                   <strong className="text-gray-800 text-base">
-                    {signalStats.strictlyOpenSignals}
+                    {activeSignalStats.strictlyOpenSignals}
                   </strong>
                 </p>
                 <p className="flex items-center justify-between">
@@ -144,7 +157,7 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
                     {translateStatus("IN_PROGRESS")}:
                   </span>
                   <strong className="text-gray-800 text-base">
-                    {signalStats.inProgressSignals}
+                    {activeSignalStats.inProgressSignals}
                   </strong>
                 </p>
                 <p className="flex items-center justify-between">
@@ -153,7 +166,7 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
                     {translateStatus("AWAITING_FINANCE")}:
                   </span>
                   <strong className="text-gray-800 text-base">
-                    {signalStats.awaitingFinanceSignals}
+                    {activeSignalStats.awaitingFinanceSignals}
                   </strong>
                 </p>
                 <p className="flex items-center justify-between">
@@ -162,13 +175,13 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
                     {translateStatus("CLOSED")}:
                   </span>
                   <strong className="text-gray-800 text-base">
-                    {signalStats.closedSignals}
+                    {activeSignalStats.closedSignals}
                   </strong>
                 </p>
               </div>
               <StatisticPieChart
                 title="Разпределение по Статус"
-                pieData={signalStats.statusPieChartData}
+                pieData={activeSignalStats.statusPieChartData}
                 onSegmentClick={onStatusClick}
                 activeLabel={activeStatusLabel}
               />
@@ -179,14 +192,14 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
             <div className="space-y-2">
               <div
                 className={`space-y-1 text-sm text-gray-600 mb-3 ${TEXT_STATS_AREA_HEIGHT} ${
-                  signalStats.problemCasesCount === 0 &&
-                  signalStats.suggestionCasesCount === 0
+                  activeSignalStats.problemCasesCount === 0 &&
+                  activeSignalStats.suggestionCasesCount === 0
                     ? "pt-4 text-center"
                     : ""
                 }`}
               >
-                {signalStats.problemCasesCount > 0 ||
-                signalStats.suggestionCasesCount > 0 ? (
+                {activeSignalStats.problemCasesCount > 0 ||
+                activeSignalStats.suggestionCasesCount > 0 ? (
                   <>
                     <p className="flex items-center justify-between w-full">
                       <span className="flex items-center">
@@ -194,7 +207,7 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
                         {translateCaseType("PROBLEM")}:
                       </span>
                       <strong className="text-gray-800 text-base">
-                        {signalStats.problemCasesCount}
+                        {activeSignalStats.problemCasesCount}
                       </strong>
                     </p>
                     <p className="flex items-center justify-between w-full">
@@ -203,7 +216,7 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
                         {translateCaseType("SUGGESTION")}:
                       </span>
                       <strong className="text-gray-800 text-base">
-                        {signalStats.suggestionCasesCount}
+                        {activeSignalStats.suggestionCasesCount}
                       </strong>
                     </p>
                   </>
@@ -216,7 +229,7 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
               </div>
               <StatisticPieChart
                 title="Разпределение по Тип"
-                pieData={signalStats.typePieChartData}
+                pieData={activeSignalStats.typePieChartData}
                 onSegmentClick={onTypeClick}
                 activeLabel={activeTypeLabel}
               />
@@ -234,7 +247,7 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
                     Приключени (за графиката):
                   </span>
                   <strong className="text-gray-800 text-base">
-                    {signalStats.effectivelyResolvedCasesCount}
+                    {activeSignalStats.effectivelyResolvedCasesCount}
                   </strong>
                 </p>
                 <p className="flex items-center justify-between">
@@ -243,25 +256,26 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
                     В изчакване/други:
                   </span>
                   <strong className="text-gray-800 text-base">
-                    {signalStats.unresolvedCasesCount}
+                    {activeSignalStats.unresolvedCasesCount}
                   </strong>
                 </p>
-                {signalStats.effectivelyResolvedCasesCount > 0 && (
+                {activeSignalStats.effectivelyResolvedCasesCount > 0 && (
                   <p className="flex items-center justify-between mt-1">
                     <span className="flex items-center">
                       <DocumentTextIcon className="h-5 w-5 mr-2 text-purple-500 flex-shrink-0" />
                       Средно време (дни):
                     </span>
                     <strong className="text-gray-800 text-base">
-                      {signalStats.averageResolutionTime.toFixed(2)}
+                      {activeSignalStats.averageResolutionTime.toFixed(2)}
                     </strong>
                   </p>
                 )}
               </div>
               <StatisticPieChart
                 title="Разпределение по Резолюция"
-                pieData={signalStats.resolutionPieChartData}
+                pieData={activeSignalStats.resolutionPieChartData}
                 onSegmentClick={onResolutionClick}
+                activeLabel={activeResolutionLabel}
               />
             </div>
           )}

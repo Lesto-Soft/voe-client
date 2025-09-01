@@ -244,3 +244,63 @@ export const calculateResolutionStats = (cases: ICase[]) => {
     unresolvedCasesCount: cases.length - effectivelyResolvedCasesCount,
   };
 };
+
+export const getCaseResolutionCategory = (
+  caseItem: ICase
+): ResolutionCategoryKey | null => {
+  // Case must be resolved to have a resolution time
+  if (
+    String(caseItem.status) !== "CLOSED" &&
+    String(caseItem.status) !== "AWAITING_FINANCE"
+  ) {
+    return null;
+  }
+
+  let latestResolutionDate: Date | null = null;
+
+  // Find the most recent resolution date from all approved answers
+  if (caseItem.answers && caseItem.answers.length > 0) {
+    caseItem.answers.forEach((answer) => {
+      // An answer is considered resolved if it's approved
+      if (answer.approved) {
+        // --- NEW LOGIC: Prioritize the specific approval date, but fall back to the answer's creation date ---
+        const resolutionDateStr = answer.approved_date || answer.date;
+
+        if (resolutionDateStr) {
+          const currentResolutionDate = new Date(resolutionDateStr);
+          if (!isNaN(currentResolutionDate.getTime())) {
+            // Check if this answer's resolution date is the latest one found so far
+            if (
+              !latestResolutionDate ||
+              currentResolutionDate > latestResolutionDate
+            ) {
+              latestResolutionDate = currentResolutionDate;
+            }
+          }
+        }
+      }
+    });
+  }
+
+  // If we found a valid resolution date, calculate the difference
+  if (latestResolutionDate && caseItem.date) {
+    try {
+      const endDate = moment.utc(latestResolutionDate);
+      const startDate = moment.utc(parseInt(caseItem.date, 10));
+      const diffTimeMs = endDate.diff(startDate);
+
+      if (diffTimeMs >= 0) {
+        const diffDays = diffTimeMs / (1000 * 60 * 60 * 24);
+        if (diffDays <= 1) return "UNDER_1_DAY";
+        if (diffDays <= 5) return "UNDER_5_DAYS";
+        if (diffDays <= 10) return "UNDER_10_DAYS";
+        return "OVER_10_DAYS";
+      }
+    } catch (e) {
+      console.error("Error calculating date difference for resolution:", e);
+      return null;
+    }
+  }
+
+  return null; // Return null if no valid resolution time can be calculated
+};

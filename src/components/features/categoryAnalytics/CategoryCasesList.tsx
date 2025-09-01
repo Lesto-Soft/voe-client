@@ -18,8 +18,9 @@ type CaseStatusTab =
   | "CLOSED";
 
 interface CategoryCasesListProps {
-  allCases: ICase[];
-  dateFilteredCases: ICase[];
+  allCases: ICase[]; // This remains for the final displayed list
+  dateFilteredCases: ICase[]; // This can be removed if no longer used directly
+  casesForTabCounts: ICase[]; // <-- ADD THIS NEW PROP
   visibleCasesCount: number;
   handleLoadMoreCases: () => void;
   scrollableRef: React.RefObject<HTMLDivElement | null>;
@@ -37,7 +38,8 @@ interface CategoryCasesListProps {
 
 const CategoryCasesList: React.FC<CategoryCasesListProps> = ({
   allCases,
-  dateFilteredCases,
+  dateFilteredCases, // This prop is now unused in the count
+  casesForTabCounts,
   visibleCasesCount,
   handleLoadMoreCases,
   scrollableRef,
@@ -63,15 +65,16 @@ const CategoryCasesList: React.FC<CategoryCasesListProps> = ({
       AWAITING_FINANCE: 0,
       CLOSED: 0,
     };
-    counts.all = dateFilteredCases.length;
-    dateFilteredCases.forEach((c) => {
+    // <-- UPDATE THE LOGIC TO USE THE NEW PROP -->
+    counts.all = casesForTabCounts.length;
+    casesForTabCounts.forEach((c) => {
       const status = c.status as CaseStatusTab;
       if (counts[status] !== undefined) {
         counts[status]++;
       }
     });
     return counts;
-  }, [dateFilteredCases]);
+  }, [casesForTabCounts]); // <-- UPDATE THE DEPENDENCY -->
 
   const tabs: { key: CaseStatusTab; label: string }[] = [
     { key: "all", label: "Всички" },

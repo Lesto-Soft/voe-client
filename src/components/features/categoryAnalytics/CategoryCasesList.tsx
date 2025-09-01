@@ -1,35 +1,34 @@
 // src/components/features/categoryAnalytics/CategoryCasesList.tsx
 import React, { useMemo, useState } from "react";
-import { ICase } from "../../../db/interfaces"; // Adjust path
-import CategoryCaseCard from "./CategoryCaseCard"; // Adjust path
+import { ICase, CaseType } from "../../../db/interfaces";
+import CategoryCaseCard from "./CategoryCaseCard";
 import {
   ArrowDownCircleIcon,
   InboxIcon,
   CalendarDaysIcon,
-  BackspaceIcon,
+  XMarkIcon,
 } from "@heroicons/react/24/outline";
-import { translateStatus } from "../../../utils/categoryDisplayUtils";
+import {
+  translateStatus,
+  translateCaseType,
+  RESOLUTION_CATEGORY_CONFIG,
+  ResolutionCategoryKey,
+} from "../../../utils/categoryDisplayUtils";
 import DateRangeSelector from "../userAnalytics/DateRangeSelector";
 
-type CaseStatusTab =
-  | "all"
-  | "OPEN"
-  | "IN_PROGRESS"
-  | "AWAITING_FINANCE"
-  | "CLOSED";
+// The local CaseStatusTab type can now be imported from Category.tsx
+import { CaseStatusTab } from "../../../pages/Category";
 
+// --- START: NEW PROPS INTERFACE ---
 interface CategoryCasesListProps {
-  allCases: ICase[]; // This remains for the final displayed list
-  dateFilteredCases: ICase[]; // This can be removed if no longer used directly
-  casesForTabCounts: ICase[]; // <-- ADD THIS NEW PROP
+  allCases: ICase[];
+  casesForTabCounts: ICase[];
   visibleCasesCount: number;
   handleLoadMoreCases: () => void;
   scrollableRef: React.RefObject<HTMLDivElement | null>;
   serverBaseUrl: string;
   isLoading?: boolean;
   categoryName?: string;
-  activeStatus: CaseStatusTab;
-  setActiveStatus: (status: CaseStatusTab) => void;
   dateRange: { startDate: Date | null; endDate: Date | null };
   onDateRangeChange: (range: {
     startDate: Date | null;
@@ -37,11 +36,36 @@ interface CategoryCasesListProps {
   }) => void;
   isAnyFilterActive: boolean;
   onClearAllFilters: () => void;
+  // State and setters for filters
+  activeStatus: CaseStatusTab;
+  setActiveStatus: (status: CaseStatusTab) => void;
+  activeType: CaseType | "all";
+  onClearTypeFilter: () => void;
+  activeResolution: ResolutionCategoryKey | "all";
+  onClearResolutionFilter: () => void;
 }
+// --- END: NEW PROPS INTERFACE ---
+
+// --- NEW: A small component for rendering the filter tags ---
+const FilterTag: React.FC<{ label: string; onRemove: () => void }> = ({
+  label,
+  onRemove,
+}) => (
+  <span className="inline-flex items-center gap-x-1.5 rounded-full bg-indigo-100 px-2 py-1 text-xs font-medium text-indigo-700">
+    {label}
+    <button
+      type="button"
+      onClick={onRemove}
+      className="cursor-pointer group relative h-3.5 w-3.5 rounded-full hover:bg-indigo-600/20"
+    >
+      <span className="sr-only">Remove</span>
+      <XMarkIcon className="h-3.5 w-3.5 text-indigo-600/75 stroke-2 group-hover:text-indigo-600" />
+    </button>
+  </span>
+);
 
 const CategoryCasesList: React.FC<CategoryCasesListProps> = ({
   allCases,
-  dateFilteredCases, // This prop is now unused in the count
   casesForTabCounts,
   visibleCasesCount,
   handleLoadMoreCases,
@@ -55,6 +79,10 @@ const CategoryCasesList: React.FC<CategoryCasesListProps> = ({
   onDateRangeChange,
   isAnyFilterActive,
   onClearAllFilters,
+  activeType,
+  onClearTypeFilter,
+  activeResolution,
+  onClearResolutionFilter,
 }) => {
   const [isDateFilterVisible, setIsDateFilterVisible] = useState(false);
 
@@ -146,31 +174,19 @@ const CategoryCasesList: React.FC<CategoryCasesListProps> = ({
               </button>
             ))}
           </div>
-          {/* --- START: UPDATED SECTION FOR BUTTONS --- */}
-          <div className="flex items-center space-x-1 sm:space-x-2 ml-2">
-            {isAnyFilterActive && (
-              <button
-                onClick={onClearAllFilters}
-                title="Изчисти всички филтри"
-                className="cursor-pointer p-2 rounded-md transition-colors duration-150 bg-red-100 text-red-600 hover:bg-red-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
-              >
-                <BackspaceIcon className="h-5 w-5" />
-              </button>
-            )}
-            <button
-              onClick={() => setIsDateFilterVisible((prev) => !prev)}
-              title="Филтрирай по дата"
-              className={`hover:cursor-pointer p-2 rounded-md transition-colors duration-150 ml-2 ${
-                isDateFilterVisible
-                  ? "bg-indigo-100 text-indigo-600" // Style when selector is OPEN
-                  : isDateFilterActive
-                  ? "bg-indigo-100 text-gray-500 border-indigo-300" // Style when selector is CLOSED but filter is ACTIVE
-                  : "bg-gray-100 text-gray-500 hover:bg-gray-200" // Style when selector is CLOSED and INACTIVE
-              }`}
-            >
-              <CalendarDaysIcon className="h-5 w-5" />
-            </button>
-          </div>
+          <button
+            onClick={() => setIsDateFilterVisible((prev) => !prev)}
+            title="Филтрирай по дата"
+            className={`hover:cursor-pointer p-2 rounded-md transition-colors duration-150 ml-2 ${
+              isDateFilterVisible
+                ? "bg-indigo-100 text-indigo-600" // Style when selector is OPEN
+                : isDateFilterActive
+                ? "bg-indigo-100 text-gray-500 border-indigo-300" // Style when selector is CLOSED but filter is ACTIVE
+                : "bg-gray-100 text-gray-500 hover:bg-gray-200" // Style when selector is CLOSED and INACTIVE
+            }`}
+          >
+            <CalendarDaysIcon className="h-5 w-5" />
+          </button>
         </div>
         {isDateFilterVisible && (
           <div className=" border-t pt-1 border-gray-200">
@@ -181,6 +197,51 @@ const CategoryCasesList: React.FC<CategoryCasesListProps> = ({
           </div>
         )}
       </div>
+
+      {/* --- NEW: Active Filters Display --- */}
+      {isAnyFilterActive && (
+        <div className="px-4 py-2 border-b border-gray-200 bg-gray-50 flex flex-wrap items-center gap-2">
+          <span className="text-xs font-semibold text-gray-600 mr-2">
+            Активни филтри:
+          </span>
+          {activeStatus !== "all" && (
+            <FilterTag
+              label={`Статус: ${translateStatus(activeStatus)}`}
+              onRemove={() => setActiveStatus("all")}
+            />
+          )}
+          {activeType !== "all" && (
+            <FilterTag
+              label={`Тип: ${translateCaseType(activeType)}`}
+              onRemove={onClearTypeFilter}
+            />
+          )}
+          {activeResolution !== "all" && (
+            <FilterTag
+              label={`Резолюция: ${
+                RESOLUTION_CATEGORY_CONFIG.find(
+                  (c) => c.key === activeResolution
+                )?.label
+              }`}
+              onRemove={onClearResolutionFilter}
+            />
+          )}
+          {isDateFilterActive && (
+            <FilterTag
+              label="Период"
+              onRemove={() =>
+                onDateRangeChange({ startDate: null, endDate: null })
+              }
+            />
+          )}
+          <button
+            onClick={onClearAllFilters}
+            className="cursor-pointer ml-auto text-xs font-semibold text-indigo-600 hover:text-indigo-800 hover:underline"
+          >
+            Изчисти всички
+          </button>
+        </div>
+      )}
 
       <div
         ref={scrollableRef}

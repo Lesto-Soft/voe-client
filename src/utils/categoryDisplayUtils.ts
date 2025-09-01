@@ -160,7 +160,7 @@ export const getCaseResolutionCategory = (
   let latestResolutionDate: Date | null = null;
 
   if (caseItem.answers && caseItem.answers.length > 0) {
-    caseItem.answers.forEach((answer) => {
+    caseItem.answers.forEach((answer: IAnswer) => {
       if (answer.approved) {
         const resolutionDateStr = answer.date;
         if (resolutionDateStr) {
@@ -254,7 +254,7 @@ export const calculateResolutionStats = (cases: ICase[]) => {
 
       let latestResolutionDate: Date | null = null;
       if (caseItem.answers && caseItem.answers.length > 0) {
-        caseItem.answers.forEach((answer) => {
+        caseItem.answers.forEach((answer: IAnswer) => {
           if (answer.approved) {
             const resolutionDateStr = answer.date; // <-- SIMPLIFIED LOGIC
             if (resolutionDateStr) {

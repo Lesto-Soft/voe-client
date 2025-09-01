@@ -99,18 +99,25 @@ const PieChart: React.FC<PieChartProps> = ({
       opacity: 1;
     }
 
-    /* style for when hovering over an already active segment */
+    /* Style for when hovering over an already active segment */
     .pie-segment-path-interactive.active.hovered {
-      transform: scale(1.06); /* Slightly larger */
-      filter: brightness(1.20); /* Even brighter */
+      transform: scale(1.06);
+      filter: brightness(1.20);
     }
 
-    /* style for when the mouse button is pressed down */
+    /* Style for while the mouse button is pressed down */
     .pie-segment-path-interactive:active {
       transform: scale(1.01);
       filter: brightness(0.95);
       transition: transform 0.05s ease-out, filter 0.05s ease-out;
     }
+
+    /* NEW: Style for pressing down on an ALREADY ACTIVE segment */
+    .pie-segment-path-interactive.active:active {
+      transform: scale(1.01);
+      filter: brightness(1.0); /* Slightly darken the already brightened segment */
+    }
+      
     .pie-empty-circle-anim {
       transform-origin: var(--cx) var(--cy);
       animation: pieSegmentEnter var(--anim-duration, 0.5s) ease-out 0.1s forwards;

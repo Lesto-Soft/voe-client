@@ -214,8 +214,6 @@ const Category: React.FC = () => {
   const { visibleCasesCount, scrollableCasesListRef, handleLoadMoreCases } =
     useCategoryScrollPersistence(categoryNameFromParams, isDataReady);
 
-  const signalStats = useCategorySignalStats(dateFilteredCases);
-
   useEffect(() => {
     const closedCasesWithNoCalculableResolution = dateFilteredCases.filter(
       (caseItem) => {
@@ -392,7 +390,6 @@ const Category: React.FC = () => {
         />
         <CategoryCasesList
           allCases={finalFilteredCases}
-          dateFilteredCases={dateFilteredCases} // This prop is no longer used for counts
           casesForTabCounts={dataForStatusCalculations}
           visibleCasesCount={visibleCasesCount}
           handleLoadMoreCases={handleLoadMoreCases}
@@ -406,6 +403,10 @@ const Category: React.FC = () => {
           onDateRangeChange={setDateRange}
           isAnyFilterActive={isAnyFilterActive}
           onClearAllFilters={handleClearAllFilters}
+          activeType={activeType}
+          activeResolution={activeResolution}
+          onClearTypeFilter={() => setActiveType("all")}
+          onClearResolutionFilter={() => setActiveResolution("all")}
         />
         <CategoryStatisticsPanel
           statsForStatus={statusSignalStats}

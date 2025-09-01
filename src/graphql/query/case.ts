@@ -295,9 +295,13 @@ export const GET_CASE_BY_CASE_NUMBER = gql`
         name
         experts {
           _id
+          name
+          username
         }
         managers {
           _id
+          name
+          username
         }
       }
       metricScores {

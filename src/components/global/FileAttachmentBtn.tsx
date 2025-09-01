@@ -65,14 +65,12 @@ const FileAttachmentBtn: React.FC<FileAttachmentBtnProps> = ({
           <div className="mt-2 text-sm text-gray-600 space-y-1 overflow-y-auto rounded p-2 bg-gray-100 border border-gray-200 max-h-32">
             <div className="flex flex-wrap gap-2">
               {existingAttachments.map((fileName) => {
-                console.log(fileName);
                 const filename = fileName.split("/").pop() || fileName;
                 let fileUrl = "";
                 if (type && objectId) {
                   fileUrl = createFileUrl(type, objectId, fileName);
                 }
 
-                console.log(fileUrl);
                 return (
                   <div
                     key={fileName}

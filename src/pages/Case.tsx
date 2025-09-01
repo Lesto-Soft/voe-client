@@ -7,7 +7,7 @@ import { useParams } from "react-router";
 import { useTranslation } from "react-i18next";
 import CaseInfo from "../components/case-components/CaseInfo";
 import Submenu from "../components/case-components/Submenu";
-import { ICase, IReadBy } from "../db/interfaces";
+import { ICase, ICategory, IReadBy } from "../db/interfaces";
 import { useCurrentUser } from "../context/UserContext";
 import { determineUserRightsForCase } from "../utils/rightUtils";
 import { ROLES } from "../utils/GLOBAL_PARAMETERS";
@@ -17,6 +17,33 @@ import { useEffect } from "react"; // ADDED
 import { useAuthorization } from "../hooks/useAuthorization";
 import ForbiddenPage from "./ErrorPages/ForbiddenPage";
 import PageStatusDisplay from "../components/global/PageStatusDisplay";
+
+function getUniqueExpertAndManager(categories: ICategory[]): {
+  name: string;
+  username: string;
+  _id: string;
+}[] {
+  const uniqueUsersMap = new Map<
+    string,
+    { name: string; username: string; _id: string }
+  >();
+  const allUsers = categories.flatMap((cat) => [
+    ...(cat.experts || []),
+    ...(cat.managers || []),
+  ]);
+
+  for (const user of allUsers) {
+    if (user && user._id && !uniqueUsersMap.has(user._id)) {
+      uniqueUsersMap.set(user._id, {
+        _id: user._id,
+        name: user.name,
+        username: user.username,
+      });
+    }
+  }
+
+  return Array.from(uniqueUsersMap.values());
+}
 
 const Case = () => {
   const { t } = useTranslation("dashboard");
@@ -100,6 +127,7 @@ const Case = () => {
     );
   }
 
+  const expert_managers = getUniqueExpertAndManager(c.categories);
   return (
     // --- MODIFIED: This container now defines the overall height for the two columns on desktop ---
     <div className="flex flex-col lg:flex-row bg-gray-50 lg:h-[calc(100vh-6rem)] w-full">
@@ -142,6 +170,7 @@ const Case = () => {
           me={currentUser}
           refetch={refetch}
           userRights={userRights}
+          mentions={expert_managers}
         />
       </div>
     </div>

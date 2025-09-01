@@ -3,7 +3,7 @@ import { PencilIcon, ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import * as Dialog from "@radix-ui/react-dialog";
 import { useTranslation } from "react-i18next";
 import FileAttachmentBtn from "./FileAttachmentBtn";
-import SimpleTextEditor from "../forms/partials/SimplifiedTextEditor";
+import SimpleTextEditor from "../forms/partials/TextEditor/SimplifiedTextEditor";
 import { IAnswer } from "../../db/interfaces";
 import { useUpdateAnswer } from "../../graphql/hooks/answer";
 import { ANSWER_CONTENT } from "../../utils/GLOBAL_PARAMETERS";
@@ -14,6 +14,7 @@ interface EditButtonProps {
   currentAttachments?: string[];
   caseNumber: number;
   me: any;
+  mentions: { name: string; username: string; _id: string }[];
 }
 
 export interface UpdateAnswerInput {
@@ -26,6 +27,7 @@ const EditAnswerButton: React.FC<EditButtonProps> = ({
   answer,
   caseNumber,
   me,
+  mentions,
 }) => {
   if (!answer) {
     return <div>Loading...</div>;
@@ -105,7 +107,7 @@ const EditAnswerButton: React.FC<EditButtonProps> = ({
       </Dialog.Trigger>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/50 z-40" />
-        <Dialog.Content className="fixed top-1/2 left-1/2 w-[90%] max-w-2xl -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg shadow-lg z-50 max-h-[85vh] overflow-y-auto">
+        <Dialog.Content className="fixed top-1/2 left-1/2 w-[90%] max-w-2xl -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg shadow-lg z-40 max-h-[85vh] overflow-y-auto">
           <Dialog.Title className="text-lg font-medium text-gray-900 mb-2">
             {t("editAnswer", "Редактирай решението")}
           </Dialog.Title>
@@ -126,6 +128,7 @@ const EditAnswerButton: React.FC<EditButtonProps> = ({
               maxLength={ANSWER_CONTENT.MAX}
               wrapperClassName="transition-colors duration-150 h-36"
               height="36"
+              mentions={mentions}
             />
           </div>
 

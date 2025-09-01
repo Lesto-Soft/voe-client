@@ -43,7 +43,6 @@ export const useUnapproveAnswer = () => {
     useMutation(UNAPPROVE_ANSWER);
 
   const unapproveAnswer = async (answerId: string) => {
-    console.log("Unapproving answer:", answerId);
     try {
       const response = await unapproveAnswerMutation({
         variables: { answerId },
@@ -124,7 +123,6 @@ export const useCreateAnswer = (caseNumber: number) => {
   );
 
   const createAnswer = async (input: any) => {
-    console.log(input);
     try {
       const response = await createAnswerMutation({
         variables: input,

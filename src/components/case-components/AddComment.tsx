@@ -4,6 +4,8 @@ import FileAttachmentAnswer from "../global/FileAttachmentAnswer";
 import { PaperAirplaneIcon, XMarkIcon } from "@heroicons/react/24/solid";
 import { COMMENT_CONTENT } from "../../utils/GLOBAL_PARAMETERS";
 import ImagePreviewModal from "../modals/ImagePreviewModal";
+import SimpleTextEditor from "../forms/partials/TextEditor/SimplifiedTextEditor";
+import { getTextLength } from "../../utils/contentRenderer";
 
 // Interface for the props of the AddComment component
 interface AddCommentProps {
@@ -13,6 +15,7 @@ interface AddCommentProps {
   caseNumber: number;
   answerId?: string;
   inputId?: string; // Optional input ID for file attachment
+  mentions?: { name: string; username: string; _id: string }[];
 }
 
 // The AddComment component
@@ -23,6 +26,7 @@ const AddComment: React.FC<AddCommentProps> = ({
   caseNumber,
   answerId,
   inputId,
+  mentions = [],
 }) => {
   // State for attachments, file errors, content input, and submission errors
   const [attachments, setAttachments] = useState<File[]>([]);
@@ -150,10 +154,10 @@ const AddComment: React.FC<AddCommentProps> = ({
   };
 
   // Function to handle changes in the textarea content
-  const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setContent(e.target.value);
+  const handleContentChange = (html: string) => {
+    setContent(html);
     // Clear submission error related to length if user corrects it
-    if (submissionError && e.target.value.length <= COMMENT_CONTENT.MAX) {
+    if (submissionError && getTextLength(html) <= COMMENT_CONTENT.MAX) {
       setSubmissionError(null);
     }
   };
@@ -164,7 +168,6 @@ const AddComment: React.FC<AddCommentProps> = ({
     loading ||
     (!content.trim() && attachments.length === 0);
 
-  // console.log("opened AddComment component", inputId, attachments);
   return (
     <div>
       {/* Main container for the input area */}
@@ -174,7 +177,7 @@ const AddComment: React.FC<AddCommentProps> = ({
         <div className="flex items-stretch gap-2">
           {/* Container for the textarea and character counter */}
           <div className="flex-grow relative">
-            <textarea
+            {/* <textarea
               className={`border border-gray-300 bg-white rounded-lg p-3 w-full h-full resize-none focus:outline-none focus:ring-1 ${
                 isInvalid
                   ? "ring-red-500 border-red-500" // Style for any invalid state
@@ -187,6 +190,16 @@ const AddComment: React.FC<AddCommentProps> = ({
               maxLength={COMMENT_CONTENT.MAX}
               aria-invalid={isInvalid}
               aria-describedby="comment-char-counter submission-error-display"
+            /> */}
+            <SimpleTextEditor
+              content={content}
+              onUpdate={handleContentChange}
+              placeholder={"Напишете решение..."}
+              maxLength={COMMENT_CONTENT.MAX}
+              minLength={COMMENT_CONTENT.MIN}
+              wrapperClassName="transition-colors duration-150 h-36"
+              height="36"
+              mentions={mentions}
             />
             <div
               id="comment-char-counter"
@@ -205,7 +218,7 @@ const AddComment: React.FC<AddCommentProps> = ({
             attachments={attachments}
             setAttachments={setAttachments}
             setFileError={setFileError}
-            // Example: pass a class if supported: className="h-24 flex items-center"
+            height={36}
           />
           {/* Submit button */}
           <button

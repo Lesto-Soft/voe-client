@@ -11,7 +11,9 @@ import {
   Bars3Icon,
   NumberedListIcon,
 } from "@heroicons/react/20/solid";
-import { getTextLength } from "../../../utils/contentRenderer";
+import { getTextLength } from "../../../../utils/contentRenderer";
+import Mention from "@tiptap/extension-mention";
+import { createMentionSuggestion } from "./MentionSuggestion";
 
 export interface TextEditorProps {
   content?: string;
@@ -24,6 +26,7 @@ export interface TextEditorProps {
   height?: string;
   maxLength?: number;
   minLength?: number;
+  mentions?: { name: string; username: string; _id: string }[];
 }
 
 // MenuBar component remains the same...
@@ -171,10 +174,14 @@ const TextEditor: React.FC<TextEditorProps> = ({
   height = "150px",
   maxLength,
   minLength,
+  mentions,
 }) => {
   const [renderKey, setRenderKey] = useState(0);
   const [charCount, setCharCount] = useState(0);
-
+  const mentionSuggestionConfig = useMemo(
+    () => createMentionSuggestion(mentions),
+    [mentions]
+  );
   const isContentTooLong = useMemo(
     () => maxLength && charCount > maxLength,
     [charCount, maxLength]
@@ -190,13 +197,18 @@ const TextEditor: React.FC<TextEditorProps> = ({
   const editor = useEditor({
     extensions: [
       StarterKit.configure({ heading: false }),
-      Underline,
       TextAlign.configure({ types: ["paragraph"], defaultAlignment: "left" }),
       Placeholder.configure({
         placeholder: ({ editor }) => {
           if (editor.getText().trim() === "") return placeholder || "";
           return "";
         },
+      }),
+      Mention.configure({
+        HTMLAttributes: {
+          class: "mention",
+        },
+        suggestion: mentionSuggestionConfig,
       }),
     ],
     content: propContent || "",
@@ -239,7 +251,7 @@ const TextEditor: React.FC<TextEditorProps> = ({
       if (isEditorEmpty && isPropEmpty) return;
 
       if (currentHTML !== propContent) {
-        editor.commands.setContent(propContent, false);
+        editor.commands.setContent(propContent, {});
       }
     }
   }, [propContent, editor]);

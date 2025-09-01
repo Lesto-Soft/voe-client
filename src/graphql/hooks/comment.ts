@@ -54,7 +54,6 @@ export const useUpdateComment = (caseNumber: number) => {
 
   const updateComment = async (input: UpdateCommentInput, id: string) => {
     try {
-      console.log(input);
       const { data } = await updateCommentMutation({
         variables: { input, id },
       });

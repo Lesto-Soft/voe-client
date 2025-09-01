@@ -18,7 +18,7 @@ import {
   useCreateCase,
   CreateCaseInput,
 } from "../../graphql/hooks/case";
-import TextEditor from "../forms/partials/TextEditor";
+import TextEditor from "../forms/partials/TextEditor/TextEditor";
 import SuccessConfirmationModal from "./SuccessConfirmationModal";
 import { getTextLength } from "../../utils/contentRenderer";
 

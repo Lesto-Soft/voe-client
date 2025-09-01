@@ -369,3 +369,13 @@ export const GET_RANKED_USERS = gql`
     }
   }
 `;
+
+export const GET_USER_MENTIONS = gql`
+  query getUserMentions($categories: [ID!]!) {
+    getExpertsByCategories(categories: $categories) {
+      _id
+      username
+      name
+    }
+  }
+`;

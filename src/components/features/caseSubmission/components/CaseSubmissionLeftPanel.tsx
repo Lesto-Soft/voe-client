@@ -2,7 +2,7 @@
 import React, { ChangeEvent } from "react";
 import { TFunction } from "i18next";
 import { ApolloError } from "@apollo/client";
-import TextEditor from "../../../forms/partials/TextEditor";
+import TextEditor from "../../../forms/partials/TextEditor/TextEditor";
 import { CASE_CONTENT } from "../../../../utils/GLOBAL_PARAMETERS";
 import { CreateCaseMutationInput } from "../types";
 

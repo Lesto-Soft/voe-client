@@ -1,9 +1,13 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import Underline from "@tiptap/extension-underline";
 import Placeholder from "@tiptap/extension-placeholder";
-import { getTextLength } from "../../../utils/contentRenderer";
+import {
+  getTextLength,
+  renderContentSafely,
+} from "../../../../utils/contentRenderer";
+import { createMentionSuggestion } from "./MentionSuggestion";
+import { CustomMention } from "./CustomMention";
 
 interface SimpleTextEditorProps {
   content?: string;
@@ -13,18 +17,24 @@ interface SimpleTextEditorProps {
   wrapperClassName?: string;
   maxLength?: number;
   minLength?: number;
+  mentions?: { name: string; username: string; _id: string }[];
 }
 
 const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
   content,
   onUpdate,
   placeholder = "Напишете решение...",
-  height = "auto", // Default height if none is provided
+  height = "auto",
   wrapperClassName,
   maxLength,
   minLength,
+  mentions = [],
 }) => {
   const [charCount, setCharCount] = useState(0);
+  const mentionSuggestionConfig = useMemo(
+    () => createMentionSuggestion(mentions),
+    [mentions]
+  );
 
   const isContentTooLong = useMemo(
     () => maxLength && charCount > maxLength,
@@ -46,7 +56,6 @@ const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
         orderedList: false,
         listItem: false,
       }),
-      Underline,
       Placeholder.configure({
         placeholder: ({ editor }) => {
           if (editor.getText().trim() === "") {
@@ -54,6 +63,9 @@ const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
           }
           return "";
         },
+      }),
+      CustomMention.configure({
+        suggestion: mentionSuggestionConfig,
       }),
     ],
     content: content || "",
@@ -69,7 +81,6 @@ const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
     },
     editorProps: {
       attributes: {
-        // The editor's own element should fill its container but not scroll itself
         class:
           "prose prose-sm max-w-none p-3 pr-4 focus:outline-none custom-simple-editor",
         style: `padding-bottom: 2rem; min-height: 100%;`, // Use min-height to ensure it fills the scrollable area
@@ -90,7 +101,7 @@ const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
       if (isEditorEmpty && isPropEmpty) return;
 
       if (currentHTML !== content) {
-        editor.commands.setContent(content, false);
+        editor.commands.setContent(content, {});
       }
     }
   }, [content, editor]);
@@ -109,23 +120,6 @@ const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
 
   return (
     <>
-      {/* Added styles for a custom scrollbar to ensure it's always visible when needed */}
-      {/* <style>{`
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 8px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: #f1f5f9;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #94a3b8;
-          border-radius: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #64748b;
-        }
-      `}</style> */}
-      {/* The main container now gets the height style applied directly only if the height prop is not 'auto' */}
       <div
         className={finalWrapperClassName.trim()}
         style={height !== "auto" ? { height } : {}}

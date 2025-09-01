@@ -6,6 +6,7 @@ import { admin_check } from "../../utils/rowStringCheckers";
 import { createFileUrl } from "../../utils/fileUtils";
 import ImagePreviewModal from "../modals/ImagePreviewModal";
 import DeleteModal from "../modals/DeleteModal";
+import { renderContentSafely } from "../../utils/contentRenderer";
 import { useDeleteComment } from "../../graphql/hooks/comment";
 
 interface CommentProps {
@@ -58,7 +59,7 @@ const Comment: React.FC<CommentProps> = ({ comment, me, caseNumber }) => {
       {/* Right: Content */}
       <div className="flex-1 flex flex-col">
         <div className="text-sm text-gray-800 whitespace-pre-line bg-gray-50 rounded p-3 max-h-32 overflow-y-auto break-all">
-          {comment.content}
+          {renderContentSafely(comment.content)}
         </div>
         {comment.attachments && comment.attachments.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-2">

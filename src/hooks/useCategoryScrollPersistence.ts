@@ -54,9 +54,6 @@ const useCategoryScrollPersistence = (
 
   const saveDataToSessionStorage = useCallback(
     (_: string, targetCategoryName: string | undefined) => {
-      //   console.log(
-      //     `[SAVE_DATA] Attempting: source="<span class="math-inline">\{source\}", category\="</span>{targetCategoryName}"`
-      //   );
       if (scrollableCasesListRef.current && targetCategoryName) {
         const key = getStorageKey(targetCategoryName);
         if (key) {
@@ -64,10 +61,7 @@ const useCategoryScrollPersistence = (
             scrollTop: scrollableCasesListRef.current.scrollTop,
             count: visibleCasesCountRef.current,
           };
-          //   console.log(
-          //     `[SAVE_DATA] Saving for key "${key}":`,
-          //     JSON.stringify(stateToSave)
-          //   );
+
           try {
             sessionStorage.setItem(key, JSON.stringify(stateToSave));
           } catch (e) {
@@ -159,44 +153,21 @@ const useCategoryScrollPersistence = (
     let debounceTimer: number | undefined;
     const categoryNameForListener = categoryNameFromParams;
 
-    // console.log(
-    //   `[WHEEL_EFFECT_SETUP] category="<span class="math-inline">\{categoryNameForListener\}", scrollDivExists\=</span>{!!scrollDiv}, isDataReady=${isDataReady}`
-    // );
-
     const handleDebouncedWheelSave = () => {
-      //   console.log(
-      //     `[WHEEL_EVENT_HANDLER] Scroll detected for category="${categoryNameForListener}" at ${new Date().toLocaleTimeString()}`
-      //   );
       clearTimeout(debounceTimer);
       debounceTimer = window.setTimeout(() => {
-        // console.log(
-        //   `[WHEEL_DEBOUNCE_TIMEOUT] Firing save for category="${categoryNameForListener}" at ${new Date().toLocaleTimeString()}`
-        // );
         saveDataToSessionStorage("WheelDebounced", categoryNameForListener);
       }, 500);
     };
 
     if (scrollDiv && categoryNameForListener) {
-      //   console.log(
-      //     `[WHEEL_EFFECT_SETUP] Attaching wheel listener for category="${categoryNameForListener}"`
-      //   );
       scrollDiv.addEventListener("wheel", handleDebouncedWheelSave, {
         passive: true,
       });
-    } else {
-      //   console.log(
-      //     `[WHEEL_EFFECT_SETUP] NOT attaching listener for category="${categoryNameForListener}" (scrollDiv: ${!!scrollDiv})`
-      //   );
     }
 
     return () => {
-      //   console.log(
-      //     `[WHEEL_EFFECT_CLEANUP] Cleaning up for category="<span class="math-inline">\{categoryNameForListener\}", scrollDivExists\=</span>{!!scrollDiv}`
-      //   );
       if (scrollDiv && categoryNameForListener) {
-        // console.log(
-        //   `[WHEEL_EFFECT_CLEANUP] Removing wheel listener for category="${categoryNameForListener}"`
-        // );
         scrollDiv.removeEventListener("wheel", handleDebouncedWheelSave);
       }
       clearTimeout(debounceTimer);

@@ -1,0 +1,70 @@
+import { ReactRenderer } from "@tiptap/react";
+import tippy, { type Instance, type Props } from "tippy.js";
+import MentionList, { type MentionListRef } from "./MentionList";
+
+export interface MentionUser {
+  _id: string;
+  name: string;
+  username: string;
+}
+
+export const createMentionSuggestion = (mentions: MentionUser[] = []) => ({
+  items: async ({ query }: { query: string }): Promise<MentionUser[]> => {
+    if (query.length < 1) return [];
+
+    return mentions
+      .filter(
+        (user) =>
+          user.name.toLowerCase().includes(query.toLowerCase()) ||
+          user.username.toLowerCase().includes(query.toLowerCase())
+      )
+      .slice(0, 5);
+  },
+
+  render: () => {
+    let component: ReactRenderer<MentionListRef>;
+    let popup: Instance<Props>[];
+
+    return {
+      onStart: (props: any) => {
+        component = new ReactRenderer(MentionList, {
+          props,
+          editor: props.editor,
+        });
+
+        if (!props.clientRect) return;
+
+        popup = tippy("body", {
+          getReferenceClientRect: props.clientRect,
+          appendTo: () => document.body,
+          content: component.element,
+          showOnCreate: true,
+          interactive: true,
+          trigger: "manual",
+          placement: "bottom-start",
+        });
+      },
+
+      onUpdate: (props: any) => {
+        component.updateProps(props);
+        if (!props.clientRect) return;
+        popup[0].setProps({
+          getReferenceClientRect: props.clientRect,
+        });
+      },
+
+      onKeyDown: (props: { event: KeyboardEvent }): boolean => {
+        if (props.event.key === "Escape") {
+          popup[0].hide();
+          return true;
+        }
+        return component.ref?.onKeyDown(props) ?? false;
+      },
+
+      onExit: () => {
+        popup[0].destroy();
+        component.destroy();
+      },
+    };
+  },
+});

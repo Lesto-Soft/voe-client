@@ -3,10 +3,11 @@ import FileAttachmentAnswer from "../global/FileAttachmentAnswer";
 import { PaperAirplaneIcon, XMarkIcon } from "@heroicons/react/24/solid";
 import { useCreateAnswer } from "../../graphql/hooks/answer";
 import { ANSWER_CONTENT } from "../../utils/GLOBAL_PARAMETERS";
-import SimpleTextEditor from "../forms/partials/SimplifiedTextEditor";
+import SimpleTextEditor from "../forms/partials/TextEditor/SimplifiedTextEditor";
 import { getTextLength } from "../../utils/contentRenderer";
 import ImagePreviewModal from "../modals/ImagePreviewModal";
 import { toast } from "react-toastify";
+import { ICategory } from "../../db/interfaces";
 
 // Interface for the props of the AddAnswer component
 interface AddAnswerProps {
@@ -14,6 +15,7 @@ interface AddAnswerProps {
   t: (key: string) => string; // Translation function
   me: any; // User object, assuming it has an _id property
   caseNumber: number;
+  mentions?: { name: string; username: string; _id: string }[];
 }
 
 // The AddAnswer component
@@ -22,6 +24,7 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
   t = (key: string) => key, // Default t function for standalone or testing
   me,
   caseNumber,
+  mentions,
 }) => {
   // State for attachments, file errors, content input, and submission errors
   const [attachments, setAttachments] = useState<File[]>([]);
@@ -170,6 +173,7 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
               minLength={ANSWER_CONTENT.MIN}
               wrapperClassName="transition-colors duration-150 h-36"
               height="36"
+              mentions={mentions}
             />
           </div>
           {/* File attachment component */}

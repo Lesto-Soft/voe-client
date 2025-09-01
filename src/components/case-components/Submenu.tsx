@@ -20,6 +20,7 @@ interface SubmenuProps {
   me: IMe;
   refetch: () => void;
   userRights: string[];
+  mentions?: { name: string; username: string; _id: string }[];
 }
 
 const Submenu: React.FC<SubmenuProps> = ({
@@ -28,6 +29,7 @@ const Submenu: React.FC<SubmenuProps> = ({
   me,
   refetch,
   userRights,
+  mentions = [],
 }) => {
   const [view, setView] = useState<"answers" | "comments" | "history">(() => {
     const stored = sessionStorage.getItem(LOCAL_STORAGE_KEY);
@@ -121,6 +123,7 @@ const Submenu: React.FC<SubmenuProps> = ({
                 caseId={caseData._id}
                 t={t}
                 me={me}
+                mentions={mentions}
               />
             ) : null}
             {caseData.answers && caseData.answers.length > 0 ? (
@@ -149,6 +152,7 @@ const Submenu: React.FC<SubmenuProps> = ({
                         caseNumber={caseData.case_number}
                         status={caseData.status}
                         caseCategories={caseData.categories}
+                        mentions={mentions}
                       />
                     ) : null;
                   })}
@@ -168,6 +172,7 @@ const Submenu: React.FC<SubmenuProps> = ({
               me={me}
               caseNumber={caseData.case_number}
               inputId={`file-upload-comment-case-${caseData._id}`}
+              mentions={mentions}
             />
             {caseData.comments && caseData.comments.length > 0 ? (
               <>

@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 // Removed IUser import as ILeanUserForForm is more specific here
-import TextEditor from "./TextEditor";
+import TextEditor from "./TextEditor/TextEditor";
 import { CATEGORY_HELPERS, ROLES } from "../../../utils/GLOBAL_PARAMETERS";
 
 // Define a lean user type that includes the role ID for the form, matching what parent passes

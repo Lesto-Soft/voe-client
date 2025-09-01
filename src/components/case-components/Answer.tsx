@@ -24,7 +24,16 @@ const Answer: React.FC<{
   caseNumber: number;
   status?: string;
   caseCategories: ICategory[];
-}> = ({ answer, me, refetch, caseNumber, status, caseCategories }) => {
+  mentions: { name: string; username: string; _id: string }[];
+}> = ({
+  answer,
+  me,
+  refetch,
+  caseNumber,
+  status,
+  caseCategories,
+  mentions,
+}) => {
   const { t } = useTranslation("answer");
   const [approved, setApproved] = useState(!!answer.approved);
   const [financialApproved, setFinancialApproved] = useState(
@@ -197,6 +206,7 @@ const Answer: React.FC<{
                       <EditAnswerButton
                         {...{ answer, caseNumber, me }}
                         currentAttachments={answer.attachments || []}
+                        mentions={mentions}
                       />
                       <DeleteModal
                         title="deleteAnswer"
@@ -246,6 +256,7 @@ const Answer: React.FC<{
                       <EditAnswerButton
                         {...{ answer, caseNumber, me }}
                         currentAttachments={answer.attachments || []}
+                        mentions={mentions}
                       />
                       <DeleteModal
                         title="deleteAnswer"

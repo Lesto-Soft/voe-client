@@ -570,6 +570,8 @@ const User: React.FC = () => {
                   )?.label ?? null
                 : null
             }
+            activeCategoryFilter={activeCategoryName}
+            activeRatingTierFilter={activeRatingTier}
           />
         </div>
       </div>

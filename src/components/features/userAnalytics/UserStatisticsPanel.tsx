@@ -8,19 +8,40 @@ import {
 } from "@heroicons/react/24/outline";
 import { UserActivityStats } from "../../../hooks/useUserActivityStats";
 import StatisticPieChart from "../../charts/StatisticPieChart";
+import { PieSegmentData } from "../../charts/PieChart";
+
+// define a type for the text-based stats
+export interface UserTextStats {
+  totalSignals: number;
+  totalAnswers: number;
+  totalComments: number;
+  averageCaseRating: number | null;
+}
 
 interface UserStatisticsPanelProps {
-  userStats: UserActivityStats | undefined | null;
+  // --- MODIFIED: Use the new type for text stats ---
+  textStats: UserTextStats | undefined | null;
+  // --- MODIFIED: This prop is now specifically for the pie charts ---
+  pieChartStats: UserActivityStats | undefined | null;
   userName?: string;
   isLoading?: boolean;
+  onCategoryClick?: (segment: PieSegmentData) => void;
+  onRatingTierClick?: (segment: PieSegmentData) => void;
+  activeCategoryLabel?: string | null;
+  activeRatingTierLabel?: string | null;
 }
 
 // Define the type for our new tabs
 type StatsTab = "categories" | "ratings";
 
 const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
-  userStats,
+  textStats,
+  pieChartStats,
   isLoading,
+  onCategoryClick,
+  onRatingTierClick,
+  activeCategoryLabel,
+  activeRatingTierLabel,
 }) => {
   // State to manage the active tab
   const [activeTab, setActiveTab] = useState<StatsTab>("categories");
@@ -61,7 +82,7 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
     );
   }
 
-  if (!userStats) {
+  if (!textStats || !pieChartStats) {
     return (
       <aside className="lg:col-span-3 bg-white rounded-lg shadow-lg flex flex-col overflow-hidden">
         <div className="p-6">
@@ -89,34 +110,27 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
           <StatItem
             icon={DocumentTextIcon}
             label="Сигнали"
-            value={userStats.totalSignals}
+            value={textStats.totalSignals}
             iconColorClass="text-blue-500"
           />
           <StatItem
             icon={ChatBubbleBottomCenterTextIcon}
             label="Решения"
-            value={userStats.totalAnswers}
+            value={textStats.totalAnswers}
             iconColorClass="text-green-500"
           />
           <StatItem
             icon={ChatBubbleOvalLeftEllipsisIcon}
             label="Коментари"
-            value={userStats.totalComments}
+            value={textStats.totalComments}
             iconColorClass="text-purple-500"
           />
-          {/* <hr className="my-2 border-gray-200" /> */}
-          {/* <StatItem
-            icon={ReceiptPercentIcon}
-            label="Получени оценки"
-            value={userStats.ratedCasesCount}
-            iconColorClass="text-sky-500"
-          /> */}
           <StatItem
             icon={StarIcon}
             label="Средна оценка на сигнал"
             value={
-              userStats.averageCaseRating
-                ? userStats.averageCaseRating.toFixed(2)
+              textStats.averageCaseRating
+                ? textStats.averageCaseRating.toFixed(2)
                 : "-"
             }
             iconColorClass="text-amber-500"
@@ -150,13 +164,17 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
           {activeTab === "categories" && (
             <StatisticPieChart
               title="Разпределение по Категории"
-              pieData={userStats.signalsByCategoryChartData}
+              pieData={pieChartStats.signalsByCategoryChartData}
+              onSegmentClick={onCategoryClick}
+              activeLabel={activeCategoryLabel}
             />
           )}
           {activeTab === "ratings" && (
             <StatisticPieChart
               title="Разпределение по Оценка на Сигнал"
-              pieData={userStats.ratingTierDistributionData}
+              pieData={pieChartStats.ratingTierDistributionData}
+              onSegmentClick={onRatingTierClick}
+              activeLabel={activeRatingTierLabel}
             />
           )}
         </div>

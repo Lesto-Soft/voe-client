@@ -1,11 +1,11 @@
 import React, { useState, useMemo } from "react";
-import { useParams } from "react-router";
+import { useParams, useNavigate } from "react-router";
 import { useGetFullUserByUsername, useUpdateUser } from "../graphql/hooks/user";
 import { useGetRoles } from "../graphql/hooks/role";
-import { IMe } from "../db/interfaces";
+import { IMe, ICase, IAnswer, IComment } from "../db/interfaces";
 import { UpdateUserInput } from "../graphql/mutation/user";
-// ✅ ADDED: Import our robust date parsing utility.
 import { parseActivityDate } from "../utils/dateUtils";
+import { PieSegmentData } from "../components/charts/PieChart";
 
 // Hooks
 import useUserActivityStats from "../hooks/useUserActivityStats";
@@ -16,17 +16,49 @@ import PageStatusDisplay from "../components/global/PageStatusDisplay";
 import UserPageSkeleton from "../components/skeletons/UserPageSkeleton";
 import UserInformationPanel from "../components/features/userAnalytics/UserInformationPanel";
 import UserActivityList from "../components/features/userAnalytics/UserActivityList";
-import UserStatisticsPanel from "../components/features/userAnalytics/UserStatisticsPanel";
+import UserStatisticsPanel, {
+  UserTextStats,
+} from "../components/features/userAnalytics/UserStatisticsPanel";
 import UserModal from "../components/modals/UserModal";
 import UserForm from "../components/forms/UserForm";
 import SuccessConfirmationModal from "../components/modals/SuccessConfirmationModal";
-import { useNavigate } from "react-router";
-// Constants
-import { ROLES } from "../utils/GLOBAL_PARAMETERS";
-import { containsAnyCategoryById } from "../utils/arrayUtils";
 
+// Constants & Utils
+import { ROLES, TIERS } from "../utils/GLOBAL_PARAMETERS";
+import { containsAnyCategoryById } from "../utils/arrayUtils";
 import { useAuthorization } from "../hooks/useAuthorization";
 import ForbiddenPage from "./ErrorPages/ForbiddenPage";
+
+export type RatingTierLabel =
+  | "Отлични"
+  | "Добри"
+  | "Средни"
+  | "Проблемни"
+  | "all";
+
+// --- NEW: Helper types for this component ---
+interface RatedCaseActivity {
+  case: ICase;
+  averageScore: number;
+}
+interface CombinedActivity {
+  id: string;
+  date: string;
+  item: ICase | IAnswer | IComment | RatedCaseActivity;
+  activityType:
+    | "case"
+    | "answer"
+    | "comment"
+    | "rating"
+    | "base_approval"
+    | "finance_approval";
+}
+const getTierForScore = (score: number): RatingTierLabel => {
+  if (score >= TIERS.GOLD) return "Отлични";
+  if (score >= TIERS.SILVER) return "Добри";
+  if (score >= TIERS.BRONZE) return "Средни";
+  return "Проблемни";
+};
 
 const User: React.FC = () => {
   const navigate = useNavigate();
@@ -44,6 +76,11 @@ const User: React.FC = () => {
     startDate: null,
     endDate: null,
   });
+  const [activeCategoryName, setActiveCategoryName] = useState<string | null>(
+    null
+  );
+  const [activeRatingTier, setActiveRatingTier] =
+    useState<RatingTierLabel>("all");
 
   const currentUser = useCurrentUser() as IMe | undefined;
 
@@ -58,6 +95,13 @@ const User: React.FC = () => {
     type: "user",
     data: user,
   });
+
+  // --- MODIFIED: This hook now ONLY provides data for the pie charts ---
+  const pieChartStats = useUserActivityStats(
+    user,
+    dateRange.startDate,
+    dateRange.endDate
+  );
 
   const {
     updateUser,
@@ -78,6 +122,235 @@ const User: React.FC = () => {
   );
 
   const serverBaseUrl = import.meta.env.VITE_API_URL || "";
+
+  const filteredActivities = useMemo((): CombinedActivity[] => {
+    if (!user) return [];
+
+    const isInDateRange = (itemDateStr: string | number) => {
+      const { startDate, endDate } = dateRange;
+      if (!startDate && !endDate) return true;
+      const itemDate = parseActivityDate(itemDateStr);
+      if (startDate && itemDate < startDate) return false;
+      if (endDate && itemDate > endDate) return false;
+      return true;
+    }; // --- 1. GATHER ALL ACTIVITIES WITHIN DATE RANGE ---
+
+    const ratedCases: Map<
+      string,
+      { scores: number[]; latestDate: string; caseData: ICase }
+    > = new Map();
+
+    if (user.metricScores) {
+      user.metricScores
+        .filter((score) => isInDateRange(score.date))
+        .forEach((score) => {
+          if (!ratedCases.has(score.case._id)) {
+            ratedCases.set(score.case._id, {
+              scores: [],
+              latestDate: score.date,
+              caseData: score.case,
+            });
+          }
+          const entry = ratedCases.get(score.case._id)!;
+          entry.scores.push(score.score);
+          if (new Date(score.date) > new Date(entry.latestDate)) {
+            entry.latestDate = score.date;
+          }
+        });
+    }
+
+    let activities: CombinedActivity[] = [];
+
+    if (user.cases) {
+      user.cases
+        .filter((c) => isInDateRange(c.date))
+        .forEach((caseItem) =>
+          activities.push({
+            id: `case-${caseItem._id}`,
+            date: caseItem.date,
+            item: caseItem,
+            activityType: "case",
+          })
+        );
+    }
+
+    if (user.answers) {
+      user.answers
+        .filter((a) => isInDateRange(a.date))
+        .forEach((answerItem) =>
+          activities.push({
+            id: `answer-${answerItem._id}`,
+            date: answerItem.date,
+            item: answerItem,
+            activityType: "answer",
+          })
+        );
+    }
+
+    if (user.approvedAnswers) {
+      user.approvedAnswers
+        .filter((a) => {
+          const dateToFilterBy = a.approved_date || a.date;
+          return isInDateRange(dateToFilterBy);
+        })
+        .forEach((answerItem) =>
+          activities.push({
+            id: `base-approval-${answerItem._id}`,
+            date: answerItem.approved_date || answerItem.date,
+            item: answerItem,
+            activityType: "base_approval",
+          })
+        );
+    }
+
+    if (user.financialApprovedAnswers) {
+      user.financialApprovedAnswers
+        .filter((a) => {
+          const dateToFilterBy = a.financial_approved_date || a.date;
+          return isInDateRange(dateToFilterBy);
+        })
+        .forEach((answerItem) =>
+          activities.push({
+            id: `finance-approval-${answerItem._id}`,
+            date: answerItem.financial_approved_date || answerItem.date,
+            item: answerItem,
+            activityType: "finance_approval",
+          })
+        );
+    }
+
+    if (user.comments) {
+      user.comments
+        .filter((c) => isInDateRange(c.date))
+        .forEach((commentItem) =>
+          activities.push({
+            id: `comment-${commentItem._id}`,
+            date: commentItem.date,
+            item: commentItem,
+            activityType: "comment",
+          })
+        );
+    }
+
+    ratedCases.forEach((value, key) => {
+      const averageScore =
+        value.scores.reduce((a, b) => a + b, 0) / value.scores.length;
+      activities.push({
+        id: `rating-${key}`,
+        date: value.latestDate,
+        item: {
+          case: value.caseData,
+          averageScore,
+        },
+        activityType: "rating",
+      });
+    }); // --- 2. APPLY PIE CHART FILTERS ---
+
+    if (activeCategoryName) {
+      const filteredCaseIds = new Set(
+        (user.cases || [])
+          .filter((c) =>
+            c.categories.some((cat) => cat.name === activeCategoryName)
+          )
+          .map((c) => c._id)
+      );
+
+      activities = activities.filter((activity) => {
+        if (activity.activityType === "case") {
+          return filteredCaseIds.has((activity.item as ICase)._id);
+        }
+        const relatedCase =
+          (activity.item as IAnswer).case ||
+          (activity.item as IComment).case ||
+          (activity.item as IComment).answer?.case ||
+          (activity.item as RatedCaseActivity).case;
+        return relatedCase ? filteredCaseIds.has(relatedCase._id) : false;
+      });
+    }
+
+    if (activeRatingTier !== "all") {
+      const filteredCaseIds = new Set(
+        (user.cases || [])
+          .filter((c) => {
+            if (
+              c.calculatedRating === null ||
+              c.calculatedRating === undefined
+            ) {
+              return false;
+            }
+            return getTierForScore(c.calculatedRating) === activeRatingTier;
+          })
+          .map((c) => c._id)
+      );
+
+      activities = activities.filter((activity) => {
+        if (activity.activityType === "case") {
+          return filteredCaseIds.has((activity.item as ICase)._id);
+        }
+        const relatedCase =
+          (activity.item as IAnswer).case ||
+          (activity.item as IComment).case ||
+          (activity.item as IComment).answer?.case ||
+          (activity.item as RatedCaseActivity).case;
+
+        return relatedCase ? filteredCaseIds.has(relatedCase._id) : false;
+      });
+    } // --- 3. SORT FINAL LIST ---
+
+    return activities.sort(
+      (a, b) =>
+        parseActivityDate(b.date).getTime() -
+        parseActivityDate(a.date).getTime()
+    );
+  }, [user, dateRange, activeCategoryName, activeRatingTier]);
+
+  // Calculate header counts from the fully filtered list
+  const filteredActivityCounts = useMemo(() => {
+    const counts = {
+      all: 0,
+      cases: 0,
+      answers: 0,
+      comments: 0,
+      ratings: 0,
+      approvals: 0,
+      finances: 0,
+    };
+    filteredActivities.forEach((activity) => {
+      counts.all++;
+      if (activity.activityType === "case") counts.cases++;
+      else if (activity.activityType === "answer") counts.answers++;
+      else if (activity.activityType === "comment") counts.comments++;
+      else if (activity.activityType === "rating") counts.ratings++;
+      else if (activity.activityType === "base_approval") counts.approvals++;
+      else if (activity.activityType === "finance_approval") counts.finances++;
+    });
+    return counts;
+  }, [filteredActivities]); // Calculate text stats from the fully filtered list
+
+  const filteredTextStats = useMemo((): UserTextStats => {
+    const filteredCases = filteredActivities
+      .filter((a) => a.activityType === "case")
+      .map((a) => a.item as ICase);
+    let ratedCasesSum = 0;
+    let ratedCasesCount = 0;
+    filteredCases.forEach((c) => {
+      if (
+        c.calculatedRating !== null &&
+        c.calculatedRating !== undefined &&
+        c.calculatedRating > 0
+      ) {
+        ratedCasesSum += c.calculatedRating;
+        ratedCasesCount++;
+      }
+    });
+    return {
+      totalSignals: filteredActivityCounts.cases,
+      totalAnswers: filteredActivityCounts.answers,
+      totalComments: filteredActivityCounts.comments,
+      averageCaseRating:
+        ratedCasesCount > 0 ? ratedCasesSum / ratedCasesCount : null,
+    };
+  }, [filteredActivities, filteredActivityCounts]);
 
   const ratedCasesCount = useMemo(() => {
     if (!user?.metricScores) return 0;
@@ -174,6 +447,32 @@ const User: React.FC = () => {
   const openEditModal = () => setIsEditModalOpen(true);
   const closeEditModal = () => setIsEditModalOpen(false);
 
+  const handleCategoryClick = (segment: PieSegmentData) => {
+    setActiveCategoryName((current) =>
+      current === segment.label ? null : segment.label
+    );
+  };
+
+  const handleRatingTierClick = (segment: PieSegmentData) => {
+    const tierKey = segment.label.split(" ")[0] as RatingTierLabel;
+    setActiveRatingTier((current) => (current === tierKey ? "all" : tierKey));
+  };
+
+  const isAnyFilterActive = useMemo(() => {
+    return (
+      dateRange.startDate !== null ||
+      dateRange.endDate !== null ||
+      activeCategoryName !== null ||
+      activeRatingTier !== "all"
+    );
+  }, [dateRange, activeCategoryName, activeRatingTier]);
+
+  const handleClearAllFilters = () => {
+    setDateRange({ startDate: null, endDate: null });
+    setActiveCategoryName(null);
+    setActiveRatingTier("all");
+  };
+
   if (userLoading || authLoading) {
     return <UserPageSkeleton />;
   }
@@ -242,17 +541,35 @@ const User: React.FC = () => {
 
           <UserActivityList
             user={user}
+            activities={filteredActivities}
             isLoading={userLoading && !!user}
-            counts={activityCounts}
+            counts={filteredActivityCounts}
             userId={userUsernameFromParams}
             dateRange={dateRange}
             onDateRangeChange={setDateRange}
+            isAnyFilterActive={isAnyFilterActive}
+            onClearAllFilters={handleClearAllFilters}
+            activeCategoryName={activeCategoryName}
+            onClearCategoryFilter={() => setActiveCategoryName(null)}
+            activeRatingTier={activeRatingTier}
+            onClearRatingTierFilter={() => setActiveRatingTier("all")}
           />
 
           <UserStatisticsPanel
-            userStats={userStats}
+            textStats={filteredTextStats}
+            pieChartStats={pieChartStats}
             userName={user.name}
             isLoading={userLoading && !!user}
+            onCategoryClick={handleCategoryClick}
+            onRatingTierClick={handleRatingTierClick}
+            activeCategoryLabel={activeCategoryName}
+            activeRatingTierLabel={
+              activeRatingTier !== "all"
+                ? pieChartStats?.ratingTierDistributionData.find((d) =>
+                    d.label.startsWith(activeRatingTier)
+                  )?.label ?? null
+                : null
+            }
           />
         </div>
       </div>

@@ -11,13 +11,23 @@ import {
 import useUserActivityScrollPersistence from "../../../hooks/useUserActivityScrollPersistence";
 import DateRangeSelector from "./DateRangeSelector";
 import { parseActivityDate } from "../../../utils/dateUtils";
+import { TIERS } from "../../../utils/GLOBAL_PARAMETERS";
+import { RatingTierLabel } from "../../../pages/User";
+import FilterTag from "../../global/FilterTag";
 
-// Represents a case that the user has rated, with their average score
+type ActivityTab =
+  | "all"
+  | "cases"
+  | "answers"
+  | "comments"
+  | "ratings"
+  | "approvals"
+  | "finances";
+
 interface RatedCaseActivity {
   case: ICase;
   averageScore: number;
 }
-
 interface CombinedActivity {
   id: string;
   date: string;
@@ -31,19 +41,12 @@ interface CombinedActivity {
     | "finance_approval";
 }
 
-type ActivityTab =
-  | "all"
-  | "cases"
-  | "answers"
-  | "comments"
-  | "ratings"
-  | "approvals"
-  | "finances";
-
 interface UserActivityListProps {
   user: IUser | undefined | null;
+  activities: CombinedActivity[]; // <-- MODIFIED: Receive the filtered list
   isLoading?: boolean;
   counts: {
+    // <-- This will now be the filtered counts
     all: number;
     cases: number;
     answers: number;
@@ -58,15 +61,36 @@ interface UserActivityListProps {
     startDate: Date | null;
     endDate: Date | null;
   }) => void;
+  isAnyFilterActive: boolean;
+  onClearAllFilters: () => void;
+  activeCategoryName: string | null;
+  onClearCategoryFilter: () => void;
+  activeRatingTier: RatingTierLabel;
+  onClearRatingTierFilter: () => void;
 }
+
+// Helper to categorize a score
+const getTierForScore = (score: number): RatingTierLabel => {
+  if (score >= TIERS.GOLD) return "Отлични";
+  if (score >= TIERS.SILVER) return "Добри";
+  if (score >= TIERS.BRONZE) return "Средни";
+  return "Проблемни";
+};
 
 const UserActivityList: React.FC<UserActivityListProps> = ({
   user,
+  activities,
   isLoading,
   counts,
   userId,
   dateRange,
   onDateRangeChange,
+  isAnyFilterActive,
+  onClearAllFilters,
+  activeCategoryName,
+  onClearCategoryFilter,
+  activeRatingTier,
+  onClearRatingTierFilter,
 }) => {
   const [isDateFilterVisible, setIsDateFilterVisible] = useState(false);
 
@@ -92,7 +116,12 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
     if (resetScrollAndVisibleCount) {
       resetScrollAndVisibleCount();
     }
-  }, [dateRange, resetScrollAndVisibleCount]);
+  }, [
+    dateRange,
+    activeCategoryName,
+    activeRatingTier,
+    resetScrollAndVisibleCount,
+  ]);
 
   // Add effect for horizontal scrolling with mouse wheel
   useEffect(() => {
@@ -118,181 +147,38 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
     };
   }, []);
 
-  const allActivities = useMemo((): CombinedActivity[] => {
-    if (!user) return [];
-
-    const isInDateRange = (itemDateStr: string | number) => {
-      const { startDate, endDate } = dateRange;
-      if (!startDate && !endDate) return true;
-
-      const itemDate = parseActivityDate(itemDateStr);
-
-      if (startDate && itemDate < startDate) {
-        return false;
-      }
-      if (endDate && itemDate > endDate) {
-        return false;
-      }
-      return true;
-    };
-
-    const ratedCases: Map<
-      string,
-      { scores: number[]; latestDate: string; caseData: ICase }
-    > = new Map();
-
-    if (user.metricScores) {
-      user.metricScores
-        .filter((score) => isInDateRange(score.date))
-        .forEach((score) => {
-          if (!ratedCases.has(score.case._id)) {
-            ratedCases.set(score.case._id, {
-              scores: [],
-              latestDate: score.date,
-              caseData: score.case,
-            });
-          }
-          const entry = ratedCases.get(score.case._id)!;
-          entry.scores.push(score.score);
-          if (new Date(score.date) > new Date(entry.latestDate)) {
-            entry.latestDate = score.date;
-          }
-        });
-    }
-
-    const activities: CombinedActivity[] = [];
-
-    if (user.cases) {
-      user.cases
-        .filter((c) => isInDateRange(c.date))
-        .forEach((caseItem) =>
-          activities.push({
-            id: `case-${caseItem._id}`,
-            date: caseItem.date,
-            item: caseItem,
-            activityType: "case",
-          })
-        );
-    }
-
-    if (user.answers) {
-      user.answers
-        .filter((a) => isInDateRange(a.date))
-        .forEach((answerItem) =>
-          activities.push({
-            id: `answer-${answerItem._id}`,
-            date: answerItem.date,
-            item: answerItem,
-            activityType: "answer",
-          })
-        );
-    }
-
-    if (user.approvedAnswers) {
-      user.approvedAnswers
-        .filter((a) => {
-          const dateToFilterBy = a.approved_date || a.date;
-          return isInDateRange(dateToFilterBy);
-        })
-        .forEach((answerItem) =>
-          activities.push({
-            id: `base-approval-${answerItem._id}`,
-            date: answerItem.approved_date || answerItem.date,
-            item: answerItem,
-            activityType: "base_approval",
-          })
-        );
-    }
-
-    if (user.financialApprovedAnswers) {
-      user.financialApprovedAnswers
-        .filter((a) => {
-          const dateToFilterBy = a.financial_approved_date || a.date;
-          return isInDateRange(dateToFilterBy);
-        })
-        .forEach((answerItem) =>
-          activities.push({
-            id: `finance-approval-${answerItem._id}`,
-            date: answerItem.financial_approved_date || answerItem.date,
-            item: answerItem,
-            activityType: "finance_approval",
-          })
-        );
-    }
-
-    if (user.comments) {
-      user.comments
-        .filter((c) => isInDateRange(c.date))
-        .forEach((commentItem) =>
-          activities.push({
-            id: `comment-${commentItem._id}`,
-            date: commentItem.date,
-            item: commentItem,
-            activityType: "comment",
-          })
-        );
-    }
-
-    ratedCases.forEach((value, key) => {
-      const averageScore =
-        value.scores.reduce((a, b) => a + b, 0) / value.scores.length;
-      activities.push({
-        id: `rating-${key}`,
-        date: value.latestDate,
-        item: {
-          case: value.caseData,
-          averageScore,
-        },
-        activityType: "rating",
-      });
-    });
-
-    return activities.sort((a, b) => {
-      return (
-        parseActivityDate(b.date).getTime() -
-        parseActivityDate(a.date).getTime()
-      );
-    });
-  }, [user, dateRange]);
-
   const activitiesToDisplay = useMemo((): CombinedActivity[] => {
     let baseActivities: CombinedActivity[];
     switch (activeTab) {
       case "cases":
-        baseActivities = allActivities.filter((a) => a.activityType === "case");
+        baseActivities = activities.filter((a) => a.activityType === "case");
         break;
       case "answers":
-        baseActivities = allActivities.filter(
-          (a) => a.activityType === "answer"
-        );
+        baseActivities = activities.filter((a) => a.activityType === "answer");
         break;
       case "comments":
-        baseActivities = allActivities.filter(
-          (a) => a.activityType === "comment"
-        );
+        baseActivities = activities.filter((a) => a.activityType === "comment");
         break;
       case "ratings":
-        baseActivities = allActivities.filter(
-          (a) => a.activityType === "rating"
-        );
+        baseActivities = activities.filter((a) => a.activityType === "rating");
         break;
       case "approvals":
-        baseActivities = allActivities.filter(
+        baseActivities = activities.filter(
           (a) => a.activityType === "base_approval"
         );
         break;
       case "finances":
-        baseActivities = allActivities.filter(
+        baseActivities = activities.filter(
           (a) => a.activityType === "finance_approval"
         );
         break;
       case "all":
       default:
-        baseActivities = allActivities;
+        baseActivities = activities;
         break;
     }
     return baseActivities.slice(0, visibleCounts[activeTab]);
-  }, [activeTab, allActivities, visibleCounts]);
+  }, [activeTab, activities, visibleCounts]);
 
   const tabs: { key: ActivityTab; label: string; count: number }[] = [
     { key: "all", label: "Всички", count: counts.all },
@@ -307,23 +193,22 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
   const getCurrentTabTotalCount = (): number => {
     switch (activeTab) {
       case "cases":
-        return allActivities.filter((a) => a.activityType === "case").length;
+        return activities.filter((a) => a.activityType === "case").length;
       case "answers":
-        return allActivities.filter((a) => a.activityType === "answer").length;
+        return activities.filter((a) => a.activityType === "answer").length;
       case "comments":
-        return allActivities.filter((a) => a.activityType === "comment").length;
+        return activities.filter((a) => a.activityType === "comment").length;
       case "ratings":
-        return allActivities.filter((a) => a.activityType === "rating").length;
+        return activities.filter((a) => a.activityType === "rating").length;
       case "approvals":
-        return allActivities.filter((a) => a.activityType === "base_approval")
+        return activities.filter((a) => a.activityType === "base_approval")
           .length;
       case "finances":
-        return allActivities.filter(
-          (a) => a.activityType === "finance_approval"
-        ).length;
+        return activities.filter((a) => a.activityType === "finance_approval")
+          .length;
       case "all":
       default:
-        return allActivities.length;
+        return activities.length;
     }
   };
 
@@ -405,7 +290,40 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
           </div>
         )}
       </div>
-
+      {/* --- ADD NEW FILTER TAGS DISPLAY --- */}
+      {isAnyFilterActive && (
+        <div className="px-4 py-2 border-b border-gray-200 bg-gray-50 flex flex-wrap items-center gap-2">
+          <span className="text-xs font-semibold text-gray-600 mr-2">
+            Активни филтри:
+          </span>
+          {activeCategoryName && (
+            <FilterTag
+              label={`Категория: ${activeCategoryName}`}
+              onRemove={onClearCategoryFilter}
+            />
+          )}
+          {activeRatingTier !== "all" && (
+            <FilterTag
+              label={`Оценка: ${activeRatingTier}`}
+              onRemove={onClearRatingTierFilter}
+            />
+          )}
+          {isDateFilterActive && (
+            <FilterTag
+              label="Период"
+              onRemove={() =>
+                onDateRangeChange({ startDate: null, endDate: null })
+              }
+            />
+          )}
+          <button
+            onClick={onClearAllFilters}
+            className="cursor-pointer ml-auto text-xs font-semibold text-indigo-600 hover:text-indigo-800 hover:underline"
+          >
+            Изчисти всички
+          </button>
+        </div>
+      )}
       <div
         ref={scrollableActivityListRef}
         className="flex-1 overflow-y-auto custom-scrollbar"

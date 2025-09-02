@@ -15,6 +15,7 @@ import {
   ResolutionCategoryKey,
 } from "../../../utils/categoryDisplayUtils";
 import DateRangeSelector from "../userAnalytics/DateRangeSelector";
+import FilterTag from "../../global/FilterTag";
 
 // The local CaseStatusTab type can now be imported from Category.tsx
 import { CaseStatusTab } from "../../../pages/Category";
@@ -35,8 +36,7 @@ interface CategoryCasesListProps {
     endDate: Date | null;
   }) => void;
   isAnyFilterActive: boolean;
-  onClearAllFilters: () => void;
-  // State and setters for filters
+  onClearAllFilters: () => void; // State and setters for filters
   activeStatus: CaseStatusTab;
   setActiveStatus: (status: CaseStatusTab) => void;
   activeType: CaseType | "all";
@@ -44,25 +44,6 @@ interface CategoryCasesListProps {
   activeResolution: ResolutionCategoryKey | "all";
   onClearResolutionFilter: () => void;
 }
-// --- END: NEW PROPS INTERFACE ---
-
-// --- NEW: A small component for rendering the filter tags ---
-const FilterTag: React.FC<{ label: string; onRemove: () => void }> = ({
-  label,
-  onRemove,
-}) => (
-  <span className="inline-flex items-center gap-x-1.5 rounded-full bg-indigo-100 px-2 py-1 text-xs font-medium text-indigo-700">
-    {label}
-    <button
-      type="button"
-      onClick={onRemove}
-      className="cursor-pointer group relative h-3.5 w-3.5 rounded-full hover:bg-indigo-600/20"
-    >
-      <span className="sr-only">Remove</span>
-      <XMarkIcon className="h-3.5 w-3.5 text-indigo-600/75 stroke-2 group-hover:text-indigo-600" />
-    </button>
-  </span>
-);
 
 const CategoryCasesList: React.FC<CategoryCasesListProps> = ({
   allCases,

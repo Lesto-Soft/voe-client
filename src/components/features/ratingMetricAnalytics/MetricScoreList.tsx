@@ -7,7 +7,8 @@ import {
   InboxIcon,
   CalendarDaysIcon,
   XMarkIcon,
-} from "@heroicons/react/24/outline"; // <-- Import XMarkIcon
+} from "@heroicons/react/24/outline";
+import FilterTag from "../../global/FilterTag";
 import { TIERS } from "../../../utils/GLOBAL_PARAMETERS";
 
 export type TierTab = "all" | "gold" | "silver" | "bronze" | "problematic";
@@ -18,24 +19,6 @@ const getTierForScore = (score: number): TierTab => {
   if (score >= TIERS.BRONZE) return "bronze";
   return "problematic";
 };
-
-// --- NEW: A local component for rendering the filter tags ---
-const FilterTag: React.FC<{ label: string; onRemove: () => void }> = ({
-  label,
-  onRemove,
-}) => (
-  <span className="inline-flex items-center gap-x-1.5 rounded-full bg-indigo-100 px-2 py-1 text-xs font-medium text-indigo-700">
-    {label}
-    <button
-      type="button"
-      onClick={onRemove}
-      className="cursor-pointer group relative h-3.5 w-3.5 rounded-full hover:bg-indigo-600/20"
-    >
-      <span className="sr-only">Remove</span>
-      <XMarkIcon className="h-3.5 w-3.5 text-indigo-600/75 stroke-2 group-hover:text-indigo-600" />
-    </button>
-  </span>
-);
 
 // Update props to control the active tab from the parent
 interface MetricScoreListProps {

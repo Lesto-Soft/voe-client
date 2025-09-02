@@ -7,7 +7,6 @@ import SimpleTextEditor from "../forms/partials/TextEditor/SimplifiedTextEditor"
 import { getTextLength } from "../../utils/contentRenderer";
 import ImagePreviewModal from "../modals/ImagePreviewModal";
 import { toast } from "react-toastify";
-import { ICategory } from "../../db/interfaces";
 
 // Interface for the props of the AddAnswer component
 interface AddAnswerProps {

@@ -31,24 +31,19 @@ export const CustomMention = Mention.extend({
     ];
   },
 
-  // 👇 CHANGED: We are now declaring all attributes manually.
-  // This avoids the 'this.parent' error completely.
   addAttributes() {
     return {
-      // Default attributes from the Mention extension
       id: {
         default: null,
       },
       label: {
         default: null,
       },
-      // Your new custom attribute
       username: {
         default: null,
       },
     };
   },
 
-  // This keeps the cursor from getting stuck.
   atom: true,
 });

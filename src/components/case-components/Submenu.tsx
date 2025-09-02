@@ -3,6 +3,7 @@ import {
   ChatBubbleBottomCenterTextIcon,
   ChatBubbleOvalLeftEllipsisIcon,
   ClockIcon,
+  XMarkIcon,
 } from "@heroicons/react/24/solid";
 import { IAnswer, ICase, IComment, IMe } from "../../db/interfaces";
 import CaseHistoryContent from "./CaseHistoryContent";
@@ -11,6 +12,8 @@ import Answer from "./Answer";
 import AddComment from "./AddComment";
 import AddAnswer from "./AddAnswer";
 import { USER_RIGHTS } from "../../utils/GLOBAL_PARAMETERS";
+import * as Tooltip from "@radix-ui/react-tooltip";
+import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 
 const LOCAL_STORAGE_KEY = "case-submenu-view";
 
@@ -125,7 +128,13 @@ const Submenu: React.FC<SubmenuProps> = ({
                 me={me}
                 mentions={mentions}
               />
-            ) : null}
+            ) : (caseData?.answers?.length ?? 0) < 1 ? (
+              <div className="text-center text-gray-500">{t("no_answers")}</div>
+            ) : (
+              <div className="text-center text-gray-500">
+                {t("waiting_approval")}
+              </div>
+            )}
             {caseData.answers && caseData.answers.length > 0 ? (
               <>
                 {[...caseData.answers]

@@ -24,5 +24,14 @@
   "send": "Send",
   "hideComment": "Hide comment",
   "addComment": "Comment",
-  "writeComment": "Write a comment..."
+  "writeComment": "Write a comment...",
+  "rte": {
+    "title": "Editor Help",
+    "description": "Here you can find information about the editor's features.",
+    "bold": "Make text bold",
+    "italic": "Make text italic",
+    "underline": "Make text underline",
+    "strike": "Make text strikethrough",
+    "mention": "Mention a user"
+  }
 }

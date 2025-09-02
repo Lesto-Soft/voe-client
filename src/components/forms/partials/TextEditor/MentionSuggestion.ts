@@ -10,8 +10,7 @@ export interface MentionUser {
 
 export const createMentionSuggestion = (mentions: MentionUser[] = []) => ({
   items: async ({ query }: { query: string }): Promise<MentionUser[]> => {
-    if (query.length < 1) return [];
-
+    console.log("triggered");
     return mentions
       .filter(
         (user) =>

@@ -52,7 +52,7 @@ const MentionList = forwardRef<MentionListRef, MentionListProps>(
     }
 
     return (
-      <div className="bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden text-sm w-64 z-50">
+      <div className="bg-white rounded-lg shadow-lg border border-gray-200 text-sm w-64 z-50 overflow-y-auto max-h-60">
         {props.items.map((item, index) => (
           <button
             key={item._id}

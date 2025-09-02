@@ -2,12 +2,11 @@ import React, { useEffect, useState, useMemo } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
-import {
-  getTextLength,
-  renderContentSafely,
-} from "../../../../utils/contentRenderer";
+import { getTextLength } from "../../../../utils/contentRenderer";
 import { createMentionSuggestion } from "./MentionSuggestion";
 import { CustomMention } from "./CustomMention";
+import { QuestionMarkCircleIcon } from "@heroicons/react/24/solid";
+import HelpModal from "./HelperModal";
 
 interface SimpleTextEditorProps {
   content?: string;
@@ -31,6 +30,8 @@ const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
   mentions = [],
 }) => {
   const [charCount, setCharCount] = useState(0);
+  const [isHelpModalOpen, setIsHelpModalOpen] = useState(false); // 👈 1. Manage state here
+
   const mentionSuggestionConfig = useMemo(
     () => createMentionSuggestion(mentions),
     [mentions]
@@ -72,6 +73,7 @@ const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
     onUpdate: ({ editor: currentEditor }) => {
       const characterCount = getTextLength(currentEditor.getHTML());
       setCharCount(characterCount);
+      console.log(characterCount);
 
       if (onUpdate) {
         const textContent = currentEditor.getText().trim();
@@ -125,43 +127,64 @@ const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
         style={height !== "auto" ? { height } : {}}
       >
         {editor && (
-          // The menu bar is a flex item that does not shrink, keeping it at the top.
-          <div className="flex-shrink-0 flex items-center gap-1 p-2 border-b border-gray-200 bg-gray-50 rounded-t-md z-10">
+          <div className="flex-shrink-0 flex items-center justify-between gap-1 p-2 border-b border-gray-200 bg-gray-50 rounded-t-md z-10">
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => editor.chain().focus().toggleBold().run()}
+                className={`px-2 py-1 rounded text-sm font-medium transition-colors cursor-pointer ${
+                  editor.isActive("bold")
+                    ? "bg-blue-100 text-blue-700 ring-1 ring-blue-300"
+                    : "text-gray-700 hover:bg-gray-200 hover:text-gray-900"
+                }`}
+                title="Bold (Ctrl+B)"
+              >
+                <strong>B</strong>
+              </button>
+              <button
+                type="button"
+                onClick={() => editor.chain().focus().toggleItalic().run()}
+                className={`px-2 py-1 rounded text-sm font-medium transition-colors cursor-pointer ${
+                  editor.isActive("italic")
+                    ? "bg-blue-100 text-blue-700 ring-1 ring-blue-300"
+                    : "text-gray-700 hover:bg-gray-200 hover:text-gray-900"
+                }`}
+                title="Italic (Ctrl+I)"
+              >
+                <em>I</em>
+              </button>
+              <button
+                type="button"
+                onClick={() => editor.chain().focus().toggleUnderline().run()}
+                className={`px-2 py-1 rounded text-sm font-medium transition-colors cursor-pointer ${
+                  editor.isActive("underline")
+                    ? "bg-blue-100 text-blue-700 ring-1 ring-blue-300"
+                    : "text-gray-700 hover:bg-gray-200 hover:text-gray-900"
+                }`}
+                title="Underline (Ctrl+U)"
+              >
+                <u>U</u>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const { from } = editor.state.selection;
+                  editor.chain().focus().insertContentAt(from, " @").run();
+                  return;
+                }}
+                className="cursor-pointer px-2 py-1 rounded text-sm font-medium transition-colors text-gray-700 hover:bg-gray-200 hover:text-gray-900"
+                title="Mention User (@)"
+              >
+                <strong className="text-blue-600">@</strong>
+              </button>
+            </div>
             <button
               type="button"
-              onClick={() => editor.chain().focus().toggleBold().run()}
-              className={`px-2 py-1 rounded text-sm font-medium transition-colors ${
-                editor.isActive("bold")
-                  ? "bg-blue-100 text-blue-700 ring-1 ring-blue-300"
-                  : "text-gray-700 hover:bg-gray-200 hover:text-gray-900"
-              }`}
-              title="Bold (Ctrl+B)"
+              onClick={() => setIsHelpModalOpen(true)} // 👈 3. Call the function from the parent
+              className="cursor-pointer p-1 rounded text-gray-500 hover:bg-gray-200 hover:text-gray-700"
+              title="Help"
             >
-              <strong>B</strong>
-            </button>
-            <button
-              type="button"
-              onClick={() => editor.chain().focus().toggleItalic().run()}
-              className={`px-2 py-1 rounded text-sm font-medium transition-colors ${
-                editor.isActive("italic")
-                  ? "bg-blue-100 text-blue-700 ring-1 ring-blue-300"
-                  : "text-gray-700 hover:bg-gray-200 hover:text-gray-900"
-              }`}
-              title="Italic (Ctrl+I)"
-            >
-              <em>I</em>
-            </button>
-            <button
-              type="button"
-              onClick={() => editor.chain().focus().toggleUnderline().run()}
-              className={`px-2 py-1 rounded text-sm font-medium transition-colors ${
-                editor.isActive("underline")
-                  ? "bg-blue-100 text-blue-700 ring-1 ring-blue-300"
-                  : "text-gray-700 hover:bg-gray-200 hover:text-gray-900"
-              }`}
-              title="Underline (Ctrl+U)"
-            >
-              <u>U</u>
+              <QuestionMarkCircleIcon className="w-5 h-5" />
             </button>
           </div>
         )}
@@ -180,6 +203,7 @@ const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
           )}
         </div>
       </div>
+      <HelpModal isOpen={isHelpModalOpen} onOpenChange={setIsHelpModalOpen} />
     </>
   );
 };

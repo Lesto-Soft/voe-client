@@ -201,14 +201,6 @@ const AddComment: React.FC<AddCommentProps> = ({
               height="36"
               mentions={mentions}
             />
-            <div
-              id="comment-char-counter"
-              className={`absolute bottom-3 right-4 text-xs ${
-                isInvalid ? "text-red-600 font-semibold" : "text-gray-500"
-              } bg-white px-1 rounded shadow-sm`}
-            >
-              {charCount}/{COMMENT_CONTENT.MAX}
-            </div>
           </div>
           {/* File attachment component */}
           {/* NOTE: For FileAttachmentAnswer to match height, its internal button should also be h-24.

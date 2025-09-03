@@ -3,7 +3,6 @@ import {
   ChatBubbleBottomCenterTextIcon,
   ChatBubbleOvalLeftEllipsisIcon,
   ClockIcon,
-  XMarkIcon,
 } from "@heroicons/react/24/solid";
 import { IAnswer, ICase, IComment, IMe } from "../../db/interfaces";
 import CaseHistoryContent from "./CaseHistoryContent";
@@ -12,9 +11,6 @@ import Answer from "./Answer";
 import AddComment from "./AddComment";
 import AddAnswer from "./AddAnswer";
 import { USER_RIGHTS } from "../../utils/GLOBAL_PARAMETERS";
-import * as Tooltip from "@radix-ui/react-tooltip";
-import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
-
 const LOCAL_STORAGE_KEY = "case-submenu-view";
 
 interface SubmenuProps {
@@ -191,12 +187,12 @@ const Submenu: React.FC<SubmenuProps> = ({
                       new Date(b.date).getTime() - new Date(a.date).getTime()
                   )
                   .map((comment: IComment) => (
-                    // --- SIMPLIFIED LOGIC ---
                     <Comment
                       key={comment._id}
                       comment={comment}
                       me={me}
                       caseNumber={caseData.case_number}
+                      mentions={mentions}
                     />
                   ))}
               </>

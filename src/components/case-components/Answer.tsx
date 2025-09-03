@@ -156,6 +156,7 @@ const Answer: React.FC<{
                 comment={comment}
                 me={me}
                 caseNumber={caseNumber}
+                mentions={mentions}
               />
             ))}
           </div>

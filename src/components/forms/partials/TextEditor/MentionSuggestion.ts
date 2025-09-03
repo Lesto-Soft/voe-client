@@ -1,6 +1,7 @@
 import { ReactRenderer } from "@tiptap/react";
 import tippy, { type Instance, type Props } from "tippy.js";
 import MentionList, { type MentionListRef } from "./MentionList";
+import { Editor } from "@tiptap/core";
 
 export interface MentionUser {
   _id: string;
@@ -8,9 +9,20 @@ export interface MentionUser {
   username: string;
 }
 
+const getExistingMentionIds = (editor: Editor): Set<string> => {
+  const ids = new Set<string>();
+
+  editor.state.doc.descendants((node) => {
+    if (node.type.name === "mention-link") {
+      ids.add(node.attrs.id);
+    }
+  });
+
+  return ids;
+};
+
 export const createMentionSuggestion = (mentions: MentionUser[] = []) => ({
   items: async ({ query }: { query: string }): Promise<MentionUser[]> => {
-    console.log("triggered");
     return mentions
       .filter(
         (user) =>
@@ -19,6 +31,7 @@ export const createMentionSuggestion = (mentions: MentionUser[] = []) => ({
       )
       .slice(0, 5);
   },
+  allowedPrefixes: [" ", "\u00A0"],
 
   render: () => {
     let component: ReactRenderer<MentionListRef>;
@@ -35,7 +48,9 @@ export const createMentionSuggestion = (mentions: MentionUser[] = []) => ({
 
         popup = tippy("body", {
           getReferenceClientRect: props.clientRect,
-          appendTo: () => document.body,
+          appendTo: () =>
+            document.querySelector("#edit-comment-popup-container") ||
+            document.body,
           content: component.element,
           showOnCreate: true,
           interactive: true,

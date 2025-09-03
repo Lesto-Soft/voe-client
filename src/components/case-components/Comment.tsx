@@ -13,9 +13,15 @@ interface CommentProps {
   comment: IComment;
   me?: any;
   caseNumber: number;
+  mentions: { name: string; username: string; _id: string }[];
 }
 
-const Comment: React.FC<CommentProps> = ({ comment, me, caseNumber }) => {
+const Comment: React.FC<CommentProps> = ({
+  comment,
+  me,
+  caseNumber,
+  mentions,
+}) => {
   const { deleteComment } = useDeleteComment(caseNumber);
 
   // Actions block is defined once to avoid repetition.
@@ -27,6 +33,7 @@ const Comment: React.FC<CommentProps> = ({ comment, me, caseNumber }) => {
           comment={comment}
           currentAttachments={comment.attachments}
           caseNumber={caseNumber}
+          mentions={mentions}
         />
         <DeleteModal
           title="deleteComment"

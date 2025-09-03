@@ -52,11 +52,11 @@ const MentionList = forwardRef<MentionListRef, MentionListProps>(
     }
 
     return (
-      <div className="bg-white rounded-lg shadow-lg border border-gray-200 text-sm w-64 z-50 overflow-y-auto max-h-60">
+      <div className="bg-white rounded-lg shadow-lg border border-gray-200 text-sm w-64 z-10 overflow-y-auto max-h-60">
         {props.items.map((item, index) => (
           <button
             key={item._id}
-            className={`flex items-center w-full text-left px-3 py-2 ${
+            className={`cursor-pointer flex items-center w-full text-left px-3 py-2 ${
               index === selectedIndex ? "bg-indigo-100" : "hover:bg-gray-100"
             }`}
             onClick={() => selectItem(index)}

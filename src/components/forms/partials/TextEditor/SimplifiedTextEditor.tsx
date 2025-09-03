@@ -73,7 +73,6 @@ const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
     onUpdate: ({ editor: currentEditor }) => {
       const characterCount = getTextLength(currentEditor.getHTML());
       setCharCount(characterCount);
-      console.log(characterCount);
 
       if (onUpdate) {
         const textContent = currentEditor.getText().trim();
@@ -119,7 +118,6 @@ const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
     }
     ${wrapperClassName || ""}
   `;
-
   return (
     <>
       <div

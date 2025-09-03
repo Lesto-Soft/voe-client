@@ -4,6 +4,8 @@ import { MentionNodeView } from "./MentionNodeView";
 import { Attributes } from "@tiptap/core";
 
 export const CustomMention = Mention.extend({
+  inclusive: false,
+
   addNodeView() {
     return ReactNodeViewRenderer(MentionNodeView);
   },
@@ -43,6 +45,15 @@ export const CustomMention = Mention.extend({
         default: null,
       },
     };
+  },
+
+  parseHTML() {
+    return [
+      {
+        tag: "a[data-type='mention']",
+        priority: 100,
+      },
+    ];
   },
 
   atom: true,

@@ -119,7 +119,7 @@ const EditAnswerButton: React.FC<EditButtonProps> = ({
           </Dialog.Description>
 
           {/* SimpleTextEditor replacing the textarea */}
-          <div className="mb-4">
+          <div className="mb-4" id="edit-comment-popup-container">
             <SimpleTextEditor
               content={content}
               onUpdate={(html) => setContent(html)}

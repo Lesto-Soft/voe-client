@@ -1,3 +1,5 @@
+// src/pages/User.tsx
+
 import React, { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router";
 import { useGetFullUserByUsername, useUpdateUser } from "../graphql/hooks/user";
@@ -94,9 +96,8 @@ const User: React.FC = () => {
   const { isAllowed, isLoading: authLoading } = useAuthorization({
     type: "user",
     data: user,
-  });
+  }); // This hook provides data for the pie charts
 
-  // --- MODIFIED: This hook now ONLY provides data for the pie charts ---
   const pieChartStats = useUserActivityStats(
     user,
     dateRange.startDate,
@@ -115,12 +116,6 @@ const User: React.FC = () => {
     error: rolesError,
   } = useGetRoles();
 
-  const userStats = useUserActivityStats(
-    user,
-    dateRange.startDate,
-    dateRange.endDate
-  );
-
   const serverBaseUrl = import.meta.env.VITE_API_URL || "";
 
   const filteredActivities = useMemo((): CombinedActivity[] => {
@@ -133,7 +128,7 @@ const User: React.FC = () => {
       if (startDate && itemDate < startDate) return false;
       if (endDate && itemDate > endDate) return false;
       return true;
-    }; // --- 1. GATHER ALL ACTIVITIES WITHIN DATE RANGE ---
+    }; // --- 1. GATHER ALL ACTIVITIES ---
 
     const ratedCases: Map<
       string,
@@ -173,7 +168,6 @@ const User: React.FC = () => {
           })
         );
     }
-
     if (user.answers) {
       user.answers
         .filter((a) => isInDateRange(a.date))
@@ -186,13 +180,9 @@ const User: React.FC = () => {
           })
         );
     }
-
     if (user.approvedAnswers) {
       user.approvedAnswers
-        .filter((a) => {
-          const dateToFilterBy = a.approved_date || a.date;
-          return isInDateRange(dateToFilterBy);
-        })
+        .filter((a) => isInDateRange(a.approved_date || a.date))
         .forEach((answerItem) =>
           activities.push({
             id: `base-approval-${answerItem._id}`,
@@ -202,13 +192,9 @@ const User: React.FC = () => {
           })
         );
     }
-
     if (user.financialApprovedAnswers) {
       user.financialApprovedAnswers
-        .filter((a) => {
-          const dateToFilterBy = a.financial_approved_date || a.date;
-          return isInDateRange(dateToFilterBy);
-        })
+        .filter((a) => isInDateRange(a.financial_approved_date || a.date))
         .forEach((answerItem) =>
           activities.push({
             id: `finance-approval-${answerItem._id}`,
@@ -218,7 +204,6 @@ const User: React.FC = () => {
           })
         );
     }
-
     if (user.comments) {
       user.comments
         .filter((c) => isInDateRange(c.date))
@@ -231,69 +216,81 @@ const User: React.FC = () => {
           })
         );
     }
-
     ratedCases.forEach((value, key) => {
       const averageScore =
         value.scores.reduce((a, b) => a + b, 0) / value.scores.length;
       activities.push({
         id: `rating-${key}`,
         date: value.latestDate,
-        item: {
-          case: value.caseData,
-          averageScore,
-        },
+        item: { case: value.caseData, averageScore },
         activityType: "rating",
       });
-    }); // --- 2. APPLY PIE CHART FILTERS ---
+    }); // --- 2. APPLY FILTERS --- // CATEGORY FILTER
 
     if (activeCategoryName) {
-      const filteredCaseIds = new Set(
-        (user.cases || [])
-          .filter((c) =>
-            c.categories.some((cat) => cat.name === activeCategoryName)
-          )
-          .map((c) => c._id)
-      );
+      const activeCategoryId = pieChartStats?.signalsByCategoryChartData.find(
+        (d) => d.label === activeCategoryName
+      )?.id;
 
-      activities = activities.filter((activity) => {
-        if (activity.activityType === "case") {
-          return filteredCaseIds.has((activity.item as ICase)._id);
-        }
-        const relatedCase =
-          (activity.item as IAnswer).case ||
-          (activity.item as IComment).case ||
-          (activity.item as IComment).answer?.case ||
-          (activity.item as RatedCaseActivity).case;
-        return relatedCase ? filteredCaseIds.has(relatedCase._id) : false;
-      });
-    }
+      if (activeCategoryId) {
+        activities = activities.filter((activity) => {
+          let relatedCase: ICase | undefined | null;
+          switch (activity.activityType) {
+            case "case":
+              relatedCase = activity.item as ICase;
+              break;
+            case "rating":
+              relatedCase = (activity.item as RatedCaseActivity).case;
+              break;
+            case "answer":
+            case "base_approval":
+            case "finance_approval":
+              relatedCase = (activity.item as IAnswer).case;
+              break;
+            case "comment":
+              const comment = activity.item as IComment;
+              relatedCase = comment.case || comment.answer?.case;
+              break;
+          }
+          if (!relatedCase || !relatedCase.categories) return false;
+          return relatedCase.categories.some(
+            (cat) => cat._id === activeCategoryId
+          );
+        });
+      }
+    } // RATING TIER FILTER
 
     if (activeRatingTier !== "all") {
-      const filteredCaseIds = new Set(
-        (user.cases || [])
-          .filter((c) => {
-            if (
-              c.calculatedRating === null ||
-              c.calculatedRating === undefined
-            ) {
-              return false;
-            }
-            return getTierForScore(c.calculatedRating) === activeRatingTier;
-          })
-          .map((c) => c._id)
-      );
-
       activities = activities.filter((activity) => {
-        if (activity.activityType === "case") {
-          return filteredCaseIds.has((activity.item as ICase)._id);
+        let relatedCase: ICase | undefined | null;
+        switch (activity.activityType) {
+          case "case":
+            relatedCase = activity.item as ICase;
+            break;
+          case "rating":
+            relatedCase = (activity.item as RatedCaseActivity).case;
+            break;
+          case "answer":
+          case "base_approval":
+          case "finance_approval":
+            relatedCase = (activity.item as IAnswer).case;
+            break;
+          case "comment":
+            const comment = activity.item as IComment;
+            relatedCase = comment.case || comment.answer?.case;
+            break;
         }
-        const relatedCase =
-          (activity.item as IAnswer).case ||
-          (activity.item as IComment).case ||
-          (activity.item as IComment).answer?.case ||
-          (activity.item as RatedCaseActivity).case;
 
-        return relatedCase ? filteredCaseIds.has(relatedCase._id) : false;
+        if (
+          !relatedCase ||
+          relatedCase.calculatedRating === null ||
+          relatedCase.calculatedRating === undefined
+        ) {
+          return false;
+        }
+        return (
+          getTierForScore(relatedCase.calculatedRating) === activeRatingTier
+        );
       });
     } // --- 3. SORT FINAL LIST ---
 
@@ -302,9 +299,8 @@ const User: React.FC = () => {
         parseActivityDate(b.date).getTime() -
         parseActivityDate(a.date).getTime()
     );
-  }, [user, dateRange, activeCategoryName, activeRatingTier]);
+  }, [user, dateRange, activeCategoryName, activeRatingTier, pieChartStats]);
 
-  // Calculate header counts from the fully filtered list
   const filteredActivityCounts = useMemo(() => {
     const counts = {
       all: 0,
@@ -325,7 +321,7 @@ const User: React.FC = () => {
       else if (activity.activityType === "finance_approval") counts.finances++;
     });
     return counts;
-  }, [filteredActivities]); // Calculate text stats from the fully filtered list
+  }, [filteredActivities]);
 
   const filteredTextStats = useMemo((): UserTextStats => {
     const filteredCases = filteredActivities
@@ -351,53 +347,6 @@ const User: React.FC = () => {
         ratedCasesCount > 0 ? ratedCasesSum / ratedCasesCount : null,
     };
   }, [filteredActivities, filteredActivityCounts]);
-
-  const ratedCasesCount = useMemo(() => {
-    if (!user?.metricScores) return 0;
-    const { startDate, endDate } = dateRange;
-
-    const filteredScores = user.metricScores.filter((score) => {
-      if (!startDate && !endDate) return true;
-      const itemDate = parseActivityDate(score.date);
-      if (startDate && itemDate < startDate) return false;
-      if (endDate && itemDate > endDate) return false;
-      return true;
-    });
-    const ratedCaseIds = new Set(filteredScores.map((score) => score.case._id));
-    return ratedCaseIds.size;
-  }, [user?.metricScores, dateRange]);
-
-  // ✅ MODIFIED: Rewrote this entire block with the correct filtering logic.
-  const approvalsCount = useMemo(() => {
-    if (!user?.approvedAnswers) return 0;
-    const { startDate, endDate } = dateRange;
-
-    return user.approvedAnswers.filter((a) => {
-      const dateToFilterBy = a.approved_date || a.date;
-      if (!startDate && !endDate) return true;
-
-      const itemDate = parseActivityDate(dateToFilterBy);
-      if (startDate && itemDate < startDate) return false;
-      if (endDate && itemDate > endDate) return false;
-      return true;
-    }).length;
-  }, [user?.approvedAnswers, dateRange]);
-
-  // ✅ MODIFIED: Rewrote this entire block with the correct filtering logic.
-  const financesCount = useMemo(() => {
-    if (!user?.financialApprovedAnswers) return 0;
-    const { startDate, endDate } = dateRange;
-
-    return user.financialApprovedAnswers.filter((a) => {
-      const dateToFilterBy = a.financial_approved_date || a.date;
-      if (!startDate && !endDate) return true;
-
-      const itemDate = parseActivityDate(dateToFilterBy);
-      if (startDate && itemDate < startDate) return false;
-      if (endDate && itemDate > endDate) return false;
-      return true;
-    }).length;
-  }, [user?.financialApprovedAnswers, dateRange]);
 
   const handleFormSubmit = async (
     formData: any,
@@ -494,22 +443,6 @@ const User: React.FC = () => {
     return <ForbiddenPage />;
   }
 
-  const activityCounts = {
-    cases: userStats?.totalSignals || 0,
-    answers: userStats?.totalAnswers || 0,
-    comments: userStats?.totalComments || 0,
-    ratings: ratedCasesCount,
-    approvals: approvalsCount,
-    finances: financesCount,
-    all:
-      (userStats?.totalSignals || 0) +
-      (userStats?.totalAnswers || 0) +
-      (userStats?.totalComments || 0) +
-      ratedCasesCount +
-      approvalsCount +
-      financesCount,
-  };
-
   const isAdmin = currentUser?.role._id === ROLES.ADMIN;
   const isManagerForCategory =
     currentUser?.role?._id === ROLES.EXPERT &&
@@ -538,7 +471,6 @@ const User: React.FC = () => {
             onEditUser={openEditModal}
             canEdit={canEdit}
           />
-
           <UserActivityList
             user={user}
             activities={filteredActivities}
@@ -554,7 +486,6 @@ const User: React.FC = () => {
             activeRatingTier={activeRatingTier}
             onClearRatingTierFilter={() => setActiveRatingTier("all")}
           />
-
           <UserStatisticsPanel
             textStats={filteredTextStats}
             pieChartStats={pieChartStats}
@@ -575,7 +506,6 @@ const User: React.FC = () => {
           />
         </div>
       </div>
-
       <UserModal
         isOpen={isEditModalOpen}
         onClose={closeEditModal}
@@ -591,7 +521,8 @@ const User: React.FC = () => {
         )}
         {updateError && !updateLoading && (
           <div className="p-4 mb-4 text-center text-red-600 bg-red-100 rounded-md">
-            Грешка при запис: {updateError?.message || "Неизвестна грешка"}
+            Грешка при запис:
+            {updateError?.message || "Неизвестна грешка"}
           </div>
         )}
         {!updateLoading && (
@@ -604,11 +535,10 @@ const User: React.FC = () => {
             roles={rolesData?.getAllLeanRoles || []}
             rolesLoading={rolesLoading}
             rolesError={rolesError}
-            isAdmin={isAdmin} // || isManagerForCategory}
+            isAdmin={isAdmin}
           />
         )}
       </UserModal>
-
       <SuccessConfirmationModal
         isOpen={isSuccessModalOpen}
         onClose={() => setIsSuccessModalOpen(false)}

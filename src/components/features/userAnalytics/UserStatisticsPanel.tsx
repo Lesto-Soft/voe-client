@@ -197,7 +197,7 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
           {/* Added Activity Type Selector */}
           <div>
             <label className="text-xs font-semibold text-gray-500">
-              Статистика за:
+              Вижте изолирана диаграма за:
             </label>
             <div className="mt-1.5 grid grid-cols-3 gap-1.5">
               {activityTabsConfig.map((tab) => (

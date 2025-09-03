@@ -329,15 +329,6 @@ const User: React.FC = () => {
 
   const filteredTextStats = useMemo((): UserTextStats => {
     const filteredCases = filteredActivities
-      .filter(
-        (a) =>
-          a.activityType === "case" ||
-          a.activityType === "answer" ||
-          a.activityType === "comment" ||
-          a.activityType === "rating" ||
-          a.activityType === "base_approval" ||
-          a.activityType === "finance_approval"
-      )
       .map((a) => {
         if (a.activityType === "case") return a.item as ICase;
         if (a.activityType === "answer") return (a.item as IAnswer).case;
@@ -352,7 +343,8 @@ const User: React.FC = () => {
           return (a.item as IAnswer).case;
         return null;
       })
-      .filter((c): c is ICase => c !== null);
+      // this filter now correctly removes both null AND undefined
+      .filter((c): c is ICase => !!c);
 
     const uniqueCases = Array.from(
       new Map(filteredCases.map((c) => [c._id, c])).values()

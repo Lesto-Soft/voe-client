@@ -198,7 +198,7 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
           <div className="mt-3">
             {activeTab === "categories" && (
               <StatisticPieChart
-                title="Разпределение по Категории"
+                title="Разпределение по Категории на Сигнал"
                 pieData={pieChartStats.signalsByCategoryChartData}
                 onSegmentClick={onCategoryClick}
                 activeLabel={activeCategoryLabel}

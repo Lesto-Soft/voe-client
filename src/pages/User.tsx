@@ -1,5 +1,4 @@
 // src/pages/User.tsx
-
 import React, { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router";
 import { useGetFullUserByUsername, useUpdateUser } from "../graphql/hooks/user";
@@ -38,7 +37,7 @@ export type RatingTierLabel =
   | "Проблемни"
   | "all";
 
-// --- NEW: Helper types for this component ---
+// --- Helper types for this component ---
 interface RatedCaseActivity {
   case: ICase;
   averageScore: number;
@@ -96,7 +95,7 @@ const User: React.FC = () => {
   const { isAllowed, isLoading: authLoading } = useAuthorization({
     type: "user",
     data: user,
-  }); // This hook provides data for the pie charts
+  });
 
   const pieChartStats = useUserActivityStats(
     user,
@@ -325,11 +324,38 @@ const User: React.FC = () => {
 
   const filteredTextStats = useMemo((): UserTextStats => {
     const filteredCases = filteredActivities
-      .filter((a) => a.activityType === "case")
-      .map((a) => a.item as ICase);
+      .filter(
+        (a) =>
+          a.activityType === "case" ||
+          a.activityType === "answer" ||
+          a.activityType === "comment" ||
+          a.activityType === "rating" ||
+          a.activityType === "base_approval" ||
+          a.activityType === "finance_approval"
+      )
+      .map((a) => {
+        if (a.activityType === "case") return a.item as ICase;
+        if (a.activityType === "answer") return (a.item as IAnswer).case;
+        if (a.activityType === "comment")
+          return (a.item as IComment).case || (a.item as IComment).answer?.case;
+        if (a.activityType === "rating")
+          return (a.item as RatedCaseActivity).case;
+        if (
+          a.activityType === "base_approval" ||
+          a.activityType === "finance_approval"
+        )
+          return (a.item as IAnswer).case;
+        return null;
+      })
+      .filter((c): c is ICase => c !== null);
+
+    const uniqueCases = Array.from(
+      new Map(filteredCases.map((c) => [c._id, c])).values()
+    );
+
     let ratedCasesSum = 0;
     let ratedCasesCount = 0;
-    filteredCases.forEach((c) => {
+    uniqueCases.forEach((c) => {
       if (
         c.calculatedRating !== null &&
         c.calculatedRating !== undefined &&

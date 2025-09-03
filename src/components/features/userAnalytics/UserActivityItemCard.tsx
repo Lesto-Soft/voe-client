@@ -1,8 +1,8 @@
 // src/components/features/userAnalytics/UserActivityItemCard.tsx
 import React from "react";
-import { ICase, IAnswer, IComment, IUser } from "../../../db/interfaces"; // Adjust path
-import ShowDate from "../../../components/global/ShowDate"; // Adjust path
-import CaseLink from "../../../components/global/CaseLink"; // Adjust path
+import { ICase, IAnswer, IComment, IUser } from "../../../db/interfaces";
+import ShowDate from "../../../components/global/ShowDate";
+import CaseLink from "../../../components/global/CaseLink";
 import {
   ChatBubbleOvalLeftEllipsisIcon,
   ChatBubbleBottomCenterTextIcon,
@@ -14,22 +14,18 @@ import {
   XCircleIcon,
   InformationCircleIcon,
 } from "@heroicons/react/24/outline";
-import { FlagIcon, StarIcon } from "@heroicons/react/24/solid"; // Use solid FlagIcon as in CaseInfo
+import { FlagIcon, StarIcon } from "@heroicons/react/24/solid";
 import {
-  // Utilities from categoryDisplayUtils for translations
   translateStatus as translateStatusUtil,
   translateCaseType as translateCaseTypeUtil,
   translatePriority as translatePriorityUtil,
-} from "../../../utils/categoryDisplayUtils"; // Adjust path
-
-// Import new style helpers
+} from "../../../utils/categoryDisplayUtils";
 import {
   getStatusStyle as getStatusStyleFromHelper,
   getPriorityStyle as getPriorityStyleFromHelper,
   getTypeBadgeStyle as getTypeBadgeStyleFromHelper,
   getCalculatedRatingStyle as getCalculatedRatingStyleFromHelper,
-} from "../../../utils/style-helpers"; // Adjust path to your style-helpers.ts
-
+} from "../../../utils/style-helpers";
 import CategoryLink from "../../global/CategoryLink";
 import {
   getContentPreview,
@@ -65,16 +61,6 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
     (item as IComment)?.content ||
     "";
   const contentPreview = getContentPreview(itemContent, 150);
-
-  // titleFragments.push(
-  //   <span
-  //     key="actor"
-  //     className="font-medium text-gray-800 truncate group-hover:text-blue-600 transition-colors"
-  //     title={actor.name}
-  //   >
-  //     {actor.name}
-  //   </span>
-  // );
 
   if (activityType === "case" && "case_number" in item) {
     const caseItem = item as ICase;
@@ -131,7 +117,7 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
     caseToLinkForDisplay = answerItem.case;
     titleFragments.push(
       <span key="preposition" className="ml-1 text-gray-700 whitespace-nowrap">
-         по
+        по
       </span>
     );
   } else if (activityType === "comment" && "content" in item) {
@@ -195,30 +181,26 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
     return key;
   }
 
-  // Prepare styles for case-specific details if activityType is "case"
-  let statusStyleFromHelper,
-    typeBadgeClassesFromHelper,
-    priorityTextColorClassFromHelper,
-    calculatedRatingTextColorClassFromHelper;
+  // --- MODIFICATION START: Reverted logic to only prepare styles for 'case' activity type ---
+  let statusStyle,
+    typeBadgeClasses,
+    priorityTextColorClass,
+    calculatedRatingTextColorClass;
   if (activityType === "case" && "status" in item) {
-    statusStyleFromHelper = getStatusStyleFromHelper(item.status as string);
-    typeBadgeClassesFromHelper = getTypeBadgeStyleFromHelper(
-      item.type as string
-    );
+    statusStyle = getStatusStyleFromHelper(item.status as string);
+    typeBadgeClasses = getTypeBadgeStyleFromHelper(item.type as string);
     if ((item as ICase).priority) {
-      priorityTextColorClassFromHelper = getPriorityStyleFromHelper(
+      priorityTextColorClass = getPriorityStyleFromHelper(
         (item as ICase).priority
       );
     }
-    if ((item as ICase).calculatedRating) {
-      const calculatedRating = (item as ICase).calculatedRating;
-      if (calculatedRating != null) {
-        // This checks for both null and undefined
-        calculatedRatingTextColorClassFromHelper =
-          getCalculatedRatingStyleFromHelper(calculatedRating);
-      }
+    if ((item as ICase).calculatedRating != null) {
+      calculatedRatingTextColorClass = getCalculatedRatingStyleFromHelper(
+        (item as ICase).calculatedRating!
+      );
     }
   }
+  // --- MODIFICATION END ---
 
   return (
     <div className="p-3 sm:p-4 border-b border-gray-100 hover:bg-gray-50 group transition-colors duration-150">
@@ -227,7 +209,6 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
           {icon || <LinkIcon className="h-5 w-5 text-gray-400" />}
         </div>
         <div className="flex-1 min-w-0">
-          {/* ... (Top line with title, CaseLink, and Date remains the same) ... */}
           <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between text-sm mb-1">
             <div className="flex items-baseline gap-x-1.5 min-w-0 mr-2">
               <span className="text-gray-700 flex items-baseline gap-x-1 flex-shrink min-w-0">
@@ -260,60 +241,44 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
             </p>
           )}
 
-          {/* === MODIFIED Case-specific details section starts here === */}
+          {/* === MODIFICATION: Reverted to only show details for 'case' type activities === */}
           {activityType === "case" &&
             "status" in item &&
-            "type" in item &&
-            statusStyleFromHelper &&
-            typeBadgeClassesFromHelper && (
+            statusStyle &&
+            typeBadgeClasses && (
               <div className="mt-2 text-xs">
-                {/* Main container for both lines */}
-                {/* Line 1: Status, Type, Priority - Evenly Spaced */}
                 <div className="flex items-center justify-around sm:justify-start sm:gap-x-3 mb-1.5">
-                  {/* justify-around for small, gap for larger */}
-                  {/* Status Display */}
                   <div className="flex-shrink-0">
-                    {/* Wrapper to help with spacing if needed */}
                     <span className="inline-flex items-center">
                       <span
-                        className={`h-2 w-2 rounded-full mr-1.5 ${statusStyleFromHelper.dotBgColor}`}
+                        className={`h-2 w-2 rounded-full mr-1.5 ${statusStyle.dotBgColor}`}
                       />
-                      <span
-                        className={`${statusStyleFromHelper.textColor} font-medium`}
-                      >
+                      <span className={`${statusStyle.textColor} font-medium`}>
                         {translateStatusUtil(item.status as string)}
                       </span>
                     </span>
                   </div>
-                  {/* Type Badge */}
                   <div className="flex-shrink-0">
-                    {/* Wrapper to help with spacing */}
                     <span
-                      className={`inline-flex items-center px-2 py-0.5 rounded-full font-medium ${typeBadgeClassesFromHelper}`}
+                      className={`inline-flex items-center px-2 py-0.5 rounded-full font-medium ${typeBadgeClasses}`}
                     >
                       {translateCaseTypeUtil(item.type as string)}
                     </span>
                   </div>
-                  {/* Priority Badge/Text */}
-                  {"priority" in item &&
-                    item.priority &&
-                    priorityTextColorClassFromHelper && (
-                      <div className="flex-shrink-0">
-                        {/* Wrapper to help with spacing */}
-                        <span
-                          className={`inline-flex items-center pl-2 py-0.5 rounded-full font-medium ${priorityTextColorClassFromHelper}`}
-                        >
-                          <FlagIcon className="h-3.5 w-3.5 mr-1 flex-shrink-0" />
-                          {translatePriorityUtil(item.priority)}
-                        </span>
-                      </div>
-                    )}
-                  {/* Calculated Rating Badge/Text */}
-                  {item.calculatedRating && (
+                  {priorityTextColorClass && (
                     <div className="flex-shrink-0">
-                      {/* Wrapper to help with spacing */}
                       <span
-                        className={`inline-flex items-center px-1 py-0.5 rounded-full font-medium ${calculatedRatingTextColorClassFromHelper}`}
+                        className={`inline-flex items-center pl-2 py-0.5 rounded-full font-medium ${priorityTextColorClass}`}
+                      >
+                        <FlagIcon className="h-3.5 w-3.5 mr-1 flex-shrink-0" />
+                        {translatePriorityUtil(item.priority!)}
+                      </span>
+                    </div>
+                  )}
+                  {calculatedRatingTextColorClass && item.calculatedRating && (
+                    <div className="flex-shrink-0">
+                      <span
+                        className={`inline-flex items-center px-1 py-0.5 rounded-full font-medium ${calculatedRatingTextColorClass}`}
                       >
                         <StarIcon className="h-3.5 w-3.5 mr-1 flex-shrink-0" />
                         <span className="brightness-75">
@@ -323,74 +288,47 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
                     </div>
                   )}
                 </div>
-                {/* Line 2: Categories */}
-                {"categories" in item &&
-                  item.categories &&
-                  item.categories.length > 0 && (
-                    <div className="mt-1 flex flex-wrap gap-1 items-center">
-                      {/* Added mt-1 for slight space from line above */}
-                      <span className="text-gray-500 mr-1">в:</span>
-                      {/* Added margin to "в:" */}
-                      {item.categories?.slice(0, 3).map(
-                        (
-                          cat // Show up to 3 categories
-                        ) => (
-                          <CategoryLink key={cat._id} {...cat} />
-                        )
-                      )}
-                      {item.categories.length > 3 && (
-                        <span className="text-xs text-gray-500 ml-0.5">
-                          ...
-                        </span>
-                      )}
-                    </div>
-                  )}
+                {item.categories && item.categories.length > 0 && (
+                  <div className="mt-1 flex flex-wrap gap-1 items-center">
+                    <span className="text-gray-500 mr-1">в:</span>
+                    {item.categories?.slice(0, 3).map((cat) => (
+                      <CategoryLink key={cat._id} {...cat} />
+                    ))}
+                    {item.categories.length > 3 && (
+                      <span className="text-xs text-gray-500 ml-0.5">...</span>
+                    )}
+                  </div>
+                )}
               </div>
             )}
-          {/* === MODIFIED Case-specific details section ends here === */}
 
           {/* Answer-specific details */}
           {activityType === "answer" &&
-            item && // Ensure item itself is not null/undefined
-            "approved" in item && // Check for optional 'approved' property
-            item.case && // Ensure 'case' object exists
-            typeof item.case.status === "string" && ( // Ensure 'case.status' exists and is a string
+            item &&
+            "approved" in item &&
+            item.case &&
+            typeof item.case.status === "string" && (
               <div className="mt-2 text-xs">
                 {(() => {
-                  // Cast to IAnswer for type safety if 'item' is more generic initially.
-                  // If 'item' is already strongly typed as IAnswer, casting might be redundant
-                  // but doesn't hurt for clarity within this block.
                   const answerItem = item as IAnswer;
-
-                  // Check if the answer has been editorially/expert approved
                   const isExpertApproved = !!answerItem.approved;
                   const caseStatus = answerItem.case.status;
 
-                  // Scenario 4: Expert approved, and the case itself is "AWAITING_FINANCE".
-                  // This implies this answer is the one leading to the case's AWAITING_FINANCE status.
                   if (isExpertApproved && caseStatus === "AWAITING_FINANCE") {
                     return (
                       <span className="inline-flex items-center px-2 py-0.5 rounded-full font-medium text-blue-700 bg-blue-100 border border-blue-200">
-                        <InformationCircleIcon className="h-4 w-4 mr-1" />{" "}
-                        {/* Icon indicates status/info */}
+                        <InformationCircleIcon className="h-4 w-4 mr-1" />
                         Чака финанси
                       </span>
                     );
-                  }
-                  // Scenario 3 (and general expert approved cases not awaiting finance):
-                  // Answer is expert approved, and the case is not "AWAITING_FINANCE".
-                  // This includes when caseStatus is "CLOSED" (implying this answer was used) or any other open status.
-                  else if (isExpertApproved) {
+                  } else if (isExpertApproved) {
                     return (
                       <span className="inline-flex items-center px-2 py-0.5 rounded-full font-medium text-green-700 bg-green-100 border border-green-200">
                         <HandThumbUpIcon className="h-4 w-4 mr-1" />
                         Одобрено
                       </span>
                     );
-                  }
-                  // Scenario 1: Answer is NOT expert approved, but the case has already moved to "CLOSED" or "AWAITING_FINANCE".
-                  // This implies this specific answer was not the one the case proceeded with.
-                  else if (
+                  } else if (
                     !isExpertApproved &&
                     (caseStatus === "CLOSED" ||
                       caseStatus === "AWAITING_FINANCE")
@@ -401,11 +339,7 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
                         Неодобрено
                       </span>
                     );
-                  }
-                  // Scenario 2 (and general not expert approved, case still open):
-                  // Answer is NOT expert approved, and the case is in a status other than "CLOSED" or "AWAITING_FINANCE".
-                  // This means the answer is still pending expert/editorial review.
-                  else if (!isExpertApproved) {
+                  } else if (!isExpertApproved) {
                     return (
                       <span className="inline-flex items-center px-2 py-0.5 rounded-full font-medium text-yellow-700 bg-yellow-100 border border-yellow-200">
                         <ClockIcon className="h-4 w-4 mr-1" />
@@ -413,8 +347,6 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
                       </span>
                     );
                   }
-
-                  // Fallback, should ideally not be reached if the logic covers all states of isExpertApproved
                   return null;
                 })()}
               </div>

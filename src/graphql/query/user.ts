@@ -84,6 +84,7 @@ fragment FullUserFragment on User {
           _id
           case_number
           status
+          calculatedRating # MODIFIED: Added
           creator {
             _id
           }
@@ -111,6 +112,7 @@ fragment FullUserFragment on User {
           _id
           case_number
           status
+          calculatedRating # MODIFIED: Added
           creator {
             _id
           }
@@ -138,6 +140,7 @@ fragment FullUserFragment on User {
           _id
           case_number
           status
+          calculatedRating # MODIFIED: Added
           creator {
             _id
           }
@@ -163,6 +166,7 @@ fragment FullUserFragment on User {
           _id
           case_number
           status
+          calculatedRating # MODIFIED: Added
           creator {
             _id
           }
@@ -185,6 +189,7 @@ fragment FullUserFragment on User {
             _id
             case_number
             status
+            calculatedRating # MODIFIED: Added
             creator {
               _id
             }
@@ -235,6 +240,7 @@ fragment FullUserFragment on User {
           _id
           case_number
           status
+          calculatedRating # MODIFIED: Added
           creator {
             _id
           }

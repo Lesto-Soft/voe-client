@@ -1,3 +1,4 @@
+// src/components/features/userAnalytics/UserStatisticsPanel.tsx
 import React, { useState } from "react";
 import {
   ChartPieIcon,
@@ -6,6 +7,9 @@ import {
   ChatBubbleOvalLeftEllipsisIcon,
   StarIcon,
   InformationCircleIcon,
+  HandThumbUpIcon,
+  BanknotesIcon,
+  GlobeAltIcon,
 } from "@heroicons/react/24/outline";
 import { UserActivityStats } from "../../../hooks/useUserActivityStats";
 import StatisticPieChart from "../../charts/StatisticPieChart";
@@ -21,10 +25,17 @@ export interface UserTextStats {
   averageCaseRating: number | null;
 }
 
+// MODIFIED: Added type for the new activity selector tabs
+export type StatsActivityType =
+  | "all"
+  | "cases"
+  | "answers"
+  | "comments"
+  | "approvals"
+  | "finances";
+
 interface UserStatisticsPanelProps {
-  // --- MODIFIED: Use the new type for text stats ---
   textStats: UserTextStats | undefined | null;
-  // --- MODIFIED: This prop is now specifically for the pie charts ---
   pieChartStats: UserActivityStats | undefined | null;
   userName?: string;
   isLoading?: boolean;
@@ -34,10 +45,27 @@ interface UserStatisticsPanelProps {
   activeRatingTierLabel?: string | null;
   activeCategoryFilter: string | null;
   activeRatingTierFilter: RatingTierLabel;
+  // MODIFIED: Added props for the new activity selector
+  activeStatsTab: StatsActivityType;
+  onStatsTabChange: (tab: StatsActivityType) => void;
 }
 
 // Define the type for our new tabs
 type StatsTab = "categories" | "ratings";
+
+// MODIFIED: Create a config for the new buttons for easier mapping
+const activityTabsConfig: {
+  key: StatsActivityType;
+  label: string;
+  icon: React.ElementType;
+}[] = [
+  { key: "all", label: "Всички", icon: GlobeAltIcon },
+  { key: "cases", label: "Сигнали", icon: DocumentTextIcon },
+  { key: "answers", label: "Решения", icon: ChatBubbleBottomCenterTextIcon },
+  { key: "comments", label: "Коментари", icon: ChatBubbleOvalLeftEllipsisIcon },
+  { key: "approvals", label: "Одобрени", icon: HandThumbUpIcon },
+  { key: "finances", label: "Финанси", icon: BanknotesIcon },
+];
 
 const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
   textStats,
@@ -49,9 +77,11 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
   activeRatingTierLabel,
   activeCategoryFilter,
   activeRatingTierFilter,
+  activeStatsTab,
+  onStatsTabChange,
 }) => {
   // State to manage the active tab
-  const [activeTab, setActiveTab] = useState<StatsTab>("categories");
+  const [activePieTab, setActivePieTab] = useState<StatsTab>("categories");
   const isInteractive = onCategoryClick || onRatingTierClick;
 
   const StatItem: React.FC<{
@@ -163,50 +193,70 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
               iconColorClass="text-amber-500"
             />
           </div>
+
+          {/* Added Activity Type Selector */}
+          <div>
+            <label className="text-xs font-semibold text-gray-500">
+              Статистика за:
+            </label>
+            <div className="mt-1.5 grid grid-cols-3 gap-1.5">
+              {activityTabsConfig.map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => onStatsTabChange(tab.key)}
+                  className={`cursor-pointer flex items-center justify-center gap-x-1.5 rounded-md px-2 py-1 text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-500 ${
+                    activeStatsTab === tab.key
+                      ? "bg-indigo-600 text-white shadow-sm"
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  }`}
+                >
+                  <tab.icon className="h-4 w-4" />
+                  <span>{tab.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="flex border-b border-gray-200 text-xs sm:text-sm">
             <button
-              onClick={() => setActiveTab("categories")}
-              // added `relative` for positioning the dot
+              onClick={() => setActivePieTab("categories")}
               className={`cursor-pointer relative flex-1 py-2 px-1 text-center font-medium focus:outline-none transition-colors duration-150 ${
-                activeTab === "categories"
+                activePieTab === "categories"
                   ? "border-b-2 border-indigo-500 text-indigo-600"
                   : "text-gray-500 hover:text-gray-700"
               }`}
             >
               По Категории
-              {/*add indicator dot */}
               {activeCategoryFilter !== null && (
                 <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-indigo-500"></span>
               )}
             </button>
             <button
-              onClick={() => setActiveTab("ratings")}
-              // added `relative` for positioning the dot
+              onClick={() => setActivePieTab("ratings")}
               className={`cursor-pointer relative flex-1 py-2 px-1 text-center font-medium focus:outline-none transition-colors duration-150 ${
-                activeTab === "ratings"
+                activePieTab === "ratings"
                   ? "border-b-2 border-indigo-500 text-indigo-600"
                   : "text-gray-500 hover:text-gray-700"
               }`}
             >
               По Рейтинг
-              {/* add indicator dot */}
               {activeRatingTierFilter !== "all" && (
                 <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-indigo-500"></span>
               )}
             </button>
           </div>
           <div className="mt-3">
-            {activeTab === "categories" && (
+            {activePieTab === "categories" && (
               <StatisticPieChart
-                title="Разпределение по Категории на Сигнал"
+                title="Разпределение по Категории"
                 pieData={pieChartStats.signalsByCategoryChartData}
                 onSegmentClick={onCategoryClick}
                 activeLabel={activeCategoryLabel}
               />
             )}
-            {activeTab === "ratings" && (
+            {activePieTab === "ratings" && (
               <StatisticPieChart
-                title="Разпределение по Оценка на Сигнал"
+                title="Разпределение по Оценка"
                 pieData={pieChartStats.ratingTierDistributionData}
                 onSegmentClick={onRatingTierClick}
                 activeLabel={activeRatingTierLabel}

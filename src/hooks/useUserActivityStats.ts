@@ -5,6 +5,7 @@ import { getCategoryColorForUserChart } from "../utils/userDisplayUtils";
 import { PieSegmentData } from "../components/charts/PieChart";
 import { TIERS } from "../utils/GLOBAL_PARAMETERS";
 import { parseActivityDate } from "../utils/dateUtils";
+import { StatsActivityType } from "../components/features/userAnalytics/UserStatisticsPanel";
 
 export interface UserActivityStats {
   totalSignals: number;
@@ -19,7 +20,8 @@ export interface UserActivityStats {
 const useUserActivityStats = (
   user: IUser | undefined | null,
   startDate: Date | null,
-  endDate: Date | null
+  endDate: Date | null,
+  activityType: StatsActivityType
 ): UserActivityStats | null => {
   const stats = useMemo((): UserActivityStats => {
     const defaultStats: UserActivityStats = {
@@ -42,51 +44,59 @@ const useUserActivityStats = (
       if (startDate && itemDate < startDate) return false;
       if (endDate && itemDate > endDate) return false;
       return true;
-    }; // --- MODIFICATION START --- // First, get simple counts of activities within the date range (this part is for the text stats).
+    };
 
-    const filteredCreatedCases =
-      user.cases?.filter((c) => isInDateRange(c.date)) || [];
-    const totalSignals = filteredCreatedCases.length;
+    const totalSignals =
+      user.cases?.filter((c) => isInDateRange(c.date)).length || 0;
     const totalAnswers =
       user.answers?.filter((a) => isInDateRange(a.date)).length || 0;
     const totalComments =
-      user.comments?.filter((c) => isInDateRange(c.date)).length || 0; // Now, build a comprehensive list of all UNIQUE cases the user has interacted with // within the date range. This will be the source for our pie charts.
+      user.comments?.filter((c) => isInDateRange(c.date)).length || 0;
 
-    const relevantCasesForStats = new Map<string, ICase>();
+    const casesToAnalyze = ((): ICase[] => {
+      const relevantCasesForStats = new Map<string, ICase>();
+      const addCaseToMap = (caseItem: ICase | undefined | null) => {
+        if (caseItem && caseItem._id) {
+          relevantCasesForStats.set(caseItem._id, caseItem);
+        }
+      };
 
-    const addCaseToMap = (caseItem: ICase | undefined | null) => {
-      if (caseItem && caseItem._id) {
-        relevantCasesForStats.set(caseItem._id, caseItem);
+      if (activityType === "all" || activityType === "cases") {
+        user.cases?.filter((c) => isInDateRange(c.date)).forEach(addCaseToMap);
       }
-    }; // 1. From cases created by the user
+      if (activityType === "all" || activityType === "answers") {
+        user.answers
+          ?.filter((a) => isInDateRange(a.date))
+          .forEach((a) => addCaseToMap(a.case));
+      }
+      if (activityType === "all" || activityType === "comments") {
+        user.comments
+          ?.filter((c) => isInDateRange(c.date))
+          .forEach((c) => addCaseToMap(c.case || c.answer?.case));
+      }
+      if (activityType === "all") {
+        user.metricScores
+          ?.filter((s) => isInDateRange(s.date))
+          .forEach((s) => addCaseToMap(s.case));
+      }
+      if (activityType === "all" || activityType === "approvals") {
+        user.approvedAnswers
+          ?.filter((a) => isInDateRange(a.approved_date || a.date))
+          .forEach((a) => addCaseToMap(a.case));
+      }
+      if (activityType === "all" || activityType === "finances") {
+        user.financialApprovedAnswers
+          ?.filter((a) => isInDateRange(a.financial_approved_date || a.date))
+          .forEach((a) => addCaseToMap(a.case));
+      }
 
-    filteredCreatedCases.forEach(addCaseToMap); // 2. From answers created by the user
+      return Array.from(relevantCasesForStats.values());
+    })(); // --- LOGIC RESTORED START ---
 
-    user.answers
-      ?.filter((a) => isInDateRange(a.date))
-      .forEach((a) => addCaseToMap(a.case)); // 3. From comments created by the user
-
-    user.comments
-      ?.filter((c) => isInDateRange(c.date))
-      .forEach((c) => addCaseToMap(c.case || c.answer?.case)); // 4. From cases the user has rated
-
-    user.metricScores
-      ?.filter((s) => isInDateRange(s.date))
-      .forEach((s) => addCaseToMap(s.case)); // 5. From answers the user has approved
-
-    user.approvedAnswers
-      ?.filter((a) => isInDateRange(a.approved_date || a.date))
-      .forEach((a) => addCaseToMap(a.case)); // 6. From answers the user has financially approved
-
-    user.financialApprovedAnswers
-      ?.filter((a) => isInDateRange(a.financial_approved_date || a.date))
-      .forEach((a) => addCaseToMap(a.case)); // This is now our master list of cases for building stats
-
-    const casesToAnalyze = Array.from(relevantCasesForStats.values()); // --- MODIFICATION END ---
     const categoryCounts: Record<
       string,
       { id: string; name: string; count: number }
-    > = {}; // This logic now iterates over the CORRECT list of cases
+    > = {};
 
     casesToAnalyze.forEach((caseItem: ICase) => {
       if (caseItem.categories && caseItem.categories.length > 0) {
@@ -125,8 +135,7 @@ const useUserActivityStats = (
         color: getCategoryColorForUserChart(index),
       }))
       .filter((segment) => segment.value > 0)
-      .sort((a, b) => b.value - a.value);
-
+      .sort((a, b) => b.value - a.value); // --- LOGIC RESTORED END ---
     let ratedCasesSum = 0;
     let ratedCasesCount = 0;
     casesToAnalyze.forEach((c) => {
@@ -185,7 +194,7 @@ const useUserActivityStats = (
       signalsByCategoryChartData,
       ratingTierDistributionData,
     };
-  }, [user, startDate, endDate]);
+  }, [user, startDate, endDate, activityType]);
 
   return stats;
 };

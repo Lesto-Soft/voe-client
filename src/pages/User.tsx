@@ -19,6 +19,7 @@ import UserInformationPanel from "../components/features/userAnalytics/UserInfor
 import UserActivityList from "../components/features/userAnalytics/UserActivityList";
 import UserStatisticsPanel, {
   UserTextStats,
+  StatsActivityType,
 } from "../components/features/userAnalytics/UserStatisticsPanel";
 import UserModal from "../components/modals/UserModal";
 import UserForm from "../components/forms/UserForm";
@@ -82,6 +83,9 @@ const User: React.FC = () => {
   );
   const [activeRatingTier, setActiveRatingTier] =
     useState<RatingTierLabel>("all");
+  // add new state for the statistics filter
+  const [statsActivityType, setStatsActivityType] =
+    useState<StatsActivityType>("all");
 
   const currentUser = useCurrentUser() as IMe | undefined;
 
@@ -100,7 +104,8 @@ const User: React.FC = () => {
   const pieChartStats = useUserActivityStats(
     user,
     dateRange.startDate,
-    dateRange.endDate
+    dateRange.endDate,
+    statsActivityType
   );
 
   const {
@@ -529,6 +534,8 @@ const User: React.FC = () => {
             }
             activeCategoryFilter={activeCategoryName}
             activeRatingTierFilter={activeRatingTier}
+            activeStatsTab={statsActivityType}
+            onStatsTabChange={setStatsActivityType}
           />
         </div>
       </div>

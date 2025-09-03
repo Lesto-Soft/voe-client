@@ -28,19 +28,25 @@ const EditorHelpModal: React.FC<EditorHelpModalProps> = ({
 
           <ul className="mt-4 space-y-2 text-sm">
             <li className="flex items-center gap-2">
-              <strong className="px-1.5 py-0.5 rounded bg-gray-200">B</strong>
+              <strong className="px-1.5 py-0.5 rounded bg-gray-200 w-6 text-center">
+                B
+              </strong>
               <span>- {t("rte.bold")}</span>
             </li>
             <li className="flex items-center gap-2">
-              <em className="px-1.5 py-0.5 rounded bg-gray-200">I</em>
+              <em className="px-1.5 py-0.5 rounded bg-gray-200 w-6 text-center">
+                I
+              </em>
               <span>- {t("rte.italic")}</span>
             </li>
             <li className="flex items-center gap-2">
-              <u className="px-1.5 py-0.5 rounded bg-gray-200">U</u>
+              <u className="px-1.5 py-0.5 rounded bg-gray-200 w-6 text-center">
+                U
+              </u>
               <span>- {t("rte.underline")}</span>
             </li>
             <li className="flex items-center gap-2">
-              <strong className="px-1.5 py-0.5 rounded bg-gray-200 text-blue-600">
+              <strong className="px-1.5 py-0.5 rounded bg-gray-200 text-blue-600 w-6 text-center">
                 @
               </strong>
               <span>- {t("rte.mention")}</span>
@@ -49,7 +55,7 @@ const EditorHelpModal: React.FC<EditorHelpModalProps> = ({
 
           <Dialog.Close asChild>
             <button
-              className="absolute top-3 right-3 p-1 rounded-full text-gray-500 hover:bg-gray-100"
+              className="absolute top-3 right-3 p-1 rounded-full text-gray-500 hover:bg-gray-100 cursor-pointer"
               aria-label="Close"
             >
               <XMarkIcon className="w-5 h-5" />

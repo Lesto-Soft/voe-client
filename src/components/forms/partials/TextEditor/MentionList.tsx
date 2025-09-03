@@ -1,4 +1,10 @@
-import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
+import {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useState,
+  useRef,
+} from "react";
 import type { MentionUser } from "./MentionSuggestion";
 
 interface MentionListProps {
@@ -13,7 +19,7 @@ export interface MentionListRef {
 const MentionList = forwardRef<MentionListRef, MentionListProps>(
   (props, ref) => {
     const [selectedIndex, setSelectedIndex] = useState(0);
-
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
     const selectItem = (index: number) => {
       const item = props.items[index];
       if (item) {
@@ -25,6 +31,17 @@ const MentionList = forwardRef<MentionListRef, MentionListProps>(
     };
 
     useEffect(() => setSelectedIndex(0), [props.items]);
+    useEffect(() => {
+      const container = scrollContainerRef.current;
+      if (container) {
+        const item = container.children[selectedIndex] as HTMLElement;
+        if (item) {
+          item.scrollIntoView({
+            block: "nearest",
+          });
+        }
+      }
+    }, [selectedIndex]);
 
     useImperativeHandle(ref, () => ({
       onKeyDown: ({ event }) => {
@@ -52,7 +69,10 @@ const MentionList = forwardRef<MentionListRef, MentionListProps>(
     }
 
     return (
-      <div className="bg-white rounded-lg shadow-lg border border-gray-200 text-sm w-64 z-10 overflow-y-auto max-h-60">
+      <div
+        className="bg-white rounded-lg shadow-lg border border-gray-200 text-sm w-64 z-10 overflow-y-auto max-h-60"
+        ref={scrollContainerRef}
+      >
         {props.items.map((item, index) => (
           <button
             key={item._id}

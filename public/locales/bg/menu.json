@@ -48,6 +48,8 @@
     "no_notifications": "Нямате известия.",
     "add_expert_to_category": "Експерт <1>{{username}}</1> е добавен към: <1>{{categoryName}}</1>",
     "add_manager_to_category": "Мениджър <1>{{username}}</1> е добавен към: <1>{{categoryName}}</1>",
-    "add_financial_approver": "<1>{{username}}</1> е добавен като финансов одобрител"
+    "add_financial_approver": "<1>{{username}}</1> е добавен като финансов одобрител",
+    "mention_in_answer": "<1>{{username}}</1> ви спомена в отговора си",
+    "mention_in_comment": "<1>{{username}}</1> ви спомена в коментара си"
   }
 }

@@ -1,9 +1,12 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import Underline from "@tiptap/extension-underline";
 import Placeholder from "@tiptap/extension-placeholder";
-import { getTextLength } from "../../../utils/contentRenderer";
+import { getTextLength } from "../../../../utils/contentRenderer";
+import { createMentionSuggestion } from "./MentionSuggestion";
+import { CustomMention } from "./CustomMention";
+import { QuestionMarkCircleIcon } from "@heroicons/react/24/solid";
+import HelpModal from "./HelperModal";
 
 interface SimpleTextEditorProps {
   content?: string;
@@ -13,18 +16,26 @@ interface SimpleTextEditorProps {
   wrapperClassName?: string;
   maxLength?: number;
   minLength?: number;
+  mentions?: { name: string; username: string; _id: string }[];
 }
 
 const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
   content,
   onUpdate,
   placeholder = "Напишете решение...",
-  height = "auto", // Default height if none is provided
+  height = "auto",
   wrapperClassName,
   maxLength,
   minLength,
+  mentions = [],
 }) => {
   const [charCount, setCharCount] = useState(0);
+  const [isHelpModalOpen, setIsHelpModalOpen] = useState(false); // 👈 1. Manage state here
+
+  const mentionSuggestionConfig = useMemo(
+    () => createMentionSuggestion(mentions),
+    [mentions]
+  );
 
   const isContentTooLong = useMemo(
     () => maxLength && charCount > maxLength,
@@ -46,7 +57,6 @@ const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
         orderedList: false,
         listItem: false,
       }),
-      Underline,
       Placeholder.configure({
         placeholder: ({ editor }) => {
           if (editor.getText().trim() === "") {
@@ -54,6 +64,9 @@ const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
           }
           return "";
         },
+      }),
+      CustomMention.configure({
+        suggestion: mentionSuggestionConfig,
       }),
     ],
     content: content || "",
@@ -69,7 +82,6 @@ const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
     },
     editorProps: {
       attributes: {
-        // The editor's own element should fill its container but not scroll itself
         class:
           "prose prose-sm max-w-none p-3 pr-4 focus:outline-none custom-simple-editor",
         style: `padding-bottom: 2rem; min-height: 100%;`, // Use min-height to ensure it fills the scrollable area
@@ -90,7 +102,7 @@ const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
       if (isEditorEmpty && isPropEmpty) return;
 
       if (currentHTML !== content) {
-        editor.commands.setContent(content, false);
+        editor.commands.setContent(content, {});
       }
     }
   }, [content, editor]);
@@ -106,68 +118,71 @@ const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
     }
     ${wrapperClassName || ""}
   `;
-
   return (
     <>
-      {/* Added styles for a custom scrollbar to ensure it's always visible when needed */}
-      {/* <style>{`
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 8px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: #f1f5f9;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #94a3b8;
-          border-radius: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #64748b;
-        }
-      `}</style> */}
-      {/* The main container now gets the height style applied directly only if the height prop is not 'auto' */}
       <div
         className={finalWrapperClassName.trim()}
         style={height !== "auto" ? { height } : {}}
       >
         {editor && (
-          // The menu bar is a flex item that does not shrink, keeping it at the top.
-          <div className="flex-shrink-0 flex items-center gap-1 p-2 border-b border-gray-200 bg-gray-50 rounded-t-md z-10">
+          <div className="flex-shrink-0 flex items-center justify-between gap-1 p-2 border-b border-gray-200 bg-gray-50 rounded-t-md z-10">
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => editor.chain().focus().toggleBold().run()}
+                className={`px-2 py-1 rounded text-sm font-medium transition-colors cursor-pointer ${
+                  editor.isActive("bold")
+                    ? "bg-blue-100 text-blue-700 ring-1 ring-blue-300"
+                    : "text-gray-700 hover:bg-gray-200 hover:text-gray-900"
+                }`}
+                title="Bold (Ctrl+B)"
+              >
+                <strong>B</strong>
+              </button>
+              <button
+                type="button"
+                onClick={() => editor.chain().focus().toggleItalic().run()}
+                className={`px-2 py-1 rounded text-sm font-medium transition-colors cursor-pointer ${
+                  editor.isActive("italic")
+                    ? "bg-blue-100 text-blue-700 ring-1 ring-blue-300"
+                    : "text-gray-700 hover:bg-gray-200 hover:text-gray-900"
+                }`}
+                title="Italic (Ctrl+I)"
+              >
+                <em>I</em>
+              </button>
+              <button
+                type="button"
+                onClick={() => editor.chain().focus().toggleUnderline().run()}
+                className={`px-2 py-1 rounded text-sm font-medium transition-colors cursor-pointer ${
+                  editor.isActive("underline")
+                    ? "bg-blue-100 text-blue-700 ring-1 ring-blue-300"
+                    : "text-gray-700 hover:bg-gray-200 hover:text-gray-900"
+                }`}
+                title="Underline (Ctrl+U)"
+              >
+                <u>U</u>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const { from } = editor.state.selection;
+                  editor.chain().focus().insertContentAt(from, " @").run();
+                  return;
+                }}
+                className="cursor-pointer px-2 py-1 rounded text-sm font-medium transition-colors text-gray-700 hover:bg-gray-200 hover:text-gray-900"
+                title="Mention User (@)"
+              >
+                <strong className="text-blue-600">@</strong>
+              </button>
+            </div>
             <button
               type="button"
-              onClick={() => editor.chain().focus().toggleBold().run()}
-              className={`px-2 py-1 rounded text-sm font-medium transition-colors ${
-                editor.isActive("bold")
-                  ? "bg-blue-100 text-blue-700 ring-1 ring-blue-300"
-                  : "text-gray-700 hover:bg-gray-200 hover:text-gray-900"
-              }`}
-              title="Bold (Ctrl+B)"
+              onClick={() => setIsHelpModalOpen(true)} // 👈 3. Call the function from the parent
+              className="cursor-pointer p-1 rounded text-gray-500 hover:bg-gray-200 hover:text-gray-700"
+              title="Help"
             >
-              <strong>B</strong>
-            </button>
-            <button
-              type="button"
-              onClick={() => editor.chain().focus().toggleItalic().run()}
-              className={`px-2 py-1 rounded text-sm font-medium transition-colors ${
-                editor.isActive("italic")
-                  ? "bg-blue-100 text-blue-700 ring-1 ring-blue-300"
-                  : "text-gray-700 hover:bg-gray-200 hover:text-gray-900"
-              }`}
-              title="Italic (Ctrl+I)"
-            >
-              <em>I</em>
-            </button>
-            <button
-              type="button"
-              onClick={() => editor.chain().focus().toggleUnderline().run()}
-              className={`px-2 py-1 rounded text-sm font-medium transition-colors ${
-                editor.isActive("underline")
-                  ? "bg-blue-100 text-blue-700 ring-1 ring-blue-300"
-                  : "text-gray-700 hover:bg-gray-200 hover:text-gray-900"
-              }`}
-              title="Underline (Ctrl+U)"
-            >
-              <u>U</u>
+              <QuestionMarkCircleIcon className="w-5 h-5" />
             </button>
           </div>
         )}
@@ -186,6 +201,7 @@ const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
           )}
         </div>
       </div>
+      <HelpModal isOpen={isHelpModalOpen} onOpenChange={setIsHelpModalOpen} />
     </>
   );
 };

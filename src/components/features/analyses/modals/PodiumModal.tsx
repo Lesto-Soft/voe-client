@@ -101,12 +101,6 @@ export const PodiumModal: React.FC<PodiumModalProps> = ({
                       <div key={`placeholder-${index}`} className="w-1/4"></div>
                     );
 
-                  // Debug: log the height being applied
-                  console.log(
-                    `Position ${index + 1} height:`,
-                    fixedHeights[index]
-                  );
-
                   return (
                     <div
                       key={userStat.user._id}

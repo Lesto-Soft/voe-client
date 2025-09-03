@@ -21,7 +21,7 @@ import {
   useMarkAsRead,
   useMarkAsUnread,
 } from "../../graphql/hooks/notificationHook";
-import { AcademicCapIcon } from "@heroicons/react/24/solid";
+import { AcademicCapIcon, AtSymbolIcon } from "@heroicons/react/24/solid";
 
 interface NotificationItemProps {
   notification: INotification;
@@ -34,8 +34,6 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
   const [markAsRead] = useMarkAsRead();
   const [deleteNotification] = useDeleteNotification();
   const [markAsUnread] = useMarkAsUnread();
-
-  console.log("NotificationItem rendered", notification);
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
@@ -61,6 +59,10 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
         return <AcademicCapIcon className="h-5 w-5 text-blue-600" />;
       case "add_financial_approver":
         return <BanknotesIcon className="h-5 w-5 text-green-500" />;
+      case "mention_in_answer":
+        return <AtSymbolIcon className="h-5 w-5 text-green-600" />;
+      case "mention_in_comment":
+        return <AtSymbolIcon className="h-5 w-5 text-purple-600" />;
       default:
         return <InformationCircleIcon className="h-5 w-5 text-gray-500" />;
     }
@@ -96,7 +98,6 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
         className="flex flex-1 items-start gap-4 min-w-0"
         onClick={() => {
           markAsRead({ variables: { notificationIds: [notification._id] } });
-          console.log(notification.caseNumber);
           if (notification.caseNumber) {
             return navigate(`/case/${notification.caseNumber}`);
           }

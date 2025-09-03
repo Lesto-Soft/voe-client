@@ -140,7 +140,6 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
 
   const handleCreatorInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
-    console.log("Creator input changed:", newValue);
     setCreatorInput(newValue);
     if (creatorId && fetchedInitialCreator) {
       setCreatorId("");
@@ -153,7 +152,6 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
   const handleCreatorInputFocus = () => {
     setIsDropdownVisible(true);
     if (creatorInput === "" && !fetchedInitialCreator) {
-      console.log("Fetching all users on focus...");
       fetchUsers({ variables: { search: "" } }).catch((error) => {
         console.error("Error fetching all users:", error);
       });

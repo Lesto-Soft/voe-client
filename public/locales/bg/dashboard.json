@@ -57,5 +57,6 @@
   "attachments": "Прикачени файлове",
   "writeAnswer": "Напиши решение...",
   "delete_case": "Изтрий сигнал",
-  "answerSubmitted": "Решението е изпратено"
+  "answerSubmitted": "Решението е изпратено",
+  "waiting_approval": "Все още няма одобрено решение"
 }

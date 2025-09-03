@@ -6,11 +6,13 @@ import FileAttachmentBtn from "./FileAttachmentBtn";
 import { IComment } from "../../db/interfaces";
 import { useUpdateComment } from "../../graphql/hooks/comment";
 import { COMMENT_CONTENT } from "../../utils/GLOBAL_PARAMETERS";
+import SimpleTextEditor from "../forms/partials/TextEditor/SimplifiedTextEditor";
 
 interface EditButtonProps {
   comment: IComment;
   currentAttachments?: string[];
   caseNumber: number;
+  mentions: { name: string; username: string; _id: string }[];
 }
 
 export interface UpdateCommentInput {
@@ -19,7 +21,11 @@ export interface UpdateCommentInput {
   deletedAttachments?: string[];
 }
 
-const EditButton: React.FC<EditButtonProps> = ({ comment, caseNumber }) => {
+const EditButton: React.FC<EditButtonProps> = ({
+  comment,
+  caseNumber,
+  mentions,
+}) => {
   if (!comment) {
     return <div>Loading...</div>;
   }
@@ -53,11 +59,6 @@ const EditButton: React.FC<EditButtonProps> = ({ comment, caseNumber }) => {
       setError(null);
     }
   }, [isOpen, comment]);
-
-  const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setContent(e.target.value);
-    setCharCount(e.target.value.length);
-  };
 
   const handleSave = async () => {
     setError(null);
@@ -113,26 +114,17 @@ const EditButton: React.FC<EditButtonProps> = ({ comment, caseNumber }) => {
             {t("editCommentInfo")}
           </Dialog.Description>
 
-          <div className="relative mb-4">
-            <textarea
-              className={`w-full h-24 border rounded-lg p-2 resize-none focus:outline-none focus:ring-1 ${
-                isInvalid
-                  ? "border-red-500 ring-red-500"
-                  : "border-gray-300 focus:ring-blue-500"
-              }`}
-              placeholder={t("writeHere")}
-              value={content}
-              onChange={handleContentChange}
+          <div className="relative mb-4" id="edit-comment-popup-container">
+            <SimpleTextEditor
+              content={content}
+              onUpdate={(html) => setContent(html)}
+              placeholder={t("writeHere", "Пишете тук...")}
               minLength={COMMENT_CONTENT.MIN}
               maxLength={COMMENT_CONTENT.MAX}
+              wrapperClassName="transition-colors duration-150 h-36"
+              height="36"
+              mentions={mentions}
             />
-            <div
-              className={`absolute bottom-3 right-4 text-xs ${
-                isInvalid ? "text-red-600 font-semibold" : "text-gray-500"
-              } bg-white px-1 rounded shadow-sm`}
-            >
-              {charCount}/{COMMENT_CONTENT.MAX}
-            </div>
           </div>
 
           {error && (

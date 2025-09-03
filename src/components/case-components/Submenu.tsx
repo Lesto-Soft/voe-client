@@ -11,7 +11,6 @@ import Answer from "./Answer";
 import AddComment from "./AddComment";
 import AddAnswer from "./AddAnswer";
 import { USER_RIGHTS } from "../../utils/GLOBAL_PARAMETERS";
-
 const LOCAL_STORAGE_KEY = "case-submenu-view";
 
 interface SubmenuProps {
@@ -20,6 +19,7 @@ interface SubmenuProps {
   me: IMe;
   refetch: () => void;
   userRights: string[];
+  mentions?: { name: string; username: string; _id: string }[];
 }
 
 const Submenu: React.FC<SubmenuProps> = ({
@@ -28,6 +28,7 @@ const Submenu: React.FC<SubmenuProps> = ({
   me,
   refetch,
   userRights,
+  mentions = [],
 }) => {
   const [view, setView] = useState<"answers" | "comments" | "history">(() => {
     const stored = sessionStorage.getItem(LOCAL_STORAGE_KEY);
@@ -121,8 +122,15 @@ const Submenu: React.FC<SubmenuProps> = ({
                 caseId={caseData._id}
                 t={t}
                 me={me}
+                mentions={mentions}
               />
-            ) : null}
+            ) : (caseData?.answers?.length ?? 0) < 1 ? (
+              <div className="text-center text-gray-500">{t("no_answers")}</div>
+            ) : (
+              <div className="text-center text-gray-500">
+                {t("waiting_approval")}
+              </div>
+            )}
             {caseData.answers && caseData.answers.length > 0 ? (
               <>
                 {[...caseData.answers]
@@ -149,6 +157,7 @@ const Submenu: React.FC<SubmenuProps> = ({
                         caseNumber={caseData.case_number}
                         status={caseData.status}
                         caseCategories={caseData.categories}
+                        mentions={mentions}
                       />
                     ) : null;
                   })}
@@ -168,6 +177,7 @@ const Submenu: React.FC<SubmenuProps> = ({
               me={me}
               caseNumber={caseData.case_number}
               inputId={`file-upload-comment-case-${caseData._id}`}
+              mentions={mentions}
             />
             {caseData.comments && caseData.comments.length > 0 ? (
               <>
@@ -177,12 +187,12 @@ const Submenu: React.FC<SubmenuProps> = ({
                       new Date(b.date).getTime() - new Date(a.date).getTime()
                   )
                   .map((comment: IComment) => (
-                    // --- SIMPLIFIED LOGIC ---
                     <Comment
                       key={comment._id}
                       comment={comment}
                       me={me}
                       caseNumber={caseData.case_number}
+                      mentions={mentions}
                     />
                   ))}
               </>

@@ -76,7 +76,7 @@ const MentionList = forwardRef<MentionListRef, MentionListProps>(
         {props.items.map((item, index) => (
           <button
             key={item._id}
-            className={`cursor-pointer flex items-center w-full text-left px-3 py-2 ${
+            className={`items-center cursor-pointer flex justify-between w-full text-left px-3 py-2 ${
               index === selectedIndex ? "bg-indigo-100" : "hover:bg-gray-100"
             }`}
             onClick={() => selectItem(index)}

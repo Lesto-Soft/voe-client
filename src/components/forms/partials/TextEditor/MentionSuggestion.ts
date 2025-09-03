@@ -23,13 +23,11 @@ const getExistingMentionIds = (editor: Editor): Set<string> => {
 
 export const createMentionSuggestion = (mentions: MentionUser[] = []) => ({
   items: async ({ query }: { query: string }): Promise<MentionUser[]> => {
-    return mentions
-      .filter(
-        (user) =>
-          user.name.toLowerCase().includes(query.toLowerCase()) ||
-          user.username.toLowerCase().includes(query.toLowerCase())
-      )
-      .slice(0, 5);
+    return mentions.filter(
+      (user) =>
+        user.name.toLowerCase().includes(query.toLowerCase()) ||
+        user.username.toLowerCase().includes(query.toLowerCase())
+    );
   },
   allowedPrefixes: [" ", "\u00A0"],
 

@@ -64,6 +64,8 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
     "";
   const contentPreview = getContentPreview(itemContent, 150);
 
+  const shortContentPreview = contentPreview.slice(0, 7);
+
   if (activityType === "case" && "case_number" in item) {
     const caseItem = item as ICase;
     icon = <DocumentTextIcon className="h-5 w-5 text-blue-500" />;
@@ -225,6 +227,14 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
                     t={tFunctionForCaseLinkProp}
                   />
                 </div>
+              )}
+              {view === "compact" && shortContentPreview && (
+                <span
+                  className="mt-1 ml-2 text-sm text-gray-600 leading-relaxed line-clamp-2 sm:line-clamp-3"
+                  title={stripHtmlTags(itemContent)}
+                >
+                  {shortContentPreview}...
+                </span>
               )}
             </div>
             {date && (

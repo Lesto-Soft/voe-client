@@ -23,7 +23,7 @@ const CategoryCasesListSkeleton = () => (
         ></div>
       </div>
     </div>
-    <div className="overflow-y-auto flex-1 p-4 custom-scrollbar">
+    <div className="overflow-y-auto flex-1 p-4 custom-scrollbar-xs">
       {[...Array(4)].map((_, index) => (
         <div key={index} className="p-4 mb-3 bg-gray-50 rounded shadow">
           <div className="flex items-start space-x-3">

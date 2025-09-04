@@ -79,7 +79,7 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
     // Keep skeleton as is
     return (
       <aside className="lg:col-span-3 bg-white rounded-lg shadow-lg flex flex-col overflow-hidden">
-        <div className="p-6 space-y-3 overflow-y-auto flex-1 animate-pulse custom-scrollbar">
+        <div className="p-6 space-y-3 overflow-y-auto flex-1 animate-pulse custom-scrollbar-xs">
           <div className="h-7 bg-gray-200 rounded w-1/2 mb-4"></div>
           <div className={`h-5 bg-gray-200 rounded w-full mb-3`}></div>
           <div className="h-9 bg-gray-200 rounded w-full mb-4"></div>
@@ -99,7 +99,7 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
     // Keep "no stats" as is
     return (
       <aside className="lg:col-span-3 bg-white rounded-lg shadow-lg flex flex-col overflow-hidden">
-        <div className="p-6 space-y-3 overflow-y-auto flex-1 custom-scrollbar">
+        <div className="p-6 space-y-3 overflow-y-auto flex-1 custom-scrollbar-xs">
           <h3 className="text-xl font-semibold text-gray-700 mb-3 flex items-center">
             <ChartPieIcon className="h-6 w-6 mr-2 text-teal-600" /> Статистика
           </h3>
@@ -128,7 +128,7 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
   return (
     <Tooltip.Provider>
       <aside className="lg:col-span-3 bg-white rounded-lg shadow-lg flex flex-col overflow-hidden">
-        <div className="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1 custom-scrollbar">
+        <div className="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1 custom-scrollbar-xs">
           <h3 className="text-xl font-semibold text-gray-700 mb-1 flex items-center gap-x-2">
             <ChartPieIcon className="h-6 w-6 mr-2 text-teal-600" />
             <span>Статистика</span>

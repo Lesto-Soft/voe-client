@@ -337,7 +337,7 @@ const RateCaseModal: React.FC<RateCaseModalProps> = ({
           <Dialog.Portal>
             <Dialog.Overlay className="fixed inset-0 z-40 bg-black/50 data-[state=open]:animate-overlayShow" />
             <Dialog.Content
-              className="fixed left-1/2 top-1/2 z-50 w-[90vw] max-w-2xl -translate-x-1/2 -translate-y-1/2 rounded-lg bg-white p-6 shadow-xl data-[state=open]:animate-contentShow focus:outline-none overflow-y-auto max-h-[90vh] custom-scrollbar"
+              className="fixed left-1/2 top-1/2 z-50 w-[90vw] max-w-2xl -translate-x-1/2 -translate-y-1/2 rounded-lg bg-white p-6 shadow-xl data-[state=open]:animate-contentShow focus:outline-none overflow-y-auto max-h-[90vh] custom-scrollbar-xs"
               onOpenAutoFocus={(e) => e.preventDefault()}
               onEscapeKeyDown={handleAttemptClose}
             >

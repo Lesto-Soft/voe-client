@@ -103,7 +103,7 @@ const PersonnelInfoPanel: React.FC<PersonnelInfoPanelProps> = ({
 
   return (
     <aside className="lg:col-span-3 bg-white rounded-lg shadow-lg flex flex-col overflow-hidden">
-      <div className="p-6 space-y-6 overflow-y-auto flex-1 custom-scrollbar">
+      <div className="p-6 space-y-6 overflow-y-auto flex-1 custom-scrollbar-xs">
         {/* Category Name Display */}
         <div className="mb-4 pb-3 border-b border-gray-200">
           <div className="flex justify-between items-start gap-2">

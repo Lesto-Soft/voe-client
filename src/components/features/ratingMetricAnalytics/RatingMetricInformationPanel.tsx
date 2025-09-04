@@ -53,7 +53,7 @@ const RatingMetricInformationPanel: React.FC<
 
   return (
     <aside className="lg:col-span-3 bg-white rounded-lg shadow-lg flex flex-col overflow-hidden">
-      <div className="p-6 space-y-4 overflow-y-auto custom-scrollbar">
+      <div className="p-6 space-y-4 overflow-y-auto custom-scrollbar-xs">
         <div className="relative">
           {canEdit && (
             <button

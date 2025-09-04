@@ -64,7 +64,7 @@ const CaseReadByModal: React.FC<CaseReadByModalProps> = ({
         </div>
 
         {/* Content */}
-        <div className="flex-grow p-4 overflow-y-auto custom-scrollbar">
+        <div className="flex-grow p-4 overflow-y-auto custom-scrollbar-xs">
           {sortedData.length > 0 ? (
             <ul className="space-y-3">
               {sortedData.map((entry) => (

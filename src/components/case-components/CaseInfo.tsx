@@ -110,7 +110,7 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
     <>
       {/* MODIFIED: The entire panel is now one scrollable container.
           Flexbox classes have been removed. */}
-      <div className="w-full h-full bg-white shadow-md overflow-y-auto custom-scrollbar">
+      <div className="w-full h-full bg-white shadow-md overflow-y-auto custom-scrollbar-xs">
         {/* --- Top and Middle sections are in a simple content wrapper --- */}
         <div className="p-4 flex flex-col gap-3">
           {/* Top Section */}

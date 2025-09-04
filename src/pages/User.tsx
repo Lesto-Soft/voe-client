@@ -651,6 +651,12 @@ const User: React.FC = () => {
                   // Pass the date range props to the statistics panel
                   dateRange={dateRange}
                   onDateRangeChange={setDateRange}
+                  isAnyFilterActive={isAnyFilterActive}
+                  onClearAllFilters={handleClearAllFilters}
+                  activeCategoryName={activeCategoryName}
+                  onClearCategoryFilter={() => setActiveCategoryName(null)}
+                  activeRatingTier={activeRatingTier}
+                  onClearRatingTierFilter={() => setActiveRatingTier("all")}
                 />
               </div>
               {/* Activity List (Right) */}
@@ -675,6 +681,7 @@ const User: React.FC = () => {
                     onClearRatingTierFilter={() => setActiveRatingTier("all")}
                     // Hide the date filter from the activity list
                     showDateFilter={false}
+                    showFiltersBar={false}
                   />
                 </div>
               )}

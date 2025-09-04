@@ -106,7 +106,7 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
     );
     caseToLinkForDisplay = answerItem.case;
     titleFragments.push(
-      <span key="preposition" className="ml-1 text-gray-700 whitespace-nowrap">
+      <span key="preposition" className="text-gray-700 whitespace-nowrap">
         по
       </span>
     );
@@ -120,7 +120,7 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
     );
     caseToLinkForDisplay = answerItem.case;
     titleFragments.push(
-      <span key="preposition" className="ml-1 text-gray-700 whitespace-nowrap">
+      <span key="preposition" className="text-gray-700 whitespace-nowrap">
         по
       </span>
     );
@@ -141,10 +141,7 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
       );
       caseToLinkForDisplay = commentItem.answer.case;
       titleFragments.push(
-        <span
-          key="preposition"
-          className="ml-1 text-gray-700 whitespace-nowrap"
-        >
+        <span key="preposition" className="text-gray-700 whitespace-nowrap">
           към
         </span>
       );
@@ -156,10 +153,7 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
       );
       caseToLinkForDisplay = commentItem.case;
       titleFragments.push(
-        <span
-          key="preposition"
-          className="ml-1 text-gray-700 whitespace-nowrap"
-        >
+        <span key="preposition" className="text-gray-700 whitespace-nowrap">
           по
         </span>
       );

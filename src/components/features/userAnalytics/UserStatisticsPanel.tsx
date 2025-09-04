@@ -18,6 +18,7 @@ import { PieSegmentData } from "../../charts/PieChart";
 import { RatingTierLabel } from "../../../pages/User";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import DateRangeSelector from "./DateRangeSelector";
+import FilterTag from "../../global/FilterTag";
 
 // define a type for the text-based stats
 export interface UserTextStats {
@@ -67,6 +68,12 @@ interface UserStatisticsPanelProps {
     startDate: Date | null;
     endDate: Date | null;
   }) => void;
+  isAnyFilterActive?: boolean;
+  onClearAllFilters?: () => void;
+  activeCategoryName?: string | null;
+  onClearCategoryFilter?: () => void;
+  activeRatingTier?: RatingTierLabel;
+  onClearRatingTierFilter?: () => void;
 }
 
 // Define the type for our new tabs
@@ -102,7 +109,13 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
   viewMode = "side",
   activityCounts,
   dateRange, // Destructure new props
-  onDateRangeChange, // Destructure new props
+  onDateRangeChange,
+  isAnyFilterActive,
+  onClearAllFilters,
+  activeCategoryName,
+  onClearCategoryFilter,
+  activeRatingTier,
+  onClearRatingTierFilter,
 }) => {
   const [activePieTab, setActivePieTab] = useState<StatsTab>("categories");
   // State to manage the date filter's visibility
@@ -165,8 +178,15 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
     );
   }
 
+  // 👇 Simplified TextStatsSection as requested
   const TextStatsSection = (
-    <div className="space-y-1">
+    <div
+      className={
+        viewMode === "center"
+          ? "flex items-center justify-around text-center"
+          : "space-y-1"
+      }
+    >
       <StatItem
         icon={DocumentTextIcon}
         label="Сигнали"
@@ -187,7 +207,7 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
       />
       <StatItem
         icon={StarIcon}
-        label="Средна оценка на сигнал"
+        label="Средна оценка"
         value={
           textStats.averageCaseRating
             ? textStats.averageCaseRating.toFixed(2)
@@ -204,8 +224,12 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
         <label className="text-xs font-semibold text-gray-500">
           Вижте изолирана диаграма за:
         </label>
-        {/* MODIFIED: Changed grid to flex-wrap for better responsiveness with 7 items */}
-        <div className="mt-1.5 flex flex-wrap gap-1.5">
+        {/* changed to a grid layout for consistent button widths */}
+        <div
+          className={`mt-1.5 grid ${
+            viewMode === "center" ? "grid-cols-2" : "grid-cols-3"
+          } gap-1.5`}
+        >
           {activityTabsConfig.map((tab) => {
             // Get the specific count for the current tab
             const count =
@@ -292,7 +316,7 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-x-2">
               <ChartPieIcon className="h-6 w-6 mr-2 text-teal-600" />
-              <span>Статистика</span>
+              Статистика
               {isInteractive && (
                 <Tooltip.Root delayDuration={150}>
                   <Tooltip.Trigger asChild>
@@ -343,10 +367,47 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
               </div>
             )}
 
+          {/* 👇 Conditionally render the Active Filters section */}
+          {viewMode === "center" &&
+            isAnyFilterActive &&
+            onClearAllFilters && ( // Ensure handlers are present
+              <div className="px-3 py-2 rounded-md border border-gray-200 bg-gray-50 flex flex-wrap items-center gap-2">
+                <span className="text-xs font-semibold text-gray-600 mr-2">
+                  Активни филтри:
+                </span>
+                {activeCategoryName && onClearCategoryFilter && (
+                  <FilterTag
+                    label={`Категория: ${activeCategoryName}`}
+                    onRemove={onClearCategoryFilter}
+                  />
+                )}
+                {activeRatingTier !== "all" && onClearRatingTierFilter && (
+                  <FilterTag
+                    label={`Оценка: ${activeRatingTier}`}
+                    onRemove={onClearRatingTierFilter}
+                  />
+                )}
+                {isDateFilterActive && onDateRangeChange && (
+                  <FilterTag
+                    label="Период"
+                    onRemove={() =>
+                      onDateRangeChange({ startDate: null, endDate: null })
+                    }
+                  />
+                )}
+                <button
+                  onClick={onClearAllFilters}
+                  className="cursor-pointer ml-auto text-xs font-semibold text-indigo-600 hover:text-indigo-800 hover:underline"
+                >
+                  Изчисти всички
+                </button>
+              </div>
+            )}
+
           {viewMode === "center" ? (
             <>
               {PieChartSection}
-              {TextStatsSection}
+              {/* {TextStatsSection} */}
             </>
           ) : (
             <>

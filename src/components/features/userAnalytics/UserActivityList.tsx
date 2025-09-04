@@ -65,6 +65,7 @@ interface UserActivityListProps {
   activeTab: StatsActivityType;
   onTabChange: (tab: StatsActivityType) => void;
   showDateFilter?: boolean; // Add a new prop to control visibility
+  showFiltersBar?: boolean;
 }
 
 const getTierForScore = (score: number): RatingTierLabel => {
@@ -92,6 +93,7 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
   activeTab,
   onTabChange,
   showDateFilter = true, // Default the new prop to true
+  showFiltersBar = true,
 }) => {
   const [isDateFilterVisible, setIsDateFilterVisible] = useState(false);
   const isDateFilterActive =
@@ -306,7 +308,7 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
           </div>
         )}
       </div>
-      {isAnyFilterActive && (
+      {showFiltersBar && isAnyFilterActive && (
         <div className="px-4 py-2 border-b border-gray-200 bg-gray-50 flex flex-wrap items-center gap-2">
           <span className="text-xs font-semibold text-gray-600 mr-2">
             Активни филтри:

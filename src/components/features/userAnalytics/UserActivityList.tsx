@@ -12,17 +12,11 @@ import useUserActivityScrollPersistence from "../../../hooks/useUserActivityScro
 import DateRangeSelector from "./DateRangeSelector";
 import { parseActivityDate } from "../../../utils/dateUtils";
 import { TIERS } from "../../../utils/GLOBAL_PARAMETERS";
+import { StatsActivityType } from "./UserStatisticsPanel";
 import { RatingTierLabel } from "../../../pages/User";
 import FilterTag from "../../global/FilterTag";
 
-type ActivityTab =
-  | "all"
-  | "cases"
-  | "answers"
-  | "comments"
-  | "ratings"
-  | "approvals"
-  | "finances";
+// REMOVED: Local ActivityTab type is no longer needed
 
 interface RatedCaseActivity {
   case: ICase;
@@ -67,6 +61,9 @@ interface UserActivityListProps {
   activeRatingTier: RatingTierLabel;
   onClearRatingTierFilter: () => void;
   cardView?: "full" | "compact";
+  // MODIFIED: Added props to control the component
+  activeTab: StatsActivityType;
+  onTabChange: (tab: StatsActivityType) => void;
 }
 
 const getTierForScore = (score: number): RatingTierLabel => {
@@ -91,6 +88,8 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
   activeRatingTier,
   onClearRatingTierFilter,
   cardView = "full",
+  activeTab,
+  onTabChange,
 }) => {
   const [isDateFilterVisible, setIsDateFilterVisible] = useState(false);
   const isDateFilterActive =
@@ -99,13 +98,11 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
   const tabsContainerRef = useRef<HTMLDivElement>(null);
 
   const {
-    activeTab,
     visibleCounts,
     scrollableActivityListRef,
-    handleTabChange,
     handleLoadMoreItems,
     resetScrollAndVisibleCount,
-  } = useUserActivityScrollPersistence(userId, isDataReady);
+  } = useUserActivityScrollPersistence(userId, activeTab, isDataReady); // MODIFIED: Pass activeTab to the hook
 
   useEffect(() => {
     if (resetScrollAndVisibleCount) {
@@ -174,7 +171,7 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
     return baseActivities.slice(0, visibleCounts[activeTab]);
   }, [activeTab, activities, visibleCounts]);
 
-  const tabs: { key: ActivityTab; label: string; count: number }[] = [
+  const tabs: { key: StatsActivityType; label: string; count: number }[] = [
     { key: "all", label: "Всички", count: counts.all },
     { key: "cases", label: "Сигнали", count: counts.cases },
     { key: "answers", label: "Решения", count: counts.answers },
@@ -247,8 +244,8 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
             {tabs.map((tab) => (
               <button
                 key={tab.key}
-                onClick={() => handleTabChange(tab.key)}
-                disabled={tab.count === 0 && activeTab !== tab.key}
+                onClick={() => onTabChange(tab.key)}
+                disabled={tab.count === 0} // MODIFIED: Added disabled state for tabs with 0 activities
                 className={`hover:cursor-pointer px-3 py-1.5 text-xs sm:text-sm font-medium rounded-md whitespace-nowrap transition-colors duration-150 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed ${
                   activeTab === tab.key
                     ? "bg-indigo-600 text-white shadow-sm"

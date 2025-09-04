@@ -74,7 +74,7 @@ const useUserActivityStats = (
           ?.filter((c) => isInDateRange(c.date))
           .forEach((c) => addCaseToMap(c.case || c.answer?.case));
       }
-      if (activityType === "all") {
+      if (activityType === "all" || activityType === "ratings") {
         user.metricScores
           ?.filter((s) => isInDateRange(s.date))
           .forEach((s) => addCaseToMap(s.case));

@@ -1,5 +1,5 @@
 // src/pages/User.tsx
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useParams, useNavigate } from "react-router";
 import { useGetFullUserByUsername, useUpdateUser } from "../graphql/hooks/user";
 import { useGetRoles } from "../graphql/hooks/role";
@@ -19,7 +19,6 @@ import UserInformationPanel from "../components/features/userAnalytics/UserInfor
 import UserActivityList from "../components/features/userAnalytics/UserActivityList";
 import UserStatisticsPanel, {
   UserTextStats,
-  StatsActivityType,
 } from "../components/features/userAnalytics/UserStatisticsPanel";
 import UserModal from "../components/modals/UserModal";
 import UserForm from "../components/forms/UserForm";
@@ -32,6 +31,7 @@ import { useAuthorization } from "../hooks/useAuthorization";
 import ForbiddenPage from "./ErrorPages/ForbiddenPage";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
 import { ArrowsRightLeftIcon } from "@heroicons/react/24/outline";
+import { StatsActivityType } from "../components/features/userAnalytics/UserStatisticsPanel";
 
 export type RatingTierLabel =
   | "Отлични"
@@ -90,7 +90,8 @@ const User: React.FC = () => {
   );
   const [activeRatingTier, setActiveRatingTier] =
     useState<RatingTierLabel>("all");
-  const [statsActivityType, setStatsActivityType] =
+  // MODIFIED: Renamed state for clarity and made it the single source of truth
+  const [activeActivityTab, setActiveActivityTab] =
     useState<StatsActivityType>("all");
 
   const currentUser = useCurrentUser() as IMe | undefined;
@@ -102,6 +103,28 @@ const User: React.FC = () => {
     refetch: refetchUser,
   } = useGetFullUserByUsername(userUsernameFromParams);
 
+  // MODIFIED: Effect to load the active tab from session storage on component mount
+  useEffect(() => {
+    if (!userUsernameFromParams) return;
+    const savedTab = sessionStorage.getItem(
+      `userActivity_activeTab_${userUsernameFromParams}`
+    ) as StatsActivityType;
+    if (
+      savedTab &&
+      [
+        "all",
+        "cases",
+        "answers",
+        "comments",
+        "ratings",
+        "approvals",
+        "finances",
+      ].includes(savedTab)
+    ) {
+      setActiveActivityTab(savedTab);
+    }
+  }, [userUsernameFromParams]);
+
   const { isAllowed, isLoading: authLoading } = useAuthorization({
     type: "user",
     data: user,
@@ -111,7 +134,7 @@ const User: React.FC = () => {
     user,
     dateRange.startDate,
     dateRange.endDate,
-    statsActivityType
+    activeActivityTab // MODIFIED: Use the unified state here
   );
 
   const {
@@ -127,6 +150,21 @@ const User: React.FC = () => {
   } = useGetRoles();
 
   const serverBaseUrl = import.meta.env.VITE_API_URL || "";
+
+  // MODIFIED: Centralized handler for changing the active tab
+  const handleActivityTabChange = (newTab: StatsActivityType) => {
+    setActiveActivityTab(newTab);
+    if (userUsernameFromParams) {
+      try {
+        sessionStorage.setItem(
+          `userActivity_activeTab_${userUsernameFromParams}`,
+          newTab
+        );
+      } catch (error) {
+        console.warn("Failed to save active tab to sessionStorage:", error);
+      }
+    }
+  };
 
   const filteredActivities = useMemo((): CombinedActivity[] => {
     if (!user) return [];
@@ -551,6 +589,8 @@ const User: React.FC = () => {
                   onClearAllFilters={handleClearAllFilters}
                   activeCategoryName={activeCategoryName}
                   onClearCategoryFilter={() => setActiveCategoryName(null)}
+                  activeTab={activeActivityTab}
+                  onTabChange={handleActivityTabChange}
                   activeRatingTier={activeRatingTier}
                   onClearRatingTierFilter={() => setActiveRatingTier("all")}
                 />
@@ -575,8 +615,9 @@ const User: React.FC = () => {
                     }
                     activeCategoryFilter={activeCategoryName}
                     activeRatingTierFilter={activeRatingTier}
-                    activeStatsTab={statsActivityType}
-                    onStatsTabChange={setStatsActivityType}
+                    activityCounts={filteredActivityCounts} // Pass the counts object
+                    activeStatsTab={activeActivityTab}
+                    onStatsTabChange={handleActivityTabChange}
                   />
                 </div>
               )}
@@ -603,8 +644,9 @@ const User: React.FC = () => {
                   }
                   activeCategoryFilter={activeCategoryName}
                   activeRatingTierFilter={activeRatingTier}
-                  activeStatsTab={statsActivityType}
-                  onStatsTabChange={setStatsActivityType}
+                  activityCounts={filteredActivityCounts} // Pass the counts object
+                  activeStatsTab={activeActivityTab}
+                  onStatsTabChange={handleActivityTabChange}
                 />
               </div>
               {/* Activity List (Right) */}
@@ -623,6 +665,8 @@ const User: React.FC = () => {
                     onClearAllFilters={handleClearAllFilters}
                     activeCategoryName={activeCategoryName}
                     onClearCategoryFilter={() => setActiveCategoryName(null)}
+                    activeTab={activeActivityTab}
+                    onTabChange={handleActivityTabChange}
                     activeRatingTier={activeRatingTier}
                     onClearRatingTierFilter={() => setActiveRatingTier("all")}
                   />

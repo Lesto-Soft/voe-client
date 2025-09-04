@@ -25,12 +25,13 @@ export interface UserTextStats {
   averageCaseRating: number | null;
 }
 
-// MODIFIED: Added type for the new activity selector tabs
+// MODIFIED: Added 'ratings' to the activity selector type
 export type StatsActivityType =
   | "all"
   | "cases"
   | "answers"
   | "comments"
+  | "ratings"
   | "approvals"
   | "finances";
 
@@ -48,11 +49,22 @@ interface UserStatisticsPanelProps {
   activeStatsTab: StatsActivityType;
   onStatsTabChange: (tab: StatsActivityType) => void;
   viewMode?: "side" | "center";
+  // Add the new prop for receiving activity counts
+  activityCounts: {
+    all: number;
+    cases: number;
+    answers: number;
+    comments: number;
+    ratings: number;
+    approvals: number;
+    finances: number;
+  };
 }
 
 // Define the type for our new tabs
 type StatsTab = "categories" | "ratings";
 
+// MODIFIED: Added 'ratings' tab configuration
 const activityTabsConfig: {
   key: StatsActivityType;
   label: string;
@@ -62,6 +74,7 @@ const activityTabsConfig: {
   { key: "cases", label: "Сигнали", icon: DocumentTextIcon },
   { key: "answers", label: "Решения", icon: ChatBubbleBottomCenterTextIcon },
   { key: "comments", label: "Коментари", icon: ChatBubbleOvalLeftEllipsisIcon },
+  { key: "ratings", label: "Оценки", icon: StarIcon },
   { key: "approvals", label: "Одобрени", icon: HandThumbUpIcon },
   { key: "finances", label: "Финанси", icon: BanknotesIcon },
 ];
@@ -79,6 +92,7 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
   activeStatsTab,
   onStatsTabChange,
   viewMode = "side",
+  activityCounts,
 }) => {
   const [activePieTab, setActivePieTab] = useState<StatsTab>("categories");
   const isInteractive = onCategoryClick || onRatingTierClick;
@@ -174,21 +188,32 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
         <label className="text-xs font-semibold text-gray-500">
           Вижте изолирана диаграма за:
         </label>
-        <div className="mt-1.5 grid grid-cols-3 gap-1.5">
-          {activityTabsConfig.map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => onStatsTabChange(tab.key)}
-              className={`cursor-pointer flex items-center justify-center gap-x-1.5 rounded-md px-2 py-1 text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-500 ${
-                activeStatsTab === tab.key
-                  ? "bg-indigo-600 text-white shadow-sm"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-              }`}
-            >
-              <tab.icon className="h-4 w-4" />
-              <span>{tab.label}</span>
-            </button>
-          ))}
+        {/* MODIFIED: Changed grid to flex-wrap for better responsiveness with 7 items */}
+        <div className="mt-1.5 flex flex-wrap gap-1.5">
+          {activityTabsConfig.map((tab) => {
+            // Get the specific count for the current tab
+            const count =
+              activityCounts[tab.key as keyof typeof activityCounts] ?? 0;
+            return (
+              <button
+                key={tab.key}
+                onClick={() => onStatsTabChange(tab.key)}
+                // Disable the button if its count is 0
+                disabled={count === 0}
+                className={`cursor-pointer flex-grow basis-auto flex items-center justify-center gap-x-1.5 rounded-md px-2 py-1 text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed ${
+                  activeStatsTab === tab.key
+                    ? "bg-indigo-600 text-white shadow-sm"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                }`}
+              >
+                <tab.icon className="h-4 w-4" />
+                {/* Display the count in the tab label */}
+                <span>
+                  {tab.label} ({count})
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
 

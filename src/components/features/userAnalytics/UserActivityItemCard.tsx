@@ -207,7 +207,9 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
   return (
     <div className="p-3 sm:p-4 border-b border-gray-100 hover:bg-gray-50 group transition-colors duration-150">
       <div className="flex items-start space-x-2 sm:space-x-3">
-        <div className="flex-shrink-0 pt-1">
+        <div
+          className={`flex-shrink-0 pt-1 ${view === "compact" ? "ml-2" : ""}`}
+        >
           {icon || <LinkIcon className="h-5 w-5 text-gray-400" />}
         </div>
         <div className="flex-1 min-w-0">

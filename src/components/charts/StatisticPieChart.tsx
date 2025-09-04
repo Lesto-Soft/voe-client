@@ -50,6 +50,32 @@ const StatisticPieChart: React.FC<StatisticPieChartProps> = ({
     }
   }, [debouncedHoveredLabel]);
 
+  // NEW: This useEffect handles scrolling when an item is actively selected.
+  useEffect(() => {
+    if (activeLabel && legendScrollRef.current) {
+      const legendItem = document.getElementById(
+        createIdFromLabel(activeLabel)
+      );
+      if (legendItem) {
+        const container = legendScrollRef.current;
+        const itemRect = legendItem.getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
+
+        // Check if the item is outside the visible area of the scroll container
+        if (
+          itemRect.top < containerRect.top ||
+          itemRect.bottom > containerRect.bottom
+        ) {
+          // If it's not visible, scroll it into view
+          legendItem.scrollIntoView({
+            behavior: "smooth",
+            block: "nearest",
+          });
+        }
+      }
+    }
+  }, [activeLabel]); // This effect runs whenever the active selection changes.
+
   if (
     !pieData ||
     pieData.length === 0 ||
@@ -107,6 +133,8 @@ const StatisticPieChart: React.FC<StatisticPieChartProps> = ({
               return (
                 <li
                   key={item.label}
+                  // ADDED: A unique ID to each legend item to make it findable
+                  id={createIdFromLabel(item.label)}
                   className={`flex items-center justify-between px-1 py-0.5 rounded-md transition-colors ${
                     onSegmentClick ? "cursor-pointer" : ""
                   } ${

@@ -138,6 +138,23 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
     };
   }, []);
 
+  // NEW: This effect triggers whenever the active tab changes.
+  useEffect(() => {
+    // Find the HTML element for the currently active tab using its ID.
+    const activeTabElement = document.getElementById(
+      `activity-tab-${activeTab}`
+    );
+
+    // If the element is found, scroll it into the visible area.
+    if (activeTabElement) {
+      activeTabElement.scrollIntoView({
+        behavior: "smooth", // For a smooth scrolling animation
+        inline: "nearest", // Ensures horizontal alignment
+        block: "nearest", // Ensures vertical alignment
+      });
+    }
+  }, [activeTab]); // The effect depends on the activeTab prop.
+
   const activitiesToDisplay = useMemo((): CombinedActivity[] => {
     let baseActivities: CombinedActivity[];
     switch (activeTab) {
@@ -244,8 +261,10 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
             {tabs.map((tab) => (
               <button
                 key={tab.key}
+                // ADDED: A unique ID to make the button findable in the DOM.
+                id={`activity-tab-${tab.key}`}
                 onClick={() => onTabChange(tab.key)}
-                disabled={tab.count === 0} // MODIFIED: Added disabled state for tabs with 0 activities
+                disabled={tab.count === 0}
                 className={`hover:cursor-pointer px-3 py-1.5 text-xs sm:text-sm font-medium rounded-md whitespace-nowrap transition-colors duration-150 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed ${
                   activeTab === tab.key
                     ? "bg-indigo-600 text-white shadow-sm"

@@ -28,7 +28,6 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }) => {
     variables: { userId },
     onData: ({ data }) => {
       const newNotification = data.data?.notificationAdded;
-      console.log(data);
       if (newNotification) {
         setNotifications((prev) => [newNotification, ...prev]);
         const toastMessage = (

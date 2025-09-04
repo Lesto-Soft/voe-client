@@ -1,5 +1,10 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
-import { ChevronUpIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
+import {
+  ChevronUpIcon,
+  ChevronDownIcon,
+  ExclamationTriangleIcon,
+  XMarkIcon,
+} from "@heroicons/react/24/outline";
 import { PlusIcon as PlusIconSolid } from "@heroicons/react/20/solid";
 
 // GraphQL Hooks & Types
@@ -67,6 +72,7 @@ const UserManagement: React.FC = () => {
   const [userToDelete, setUserToDelete] = useState<IUser | null>(null);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [successModalMessage, setSuccessModalMessage] = useState("");
+  const [isBannerVisible, setIsBannerVisible] = useState(true);
 
   const serverBaseUrl = import.meta.env.VITE_API_URL || "";
 
@@ -315,6 +321,29 @@ const UserManagement: React.FC = () => {
     countError ||
     deleteUserError;
 
+  // calculate the count of misconfigured experts
+  const misconfiguredExpertsCount = useMemo(() => {
+    if (
+      !allUsersForDynamicRoleCount ||
+      allUsersForDynamicRoleCount.length === 0
+    ) {
+      return 0;
+    }
+    return allUsersForDynamicRoleCount.filter(
+      (user) =>
+        user.role?._id === ROLES.EXPERT &&
+        (!user.expert_categories || user.expert_categories.length === 0) &&
+        (!user.managed_categories || user.managed_categories.length === 0)
+    ).length;
+  }, [allUsersForDynamicRoleCount]);
+
+  // functionality to re-show the banner
+  // useEffect(() => {
+  //   if (misconfiguredExpertsCount > 0) {
+  //     setIsBannerVisible(true);
+  //   }
+  // }, [misconfiguredExpertsCount]);
+
   if (
     criticalPageError &&
     !isLoadingTableData &&
@@ -390,6 +419,38 @@ const UserManagement: React.FC = () => {
           setFilterManager={setFilterManager}
         />
       </div>
+
+      {misconfiguredExpertsCount > 0 && (
+        <div
+          className={`transition-all duration-300 ease-in-out overflow-hidden ${
+            isBannerVisible ? "max-h-40 opacity-100 mb-4" : "max-h-0 opacity-0"
+          }`}
+        >
+          <div
+            className="p-3 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 rounded-r-lg shadow flex items-center justify-between"
+            role="alert"
+          >
+            <div className="flex items-center">
+              <ExclamationTriangleIcon className="h-6 w-6 mr-3 flex-shrink-0" />
+              <div>
+                <p className="font-bold">Внимание</p>
+                <p className="text-sm">
+                  Има {misconfiguredExpertsCount} потребител
+                  {misconfiguredExpertsCount === 1 ? "" : "и"} с роля 'Експерт',
+                  на които не са зададени категории.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setIsBannerVisible(false)}
+              className="p-1 rounded-md hover:bg-yellow-200 transition-colors cursor-pointer"
+              aria-label="Скрий предупреждението"
+            >
+              <XMarkIcon className="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+      )}
 
       <UserTable
         users={usersForTable}

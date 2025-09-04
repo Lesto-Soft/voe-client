@@ -676,3 +676,21 @@ body.scrolled .notification-toast {
 .Toastify__toast {
   pointer-events: auto;
 }
+
+/* For action button reminders */
+@keyframes pulse-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.5); /* blue-500 */
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(59, 130, 246, 0);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s infinite;
+  border-radius: 9999px;
+  border: 2px solid rgba(59, 130, 246, 0.5); /* blue-500 */
+  background-color: rgba(59, 130, 246, 0.05); /* blue-100 */
+}

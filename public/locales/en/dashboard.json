@@ -57,5 +57,6 @@
   "attachments": "Attachments",
   "writeAnswer": "Write an answer...",
   "delete_case": "Delete case",
-  "answerSubmitted": "The answer has been sent"
+  "answerSubmitted": "The answer has been sent",
+  "waiting_approval": "Still does not have an approved answer"
 }

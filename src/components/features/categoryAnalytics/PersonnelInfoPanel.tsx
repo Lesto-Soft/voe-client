@@ -1,5 +1,5 @@
 // src/components/features/categoryAnalytics/PersonnelInfoPanel.tsx
-import React from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { ICategory, IUser } from "../../../db/interfaces"; // Adjust path as needed
 import UserLink from "../../../components/global/UserLink"; // Adjust path as needed
 import {
@@ -7,8 +7,10 @@ import {
   LightBulbIcon,
   ExclamationTriangleIcon,
   TagIcon,
-  PencilSquareIcon, // --- NEW: Import edit icon ---
+  PencilSquareIcon,
+  XMarkIcon,
 } from "@heroicons/react/24/outline";
+import * as Tooltip from "@radix-ui/react-tooltip";
 
 // Note: No need for useCurrentUser or role checks here.
 // All permission logic is handled in the parent `Category.tsx` page.
@@ -22,6 +24,7 @@ interface PersonnelInfoPanelProps {
   // --- NEW: Props for editing functionality ---
   canEdit: boolean;
   onEditClick: () => void;
+  isMisconfigured?: boolean;
 }
 
 const PersonnelInfoPanel: React.FC<PersonnelInfoPanelProps> = ({
@@ -33,7 +36,34 @@ const PersonnelInfoPanel: React.FC<PersonnelInfoPanelProps> = ({
   // --- NEW: Destructure new props ---
   canEdit,
   onEditClick,
+  isMisconfigured = false,
 }) => {
+  const [isWarningVisible, setIsWarningVisible] = useState(true); // add state for warning
+
+  useEffect(() => {
+    if (isMisconfigured) {
+      setIsWarningVisible(true);
+    }
+  }, [isMisconfigured]);
+
+  // create specific checks for each role
+  const hasNoExperts = !category?.experts || category.experts.length === 0;
+  const hasNoManagers = !category?.managers || category.managers.length === 0;
+
+  // create a dynamic warning message
+  const warningMessage = useMemo(() => {
+    if (hasNoExperts && hasNoManagers) {
+      return "Тази категория няма назначени експерти или мениджъри.";
+    }
+    if (hasNoExperts) {
+      return "Тази категория няма назначени експерти.";
+    }
+    if (hasNoManagers) {
+      return "Тази категория няма назначени мениджъри.";
+    }
+    return ""; // Should not happen if isMisconfigured is true
+  }, [hasNoExperts, hasNoManagers]);
+
   if (!category) {
     // Skeleton remains the same, no changes needed here.
     return (
@@ -84,11 +114,14 @@ const PersonnelInfoPanel: React.FC<PersonnelInfoPanelProps> = ({
               </span>
             </h1>
 
-            {/* --- NEW: Conditionally rendered Edit Button --- */}
+            {/* conditionally rendered Edit Button */}
             {canEdit && (
               <button
                 onClick={onEditClick}
-                className="hover:cursor-pointer flex-shrink-0 p-2 rounded-md text-gray-500 hover:bg-gray-100 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+                // conditionally apply animation class
+                className={`hover:cursor-pointer flex-shrink-0 p-2 rounded-full text-gray-500 hover:bg-gray-100 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors ${
+                  isMisconfigured ? "animate-pulse-glow" : ""
+                }`}
                 title="Редактирай категория"
               >
                 <PencilSquareIcon className="h-6 w-6" />
@@ -97,21 +130,35 @@ const PersonnelInfoPanel: React.FC<PersonnelInfoPanelProps> = ({
           </div>
         </div>
 
+        {/* the outer div now controls the hide/show animation */}
+        {isMisconfigured && (
+          <div
+            className={`transition-all duration-300 ease-in-out overflow-hidden ${
+              isWarningVisible ? "max-h-40 opacity-100" : "max-h-0 opacity-0"
+            }`}
+          >
+            <div className="p-3 text-sm text-yellow-800 bg-yellow-100 border border-yellow-300 rounded-md flex items-center justify-between">
+              <div className="flex items-center">
+                <ExclamationTriangleIcon className="h-5 w-5 mr-2 flex-shrink-0" />
+                <span>
+                  <strong>Внимание:</strong> {warningMessage}
+                </span>
+              </div>
+              <button
+                onClick={() => setIsWarningVisible(false)}
+                className="p-1 rounded-md hover:bg-yellow-200 transition-colors cursor-pointer"
+                aria-label="Скрий предупреждението"
+              >
+                <XMarkIcon className="h-5 w-5" />
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Personnel Tabs (Managers/Experts) */}
         <div>
           {/* ... The rest of the component remains unchanged ... */}
           <div className="flex border-b border-gray-200">
-            <button
-              onClick={() => setActivePersonnelTab("managers")}
-              className={`hover:cursor-pointer flex-1 py-2 px-1 text-center text-sm font-medium focus:outline-none transition-colors duration-150 flex items-center justify-center ${
-                activePersonnelTab === "managers"
-                  ? "border-b-2 border-purple-500 text-purple-600"
-                  : "text-gray-500 hover:text-gray-700 hover:border-gray-300 border-b-2 border-transparent"
-              }`}
-            >
-              <UserGroupIcon className="h-5 w-5 mr-1.5 text-purple-600" />
-              Мениджъри
-            </button>
             <button
               onClick={() => setActivePersonnelTab("experts")}
               className={`hover:cursor-pointer flex-1 py-2 px-1 text-center text-sm font-medium focus:outline-none transition-colors duration-150 flex items-center justify-center ${
@@ -122,6 +169,57 @@ const PersonnelInfoPanel: React.FC<PersonnelInfoPanelProps> = ({
             >
               <UserGroupIcon className="h-5 w-5 mr-1.5 text-teal-600" />
               Експерти
+              {isMisconfigured && hasNoExperts && (
+                <Tooltip.Provider delayDuration={100}>
+                  <Tooltip.Root>
+                    <Tooltip.Trigger asChild>
+                      <span className="ml-1.5">
+                        <ExclamationTriangleIcon className="h-5 w-5 text-yellow-500" />
+                      </span>
+                    </Tooltip.Trigger>
+                    <Tooltip.Portal>
+                      <Tooltip.Content
+                        sideOffset={5}
+                        className="z-50 max-w-xs rounded-md bg-gray-800 px-3 py-1.5 text-sm text-white shadow-lg"
+                      >
+                        Няма посочени експерти
+                        <Tooltip.Arrow className="fill-gray-800" />
+                      </Tooltip.Content>
+                    </Tooltip.Portal>
+                  </Tooltip.Root>
+                </Tooltip.Provider>
+              )}
+            </button>
+            <button
+              onClick={() => setActivePersonnelTab("managers")}
+              className={`hover:cursor-pointer flex-1 py-2 px-1 text-center text-sm font-medium focus:outline-none transition-colors duration-150 flex items-center justify-center ${
+                activePersonnelTab === "managers"
+                  ? "border-b-2 border-purple-500 text-purple-600"
+                  : "text-gray-500 hover:text-gray-700 hover:border-gray-300 border-b-2 border-transparent"
+              }`}
+            >
+              <UserGroupIcon className="h-5 w-5 mr-1.5 text-purple-600" />
+              Мениджъри
+              {isMisconfigured && hasNoManagers && (
+                <Tooltip.Provider delayDuration={100}>
+                  <Tooltip.Root>
+                    <Tooltip.Trigger asChild>
+                      <span className="ml-1.5">
+                        <ExclamationTriangleIcon className="h-5 w-5 text-yellow-500" />
+                      </span>
+                    </Tooltip.Trigger>
+                    <Tooltip.Portal>
+                      <Tooltip.Content
+                        sideOffset={5}
+                        className="z-50 max-w-xs rounded-md bg-gray-800 px-3 py-1.5 text-sm text-white shadow-lg"
+                      >
+                        Няма посочени мениджъри
+                        <Tooltip.Arrow className="fill-gray-800" />
+                      </Tooltip.Content>
+                    </Tooltip.Portal>
+                  </Tooltip.Root>
+                </Tooltip.Provider>
+              )}
             </button>
           </div>
           <div className="mt-4 bg-gray-50 rounded-sm border border-gray-300 min-h-20 lg:h-37 flex flex-col justify-center items-center text-center">

@@ -10,6 +10,7 @@ import {
   GET_USER_BY_ID,
   GET_FULL_USER_BY_USERNAME,
   GET_RANKED_USERS,
+  GET_USER_MENTIONS,
 } from "../query/user"; // Adjust path if needed
 import {
   CREATE_USER,
@@ -116,7 +117,6 @@ export const useGetFullUserByUsername = (username: string | undefined) => {
 };
 
 export const useGetUserById = (id: string | undefined) => {
-  // console.log("[HOOK] Attempting to fetch user with input id:", id);
   const { loading, error, data } = useQuery<{ getUserById: IUser }>(
     GET_USER_BY_ID,
     {
@@ -345,6 +345,19 @@ export const useGetRankedUsers = (
 
   return {
     rankedUsers: data?.getRankedUsers || [],
+    loading,
+    error,
+  };
+};
+
+export const useGetUserMentions = (categories: string[]) => {
+  const { data, loading, error } = useQuery(GET_USER_MENTIONS, {
+    variables: { categories },
+    skip: categories.length === 0,
+  });
+
+  return {
+    userMentions: data?.getExpertsByCategories || [],
     loading,
     error,
   };

@@ -111,7 +111,7 @@ const CategoryCasesList: React.FC<CategoryCasesListProps> = ({
         </div>
         <div
           ref={scrollableRef}
-          className="overflow-y-auto flex-1 p-4 custom-scrollbar"
+          className="overflow-y-auto flex-1 p-4 custom-scrollbar-xs"
         >
           {[...Array(3)].map((_, index) => (
             <div
@@ -226,7 +226,7 @@ const CategoryCasesList: React.FC<CategoryCasesListProps> = ({
 
       <div
         ref={scrollableRef}
-        className="overflow-y-auto flex-1 custom-scrollbar"
+        className="overflow-y-auto flex-1 custom-scrollbar-xs"
       >
         {totalCasesCount > 0 ? (
           <>
@@ -243,7 +243,7 @@ const CategoryCasesList: React.FC<CategoryCasesListProps> = ({
               <div className="p-4 flex justify-center mt-2 mb-2">
                 <button
                   onClick={handleLoadMoreCases}
-                  className="flex items-center px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded-md hover:bg-blue-600 transition-colors duration-150"
+                  className="cursor-pointer flex items-center px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded-md hover:bg-blue-600 transition-colors duration-150"
                 >
                   <ArrowDownCircleIcon className="h-5 w-5 mr-2" />
                   Зареди още... ({totalCasesCount - visibleCasesCount} остават)

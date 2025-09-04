@@ -43,10 +43,9 @@ interface CombinedActivity {
 
 interface UserActivityListProps {
   user: IUser | undefined | null;
-  activities: CombinedActivity[]; // <-- MODIFIED: Receive the filtered list
+  activities: CombinedActivity[];
   isLoading?: boolean;
   counts: {
-    // <-- This will now be the filtered counts
     all: number;
     cases: number;
     answers: number;
@@ -67,9 +66,9 @@ interface UserActivityListProps {
   onClearCategoryFilter: () => void;
   activeRatingTier: RatingTierLabel;
   onClearRatingTierFilter: () => void;
+  cardView?: "full" | "compact";
 }
 
-// Helper to categorize a score
 const getTierForScore = (score: number): RatingTierLabel => {
   if (score >= TIERS.GOLD) return "Отлични";
   if (score >= TIERS.SILVER) return "Добри";
@@ -91,16 +90,12 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
   onClearCategoryFilter,
   activeRatingTier,
   onClearRatingTierFilter,
+  cardView = "full",
 }) => {
   const [isDateFilterVisible, setIsDateFilterVisible] = useState(false);
-
-  // ✅ MODIFIED: Changed from && to || to show active state if at least one date is selected.
   const isDateFilterActive =
     dateRange.startDate !== null || dateRange.endDate !== null;
-
   const isDataReady = !isLoading && !!user;
-
-  // Add ref for the tabs container
   const tabsContainerRef = useRef<HTMLDivElement>(null);
 
   const {
@@ -123,7 +118,6 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
     resetScrollAndVisibleCount,
   ]);
 
-  // Add effect for horizontal scrolling with mouse wheel
   useEffect(() => {
     const scrollContainer = tabsContainerRef.current;
 
@@ -271,10 +265,10 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
             title="Filter by date"
             className={`hover:cursor-pointer p-2 rounded-md transition-colors duration-150 ${
               isDateFilterVisible
-                ? "bg-indigo-100 text-indigo-600" // Style when selector is OPEN
+                ? "bg-indigo-100 text-indigo-600"
                 : isDateFilterActive
-                ? "bg-indigo-100 text-gray-500" // Style when selector is CLOSED but filter is ACTIVE
-                : "bg-gray-100 text-gray-500 hover:bg-gray-200" // Style when selector is CLOSED and INACTIVE
+                ? "bg-indigo-100 text-gray-500"
+                : "bg-gray-100 text-gray-500 hover:bg-gray-200"
             }`}
           >
             <CalendarDaysIcon className="h-5 w-5" />
@@ -290,7 +284,6 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
           </div>
         )}
       </div>
-      {/* --- ADD NEW FILTER TAGS DISPLAY --- */}
       {isAnyFilterActive && (
         <div className="px-4 py-2 border-b border-gray-200 bg-gray-50 flex flex-wrap items-center gap-2">
           <span className="text-xs font-semibold text-gray-600 mr-2">
@@ -326,7 +319,7 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
       )}
       <div
         ref={scrollableActivityListRef}
-        className="flex-1 overflow-y-auto custom-scrollbar"
+        className="flex-1 overflow-y-auto custom-scrollbar-xs"
       >
         {activitiesToDisplay.length > 0 ? (
           <>
@@ -341,6 +334,7 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
                     }
                     date={activity.date}
                     actor={user!}
+                    view={cardView}
                   />
                 ) : (
                   <UserActivityItemCard
@@ -356,6 +350,7 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
                     }
                     actor={user!}
                     date={activity.date}
+                    view={cardView}
                   />
                 )
               )}
@@ -365,7 +360,7 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
               <div className="p-4 flex justify-center mt-2 mb-2">
                 <button
                   onClick={handleLoadMoreItems}
-                  className="flex items-center px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded-md hover:bg-blue-600 transition-colors duration-150"
+                  className="cursor-pointer flex items-center px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded-md hover:bg-blue-600 transition-colors duration-150"
                 >
                   <ArrowDownCircleIcon className="h-5 w-5 mr-2" />
                   Зареди още... (

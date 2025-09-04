@@ -45,15 +45,14 @@ interface UserStatisticsPanelProps {
   activeRatingTierLabel?: string | null;
   activeCategoryFilter: string | null;
   activeRatingTierFilter: RatingTierLabel;
-  // MODIFIED: Added props for the new activity selector
   activeStatsTab: StatsActivityType;
   onStatsTabChange: (tab: StatsActivityType) => void;
+  viewMode?: "side" | "center";
 }
 
 // Define the type for our new tabs
 type StatsTab = "categories" | "ratings";
 
-// MODIFIED: Create a config for the new buttons for easier mapping
 const activityTabsConfig: {
   key: StatsActivityType;
   label: string;
@@ -79,8 +78,8 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
   activeRatingTierFilter,
   activeStatsTab,
   onStatsTabChange,
+  viewMode = "side",
 }) => {
-  // State to manage the active tab
   const [activePieTab, setActivePieTab] = useState<StatsTab>("categories");
   const isInteractive = onCategoryClick || onRatingTierClick;
 
@@ -136,14 +135,121 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
     );
   }
 
+  const TextStatsSection = (
+    <div className="space-y-1">
+      <StatItem
+        icon={DocumentTextIcon}
+        label="Сигнали"
+        value={textStats.totalSignals}
+        iconColorClass="text-blue-500"
+      />
+      <StatItem
+        icon={ChatBubbleBottomCenterTextIcon}
+        label="Решения"
+        value={textStats.totalAnswers}
+        iconColorClass="text-green-500"
+      />
+      <StatItem
+        icon={ChatBubbleOvalLeftEllipsisIcon}
+        label="Коментари"
+        value={textStats.totalComments}
+        iconColorClass="text-purple-500"
+      />
+      <StatItem
+        icon={StarIcon}
+        label="Средна оценка на сигнал"
+        value={
+          textStats.averageCaseRating
+            ? textStats.averageCaseRating.toFixed(2)
+            : "-"
+        }
+        iconColorClass="text-amber-500"
+      />
+    </div>
+  );
+
+  const PieChartSection = (
+    <>
+      <div>
+        <label className="text-xs font-semibold text-gray-500">
+          Вижте изолирана диаграма за:
+        </label>
+        <div className="mt-1.5 grid grid-cols-3 gap-1.5">
+          {activityTabsConfig.map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => onStatsTabChange(tab.key)}
+              className={`cursor-pointer flex items-center justify-center gap-x-1.5 rounded-md px-2 py-1 text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-500 ${
+                activeStatsTab === tab.key
+                  ? "bg-indigo-600 text-white shadow-sm"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              }`}
+            >
+              <tab.icon className="h-4 w-4" />
+              <span>{tab.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex border-b border-gray-200 text-xs sm:text-sm">
+        <button
+          onClick={() => setActivePieTab("categories")}
+          className={`cursor-pointer relative flex-1 py-2 px-1 text-center font-medium focus:outline-none transition-colors duration-150 ${
+            activePieTab === "categories"
+              ? "border-b-2 border-indigo-500 text-indigo-600"
+              : "text-gray-500 hover:text-gray-700"
+          }`}
+        >
+          По Категории
+          {activeCategoryFilter !== null && (
+            <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-indigo-500"></span>
+          )}
+        </button>
+        <button
+          onClick={() => setActivePieTab("ratings")}
+          className={`cursor-pointer relative flex-1 py-2 px-1 text-center font-medium focus:outline-none transition-colors duration-150 ${
+            activePieTab === "ratings"
+              ? "border-b-2 border-indigo-500 text-indigo-600"
+              : "text-gray-500 hover:text-gray-700"
+          }`}
+        >
+          По Рейтинг
+          {activeRatingTierFilter !== "all" && (
+            <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-indigo-500"></span>
+          )}
+        </button>
+      </div>
+      <div className="mt-3">
+        {activePieTab === "categories" && (
+          <StatisticPieChart
+            title="Разпределение по Категории"
+            pieData={pieChartStats.signalsByCategoryChartData}
+            onSegmentClick={onCategoryClick}
+            activeLabel={activeCategoryLabel}
+            layout={viewMode === "center" ? "horizontal" : "vertical"}
+          />
+        )}
+        {activePieTab === "ratings" && (
+          <StatisticPieChart
+            title="Разпределение по Оценка"
+            pieData={pieChartStats.ratingTierDistributionData}
+            onSegmentClick={onRatingTierClick}
+            activeLabel={activeRatingTierLabel}
+            layout={viewMode === "center" ? "horizontal" : "vertical"}
+          />
+        )}
+      </div>
+    </>
+  );
+
   return (
     <Tooltip.Provider>
       <aside className="bg-white rounded-lg shadow-lg flex flex-col overflow-hidden h-full">
-        <div className="p-4 sm:p-6 space-y-5 overflow-y-auto flex-1 custom-scrollbar">
+        <div className="p-4 sm:p-6 space-y-5 overflow-y-auto flex-1 custom-scrollbar-xs">
           <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-x-2">
             <ChartPieIcon className="h-6 w-6 mr-2 text-teal-600" />
             <span>Статистика</span>
-            {/* add Radix UI Tooltip */}
             {isInteractive && (
               <Tooltip.Root delayDuration={150}>
                 <Tooltip.Trigger asChild>
@@ -163,106 +269,17 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
               </Tooltip.Root>
             )}
           </h3>
-          <div className="space-y-1">
-            <StatItem
-              icon={DocumentTextIcon}
-              label="Сигнали"
-              value={textStats.totalSignals}
-              iconColorClass="text-blue-500"
-            />
-            <StatItem
-              icon={ChatBubbleBottomCenterTextIcon}
-              label="Решения"
-              value={textStats.totalAnswers}
-              iconColorClass="text-green-500"
-            />
-            <StatItem
-              icon={ChatBubbleOvalLeftEllipsisIcon}
-              label="Коментари"
-              value={textStats.totalComments}
-              iconColorClass="text-purple-500"
-            />
-            <StatItem
-              icon={StarIcon}
-              label="Средна оценка на сигнал"
-              value={
-                textStats.averageCaseRating
-                  ? textStats.averageCaseRating.toFixed(2)
-                  : "-"
-              }
-              iconColorClass="text-amber-500"
-            />
-          </div>
-
-          {/* Added Activity Type Selector */}
-          <div>
-            <label className="text-xs font-semibold text-gray-500">
-              Вижте изолирана диаграма за:
-            </label>
-            <div className="mt-1.5 grid grid-cols-3 gap-1.5">
-              {activityTabsConfig.map((tab) => (
-                <button
-                  key={tab.key}
-                  onClick={() => onStatsTabChange(tab.key)}
-                  className={`cursor-pointer flex items-center justify-center gap-x-1.5 rounded-md px-2 py-1 text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-500 ${
-                    activeStatsTab === tab.key
-                      ? "bg-indigo-600 text-white shadow-sm"
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                  }`}
-                >
-                  <tab.icon className="h-4 w-4" />
-                  <span>{tab.label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="flex border-b border-gray-200 text-xs sm:text-sm">
-            <button
-              onClick={() => setActivePieTab("categories")}
-              className={`cursor-pointer relative flex-1 py-2 px-1 text-center font-medium focus:outline-none transition-colors duration-150 ${
-                activePieTab === "categories"
-                  ? "border-b-2 border-indigo-500 text-indigo-600"
-                  : "text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              По Категории
-              {activeCategoryFilter !== null && (
-                <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-indigo-500"></span>
-              )}
-            </button>
-            <button
-              onClick={() => setActivePieTab("ratings")}
-              className={`cursor-pointer relative flex-1 py-2 px-1 text-center font-medium focus:outline-none transition-colors duration-150 ${
-                activePieTab === "ratings"
-                  ? "border-b-2 border-indigo-500 text-indigo-600"
-                  : "text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              По Рейтинг
-              {activeRatingTierFilter !== "all" && (
-                <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-indigo-500"></span>
-              )}
-            </button>
-          </div>
-          <div className="mt-3">
-            {activePieTab === "categories" && (
-              <StatisticPieChart
-                title="Разпределение по Категории"
-                pieData={pieChartStats.signalsByCategoryChartData}
-                onSegmentClick={onCategoryClick}
-                activeLabel={activeCategoryLabel}
-              />
-            )}
-            {activePieTab === "ratings" && (
-              <StatisticPieChart
-                title="Разпределение по Оценка"
-                pieData={pieChartStats.ratingTierDistributionData}
-                onSegmentClick={onRatingTierClick}
-                activeLabel={activeRatingTierLabel}
-              />
-            )}
-          </div>
+          {viewMode === "center" ? (
+            <>
+              {PieChartSection}
+              {TextStatsSection}
+            </>
+          ) : (
+            <>
+              {TextStatsSection}
+              {PieChartSection}
+            </>
+          )}
         </div>
       </aside>
     </Tooltip.Provider>

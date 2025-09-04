@@ -216,7 +216,7 @@ const MetricScoreList: React.FC<MetricScoreListProps> = ({
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto custom-scrollbar">
+      <div className="flex-1 overflow-y-auto custom-scrollbar-xs">
         {finalScoresToDisplay.length > 0 ? (
           <div>
             {finalScoresToDisplay.map((score) => (

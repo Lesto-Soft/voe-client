@@ -11,15 +11,17 @@ const createIdFromLabel = (label: string) => {
 interface StatisticPieChartProps {
   title: string;
   pieData: PieSegmentData[] | undefined;
-  onSegmentClick?: (segment: PieSegmentData) => void; // <-- NEW: Add click handler prop
+  onSegmentClick?: (segment: PieSegmentData) => void;
   activeLabel?: string | null;
+  layout?: "vertical" | "horizontal";
 }
 
 const StatisticPieChart: React.FC<StatisticPieChartProps> = ({
   title,
   pieData,
-  onSegmentClick, // <-- NEW: Destructure prop
+  onSegmentClick,
   activeLabel,
+  layout = "vertical",
 }) => {
   const [hoveredLabel, setHoveredLabel] = useState<string | null>(null);
   const debouncedHoveredLabel = useDebounce(hoveredLabel, 200);
@@ -66,58 +68,78 @@ const StatisticPieChart: React.FC<StatisticPieChartProps> = ({
   return (
     <div className="w-full">
       <h4 className="text-md font-semibold text-gray-700 mb-3">{title}</h4>
-
-      <div className="flex justify-center mb-4">
-        <PieChart
-          data={pieData}
-          size={160}
-          hoveredLabel={hoveredLabel}
-          onHover={setHoveredLabel}
-          onSegmentClick={onSegmentClick} // <-- NEW: Pass handler to PieChart
-          activeLabel={activeLabel}
-        />
-      </div>
-
-      <div className="w-full">
-        <ul
-          ref={legendScrollRef}
-          className="text-xs max-h-21 overflow-y-auto custom-scrollbar pr-1"
+      <div
+        className={
+          layout === "horizontal"
+            ? "flex flex-row items-center justify-around gap-x-4"
+            : ""
+        }
+      >
+        <div
+          className={
+            layout === "horizontal"
+              ? "flex-shrink-0"
+              : "flex justify-center mb-4"
+          }
         >
-          {pieData.map((item) => {
-            const isHovered = item.label === hoveredLabel;
-            const isActive = item.label === activeLabel; // <-- ADD THIS CHECK
-            return (
-              <li
-                key={item.label}
-                className={`flex items-center justify-between px-1 py-0.5 rounded-md transition-colors ${
-                  onSegmentClick ? "cursor-pointer" : ""
-                } ${
-                  isHovered
-                    ? isActive
-                      ? "bg-sky-200 font-semibold" // Hovering an active item
-                      : "bg-sky-100" // Standard hover
-                    : isActive
-                    ? "bg-indigo-100 font-semibold" // Active but not hovered
-                    : ""
-                } active:bg-indigo-200`} // Style for while mouse is pressed`}
-                onMouseEnter={() => setHoveredLabel(item.label)}
-                onMouseLeave={() => setHoveredLabel(null)}
-                onClick={() => onSegmentClick?.(item)}
-              >
-                <span className="flex items-center" title={item.label}>
-                  <span
-                    className="h-2.5 w-2.5 rounded-full mr-2 flex-shrink-0"
-                    style={{ backgroundColor: item.color }}
-                  />
-                  <span className="truncate max-w-[200px]">{item.label}:</span>
-                </span>
-                <span className="font-medium whitespace-nowrap">
-                  {item.value} ({((item.value / totalValue) * 100).toFixed(1)}%)
-                </span>
-              </li>
-            );
-          })}
-        </ul>
+          <PieChart
+            data={pieData}
+            size={layout === "horizontal" ? 240 : 160}
+            hoveredLabel={hoveredLabel}
+            onHover={setHoveredLabel}
+            onSegmentClick={onSegmentClick}
+            activeLabel={activeLabel}
+          />
+        </div>
+
+        <div
+          className={
+            layout === "horizontal" ? "flex-1 min-w-0 max-w-1/2" : "w-full"
+          }
+        >
+          <ul
+            ref={legendScrollRef}
+            className="text-xs max-h-48 overflow-y-auto custom-scrollbar-xs pr-1"
+          >
+            {pieData.map((item) => {
+              const isHovered = item.label === hoveredLabel;
+              const isActive = item.label === activeLabel;
+              return (
+                <li
+                  key={item.label}
+                  className={`flex items-center justify-between px-1 py-0.5 rounded-md transition-colors ${
+                    onSegmentClick ? "cursor-pointer" : ""
+                  } ${
+                    isHovered
+                      ? isActive
+                        ? "bg-sky-200 font-semibold"
+                        : "bg-sky-100"
+                      : isActive
+                      ? "bg-indigo-100 font-semibold"
+                      : ""
+                  } active:bg-indigo-200`}
+                  onMouseEnter={() => setHoveredLabel(item.label)}
+                  onMouseLeave={() => setHoveredLabel(null)}
+                  onClick={() => onSegmentClick?.(item)}
+                >
+                  <span className="flex items-center" title={item.label}>
+                    <span
+                      className="h-2.5 w-2.5 rounded-full mr-2 flex-shrink-0"
+                      style={{ backgroundColor: item.color }}
+                    />
+                    <span className="truncate max-w-[200px]">
+                      {item.label}:
+                    </span>
+                  </span>
+                  <span className="font-medium whitespace-nowrap">
+                    {item.value} ({((item.value / totalValue) * 100).toFixed(1)}
+                    %)
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
       </div>
     </div>
   );

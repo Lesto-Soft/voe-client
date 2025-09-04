@@ -31,6 +31,7 @@ import { containsAnyCategoryById } from "../utils/arrayUtils";
 import { useAuthorization } from "../hooks/useAuthorization";
 import ForbiddenPage from "./ErrorPages/ForbiddenPage";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
+import { ArrowsRightLeftIcon } from "@heroicons/react/24/outline";
 
 export type RatingTierLabel =
   | "Отлични"
@@ -67,11 +68,12 @@ const User: React.FC = () => {
   const navigate = useNavigate();
   const { username: userUsernameFromParams } = useParams<{
     username: string;
-  }>();
+  }>(); // --- NEW: State for layout view ---
 
-  // --- NEW: State for panel visibility ---
+  const [layout, setLayout] = useState<"standard" | "analytics">("standard"); // --- MODIFIED: Renamed isStatsPanelHidden for clarity ---
+
   const [isInfoPanelHidden, setIsInfoPanelHidden] = useState(false);
-  const [isStatsPanelHidden, setIsStatsPanelHidden] = useState(false);
+  const [isRightPanelHidden, setIsRightPanelHidden] = useState(false);
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
@@ -126,7 +128,6 @@ const User: React.FC = () => {
 
   const serverBaseUrl = import.meta.env.VITE_API_URL || "";
 
-  // --- All memoized calculations for filtering and stats remain unchanged ---
   const filteredActivities = useMemo((): CombinedActivity[] => {
     if (!user) return [];
 
@@ -375,7 +376,6 @@ const User: React.FC = () => {
     };
   }, [filteredActivities, filteredActivityCounts]);
 
-  // --- Handlers and other logic remain unchanged ---
   const isMisconfiguredExpert = useMemo(() => {
     return (
       user?.role?._id === ROLES.EXPERT &&
@@ -500,10 +500,26 @@ const User: React.FC = () => {
   return (
     <>
       <div className="container min-w-full mx-auto p-2 sm:p-6 bg-gray-50 flex flex-col h-[calc(100vh-6rem)]">
-        {/*
-          This container is now 'relative' to act as the positioning context for the arrows.
-          This ensures the arrows don't get cut off when panels are hidden.
-        */}
+        {/* <div className="flex justify-end mb-4 px-1"> */}
+        {/* Positioned to the top right corner with some margin */}
+        <div className="absolute top-[calc(6rem)] right-2 z-10 w-auto origin-top-left rounded-md bg-white shadow-lg focus:outline-none animate-slideRightAndFadeIn">
+          <button
+            onClick={() =>
+              setLayout((prev) =>
+                prev === "standard" ? "analytics" : "standard"
+              )
+            }
+            className="cursor-pointer flex items-center gap-x-2 rounded-b-md border-gray-50 bg-white px-3 py-1 text-xs font-medium text-gray-600 shadow-sm transition-colors hover:bg-gray-100 focus:outline-none "
+            title="Промяна на изгледа"
+          >
+            <ArrowsRightLeftIcon className="h-4 w-4" />
+            <span>
+              {layout === "standard"
+                ? "Аналитичен изглед"
+                : "Стандартен изглед"}
+            </span>
+          </button>
+        </div>
         <div className="relative flex flex-col lg:flex-row gap-6 flex-1 overflow-hidden">
           {/* Information Panel */}
           {!isInfoPanelHidden && (
@@ -518,64 +534,112 @@ const User: React.FC = () => {
               />
             </div>
           )}
-
-          {/* Main Content (Activity List) */}
-          <div className="relative flex-1 flex flex-col min-w-0 h-full">
-            <UserActivityList
-              user={user}
-              activities={filteredActivities}
-              isLoading={userLoading && !!user}
-              counts={filteredActivityCounts}
-              userId={userUsernameFromParams}
-              dateRange={dateRange}
-              onDateRangeChange={setDateRange}
-              isAnyFilterActive={isAnyFilterActive}
-              onClearAllFilters={handleClearAllFilters}
-              activeCategoryName={activeCategoryName}
-              onClearCategoryFilter={() => setActiveCategoryName(null)}
-              activeRatingTier={activeRatingTier}
-              onClearRatingTierFilter={() => setActiveRatingTier("all")}
-            />
-          </div>
-
-          {/* Statistics Panel */}
-          {!isStatsPanelHidden && (
-            <div className="lg:w-3/12 lg:basis-3/12 flex flex-col min-w-0 h-full">
-              <UserStatisticsPanel
-                textStats={filteredTextStats}
-                pieChartStats={pieChartStats}
-                userName={user.name}
-                isLoading={userLoading && !!user}
-                onCategoryClick={handleCategoryClick}
-                onRatingTierClick={handleRatingTierClick}
-                activeCategoryLabel={activeCategoryName}
-                activeRatingTierLabel={
-                  activeRatingTier !== "all"
-                    ? pieChartStats?.ratingTierDistributionData.find((d) =>
-                        d.label.startsWith(activeRatingTier)
-                      )?.label ?? null
-                    : null
-                }
-                activeCategoryFilter={activeCategoryName}
-                activeRatingTierFilter={activeRatingTier}
-                activeStatsTab={statsActivityType}
-                onStatsTabChange={setStatsActivityType}
-              />
-            </div>
+          {/* --- NEW: Conditional Layout Rendering --- */}
+          {layout === "standard" ? (
+            <>
+              {/* Main Content (Activity List) */}
+              <div className="relative flex-1 flex flex-col min-w-0 h-full">
+                <UserActivityList
+                  user={user}
+                  activities={filteredActivities}
+                  isLoading={userLoading && !!user}
+                  counts={filteredActivityCounts}
+                  userId={userUsernameFromParams}
+                  dateRange={dateRange}
+                  onDateRangeChange={setDateRange}
+                  isAnyFilterActive={isAnyFilterActive}
+                  onClearAllFilters={handleClearAllFilters}
+                  activeCategoryName={activeCategoryName}
+                  onClearCategoryFilter={() => setActiveCategoryName(null)}
+                  activeRatingTier={activeRatingTier}
+                  onClearRatingTierFilter={() => setActiveRatingTier("all")}
+                />
+              </div>
+              {/* Statistics Panel */}
+              {!isRightPanelHidden && (
+                <div className="lg:w-3/12 lg:basis-3/12 flex flex-col min-w-0 h-full">
+                  <UserStatisticsPanel
+                    textStats={filteredTextStats}
+                    pieChartStats={pieChartStats}
+                    userName={user.name}
+                    isLoading={userLoading && !!user}
+                    onCategoryClick={handleCategoryClick}
+                    onRatingTierClick={handleRatingTierClick}
+                    activeCategoryLabel={activeCategoryName}
+                    activeRatingTierLabel={
+                      activeRatingTier !== "all"
+                        ? pieChartStats?.ratingTierDistributionData.find((d) =>
+                            d.label.startsWith(activeRatingTier)
+                          )?.label ?? null
+                        : null
+                    }
+                    activeCategoryFilter={activeCategoryName}
+                    activeRatingTierFilter={activeRatingTier}
+                    activeStatsTab={statsActivityType}
+                    onStatsTabChange={setStatsActivityType}
+                  />
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              {/* Statistics Panel (Center) */}
+              <div className="relative flex-1 flex flex-col min-w-0 h-full">
+                <UserStatisticsPanel
+                  viewMode="center"
+                  textStats={filteredTextStats}
+                  pieChartStats={pieChartStats}
+                  userName={user.name}
+                  isLoading={userLoading && !!user}
+                  onCategoryClick={handleCategoryClick}
+                  onRatingTierClick={handleRatingTierClick}
+                  activeCategoryLabel={activeCategoryName}
+                  activeRatingTierLabel={
+                    activeRatingTier !== "all"
+                      ? pieChartStats?.ratingTierDistributionData.find((d) =>
+                          d.label.startsWith(activeRatingTier)
+                        )?.label ?? null
+                      : null
+                  }
+                  activeCategoryFilter={activeCategoryName}
+                  activeRatingTierFilter={activeRatingTier}
+                  activeStatsTab={statsActivityType}
+                  onStatsTabChange={setStatsActivityType}
+                />
+              </div>
+              {/* Activity List (Right) */}
+              {!isRightPanelHidden && (
+                <div className="lg:w-3/12 lg:basis-3/12 flex flex-col min-w-0 h-full">
+                  <UserActivityList
+                    cardView="compact"
+                    user={user}
+                    activities={filteredActivities}
+                    isLoading={userLoading && !!user}
+                    counts={filteredActivityCounts}
+                    userId={userUsernameFromParams}
+                    dateRange={dateRange}
+                    onDateRangeChange={setDateRange}
+                    isAnyFilterActive={isAnyFilterActive}
+                    onClearAllFilters={handleClearAllFilters}
+                    activeCategoryName={activeCategoryName}
+                    onClearCategoryFilter={() => setActiveCategoryName(null)}
+                    activeRatingTier={activeRatingTier}
+                    onClearRatingTierFilter={() => setActiveRatingTier("all")}
+                  />
+                </div>
+              )}
+            </>
           )}
-
-          {/* --- UPDATED: Left Toggle Button --- */}
+          {/* Left Toggle Button */}
           <div
             className="absolute top-0 bottom-0 z-20 hidden lg:flex items-center transition-all duration-300 ease-in-out"
             style={{ left: isInfoPanelHidden ? "0px" : "25%" }}
           >
             <button
               onClick={() => setIsInfoPanelHidden((p) => !p)}
-              // Apply rounded-l-lg to the button itself for the left side
               className="relative -translate-x-1/2 w-4 h-full flex items-center justify-center group bg-white/0 hover:bg-white/50 transition-colors rounded-l-lg"
               title={isInfoPanelHidden ? "Покажи панела" : "Скрий панела"}
             >
-              {/* Removed the separate dimmed background div, now handled by button hover bg */}
               <div
                 className={`cursor-pointer p-0  flex rounded-r-md items-center  group-hover:bg-gray-50 group-hover:shadow-md shadow-xs border border-gray-50/50 group-hover:border-gray-100 transition-all ${
                   isInfoPanelHidden
@@ -593,27 +657,25 @@ const User: React.FC = () => {
               </div>
             </button>
           </div>
-
-          {/* --- UPDATED: Right Toggle Button --- */}
+          {/* Right Toggle Button */}
           <div
             className="absolute top-0 bottom-0 z-20 hidden lg:flex items-center transition-all duration-300 ease-in-out"
-            style={{ right: isStatsPanelHidden ? "0px" : "25%" }}
+            style={{ right: isRightPanelHidden ? "0px" : "25%" }}
           >
             <button
-              onClick={() => setIsStatsPanelHidden((p) => !p)}
-              // Mirrored: translate-x-1/2 and rounded-r-lg
+              onClick={() => setIsRightPanelHidden((p) => !p)}
               className="relative translate-x-1/2 w-4 h-full flex items-center justify-center group bg-white/0 hover:bg-white/50 transition-colors rounded-r-lg"
-              title={isStatsPanelHidden ? "Покажи панела" : "Скрий панела"}
+              title={isRightPanelHidden ? "Покажи панела" : "Скрий панела"}
             >
               <div
                 className={`cursor-pointer p-0 flex rounded-l-md items-center group-hover:bg-gray-50 group-hover:shadow-md shadow-xs border border-gray-50/50 group-hover:border-gray-100 transition-all ${
-                  isStatsPanelHidden
+                  isRightPanelHidden
                     ? "mr-5 h-10 rounded-l-md bg-gray-100"
                     : "h-full bg-white"
                 }`}
               >
                 <div className="text-gray-500 group-hover:text-gray-800 transition-colors">
-                  {isStatsPanelHidden ? (
+                  {isRightPanelHidden ? (
                     <ChevronLeftIcon className="h-5 w-5" />
                   ) : (
                     <ChevronRightIcon className="h-5 w-5" />
@@ -640,8 +702,7 @@ const User: React.FC = () => {
         )}
         {updateError && !updateLoading && (
           <div className="p-4 mb-4 text-center text-red-600 bg-red-100 rounded-md">
-            Грешка при запис:
-            {updateError?.message || "Неизвестна грешка"}
+            Грешка при запис: {updateError?.message || "Неизвестна грешка"}
           </div>
         )}
         {!updateLoading && (

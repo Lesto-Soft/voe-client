@@ -10,12 +10,14 @@ import {
   HandThumbUpIcon,
   BanknotesIcon,
   GlobeAltIcon,
+  CalendarDaysIcon,
 } from "@heroicons/react/24/outline";
 import { UserActivityStats } from "../../../hooks/useUserActivityStats";
 import StatisticPieChart from "../../charts/StatisticPieChart";
 import { PieSegmentData } from "../../charts/PieChart";
 import { RatingTierLabel } from "../../../pages/User";
 import * as Tooltip from "@radix-ui/react-tooltip";
+import DateRangeSelector from "./DateRangeSelector";
 
 // define a type for the text-based stats
 export interface UserTextStats {
@@ -59,6 +61,12 @@ interface UserStatisticsPanelProps {
     approvals: number;
     finances: number;
   };
+  // Add new props to receive date range state and handler
+  dateRange?: { startDate: Date | null; endDate: Date | null };
+  onDateRangeChange?: (range: {
+    startDate: Date | null;
+    endDate: Date | null;
+  }) => void;
 }
 
 // Define the type for our new tabs
@@ -93,9 +101,17 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
   onStatsTabChange,
   viewMode = "side",
   activityCounts,
+  dateRange, // Destructure new props
+  onDateRangeChange, // Destructure new props
 }) => {
   const [activePieTab, setActivePieTab] = useState<StatsTab>("categories");
+  // State to manage the date filter's visibility
+  const [isDateFilterVisible, setIsDateFilterVisible] = useState(false);
   const isInteractive = onCategoryClick || onRatingTierClick;
+
+  // Check if a date range is active to style the button accordingly
+  const isDateFilterActive =
+    dateRange?.startDate !== null || dateRange?.endDate !== null;
 
   const StatItem: React.FC<{
     icon: React.ElementType;
@@ -271,29 +287,62 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
   return (
     <Tooltip.Provider>
       <aside className="bg-white rounded-lg shadow-lg flex flex-col overflow-hidden h-full">
-        <div className="p-4 sm:p-6 space-y-5 overflow-y-auto flex-1 custom-scrollbar-xs">
-          <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-x-2">
-            <ChartPieIcon className="h-6 w-6 mr-2 text-teal-600" />
-            <span>Статистика</span>
-            {isInteractive && (
-              <Tooltip.Root delayDuration={150}>
-                <Tooltip.Trigger asChild>
-                  <button className="cursor-help text-gray-400 hover:text-sky-600">
-                    <InformationCircleIcon className="h-5 w-5" />
-                  </button>
-                </Tooltip.Trigger>
-                <Tooltip.Portal>
-                  <Tooltip.Content
-                    className="select-none rounded-md bg-gray-800 px-3 py-2 text-sm leading-tight text-white shadow-lg z-50"
-                    sideOffset={5}
-                  >
-                    Кликнете върху диаграмите, за да филтрирате.
-                    <Tooltip.Arrow className="fill-gray-800" />
-                  </Tooltip.Content>
-                </Tooltip.Portal>
-              </Tooltip.Root>
+        <div className="p-4 sm:p-4 space-y-3 overflow-y-auto flex-1 custom-scrollbar-xs">
+          {/* 👇 Wrap heading in a flex container to align with the button */}
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-x-2">
+              <ChartPieIcon className="h-6 w-6 mr-2 text-teal-600" />
+              <span>Статистика</span>
+              {isInteractive && (
+                <Tooltip.Root delayDuration={150}>
+                  <Tooltip.Trigger asChild>
+                    <button className="cursor-help text-gray-400 hover:text-sky-600">
+                      <InformationCircleIcon className="h-5 w-5" />
+                    </button>
+                  </Tooltip.Trigger>
+                  <Tooltip.Portal>
+                    <Tooltip.Content
+                      className="select-none rounded-md bg-gray-800 px-3 py-2 text-sm leading-tight text-white shadow-lg z-50"
+                      sideOffset={5}
+                    >
+                      Кликнете върху диаграмите, за да филтрирате.
+                      <Tooltip.Arrow className="fill-gray-800" />
+                    </Tooltip.Content>
+                  </Tooltip.Portal>
+                </Tooltip.Root>
+              )}
+            </h3>
+            {/* 👇 Render the toggle button only in the center view mode */}
+            {viewMode === "center" && (
+              <button
+                onClick={() => setIsDateFilterVisible((prev) => !prev)}
+                title="Filter by date"
+                className={`hover:cursor-pointer p-2 rounded-md transition-colors duration-150 ${
+                  isDateFilterVisible
+                    ? "bg-indigo-100 text-indigo-600"
+                    : isDateFilterActive
+                    ? "bg-indigo-100 text-gray-500"
+                    : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                }`}
+              >
+                <CalendarDaysIcon className="h-5 w-5" />
+              </button>
             )}
-          </h3>
+          </div>
+
+          {/* 👇 Update the conditional render to use the new state */}
+          {viewMode === "center" &&
+            isDateFilterVisible &&
+            dateRange &&
+            onDateRangeChange && (
+              <div className="border-t border-b pt-1 pb-1 border-gray-200 bg-gray-50">
+                <DateRangeSelector
+                  dateRange={dateRange}
+                  onDateRangeChange={onDateRangeChange}
+                />
+              </div>
+            )}
+
           {viewMode === "center" ? (
             <>
               {PieChartSection}

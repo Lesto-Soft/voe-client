@@ -623,6 +623,7 @@ const User: React.FC = () => {
               )}
             </>
           ) : (
+            // analytics layout
             <>
               {/* Statistics Panel (Center) */}
               <div className="relative flex-1 flex flex-col min-w-0 h-full">
@@ -647,6 +648,9 @@ const User: React.FC = () => {
                   activityCounts={filteredActivityCounts} // Pass the counts object
                   activeStatsTab={activeActivityTab}
                   onStatsTabChange={handleActivityTabChange}
+                  // Pass the date range props to the statistics panel
+                  dateRange={dateRange}
+                  onDateRangeChange={setDateRange}
                 />
               </div>
               {/* Activity List (Right) */}
@@ -669,6 +673,8 @@ const User: React.FC = () => {
                     onTabChange={handleActivityTabChange}
                     activeRatingTier={activeRatingTier}
                     onClearRatingTierFilter={() => setActiveRatingTier("all")}
+                    // Hide the date filter from the activity list
+                    showDateFilter={false}
                   />
                 </div>
               )}

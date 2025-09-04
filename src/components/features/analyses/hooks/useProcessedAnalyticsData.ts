@@ -205,7 +205,7 @@ export const useProcessedAnalyticsData = (
         return { periodLabel: dayName, ...aggregateCases(dayCases) };
       });
     } else if (viewMode === "custom") {
-      let periodString = "Целия период"; // Default for custom view with no dates
+      let periodString = "Цял период"; // Default for custom view with no dates
       const startStr = startDateForPies?.toLocaleDateString("bg-BG");
       const endStr = endDateForPies?.toLocaleDateString("bg-BG");
 

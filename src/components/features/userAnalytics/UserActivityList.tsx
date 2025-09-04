@@ -64,6 +64,7 @@ interface UserActivityListProps {
   // MODIFIED: Added props to control the component
   activeTab: StatsActivityType;
   onTabChange: (tab: StatsActivityType) => void;
+  showDateFilter?: boolean; // Add a new prop to control visibility
 }
 
 const getTierForScore = (score: number): RatingTierLabel => {
@@ -90,6 +91,7 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
   cardView = "full",
   activeTab,
   onTabChange,
+  showDateFilter = true, // Default the new prop to true
 }) => {
   const [isDateFilterVisible, setIsDateFilterVisible] = useState(false);
   const isDateFilterActive =
@@ -276,22 +278,26 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
             ))}
           </div>
 
-          <button
-            onClick={() => setIsDateFilterVisible((prev) => !prev)}
-            title="Filter by date"
-            className={`hover:cursor-pointer p-2 rounded-md transition-colors duration-150 ${
-              isDateFilterVisible
-                ? "bg-indigo-100 text-indigo-600"
-                : isDateFilterActive
-                ? "bg-indigo-100 text-gray-500"
-                : "bg-gray-100 text-gray-500 hover:bg-gray-200"
-            }`}
-          >
-            <CalendarDaysIcon className="h-5 w-5" />
-          </button>
+          {/* Conditionally render the calendar button */}
+          {showDateFilter && (
+            <button
+              onClick={() => setIsDateFilterVisible((prev) => !prev)}
+              title="Filter by date"
+              className={`hover:cursor-pointer p-2 rounded-md transition-colors duration-150 ${
+                isDateFilterVisible
+                  ? "bg-indigo-100 text-indigo-600"
+                  : isDateFilterActive
+                  ? "bg-indigo-100 text-gray-500"
+                  : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+              }`}
+            >
+              <CalendarDaysIcon className="h-5 w-5" />
+            </button>
+          )}
         </div>
 
-        {isDateFilterVisible && (
+        {/* Conditionally render the DateRangeSelector itself */}
+        {showDateFilter && isDateFilterVisible && (
           <div className=" border-t pt-1 border-gray-200">
             <DateRangeSelector
               dateRange={dateRange}

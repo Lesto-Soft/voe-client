@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import DatePicker, { registerLocale } from "react-datepicker";
 import { bg } from "date-fns/locale/bg";
 import { startOfDay, endOfDay, subDays } from "../../../utils/dateUtils";
@@ -92,6 +92,8 @@ const DateRangeSelector: React.FC<DateRangeSelectorProps> = ({
 }) => {
   const [activePreset, setActivePreset] = useState<string | null>("All Time");
   const today = new Date();
+  // create a ref for the scrollable container
+  const presetsContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const { startDate, endDate } = dateRange;
@@ -122,6 +124,32 @@ const DateRangeSelector: React.FC<DateRangeSelectorProps> = ({
 
     setActivePreset(null);
   }, [dateRange]);
+
+  // add a new useEffect to handle mouse wheel scrolling
+  useEffect(() => {
+    const scrollContainer = presetsContainerRef.current;
+    if (!scrollContainer) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      // Proceed only if scrolling vertically and the container is overflowing
+      if (
+        e.deltaY !== 0 &&
+        scrollContainer.scrollWidth > scrollContainer.clientWidth
+      ) {
+        e.preventDefault(); // Prevent the main page from scrolling
+        scrollContainer.scrollBy({
+          left: e.deltaY * 1.5, // Use deltaY to scroll horizontally
+          behavior: "smooth",
+        });
+      }
+    };
+
+    scrollContainer.addEventListener("wheel", handleWheel, { passive: false });
+
+    return () => {
+      scrollContainer.removeEventListener("wheel", handleWheel);
+    };
+  }, []); // Run this effect only once
 
   const handlePresetClick = (preset: { label: string; days: number }) => {
     setActivePreset(preset.label);
@@ -167,25 +195,29 @@ const DateRangeSelector: React.FC<DateRangeSelectorProps> = ({
   };
 
   const getButtonClass = (isActive: boolean) =>
-    `border hover:cursor-pointer px-3 py-1 text-xs sm:text-sm font-medium rounded-md whitespace-nowrap transition-colors duration-150 focus:outline-none ${
+    `border hover:cursor-pointer px-1 py-0.5 text-xs sm:text-sm font-medium rounded-md whitespace-nowrap transition-colors duration-150 focus:outline-none ${
       isActive
         ? "bg-indigo-600 text-white shadow-sm border-indigo-700"
         : "bg-white text-gray-700 hover:bg-gray-200 border-gray-200"
     }`;
 
   return (
+    // attach the ref and add horizontal padding here
     <div
       className={`flex flex-row items-center space-x-5 ${
         justify === "end" ? "justify-end" : "justify-between"
       }`}
     >
-      <div className="flex items-center justify-center space-x-1 sm:space-x-2 overflow-x-auto custom-scrollbar-xs">
+      <div
+        ref={presetsContainerRef}
+        className="flex items-center justify-start space-x-1 sm:space-x-2 overflow-x-auto custom-scrollbar-xs px-1"
+      >
         <button
           onClick={handleAllTimeClick}
           className={getButtonClass(activePreset === "All Time")}
         >
           <span className="lg:hidden">Цял</span>
-          <span className="hidden lg:inline">Целия период</span>
+          <span className="hidden lg:inline">Цял период</span>
         </button>
         {presets.map((preset) => (
           <button
@@ -215,7 +247,7 @@ const DateRangeSelector: React.FC<DateRangeSelectorProps> = ({
             scrollableYearDropdown
             yearDropdownItemNumber={15}
             renderCustomHeader={(props) => <CustomHeader {...props} />}
-            className="p-1.5 pl-2 pr-7 border border-gray-300 rounded bg-white text-sm shadow-sm focus:outline-none focus:border-indigo-500 w-28 cursor-pointer"
+            className="p-0.5 pl-2 pr-7 border border-gray-300 rounded bg-white text-sm shadow-sm focus:outline-none focus:border-indigo-500 w-28 cursor-pointer"
             calendarClassName="font-mulish"
             placeholderText="дд/мм/гг"
           />
@@ -246,7 +278,7 @@ const DateRangeSelector: React.FC<DateRangeSelectorProps> = ({
             scrollableYearDropdown
             yearDropdownItemNumber={15}
             renderCustomHeader={(props) => <CustomHeader {...props} />}
-            className="p-1.5 pl-2 pr-7 border border-gray-300 rounded bg-white text-sm shadow-sm focus:outline-none focus:border-indigo-500 w-28 cursor-pointer"
+            className="p-0.5 pl-2 pr-7 border border-gray-300 rounded bg-white text-sm shadow-sm focus:outline-none focus:border-indigo-500 w-28 cursor-pointer"
             calendarClassName="font-mulish"
             placeholderText="дд/мм/гг"
           />

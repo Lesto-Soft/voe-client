@@ -30,6 +30,7 @@ import { ROLES, TIERS } from "../utils/GLOBAL_PARAMETERS";
 import { containsAnyCategoryById } from "../utils/arrayUtils";
 import { useAuthorization } from "../hooks/useAuthorization";
 import ForbiddenPage from "./ErrorPages/ForbiddenPage";
+import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
 
 export type RatingTierLabel =
   | "Отлични"
@@ -68,6 +69,10 @@ const User: React.FC = () => {
     username: string;
   }>();
 
+  // --- NEW: State for panel visibility ---
+  const [isInfoPanelHidden, setIsInfoPanelHidden] = useState(false);
+  const [isStatsPanelHidden, setIsStatsPanelHidden] = useState(false);
+
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [successModalMessage, setSuccessModalMessage] = useState("");
@@ -83,7 +88,6 @@ const User: React.FC = () => {
   );
   const [activeRatingTier, setActiveRatingTier] =
     useState<RatingTierLabel>("all");
-  // add new state for the statistics filter
   const [statsActivityType, setStatsActivityType] =
     useState<StatsActivityType>("all");
 
@@ -122,6 +126,7 @@ const User: React.FC = () => {
 
   const serverBaseUrl = import.meta.env.VITE_API_URL || "";
 
+  // --- All memoized calculations for filtering and stats remain unchanged ---
   const filteredActivities = useMemo((): CombinedActivity[] => {
     if (!user) return [];
 
@@ -132,7 +137,7 @@ const User: React.FC = () => {
       if (startDate && itemDate < startDate) return false;
       if (endDate && itemDate > endDate) return false;
       return true;
-    }; // --- 1. GATHER ALL ACTIVITIES ---
+    };
 
     const ratedCases: Map<
       string,
@@ -229,7 +234,7 @@ const User: React.FC = () => {
         item: { case: value.caseData, averageScore },
         activityType: "rating",
       });
-    }); // --- 2. APPLY FILTERS --- // CATEGORY FILTER
+    });
 
     if (activeCategoryName) {
       const activeCategoryId = pieChartStats?.signalsByCategoryChartData.find(
@@ -262,7 +267,7 @@ const User: React.FC = () => {
           );
         });
       }
-    } // RATING TIER FILTER
+    }
 
     if (activeRatingTier !== "all") {
       activities = activities.filter((activity) => {
@@ -296,7 +301,7 @@ const User: React.FC = () => {
           getTierForScore(relatedCase.calculatedRating) === activeRatingTier
         );
       });
-    } // --- 3. SORT FINAL LIST ---
+    }
 
     return activities.sort(
       (a, b) =>
@@ -343,7 +348,6 @@ const User: React.FC = () => {
           return (a.item as IAnswer).case;
         return null;
       })
-      // this filter now correctly removes both null AND undefined
       .filter((c): c is ICase => !!c);
 
     const uniqueCases = Array.from(
@@ -371,6 +375,7 @@ const User: React.FC = () => {
     };
   }, [filteredActivities, filteredActivityCounts]);
 
+  // --- Handlers and other logic remain unchanged ---
   const handleFormSubmit = async (
     formData: any,
     editingUserId: string | null,
@@ -486,51 +491,130 @@ const User: React.FC = () => {
   return (
     <>
       <div className="container min-w-full mx-auto p-2 sm:p-6 bg-gray-50 flex flex-col h-[calc(100vh-6rem)]">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 overflow-hidden">
-          <UserInformationPanel
-            user={user}
-            isLoading={userLoading && !!user}
-            serverBaseUrl={serverBaseUrl}
-            onEditUser={openEditModal}
-            canEdit={canEdit}
-          />
-          <UserActivityList
-            user={user}
-            activities={filteredActivities}
-            isLoading={userLoading && !!user}
-            counts={filteredActivityCounts}
-            userId={userUsernameFromParams}
-            dateRange={dateRange}
-            onDateRangeChange={setDateRange}
-            isAnyFilterActive={isAnyFilterActive}
-            onClearAllFilters={handleClearAllFilters}
-            activeCategoryName={activeCategoryName}
-            onClearCategoryFilter={() => setActiveCategoryName(null)}
-            activeRatingTier={activeRatingTier}
-            onClearRatingTierFilter={() => setActiveRatingTier("all")}
-          />
-          <UserStatisticsPanel
-            textStats={filteredTextStats}
-            pieChartStats={pieChartStats}
-            userName={user.name}
-            isLoading={userLoading && !!user}
-            onCategoryClick={handleCategoryClick}
-            onRatingTierClick={handleRatingTierClick}
-            activeCategoryLabel={activeCategoryName}
-            activeRatingTierLabel={
-              activeRatingTier !== "all"
-                ? pieChartStats?.ratingTierDistributionData.find((d) =>
-                    d.label.startsWith(activeRatingTier)
-                  )?.label ?? null
-                : null
-            }
-            activeCategoryFilter={activeCategoryName}
-            activeRatingTierFilter={activeRatingTier}
-            activeStatsTab={statsActivityType}
-            onStatsTabChange={setStatsActivityType}
-          />
+        {/*
+          This container is now 'relative' to act as the positioning context for the arrows.
+          This ensures the arrows don't get cut off when panels are hidden.
+        */}
+        <div className="relative flex flex-col lg:flex-row gap-6 flex-1 overflow-hidden">
+          {/* Information Panel */}
+          {!isInfoPanelHidden && (
+            <div className="lg:w-3/12 lg:basis-3/12 flex flex-col min-w-0 h-full">
+              <UserInformationPanel
+                user={user}
+                isLoading={userLoading && !!user}
+                serverBaseUrl={serverBaseUrl}
+                onEditUser={openEditModal}
+                canEdit={canEdit}
+              />
+            </div>
+          )}
+
+          {/* Main Content (Activity List) */}
+          <div className="relative flex-1 flex flex-col min-w-0 h-full">
+            <UserActivityList
+              user={user}
+              activities={filteredActivities}
+              isLoading={userLoading && !!user}
+              counts={filteredActivityCounts}
+              userId={userUsernameFromParams}
+              dateRange={dateRange}
+              onDateRangeChange={setDateRange}
+              isAnyFilterActive={isAnyFilterActive}
+              onClearAllFilters={handleClearAllFilters}
+              activeCategoryName={activeCategoryName}
+              onClearCategoryFilter={() => setActiveCategoryName(null)}
+              activeRatingTier={activeRatingTier}
+              onClearRatingTierFilter={() => setActiveRatingTier("all")}
+            />
+          </div>
+
+          {/* Statistics Panel */}
+          {!isStatsPanelHidden && (
+            <div className="lg:w-3/12 lg:basis-3/12 flex flex-col min-w-0 h-full">
+              <UserStatisticsPanel
+                textStats={filteredTextStats}
+                pieChartStats={pieChartStats}
+                userName={user.name}
+                isLoading={userLoading && !!user}
+                onCategoryClick={handleCategoryClick}
+                onRatingTierClick={handleRatingTierClick}
+                activeCategoryLabel={activeCategoryName}
+                activeRatingTierLabel={
+                  activeRatingTier !== "all"
+                    ? pieChartStats?.ratingTierDistributionData.find((d) =>
+                        d.label.startsWith(activeRatingTier)
+                      )?.label ?? null
+                    : null
+                }
+                activeCategoryFilter={activeCategoryName}
+                activeRatingTierFilter={activeRatingTier}
+                activeStatsTab={statsActivityType}
+                onStatsTabChange={setStatsActivityType}
+              />
+            </div>
+          )}
+
+          {/* --- UPDATED: Left Toggle Button --- */}
+          <div
+            className="absolute top-0 bottom-0 z-20 hidden lg:flex items-center transition-all duration-300 ease-in-out"
+            style={{ left: isInfoPanelHidden ? "0px" : "25%" }}
+          >
+            <button
+              onClick={() => setIsInfoPanelHidden((p) => !p)}
+              // Apply rounded-l-lg to the button itself for the left side
+              className="relative -translate-x-1/2 w-4 h-full flex items-center justify-center group bg-white/0 hover:bg-white/50 transition-colors rounded-l-lg"
+              title={isInfoPanelHidden ? "Покажи панела" : "Скрий панела"}
+            >
+              {/* Removed the separate dimmed background div, now handled by button hover bg */}
+              <div
+                className={`cursor-pointer p-0  flex rounded-r-md items-center  group-hover:bg-gray-50 group-hover:shadow-md shadow-xs border border-gray-50/50 group-hover:border-gray-100 transition-all ${
+                  isInfoPanelHidden
+                    ? "ml-5 h-10 rounded-r-md bg-gray-100"
+                    : "h-full bg-white"
+                }`}
+              >
+                <div className="text-gray-500 group-hover:text-gray-800 transition-colors">
+                  {isInfoPanelHidden ? (
+                    <ChevronRightIcon className="h-5 w-5" />
+                  ) : (
+                    <ChevronLeftIcon className="h-5 w-5" />
+                  )}
+                </div>
+              </div>
+            </button>
+          </div>
+
+          {/* --- UPDATED: Right Toggle Button --- */}
+          <div
+            className="absolute top-0 bottom-0 z-20 hidden lg:flex items-center transition-all duration-300 ease-in-out"
+            style={{ right: isStatsPanelHidden ? "0px" : "25%" }}
+          >
+            <button
+              onClick={() => setIsStatsPanelHidden((p) => !p)}
+              // Mirrored: translate-x-1/2 and rounded-r-lg
+              className="relative translate-x-1/2 w-4 h-full flex items-center justify-center group bg-white/0 hover:bg-white/50 transition-colors rounded-r-lg"
+              title={isStatsPanelHidden ? "Покажи панела" : "Скрий панела"}
+            >
+              <div
+                className={`cursor-pointer p-0 flex rounded-l-md items-center group-hover:bg-gray-50 group-hover:shadow-md shadow-xs border border-gray-50/50 group-hover:border-gray-100 transition-all ${
+                  isStatsPanelHidden
+                    ? "mr-5 h-10 rounded-l-md bg-gray-100"
+                    : "h-full bg-white"
+                }`}
+              >
+                <div className="text-gray-500 group-hover:text-gray-800 transition-colors">
+                  {isStatsPanelHidden ? (
+                    <ChevronLeftIcon className="h-5 w-5" />
+                  ) : (
+                    <ChevronRightIcon className="h-5 w-5" />
+                  )}
+                </div>
+              </div>
+            </button>
+          </div>
         </div>
       </div>
+      {/* --- Modals remain unchanged --- */}
       <UserModal
         isOpen={isEditModalOpen}
         onClose={closeEditModal}

@@ -138,7 +138,7 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
 
   return (
     <Tooltip.Provider>
-      <aside className="lg:col-span-3 bg-white rounded-lg shadow-lg flex flex-col overflow-hidden">
+      <aside className="bg-white rounded-lg shadow-lg flex flex-col overflow-hidden h-full">
         <div className="p-4 sm:p-6 space-y-5 overflow-y-auto flex-1 custom-scrollbar">
           <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-x-2">
             <ChartPieIcon className="h-6 w-6 mr-2 text-teal-600" />

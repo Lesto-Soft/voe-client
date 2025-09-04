@@ -243,7 +243,7 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
   }
 
   return (
-    <div className="lg:col-span-6 bg-white rounded-lg shadow-lg flex flex-col overflow-hidden max-h-full">
+    <div className="bg-white rounded-lg shadow-lg flex flex-col overflow-hidden max-h-full  h-full">
       <div className="p-1 sm:p-2 border-b border-gray-200">
         <div className="flex items-center justify-between pb-1">
           <div

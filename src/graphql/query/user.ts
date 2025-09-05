@@ -53,6 +53,7 @@ fragment FullUserFragment on User {
         categories {
           _id
           name
+          color
           experts {
             _id
           }
@@ -91,6 +92,7 @@ fragment FullUserFragment on User {
           categories {
             _id
             name
+            color
           }
           answers {
             needs_finance
@@ -119,6 +121,7 @@ fragment FullUserFragment on User {
           categories {
             _id
             name
+            color
           }
           answers {
             needs_finance
@@ -147,6 +150,7 @@ fragment FullUserFragment on User {
           categories {
             _id
             name
+            color
           }
           answers {
             needs_finance
@@ -173,6 +177,7 @@ fragment FullUserFragment on User {
           categories {
             _id
             name
+            color
           }
           answers {
             needs_finance
@@ -196,6 +201,7 @@ fragment FullUserFragment on User {
             categories {
               _id
               name
+              color
             }
             answers {
               needs_finance
@@ -247,6 +253,7 @@ fragment FullUserFragment on User {
           categories {
             _id
             name
+            color
           }
           answers {
             needs_finance

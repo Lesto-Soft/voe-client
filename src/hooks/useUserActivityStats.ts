@@ -1,7 +1,6 @@
 // src/hooks/useUserActivityStats.ts
 import { useMemo } from "react";
 import { IUser, ICase, ICategory } from "../db/interfaces";
-import { getCategoryColorForUserChart } from "../utils/userDisplayUtils";
 import { PieSegmentData } from "../components/charts/PieChart";
 import { TIERS } from "../utils/GLOBAL_PARAMETERS";
 import { parseActivityDate } from "../utils/dateUtils";
@@ -95,7 +94,7 @@ const useUserActivityStats = (
 
     const categoryCounts: Record<
       string,
-      { id: string; name: string; count: number }
+      { id: string; name: string; count: number; color: string }
     > = {};
 
     casesToAnalyze.forEach((caseItem: ICase) => {
@@ -107,6 +106,7 @@ const useUserActivityStats = (
                 id: category._id,
                 name: category.name,
                 count: 0,
+                color: category.color || "#A9A9A9", // Use the category's color with a fallback
               };
             }
             categoryCounts[category.name].count++;
@@ -119,6 +119,7 @@ const useUserActivityStats = (
             id: "unknown",
             name: unknownCategoryName,
             count: 0,
+            color: "#888888",
           };
         }
         categoryCounts[unknownCategoryName].count++;
@@ -128,14 +129,14 @@ const useUserActivityStats = (
     const signalsByCategoryChartData: PieSegmentData[] = Object.values(
       categoryCounts
     )
-      .map((catInfo, index) => ({
+      .map((catInfo) => ({
         id: catInfo.id,
         label: catInfo.name,
         value: catInfo.count,
-        color: getCategoryColorForUserChart(index),
+        color: catInfo.color, // Use the stored color
       }))
       .filter((segment) => segment.value > 0)
-      .sort((a, b) => b.value - a.value); // --- LOGIC RESTORED END ---
+      .sort((a, b) => b.value - a.value);
     let ratedCasesSum = 0;
     let ratedCasesCount = 0;
     casesToAnalyze.forEach((c) => {

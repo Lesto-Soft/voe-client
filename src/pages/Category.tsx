@@ -6,6 +6,7 @@ import { useCurrentUser } from "../context/UserContext"; // Adjust path as neede
 import {
   useGetCategoryByName,
   useUpdateCategory,
+  useGetAllLeanCategories,
 } from "../graphql/hooks/category"; // Adjust path
 import { GET_LEAN_USERS } from "../graphql/query/user"; // Adjust path
 import { IMe, CaseType } from "../db/interfaces";
@@ -37,6 +38,7 @@ import CategoryStatisticsPanel from "../components/features/categoryAnalytics/Ca
 
 // Constants
 import { ROLES } from "../utils/GLOBAL_PARAMETERS";
+import { PREDEFINED_CATEGORY_COLORS } from "../utils/colors";
 
 import { useAuthorization } from "../hooks/useAuthorization";
 import ForbiddenPage from "./ErrorPages/ForbiddenPage";
@@ -88,6 +90,8 @@ const Category: React.FC = () => {
     data: category,
   });
 
+  const { categories: allCategoriesForPicker } = useGetAllLeanCategories({});
+
   const {
     updateCategory,
     loading: updateCategoryLoading,
@@ -115,6 +119,18 @@ const Category: React.FC = () => {
         category.managers.length === 0)
     );
   }, [category]);
+
+  // ADD THIS MEMO to process the categories and find used colors
+  const usedColors = useMemo(() => {
+    if (!allCategoriesForPicker) return [];
+    // We filter out the current category being edited so its own color is not marked as disabled
+    return allCategoriesForPicker
+      .filter((cat) => cat._id !== category?._id)
+      .filter(
+        (cat) => cat.color && PREDEFINED_CATEGORY_COLORS.includes(cat.color)
+      )
+      .map((cat) => ({ color: cat.color!, categoryName: cat.name }));
+  }, [allCategoriesForPicker, category]);
 
   const canEdit = useMemo(() => {
     if (!currentUser || !category) return false;
@@ -347,6 +363,7 @@ const Category: React.FC = () => {
 
     const inputForMutation: UpdateCategoryInput = {
       name: formData.name,
+      color: formData.color,
       problem: formData.problem || "",
       suggestion: formData.suggestion || "",
       experts: formData.expertIds,
@@ -464,6 +481,7 @@ const Category: React.FC = () => {
             submitButtonText="Запази промените"
             isSubmitting={updateCategoryLoading}
             onDirtyChange={setFormHasUnsavedChanges}
+            usedColors={usedColors}
             allUsersForForm={allUsersDataForForm?.getLeanUsers || []}
             allUsersForFormLoading={allUsersForFormLoading}
           />

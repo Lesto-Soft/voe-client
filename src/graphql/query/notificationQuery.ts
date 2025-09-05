@@ -10,6 +10,7 @@ export const GET_NOTIFICATIONS = gql`
       caseNumber
       username
       new_categories
+      entityId
     }
   }
 `;

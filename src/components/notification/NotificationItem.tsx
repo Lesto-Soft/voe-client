@@ -63,6 +63,8 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
         return <AtSymbolIcon className="h-5 w-5 text-green-600" />;
       case "mention_in_comment":
         return <AtSymbolIcon className="h-5 w-5 text-purple-600" />;
+      case "mention_in_answer_comment":
+        return <AtSymbolIcon className="h-5 w-5 text-purple-600" />;
       default:
         return <InformationCircleIcon className="h-5 w-5 text-gray-500" />;
     }
@@ -98,11 +100,26 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
         className="flex flex-1 items-start gap-4 min-w-0"
         onClick={() => {
           markAsRead({ variables: { notificationIds: [notification._id] } });
-          if (notification.caseNumber) {
-            return navigate(`/case/${notification.caseNumber}`);
+          const { content, caseNumber, entityId, username } = notification;
+          console.log("Notification clicked:", notification);
+          if (caseNumber && entityId) {
+            if (content.includes("answer_comment")) {
+              return navigate(
+                `/case/${caseNumber}#answers-${entityId}?comment=true`
+              );
+            }
+            if (content.includes("comment")) {
+              return navigate(`/case/${caseNumber}#comments-${entityId}`);
+            }
+            if (content.includes("answer")) {
+              return navigate(`/case/${caseNumber}#answers-${entityId}`);
+            }
           }
-          if (notification.username) {
-            return navigate(`/user/${notification.username}`);
+          if (caseNumber) {
+            return navigate(`/case/${caseNumber}`);
+          }
+          if (username) {
+            return navigate(`/user/${username}`);
           }
         }}
       >

@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   ChatBubbleBottomCenterTextIcon,
   ChatBubbleOvalLeftEllipsisIcon,
@@ -11,7 +11,6 @@ import Answer from "./Answer";
 import AddComment from "./AddComment";
 import AddAnswer from "./AddAnswer";
 import { USER_RIGHTS } from "../../utils/GLOBAL_PARAMETERS";
-const LOCAL_STORAGE_KEY = "case-submenu-view";
 
 interface SubmenuProps {
   caseData: ICase;
@@ -22,6 +21,29 @@ interface SubmenuProps {
   mentions?: { name: string; username: string; _id: string }[];
 }
 
+const getStateFromHash = () => {
+  const hash = window.location.hash.substring(1);
+
+  if (hash.startsWith("comments-")) {
+    return { view: "comments" as const, targetId: hash };
+  }
+  if (hash.startsWith("answers-")) {
+    return { view: "answers" as const, targetId: hash };
+  }
+  if (hash === "comments") {
+    return { view: "comments" as const, targetId: null };
+  }
+  if (hash === "answers") {
+    return { view: "answers" as const, targetId: null };
+  }
+  if (hash === "history") {
+    return { view: "history" as const, targetId: null };
+  }
+
+  // Default state if hash is empty or unrecognized
+  return { view: "answers" as const, targetId: null };
+};
+
 const Submenu: React.FC<SubmenuProps> = ({
   caseData,
   t,
@@ -30,17 +52,77 @@ const Submenu: React.FC<SubmenuProps> = ({
   userRights,
   mentions = [],
 }) => {
-  const [view, setView] = useState<"answers" | "comments" | "history">(() => {
-    const stored = sessionStorage.getItem(LOCAL_STORAGE_KEY);
-    if (stored === "answers" || stored === "comments" || stored === "history") {
-      return stored;
-    }
-    return "answers";
-  });
+  const [view, setView] = useState(() => getStateFromHash().view);
+  const [targetId, setTargetId] = useState<string | null>(null);
+  const [childTargetId, setChildTargetId] = useState<string | null>(null);
 
-  useLayoutEffect(() => {
-    sessionStorage.setItem(LOCAL_STORAGE_KEY, view);
-  }, [view]);
+  // --- A SINGLE, ROBUST useEffect to control everything ---
+  useEffect(() => {
+    const processUrl = () => {
+      const fullHash = window.location.hash.substring(1);
+
+      // --- THIS IS THE CORRECT PARSING LOGIC ---
+      // It correctly checks the hash string itself, not the main URL search params.
+      const isCommentLink = fullHash.includes("?comment=true");
+      const hashPart = fullHash.split("?")[0]; // Isolates "answers-COMMENT_ID"
+
+      console.log("SUBMENU: Processing URL...", {
+        fullHash,
+        isCommentLink,
+        hashPart,
+      });
+
+      // SCENARIO 1: Your special link for a nested comment
+      if (hashPart.startsWith("answers-") && isCommentLink) {
+        const commentId = hashPart.split("-")[1];
+        console.log("SUBMENU: Looking for parent of commentId:", commentId);
+
+        const parentAnswer = (caseData.answers || []).find((answer) =>
+          answer.comments?.some((c) => c._id === commentId)
+        );
+
+        if (parentAnswer) {
+          console.log(
+            "SUBMENU: SUCCESS! Found Parent Answer. ID:",
+            parentAnswer._id
+          );
+          setView("answers");
+          setTargetId(`answers-${parentAnswer._id}`); // The parent is the main target
+          setChildTargetId(`comments-${commentId}`); // The child is the secondary target
+        } else {
+          console.error(
+            "SUBMENU: FAILED to find parent answer for commentId:",
+            commentId
+          );
+        }
+        return; // Stop processing
+      }
+
+      // SCENARIO 2: All other direct links
+      setChildTargetId(null); // Ensure child target is cleared for other links
+      if (hashPart.startsWith("comments-")) {
+        setView("comments");
+        setTargetId(hashPart);
+      } else if (hashPart.startsWith("answers-")) {
+        setView("answers");
+        setTargetId(hashPart);
+      } else if (hashPart === "history" || hashPart === "comments") {
+        setView(hashPart);
+        setTargetId(null);
+      } else {
+        // Default / fallback
+        setView("answers");
+        setTargetId(null);
+      }
+    };
+
+    processUrl(); // Run logic when component loads or data changes
+
+    window.addEventListener("hashchange", processUrl);
+    return () => {
+      window.removeEventListener("hashchange", processUrl);
+    };
+  }, [caseData.answers, window.location.href]);
 
   const isCreatorAndNothingElse =
     userRights.length === 1 && userRights.includes("creator");
@@ -54,7 +136,6 @@ const Submenu: React.FC<SubmenuProps> = ({
           <sup>{caseData?.answers?.length || 0}</sup>
         </>
       ),
-      // --- FIXED: Added mr-2 for spacing ---
       icon: <ChatBubbleBottomCenterTextIcon className="h-5 w-5 mr-2" />,
     },
     {
@@ -99,9 +180,7 @@ const Submenu: React.FC<SubmenuProps> = ({
                   : "border-gray-300 shadow-sm bg-gray-100 text-gray-700 hover:bg-red-100 hover:text-btnRedHover hover:cursor-pointer"
               }`}
               type="button"
-              onClick={() =>
-                setView(item.key as "answers" | "comments" | "history")
-              }
+              onClick={() => (window.location.hash = item.key)}
             >
               {item.icon}
               {item.label}
@@ -158,6 +237,8 @@ const Submenu: React.FC<SubmenuProps> = ({
                         status={caseData.status}
                         caseCategories={caseData.categories}
                         mentions={mentions}
+                        targetId={targetId}
+                        childTargetId={childTargetId}
                       />
                     ) : null;
                   })}
@@ -193,6 +274,7 @@ const Submenu: React.FC<SubmenuProps> = ({
                       me={me}
                       caseNumber={caseData.case_number}
                       mentions={mentions}
+                      targetId={targetId}
                     />
                   ))}
               </>

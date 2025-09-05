@@ -1,5 +1,5 @@
 import { IAnswer, ICategory, IComment, IMe } from "../../db/interfaces";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Comment from "./Comment";
 import ShowDate from "../global/ShowDate";
 import { useTranslation } from "react-i18next";
@@ -25,6 +25,8 @@ const Answer: React.FC<{
   status?: string;
   caseCategories: ICategory[];
   mentions: { name: string; username: string; _id: string }[];
+  targetId?: string | null;
+  childTargetId?: string | null;
 }> = ({
   answer,
   me,
@@ -33,6 +35,8 @@ const Answer: React.FC<{
   status,
   caseCategories,
   mentions,
+  targetId,
+  childTargetId = null,
 }) => {
   const { t } = useTranslation("answer");
   const [approved, setApproved] = useState(!!answer.approved);
@@ -42,6 +46,8 @@ const Answer: React.FC<{
   const [showCommentBox, setShowCommentBox] = useState(false);
   const isCreator = me._id === answer.creator._id;
   const isAdmin = me.role?._id === ROLES.ADMIN;
+  const answerRef = useRef<HTMLDivElement>(null);
+  const commentRefs = useRef(new Map<string, HTMLDivElement>());
 
   const managedCategoryIds = me?.managed_categories.map(
     (cat: ICategory) => cat._id
@@ -71,9 +77,62 @@ const Answer: React.FC<{
     approved === true;
 
   useEffect(() => {
-    setApproved(!!answer.approved);
-    setFinancialApproved(!!answer.financial_approved);
-  }, [answer]);
+    const selfId = `answers-${answer._id}`;
+
+    // This component is not involved at all, so do nothing.
+    if (targetId !== selfId) {
+      return;
+    }
+
+    // --- This component IS the target parent. ---
+
+    // Action 1: Scroll this parent Answer into view.
+    if (answerRef.current) {
+      answerRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+
+    // Action 2: Check if there is a child comment to highlight.
+    if (childTargetId) {
+      const timer = setTimeout(() => {
+        const commentId = childTargetId.split("-")[1];
+        const childWrapperRef = commentRefs.current.get(commentId);
+
+        if (childWrapperRef) {
+          console.log(
+            `ANSWER (${answer._id}): Found ref for child, now highlighting!`
+          );
+
+          // SCROLL TO THE CHILD'S WRAPPER
+          childWrapperRef.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+          });
+
+          // HIGHLIGHT THE CHILD'S WRAPPER
+          childWrapperRef.classList.add("highlight");
+          setTimeout(() => {
+            childWrapperRef.classList.remove("highlight");
+          }, 5000);
+        } else {
+          console.error(
+            `ANSWER (${answer._id}): FAILED to find ref for child with ID:`,
+            commentId
+          );
+        }
+      }, 100); // 100ms delay for React to render the comment.
+
+      return () => clearTimeout(timer);
+    } else {
+      // NO. The target is me.
+      // Highlight myself.
+      if (answerRef.current) {
+        answerRef.current.classList.add("highlight");
+        setTimeout(() => {
+          answerRef.current?.classList.remove("highlight");
+        }, 5000);
+      }
+    }
+  }, [targetId, childTargetId, answer._id]);
 
   const answerContentAndAttachments = (
     <>
@@ -143,6 +202,7 @@ const Answer: React.FC<{
             caseNumber={caseNumber}
             me={me}
             inputId={`file-upload-comment-answer-${answer._id}`}
+            mentions={mentions}
           />
         )}
       </div>
@@ -151,13 +211,26 @@ const Answer: React.FC<{
           <hr className="my-2 border-gray-200" />
           <div className="flex flex-col gap-2">
             {answer.comments.map((comment: IComment) => (
-              <Comment
+              <div
                 key={comment._id}
-                comment={comment}
-                me={me}
-                caseNumber={caseNumber}
-                mentions={mentions}
-              />
+                ref={(node) => {
+                  if (node) {
+                    commentRefs.current.set(comment._id, node);
+                  } else {
+                    commentRefs.current.delete(comment._id);
+                  }
+                }}
+              >
+                <Comment
+                  key={comment._id}
+                  comment={comment}
+                  me={me}
+                  caseNumber={caseNumber}
+                  mentions={mentions}
+                  parentType="answer"
+                  targetId={childTargetId}
+                />
+              </div>
             ))}
           </div>
         </div>
@@ -166,7 +239,7 @@ const Answer: React.FC<{
   );
 
   return (
-    <div className="my-8 min-w-full px-5">
+    <div className="my-8 min-w-full px-5 transition-all duration-500">
       <div
         className={`bg-white shadow-md rounded-lg p-4 lg:p-6 ${
           approved
@@ -226,7 +299,11 @@ const Answer: React.FC<{
 
         {/* --- DESKTOP VIEW (FLEX) --- */}
         <div className="hidden lg:block">
-          <div className="flex flex-row gap-2">
+          <div
+            className="flex flex-row gap-2"
+            id={`answers-${answer._id}`}
+            ref={answerRef}
+          >
             <Creator creator={answer.creator} />
             <div className="flex-1 flex flex-col">
               <div className="flex flex-wrap gap-y-2 justify-between items-center mb-2">

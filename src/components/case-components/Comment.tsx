@@ -8,12 +8,15 @@ import ImagePreviewModal from "../modals/ImagePreviewModal";
 import DeleteModal from "../modals/DeleteModal";
 import { renderContentSafely } from "../../utils/contentRenderer";
 import { useDeleteComment } from "../../graphql/hooks/comment";
+import { useEffect, useRef, useState } from "react";
 
 interface CommentProps {
   comment: IComment;
   me?: any;
   caseNumber: number;
   mentions: { name: string; username: string; _id: string }[];
+  targetId?: string | null;
+  parentType?: "case" | "answer";
 }
 
 const Comment: React.FC<CommentProps> = ({
@@ -21,8 +24,11 @@ const Comment: React.FC<CommentProps> = ({
   me,
   caseNumber,
   mentions,
+  targetId,
+  parentType,
 }) => {
   const { deleteComment } = useDeleteComment(caseNumber);
+  const commentRef = useRef<HTMLDivElement>(null);
 
   // Actions block is defined once to avoid repetition.
   const actions = me &&
@@ -43,8 +49,34 @@ const Comment: React.FC<CommentProps> = ({
       </div>
     );
 
+  useEffect(() => {
+    const elementId = `${
+      parentType === "answer" ? "answers-comment" : "comments"
+    }-${comment._id}`;
+
+    if (targetId === elementId && commentRef.current) {
+      requestAnimationFrame(() => {
+        if (commentRef.current) {
+          commentRef.current.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+          });
+          commentRef.current.classList.add("highlight");
+          setTimeout(() => {
+            commentRef.current?.classList.remove("highlight");
+          }, 5000);
+        }
+      });
+    }
+  }, [targetId, comment._id, parentType]);
   return (
-    <div className="flex flex-row items-stretch gap-3 rounded p-3 w-full px-5">
+    <div
+      id={`${parentType === "answer" ? "answers-comment" : "comments"}-${
+        comment._id
+      }`}
+      ref={commentRef}
+      className="py-8 px-5 m-5  transition-all duration-500 flex flex-row items-stretch gap-3 rounded min-w-11/12"
+    >
       {/* Left: Creator info */}
       <div className="flex flex-col justify-center items-center w-38">
         <UserLink user={comment.creator} />

@@ -11,6 +11,7 @@ import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 
 export interface CategoryFormData {
   name: string;
+  color: string;
   problem?: string;
   suggestion?: string;
   expertIds?: string[];
@@ -36,6 +37,7 @@ interface CategoryFormProps {
   submitButtonText?: string;
   isSubmitting?: boolean;
   onDirtyChange?: (isDirty: boolean) => void;
+  usedColors: { color: string; categoryName: string }[];
   allUsersForForm: ILeanUserForForm[];
   allUsersForFormLoading: boolean;
 }
@@ -47,6 +49,7 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
   submitButtonText,
   isSubmitting = false,
   onDirtyChange,
+  usedColors,
   allUsersForForm,
   allUsersForFormLoading,
 }) => {
@@ -63,6 +66,8 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
     setManagerIds,
     archived,
     setArchived,
+    color,
+    setColor,
     nameError,
     setNameError,
     initialExpertObjects,
@@ -146,6 +151,7 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
 
     const formDataObject: CategoryFormData = {
       name: finalTrimmedName,
+      color: color,
       problem: problem, // Send the full HTML
       suggestion: suggestion, // Send the full HTML
       expertIds: expertIds.length > 0 ? expertIds : undefined,
@@ -187,28 +193,33 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
     <>
       <form onSubmit={handleSubmit} noValidate>
         <div className="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2">
-          <CategoryInputFields
-            name={name}
-            setName={setName}
-            nameError={nameError}
-            problem={problem}
-            setProblem={setProblem}
-            problemError={problemError}
-            suggestion={suggestion}
-            setSuggestion={setSuggestion}
-            suggestionError={suggestionError}
-            expertIds={expertIds}
-            setExpertIds={setExpertIds}
-            managerIds={managerIds}
-            setManagerIds={setManagerIds}
-            archived={archived}
-            setArchived={setArchived}
-            errorPlaceholderClass={errorPlaceholderClass}
-            initialExperts={initialExpertObjects as ILeanUserForForm[]}
-            initialManagers={initialManagerObjects as ILeanUserForForm[]}
-            allUsersForAssigning={allUsersForForm}
-            usersLoading={allUsersForFormLoading}
-          />
+          <div className="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2 col-span-2">
+            <CategoryInputFields
+              name={name}
+              setName={setName}
+              nameError={nameError}
+              problem={problem}
+              setProblem={setProblem}
+              problemError={problemError}
+              suggestion={suggestion}
+              setSuggestion={setSuggestion}
+              suggestionError={suggestionError}
+              expertIds={expertIds}
+              setExpertIds={setExpertIds}
+              managerIds={managerIds}
+              setManagerIds={setManagerIds}
+              archived={archived}
+              setArchived={setArchived}
+              color={color}
+              setColor={setColor}
+              usedColors={usedColors}
+              errorPlaceholderClass={errorPlaceholderClass}
+              initialExperts={initialExpertObjects as ILeanUserForForm[]}
+              initialManagers={initialManagerObjects as ILeanUserForForm[]}
+              allUsersForAssigning={allUsersForForm}
+              usersLoading={allUsersForFormLoading}
+            />
+          </div>
         </div>
 
         {formSubmitError && (

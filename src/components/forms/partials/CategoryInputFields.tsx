@@ -4,6 +4,7 @@ import { XMarkIcon } from "@heroicons/react/24/outline";
 // Removed IUser import as ILeanUserForForm is more specific here
 import TextEditor from "./TextEditor/TextEditor";
 import { CATEGORY_HELPERS, ROLES } from "../../../utils/GLOBAL_PARAMETERS";
+import ColorPicker from "./ColorPicker";
 
 // Define a lean user type that includes the role ID for the form, matching what parent passes
 interface ILeanUserForForm {
@@ -36,11 +37,14 @@ interface CategoryInputFieldsProps {
   setManagerIds: (ids: string[]) => void;
   archived: boolean;
   setArchived: (isChecked: boolean) => void;
+  color: string;
+  setColor: (value: string) => void;
+  usedColors: { color: string; categoryName: string }[];
   errorPlaceholderClass: string;
-  initialExperts?: ILeanUserForForm[]; // Used for pre-selecting and displaying names
-  initialManagers?: ILeanUserForForm[]; // Used for pre-selecting and displaying names
-  allUsersForAssigning: ILeanUserForForm[]; // Users passed from parent
-  usersLoading: boolean; // Loading state for allUsersForAssigning
+  initialExperts?: ILeanUserForForm[];
+  initialManagers?: ILeanUserForForm[];
+  allUsersForAssigning: ILeanUserForForm[];
+  usersLoading: boolean;
 }
 
 const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
@@ -59,6 +63,9 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
   setManagerIds,
   archived,
   setArchived,
+  color,
+  setColor,
+  usedColors,
   errorPlaceholderClass,
   initialExperts = [],
   initialManagers = [],
@@ -217,14 +224,13 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
 
   return (
     <>
-      {/* Row 1: Name | Archived */}
+      {/* Name Input */}
       <div>
         <label
           htmlFor="categoryName"
           className="mb-1 block text-sm font-medium text-gray-700"
         >
-          {t("Име на категория")}
-          <span className="text-red-500">*</span>
+          {t("Име на категория")} <span className="text-red-500">*</span>
         </label>
         <input
           type="text"
@@ -245,26 +251,21 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
         </p>
       </div>
 
-      <div>
-        <label className="mb-1 block text-sm font-medium text-transparent select-none">
-          &nbsp;
+      {/* Archived Checkbox */}
+      <div className="flex items-center">
+        <input
+          type="checkbox"
+          id="categoryArchived"
+          checked={archived}
+          onChange={(e) => setArchived(e.target.checked)}
+          className="cursor-pointer h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+        />
+        <label
+          htmlFor="categoryArchived"
+          className="cursor-pointer ml-2 block text-sm text-gray-900"
+        >
+          {t("Архивирана категория")}
         </label>
-        <div className="flex items-center">
-          <input
-            type="checkbox"
-            id="categoryArchived"
-            checked={archived}
-            onChange={(e) => setArchived(e.target.checked)}
-            className="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-          />
-          <label
-            htmlFor="categoryArchived"
-            className="ml-2 block text-sm text-gray-900"
-          >
-            {t("Архивирана категория")}
-          </label>
-        </div>
-        <p className={`${errorPlaceholderClass}`}>&nbsp;</p>
       </div>
 
       {/* Row 2: Experts | Managers */}
@@ -464,8 +465,21 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
         <p className={`${errorPlaceholderClass}`}>&nbsp;</p>
       </div>
 
-      {/* Row 3: Problem | Suggestion - Using TextEditor */}
-      <div>
+      {/* Color Picker (spanning both columns) */}
+      <div className="md:col-span-2">
+        <label className="mb-1 block text-sm font-medium text-gray-700">
+          {t("Цвят на категория")} <span className="text-red-500">*</span>
+        </label>
+        <ColorPicker
+          selectedColor={color}
+          onSelectColor={setColor}
+          usedColors={usedColors}
+        />
+        <p className={`${errorPlaceholderClass}`}>&nbsp;</p>
+      </div>
+
+      {/* Problem and Suggestion Text Editors (spanning both columns) */}
+      <div className="md:col-span-1">
         <label
           htmlFor="categoryProblem"
           className="mb-1 block text-sm font-medium text-gray-700"
@@ -503,7 +517,7 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
         </p>
       </div>
 
-      <div>
+      <div className="md:col-span-1">
         <label
           htmlFor="categorySuggestion"
           className="mb-1 block text-sm font-medium text-gray-700"

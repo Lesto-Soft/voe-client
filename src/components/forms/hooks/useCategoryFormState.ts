@@ -23,6 +23,7 @@ export function useCategoryFormState({
   const [expertIds, setExpertIds] = useState<string[]>([]);
   const [managerIds, setManagerIds] = useState<string[]>([]);
   const [archived, setArchived] = useState<boolean>(false);
+  const [color, setColor] = useState("#CCCCCC");
 
   const [nameError, setNameError] = useState<string | null>(null);
 
@@ -33,6 +34,7 @@ export function useCategoryFormState({
   const [initialExpertIds, setInitialExpertIds] = useState<string[]>([]);
   const [initialManagerIds, setInitialManagerIds] = useState<string[]>([]);
   const [initialArchived, setInitialArchived] = useState<boolean>(false);
+  const [initialColor, setInitialColor] = useState("#CCCCCC");
 
   // Store initial expert/manager objects with names for display
   const [initialExpertObjects, setInitialExpertObjects] = useState<IUserLean[]>(
@@ -57,6 +59,7 @@ export function useCategoryFormState({
       setExpertIds(K_experts.map((e) => e._id));
       setManagerIds(K_managers.map((m) => m._id));
       setArchived(initialData.archived || false);
+      setColor(initialData.color || "#CCCCCC");
 
       // Set initial values for dirty check
       setInitialName(initialData.name || "");
@@ -65,6 +68,7 @@ export function useCategoryFormState({
       setInitialExpertIds(K_experts.map((e) => e._id));
       setInitialManagerIds(K_managers.map((m) => m._id));
       setInitialArchived(initialData.archived || false);
+      setInitialColor(initialData.color || "#CCCCCC");
 
       setInitialExpertObjects(K_experts);
       setInitialManagerObjects(K_managers);
@@ -76,6 +80,7 @@ export function useCategoryFormState({
       setExpertIds([]);
       setManagerIds([]);
       setArchived(false);
+      setColor("#CCCCCC");
       // Reset initial values
       setInitialName("");
       setInitialProblem("");
@@ -83,6 +88,7 @@ export function useCategoryFormState({
       setInitialExpertIds([]);
       setInitialManagerIds([]);
       setInitialArchived(false);
+      setInitialColor("#CCCCCC");
       setInitialExpertObjects([]);
       setInitialManagerObjects([]);
     }
@@ -98,7 +104,8 @@ export function useCategoryFormState({
         suggestion !== initialSuggestion ||
         !arraysEqualUnordered(expertIds, initialExpertIds) ||
         !arraysEqualUnordered(managerIds, initialManagerIds) ||
-        archived !== initialArchived
+        archived !== initialArchived ||
+        color !== initialColor
       );
     } else {
       // Create mode: dirty if any field has a value (name is primary)
@@ -108,7 +115,8 @@ export function useCategoryFormState({
         suggestion.trim() !== "" ||
         expertIds.length > 0 ||
         managerIds.length > 0 ||
-        archived // if true, it's a change from default false
+        archived ||
+        color !== "#CCCCCC" // if true, it's a change from default false
       );
     }
   }, [
@@ -118,12 +126,14 @@ export function useCategoryFormState({
     expertIds,
     managerIds,
     archived,
+    color,
     initialName,
     initialProblem,
     initialSuggestion,
     initialExpertIds,
     initialManagerIds,
     initialArchived,
+    initialColor,
     initialData,
   ]);
 
@@ -158,6 +168,10 @@ export function useCategoryFormState({
     (isChecked: boolean) => setArchived(isChecked),
     []
   );
+  const handleColorChange = useCallback(
+    (newColor: string) => setColor(newColor),
+    []
+  );
 
   return {
     name,
@@ -172,6 +186,8 @@ export function useCategoryFormState({
     setManagerIds: handleManagerIdsChange,
     archived,
     setArchived: handleArchivedChange,
+    color,
+    setColor: handleColorChange,
     nameError,
     setNameError,
     initialData, // Keep exposing for potential other logic in form

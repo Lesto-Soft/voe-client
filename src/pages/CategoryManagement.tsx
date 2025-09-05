@@ -41,6 +41,8 @@ import { useCurrentUser } from "../context/UserContext"; // <-- NEW: Import curr
 import { IMe } from "../db/interfaces"; // <-- NEW: Import IMe
 import { ROLES } from "../utils/GLOBAL_PARAMETERS";
 
+import { PREDEFINED_CATEGORY_COLORS } from "../utils/colors";
+
 // Define a lean user type that includes the role ID, matching GET_LEAN_USERS
 interface ILeanUserForForm {
   _id: string;
@@ -458,6 +460,19 @@ const CategoryManagement: React.FC = () => {
     categoryCountLoadingForTable,
   ]);
 
+  // fetch all categories for the color picker
+  const { categories: allCategoriesForPicker } = useGetAllLeanCategories({});
+
+  // compute the list of used colors
+  const usedColors = useMemo(() => {
+    if (!allCategoriesForPicker) return [];
+    return allCategoriesForPicker
+      .filter(
+        (cat) => cat.color && PREDEFINED_CATEGORY_COLORS.includes(cat.color)
+      )
+      .map((cat) => ({ color: cat.color!, categoryName: cat.name }));
+  }, [allCategoriesForPicker]);
+
   const handleCaseStatusCardClick = (status: CaseStatus | string | null) => {
     const newStatus =
       filterCaseStatus === status ? null : (status as CaseStatus);
@@ -496,6 +511,7 @@ const CategoryManagement: React.FC = () => {
   ) => {
     const inputForMutation = {
       name: formData.name,
+      color: formData.color,
       problem: formData.problem || "",
       suggestion: formData.suggestion || "",
       experts: formData.expertIds,
@@ -728,7 +744,7 @@ const CategoryManagement: React.FC = () => {
             Грешка при запис: {mutationError.message || "Неизвестна грешка"}
           </div>
         )}
-        {!(createCategoryLoading || updateCategoryLoading) && (
+        {!updateCategoryLoading && (
           <CategoryForm
             key={editingCategory ? editingCategory._id : "create-new-category"}
             onSubmit={handleCategoryFormSubmit}
@@ -739,6 +755,7 @@ const CategoryManagement: React.FC = () => {
             }
             isSubmitting={createCategoryLoading || updateCategoryLoading}
             onDirtyChange={setFormHasUnsavedChanges}
+            usedColors={usedColors}
             allUsersForForm={allUsersDataForForm?.getLeanUsers || []}
             allUsersForFormLoading={allUsersForFormLoading}
           />

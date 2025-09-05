@@ -4,6 +4,7 @@ const categoryFragment = `
 fragment CategoryFragment on Category {
       _id
       name
+      color
       problem
       suggestion
       experts {
@@ -55,6 +56,7 @@ export const GET_ACTIVE_CATEGORIES = gql`
     getLeanActiveCategories {
       _id
       name
+      color
       problem
       suggestion
       experts {
@@ -75,6 +77,7 @@ export const GET_CATEGORY_BY_NAME = gql`
       # and passes the operation variable $name to it.
       _id
       name
+      color
       problem
       suggestion
       experts {

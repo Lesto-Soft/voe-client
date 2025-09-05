@@ -21,6 +21,7 @@ export interface ICase {
 export interface ICategory {
   _id: string;
   name: string;
+  color?: string;
   problem?: string;
   suggestion?: string;
   cases?: ICase[];

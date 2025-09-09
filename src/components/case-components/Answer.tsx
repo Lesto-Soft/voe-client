@@ -79,12 +79,9 @@ const Answer: React.FC<{
   useEffect(() => {
     const selfId = `answers-${answer._id}`;
     // This component is not involved at all, so do nothing.
-    console.log(selfId, targetId);
     if (targetId !== selfId) {
       return;
     }
-    console.log("pass");
-    // --- This component IS the target parent. ---
 
     // Action 1: Scroll this parent Answer into view.
     if (answerRef.current) {
@@ -92,7 +89,6 @@ const Answer: React.FC<{
     }
     // Action 2: Check if there is a child comment to highlight.
     if (childTargetId) {
-      console.log("childTargetId", childTargetId);
       const timer = setTimeout(() => {
         const commentId = childTargetId.split("-")[1];
         const childWrapperRef = commentRefs.current.get(commentId);

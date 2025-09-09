@@ -66,34 +66,18 @@ const Submenu: React.FC<SubmenuProps> = ({
       const isCommentLink = fullHash.includes("?comment=true");
       const hashPart = fullHash.split("?")[0]; // Isolates "answers-COMMENT_ID"
 
-      console.log("SUBMENU: Processing URL...", {
-        fullHash,
-        isCommentLink,
-        hashPart,
-      });
-
       // SCENARIO 1: Your special link for a nested comment
       if (hashPart.startsWith("answers-") && isCommentLink) {
         const commentId = hashPart.split("-")[1];
-        console.log("SUBMENU: Looking for parent of commentId:", commentId);
 
         const parentAnswer = (caseData.answers || []).find((answer) =>
           answer.comments?.some((c) => c._id === commentId)
         );
 
         if (parentAnswer) {
-          console.log(
-            "SUBMENU: SUCCESS! Found Parent Answer. ID:",
-            parentAnswer._id
-          );
           setView("answers");
           setTargetId(`answers-${parentAnswer._id}`); // The parent is the main target
           setChildTargetId(`comments-${commentId}`); // The child is the secondary target
-        } else {
-          console.error(
-            "SUBMENU: FAILED to find parent answer for commentId:",
-            commentId
-          );
         }
         return; // Stop processing
       }

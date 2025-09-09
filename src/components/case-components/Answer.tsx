@@ -77,8 +77,8 @@ const Answer: React.FC<{
     approved === true;
 
   useEffect(() => {
-    const selfId = `answers-${answer._id}`;
-
+    const selfId = childTargetId ? `${childTargetId}` : `answers-${answer._id}`;
+    console.log(selfId, childTargetId, targetId);
     // This component is not involved at all, so do nothing.
     if (targetId !== selfId) {
       return;
@@ -90,9 +90,9 @@ const Answer: React.FC<{
     if (answerRef.current) {
       answerRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
     }
-
     // Action 2: Check if there is a child comment to highlight.
     if (childTargetId) {
+      console.log("childTargetId", childTargetId);
       const timer = setTimeout(() => {
         const commentId = childTargetId.split("-")[1];
         const childWrapperRef = commentRefs.current.get(commentId);
@@ -247,15 +247,22 @@ const Answer: React.FC<{
             : ""
         }`}
       >
-        {/* --- MOBILE VIEW (GRID) --- */}
-        <div className="lg:hidden">
-          <div className="grid grid-cols-[1fr_auto] gap-x-4">
-            <div className="col-start-1">
-              <Creator creator={answer.creator} />
-            </div>
-            <div className="col-start-2 flex flex-col items-end gap-y-2">
+        {/* --- UNIFIED RESPONSIVE LAYOUT --- */}
+        <div
+          className="flex flex-row gap-4"
+          id={`answers-${answer._id}`} // Moved ID and Ref here for consistent targeting
+          ref={answerRef}
+        >
+          {/* Creator's avatar/info on the left */}
+          <Creator creator={answer.creator} />
+
+          {/* All content to the right of the creator */}
+          <div className="flex-1 flex flex-col min-w-0">
+            {/* Header: Contains all action buttons and the date */}
+            <div className="flex flex-wrap justify-between items-center gap-y-2 gap-x-4 mb-2">
+              {/* Approval buttons will appear on the left */}
               {(showApproveBtn || showFinanceApproveBtn) && (
-                <div className="flex items-center flex-wrap gap-2 justify-end">
+                <div className="flex items-center flex-wrap gap-2">
                   {showApproveBtn && (
                     <ApproveBtn
                       {...{ approved, setApproved, t, answer, me, refetch }}
@@ -270,86 +277,35 @@ const Answer: React.FC<{
                   )}
                 </div>
               )}
-              <div className="flex items-center gap-2">
+
+              {/* Edit/Delete/History/Date buttons. This group is pushed to the right on large screens. */}
+              <div className="flex items-center gap-2 lg:ml-auto">
                 {canEditOrDelete && (
                   <>
                     {answer.history && answer.history.length > 0 && (
                       <AnswerHistoryModal history={answer.history} />
                     )}
-                    <>
-                      <EditAnswerButton
-                        {...{ answer, caseNumber, me }}
-                        currentAttachments={answer.attachments || []}
-                        mentions={mentions}
-                      />
-                      <DeleteModal
-                        title="deleteAnswer"
-                        content="deleteAnswerInfo"
-                        onDelete={() => deleteAnswer(answer._id.toString())}
-                      />
-                    </>
+                    <EditAnswerButton
+                      {...{ answer, caseNumber, me }}
+                      currentAttachments={answer.attachments || []}
+                      mentions={mentions}
+                    />
+                    <DeleteModal
+                      title="deleteAnswer"
+                      content="deleteAnswerInfo"
+                      onDelete={() => deleteAnswer(answer._id.toString())}
+                    />
                   </>
                 )}
+                <ShowDate date={answer.date} />
               </div>
-              <ShowDate date={answer.date} centered={true} />
             </div>
-            <div className="col-span-2">{answerContentAndAttachments}</div>
+
+            {/* The main content of the answer */}
+            <div>{answerContentAndAttachments}</div>
           </div>
         </div>
 
-        {/* --- DESKTOP VIEW (FLEX) --- */}
-        <div className="hidden lg:block">
-          <div
-            className="flex flex-row gap-2"
-            id={`answers-${answer._id}`}
-            ref={answerRef}
-          >
-            <Creator creator={answer.creator} />
-            <div className="flex-1 flex flex-col">
-              <div className="flex flex-wrap gap-y-2 justify-between items-center mb-2">
-                {showApproveBtn || showFinanceApproveBtn ? (
-                  <div className="flex items-center flex-wrap gap-2 justify-end">
-                    {showApproveBtn && (
-                      <ApproveBtn
-                        {...{ approved, setApproved, t, answer, me, refetch }}
-                      />
-                    )}
-                    {showFinanceApproveBtn && (
-                      <FinanceApproveBtn
-                        approved={financialApproved}
-                        setApproved={setFinancialApproved}
-                        {...{ t, answer, me, refetch }}
-                      />
-                    )}
-                  </div>
-                ) : (
-                  <div className="h-10" /> // This empty div acts as a placeholder to maintain spacing
-                )}
-                <div className="flex items-center gap-2 ml-4">
-                  {canEditOrDelete && (
-                    <>
-                      {answer.history && answer.history.length > 0 && (
-                        <AnswerHistoryModal history={answer.history} />
-                      )}
-                      <EditAnswerButton
-                        {...{ answer, caseNumber, me }}
-                        currentAttachments={answer.attachments || []}
-                        mentions={mentions}
-                      />
-                      <DeleteModal
-                        title="deleteAnswer"
-                        content="deleteAnswerInfo"
-                        onDelete={() => deleteAnswer(answer._id.toString())}
-                      />
-                    </>
-                  )}
-                  <ShowDate date={answer.date} />
-                </div>
-              </div>
-              <div>{answerContentAndAttachments}</div>
-            </div>
-          </div>
-        </div>
         {commentsSection}
       </div>
     </div>

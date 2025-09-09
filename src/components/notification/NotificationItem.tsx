@@ -102,8 +102,11 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
           markAsRead({ variables: { notificationIds: [notification._id] } });
           const { content, caseNumber, entityId, username } = notification;
           console.log("Notification clicked:", notification);
+          console.log(entityId, caseNumber);
           if (caseNumber && entityId) {
+            console.log(content);
             if (content.includes("answer_comment")) {
+              console.log("Navigating to answer comment");
               return navigate(
                 `/case/${caseNumber}#answers-${entityId}?comment=true`
               );

@@ -1,75 +1,62 @@
-// A selection of 50 distinct, visually appealing colors.
+// src/utils/colors.ts
+
+// A curated selection of 40 visually distinct colors from the Tailwind CSS palette.
+// Organized by hue for easier visual scanning in the color picker.
 export const PREDEFINED_CATEGORY_COLORS: string[] = [
-  "#FF6B6B",
-  "#4ECDC4",
-  "#45B7D1",
-  "#F7B801",
-  "#5F4B8B",
-  "#F07167",
-  "#009B77",
-  "#1A535C",
-  "#FFD166",
-  "#7209B7",
-  "#D62828",
-  "#3A86FF",
-  "#2EC4B6",
-  "#FFC43D",
-  "#CDB4DB",
-  "#E63946",
-  "#2A9D8F",
-  "#264653",
-  "#F4A261",
-  "#8338EC",
+  // Reds
+  "#EF4444", // red-500
+  "#F87171", // red-400
+  // Oranges
+  "#F97316", // orange-500
+  "#FB923C", // orange-400
+  // Amber / Yellow
+  "#F59E0B", // amber-500
+  "#FBBF24", // amber-400
+  // Limes
+  "#84CC16", // lime-500
+  "#A3E635", // lime-400
+  // Greens
+  "#22C55E", // green-500
+  "#4ADE80", // green-400
+  // Emeralds
+  "#10B981", // emerald-500
+  "#34D399", // emerald-400
+  // Teals
+  "#14B8A6", // teal-500
+  "#2DD4BF", // teal-400
+  // Cyans
+  "#06B6D4", // cyan-500
+  "#22D3EE", // cyan-400
+  // Sky / Blues
+  "#0EA5E9", // sky-500
+  "#38BDF8", // sky-400
+  "#3B82F6", // blue-500
+  "#60A5FA", // blue-400
+  // Indigos
+  "#6366F1", // indigo-500
+  "#818CF8", // indigo-400
+  // Violets
+  "#8B5CF6", // violet-500
+  "#A78BFA", // violet-400
+  // Purples
+  "#A855F7", // purple-500
+  "#C084FC", // purple-400
+  // Fuchsias
+  "#D946EF", // fuchsia-500
+  "#E879F9", // fuchsia-400
+  // Pinks
+  "#EC4899", // pink-500
+  "#F472B6", // pink-400
+  // Roses
+  "#F43F5E", // rose-500
+  "#FB7185", // rose-400
+  // Grays & Neutrals
+  "#64748B", // slate-500
+  "#94A3B8", // slate-400
+  "#737373", // neutral-500
+  "#A3A3A3", // neutral-400
+  "#78716C", // stone-500
+  "#A8A29E", // stone-400
+  "#7E22CE", // dark purple
+  "#164E63", // dark cyan
 ];
-/*export const PREDEFINED_CATEGORY_COLORS: string[] = [
-  "#FF6B6B",
-  "#4ECDC4",
-  "#45B7D1",
-  "#F7B801",
-  "#5F4B8B",
-  "#F07167",
-  "#009B77",
-  "#1A535C",
-  "#FFD166",
-  "#7209B7",
-  "#D62828",
-  "#3A86FF",
-  "#2EC4B6",
-  "#FFC43D",
-  "#CDB4DB",
-  "#E63946",
-  "#2A9D8F",
-  "#264653",
-  "#F4A261",
-  "#8338EC",
-  "#EE6055",
-  "#60D394",
-  "#AAF683",
-  "#FFD97D",
-  "#FF9B85",
-  "#D81159",
-  "#8F2D56",
-  "#218380",
-  "#FBB13C",
-  "#73D2DE",
-  "#EF476F",
-  "#FFD166",
-  "#06D6A0",
-  "#118AB2",
-  "#073B4C",
-  "#FF595E",
-  "#FFCA3A",
-  "#8AC926",
-  "#1982C4",
-  "#6A4C93",
-  "#F94144",
-  "#F3722C",
-  "#F8961E",
-  "#F9C74F",
-  "#90BE6D",
-  "#43AA8B",
-  "#4D908E",
-  "#577590",
-  "#277DA1",
-  "#F94144",
-];*/

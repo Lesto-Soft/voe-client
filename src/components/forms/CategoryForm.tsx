@@ -42,6 +42,8 @@ interface CategoryFormProps {
   allUsersForForm: ILeanUserForForm[];
   allUsersForFormLoading: boolean;
   paletteColors: IPaletteColor[];
+  setPaletteColors: (colors: IPaletteColor[]) => void; // For optimistic DnD updates
+  allCategories: ICategory[]; // To check color usage
   paletteColorsLoading: boolean;
   canManageColors: boolean;
 }
@@ -57,6 +59,8 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
   allUsersForForm,
   allUsersForFormLoading,
   paletteColors,
+  setPaletteColors,
+  allCategories,
   paletteColorsLoading,
   canManageColors,
 }) => {
@@ -79,7 +83,7 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
     setNameError,
     initialExpertObjects,
     initialManagerObjects,
-  } = useCategoryFormState({ initialData, onDirtyChange });
+  } = useCategoryFormState({ initialData, onDirtyChange, paletteColors });
 
   const [isColorManagerOpen, setIsColorManagerOpen] = useState(false);
   const [formSubmitError, setFormSubmitError] = useState<string | null>(null);
@@ -258,6 +262,8 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
           isOpen={isColorManagerOpen}
           onClose={() => setIsColorManagerOpen(false)}
           paletteColors={paletteColors}
+          setPaletteColors={setPaletteColors}
+          allCategories={allCategories}
           isLoading={paletteColorsLoading}
         />
       )}

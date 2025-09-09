@@ -304,7 +304,7 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
                 setExpertIds([]);
                 setExpertSearchTerm("");
               }}
-              className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700"
+              className="cursor-pointer absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700"
               title={t("Изчисти експерти")}
             >
               <XMarkIcon className="h-5 w-5" />
@@ -402,7 +402,7 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
                 setManagerIds([]);
                 setManagerSearchTerm("");
               }}
-              className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700"
+              className="cursor-pointer absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700"
               title={t("Изчисти мениджъри")}
             >
               <XMarkIcon className="h-5 w-5" />

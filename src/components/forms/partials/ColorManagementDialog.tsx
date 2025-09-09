@@ -1,25 +1,44 @@
 // src/components/forms/partials/ColorManagementDialog.tsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  restrictToVerticalAxis,
+  restrictToParentElement,
+} from "@dnd-kit/modifiers";
+import {
+  arrayMove,
+  SortableContext,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import {
   XMarkIcon,
-  PencilIcon,
-  TrashIcon,
   PlusIcon,
   ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
-import { IPaletteColor } from "../../../db/interfaces";
+import { ICategory, IPaletteColor } from "../../../db/interfaces";
 import {
   useAddPaletteColor,
   useUpdatePaletteColor,
   useRemovePaletteColor,
+  useReorderPaletteColors,
 } from "../../../graphql/hooks/colorPalette";
 import ConfirmActionDialog from "../../modals/ConfirmActionDialog";
+import { SortableColorRow } from "./SortableColorRow";
 
 interface ColorManagementDialogProps {
   isOpen: boolean;
   onClose: () => void;
   paletteColors: IPaletteColor[];
+  setPaletteColors: (colors: IPaletteColor[]) => void; // For optimistic updates
+  allCategories: ICategory[];
   isLoading: boolean;
 }
 
@@ -27,6 +46,8 @@ const ColorManagementDialog: React.FC<ColorManagementDialogProps> = ({
   isOpen,
   onClose,
   paletteColors,
+  setPaletteColors,
+  allCategories,
   isLoading,
 }) => {
   const [hexCode, setHexCode] = useState("#");
@@ -40,8 +61,20 @@ const ColorManagementDialog: React.FC<ColorManagementDialogProps> = ({
   const { addColor, loading: addLoading } = useAddPaletteColor();
   const { updateColor, loading: updateLoading } = useUpdatePaletteColor();
   const { removeColor, loading: removeLoading } = useRemovePaletteColor();
+  const { reorderColors } = useReorderPaletteColors();
 
   const isMutating = addLoading || updateLoading || removeLoading;
+  const sensors = useSensors(useSensor(PointerSensor));
+
+  const colorUsageMap = useMemo(() => {
+    const map = new Map<string, string>();
+    allCategories.forEach((cat) => {
+      if (cat.color) {
+        map.set(cat.color.toUpperCase(), cat.name);
+      }
+    });
+    return map;
+  }, [allCategories]);
 
   useEffect(() => {
     if (editingColor) {
@@ -97,12 +130,15 @@ const ColorManagementDialog: React.FC<ColorManagementDialogProps> = ({
     }
   };
 
-  const handleHexChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value;
-    if (!value.startsWith("#")) {
-      value = `#${value}`;
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      const oldIndex = paletteColors.findIndex((c) => c._id === active.id);
+      const newIndex = paletteColors.findIndex((c) => c._id === over.id);
+      const newOrder = arrayMove(paletteColors, oldIndex, newIndex);
+      setPaletteColors(newOrder); // Optimistic update
+      reorderColors(newOrder.map((c) => c._id));
     }
-    setHexCode(value.toUpperCase());
   };
 
   return (
@@ -115,8 +151,7 @@ const ColorManagementDialog: React.FC<ColorManagementDialogProps> = ({
               Управление на цветове
             </Dialog.Title>
             <Dialog.Description className="mt-1 mb-4 text-sm text-gray-600">
-              Добавяйте, редактирайте или премахвайте цветове от глобалната
-              палитра.
+              Добавяйте, редактирайте или пренареждайте цветове от палитрата.
             </Dialog.Description>
 
             {error && (
@@ -126,18 +161,21 @@ const ColorManagementDialog: React.FC<ColorManagementDialogProps> = ({
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="mb-4 flex gap-2">
+            <form
+              onSubmit={handleSubmit}
+              className="mb-4 flex items-center gap-2"
+            >
               <input
                 type="color"
                 value={hexCode.length === 7 ? hexCode : "#FFFFFF"}
-                onChange={handleHexChange}
-                className="h-10 w-12 flex-shrink-0 cursor-pointer rounded-md border border-gray-300 bg-white p-0"
+                onChange={(e) => setHexCode(e.target.value.toUpperCase())}
+                className="h-10 w-12 flex-shrink-0 cursor-pointer rounded-xs border border-gray-300 bg-white p-0"
                 title="Избери цвят"
               />
               <input
                 type="text"
                 value={hexCode}
-                onChange={handleHexChange}
+                onChange={(e) => setHexCode(e.target.value.toUpperCase())}
                 placeholder="#RRGGBB"
                 maxLength={7}
                 className="h-10 w-28 rounded-md border border-gray-300 p-2 font-mono text-sm shadow-sm focus:border-indigo-500 focus:outline-none"
@@ -149,62 +187,57 @@ const ColorManagementDialog: React.FC<ColorManagementDialogProps> = ({
                 placeholder="Етикет (напр. 'Светло синьо')"
                 className="h-10 flex-grow rounded-md border border-gray-300 p-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none"
               />
-              <button
-                type="submit"
-                disabled={isMutating}
-                className="flex h-10 items-center justify-center rounded-md bg-indigo-600 px-4 text-white hover:bg-indigo-700 disabled:opacity-50"
-              >
-                {editingColor ? "Запази" : <PlusIcon className="h-5 w-5" />}
-              </button>
-              {editingColor && (
+              <div className="flex-shrink-0 flex items-center gap-2">
                 <button
-                  type="button"
-                  onClick={resetForm}
-                  className="flex h-10 items-center justify-center rounded-md bg-gray-200 px-3 text-gray-700 hover:bg-gray-300"
+                  type="submit"
+                  disabled={isMutating}
+                  className="cursor-pointer flex h-10 w-full items-center justify-center rounded-md bg-indigo-600 px-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
                 >
-                  <XMarkIcon className="h-5 w-5" />
+                  {editingColor ? "Запази" : <PlusIcon className="h-5 w-5" />}
                 </button>
-              )}
+                {editingColor && (
+                  <button
+                    type="button"
+                    onClick={resetForm}
+                    className="cursor-pointer flex h-10 w-10 items-center justify-center rounded-md bg-gray-200 px-3 text-gray-700 hover:bg-gray-300"
+                  >
+                    <XMarkIcon className="h-5 w-5" />
+                  </button>
+                )}
+              </div>
             </form>
 
             <div className="custom-scrollbar-xs -mr-3 max-h-[40vh] space-y-2 overflow-y-auto pr-3">
-              {isLoading && <p>Зареждане...</p>}
-              {paletteColors.map((color) => (
-                <div
-                  key={color._id}
-                  className="flex items-center gap-3 rounded-md bg-gray-50 p-2"
+              {isLoading ? (
+                <p>Зареждане...</p>
+              ) : (
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                  modifiers={[restrictToVerticalAxis, restrictToParentElement]}
                 >
-                  <div
-                    className="h-6 w-6 flex-shrink-0 rounded-md border border-gray-400"
-                    style={{ backgroundColor: color.hexCode }}
-                  ></div>
-                  <span className="font-mono text-sm text-gray-700">
-                    {color.hexCode}
-                  </span>
-                  <span className="flex-grow text-sm text-gray-600">
-                    {color.label}
-                  </span>
-                  <button
-                    onClick={() => setEditingColor(color)}
-                    className="p-1 text-gray-500 hover:text-blue-600"
-                    title="Редактирай"
+                  <SortableContext
+                    items={paletteColors.map((c) => c._id)}
+                    strategy={verticalListSortingStrategy}
                   >
-                    <PencilIcon className="h-4 w-4" />
-                  </button>
-                  <button
-                    onClick={() => handleDeleteClick(color)}
-                    className="p-1 text-gray-500 hover:text-red-600"
-                    title="Изтрий"
-                  >
-                    <TrashIcon className="h-4 w-4" />
-                  </button>
-                </div>
-              ))}
+                    {paletteColors.map((color) => (
+                      <SortableColorRow
+                        key={color._id}
+                        color={color}
+                        usedBy={colorUsageMap.get(color.hexCode.toUpperCase())}
+                        onEdit={setEditingColor}
+                        onDelete={handleDeleteClick}
+                      />
+                    ))}
+                  </SortableContext>
+                </DndContext>
+              )}
             </div>
 
             <Dialog.Close asChild>
               <button
-                className="absolute top-3 right-3 inline-flex h-7 w-7 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100"
+                className="cursor-pointer absolute top-3 right-3 inline-flex h-7 w-7 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100"
                 aria-label="Close"
               >
                 <XMarkIcon className="h-5 w-5" />

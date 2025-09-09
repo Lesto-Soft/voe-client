@@ -26,3 +26,9 @@ export const REMOVE_PALETTE_COLOR = gql`
     removePaletteColor(id: $id)
   }
 `;
+
+export const REORDER_PALETTE_COLORS = gql`
+  mutation ReorderPaletteColors($orderedIds: [ID!]!) {
+    reorderPaletteColors(orderedIds: $orderedIds)
+  }
+`;

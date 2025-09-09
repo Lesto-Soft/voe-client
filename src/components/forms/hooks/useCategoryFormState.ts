@@ -1,21 +1,23 @@
-// src/components/forms/hooks/useCreateCategoryFormState.ts
+// src/components/forms/hooks/useCategoryFormState.ts
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { ICategory } from "../../../db/interfaces"; // Adjust path
+import { ICategory, IPaletteColor } from "../../../db/interfaces"; // Adjust path
 import { arraysEqualUnordered } from "../../../utils/arrayUtils";
 
 interface IUserLean {
-  // Define a lean user type based on what ICategory provides
   _id: string;
   name: string;
 }
+
 interface UseCreateCategoryFormStateProps {
   initialData: ICategory | null;
   onDirtyChange?: (isDirty: boolean) => void;
+  paletteColors: IPaletteColor[]; // Add this prop to receive the palette
 }
 
 export function useCategoryFormState({
   initialData,
   onDirtyChange,
+  paletteColors, // Destructure the new prop
 }: UseCreateCategoryFormStateProps) {
   const [name, setName] = useState("");
   const [problem, setProblem] = useState("");
@@ -23,20 +25,18 @@ export function useCategoryFormState({
   const [expertIds, setExpertIds] = useState<string[]>([]);
   const [managerIds, setManagerIds] = useState<string[]>([]);
   const [archived, setArchived] = useState<boolean>(false);
-  const [color, setColor] = useState("#CCCCCC");
+  const [color, setColor] = useState(""); // Initialize as empty
 
   const [nameError, setNameError] = useState<string | null>(null);
 
-  // Store initial values for dirty checking
   const [initialName, setInitialName] = useState("");
   const [initialProblem, setInitialProblem] = useState("");
   const [initialSuggestion, setInitialSuggestion] = useState("");
   const [initialExpertIds, setInitialExpertIds] = useState<string[]>([]);
   const [initialManagerIds, setInitialManagerIds] = useState<string[]>([]);
   const [initialArchived, setInitialArchived] = useState<boolean>(false);
-  const [initialColor, setInitialColor] = useState("#CCCCCC");
+  const [initialColor, setInitialColor] = useState(""); // Initialize as empty
 
-  // Store initial expert/manager objects with names for display
   const [initialExpertObjects, setInitialExpertObjects] = useState<IUserLean[]>(
     []
   );
@@ -45,13 +45,22 @@ export function useCategoryFormState({
   >([]);
 
   useEffect(() => {
+    // Determine the default color to use for new categories
+    const defaultColor =
+      paletteColors && paletteColors.length > 0
+        ? paletteColors[0].hexCode
+        : "#CCCCCC"; // Fallback gray if palette is empty
+
     if (initialData) {
+      // --- EDIT MODE ---
       const K_experts = (
         (initialData.experts as IUserLean[] | undefined) || []
-      ).filter((e) => e && e._id && e.name); // Ensure experts are well-formed
+      ).filter((e) => e && e._id && e.name);
       const K_managers = (
         (initialData.managers as IUserLean[] | undefined) || []
-      ).filter((m) => m && m._id && m.name); // Ensure managers are well-formed
+      ).filter((m) => m && m._id && m.name);
+
+      const categoryColor = initialData.color || defaultColor;
 
       setName(initialData.name || "");
       setProblem(initialData.problem || "");
@@ -59,7 +68,7 @@ export function useCategoryFormState({
       setExpertIds(K_experts.map((e) => e._id));
       setManagerIds(K_managers.map((m) => m._id));
       setArchived(initialData.archived || false);
-      setColor(initialData.color || "#CCCCCC");
+      setColor(categoryColor);
 
       // Set initial values for dirty check
       setInitialName(initialData.name || "");
@@ -68,36 +77,39 @@ export function useCategoryFormState({
       setInitialExpertIds(K_experts.map((e) => e._id));
       setInitialManagerIds(K_managers.map((m) => m._id));
       setInitialArchived(initialData.archived || false);
-      setInitialColor(initialData.color || "#CCCCCC");
+      setInitialColor(categoryColor);
 
       setInitialExpertObjects(K_experts);
       setInitialManagerObjects(K_managers);
     } else {
-      // Reset form for create mode
+      // --- CREATE MODE ---
+      // Reset form and use the first color from the palette as the default
       setName("");
       setProblem("");
       setSuggestion("");
       setExpertIds([]);
       setManagerIds([]);
       setArchived(false);
-      setColor("#CCCCCC");
-      // Reset initial values
+      setColor(defaultColor); // Use the calculated default color
+
+      // Reset initial values for dirty check
       setInitialName("");
       setInitialProblem("");
       setInitialSuggestion("");
       setInitialExpertIds([]);
       setInitialManagerIds([]);
       setInitialArchived(false);
-      setInitialColor("#CCCCCC");
+      setInitialColor(defaultColor); // Use the same default for comparison
+
       setInitialExpertObjects([]);
       setInitialManagerObjects([]);
     }
-    setNameError(null); // Reset errors
-  }, [initialData]);
+    setNameError(null);
+  }, [initialData, paletteColors]); // Re-run effect if palette changes
 
   const isDirty = useMemo((): boolean => {
+    // isDirty logic remains the same and will work correctly
     if (initialData) {
-      // Edit mode: compare with initial values
       return (
         name !== initialName ||
         problem !== initialProblem ||
@@ -108,7 +120,6 @@ export function useCategoryFormState({
         color !== initialColor
       );
     } else {
-      // Create mode: dirty if any field has a value (name is primary)
       return (
         name.trim() !== "" ||
         problem.trim() !== "" ||
@@ -116,7 +127,7 @@ export function useCategoryFormState({
         expertIds.length > 0 ||
         managerIds.length > 0 ||
         archived ||
-        color !== "#CCCCCC" // if true, it's a change from default false
+        color !== initialColor
       );
     }
   }, [
@@ -190,9 +201,9 @@ export function useCategoryFormState({
     setColor: handleColorChange,
     nameError,
     setNameError,
-    initialData, // Keep exposing for potential other logic in form
-    isDirty, // Expose dirty state
-    initialExpertObjects, // For CategoryInputFields
-    initialManagerObjects, // For CategoryInputFields
+    initialData,
+    isDirty,
+    initialExpertObjects,
+    initialManagerObjects,
   };
 }

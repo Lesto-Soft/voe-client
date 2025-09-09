@@ -1,10 +1,9 @@
 // src/components/forms/partials/ColorPicker.tsx
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useMemo } from "react";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import {
   CheckIcon,
   NoSymbolIcon,
-  ExclamationTriangleIcon,
   Cog6ToothIcon,
 } from "@heroicons/react/24/solid";
 import { IPaletteColor } from "../../../db/interfaces";
@@ -26,12 +25,6 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
   canManageColors,
   onOpenManager,
 }) => {
-  const [customColor, setCustomColor] = useState(selectedColor);
-
-  useEffect(() => {
-    setCustomColor(selectedColor);
-  }, [selectedColor]);
-
   const usedColorMap = useMemo(
     () =>
       new Map(
@@ -40,32 +33,23 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
     [usedColors]
   );
 
-  const paletteColorHexCodes = useMemo(
-    () => paletteColors.map((c) => c.hexCode.toUpperCase()),
-    [paletteColors]
-  );
-
-  const duplicateWarning = useMemo(() => {
-    const customUpper = customColor.toUpperCase();
-    if (
-      !paletteColorHexCodes.includes(customUpper) &&
-      usedColorMap.has(customUpper)
-    ) {
-      return `Внимание: Този цвят се използва от "${usedColorMap.get(
-        customUpper
-      )}".`;
-    }
-    return null;
-  }, [customColor, usedColorMap, paletteColorHexCodes]);
-
-  const handleCustomColorChange = (colorValue: string) => {
-    const formattedColor = colorValue.toUpperCase();
-    setCustomColor(formattedColor);
-    onSelectColor(formattedColor);
-  };
-
   return (
     <div className="rounded-md border border-gray-300 bg-gray-50/50 p-2">
+      <div className="mb-2 flex items-center justify-between">
+        <label className="block text-sm font-medium text-gray-700">
+          Изберете цвят от палитрата:
+        </label>
+        {canManageColors && (
+          <button
+            type="button"
+            onClick={onOpenManager}
+            className="flex cursor-pointer items-center gap-1 rounded-md px-2 py-1 text-xs text-gray-600 hover:bg-gray-200 hover:text-gray-900"
+          >
+            <Cog6ToothIcon className="h-4 w-4" />
+            Управление
+          </button>
+        )}
+      </div>
       <div className="grid grid-cols-10 gap-2">
         <Tooltip.Provider delayDuration={100}>
           {paletteColors.map((color) => {
@@ -121,49 +105,6 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
             );
           })}
         </Tooltip.Provider>
-      </div>
-
-      <div className="mt-4 border-t border-gray-200 pt-4">
-        <div className="mb-2 flex items-center justify-between">
-          <label className="block text-sm font-medium text-gray-700">
-            или изберете персонализиран цвят:
-          </label>
-          {canManageColors && (
-            <button
-              type="button"
-              onClick={onOpenManager}
-              className="flex cursor-pointer items-center gap-1 rounded-md px-2 py-1 text-xs text-gray-600 hover:bg-gray-200 hover:text-gray-900"
-            >
-              <Cog6ToothIcon className="h-4 w-4" />
-              Управление
-            </button>
-          )}
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="relative h-10 w-16">
-            <input
-              type="color"
-              value={customColor}
-              onChange={(e) => handleCustomColorChange(e.target.value)}
-              className="absolute top-0 left-0 h-full w-full cursor-pointer rounded-md border-none p-0"
-              title="Open color picker"
-            />
-          </div>
-          <input
-            type="text"
-            value={customColor}
-            onChange={(e) => handleCustomColorChange(e.target.value)}
-            placeholder="#RRGGBB"
-            maxLength={7}
-            className="w-full max-w-xs rounded-md border border-gray-300 p-2 font-mono text-sm shadow-sm focus:border-indigo-500 focus:outline-none"
-          />
-        </div>
-        {duplicateWarning && (
-          <div className="mt-2 flex items-center text-xs text-yellow-700">
-            <ExclamationTriangleIcon className="h-4 w-4 mr-1.5 flex-shrink-0" />
-            <span>{duplicateWarning}</span>
-          </div>
-        )}
       </div>
     </div>
   );

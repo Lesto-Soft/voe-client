@@ -10,7 +10,7 @@ import {
 } from "../graphql/hooks/category"; // Adjust path
 import { useGetAllPaletteColors } from "../graphql/hooks/colorPalette";
 import { GET_LEAN_USERS } from "../graphql/query/user"; // Adjust path
-import { IMe, CaseType } from "../db/interfaces";
+import { IMe, CaseType, IPaletteColor } from "../db/interfaces";
 import {
   ResolutionCategoryKey,
   RESOLUTION_CATEGORY_CONFIG,
@@ -94,10 +94,29 @@ const Category: React.FC = () => {
   const { categories: allCategoriesForPicker } = useGetAllLeanCategories({});
 
   const {
-    paletteColors,
+    paletteColors: fetchedPaletteColors,
     loading: paletteColorsLoading,
     error: paletteColorsError,
   } = useGetAllPaletteColors();
+
+  // --- NEW: Local state for palette colors to support optimistic DnD updates ---
+  const [paletteColors, setPaletteColors] = useState<IPaletteColor[]>([]);
+
+  useEffect(() => {
+    if (fetchedPaletteColors) {
+      // Use a functional update to access the previous state
+      setPaletteColors((prevColors) => {
+        // Only update state if the content has actually changed
+        if (
+          JSON.stringify(prevColors) !== JSON.stringify(fetchedPaletteColors)
+        ) {
+          return fetchedPaletteColors;
+        }
+        // Otherwise, return the old state to prevent a re-render
+        return prevColors;
+      });
+    }
+  }, [fetchedPaletteColors]); // Corrected: Only depend on fetchedPaletteColorss
 
   const {
     updateCategory,
@@ -494,6 +513,8 @@ const Category: React.FC = () => {
             allUsersForForm={allUsersDataForForm?.getLeanUsers || []}
             allUsersForFormLoading={allUsersForFormLoading}
             paletteColors={paletteColors}
+            setPaletteColors={setPaletteColors}
+            allCategories={allCategoriesForPicker || []}
             paletteColorsLoading={paletteColorsLoading}
             canManageColors={isAdmin}
           />

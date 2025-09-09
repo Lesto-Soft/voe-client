@@ -19,7 +19,11 @@ import {
   CreateCategoryInput,
   UpdateCategoryInput,
 } from "../graphql/mutation/category"; // Adjust path as needed
-import { ICategory, ICaseStatus as CaseStatus } from "../db/interfaces"; // Adjust path as needed, Added IUser
+import {
+  ICategory,
+  ICaseStatus as CaseStatus,
+  IPaletteColor,
+} from "../db/interfaces"; // Adjust path as needed, Added IUser
 import CategoryTable from "../components/features/categoryManagement/CategoryTable"; // Adjust path as needed
 import {
   useCategoryManagement,
@@ -78,10 +82,29 @@ const CategoryManagement: React.FC = () => {
   const isAdmin = currentUser?.role?._id === ROLES.ADMIN;
 
   const {
-    paletteColors,
+    paletteColors: fetchedPaletteColors,
     loading: paletteColorsLoading,
     error: paletteColorsError,
   } = useGetAllPaletteColors();
+
+  // State to hold colors for optimistic updates
+  const [paletteColors, setPaletteColors] = useState<IPaletteColor[]>([]);
+
+  useEffect(() => {
+    if (fetchedPaletteColors) {
+      // Use a functional update to access the previous state
+      setPaletteColors((prevColors) => {
+        // Only update state if the content has actually changed
+        if (
+          JSON.stringify(prevColors) !== JSON.stringify(fetchedPaletteColors)
+        ) {
+          return fetchedPaletteColors;
+        }
+        // Otherwise, return the old state to prevent a re-render
+        return prevColors;
+      });
+    }
+  }, [fetchedPaletteColors]); // Corrected: Only depend on fetchedPaletteColors
 
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<ICategory | null>(
@@ -472,15 +495,19 @@ const CategoryManagement: React.FC = () => {
   // fetch all categories for the color picker
   const { categories: allCategoriesForPicker } = useGetAllLeanCategories({});
 
-  // compute the list of used colors
+  // Computes the list of colors used by *other* categories.
   const usedColors = useMemo(() => {
     if (!allCategoriesForPicker) return [];
-    return allCategoriesForPicker
-      .filter(
-        (cat) => cat.color && PREDEFINED_CATEGORY_COLORS.includes(cat.color)
-      )
-      .map((cat) => ({ color: cat.color!, categoryName: cat.name }));
-  }, [allCategoriesForPicker]);
+    return (
+      allCategoriesForPicker
+        // 1. Filter out the category currently being edited.
+        .filter((cat) => cat._id !== editingCategory?._id)
+        // 2. Filter for categories that have a color defined.
+        .filter((cat) => !!cat.color)
+        // 3. Map to the required structure.
+        .map((cat) => ({ color: cat.color!, categoryName: cat.name }))
+    );
+  }, [allCategoriesForPicker, editingCategory]); // Dependency array updated
 
   const handleCaseStatusCardClick = (status: CaseStatus | string | null) => {
     const newStatus =
@@ -768,6 +795,8 @@ const CategoryManagement: React.FC = () => {
             allUsersForForm={allUsersDataForForm?.getLeanUsers || []}
             allUsersForFormLoading={allUsersForFormLoading}
             paletteColors={paletteColors}
+            setPaletteColors={setPaletteColors}
+            allCategories={allCategoriesForPicker || []}
             paletteColorsLoading={paletteColorsLoading}
             canManageColors={isAdmin}
           />

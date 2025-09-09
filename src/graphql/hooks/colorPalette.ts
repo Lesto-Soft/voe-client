@@ -6,6 +6,7 @@ import {
   ADD_PALETTE_COLOR,
   UPDATE_PALETTE_COLOR,
   REMOVE_PALETTE_COLOR,
+  REORDER_PALETTE_COLORS,
 } from "../mutation/colorPalette";
 
 interface GetAllPaletteColorsData {
@@ -74,4 +75,24 @@ export const useRemovePaletteColor = () => {
   };
 
   return { removeColor, loading, error };
+};
+
+export const useReorderPaletteColors = () => {
+  const [reorderMutation, { loading, error }] = useMutation(
+    REORDER_PALETTE_COLORS,
+    {
+      // We don't need to refetch here because we do an optimistic update in the UI
+    }
+  );
+
+  const reorderColors = async (orderedIds: string[]) => {
+    try {
+      await reorderMutation({ variables: { orderedIds } });
+    } catch (e) {
+      console.error("Failed to reorder colors:", e);
+      throw new Error((e as ApolloError).message);
+    }
+  };
+
+  return { reorderColors, loading, error };
 };

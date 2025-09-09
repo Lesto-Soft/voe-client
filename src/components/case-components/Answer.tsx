@@ -77,13 +77,13 @@ const Answer: React.FC<{
     approved === true;
 
   useEffect(() => {
-    const selfId = childTargetId ? `${childTargetId}` : `answers-${answer._id}`;
-    console.log(selfId, childTargetId, targetId);
+    const selfId = `answers-${answer._id}`;
     // This component is not involved at all, so do nothing.
+    console.log(selfId, targetId);
     if (targetId !== selfId) {
       return;
     }
-
+    console.log("pass");
     // --- This component IS the target parent. ---
 
     // Action 1: Scroll this parent Answer into view.

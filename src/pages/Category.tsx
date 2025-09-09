@@ -8,6 +8,7 @@ import {
   useUpdateCategory,
   useGetAllLeanCategories,
 } from "../graphql/hooks/category"; // Adjust path
+import { useGetAllPaletteColors } from "../graphql/hooks/colorPalette";
 import { GET_LEAN_USERS } from "../graphql/query/user"; // Adjust path
 import { IMe, CaseType } from "../db/interfaces";
 import {
@@ -38,7 +39,6 @@ import CategoryStatisticsPanel from "../components/features/categoryAnalytics/Ca
 
 // Constants
 import { ROLES } from "../utils/GLOBAL_PARAMETERS";
-import { PREDEFINED_CATEGORY_COLORS } from "../utils/colors";
 
 import { useAuthorization } from "../hooks/useAuthorization";
 import ForbiddenPage from "./ErrorPages/ForbiddenPage";
@@ -63,6 +63,7 @@ const Category: React.FC = () => {
   const { name: categoryNameFromParams } = useParams<{ name: string }>();
   const navigate = useNavigate();
   const currentUser = useCurrentUser() as IMe | undefined;
+  const isAdmin = currentUser?.role?._id === ROLES.ADMIN;
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [formHasUnsavedChanges, setFormHasUnsavedChanges] = useState(false);
@@ -91,6 +92,12 @@ const Category: React.FC = () => {
   });
 
   const { categories: allCategoriesForPicker } = useGetAllLeanCategories({});
+
+  const {
+    paletteColors,
+    loading: paletteColorsLoading,
+    error: paletteColorsError,
+  } = useGetAllPaletteColors();
 
   const {
     updateCategory,
@@ -123,18 +130,16 @@ const Category: React.FC = () => {
   // ADD THIS MEMO to process the categories and find used colors
   const usedColors = useMemo(() => {
     if (!allCategoriesForPicker) return [];
-    // We filter out the current category being edited so its own color is not marked as disabled
     return allCategoriesForPicker
       .filter((cat) => cat._id !== category?._id)
-      .filter(
-        (cat) => cat.color && PREDEFINED_CATEGORY_COLORS.includes(cat.color)
-      )
+      .filter((cat) => !!cat.color) // Only include categories that have a color assigned
       .map((cat) => ({ color: cat.color!, categoryName: cat.name }));
   }, [allCategoriesForPicker, category]);
 
   const canEdit = useMemo(() => {
     if (!currentUser || !category) return false;
-    if (currentUser.role?._id === ROLES.ADMIN) {
+    //if (currentUser.role?._id === ROLES.ADMIN) {
+    if (isAdmin) {
       return true;
     }
     if (currentUser.role?._id === ROLES.EXPERT) {
@@ -144,7 +149,7 @@ const Category: React.FC = () => {
       );
     }
     return false;
-  }, [currentUser, category]);
+  }, [currentUser, category, isAdmin]);
 
   const dateFilteredCases = useMemo(() => {
     const allCases = category?.cases || [];
@@ -389,8 +394,13 @@ const Category: React.FC = () => {
     }
   };
 
-  const pageError = categoryError || allUsersForFormError;
-  if (categoryLoading || authLoading || allUsersForFormLoading) {
+  const pageError = categoryError || allUsersForFormError || paletteColorsError;
+  if (
+    categoryLoading ||
+    authLoading ||
+    allUsersForFormLoading ||
+    paletteColorsLoading
+  ) {
     return <CategoryPageSkeleton />;
   }
   if (pageError || !category) {
@@ -451,7 +461,6 @@ const Category: React.FC = () => {
           activeStatusLabel={activeStatusLabel}
           activeTypeLabel={activeTypeLabel}
           activeResolutionLabel={activeResolutionLabel}
-          // --- ADD THESE THREE PROPS ---
           activeStatusFilter={activeStatus}
           activeTypeFilter={activeType}
           activeResolutionFilter={activeResolution}
@@ -484,6 +493,9 @@ const Category: React.FC = () => {
             usedColors={usedColors}
             allUsersForForm={allUsersDataForForm?.getLeanUsers || []}
             allUsersForFormLoading={allUsersForFormLoading}
+            paletteColors={paletteColors}
+            paletteColorsLoading={paletteColorsLoading}
+            canManageColors={isAdmin}
           />
         )}
       </CategoryModal>

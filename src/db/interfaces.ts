@@ -30,6 +30,12 @@ export interface ICategory {
   archived?: boolean;
 }
 
+export interface IPaletteColor {
+  _id: string;
+  hexCode: string;
+  label?: string;
+}
+
 export interface IUser {
   _id: string;
   username: string;

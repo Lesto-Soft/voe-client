@@ -2,7 +2,8 @@
 
 // A curated selection of 40 visually distinct colors from the Tailwind CSS palette.
 // Organized by hue for easier visual scanning in the color picker.
-export const PREDEFINED_CATEGORY_COLORS: string[] = [
+export const PREDEFINED_CATEGORY_COLORS: string[] = [];
+export const PREDEFINED_CATEGORY_COLORS_OLD: string[] = [
   // Reds
   "#EF4444", // red-500
   "#F87171", // red-400

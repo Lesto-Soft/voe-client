@@ -1,13 +1,14 @@
 // src/components/forms/CategoryForm.tsx
 // NOTE: This file was renamed from CreateCategoryForm.tsx
 import React, { useState, useRef } from "react";
-import { ICategory } from "../../db/interfaces"; // Adjust path
+import { ICategory, IPaletteColor } from "../../db/interfaces"; // Adjust path
 import { useCategoryFormState } from "./hooks/useCategoryFormState"; // Adjust path
 import CategoryInputFields from "./partials/CategoryInputFields"; // Adjust path
 import { getTextLength } from "../../utils/contentRenderer";
 import { CATEGORY_HELPERS } from "../../utils/GLOBAL_PARAMETERS";
 import ConfirmActionDialog from "../modals/ConfirmActionDialog";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
+import ColorManagementDialog from "./partials/ColorManagementDialog";
 
 export interface CategoryFormData {
   name: string;
@@ -40,6 +41,9 @@ interface CategoryFormProps {
   usedColors: { color: string; categoryName: string }[];
   allUsersForForm: ILeanUserForForm[];
   allUsersForFormLoading: boolean;
+  paletteColors: IPaletteColor[];
+  paletteColorsLoading: boolean;
+  canManageColors: boolean;
 }
 
 // Component name updated
@@ -52,6 +56,9 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
   usedColors,
   allUsersForForm,
   allUsersForFormLoading,
+  paletteColors,
+  paletteColorsLoading,
+  canManageColors,
 }) => {
   const {
     name,
@@ -74,6 +81,7 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
     initialManagerObjects,
   } = useCategoryFormState({ initialData, onDirtyChange });
 
+  const [isColorManagerOpen, setIsColorManagerOpen] = useState(false);
   const [formSubmitError, setFormSubmitError] = useState<string | null>(null);
   const [problemError, setProblemError] = useState<string | null>(null);
   const [suggestionError, setSuggestionError] = useState<string | null>(null);
@@ -218,6 +226,10 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
               initialManagers={initialManagerObjects as ILeanUserForForm[]}
               allUsersForAssigning={allUsersForForm}
               usersLoading={allUsersForFormLoading}
+              paletteColors={paletteColors}
+              paletteColorsLoading={paletteColorsLoading}
+              canManageColors={canManageColors}
+              onOpenColorManager={() => setIsColorManagerOpen(true)}
             />
           </div>
         </div>
@@ -241,6 +253,15 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
           </button>
         </div>
       </form>
+      {canManageColors && (
+        <ColorManagementDialog
+          isOpen={isColorManagerOpen}
+          onClose={() => setIsColorManagerOpen(false)}
+          paletteColors={paletteColors}
+          isLoading={paletteColorsLoading}
+        />
+      )}
+
       {/* add the dialog to the component's render output */}
       <ConfirmActionDialog
         isOpen={isConfirmOpen}

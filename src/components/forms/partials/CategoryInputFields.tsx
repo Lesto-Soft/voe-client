@@ -4,6 +4,7 @@ import { XMarkIcon } from "@heroicons/react/24/outline";
 // Removed IUser import as ILeanUserForForm is more specific here
 import TextEditor from "./TextEditor/TextEditor";
 import { CATEGORY_HELPERS, ROLES } from "../../../utils/GLOBAL_PARAMETERS";
+import { IPaletteColor } from "../../../db/interfaces";
 import ColorPicker from "./ColorPicker";
 
 // Define a lean user type that includes the role ID for the form, matching what parent passes
@@ -45,6 +46,10 @@ interface CategoryInputFieldsProps {
   initialManagers?: ILeanUserForForm[];
   allUsersForAssigning: ILeanUserForForm[];
   usersLoading: boolean;
+  paletteColors: IPaletteColor[];
+  paletteColorsLoading: boolean;
+  canManageColors: boolean;
+  onOpenColorManager: () => void;
 }
 
 const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
@@ -71,6 +76,10 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
   initialManagers = [],
   allUsersForAssigning,
   usersLoading,
+  paletteColors,
+  paletteColorsLoading,
+  canManageColors,
+  onOpenColorManager,
 }) => {
   const t = (key: string) => key; // Placeholder for translations
 
@@ -470,11 +479,18 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
         <label className="mb-1 block text-sm font-medium text-gray-700">
           {t("Цвят на категория")} <span className="text-red-500">*</span>
         </label>
-        <ColorPicker
-          selectedColor={color}
-          onSelectColor={setColor}
-          usedColors={usedColors}
-        />
+        {paletteColorsLoading ? (
+          <div className="h-24 w-full animate-pulse rounded-md bg-gray-200"></div>
+        ) : (
+          <ColorPicker
+            selectedColor={color}
+            onSelectColor={setColor}
+            usedColors={usedColors}
+            paletteColors={paletteColors}
+            canManageColors={canManageColors}
+            onOpenManager={onOpenColorManager}
+          />
+        )}
         <p className={`${errorPlaceholderClass}`}>&nbsp;</p>
       </div>
 

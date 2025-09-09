@@ -42,6 +42,7 @@ import { IMe } from "../db/interfaces"; // <-- NEW: Import IMe
 import { ROLES } from "../utils/GLOBAL_PARAMETERS";
 
 import { PREDEFINED_CATEGORY_COLORS } from "../utils/colors";
+import { useGetAllPaletteColors } from "../graphql/hooks/colorPalette";
 
 // Define a lean user type that includes the role ID, matching GET_LEAN_USERS
 interface ILeanUserForForm {
@@ -75,6 +76,12 @@ const CategoryManagement: React.FC = () => {
   // --- NEW: Get current user and determine if they are an admin ---
   const currentUser = useCurrentUser() as IMe | undefined;
   const isAdmin = currentUser?.role?._id === ROLES.ADMIN;
+
+  const {
+    paletteColors,
+    loading: paletteColorsLoading,
+    error: paletteColorsError,
+  } = useGetAllPaletteColors();
 
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<ICategory | null>(
@@ -423,7 +430,8 @@ const CategoryManagement: React.FC = () => {
       awaitingFinanceError ||
       closedError ||
       absoluteTotalCaseCountError ||
-      allUsersForFormError,
+      allUsersForFormError ||
+      paletteColorsError,
     [
       categoriesListError,
       categoryCountErrorForTable,
@@ -435,6 +443,7 @@ const CategoryManagement: React.FC = () => {
       closedError,
       absoluteTotalCaseCountError,
       allUsersForFormError,
+      paletteColorsError,
     ]
   );
 
@@ -758,6 +767,9 @@ const CategoryManagement: React.FC = () => {
             usedColors={usedColors}
             allUsersForForm={allUsersDataForForm?.getLeanUsers || []}
             allUsersForFormLoading={allUsersForFormLoading}
+            paletteColors={paletteColors}
+            paletteColorsLoading={paletteColorsLoading}
+            canManageColors={isAdmin}
           />
         )}
       </CategoryModal>

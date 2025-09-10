@@ -113,6 +113,7 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
     dateRange.startDate !== null || dateRange.endDate !== null;
   const isDataReady = !isLoading && !!user;
   const tabsContainerRef = useRef<HTMLDivElement>(null);
+  const filtersContainerRef = useRef<HTMLDivElement>(null);
 
   const {
     visibleCounts,
@@ -138,13 +139,16 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
     if (!scrollContainer) return;
 
     const handleWheel = (e: WheelEvent) => {
-      if (e.deltaY !== 0) {
+      // If there's horizontal scroll, let the browser handle it natively
+      if (e.deltaX !== 0) return;
+
+      // If there's vertical scroll and the container is overflowing, convert it
+      if (
+        e.deltaY !== 0 &&
+        scrollContainer.scrollWidth > scrollContainer.clientWidth
+      ) {
         e.preventDefault();
-        const scrollAmount = e.deltaY * 1.5;
-        scrollContainer.scrollBy({
-          left: scrollAmount,
-          behavior: "smooth",
-        });
+        scrollContainer.scrollLeft += e.deltaY;
       }
     };
 
@@ -154,6 +158,29 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
       scrollContainer.removeEventListener("wheel", handleWheel);
     };
   }, []);
+
+  // add a new useEffect to handle mouse wheel scrolling on the filters bar
+  useEffect(() => {
+    const scrollContainer = filtersContainerRef.current;
+    if (!scrollContainer) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      // Proceed only if scrolling vertically and the container is overflowing
+      // If there's horizontal scroll, let the browser handle it natively
+      if (e.deltaX !== 0) return;
+
+      // If there's vertical scroll and the container is overflowing, convert it
+      if (
+        e.deltaY !== 0 &&
+        scrollContainer.scrollWidth > scrollContainer.clientWidth
+      ) {
+        e.preventDefault(); // Prevent the main page from scrolling
+        scrollContainer.scrollLeft += e.deltaY;
+      }
+    };
+    scrollContainer.addEventListener("wheel", handleWheel, { passive: false });
+    return () => scrollContainer.removeEventListener("wheel", handleWheel);
+  }, [isAnyFilterActive]);
 
   // NEW: This effect triggers whenever the active tab changes.
   useEffect(() => {
@@ -322,57 +349,62 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
         )}
       </div>
       {showFiltersBar && isAnyFilterActive && (
-        <div className="px-4 py-2 border-b border-gray-200 bg-gray-50 flex flex-wrap items-center gap-2">
-          <span className="text-xs font-semibold text-gray-600 mr-2">
-            Активни филтри:
-          </span>
-          {activeCategoryName && (
-            <FilterTag
-              label={`Категория: ${activeCategoryName}`}
-              onRemove={onClearCategoryFilter}
-            />
-          )}
-          {activeRatingTier !== "all" && (
-            <FilterTag
-              label={`Оценка: ${activeRatingTier}`}
-              onRemove={onClearRatingTierFilter}
-            />
-          )}
-          {activePriority !== "all" && (
-            <FilterTag
-              label={`Приоритет: ${translatePriority(activePriority)}`}
-              onRemove={onClearPriorityFilter}
-            />
-          )}
-          {activeType !== "all" && (
-            <FilterTag
-              label={`Тип: ${translateCaseType(activeType)}`}
-              onRemove={onClearTypeFilter}
-            />
-          )}
-          {activeResolution !== "all" && (
-            <FilterTag
-              label={`Реакция: ${activeResolution}`}
-              onRemove={onClearResolutionFilter}
-            />
-          )}
-          {activeStatus !== "all" && (
-            <FilterTag
-              label={`Статус: ${translateStatus(activeStatus)}`}
-              onRemove={onClearStatusFilter}
-            />
-          )}
-          {isDateFilterActive && (
-            <FilterTag
-              label="Период"
-              onRemove={() =>
-                onDateRangeChange({ startDate: null, endDate: null })
-              }
-            />
-          )}
+        <div className="px-4 py-1.5 border-b border-gray-200 bg-gray-50 flex items-center justify-between gap-x-4">
+          <div
+            ref={filtersContainerRef}
+            className="flex items-center gap-2 overflow-x-auto custom-scrollbar-xs flex-nowrap py-1"
+          >
+            <span className="text-xs font-semibold text-gray-600 mr-2 flex-shrink-0">
+              Активни филтри:
+            </span>
+            {activeCategoryName && (
+              <FilterTag
+                label={`Категория: ${activeCategoryName}`}
+                onRemove={onClearCategoryFilter}
+              />
+            )}
+            {activeRatingTier !== "all" && (
+              <FilterTag
+                label={`Оценка: ${activeRatingTier}`}
+                onRemove={onClearRatingTierFilter}
+              />
+            )}
+            {activePriority !== "all" && (
+              <FilterTag
+                label={`Приоритет: ${translatePriority(activePriority)}`}
+                onRemove={onClearPriorityFilter}
+              />
+            )}
+            {activeType !== "all" && (
+              <FilterTag
+                label={`Тип: ${translateCaseType(activeType)}`}
+                onRemove={onClearTypeFilter}
+              />
+            )}
+            {activeResolution !== "all" && (
+              <FilterTag
+                label={`Реакция: ${activeResolution}`}
+                onRemove={onClearResolutionFilter}
+              />
+            )}
+            {activeStatus !== "all" && (
+              <FilterTag
+                label={`Статус: ${translateStatus(activeStatus)}`}
+                onRemove={onClearStatusFilter}
+              />
+            )}
+            {isDateFilterActive && (
+              <FilterTag
+                label="Период"
+                onRemove={() =>
+                  onDateRangeChange({ startDate: null, endDate: null })
+                }
+              />
+            )}
+          </div>
           <button
             onClick={onClearAllFilters}
-            className="cursor-pointer ml-auto text-xs font-semibold text-indigo-600 hover:text-indigo-800 hover:underline"
+            className="cursor-pointer text-xs font-semibold text-indigo-600 hover:text-indigo-800 hover:underline flex-shrink-0"
           >
             Изчисти всички
           </button>

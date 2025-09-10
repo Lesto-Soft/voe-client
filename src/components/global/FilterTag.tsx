@@ -8,7 +8,7 @@ interface FilterTagProps {
 }
 
 const FilterTag: React.FC<FilterTagProps> = ({ label, onRemove }) => (
-  <span className="inline-flex items-center gap-x-1.5 rounded-full bg-indigo-100 px-2 py-1 text-xs font-medium text-indigo-700">
+  <span className="inline-flex items-center gap-x-1.5 rounded-full bg-indigo-100 px-2 py-1 text-xs font-medium text-indigo-700 whitespace-nowrap">
     {label}
     <button
       type="button"

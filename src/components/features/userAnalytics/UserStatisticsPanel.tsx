@@ -1,5 +1,5 @@
 // src/components/features/userAnalytics/UserStatisticsPanel.tsx
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   ChartPieIcon,
   DocumentTextIcon,
@@ -155,12 +155,57 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
   onClearStatusFilter,
   onClearResolutionFilter,
 }) => {
+  const pieTabsContainerRef = useRef<HTMLDivElement>(null);
+  const filtersContainerRef = useRef<HTMLDivElement>(null);
   const [activePieTab, setActivePieTab] = useState<PieTab>("categories");
   // State to manage the date filter's visibility
   const [isDateFilterVisible, setIsDateFilterVisible] = useState(
     viewMode === "center"
   );
   const isInteractive = onCategoryClick || onRatingTierClick;
+
+  useEffect(() => {
+    const scrollContainer = pieTabsContainerRef.current;
+    if (!scrollContainer) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      if (e.deltaX !== 0) return;
+      if (
+        e.deltaY !== 0 &&
+        scrollContainer.scrollWidth > scrollContainer.clientWidth
+      ) {
+        e.preventDefault();
+        scrollContainer.scrollLeft += e.deltaY;
+      }
+    };
+
+    scrollContainer.addEventListener("wheel", handleWheel, { passive: false });
+    return () => {
+      scrollContainer.removeEventListener("wheel", handleWheel);
+    };
+  }, [isAnyFilterActive]);
+
+  useEffect(() => {
+    const scrollContainer = filtersContainerRef.current;
+    if (!scrollContainer) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      if (e.deltaX !== 0) return;
+      if (
+        e.deltaY !== 0 &&
+        scrollContainer.scrollWidth > scrollContainer.clientWidth
+      ) {
+        e.preventDefault();
+        scrollContainer.scrollLeft += e.deltaY;
+      }
+    };
+
+    scrollContainer.addEventListener("wheel", handleWheel, { passive: false });
+
+    return () => {
+      scrollContainer.removeEventListener("wheel", handleWheel);
+    };
+  }, [isAnyFilterActive]);
 
   // Check if a date range is active to style the button accordingly
   const isDateFilterActive =
@@ -326,12 +371,15 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
         </div>
       </div>
 
-      <div className="flex border-b border-gray-200 text-xs sm:text-sm">
+      <div
+        ref={pieTabsContainerRef}
+        className="flex border-b border-gray-200 overflow-x-auto custom-scrollbar-xs py-1"
+      >
         {pieTabsConfig.map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActivePieTab(tab.key as PieTab)}
-            className={`cursor-pointer relative flex-1 py-2 px-1 text-center font-medium focus:outline-none transition-colors duration-150 ${
+            className={`cursor-pointer relative flex-1 py-2 px-3 text-sm font-medium focus:outline-none transition-colors duration-150 whitespace-nowrap ${
               activePieTab === tab.key
                 ? "border-b-2 border-indigo-500 text-indigo-600"
                 : "text-gray-500 hover:text-gray-700"
@@ -478,66 +526,70 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
           {viewMode === "center" &&
             isAnyFilterActive &&
             onClearAllFilters && ( // Ensure handlers are present
-              <div className="px-3 py-2 rounded-md border border-gray-200 bg-gray-50 flex flex-wrap items-center gap-2">
-                <span className="text-xs font-semibold text-gray-600 mr-2">
-                  Активни филтри:
-                </span>
-                {activeCategoryName && onClearCategoryFilter && (
-                  <FilterTag
-                    label={`Категория: ${activeCategoryName}`}
-                    onRemove={onClearCategoryFilter}
-                  />
-                )}
-                {activeRatingTier !== "all" && onClearRatingTierFilter && (
-                  <FilterTag
-                    label={`Оценка: ${activeRatingTier}`}
-                    onRemove={onClearRatingTierFilter}
-                  />
-                )}
-                {activePriorityFilter !== "all" && onClearPriorityFilter && (
-                  <FilterTag
-                    label={`Приоритет: ${translatePriority(
-                      activePriorityFilter
-                    )}`}
-                    onRemove={onClearPriorityFilter}
-                  />
-                )}
-                {activeTypeFilter !== "all" && onClearTypeFilter && (
-                  <FilterTag
-                    label={`Тип: ${translateCaseType(activeTypeFilter)}`}
-                    onRemove={onClearTypeFilter}
-                  />
-                )}
-                {activeResolutionFilter !== "all" &&
-                  onClearResolutionFilter && (
+              <div className="px-3 py-1.5 rounded-md border border-gray-200 bg-gray-50 flex items-center justify-between gap-x-4">
+                <div
+                  ref={filtersContainerRef}
+                  className="flex items-center gap-2 overflow-x-auto custom-scrollbar-xs flex-nowrap py-1"
+                >
+                  <span className="text-xs font-semibold text-gray-600 mr-2 flex-shrink-0">
+                    Активни филтри:
+                  </span>
+                  {activeCategoryName && onClearCategoryFilter && (
                     <FilterTag
-                      label={`Реакция: ${activeResolutionFilter}`}
-                      onRemove={onClearResolutionFilter}
+                      label={`Категория: ${activeCategoryName}`}
+                      onRemove={onClearCategoryFilter}
                     />
                   )}
-                {activeStatusFilter !== "all" && onClearStatusFilter && (
-                  <FilterTag
-                    label={`Статус: ${translateStatus(activeStatusFilter)}`}
-                    onRemove={onClearStatusFilter}
-                  />
-                )}
-                {isDateFilterActive && onDateRangeChange && (
-                  <FilterTag
-                    label="Период"
-                    onRemove={() =>
-                      onDateRangeChange({ startDate: null, endDate: null })
-                    }
-                  />
-                )}
+                  {activeRatingTier !== "all" && onClearRatingTierFilter && (
+                    <FilterTag
+                      label={`Оценка: ${activeRatingTier}`}
+                      onRemove={onClearRatingTierFilter}
+                    />
+                  )}
+                  {activePriorityFilter !== "all" && onClearPriorityFilter && (
+                    <FilterTag
+                      label={`Приоритет: ${translatePriority(
+                        activePriorityFilter
+                      )}`}
+                      onRemove={onClearPriorityFilter}
+                    />
+                  )}
+                  {activeTypeFilter !== "all" && onClearTypeFilter && (
+                    <FilterTag
+                      label={`Тип: ${translateCaseType(activeTypeFilter)}`}
+                      onRemove={onClearTypeFilter}
+                    />
+                  )}
+                  {activeResolutionFilter !== "all" &&
+                    onClearResolutionFilter && (
+                      <FilterTag
+                        label={`Реакция: ${activeResolutionFilter}`}
+                        onRemove={onClearResolutionFilter}
+                      />
+                    )}
+                  {activeStatusFilter !== "all" && onClearStatusFilter && (
+                    <FilterTag
+                      label={`Статус: ${translateStatus(activeStatusFilter)}`}
+                      onRemove={onClearStatusFilter}
+                    />
+                  )}
+                  {isDateFilterActive && onDateRangeChange && (
+                    <FilterTag
+                      label="Период"
+                      onRemove={() =>
+                        onDateRangeChange({ startDate: null, endDate: null })
+                      }
+                    />
+                  )}
+                </div>
                 <button
                   onClick={onClearAllFilters}
-                  className="cursor-pointer ml-auto text-xs font-semibold text-indigo-600 hover:text-indigo-800 hover:underline"
+                  className="cursor-pointer text-xs font-semibold text-indigo-600 hover:text-indigo-800 hover:underline flex-shrink-0"
                 >
                   Изчисти всички
                 </button>
               </div>
             )}
-
           {viewMode === "center" ? (
             <>
               {PieChartSection}

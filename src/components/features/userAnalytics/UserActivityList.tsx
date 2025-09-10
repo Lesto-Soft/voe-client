@@ -10,13 +10,14 @@ import {
 } from "@heroicons/react/24/outline";
 import useUserActivityScrollPersistence from "../../../hooks/useUserActivityScrollPersistence";
 import DateRangeSelector from "./DateRangeSelector";
-import { CasePriority, CaseType } from "../../../db/interfaces";
+import { CasePriority, CaseType, ICaseStatus } from "../../../db/interfaces";
 import { StatsActivityType } from "./UserStatisticsPanel";
 import { RatingTierLabel } from "../../../pages/User";
 import FilterTag from "../../global/FilterTag";
 import {
   translateCaseType,
   translatePriority,
+  translateStatus,
 } from "../../../utils/categoryDisplayUtils";
 
 // REMOVED: Local ActivityTab type is no longer needed
@@ -69,6 +70,8 @@ interface UserActivityListProps {
   onClearTypeFilter: () => void;
   activeResolution: string; // The label string
   onClearResolutionFilter: () => void;
+  activeStatus: ICaseStatus | "all";
+  onClearStatusFilter: () => void;
   cardView?: "full" | "compact";
   // MODIFIED: Added props to control the component
   activeTab: StatsActivityType;
@@ -97,6 +100,8 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
   onClearTypeFilter,
   activeResolution,
   onClearResolutionFilter,
+  activeStatus,
+  onClearStatusFilter,
   cardView = "full",
   activeTab,
   onTabChange,
@@ -349,6 +354,12 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
             <FilterTag
               label={`Реакция: ${activeResolution}`}
               onRemove={onClearResolutionFilter}
+            />
+          )}
+          {activeStatus !== "all" && (
+            <FilterTag
+              label={`Статус: ${translateStatus(activeStatus)}`}
+              onRemove={onClearStatusFilter}
             />
           )}
           {isDateFilterActive && (

@@ -150,6 +150,8 @@ export const getCaseResolutionCategory = (
   console.log(`[DEBUG] Processing Case #${caseItem.case_number}...`);
   // --- END OF DEBUGGING LOGIC ---
 
+  console.log("CASE ITEM: ", caseItem);
+
   if (
     String(caseItem.status) !== "CLOSED" &&
     String(caseItem.status) !== "AWAITING_FINANCE"

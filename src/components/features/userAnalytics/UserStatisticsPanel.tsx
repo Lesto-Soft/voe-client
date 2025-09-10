@@ -11,6 +11,7 @@ import {
   BanknotesIcon,
   GlobeAltIcon,
   CalendarDaysIcon,
+  CheckCircleIcon,
   ClockIcon,
 } from "@heroicons/react/24/outline";
 import { UserActivityStats } from "../../../hooks/useUserActivityStats";
@@ -19,10 +20,11 @@ import { PieSegmentData } from "../../charts/PieChart";
 import { RatingTierLabel } from "../../../pages/User";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import DateRangeSelector from "./DateRangeSelector";
-import { CasePriority, CaseType } from "../../../db/interfaces";
+import { CasePriority, CaseType, ICaseStatus } from "../../../db/interfaces";
 import {
   translateCaseType,
   translatePriority,
+  translateStatus,
 } from "../../../utils/categoryDisplayUtils";
 import FilterTag from "../../global/FilterTag";
 
@@ -59,6 +61,8 @@ interface UserStatisticsPanelProps {
   activePriorityFilter: CasePriority | "all";
   activeTypeFilter: CaseType | "all";
   activeResolutionFilter: string;
+  activeStatusFilter: ICaseStatus | "all";
+  onStatusClick?: (segment: PieSegmentData) => void;
   activeCategoryFilter: string | null;
   activeRatingTierFilter: RatingTierLabel;
   activeStatsTab: StatsActivityType;
@@ -89,10 +93,17 @@ interface UserStatisticsPanelProps {
   onClearPriorityFilter?: () => void;
   onClearTypeFilter?: () => void;
   onClearResolutionFilter?: () => void;
+  onClearStatusFilter?: () => void;
 }
 
 // Define the type for our new tabs
-type PieTab = "categories" | "ratings" | "priority" | "resolution" | "type";
+type PieTab =
+  | "categories"
+  | "ratings"
+  | "priority"
+  | "resolution"
+  | "type"
+  | "status";
 
 // MODIFIED: Added 'ratings' tab configuration
 const activityTabsConfig: {
@@ -121,6 +132,8 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
   onResolutionClick,
   onTypeClick,
   activePriorityFilter,
+  onStatusClick,
+  activeStatusFilter,
   activeTypeFilter,
   activeResolutionFilter,
   activeCategoryFilter,
@@ -139,6 +152,7 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
   onClearRatingTierFilter,
   onClearPriorityFilter,
   onClearTypeFilter,
+  onClearStatusFilter,
   onClearResolutionFilter,
 }) => {
   const [activePieTab, setActivePieTab] = useState<PieTab>("categories");
@@ -265,6 +279,11 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
       label: "По Време",
       filterActive: activeResolutionFilter !== "all",
     },
+    {
+      key: "status",
+      label: "По Статус",
+      filterActive: activeStatusFilter !== "all",
+    },
     { key: "type", label: "По Тип", filterActive: activeTypeFilter !== "all" },
   ];
 
@@ -379,6 +398,19 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
             layout={viewMode === "center" ? "horizontal" : "vertical"}
           />
         )}
+        {activePieTab === "status" && (
+          <StatisticPieChart
+            title="Разпределение по Статус"
+            pieData={pieChartStats.statusDistributionData}
+            onSegmentClick={onStatusClick}
+            activeLabel={
+              pieChartStats.statusDistributionData.find(
+                (d) => d.id === activeStatusFilter
+              )?.label
+            }
+            layout={viewMode === "center" ? "horizontal" : "vertical"}
+          />
+        )}
       </div>
     </>
   );
@@ -483,6 +515,12 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
                       onRemove={onClearResolutionFilter}
                     />
                   )}
+                {activeStatusFilter !== "all" && onClearStatusFilter && (
+                  <FilterTag
+                    label={`Статус: ${translateStatus(activeStatusFilter)}`}
+                    onRemove={onClearStatusFilter}
+                  />
+                )}
                 {isDateFilterActive && onDateRangeChange && (
                   <FilterTag
                     label="Период"

@@ -6,6 +6,7 @@ import {
   ICategory,
   CasePriority,
   CaseType,
+  ICaseStatus,
 } from "../db/interfaces";
 import { PieSegmentData } from "../components/charts/PieChart";
 import { TIERS } from "../utils/GLOBAL_PARAMETERS";
@@ -15,6 +16,7 @@ import {
   calculateResolutionStats,
   translateCaseType,
   translatePriority,
+  translateStatus,
 } from "../utils/categoryDisplayUtils";
 
 export interface UserActivityStats {
@@ -27,6 +29,7 @@ export interface UserActivityStats {
   ratingTierDistributionData: PieSegmentData[];
   priorityDistributionData: PieSegmentData[];
   typeDistributionData: PieSegmentData[];
+  statusDistributionData: PieSegmentData[];
   resolutionTimeDistributionData: PieSegmentData[];
 }
 
@@ -47,6 +50,7 @@ const useUserActivityStats = (
       ratingTierDistributionData: [],
       priorityDistributionData: [],
       typeDistributionData: [],
+      statusDistributionData: [],
       resolutionTimeDistributionData: [],
     };
 
@@ -217,10 +221,19 @@ const useUserActivityStats = (
       [CaseType.Problem]: 0,
       [CaseType.Suggestion]: 0,
     };
+    const statusCounts: Record<string, number> = {
+      [ICaseStatus.Open]: 0,
+      [ICaseStatus.InProgress]: 0,
+      [ICaseStatus.AwaitingFinance]: 0,
+      [ICaseStatus.Closed]: 0,
+    };
 
     casesToAnalyze.forEach((c) => {
       if (c.priority) {
         priorityCounts[c.priority]++;
+      }
+      if (c.status) {
+        statusCounts[c.status as string]++;
       }
       if (c.type) {
         typeCounts[c.type]++;
@@ -246,6 +259,33 @@ const useUserActivityStats = (
         value: priorityCounts[CasePriority.Low],
         color: "#22C55E",
       }, // green-500
+    ].filter((segment) => segment.value > 0);
+
+    const statusDistributionData: PieSegmentData[] = [
+      {
+        id: ICaseStatus.Open,
+        label: translateStatus(ICaseStatus.Open),
+        value: statusCounts[ICaseStatus.Open],
+        color: "#22C55E",
+      }, // green-500
+      {
+        id: ICaseStatus.InProgress,
+        label: translateStatus(ICaseStatus.InProgress),
+        value: statusCounts[ICaseStatus.InProgress],
+        color: "#EAB308",
+      }, // yellow-500
+      {
+        id: ICaseStatus.AwaitingFinance,
+        label: translateStatus(ICaseStatus.AwaitingFinance),
+        value: statusCounts[ICaseStatus.AwaitingFinance],
+        color: "#3B82F6",
+      }, // blue-500
+      {
+        id: ICaseStatus.Closed,
+        label: translateStatus(ICaseStatus.Closed),
+        value: statusCounts[ICaseStatus.Closed],
+        color: "#9CA3AF",
+      }, // gray-400
     ].filter((segment) => segment.value > 0);
 
     const typeDistributionData: PieSegmentData[] = [
@@ -274,6 +314,7 @@ const useUserActivityStats = (
       resolutionTimeDistributionData: resolutionPieChartData,
       priorityDistributionData,
       typeDistributionData,
+      statusDistributionData,
     };
   }, [user, startDate, endDate, activityType]);
 

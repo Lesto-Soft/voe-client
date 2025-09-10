@@ -10,6 +10,7 @@ import {
   IComment,
   CasePriority,
   CaseType,
+  ICaseStatus,
 } from "../db/interfaces";
 import { UpdateUserInput } from "../graphql/mutation/user";
 import { parseActivityDate } from "../utils/dateUtils";
@@ -113,6 +114,7 @@ const User: React.FC = () => {
   const [activeResolution, setActiveResolution] = useState<
     ResolutionCategoryLabel | "all"
   >("all");
+  const [activeStatus, setActiveStatus] = useState<ICaseStatus | "all">("all");
   // MODIFIED: Renamed state for clarity and made it the single source of truth
   const [activeActivityTab, setActiveActivityTab] =
     useState<StatsActivityType>("all");
@@ -357,6 +359,32 @@ const User: React.FC = () => {
       });
     }
 
+    if (activeStatus !== "all") {
+      activities = activities.filter((activity) => {
+        let relatedCase: ICase | undefined | null;
+        // This logic can be extracted to a helper if it gets too repetitive
+        switch (activity.activityType) {
+          case "case":
+            relatedCase = activity.item as ICase;
+            break;
+          case "rating":
+            relatedCase = (activity.item as RatedCaseActivity).case;
+            break;
+          case "answer":
+          case "base_approval":
+          case "finance_approval":
+            relatedCase = (activity.item as IAnswer).case;
+            break;
+          case "comment":
+            const comment = activity.item as IComment;
+            relatedCase = comment.case || comment.answer?.case;
+            break;
+        }
+        if (!relatedCase) return false;
+        return relatedCase.status === activeStatus;
+      });
+    }
+
     if (activeRatingTier !== "all") {
       activities = activities.filter((activity) => {
         let relatedCase: ICase | undefined | null;
@@ -459,6 +487,7 @@ const User: React.FC = () => {
     activeCategoryName,
     activeRatingTier,
     activePriority,
+    activeStatus,
     activeType,
     activeResolution,
     pieChartStats,
@@ -615,6 +644,11 @@ const User: React.FC = () => {
     );
   };
 
+  const handleStatusClick = (segment: PieSegmentData) => {
+    const statusKey = segment.id as ICaseStatus;
+    setActiveStatus((current) => (current === statusKey ? "all" : statusKey));
+  };
+
   const isAnyFilterActive = useMemo(() => {
     return (
       dateRange.startDate !== null ||
@@ -622,6 +656,7 @@ const User: React.FC = () => {
       activeCategoryName !== null ||
       activeRatingTier !== "all" ||
       activePriority !== "all" ||
+      activeStatus !== "all" ||
       activeType !== "all" ||
       activeResolution !== "all"
     );
@@ -632,6 +667,7 @@ const User: React.FC = () => {
     activePriority,
     activeType,
     activeResolution,
+    activeStatus,
   ]);
 
   const handleClearAllFilters = () => {
@@ -641,6 +677,7 @@ const User: React.FC = () => {
     setActivePriority("all");
     setActiveType("all");
     setActiveResolution("all");
+    setActiveStatus("all");
   };
 
   if (userLoading || authLoading) {
@@ -747,6 +784,8 @@ const User: React.FC = () => {
                   onClearResolutionFilter={() => setActiveResolution("all")}
                   activeRatingTier={activeRatingTier}
                   onClearRatingTierFilter={() => setActiveRatingTier("all")}
+                  activeStatus={activeStatus}
+                  onClearStatusFilter={() => setActiveStatus("all")}
                 />
               </div>
               {/* Statistics Panel */}
@@ -773,6 +812,8 @@ const User: React.FC = () => {
                           )?.label ?? null
                         : null
                     }
+                    onStatusClick={handleStatusClick}
+                    activeStatusFilter={activeStatus}
                     activeCategoryFilter={activeCategoryName}
                     activeRatingTierFilter={activeRatingTier}
                     activityCounts={filteredActivityCounts} // Pass the counts object
@@ -809,6 +850,8 @@ const User: React.FC = () => {
                         )?.label ?? null
                       : null
                   }
+                  onStatusClick={handleStatusClick}
+                  activeStatusFilter={activeStatus}
                   activeCategoryFilter={activeCategoryName}
                   activeRatingTierFilter={activeRatingTier}
                   activityCounts={filteredActivityCounts} // Pass the counts object
@@ -826,6 +869,7 @@ const User: React.FC = () => {
                   onClearPriorityFilter={() => setActivePriority("all")}
                   onClearTypeFilter={() => setActiveType("all")}
                   onClearResolutionFilter={() => setActiveResolution("all")}
+                  onClearStatusFilter={() => setActiveStatus("all")}
                 />
               </div>
               {/* Activity List (Right) */}
@@ -854,6 +898,8 @@ const User: React.FC = () => {
                     onClearTypeFilter={() => setActiveType("all")}
                     activeResolution={activeResolution}
                     onClearResolutionFilter={() => setActiveResolution("all")}
+                    activeStatus={activeStatus}
+                    onClearStatusFilter={() => setActiveStatus("all")}
                     // Hide the date filter from the activity list
                     showDateFilter={false}
                     showFiltersBar={false}

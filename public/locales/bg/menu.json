@@ -51,6 +51,9 @@
     "add_financial_approver": "<1>{{username}}</1> е добавен като финансов одобрител",
     "mention_in_answer": "<1>{{username}}</1> ви спомена в решението си",
     "mention_in_comment": "<1>{{username}}</1> ви спомена в коментара си",
-    "mention_in_answer_comment": "<1>{{username}}</1> ви спомена в коментар към решението"
+    "mention_in_answer_comment": "<1>{{username}}</1> ви спомена в коментар към решението",
+    "mark_as_read": "Маркирай като прочетено",
+    "mark_as_unread": "Маркирай като непрочетено",
+    "delete_notification": "Изтрий известието"
   }
 }

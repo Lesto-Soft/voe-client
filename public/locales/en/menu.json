@@ -50,6 +50,9 @@
     "add_financial_approver": "<1>{{username}}</1> added as financial approver",
     "mention_in_answer": "<1>{{username}}</1> mentioned you in their answer",
     "mention_in_comment": "<1>{{username}}</1> mentioned you in their comment",
-    "mention_in_answer_comment": "<1>{{username}}</1> mentioned you in a comment on answer"
+    "mention_in_answer_comment": "<1>{{username}}</1> mentioned you in a comment on answer",
+    "mark_as_read": "Mark as read",
+    "mark_as_unread": "Mark as unread",
+    "delete_notification": "Delete notification"
   }
 }

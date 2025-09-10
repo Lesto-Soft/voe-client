@@ -14,7 +14,7 @@ import {
 import { INotification } from "../../db/interfaces";
 import { clsx } from "clsx";
 import moment from "moment";
-import { Trans } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import {
   useDeleteNotification,
@@ -34,6 +34,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
   const [markAsRead] = useMarkAsRead();
   const [deleteNotification] = useDeleteNotification();
   const [markAsUnread] = useMarkAsUnread();
+  const { t } = useTranslation("menu");
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
@@ -101,7 +102,6 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
         onClick={() => {
           markAsRead({ variables: { notificationIds: [notification._id] } });
           const { content, caseNumber, entityId, username } = notification;
-
           if (caseNumber && entityId) {
             if (content.includes("answer_comment")) {
               return navigate(
@@ -178,16 +178,15 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
             <button
               onClick={handleMarkAsUnread}
               className="p-1 rounded-full hover:bg-gray-200 cursor-pointer"
-              title="Mark as unread"
+              title={t("notification_contents.mark_as_unread")}
             >
               <EnvelopeIcon className="h-5 w-5 text-gray-600" />
             </button>
           ) : (
-            // If the notification is UNREAD, show "Mark as Read" button
             <button
               onClick={handleMarkAsRead}
               className="p-1 rounded-full hover:bg-gray-200 cursor-pointer"
-              title="Mark as read"
+              title={t("notification_contents.mark_as_read")}
             >
               <EnvelopeOpenIcon className="h-5 w-5 text-gray-600" />
             </button>
@@ -195,7 +194,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
           <button
             onClick={handleDelete}
             className="p-1 rounded-full hover:bg-gray-200 cursor-pointer"
-            title="Delete notification"
+            title={t("notification_contents.delete_notification")}
           >
             <TrashIcon className="h-5 w-5 text-gray-600" />
           </button>

@@ -11,12 +11,11 @@ import { IAnswer } from "../../db/interfaces";
 
 const FinanceApproveBtn: React.FC<{
   approved: boolean;
-  setApproved: React.Dispatch<React.SetStateAction<boolean>>;
   t: (word: string) => string;
   answer: IAnswer;
   me: any;
-  refetch: () => void;
-}> = ({ approved, setApproved, t, answer, me, refetch }) => {
+  caseNumber: number;
+}> = ({ approved, t, answer, me, caseNumber }) => {
   const [open, setOpen] = useState(false);
   const { approveFinanceAnswer, loading, error } = useApproveFinanceAnswer();
   const {
@@ -25,18 +24,16 @@ const FinanceApproveBtn: React.FC<{
     error: unapproveError,
   } = useUnapproveFinanceAnswer();
 
-  const handleApprove = async () => {
+  const handleConfirmAction = async () => {
+    setOpen(false); // Close the dialog
     try {
       if (approved) {
-        await unapproveFinanceAnswer(answer._id);
+        await unapproveFinanceAnswer(answer._id, caseNumber);
       } else {
-        await approveFinanceAnswer(answer._id, me._id);
+        await approveFinanceAnswer(answer._id, me._id, caseNumber);
       }
-      setApproved((prev) => !prev);
-    } catch (error) {
-      console.error("Error approving finance:", error);
-    } finally {
-      await refetch();
+    } catch (err) {
+      console.error("Failed to update finance approval status:", err);
     }
   };
 
@@ -92,11 +89,7 @@ const FinanceApproveBtn: React.FC<{
                   ? "bg-btnRed hover:bg-btnRedHover text-white hover:cursor-pointer"
                   : "bg-blue-600 hover:bg-blue-700 text-white hover:cursor-pointer"
               }`}
-              onClick={() => {
-                setApproved((v) => !v);
-                setOpen(false);
-                handleApprove();
-              }}
+              onClick={handleConfirmAction}
               type="button"
             >
               {approved ? t("unapprove") : t("finance")}

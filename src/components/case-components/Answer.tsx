@@ -39,10 +39,9 @@ const Answer: React.FC<{
   childTargetId = null,
 }) => {
   const { t } = useTranslation("answer");
-  const [approved, setApproved] = useState(!!answer.approved);
-  const [financialApproved, setFinancialApproved] = useState(
-    !!answer.financial_approved
-  );
+  const approved = !!answer.approved;
+  const financialApproved = !!answer.financial_approved;
+
   const [showCommentBox, setShowCommentBox] = useState(false);
   const isCreator = me._id === answer.creator._id;
   const isAdmin = me.role?._id === ROLES.ADMIN;
@@ -261,14 +260,18 @@ const Answer: React.FC<{
                 <div className="flex items-center flex-wrap gap-2">
                   {showApproveBtn && (
                     <ApproveBtn
-                      {...{ approved, setApproved, t, answer, me, refetch }}
+                      approved={approved}
+                      refetch={refetch} // ✅ PASS refetch instead
+                      t={t}
+                      answer={answer}
+                      me={me}
+                      caseNumber={caseNumber}
                     />
                   )}
                   {showFinanceApproveBtn && (
                     <FinanceApproveBtn
                       approved={financialApproved}
-                      setApproved={setFinancialApproved}
-                      {...{ t, answer, me, refetch }}
+                      {...{ t, answer, me, caseNumber }}
                     />
                   )}
                 </div>

@@ -10,11 +10,14 @@ import {
 } from "@heroicons/react/24/outline";
 import useUserActivityScrollPersistence from "../../../hooks/useUserActivityScrollPersistence";
 import DateRangeSelector from "./DateRangeSelector";
-import { parseActivityDate } from "../../../utils/dateUtils";
-import { TIERS } from "../../../utils/GLOBAL_PARAMETERS";
+import { CasePriority, CaseType } from "../../../db/interfaces";
 import { StatsActivityType } from "./UserStatisticsPanel";
 import { RatingTierLabel } from "../../../pages/User";
 import FilterTag from "../../global/FilterTag";
+import {
+  translateCaseType,
+  translatePriority,
+} from "../../../utils/categoryDisplayUtils";
 
 // REMOVED: Local ActivityTab type is no longer needed
 
@@ -60,6 +63,12 @@ interface UserActivityListProps {
   onClearCategoryFilter: () => void;
   activeRatingTier: RatingTierLabel;
   onClearRatingTierFilter: () => void;
+  activePriority: CasePriority | "all";
+  onClearPriorityFilter: () => void;
+  activeType: CaseType | "all";
+  onClearTypeFilter: () => void;
+  activeResolution: string; // The label string
+  onClearResolutionFilter: () => void;
   cardView?: "full" | "compact";
   // MODIFIED: Added props to control the component
   activeTab: StatsActivityType;
@@ -67,13 +76,6 @@ interface UserActivityListProps {
   showDateFilter?: boolean; // Add a new prop to control visibility
   showFiltersBar?: boolean;
 }
-
-const getTierForScore = (score: number): RatingTierLabel => {
-  if (score >= TIERS.GOLD) return "Отлични";
-  if (score >= TIERS.SILVER) return "Добри";
-  if (score >= TIERS.BRONZE) return "Средни";
-  return "Проблемни";
-};
 
 const UserActivityList: React.FC<UserActivityListProps> = ({
   user,
@@ -89,6 +91,12 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
   onClearCategoryFilter,
   activeRatingTier,
   onClearRatingTierFilter,
+  activePriority,
+  onClearPriorityFilter,
+  activeType,
+  onClearTypeFilter,
+  activeResolution,
+  onClearResolutionFilter,
   cardView = "full",
   activeTab,
   onTabChange,
@@ -323,6 +331,24 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
             <FilterTag
               label={`Оценка: ${activeRatingTier}`}
               onRemove={onClearRatingTierFilter}
+            />
+          )}
+          {activePriority !== "all" && (
+            <FilterTag
+              label={`Приоритет: ${translatePriority(activePriority)}`}
+              onRemove={onClearPriorityFilter}
+            />
+          )}
+          {activeType !== "all" && (
+            <FilterTag
+              label={`Тип: ${translateCaseType(activeType)}`}
+              onRemove={onClearTypeFilter}
+            />
+          )}
+          {activeResolution !== "all" && (
+            <FilterTag
+              label={`Реакция: ${activeResolution}`}
+              onRemove={onClearResolutionFilter}
             />
           )}
           {isDateFilterActive && (

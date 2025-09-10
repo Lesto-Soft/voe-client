@@ -1,10 +1,21 @@
 // src/hooks/useUserActivityStats.ts
 import { useMemo } from "react";
-import { IUser, ICase, ICategory } from "../db/interfaces";
+import {
+  IUser,
+  ICase,
+  ICategory,
+  CasePriority,
+  CaseType,
+} from "../db/interfaces";
 import { PieSegmentData } from "../components/charts/PieChart";
 import { TIERS } from "../utils/GLOBAL_PARAMETERS";
 import { parseActivityDate } from "../utils/dateUtils";
 import { StatsActivityType } from "../components/features/userAnalytics/UserStatisticsPanel";
+import {
+  calculateResolutionStats,
+  translateCaseType,
+  translatePriority,
+} from "../utils/categoryDisplayUtils";
 
 export interface UserActivityStats {
   totalSignals: number;
@@ -14,6 +25,9 @@ export interface UserActivityStats {
   averageCaseRating: number | null;
   signalsByCategoryChartData: PieSegmentData[];
   ratingTierDistributionData: PieSegmentData[];
+  priorityDistributionData: PieSegmentData[];
+  typeDistributionData: PieSegmentData[];
+  resolutionTimeDistributionData: PieSegmentData[];
 }
 
 const useUserActivityStats = (
@@ -31,6 +45,9 @@ const useUserActivityStats = (
       averageCaseRating: null,
       signalsByCategoryChartData: [],
       ratingTierDistributionData: [],
+      priorityDistributionData: [],
+      typeDistributionData: [],
+      resolutionTimeDistributionData: [],
     };
 
     if (!user) {
@@ -186,6 +203,66 @@ const useUserActivityStats = (
       },
     ].filter((segment) => segment.value > 0);
 
+    // --- NEW LOGIC ---
+    // 1. Resolution Time Stats
+    const { resolutionPieChartData } = calculateResolutionStats(casesToAnalyze);
+
+    // 2. Priority & Type Stats
+    const priorityCounts: Record<string, number> = {
+      [CasePriority.High]: 0,
+      [CasePriority.Medium]: 0,
+      [CasePriority.Low]: 0,
+    };
+    const typeCounts: Record<string, number> = {
+      [CaseType.Problem]: 0,
+      [CaseType.Suggestion]: 0,
+    };
+
+    casesToAnalyze.forEach((c) => {
+      if (c.priority) {
+        priorityCounts[c.priority]++;
+      }
+      if (c.type) {
+        typeCounts[c.type]++;
+      }
+    });
+
+    const priorityDistributionData: PieSegmentData[] = [
+      {
+        id: CasePriority.High,
+        label: translatePriority(CasePriority.High),
+        value: priorityCounts[CasePriority.High],
+        color: "#EF4444",
+      }, // red-500
+      {
+        id: CasePriority.Medium,
+        label: translatePriority(CasePriority.Medium),
+        value: priorityCounts[CasePriority.Medium],
+        color: "#EAB308",
+      }, // yellow-500
+      {
+        id: CasePriority.Low,
+        label: translatePriority(CasePriority.Low),
+        value: priorityCounts[CasePriority.Low],
+        color: "#22C55E",
+      }, // green-500
+    ].filter((segment) => segment.value > 0);
+
+    const typeDistributionData: PieSegmentData[] = [
+      {
+        id: CaseType.Problem,
+        label: translateCaseType(CaseType.Problem),
+        value: typeCounts[CaseType.Problem],
+        color: "#F87171",
+      }, // red-400
+      {
+        id: CaseType.Suggestion,
+        label: translateCaseType(CaseType.Suggestion),
+        value: typeCounts[CaseType.Suggestion],
+        color: "#4ADE80",
+      }, // green-400
+    ].filter((segment) => segment.value > 0);
+
     return {
       totalSignals,
       totalAnswers,
@@ -194,6 +271,9 @@ const useUserActivityStats = (
       averageCaseRating,
       signalsByCategoryChartData,
       ratingTierDistributionData,
+      resolutionTimeDistributionData: resolutionPieChartData,
+      priorityDistributionData,
+      typeDistributionData,
     };
   }, [user, startDate, endDate, activityType]);
 

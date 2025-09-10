@@ -63,6 +63,8 @@ fragment FullUserFragment on User {
         }
         answers {
           needs_finance
+          approved { _id }
+          date
         }
         readBy {
           user {
@@ -85,6 +87,8 @@ fragment FullUserFragment on User {
           _id
           case_number
           status
+          priority
+          type
           calculatedRating # MODIFIED: Added
           creator {
             _id
@@ -114,6 +118,8 @@ fragment FullUserFragment on User {
           _id
           case_number
           status
+          priority
+          type
           calculatedRating # MODIFIED: Added
           creator {
             _id
@@ -137,12 +143,15 @@ fragment FullUserFragment on User {
         _id
         content
         date
+        approved {_id}
         financial_approved_date
         financial_approved {_id}
         case {
           _id
           case_number
           status
+          priority
+          type
           calculatedRating # MODIFIED: Added
           creator {
             _id
@@ -170,6 +179,8 @@ fragment FullUserFragment on User {
           _id
           case_number
           status
+          priority
+          type
           calculatedRating # MODIFIED: Added
           creator {
             _id
@@ -181,6 +192,8 @@ fragment FullUserFragment on User {
           }
           answers {
             needs_finance
+            approved { _id }
+            date
           }
           readBy {
             user {
@@ -190,10 +203,14 @@ fragment FullUserFragment on User {
         }
         answer {
           _id
+          approved { _id }
+          date
           case {
             _id
             case_number
             status
+            priority
+            type
             calculatedRating # MODIFIED: Added
             creator {
               _id
@@ -205,6 +222,8 @@ fragment FullUserFragment on User {
             }
             answers {
               needs_finance
+              approved { _id }
+              date
             }
             readBy {
               user {
@@ -246,6 +265,8 @@ fragment FullUserFragment on User {
           _id
           case_number
           status
+          priority
+          type
           calculatedRating # MODIFIED: Added
           creator {
             _id
@@ -257,6 +278,8 @@ fragment FullUserFragment on User {
           }
           answers {
             needs_finance
+            approved { _id }
+            date
           }
           readBy {
             user {

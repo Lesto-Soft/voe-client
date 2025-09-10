@@ -11,6 +11,7 @@ import {
   BanknotesIcon,
   GlobeAltIcon,
   CalendarDaysIcon,
+  ClockIcon,
 } from "@heroicons/react/24/outline";
 import { UserActivityStats } from "../../../hooks/useUserActivityStats";
 import StatisticPieChart from "../../charts/StatisticPieChart";
@@ -18,6 +19,11 @@ import { PieSegmentData } from "../../charts/PieChart";
 import { RatingTierLabel } from "../../../pages/User";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import DateRangeSelector from "./DateRangeSelector";
+import { CasePriority, CaseType } from "../../../db/interfaces";
+import {
+  translateCaseType,
+  translatePriority,
+} from "../../../utils/categoryDisplayUtils";
 import FilterTag from "../../global/FilterTag";
 
 // define a type for the text-based stats
@@ -47,6 +53,12 @@ interface UserStatisticsPanelProps {
   onRatingTierClick?: (segment: PieSegmentData) => void;
   activeCategoryLabel?: string | null;
   activeRatingTierLabel?: string | null;
+  onPriorityClick?: (segment: PieSegmentData) => void;
+  onResolutionClick?: (segment: PieSegmentData) => void;
+  onTypeClick?: (segment: PieSegmentData) => void;
+  activePriorityFilter: CasePriority | "all";
+  activeTypeFilter: CaseType | "all";
+  activeResolutionFilter: string;
   activeCategoryFilter: string | null;
   activeRatingTierFilter: RatingTierLabel;
   activeStatsTab: StatsActivityType;
@@ -74,10 +86,13 @@ interface UserStatisticsPanelProps {
   onClearCategoryFilter?: () => void;
   activeRatingTier?: RatingTierLabel;
   onClearRatingTierFilter?: () => void;
+  onClearPriorityFilter?: () => void;
+  onClearTypeFilter?: () => void;
+  onClearResolutionFilter?: () => void;
 }
 
 // Define the type for our new tabs
-type StatsTab = "categories" | "ratings";
+type PieTab = "categories" | "ratings" | "priority" | "resolution" | "type";
 
 // MODIFIED: Added 'ratings' tab configuration
 const activityTabsConfig: {
@@ -102,6 +117,12 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
   onRatingTierClick,
   activeCategoryLabel,
   activeRatingTierLabel,
+  onPriorityClick,
+  onResolutionClick,
+  onTypeClick,
+  activePriorityFilter,
+  activeTypeFilter,
+  activeResolutionFilter,
   activeCategoryFilter,
   activeRatingTierFilter,
   activeStatsTab,
@@ -116,8 +137,11 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
   onClearCategoryFilter,
   activeRatingTier,
   onClearRatingTierFilter,
+  onClearPriorityFilter,
+  onClearTypeFilter,
+  onClearResolutionFilter,
 }) => {
-  const [activePieTab, setActivePieTab] = useState<StatsTab>("categories");
+  const [activePieTab, setActivePieTab] = useState<PieTab>("categories");
   // State to manage the date filter's visibility
   const [isDateFilterVisible, setIsDateFilterVisible] = useState(
     viewMode === "center"
@@ -220,6 +244,30 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
     </div>
   );
 
+  const pieTabsConfig = [
+    {
+      key: "categories",
+      label: "По Категории",
+      filterActive: activeCategoryFilter !== null,
+    },
+    {
+      key: "ratings",
+      label: "По Рейтинг",
+      filterActive: activeRatingTierFilter !== "all",
+    },
+    {
+      key: "priority",
+      label: "По Приоритет",
+      filterActive: activePriorityFilter !== "all",
+    },
+    {
+      key: "resolution",
+      label: "По Време",
+      filterActive: activeResolutionFilter !== "all",
+    },
+    { key: "type", label: "По Тип", filterActive: activeTypeFilter !== "all" },
+  ];
+
   const PieChartSection = (
     <>
       <div>
@@ -260,37 +308,27 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
       </div>
 
       <div className="flex border-b border-gray-200 text-xs sm:text-sm">
-        <button
-          onClick={() => setActivePieTab("categories")}
-          className={`cursor-pointer relative flex-1 py-2 px-1 text-center font-medium focus:outline-none transition-colors duration-150 ${
-            activePieTab === "categories"
-              ? "border-b-2 border-indigo-500 text-indigo-600"
-              : "text-gray-500 hover:text-gray-700"
-          }`}
-        >
-          По Категории
-          {activeCategoryFilter !== null && (
-            <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-indigo-500"></span>
-          )}
-        </button>
-        <button
-          onClick={() => setActivePieTab("ratings")}
-          className={`cursor-pointer relative flex-1 py-2 px-1 text-center font-medium focus:outline-none transition-colors duration-150 ${
-            activePieTab === "ratings"
-              ? "border-b-2 border-indigo-500 text-indigo-600"
-              : "text-gray-500 hover:text-gray-700"
-          }`}
-        >
-          По Рейтинг
-          {activeRatingTierFilter !== "all" && (
-            <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-indigo-500"></span>
-          )}
-        </button>
+        {pieTabsConfig.map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setActivePieTab(tab.key as PieTab)}
+            className={`cursor-pointer relative flex-1 py-2 px-1 text-center font-medium focus:outline-none transition-colors duration-150 ${
+              activePieTab === tab.key
+                ? "border-b-2 border-indigo-500 text-indigo-600"
+                : "text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            {tab.label}
+            {tab.filterActive && (
+              <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-indigo-500"></span>
+            )}
+          </button>
+        ))}
       </div>
       <div className="mt-3">
         {activePieTab === "categories" && (
           <StatisticPieChart
-            title="Разпределение по Категории"
+            title="Разпределение по Категория"
             pieData={pieChartStats.signalsByCategoryChartData}
             onSegmentClick={onCategoryClick}
             activeLabel={activeCategoryLabel}
@@ -303,6 +341,41 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
             pieData={pieChartStats.ratingTierDistributionData}
             onSegmentClick={onRatingTierClick}
             activeLabel={activeRatingTierLabel}
+            layout={viewMode === "center" ? "horizontal" : "vertical"}
+          />
+        )}
+        {activePieTab === "priority" && (
+          <StatisticPieChart
+            title="Разпределение по Приоритет"
+            pieData={pieChartStats.priorityDistributionData}
+            onSegmentClick={onPriorityClick}
+            activeLabel={
+              pieChartStats.priorityDistributionData.find(
+                (d) => d.id === activePriorityFilter
+              )?.label
+            }
+            layout={viewMode === "center" ? "horizontal" : "vertical"}
+          />
+        )}
+        {activePieTab === "resolution" && (
+          <StatisticPieChart
+            title="Разпределение по Време за реакция"
+            pieData={pieChartStats.resolutionTimeDistributionData}
+            onSegmentClick={onResolutionClick}
+            activeLabel={activeResolutionFilter}
+            layout={viewMode === "center" ? "horizontal" : "vertical"}
+          />
+        )}
+        {activePieTab === "type" && (
+          <StatisticPieChart
+            title="Разпределение по Тип"
+            pieData={pieChartStats.typeDistributionData}
+            onSegmentClick={onTypeClick}
+            activeLabel={
+              pieChartStats.typeDistributionData.find(
+                (d) => d.id === activeTypeFilter
+              )?.label
+            }
             layout={viewMode === "center" ? "horizontal" : "vertical"}
           />
         )}
@@ -389,6 +462,27 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
                     onRemove={onClearRatingTierFilter}
                   />
                 )}
+                {activePriorityFilter !== "all" && onClearPriorityFilter && (
+                  <FilterTag
+                    label={`Приоритет: ${translatePriority(
+                      activePriorityFilter
+                    )}`}
+                    onRemove={onClearPriorityFilter}
+                  />
+                )}
+                {activeTypeFilter !== "all" && onClearTypeFilter && (
+                  <FilterTag
+                    label={`Тип: ${translateCaseType(activeTypeFilter)}`}
+                    onRemove={onClearTypeFilter}
+                  />
+                )}
+                {activeResolutionFilter !== "all" &&
+                  onClearResolutionFilter && (
+                    <FilterTag
+                      label={`Реакция: ${activeResolutionFilter}`}
+                      onRemove={onClearResolutionFilter}
+                    />
+                  )}
                 {isDateFilterActive && onDateRangeChange && (
                   <FilterTag
                     label="Период"

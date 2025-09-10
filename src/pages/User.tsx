@@ -3,7 +3,14 @@ import React, { useState, useMemo, useEffect } from "react";
 import { useParams, useNavigate } from "react-router";
 import { useGetFullUserByUsername, useUpdateUser } from "../graphql/hooks/user";
 import { useGetRoles } from "../graphql/hooks/role";
-import { IMe, ICase, IAnswer, IComment } from "../db/interfaces";
+import {
+  IMe,
+  ICase,
+  IAnswer,
+  IComment,
+  CasePriority,
+  CaseType,
+} from "../db/interfaces";
 import { UpdateUserInput } from "../graphql/mutation/user";
 import { parseActivityDate } from "../utils/dateUtils";
 import { PieSegmentData } from "../components/charts/PieChart";
@@ -27,6 +34,12 @@ import SuccessConfirmationModal from "../components/modals/SuccessConfirmationMo
 // Constants & Utils
 import { ROLES, TIERS } from "../utils/GLOBAL_PARAMETERS";
 import { containsAnyCategoryById } from "../utils/arrayUtils";
+import {
+  getCaseResolutionCategory,
+  RESOLUTION_CATEGORY_CONFIG,
+  translatePriority,
+  translateCaseType,
+} from "../utils/categoryDisplayUtils";
 import { useAuthorization } from "../hooks/useAuthorization";
 import ForbiddenPage from "./ErrorPages/ForbiddenPage";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
@@ -39,6 +52,9 @@ export type RatingTierLabel =
   | "Средни"
   | "Проблемни"
   | "all";
+
+type ResolutionCategoryLabel =
+  (typeof RESOLUTION_CATEGORY_CONFIG)[number]["label"];
 
 // --- Helper types for this component ---
 interface RatedCaseActivity {
@@ -90,6 +106,13 @@ const User: React.FC = () => {
   );
   const [activeRatingTier, setActiveRatingTier] =
     useState<RatingTierLabel>("all");
+  const [activePriority, setActivePriority] = useState<CasePriority | "all">(
+    "all"
+  );
+  const [activeType, setActiveType] = useState<CaseType | "all">("all");
+  const [activeResolution, setActiveResolution] = useState<
+    ResolutionCategoryLabel | "all"
+  >("all");
   // MODIFIED: Renamed state for clarity and made it the single source of truth
   const [activeActivityTab, setActiveActivityTab] =
     useState<StatsActivityType>("all");
@@ -308,6 +331,32 @@ const User: React.FC = () => {
       }
     }
 
+    if (activePriority !== "all") {
+      activities = activities.filter((activity) => {
+        let relatedCase: ICase | undefined | null;
+        // This logic can be extracted to a helper if it gets too repetitive
+        switch (activity.activityType) {
+          case "case":
+            relatedCase = activity.item as ICase;
+            break;
+          case "rating":
+            relatedCase = (activity.item as RatedCaseActivity).case;
+            break;
+          case "answer":
+          case "base_approval":
+          case "finance_approval":
+            relatedCase = (activity.item as IAnswer).case;
+            break;
+          case "comment":
+            const comment = activity.item as IComment;
+            relatedCase = comment.case || comment.answer?.case;
+            break;
+        }
+        if (!relatedCase) return false;
+        return relatedCase.priority === activePriority;
+      });
+    }
+
     if (activeRatingTier !== "all") {
       activities = activities.filter((activity) => {
         let relatedCase: ICase | undefined | null;
@@ -342,12 +391,78 @@ const User: React.FC = () => {
       });
     }
 
+    if (activeType !== "all") {
+      activities = activities.filter((activity) => {
+        let relatedCase: ICase | undefined | null;
+        switch (activity.activityType) {
+          case "case":
+            relatedCase = activity.item as ICase;
+            break;
+          case "rating":
+            relatedCase = (activity.item as RatedCaseActivity).case;
+            break;
+          case "answer":
+          case "base_approval":
+          case "finance_approval":
+            relatedCase = (activity.item as IAnswer).case;
+            break;
+          case "comment":
+            const comment = activity.item as IComment;
+            relatedCase = comment.case || comment.answer?.case;
+            break;
+        }
+        if (!relatedCase) return false;
+        return relatedCase.type === activeType;
+      });
+    }
+
+    if (activeResolution !== "all") {
+      const resolutionKey = RESOLUTION_CATEGORY_CONFIG.find(
+        (c) => c.label === activeResolution
+      )?.key;
+      if (resolutionKey) {
+        activities = activities.filter((activity) => {
+          let relatedCase: ICase | undefined | null;
+          switch (activity.activityType) {
+            case "case":
+              relatedCase = activity.item as ICase;
+              break;
+            case "rating":
+              relatedCase = (activity.item as RatedCaseActivity).case;
+              break;
+            case "answer":
+            case "base_approval":
+            case "finance_approval":
+              relatedCase = (activity.item as IAnswer).case;
+              break;
+            case "comment":
+              const comment = activity.item as IComment;
+              relatedCase = comment.case || comment.answer?.case;
+              break;
+          }
+          if (!relatedCase) return false;
+          const caseResolutionCategoryKey =
+            getCaseResolutionCategory(relatedCase);
+          return caseResolutionCategoryKey === resolutionKey;
+        });
+      }
+    }
+
     return activities.sort(
       (a, b) =>
         parseActivityDate(b.date).getTime() -
         parseActivityDate(a.date).getTime()
     );
-  }, [user, dateRange, activeCategoryName, activeRatingTier, pieChartStats]);
+  }, [
+    user,
+    dateRange,
+    activeCategoryName,
+    activeRatingTier,
+    activePriority,
+    activeType,
+    activeResolution,
+    pieChartStats,
+  ]);
 
   const filteredActivityCounts = useMemo(() => {
     const counts = {
@@ -477,8 +592,27 @@ const User: React.FC = () => {
   };
 
   const handleRatingTierClick = (segment: PieSegmentData) => {
-    const tierKey = segment.label.split(" ")[0] as RatingTierLabel;
+    const tierKey = segment.label.split(" ")[0] as RatingTierLabel; // "Отлични", "Добри", etc.
     setActiveRatingTier((current) => (current === tierKey ? "all" : tierKey));
+  };
+
+  const handlePriorityClick = (segment: PieSegmentData) => {
+    const priorityKey = segment.id as CasePriority;
+    setActivePriority((current) =>
+      current === priorityKey ? "all" : priorityKey
+    );
+  };
+
+  const handleTypeClick = (segment: PieSegmentData) => {
+    const typeKey = segment.id as CaseType;
+    setActiveType((current) => (current === typeKey ? "all" : typeKey));
+  };
+
+  const handleResolutionClick = (segment: PieSegmentData) => {
+    const resolutionLabel = segment.label as ResolutionCategoryLabel;
+    setActiveResolution((current) =>
+      current === resolutionLabel ? "all" : resolutionLabel
+    );
   };
 
   const isAnyFilterActive = useMemo(() => {
@@ -486,14 +620,27 @@ const User: React.FC = () => {
       dateRange.startDate !== null ||
       dateRange.endDate !== null ||
       activeCategoryName !== null ||
-      activeRatingTier !== "all"
+      activeRatingTier !== "all" ||
+      activePriority !== "all" ||
+      activeType !== "all" ||
+      activeResolution !== "all"
     );
-  }, [dateRange, activeCategoryName, activeRatingTier]);
+  }, [
+    dateRange,
+    activeCategoryName,
+    activeRatingTier,
+    activePriority,
+    activeType,
+    activeResolution,
+  ]);
 
   const handleClearAllFilters = () => {
     setDateRange({ startDate: null, endDate: null });
     setActiveCategoryName(null);
     setActiveRatingTier("all");
+    setActivePriority("all");
+    setActiveType("all");
+    setActiveResolution("all");
   };
 
   if (userLoading || authLoading) {
@@ -573,6 +720,7 @@ const User: React.FC = () => {
             </div>
           )}
           {/* --- NEW: Conditional Layout Rendering --- */}
+          {/* make some props conditional for UserActivityList and UserStatisticsPanel based on the layout */}
           {layout === "standard" ? (
             <>
               {/* Main Content (Activity List) */}
@@ -591,6 +739,12 @@ const User: React.FC = () => {
                   onClearCategoryFilter={() => setActiveCategoryName(null)}
                   activeTab={activeActivityTab}
                   onTabChange={handleActivityTabChange}
+                  activePriority={activePriority}
+                  onClearPriorityFilter={() => setActivePriority("all")}
+                  activeType={activeType}
+                  onClearTypeFilter={() => setActiveType("all")}
+                  activeResolution={activeResolution}
+                  onClearResolutionFilter={() => setActiveResolution("all")}
                   activeRatingTier={activeRatingTier}
                   onClearRatingTierFilter={() => setActiveRatingTier("all")}
                 />
@@ -606,6 +760,12 @@ const User: React.FC = () => {
                     onCategoryClick={handleCategoryClick}
                     onRatingTierClick={handleRatingTierClick}
                     activeCategoryLabel={activeCategoryName}
+                    onPriorityClick={handlePriorityClick}
+                    onResolutionClick={handleResolutionClick}
+                    onTypeClick={handleTypeClick}
+                    activePriorityFilter={activePriority}
+                    activeTypeFilter={activeType}
+                    activeResolutionFilter={activeResolution}
                     activeRatingTierLabel={
                       activeRatingTier !== "all"
                         ? pieChartStats?.ratingTierDistributionData.find((d) =>
@@ -636,6 +796,12 @@ const User: React.FC = () => {
                   onCategoryClick={handleCategoryClick}
                   onRatingTierClick={handleRatingTierClick}
                   activeCategoryLabel={activeCategoryName}
+                  onPriorityClick={handlePriorityClick}
+                  onResolutionClick={handleResolutionClick}
+                  onTypeClick={handleTypeClick}
+                  activePriorityFilter={activePriority}
+                  activeTypeFilter={activeType}
+                  activeResolutionFilter={activeResolution}
                   activeRatingTierLabel={
                     activeRatingTier !== "all"
                       ? pieChartStats?.ratingTierDistributionData.find((d) =>
@@ -657,6 +823,9 @@ const User: React.FC = () => {
                   onClearCategoryFilter={() => setActiveCategoryName(null)}
                   activeRatingTier={activeRatingTier}
                   onClearRatingTierFilter={() => setActiveRatingTier("all")}
+                  onClearPriorityFilter={() => setActivePriority("all")}
+                  onClearTypeFilter={() => setActiveType("all")}
+                  onClearResolutionFilter={() => setActiveResolution("all")}
                 />
               </div>
               {/* Activity List (Right) */}
@@ -679,6 +848,12 @@ const User: React.FC = () => {
                     onTabChange={handleActivityTabChange}
                     activeRatingTier={activeRatingTier}
                     onClearRatingTierFilter={() => setActiveRatingTier("all")}
+                    activePriority={activePriority}
+                    onClearPriorityFilter={() => setActivePriority("all")}
+                    activeType={activeType}
+                    onClearTypeFilter={() => setActiveType("all")}
+                    activeResolution={activeResolution}
+                    onClearResolutionFilter={() => setActiveResolution("all")}
                     // Hide the date filter from the activity list
                     showDateFilter={false}
                     showFiltersBar={false}

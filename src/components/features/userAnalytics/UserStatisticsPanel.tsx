@@ -119,7 +119,9 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
 }) => {
   const [activePieTab, setActivePieTab] = useState<StatsTab>("categories");
   // State to manage the date filter's visibility
-  const [isDateFilterVisible, setIsDateFilterVisible] = useState(false);
+  const [isDateFilterVisible, setIsDateFilterVisible] = useState(
+    viewMode === "center"
+  );
   const isInteractive = onCategoryClick || onRatingTierClick;
 
   // Check if a date range is active to style the button accordingly

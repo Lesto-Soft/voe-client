@@ -307,6 +307,7 @@ export const useGetMe = () => {
   // --- CHECK data access for 'me' ---
   // If GET_ME returns { me: { ... } }, it should be data?.me
   // If it returns { _id: ..., name: ... } directly, then data is correct
+  console.log(data);
   return {
     loading,
     error,

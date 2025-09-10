@@ -383,6 +383,7 @@ export const useDeleteCase = (
     {
       onCompleted: options.onCompleted,
       refetchQueries: [GET_NOTIFICATIONS],
+      awaitRefetchQueries: true,
     }
   );
 

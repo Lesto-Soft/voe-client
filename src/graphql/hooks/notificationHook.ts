@@ -1,6 +1,9 @@
 import { useQuery, useSubscription, useMutation } from "@apollo/client";
 import { GET_NOTIFICATIONS } from "../query/notificationQuery";
-import { NOTIFICATION_SUBSCRIPTION } from "../subscription/notification";
+import {
+  NOTIFICATION_SUBSCRIPTION,
+  NOTIFICATIONS_REMOVED_SUBSCRIPTION,
+} from "../subscription/notification";
 import {
   DELETE_ALL_NOTIFICATIONS,
   DELETE_NOTIFICATION,
@@ -55,4 +58,12 @@ export const useMarkAsUnread = () => {
       console.error("Error marking notifications as unread:", error);
     },
   });
+};
+
+export const useNotificationsRemovedSubscription = (options: {
+  variables: { userId: string };
+  onData: (data: any) => void;
+  onError?: (error: any) => void;
+}) => {
+  return useSubscription(NOTIFICATIONS_REMOVED_SUBSCRIPTION, options);
 };

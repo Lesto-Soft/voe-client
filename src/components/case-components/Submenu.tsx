@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ChatBubbleBottomCenterTextIcon,
   ChatBubbleOvalLeftEllipsisIcon,
@@ -11,7 +11,7 @@ import Answer from "./Answer";
 import AddComment from "./AddComment";
 import AddAnswer from "./AddAnswer";
 import { USER_RIGHTS } from "../../utils/GLOBAL_PARAMETERS";
-const LOCAL_STORAGE_KEY = "case-submenu-view";
+import { useLocation } from "react-router";
 
 interface SubmenuProps {
   caseData: ICase;
@@ -22,6 +22,29 @@ interface SubmenuProps {
   mentions?: { name: string; username: string; _id: string }[];
 }
 
+const getStateFromHash = () => {
+  const hash = window.location.hash.substring(1);
+
+  if (hash.startsWith("comments-")) {
+    return { view: "comments" as const, targetId: hash };
+  }
+  if (hash.startsWith("answers-")) {
+    return { view: "answers" as const, targetId: hash };
+  }
+  if (hash === "comments") {
+    return { view: "comments" as const, targetId: null };
+  }
+  if (hash === "answers") {
+    return { view: "answers" as const, targetId: null };
+  }
+  if (hash === "history") {
+    return { view: "history" as const, targetId: null };
+  }
+
+  // Default state if hash is empty or unrecognized
+  return { view: "answers" as const, targetId: null };
+};
+
 const Submenu: React.FC<SubmenuProps> = ({
   caseData,
   t,
@@ -30,18 +53,67 @@ const Submenu: React.FC<SubmenuProps> = ({
   userRights,
   mentions = [],
 }) => {
-  const [view, setView] = useState<"answers" | "comments" | "history">(() => {
-    const stored = sessionStorage.getItem(LOCAL_STORAGE_KEY);
-    if (stored === "answers" || stored === "comments" || stored === "history") {
-      return stored;
-    }
-    return "answers";
-  });
+  const [view, setView] = useState(() => getStateFromHash().view);
+  const [targetId, setTargetId] = useState<string | null>(null);
+  const [childTargetId, setChildTargetId] = useState<string | null>(null);
+  const location = useLocation();
+  // --- A SINGLE, ROBUST useEffect to control everything ---
+  useEffect(() => {
+    // 1. Wrap your logic in an async function.
+    const handleNavigation = async () => {
+      // This is your existing function to parse the URL and set the view.
+      // It remains unchanged.
+      const processUrl = () => {
+        const fullHash = location.hash.substring(1);
+        const isCommentLink = fullHash.includes("?comment=true");
+        const hashPart = fullHash.split("?")[0];
 
-  useLayoutEffect(() => {
-    sessionStorage.setItem(LOCAL_STORAGE_KEY, view);
-  }, [view]);
+        if (hashPart.startsWith("answers-") && isCommentLink) {
+          const commentId = hashPart.split("-")[1];
+          const parentAnswer = (caseData.answers || []).find((answer) =>
+            answer.comments?.some((c) => c._id === commentId)
+          );
+          if (parentAnswer) {
+            setView("answers");
+            setTargetId(`answers-${parentAnswer._id}`);
+            setChildTargetId(`comments-${commentId}`);
+          }
+          return;
+        }
 
+        setChildTargetId(null);
+        if (hashPart.startsWith("comments-")) {
+          setView("comments");
+          setTargetId(hashPart);
+        } else if (hashPart.startsWith("answers-")) {
+          setView("answers");
+          setTargetId(hashPart);
+        } else if (hashPart === "history" || hashPart === "comments") {
+          setView(hashPart as "history" | "comments");
+          setTargetId(null);
+        } else {
+          setView("answers");
+          setTargetId(null);
+        }
+      };
+
+      // 2. Check if the URL hash is targeting a specific item (like a comment or answer).
+      const isTargetingSpecificItem = location.hash.includes("-");
+
+      // 3. If it is, await the refetch call to get fresh data first.
+      if (isTargetingSpecificItem) {
+        await refetch();
+      }
+
+      // 4. Now, run your URL processing logic with the guaranteed fresh data.
+      processUrl();
+    };
+
+    handleNavigation();
+
+    // 5. The 'hashchange' event listener is no longer needed and can be removed,
+    //    as the effect now correctly depends on `location.hash`.
+  }, [caseData.answers, location.hash, refetch]);
   const isCreatorAndNothingElse =
     userRights.length === 1 && userRights.includes("creator");
 
@@ -54,7 +126,6 @@ const Submenu: React.FC<SubmenuProps> = ({
           <sup>{caseData?.answers?.length || 0}</sup>
         </>
       ),
-      // --- FIXED: Added mr-2 for spacing ---
       icon: <ChatBubbleBottomCenterTextIcon className="h-5 w-5 mr-2" />,
     },
     {
@@ -99,9 +170,7 @@ const Submenu: React.FC<SubmenuProps> = ({
                   : "border-gray-300 shadow-sm bg-gray-100 text-gray-700 hover:bg-red-100 hover:text-btnRedHover hover:cursor-pointer"
               }`}
               type="button"
-              onClick={() =>
-                setView(item.key as "answers" | "comments" | "history")
-              }
+              onClick={() => (window.location.hash = item.key)}
             >
               {item.icon}
               {item.label}
@@ -158,6 +227,8 @@ const Submenu: React.FC<SubmenuProps> = ({
                         status={caseData.status}
                         caseCategories={caseData.categories}
                         mentions={mentions}
+                        targetId={targetId}
+                        childTargetId={childTargetId}
                       />
                     ) : null;
                   })}
@@ -193,6 +264,7 @@ const Submenu: React.FC<SubmenuProps> = ({
                       me={me}
                       caseNumber={caseData.case_number}
                       mentions={mentions}
+                      targetId={targetId}
                     />
                   ))}
               </>

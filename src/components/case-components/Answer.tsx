@@ -1,5 +1,5 @@
 import { IAnswer, ICategory, IComment, IMe } from "../../db/interfaces";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Comment from "./Comment";
 import ShowDate from "../global/ShowDate";
 import { useTranslation } from "react-i18next";
@@ -25,6 +25,8 @@ const Answer: React.FC<{
   status?: string;
   caseCategories: ICategory[];
   mentions: { name: string; username: string; _id: string }[];
+  targetId?: string | null;
+  childTargetId?: string | null;
 }> = ({
   answer,
   me,
@@ -33,15 +35,18 @@ const Answer: React.FC<{
   status,
   caseCategories,
   mentions,
+  targetId,
+  childTargetId = null,
 }) => {
   const { t } = useTranslation("answer");
-  const [approved, setApproved] = useState(!!answer.approved);
-  const [financialApproved, setFinancialApproved] = useState(
-    !!answer.financial_approved
-  );
+  const approved = !!answer.approved;
+  const financialApproved = !!answer.financial_approved;
+
   const [showCommentBox, setShowCommentBox] = useState(false);
   const isCreator = me._id === answer.creator._id;
   const isAdmin = me.role?._id === ROLES.ADMIN;
+  const answerRef = useRef<HTMLDivElement>(null);
+  const commentRefs = useRef(new Map<string, HTMLDivElement>());
 
   const managedCategoryIds = me?.managed_categories.map(
     (cat: ICategory) => cat._id
@@ -71,9 +76,58 @@ const Answer: React.FC<{
     approved === true;
 
   useEffect(() => {
-    setApproved(!!answer.approved);
-    setFinancialApproved(!!answer.financial_approved);
-  }, [answer]);
+    const selfId = `answers-${answer._id}`;
+    // This component is not involved at all, so do nothing.
+    if (targetId !== selfId) {
+      return;
+    }
+
+    // Action 1: Scroll this parent Answer into view.
+    if (answerRef.current) {
+      answerRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+    // Action 2: Check if there is a child comment to highlight.
+    if (childTargetId) {
+      const timer = setTimeout(() => {
+        const commentId = childTargetId.split("-")[1];
+        const childWrapperRef = commentRefs.current.get(commentId);
+
+        if (childWrapperRef) {
+          console.log(
+            `ANSWER (${answer._id}): Found ref for child, now highlighting!`
+          );
+
+          // SCROLL TO THE CHILD'S WRAPPER
+          childWrapperRef.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+          });
+
+          // HIGHLIGHT THE CHILD'S WRAPPER
+          childWrapperRef.classList.add("highlight");
+          setTimeout(() => {
+            childWrapperRef.classList.remove("highlight");
+          }, 5000);
+        } else {
+          console.error(
+            `ANSWER (${answer._id}): FAILED to find ref for child with ID:`,
+            commentId
+          );
+        }
+      }, 100); // 100ms delay for React to render the comment.
+
+      return () => clearTimeout(timer);
+    } else {
+      // NO. The target is me.
+      // Highlight myself.
+      if (answerRef.current) {
+        answerRef.current.classList.add("highlight");
+        setTimeout(() => {
+          answerRef.current?.classList.remove("highlight");
+        }, 5000);
+      }
+    }
+  }, [targetId, childTargetId, answer._id]);
 
   const answerContentAndAttachments = (
     <>
@@ -143,6 +197,7 @@ const Answer: React.FC<{
             caseNumber={caseNumber}
             me={me}
             inputId={`file-upload-comment-answer-${answer._id}`}
+            mentions={mentions}
           />
         )}
       </div>
@@ -151,13 +206,26 @@ const Answer: React.FC<{
           <hr className="my-2 border-gray-200" />
           <div className="flex flex-col gap-2">
             {answer.comments.map((comment: IComment) => (
-              <Comment
+              <div
                 key={comment._id}
-                comment={comment}
-                me={me}
-                caseNumber={caseNumber}
-                mentions={mentions}
-              />
+                ref={(node) => {
+                  if (node) {
+                    commentRefs.current.set(comment._id, node);
+                  } else {
+                    commentRefs.current.delete(comment._id);
+                  }
+                }}
+              >
+                <Comment
+                  key={comment._id}
+                  comment={comment}
+                  me={me}
+                  caseNumber={caseNumber}
+                  mentions={mentions}
+                  parentType="answer"
+                  targetId={childTargetId}
+                />
+              </div>
             ))}
           </div>
         </div>
@@ -166,7 +234,7 @@ const Answer: React.FC<{
   );
 
   return (
-    <div className="my-8 min-w-full px-5">
+    <div className="my-8 min-w-full px-5 transition-all duration-500">
       <div
         className={`bg-white shadow-md rounded-lg p-4 lg:p-6 ${
           approved
@@ -174,105 +242,69 @@ const Answer: React.FC<{
             : ""
         }`}
       >
-        {/* --- MOBILE VIEW (GRID) --- */}
-        <div className="lg:hidden">
-          <div className="grid grid-cols-[1fr_auto] gap-x-4">
-            <div className="col-start-1">
-              <Creator creator={answer.creator} />
-            </div>
-            <div className="col-start-2 flex flex-col items-end gap-y-2">
+        {/* --- UNIFIED RESPONSIVE LAYOUT --- */}
+        <div
+          className="flex flex-row gap-4"
+          id={`answers-${answer._id}`} // Moved ID and Ref here for consistent targeting
+          ref={answerRef}
+        >
+          {/* Creator's avatar/info on the left */}
+          <Creator creator={answer.creator} />
+
+          {/* All content to the right of the creator */}
+          <div className="flex-1 flex flex-col min-w-0">
+            {/* Header: Contains all action buttons and the date */}
+            <div className="flex flex-wrap justify-between items-center gap-y-2 gap-x-4 mb-2">
+              {/* Approval buttons will appear on the left */}
               {(showApproveBtn || showFinanceApproveBtn) && (
-                <div className="flex items-center flex-wrap gap-2 justify-end">
+                <div className="flex items-center flex-wrap gap-2">
                   {showApproveBtn && (
                     <ApproveBtn
-                      {...{ approved, setApproved, t, answer, me, refetch }}
+                      approved={approved}
+                      refetch={refetch} // ✅ PASS refetch instead
+                      t={t}
+                      answer={answer}
+                      me={me}
+                      caseNumber={caseNumber}
                     />
                   )}
                   {showFinanceApproveBtn && (
                     <FinanceApproveBtn
                       approved={financialApproved}
-                      setApproved={setFinancialApproved}
-                      {...{ t, answer, me, refetch }}
+                      {...{ t, answer, me, caseNumber }}
                     />
                   )}
                 </div>
               )}
-              <div className="flex items-center gap-2">
+
+              {/* Edit/Delete/History/Date buttons. This group is pushed to the right on large screens. */}
+              <div className="flex items-center gap-2 lg:ml-auto">
                 {canEditOrDelete && (
                   <>
                     {answer.history && answer.history.length > 0 && (
                       <AnswerHistoryModal history={answer.history} />
                     )}
-                    <>
-                      <EditAnswerButton
-                        {...{ answer, caseNumber, me }}
-                        currentAttachments={answer.attachments || []}
-                        mentions={mentions}
-                      />
-                      <DeleteModal
-                        title="deleteAnswer"
-                        content="deleteAnswerInfo"
-                        onDelete={() => deleteAnswer(answer._id.toString())}
-                      />
-                    </>
+                    <EditAnswerButton
+                      {...{ answer, caseNumber, me }}
+                      currentAttachments={answer.attachments || []}
+                      mentions={mentions}
+                    />
+                    <DeleteModal
+                      title="deleteAnswer"
+                      content="deleteAnswerInfo"
+                      onDelete={() => deleteAnswer(answer._id.toString())}
+                    />
                   </>
                 )}
+                <ShowDate date={answer.date} />
               </div>
-              <ShowDate date={answer.date} centered={true} />
             </div>
-            <div className="col-span-2">{answerContentAndAttachments}</div>
+
+            {/* The main content of the answer */}
+            <div>{answerContentAndAttachments}</div>
           </div>
         </div>
 
-        {/* --- DESKTOP VIEW (FLEX) --- */}
-        <div className="hidden lg:block">
-          <div className="flex flex-row gap-2">
-            <Creator creator={answer.creator} />
-            <div className="flex-1 flex flex-col">
-              <div className="flex flex-wrap gap-y-2 justify-between items-center mb-2">
-                {showApproveBtn || showFinanceApproveBtn ? (
-                  <div className="flex items-center flex-wrap gap-2 justify-end">
-                    {showApproveBtn && (
-                      <ApproveBtn
-                        {...{ approved, setApproved, t, answer, me, refetch }}
-                      />
-                    )}
-                    {showFinanceApproveBtn && (
-                      <FinanceApproveBtn
-                        approved={financialApproved}
-                        setApproved={setFinancialApproved}
-                        {...{ t, answer, me, refetch }}
-                      />
-                    )}
-                  </div>
-                ) : (
-                  <div className="h-10" /> // This empty div acts as a placeholder to maintain spacing
-                )}
-                <div className="flex items-center gap-2 ml-4">
-                  {canEditOrDelete && (
-                    <>
-                      {answer.history && answer.history.length > 0 && (
-                        <AnswerHistoryModal history={answer.history} />
-                      )}
-                      <EditAnswerButton
-                        {...{ answer, caseNumber, me }}
-                        currentAttachments={answer.attachments || []}
-                        mentions={mentions}
-                      />
-                      <DeleteModal
-                        title="deleteAnswer"
-                        content="deleteAnswerInfo"
-                        onDelete={() => deleteAnswer(answer._id.toString())}
-                      />
-                    </>
-                  )}
-                  <ShowDate date={answer.date} />
-                </div>
-              </div>
-              <div>{answerContentAndAttachments}</div>
-            </div>
-          </div>
-        </div>
         {commentsSection}
       </div>
     </div>

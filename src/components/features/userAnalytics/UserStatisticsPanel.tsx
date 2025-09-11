@@ -94,6 +94,8 @@ interface UserStatisticsPanelProps {
   onClearTypeFilter?: () => void;
   onClearResolutionFilter?: () => void;
   onClearStatusFilter?: () => void;
+  activePieTab: PieTab;
+  onPieTabChange: (tab: PieTab) => void;
 }
 
 // Define the type for our new tabs
@@ -104,6 +106,8 @@ type PieTab =
   | "resolution"
   | "type"
   | "status";
+
+export type { PieTab };
 
 // MODIFIED: Added 'ratings' tab configuration
 const activityTabsConfig: {
@@ -154,10 +158,11 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
   onClearTypeFilter,
   onClearStatusFilter,
   onClearResolutionFilter,
+  activePieTab,
+  onPieTabChange,
 }) => {
   const pieTabsContainerRef = useRef<HTMLDivElement>(null);
   const filtersContainerRef = useRef<HTMLDivElement>(null);
-  const [activePieTab, setActivePieTab] = useState<PieTab>("categories");
   // State to manage the date filter's visibility
   const [isDateFilterVisible, setIsDateFilterVisible] = useState(
     viewMode === "center"
@@ -184,6 +189,20 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
       scrollContainer.removeEventListener("wheel", handleWheel);
     };
   }, [isAnyFilterActive]);
+
+  // This effect runs whenever the active pie tab changes
+  useEffect(() => {
+    // Construct the ID of the active tab button
+    const activeTabElement = document.getElementById(`pie-tab-${activePieTab}`);
+    // If the element is found, scroll it into the visible area of its container
+    if (activeTabElement) {
+      activeTabElement.scrollIntoView({
+        behavior: "smooth",
+        inline: "nearest", // Crucial for horizontal scrolling
+        block: "nearest",
+      });
+    }
+  }, [activePieTab]);
 
   useEffect(() => {
     const scrollContainer = filtersContainerRef.current;
@@ -308,28 +327,38 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
       key: "categories",
       label: "По Категории",
       filterActive: activeCategoryFilter !== null,
+      clearFilter: onClearCategoryFilter,
     },
     {
       key: "ratings",
       label: "По Рейтинг",
       filterActive: activeRatingTierFilter !== "all",
+      clearFilter: onClearRatingTierFilter,
     },
     {
       key: "priority",
       label: "По Приоритет",
       filterActive: activePriorityFilter !== "all",
+      clearFilter: onClearPriorityFilter,
     },
     {
       key: "resolution",
       label: "По Време",
       filterActive: activeResolutionFilter !== "all",
+      clearFilter: onClearResolutionFilter,
     },
     {
       key: "status",
       label: "По Статус",
       filterActive: activeStatusFilter !== "all",
+      clearFilter: onClearStatusFilter,
     },
-    { key: "type", label: "По Тип", filterActive: activeTypeFilter !== "all" },
+    {
+      key: "type",
+      label: "По Тип",
+      filterActive: activeTypeFilter !== "all",
+      clearFilter: onClearTypeFilter,
+    },
   ];
 
   const PieChartSection = (
@@ -378,7 +407,8 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
         {pieTabsConfig.map((tab) => (
           <button
             key={tab.key}
-            onClick={() => setActivePieTab(tab.key as PieTab)}
+            id={`pie-tab-${tab.key}`}
+            onClick={() => onPieTabChange(tab.key as PieTab)}
             className={`cursor-pointer relative flex-1 py-2 px-3 text-sm font-medium focus:outline-none transition-colors duration-150 whitespace-nowrap ${
               activePieTab === tab.key
                 ? "border-b-2 border-indigo-500 text-indigo-600"
@@ -387,7 +417,14 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
           >
             {tab.label}
             {tab.filterActive && (
-              <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-indigo-500"></span>
+              <span
+                title="Изчисти филтъра"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  tab.clearFilter?.();
+                }}
+                className="absolute top-1 right-1 h-2 w-2 rounded-full bg-indigo-500 hover:ring-2 hover:ring-indigo-300"
+              ></span>
             )}
           </button>
         ))}
@@ -538,12 +575,14 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
                     <FilterTag
                       label={`Категория: ${activeCategoryName}`}
                       onRemove={onClearCategoryFilter}
+                      onClick={() => onPieTabChange("categories")}
                     />
                   )}
                   {activeRatingTier !== "all" && onClearRatingTierFilter && (
                     <FilterTag
                       label={`Оценка: ${activeRatingTier}`}
                       onRemove={onClearRatingTierFilter}
+                      onClick={() => onPieTabChange("ratings")}
                     />
                   )}
                   {activePriorityFilter !== "all" && onClearPriorityFilter && (
@@ -552,12 +591,14 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
                         activePriorityFilter
                       )}`}
                       onRemove={onClearPriorityFilter}
+                      onClick={() => onPieTabChange("priority")}
                     />
                   )}
                   {activeTypeFilter !== "all" && onClearTypeFilter && (
                     <FilterTag
                       label={`Тип: ${translateCaseType(activeTypeFilter)}`}
                       onRemove={onClearTypeFilter}
+                      onClick={() => onPieTabChange("type")}
                     />
                   )}
                   {activeResolutionFilter !== "all" &&
@@ -565,12 +606,14 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
                       <FilterTag
                         label={`Реакция: ${activeResolutionFilter}`}
                         onRemove={onClearResolutionFilter}
+                        onClick={() => onPieTabChange("resolution")}
                       />
                     )}
                   {activeStatusFilter !== "all" && onClearStatusFilter && (
                     <FilterTag
                       label={`Статус: ${translateStatus(activeStatusFilter)}`}
                       onRemove={onClearStatusFilter}
+                      onClick={() => onPieTabChange("status")}
                     />
                   )}
                   {isDateFilterActive && onDateRangeChange && (

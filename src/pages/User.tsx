@@ -27,6 +27,7 @@ import UserInformationPanel from "../components/features/userAnalytics/UserInfor
 import UserActivityList from "../components/features/userAnalytics/UserActivityList";
 import UserStatisticsPanel, {
   UserTextStats,
+  PieTab,
 } from "../components/features/userAnalytics/UserStatisticsPanel";
 import UserModal from "../components/modals/UserModal";
 import UserForm from "../components/forms/UserForm";
@@ -115,6 +116,8 @@ const User: React.FC = () => {
     ResolutionCategoryLabel | "all"
   >("all");
   const [activeStatus, setActiveStatus] = useState<ICaseStatus | "all">("all");
+  // LIFTED STATE: The active pie tab state now lives here
+  const [activePieTab, setActivePieTab] = useState<PieTab>("categories");
   // MODIFIED: Renamed state for clarity and made it the single source of truth
   const [activeActivityTab, setActiveActivityTab] =
     useState<StatsActivityType>("all");
@@ -786,6 +789,7 @@ const User: React.FC = () => {
                   onClearRatingTierFilter={() => setActiveRatingTier("all")}
                   activeStatus={activeStatus}
                   onClearStatusFilter={() => setActiveStatus("all")}
+                  onPieTabChange={setActivePieTab}
                 />
               </div>
               {/* Statistics Panel */}
@@ -819,6 +823,14 @@ const User: React.FC = () => {
                     activityCounts={filteredActivityCounts} // Pass the counts object
                     activeStatsTab={activeActivityTab}
                     onStatsTabChange={handleActivityTabChange}
+                    onClearResolutionFilter={() => setActiveResolution("all")}
+                    onClearStatusFilter={() => setActiveStatus("all")}
+                    activePieTab={activePieTab}
+                    onPieTabChange={setActivePieTab}
+                    onClearCategoryFilter={() => setActiveCategoryName(null)}
+                    onClearRatingTierFilter={() => setActiveRatingTier("all")}
+                    onClearPriorityFilter={() => setActivePriority("all")}
+                    onClearTypeFilter={() => setActiveType("all")}
                   />
                 </div>
               )}
@@ -870,6 +882,8 @@ const User: React.FC = () => {
                   onClearTypeFilter={() => setActiveType("all")}
                   onClearResolutionFilter={() => setActiveResolution("all")}
                   onClearStatusFilter={() => setActiveStatus("all")}
+                  activePieTab={activePieTab}
+                  onPieTabChange={setActivePieTab}
                 />
               </div>
               {/* Activity List (Right) */}
@@ -900,6 +914,7 @@ const User: React.FC = () => {
                     onClearResolutionFilter={() => setActiveResolution("all")}
                     activeStatus={activeStatus}
                     onClearStatusFilter={() => setActiveStatus("all")}
+                    onPieTabChange={setActivePieTab}
                     // Hide the date filter from the activity list
                     showDateFilter={false}
                     showFiltersBar={false}

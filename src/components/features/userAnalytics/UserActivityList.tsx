@@ -19,6 +19,7 @@ import {
   translatePriority,
   translateStatus,
 } from "../../../utils/categoryDisplayUtils";
+import { PieTab } from "./UserStatisticsPanel";
 
 // REMOVED: Local ActivityTab type is no longer needed
 
@@ -72,6 +73,7 @@ interface UserActivityListProps {
   onClearResolutionFilter: () => void;
   activeStatus: ICaseStatus | "all";
   onClearStatusFilter: () => void;
+  onPieTabChange?: (tab: PieTab) => void;
   cardView?: "full" | "compact";
   // MODIFIED: Added props to control the component
   activeTab: StatsActivityType;
@@ -102,6 +104,7 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
   onClearResolutionFilter,
   activeStatus,
   onClearStatusFilter,
+  onPieTabChange,
   cardView = "full",
   activeTab,
   onTabChange,
@@ -361,36 +364,42 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
               <FilterTag
                 label={`Категория: ${activeCategoryName}`}
                 onRemove={onClearCategoryFilter}
+                onClick={() => onPieTabChange?.("categories")}
               />
             )}
             {activeRatingTier !== "all" && (
               <FilterTag
                 label={`Оценка: ${activeRatingTier}`}
                 onRemove={onClearRatingTierFilter}
+                onClick={() => onPieTabChange?.("ratings")}
               />
             )}
             {activePriority !== "all" && (
               <FilterTag
                 label={`Приоритет: ${translatePriority(activePriority)}`}
                 onRemove={onClearPriorityFilter}
+                onClick={() => onPieTabChange?.("priority")}
               />
             )}
             {activeType !== "all" && (
               <FilterTag
                 label={`Тип: ${translateCaseType(activeType)}`}
                 onRemove={onClearTypeFilter}
+                onClick={() => onPieTabChange?.("type")}
               />
             )}
             {activeResolution !== "all" && (
               <FilterTag
                 label={`Реакция: ${activeResolution}`}
                 onRemove={onClearResolutionFilter}
+                onClick={() => onPieTabChange?.("resolution")}
               />
             )}
             {activeStatus !== "all" && (
               <FilterTag
                 label={`Статус: ${translateStatus(activeStatus)}`}
                 onRemove={onClearStatusFilter}
+                onClick={() => onPieTabChange?.("status")}
               />
             )}
             {isDateFilterActive && (

@@ -14,3 +14,9 @@ export const NOTIFICATION_SUBSCRIPTION = gql`
     }
   }
 `;
+
+export const NOTIFICATIONS_REMOVED_SUBSCRIPTION = gql`
+  subscription OnNotificationsRemoved($userId: ID!) {
+    notificationsRemoved(userId: $userId)
+  }
+`;

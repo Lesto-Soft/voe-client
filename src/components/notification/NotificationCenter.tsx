@@ -5,6 +5,7 @@ import {
   useDeleteNotifications,
   useGetNotifications,
   useNotificationSubscription,
+  useNotificationsRemovedSubscription,
 } from "../../graphql/hooks/notificationHook";
 import { INotification } from "../../db/interfaces";
 import { toast } from "react-toastify";
@@ -58,7 +59,24 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }) => {
       console.error("Subscription Error:", error);
     },
   });
-
+  useNotificationsRemovedSubscription({
+    variables: { userId },
+    onData: ({ data }) => {
+      const removedIds = data.data?.notificationsRemoved;
+      if (removedIds && removedIds.length > 0) {
+        // Create a Set for efficient lookup
+        const removedIdSet = new Set(removedIds);
+        // Filter out the notifications whose IDs were received
+        setNotifications((prev) => {
+          const newState = prev.filter((notif) => !removedIdSet.has(notif._id));
+          return newState;
+        });
+      }
+    },
+    onError: (error) => {
+      console.error("Notifications Removed Subscription Error:", error);
+    },
+  });
   useEffect(() => {
     if (initialData?.getUserNotifications) {
       setNotifications(initialData.getUserNotifications);
@@ -163,7 +181,11 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }) => {
 
               {!initialLoading &&
                 notifications.map((notif) => (
-                  <NotificationItem key={notif._id} notification={notif} />
+                  <NotificationItem
+                    key={notif._id}
+                    notification={notif}
+                    setDropdownOpen={setDropdownOpen}
+                  />
                 ))}
             </div>
           </DropdownMenu.Content>

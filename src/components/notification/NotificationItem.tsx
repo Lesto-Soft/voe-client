@@ -25,10 +25,12 @@ import { AcademicCapIcon, AtSymbolIcon } from "@heroicons/react/24/solid";
 
 interface NotificationItemProps {
   notification: INotification;
+  setDropdownOpen?: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const NotificationItem: React.FC<NotificationItemProps> = ({
   notification,
+  setDropdownOpen,
 }) => {
   const navigate = useNavigate();
   const [markAsRead] = useMarkAsRead();
@@ -100,6 +102,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
       <div
         className="flex flex-1 items-start gap-4 min-w-0"
         onClick={() => {
+          if (setDropdownOpen) setDropdownOpen(false);
           markAsRead({ variables: { notificationIds: [notification._id] } });
           const { content, caseNumber, entityId, username } = notification;
           if (caseNumber && entityId) {

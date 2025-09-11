@@ -69,7 +69,6 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }) => {
         // Filter out the notifications whose IDs were received
         setNotifications((prev) => {
           const newState = prev.filter((notif) => !removedIdSet.has(notif._id));
-
           return newState;
         });
       }
@@ -182,7 +181,11 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }) => {
 
               {!initialLoading &&
                 notifications.map((notif) => (
-                  <NotificationItem key={notif._id} notification={notif} />
+                  <NotificationItem
+                    key={notif._id}
+                    notification={notif}
+                    setDropdownOpen={setDropdownOpen}
+                  />
                 ))}
             </div>
           </DropdownMenu.Content>

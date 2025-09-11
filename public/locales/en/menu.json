@@ -54,5 +54,17 @@
     "mark_as_read": "Mark as read",
     "mark_as_unread": "Mark as unread",
     "delete_notification": "Delete notification"
+  },
+  "rte": {
+    "bold": "Bold (Ctrl+B)",
+    "italic": "Italic (Ctrl+I)",
+    "underline": "Underline (Ctrl+U)",
+    "Strikethrough": "Strikethrough",
+    "bulletList": "Bullet List",
+    "orderedList": "Ordered List",
+    "alignLeft": "Align Left",
+    "alignCenter": "Align Center",
+    "alignRight": "Align Right",
+    "mention": "Mention User (@)"
   }
 }

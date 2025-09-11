@@ -55,5 +55,17 @@
     "mark_as_read": "Маркирай като прочетено",
     "mark_as_unread": "Маркирай като непрочетено",
     "delete_notification": "Изтрий известието"
+  },
+  "rte": {
+    "bold": "Удебелен (Ctrl+B)",
+    "italic": "Курсив (Ctrl+I)",
+    "underline": "Подчертан (Ctrl+U)",
+    "strikethrough": "Зачертан",
+    "bulletList": "Маркиран списък",
+    "orderedList": "Номериран списък",
+    "alignLeft": "Подравни вляво",
+    "alignCenter": "Центрирай",
+    "alignRight": "Подравни вдясно",
+    "mention": "Спомени потребител (@)"
   }
 }

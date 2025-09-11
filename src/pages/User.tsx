@@ -724,7 +724,7 @@ const User: React.FC = () => {
 
   return (
     <>
-      <div className="container min-w-full mx-auto p-2 sm:p-6 bg-gray-50 flex flex-col h-[calc(100vh-6rem)]">
+      <div className="container min-w-full mx-auto p-2 sm:p-6 bg-gray-50 flex flex-col min-h-[calc(100vh-6rem)] lg:h-[calc(100vh-6rem)]">
         {/* <div className="flex justify-end mb-4 px-1"> */}
         {/* Positioned to the top right corner with some margin */}
         <div className="absolute top-[calc(6rem)] right-2 z-10 w-auto origin-top-left rounded-md bg-white shadow-lg focus:outline-none animate-slideRightAndFadeIn">

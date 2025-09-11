@@ -370,7 +370,7 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
         {/* changed to a grid layout for consistent button widths */}
         <div
           className={`mt-1.5 grid ${
-            viewMode === "center" ? "grid-cols-2" : "grid-cols-3"
+            viewMode === "center" ? "grid-cols-4" : "grid-cols-3"
           } gap-1.5`}
         >
           {activityTabsConfig.map((tab) => {

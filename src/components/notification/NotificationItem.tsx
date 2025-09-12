@@ -10,6 +10,7 @@ import {
   EnvelopeOpenIcon,
   EnvelopeIcon,
   TrashIcon,
+  HandThumbDownIcon,
 } from "@heroicons/react/24/outline";
 import { INotification } from "../../db/interfaces";
 import { clsx } from "clsx";
@@ -52,10 +53,14 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
         );
       case "approve_answer_close_case":
         return <HandThumbUpIcon className="h-5 w-5 text-green-600" />;
+      case "reopen_case":
+        return <HandThumbDownIcon className="h-5 w-5 text-red-600" />;
       case "approve_answer_await_finance_case":
         return <BanknotesIcon className="h-5 w-5 text-gray-500" />;
       case "approve_answer_finance_case":
         return <BanknotesIcon className="h-5 w-5 text-green-500" />;
+      case "reopen_finance_case":
+        return <BanknotesIcon className="h-5 w-5 text-red-500" />;
       case "add_expert_to_category":
         return <AcademicCapIcon className="h-5 w-5 text-yellow-500" />;
       case "add_manager_to_category":

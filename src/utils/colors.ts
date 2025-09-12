@@ -1,8 +1,34 @@
 // src/utils/colors.ts
 
+/**
+ * Calculates the perceived luminance of a hex color to determine if a dark or light foreground color is more suitable.
+ * @param hex - The hex color string (e.g., "#RRGGBB").
+ * @returns 'dark' if the color is light (needs dark text), or 'light' if the color is dark (needs light text).
+ */
+export const getContrastingTextColor = (hex: string): "dark" | "light" => {
+  if (!hex) return "dark"; // Default to dark text for invalid input
+
+  // Remove '#' if present and expand shorthand form (e.g. "03F") to full form (e.g. "0033FF")
+  const shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
+  hex = hex.replace(shorthandRegex, (_, r, g, b) => r + r + g + g + b + b);
+
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  if (!result) {
+    return "dark"; // Default to dark text for invalid hex
+  }
+
+  const r = parseInt(result[1], 16);
+  const g = parseInt(result[2], 16);
+  const b = parseInt(result[3], 16);
+
+  // Formula for perceived brightness (YIQ)
+  const luminance = (r * 299 + g * 587 + b * 114) / 1000;
+  return luminance > 150 ? "dark" : "light";
+};
+
+export const PREDEFINED_CATEGORY_COLORS: string[] = [];
 // A curated selection of 40 visually distinct colors from the Tailwind CSS palette.
 // Organized by hue for easier visual scanning in the color picker.
-export const PREDEFINED_CATEGORY_COLORS: string[] = [];
 export const PREDEFINED_CATEGORY_COLORS_OLD: string[] = [
   // Reds
   "#EF4444", // red-500

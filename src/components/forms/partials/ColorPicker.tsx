@@ -6,6 +6,7 @@ import {
   NoSymbolIcon,
   Cog6ToothIcon,
 } from "@heroicons/react/24/solid";
+import { getContrastingTextColor } from "../../../utils/colors";
 import { IPaletteColor } from "../../../db/interfaces";
 
 interface ColorPickerProps {
@@ -50,7 +51,7 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
           </button>
         )}
       </div>
-      <div className="grid grid-cols-10 gap-2">
+      <div className="grid grid-cols-12 gap-2">
         <Tooltip.Provider delayDuration={100}>
           {paletteColors.map((color) => {
             const isSelected =
@@ -62,6 +63,11 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
             const tooltipContent = isDisabled
               ? `Използван от: ${usedByCategory}`
               : color.label || color.hexCode;
+
+            const iconColorClass =
+              getContrastingTextColor(color.hexCode) === "dark"
+                ? "text-gray-800"
+                : "text-white";
 
             return (
               <Tooltip.Root key={color._id}>
@@ -85,10 +91,12 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
                     aria-label={`Select color ${color.label || color.hexCode}`}
                   >
                     {isSelected && (
-                      <CheckIcon className="h-5 w-5 text-white mix-blend-difference" />
+                      <CheckIcon className={`h-5 w-5 ${iconColorClass}`} />
                     )}
                     {isDisabled && (
-                      <NoSymbolIcon className="absolute h-5 w-5 text-white mix-blend-difference" />
+                      <NoSymbolIcon
+                        className={`absolute h-5 w-5 ${iconColorClass}`}
+                      />
                     )}
                   </button>
                 </Tooltip.Trigger>

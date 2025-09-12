@@ -11,13 +11,15 @@ interface IUserLean {
 interface UseCreateCategoryFormStateProps {
   initialData: ICategory | null;
   onDirtyChange?: (isDirty: boolean) => void;
-  paletteColors: IPaletteColor[]; // Add this prop to receive the palette
+  paletteColors: IPaletteColor[];
+  usedColors: { color: string; categoryName: string }[];
 }
 
 export function useCategoryFormState({
   initialData,
   onDirtyChange,
-  paletteColors, // Destructure the new prop
+  paletteColors,
+  usedColors,
 }: UseCreateCategoryFormStateProps) {
   const [name, setName] = useState("");
   const [problem, setProblem] = useState("");
@@ -45,14 +47,12 @@ export function useCategoryFormState({
   >([]);
 
   useEffect(() => {
-    // Determine the default color to use for new categories
-    const defaultColor =
-      paletteColors && paletteColors.length > 0
-        ? paletteColors[0].hexCode
-        : "#CCCCCC"; // Fallback gray if palette is empty
-
     if (initialData) {
       // --- EDIT MODE ---
+      const fallbackColor =
+        paletteColors && paletteColors.length > 0
+          ? paletteColors[0].hexCode
+          : "#CCCCCC";
       const K_experts = (
         (initialData.experts as IUserLean[] | undefined) || []
       ).filter((e) => e && e._id && e.name);
@@ -60,15 +60,13 @@ export function useCategoryFormState({
         (initialData.managers as IUserLean[] | undefined) || []
       ).filter((m) => m && m._id && m.name);
 
-      const categoryColor = initialData.color || defaultColor;
-
       setName(initialData.name || "");
       setProblem(initialData.problem || "");
       setSuggestion(initialData.suggestion || "");
       setExpertIds(K_experts.map((e) => e._id));
       setManagerIds(K_managers.map((m) => m._id));
       setArchived(initialData.archived || false);
-      setColor(categoryColor);
+      setColor(initialData.color || fallbackColor);
 
       // Set initial values for dirty check
       setInitialName(initialData.name || "");
@@ -77,13 +75,23 @@ export function useCategoryFormState({
       setInitialExpertIds(K_experts.map((e) => e._id));
       setInitialManagerIds(K_managers.map((m) => m._id));
       setInitialArchived(initialData.archived || false);
-      setInitialColor(categoryColor);
+      setInitialColor(initialData.color || fallbackColor);
 
       setInitialExpertObjects(K_experts);
       setInitialManagerObjects(K_managers);
     } else {
       // --- CREATE MODE ---
-      // Reset form and use the first color from the palette as the default
+
+      const usedHexCodes = new Set(
+        usedColors.map((c) => c.color.toUpperCase())
+      );
+      const firstAvailableColor = paletteColors.find(
+        (p) => !usedHexCodes.has(p.hexCode.toUpperCase())
+      );
+      const defaultColor = firstAvailableColor
+        ? firstAvailableColor.hexCode
+        : "";
+
       setName("");
       setProblem("");
       setSuggestion("");
@@ -105,7 +113,7 @@ export function useCategoryFormState({
       setInitialManagerObjects([]);
     }
     setNameError(null);
-  }, [initialData, paletteColors]); // Re-run effect if palette changes
+  }, [initialData, paletteColors, usedColors]); // Re-run effect if palette changes
 
   const isDirty = useMemo((): boolean => {
     // isDirty logic remains the same and will work correctly

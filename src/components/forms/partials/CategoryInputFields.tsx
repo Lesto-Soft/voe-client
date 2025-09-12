@@ -40,6 +40,7 @@ interface CategoryInputFieldsProps {
   setArchived: (isChecked: boolean) => void;
   color: string;
   setColor: (value: string) => void;
+  colorError: string | null;
   usedColors: { color: string; categoryName: string }[];
   errorPlaceholderClass: string;
   initialExperts?: ILeanUserForForm[];
@@ -70,6 +71,7 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
   setArchived,
   color,
   setColor,
+  colorError,
   usedColors,
   errorPlaceholderClass,
   initialExperts = [],
@@ -491,7 +493,13 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
             onOpenManager={onOpenColorManager}
           />
         )}
-        <p className={`${errorPlaceholderClass}`}>&nbsp;</p>
+        <p
+          className={`${errorPlaceholderClass} ${
+            colorError ? "text-red-500" : ""
+          }`}
+        >
+          {colorError || <>&nbsp;</>}
+        </p>
       </div>
 
       {/* Problem and Suggestion Text Editors (spanning both columns) */}
@@ -522,7 +530,7 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
               : ""
           }`}
         >
-          {problemError}
+          {problemError} {` `}
           {isProblemTooLong &&
             `Съдържанието надвишава лимита от ${CATEGORY_HELPERS.MAX} символа.`}
           {isProblemTooShort &&
@@ -560,7 +568,7 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
               : ""
           }`}
         >
-          {suggestionError}
+          {suggestionError} {` `}
           {isSuggestionTooLong &&
             `Съдържанието надвишава лимита от ${CATEGORY_HELPERS.MAX} символа.`}
           {isSuggestionTooShort &&

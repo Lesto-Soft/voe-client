@@ -83,10 +83,16 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
     setNameError,
     initialExpertObjects,
     initialManagerObjects,
-  } = useCategoryFormState({ initialData, onDirtyChange, paletteColors });
+  } = useCategoryFormState({
+    initialData,
+    onDirtyChange,
+    paletteColors,
+    usedColors,
+  });
 
   const [isColorManagerOpen, setIsColorManagerOpen] = useState(false);
   const [formSubmitError, setFormSubmitError] = useState<string | null>(null);
+  const [colorError, setColorError] = useState<string | null>(null);
   const [problemError, setProblemError] = useState<string | null>(null);
   const [suggestionError, setSuggestionError] = useState<string | null>(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
@@ -110,6 +116,7 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
     event.preventDefault();
     setFormSubmitError(null);
     setNameError(null);
+    setColorError(null);
     setProblemError(null);
     setSuggestionError(null);
 
@@ -117,6 +124,13 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
     const problemLength = getTextLength(problem);
     const suggestionLength = getTextLength(suggestion);
     let hasValidationErrors = false;
+
+    if (!color) {
+      setColorError(
+        "Моля, изберете цвят за категорията. Ако няма свободни цветове, моля добавете нов от менюто за управление."
+      );
+      hasValidationErrors = true;
+    }
 
     if (!finalTrimmedName) {
       setNameError("Името на категорията е задължително.");
@@ -224,6 +238,7 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
               setArchived={setArchived}
               color={color}
               setColor={setColor}
+              colorError={colorError}
               usedColors={usedColors}
               errorPlaceholderClass={errorPlaceholderClass}
               initialExperts={initialExpertObjects as ILeanUserForForm[]}

@@ -7,7 +7,7 @@ import { useParams } from "react-router";
 import { useTranslation } from "react-i18next";
 import CaseInfo from "../components/case-components/CaseInfo";
 import Submenu from "../components/case-components/Submenu";
-import { ICase, ICategory, IReadBy } from "../db/interfaces";
+import { ICase, ICategory, IReadBy, IUser } from "../db/interfaces";
 import { useCurrentUser } from "../context/UserContext";
 import { determineUserRightsForCase } from "../utils/rightUtils";
 import { ROLES } from "../utils/GLOBAL_PARAMETERS";
@@ -18,7 +18,10 @@ import { useAuthorization } from "../hooks/useAuthorization";
 import ForbiddenPage from "./ErrorPages/ForbiddenPage";
 import PageStatusDisplay from "../components/global/PageStatusDisplay";
 
-function getUniqueExpertAndManager(categories: ICategory[]): {
+function getUniqueMentionableUsers(
+  categories: ICategory[],
+  creator: IUser
+): {
   name: string;
   username: string;
   _id: string;
@@ -27,6 +30,13 @@ function getUniqueExpertAndManager(categories: ICategory[]): {
     string,
     { name: string; username: string; _id: string }
   >();
+  if (creator && creator._id) {
+    uniqueUsersMap.set(creator._id, {
+      _id: creator._id,
+      name: creator.name,
+      username: creator.username,
+    });
+  }
   const allUsers = categories.flatMap((cat) => [
     ...(cat.experts || []),
     ...(cat.managers || []),
@@ -73,10 +83,8 @@ const Case = () => {
     refetch,
   } = useGetCaseByCaseNumber(numericCaseNumber, currentUser.role?._id);
 
-  // Pass the case number to the hook
   const { markCaseAsRead } = useMarkCaseAsRead(numericCaseNumber);
 
-  // ADDED: This effect marks the case as read by the current user
   useEffect(() => {
     if (caseData && currentUser) {
       const hasRead = caseData.readBy?.some(
@@ -127,11 +135,9 @@ const Case = () => {
     );
   }
 
-  const expert_managers = getUniqueExpertAndManager(c.categories);
+  const expert_managers = getUniqueMentionableUsers(c.categories, c.creator);
   return (
-    // --- MODIFIED: This container now defines the overall height for the two columns on desktop ---
     <div className="flex flex-col lg:flex-row bg-gray-50 lg:h-[calc(100vh-6rem)] w-full">
-      {/* Left Panel for CaseInfo: This remains sticky and its own content can scroll if needed */}
       <div
         className={
           "max-w-full lg:w-96 lg:shrink-0 lg:sticky lg:top-[6rem] order-1 lg:order-none lg:h-full lg:mb-0 z-2"
@@ -145,8 +151,8 @@ const Case = () => {
           status={c.status as string}
           categories={c.categories}
           creator={c.creator}
-          metricScores={c.metricScores} // <-- UPDATED PROP
-          calculatedRating={c.calculatedRating} // <-- NEW PROP
+          metricScores={c.metricScores}
+          calculatedRating={c.calculatedRating}
           date={c.date}
           me={currentUser}
           refetch={refetch}
@@ -159,10 +165,6 @@ const Case = () => {
         />
       </div>
 
-      {/* --- MODIFIED: Right Panel for Submenu ---
-          This container now has a fixed height and does NOT scroll.
-          This allows the Submenu component inside to handle its own scrolling.
-      */}
       <div className="flex-1 w-full lg:w-auto order-2 lg:order-none lg:h-full">
         <Submenu
           caseData={c}

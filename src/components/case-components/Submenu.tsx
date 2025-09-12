@@ -57,12 +57,8 @@ const Submenu: React.FC<SubmenuProps> = ({
   const [targetId, setTargetId] = useState<string | null>(null);
   const [childTargetId, setChildTargetId] = useState<string | null>(null);
   const location = useLocation();
-  // --- A SINGLE, ROBUST useEffect to control everything ---
   useEffect(() => {
-    // 1. Wrap your logic in an async function.
     const handleNavigation = async () => {
-      // This is your existing function to parse the URL and set the view.
-      // It remains unchanged.
       const processUrl = () => {
         const fullHash = location.hash.substring(1);
         const isCommentLink = fullHash.includes("?comment=true");
@@ -97,22 +93,16 @@ const Submenu: React.FC<SubmenuProps> = ({
         }
       };
 
-      // 2. Check if the URL hash is targeting a specific item (like a comment or answer).
       const isTargetingSpecificItem = location.hash.includes("-");
 
-      // 3. If it is, await the refetch call to get fresh data first.
       if (isTargetingSpecificItem) {
         await refetch();
       }
 
-      // 4. Now, run your URL processing logic with the guaranteed fresh data.
       processUrl();
     };
 
     handleNavigation();
-
-    // 5. The 'hashchange' event listener is no longer needed and can be removed,
-    //    as the effect now correctly depends on `location.hash`.
   }, [caseData.answers, location.hash, refetch]);
   const isCreatorAndNothingElse =
     userRights.length === 1 && userRights.includes("creator");
@@ -154,10 +144,10 @@ const Submenu: React.FC<SubmenuProps> = ({
     submenu.splice(2, 2);
   }
 
+  console.log("Answers:", caseData.answers);
+
   return (
-    // --- NEW: Flex container for sticky layout ---
     <div className="flex flex-col h-full">
-      {/* --- NEW: Sticky Header --- */}
       <div className="flex-shrink-0 sticky top-0 z-1 bg-white border-b border-gray-200">
         <div className="flex justify-center gap-2 py-4">
           {submenu.map((item) => (
@@ -211,11 +201,21 @@ const Submenu: React.FC<SubmenuProps> = ({
                     return dateB - dateA;
                   })
                   .map((answer: IAnswer) => {
+                    const isMentionedInAnswer =
+                      answer.content?.includes(`data-id="${me.username}"`) ??
+                      false;
+                    const isMentionedInComment =
+                      answer.comments?.some((comment) =>
+                        comment.content?.includes(`data-id="${me.username}"`)
+                      ) ?? false;
+                    console.log(isMentionedInAnswer);
                     const showThisAnswer =
                       answer.approved ||
                       userRights.includes(USER_RIGHTS.EXPERT) ||
                       userRights.includes(USER_RIGHTS.MANAGER) ||
-                      userRights.includes(USER_RIGHTS.ADMIN);
+                      userRights.includes(USER_RIGHTS.ADMIN) ||
+                      isMentionedInAnswer ||
+                      isMentionedInComment;
                     // --- SIMPLIFIED LOGIC ---
                     return showThisAnswer ? (
                       <Answer

@@ -110,6 +110,18 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
           if (setDropdownOpen) setDropdownOpen(false);
           markAsRead({ variables: { notificationIds: [notification._id] } });
           const { content, caseNumber, entityId, username } = notification;
+          console.log(content);
+          if (content.includes("reopen_")) {
+            console.log("here");
+            return navigate(`/case/${caseNumber}`, {
+              state: { refetch: true },
+            });
+          }
+          if (content.includes("approve_answer_finance_case")) {
+            return navigate(`/case/${caseNumber}`, {
+              state: { refetch: true },
+            });
+          }
           if (caseNumber && entityId) {
             if (content.includes("answer_comment")) {
               return navigate(

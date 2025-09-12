@@ -155,12 +155,13 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }) => {
                 </span>
               </h3>
               <button
-                className="cursor-pointer text-sm text-blue-500 hover:underline"
+                className="cursor-pointer text-sm text-blue-500 hover:underline disabled:cursor-not-allowed disabled:text-gray-400"
                 onClick={() => {
                   setShowConfirmModal(true);
                   setDropdownOpen(false);
                 }}
                 title={t("notification_contents.remove_all_title")}
+                disabled={!notifications || notifications.length === 0}
               >
                 {t("notification_contents.remove_all")}
               </button>

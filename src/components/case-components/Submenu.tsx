@@ -144,8 +144,6 @@ const Submenu: React.FC<SubmenuProps> = ({
     submenu.splice(2, 2);
   }
 
-  console.log("Answers:", caseData.answers);
-
   return (
     <div className="flex flex-col h-full">
       <div className="flex-shrink-0 sticky top-0 z-1 bg-white border-b border-gray-200">
@@ -185,11 +183,11 @@ const Submenu: React.FC<SubmenuProps> = ({
               />
             ) : (caseData?.answers?.length ?? 0) < 1 ? (
               <div className="text-center text-gray-500">{t("no_answers")}</div>
-            ) : (
+            ) : caseData.status !== "CLOSED" ? (
               <div className="text-center text-gray-500">
                 {t("waiting_approval")}
               </div>
-            )}
+            ) : null}
             {caseData.answers && caseData.answers.length > 0 ? (
               <>
                 {[...caseData.answers]
@@ -208,7 +206,6 @@ const Submenu: React.FC<SubmenuProps> = ({
                       answer.comments?.some((comment) =>
                         comment.content?.includes(`data-id="${me.username}"`)
                       ) ?? false;
-                    console.log(isMentionedInAnswer);
                     const showThisAnswer =
                       answer.approved ||
                       userRights.includes(USER_RIGHTS.EXPERT) ||
@@ -233,9 +230,7 @@ const Submenu: React.FC<SubmenuProps> = ({
                     ) : null;
                   })}
               </>
-            ) : (
-              <div className="text-center text-gray-500">{t("no_answers")}</div>
-            )}
+            ) : null}
           </>
         )}
 

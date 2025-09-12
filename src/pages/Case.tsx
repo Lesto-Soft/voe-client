@@ -3,7 +3,7 @@ import {
   useGetCaseByCaseNumber,
   useMarkCaseAsRead,
 } from "../graphql/hooks/case";
-import { useParams } from "react-router";
+import { useLocation, useParams } from "react-router";
 import { useTranslation } from "react-i18next";
 import CaseInfo from "../components/case-components/CaseInfo";
 import Submenu from "../components/case-components/Submenu";
@@ -57,6 +57,7 @@ function getUniqueMentionableUsers(
 
 const Case = () => {
   const { t } = useTranslation("dashboard");
+  const location = useLocation();
   const { number: numberParam } = useParams<{ number: string }>();
   const currentUser = useCurrentUser();
 
@@ -84,6 +85,14 @@ const Case = () => {
   } = useGetCaseByCaseNumber(numericCaseNumber, currentUser.role?._id);
 
   const { markCaseAsRead } = useMarkCaseAsRead(numericCaseNumber);
+
+  useEffect(() => {
+    if (location.state?.refetch) {
+      refetch();
+      // Clean the state to prevent re-fetching on browser back/forward navigation
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state, refetch]);
 
   useEffect(() => {
     if (caseData && currentUser) {

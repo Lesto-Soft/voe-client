@@ -57,12 +57,8 @@ const Submenu: React.FC<SubmenuProps> = ({
   const [targetId, setTargetId] = useState<string | null>(null);
   const [childTargetId, setChildTargetId] = useState<string | null>(null);
   const location = useLocation();
-  // --- A SINGLE, ROBUST useEffect to control everything ---
   useEffect(() => {
-    // 1. Wrap your logic in an async function.
     const handleNavigation = async () => {
-      // This is your existing function to parse the URL and set the view.
-      // It remains unchanged.
       const processUrl = () => {
         const fullHash = location.hash.substring(1);
         const isCommentLink = fullHash.includes("?comment=true");
@@ -97,22 +93,16 @@ const Submenu: React.FC<SubmenuProps> = ({
         }
       };
 
-      // 2. Check if the URL hash is targeting a specific item (like a comment or answer).
       const isTargetingSpecificItem = location.hash.includes("-");
 
-      // 3. If it is, await the refetch call to get fresh data first.
       if (isTargetingSpecificItem) {
         await refetch();
       }
 
-      // 4. Now, run your URL processing logic with the guaranteed fresh data.
       processUrl();
     };
 
     handleNavigation();
-
-    // 5. The 'hashchange' event listener is no longer needed and can be removed,
-    //    as the effect now correctly depends on `location.hash`.
   }, [caseData.answers, location.hash, refetch]);
   const isCreatorAndNothingElse =
     userRights.length === 1 && userRights.includes("creator");
@@ -154,10 +144,26 @@ const Submenu: React.FC<SubmenuProps> = ({
     submenu.splice(2, 2);
   }
 
+  const visibleAnswers = (caseData.answers || []).filter((answer) => {
+    const isMentionedInAnswer =
+      answer.content?.includes(`data-id="${me.username}"`) ?? false;
+    const isMentionedInComment =
+      answer.comments?.some((comment) =>
+        comment.content?.includes(`data-id="${me.username}"`)
+      ) ?? false;
+
+    return (
+      answer.approved ||
+      userRights.includes(USER_RIGHTS.EXPERT) ||
+      userRights.includes(USER_RIGHTS.MANAGER) ||
+      userRights.includes(USER_RIGHTS.ADMIN) ||
+      isMentionedInAnswer ||
+      isMentionedInComment
+    );
+  });
+
   return (
-    // --- NEW: Flex container for sticky layout ---
     <div className="flex flex-col h-full">
-      {/* --- NEW: Sticky Header --- */}
       <div className="flex-shrink-0 sticky top-0 z-1 bg-white border-b border-gray-200">
         <div className="flex justify-center gap-2 py-4">
           {submenu.map((item) => (
@@ -183,6 +189,7 @@ const Submenu: React.FC<SubmenuProps> = ({
       <div className="flex-grow overflow-y-auto pt-6">
         {view === "answers" && (
           <>
+            {/* Block for AddAnswer form OR placeholder messages */}
             {userRights.includes(USER_RIGHTS.EXPERT) ||
             userRights.includes(USER_RIGHTS.MANAGER) ||
             userRights.includes(USER_RIGHTS.ADMIN) ? (
@@ -193,16 +200,24 @@ const Submenu: React.FC<SubmenuProps> = ({
                 me={me}
                 mentions={mentions}
               />
-            ) : (caseData?.answers?.length ?? 0) < 1 ? (
+            ) : // **MODIFIED**: Logic for non-privileged users
+            // If there are no visible answers for this user...
+            visibleAnswers.length === 0 &&
+              // ...and there are no answers on the case at all, show "no answers".
+              (caseData.answers || []).length === 0 ? (
               <div className="text-center text-gray-500">{t("no_answers")}</div>
-            ) : (
+            ) : // ...otherwise, if there are answers but none are visible, show "waiting for approval".
+            visibleAnswers.length === 0 ? (
               <div className="text-center text-gray-500">
                 {t("waiting_approval")}
               </div>
-            )}
-            {caseData.answers && caseData.answers.length > 0 ? (
+            ) : null}
+
+            {/* Block for the list of answers */}
+            {/* **MODIFIED**: We map over the pre-filtered visibleAnswers array */}
+            {visibleAnswers.length > 0 ? (
               <>
-                {[...caseData.answers]
+                {visibleAnswers
                   .sort((a, b) => {
                     if (a.approved && !b.approved) return -1;
                     if (!a.approved && b.approved) return 1;
@@ -210,35 +225,24 @@ const Submenu: React.FC<SubmenuProps> = ({
                     const dateB = new Date(b.date).getTime();
                     return dateB - dateA;
                   })
-                  .map((answer: IAnswer) => {
-                    const showThisAnswer =
-                      answer.approved ||
-                      userRights.includes(USER_RIGHTS.EXPERT) ||
-                      userRights.includes(USER_RIGHTS.MANAGER) ||
-                      userRights.includes(USER_RIGHTS.ADMIN);
-                    // --- SIMPLIFIED LOGIC ---
-                    return showThisAnswer ? (
-                      <Answer
-                        key={answer._id}
-                        answer={answer}
-                        me={me}
-                        refetch={refetch}
-                        caseNumber={caseData.case_number}
-                        status={caseData.status}
-                        caseCategories={caseData.categories}
-                        mentions={mentions}
-                        targetId={targetId}
-                        childTargetId={childTargetId}
-                      />
-                    ) : null;
-                  })}
+                  .map((answer: IAnswer) => (
+                    <Answer
+                      key={answer._id}
+                      answer={answer}
+                      me={me}
+                      refetch={refetch}
+                      caseNumber={caseData.case_number}
+                      status={caseData.status}
+                      caseCategories={caseData.categories}
+                      mentions={mentions}
+                      targetId={targetId}
+                      childTargetId={childTargetId}
+                    />
+                  ))}
               </>
-            ) : (
-              <div className="text-center text-gray-500">{t("no_answers")}</div>
-            )}
+            ) : null}
           </>
         )}
-
         {view === "comments" && (
           <>
             <AddComment

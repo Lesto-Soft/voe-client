@@ -53,7 +53,9 @@
     "mention_in_answer_comment": "<1>{{username}}</1> mentioned you in a comment on answer",
     "mark_as_read": "Mark as read",
     "mark_as_unread": "Mark as unread",
-    "delete_notification": "Delete notification"
+    "delete_notification": "Delete notification",
+    "reopen_case": "Case <1>{{caseNumber}}</1> was set to <1>Open</1>",
+    "reopen_finance_case": "Case <1>{{caseNumber}}</1> was set to <1>Awaiting Finance</1>"
   },
   "rte": {
     "bold": "Bold (Ctrl+B)",

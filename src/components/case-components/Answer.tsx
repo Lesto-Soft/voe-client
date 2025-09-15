@@ -279,7 +279,7 @@ const Answer: React.FC<{
 
               {/* Edit/Delete/History/Date buttons. This group is pushed to the right on large screens. */}
               <div className="flex items-center gap-2 lg:ml-auto">
-                {canEditOrDelete && (
+                {canEditOrDelete && !answer.approved && (
                   <>
                     {answer.history && answer.history.length > 0 && (
                       <AnswerHistoryModal history={answer.history} />

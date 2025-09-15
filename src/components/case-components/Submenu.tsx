@@ -144,6 +144,24 @@ const Submenu: React.FC<SubmenuProps> = ({
     submenu.splice(2, 2);
   }
 
+  const visibleAnswers = (caseData.answers || []).filter((answer) => {
+    const isMentionedInAnswer =
+      answer.content?.includes(`data-id="${me.username}"`) ?? false;
+    const isMentionedInComment =
+      answer.comments?.some((comment) =>
+        comment.content?.includes(`data-id="${me.username}"`)
+      ) ?? false;
+
+    return (
+      answer.approved ||
+      userRights.includes(USER_RIGHTS.EXPERT) ||
+      userRights.includes(USER_RIGHTS.MANAGER) ||
+      userRights.includes(USER_RIGHTS.ADMIN) ||
+      isMentionedInAnswer ||
+      isMentionedInComment
+    );
+  });
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex-shrink-0 sticky top-0 z-1 bg-white border-b border-gray-200">
@@ -171,6 +189,7 @@ const Submenu: React.FC<SubmenuProps> = ({
       <div className="flex-grow overflow-y-auto pt-6">
         {view === "answers" && (
           <>
+            {/* Block for AddAnswer form OR placeholder messages */}
             {userRights.includes(USER_RIGHTS.EXPERT) ||
             userRights.includes(USER_RIGHTS.MANAGER) ||
             userRights.includes(USER_RIGHTS.ADMIN) ? (
@@ -181,16 +200,24 @@ const Submenu: React.FC<SubmenuProps> = ({
                 me={me}
                 mentions={mentions}
               />
-            ) : (caseData?.answers?.length ?? 0) < 1 ? (
+            ) : // **MODIFIED**: Logic for non-privileged users
+            // If there are no visible answers for this user...
+            visibleAnswers.length === 0 &&
+              // ...and there are no answers on the case at all, show "no answers".
+              (caseData.answers || []).length === 0 ? (
               <div className="text-center text-gray-500">{t("no_answers")}</div>
-            ) : caseData.status !== "CLOSED" ? (
+            ) : // ...otherwise, if there are answers but none are visible, show "waiting for approval".
+            visibleAnswers.length === 0 ? (
               <div className="text-center text-gray-500">
                 {t("waiting_approval")}
               </div>
             ) : null}
-            {caseData.answers && caseData.answers.length > 0 ? (
+
+            {/* Block for the list of answers */}
+            {/* **MODIFIED**: We map over the pre-filtered visibleAnswers array */}
+            {visibleAnswers.length > 0 ? (
               <>
-                {[...caseData.answers]
+                {visibleAnswers
                   .sort((a, b) => {
                     if (a.approved && !b.approved) return -1;
                     if (!a.approved && b.approved) return 1;
@@ -198,42 +225,24 @@ const Submenu: React.FC<SubmenuProps> = ({
                     const dateB = new Date(b.date).getTime();
                     return dateB - dateA;
                   })
-                  .map((answer: IAnswer) => {
-                    const isMentionedInAnswer =
-                      answer.content?.includes(`data-id="${me.username}"`) ??
-                      false;
-                    const isMentionedInComment =
-                      answer.comments?.some((comment) =>
-                        comment.content?.includes(`data-id="${me.username}"`)
-                      ) ?? false;
-                    const showThisAnswer =
-                      answer.approved ||
-                      userRights.includes(USER_RIGHTS.EXPERT) ||
-                      userRights.includes(USER_RIGHTS.MANAGER) ||
-                      userRights.includes(USER_RIGHTS.ADMIN) ||
-                      isMentionedInAnswer ||
-                      isMentionedInComment;
-                    // --- SIMPLIFIED LOGIC ---
-                    return showThisAnswer ? (
-                      <Answer
-                        key={answer._id}
-                        answer={answer}
-                        me={me}
-                        refetch={refetch}
-                        caseNumber={caseData.case_number}
-                        status={caseData.status}
-                        caseCategories={caseData.categories}
-                        mentions={mentions}
-                        targetId={targetId}
-                        childTargetId={childTargetId}
-                      />
-                    ) : null;
-                  })}
+                  .map((answer: IAnswer) => (
+                    <Answer
+                      key={answer._id}
+                      answer={answer}
+                      me={me}
+                      refetch={refetch}
+                      caseNumber={caseData.case_number}
+                      status={caseData.status}
+                      caseCategories={caseData.categories}
+                      mentions={mentions}
+                      targetId={targetId}
+                      childTargetId={childTargetId}
+                    />
+                  ))}
               </>
             ) : null}
           </>
         )}
-
         {view === "comments" && (
           <>
             <AddComment

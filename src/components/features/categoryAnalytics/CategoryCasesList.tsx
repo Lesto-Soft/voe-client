@@ -19,9 +19,15 @@ import DateRangeSelector from "../userAnalytics/DateRangeSelector";
 import FilterTag from "../../global/FilterTag";
 
 // The local CaseStatusTab type can now be imported from Category.tsx
-import { CaseStatusTab } from "../../../pages/Category";
+import { CaseStatusTab, RatingTierLabel } from "../../../pages/Category";
 
-type CategoryPieTabKey = "status" | "type" | "resolution" | "priority" | "user";
+type CategoryPieTabKey =
+  | "status"
+  | "type"
+  | "resolution"
+  | "priority"
+  | "user"
+  | "rating";
 
 // --- START: NEW PROPS INTERFACE ---
 interface CategoryCasesListProps {
@@ -52,6 +58,8 @@ interface CategoryCasesListProps {
   activeCreatorName: string | null;
   onClearCreatorFilter: () => void;
   onPieTabChange?: (tab: CategoryPieTabKey) => void;
+  activeRatingTier: RatingTierLabel; // <-- ADD
+  onClearRatingTierFilter: () => void; // <-- ADD
 }
 
 const CategoryCasesList: React.FC<CategoryCasesListProps> = ({
@@ -79,6 +87,8 @@ const CategoryCasesList: React.FC<CategoryCasesListProps> = ({
   activeCreatorName,
   onClearCreatorFilter,
   onPieTabChange,
+  activeRatingTier, // <-- DESTRUCTURE
+  onClearRatingTierFilter, // <-- DESTRUCTURE
 }) => {
   const [isDateFilterVisible, setIsDateFilterVisible] = useState(false);
   const filtersContainerRef = useRef<HTMLDivElement>(null);
@@ -224,7 +234,7 @@ const CategoryCasesList: React.FC<CategoryCasesListProps> = ({
       {isAnyFilterActive && (
         <div className="px-4 py-1.5 border-b border-gray-200 bg-gray-50 flex items-center justify-between gap-x-4">
           <div
-            ref={filtersContainerRef} // <-- ADDED REF
+            ref={filtersContainerRef}
             className="flex items-center gap-2 overflow-x-auto custom-scrollbar-xs flex-nowrap py-1"
           >
             <span className="text-xs font-semibold text-gray-600 mr-2">
@@ -268,6 +278,13 @@ const CategoryCasesList: React.FC<CategoryCasesListProps> = ({
                 label={`Създател: ${activeCreatorName}`}
                 onRemove={onClearCreatorFilter}
                 onClick={() => onPieTabChange?.("user")}
+              />
+            )}
+            {activeRatingTier !== "all" && (
+              <FilterTag
+                label={`Рейтинг: ${activeRatingTier}`}
+                onRemove={onClearRatingTierFilter}
+                onClick={() => onPieTabChange?.("rating")}
               />
             )}
             {/* -------------------------- */}

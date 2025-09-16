@@ -10,6 +10,7 @@ import {
   translatePriority,
 } from "../utils/categoryDisplayUtils"; // Adjust path as needed
 import { PieSegmentData } from "../components/charts/PieChart";
+import { TIERS } from "../utils/GLOBAL_PARAMETERS";
 
 // --- ADD THIS HELPER FUNCTION (copied from useRatingMetricStats) ---
 const getColorForChart = (index: number): string => {
@@ -48,6 +49,8 @@ export interface SignalStats {
   // --- ADD THESE TWO NEW PROPERTIES ---
   priorityPieChartData: PieSegmentData[];
   creatorPieChartData: PieSegmentData[];
+  ratingTierDistributionData: PieSegmentData[];
+  averageCaseRating: number | null; // <-- ADD THIS
 }
 
 const useCategorySignalStats = (
@@ -79,6 +82,8 @@ const useCategorySignalStats = (
         // --- ADD DEFAULTS ---
         priorityPieChartData: [],
         creatorPieChartData: [],
+        ratingTierDistributionData: [],
+        averageCaseRating: null, // <-- ADD THIS
       };
     }
 
@@ -114,6 +119,13 @@ const useCategorySignalStats = (
       { id: string; count: number; name: string }
     > = {};
 
+    const tierCounts = {
+      Gold: 0,
+      Silver: 0,
+      Bronze: 0,
+      Problematic: 0,
+    };
+
     cases.forEach((c: ICase) => {
       const caseTypeKey = String(c.type).toUpperCase();
       if (caseTypeKey === "PROBLEM") problemCasesCount++;
@@ -135,6 +147,17 @@ const useCategorySignalStats = (
         creatorCounts[creatorId].count++;
       }
       // --- END ADD COUNTING LOGIC ---
+
+      if (
+        c.calculatedRating !== null &&
+        c.calculatedRating !== undefined &&
+        c.calculatedRating > 0
+      ) {
+        if (c.calculatedRating >= TIERS.GOLD) tierCounts.Gold++;
+        else if (c.calculatedRating >= TIERS.SILVER) tierCounts.Silver++;
+        else if (c.calculatedRating >= TIERS.BRONZE) tierCounts.Bronze++;
+        else tierCounts.Problematic++;
+      }
     });
 
     const typePieChartData: PieSegmentData[] = [];
@@ -183,6 +206,50 @@ const useCategorySignalStats = (
         color: getColorForChart(index),
       }))
       .sort((a, b) => b.value - a.value);
+
+    const ratingTierDistributionData: PieSegmentData[] = [
+      {
+        id: "Отлични",
+        label: `Отлични (>${TIERS.GOLD})`,
+        value: tierCounts.Gold,
+        color: "#FFD700",
+      },
+      {
+        id: "Добри",
+        label: `Добри (${TIERS.SILVER}-${TIERS.GOLD})`,
+        value: tierCounts.Silver,
+        color: "#C0C0C0",
+      },
+      {
+        id: "Средни",
+        label: `Средни (${TIERS.BRONZE}-${TIERS.SILVER})`,
+        value: tierCounts.Bronze,
+        color: "#CD7F32",
+      },
+      {
+        id: "Проблемни",
+        label: `Проблемни (<${TIERS.BRONZE})`,
+        value: tierCounts.Problematic,
+        color: "#EF4444",
+      },
+    ].filter((segment) => segment.value > 0);
+
+    // --- ADD CALCULATION FOR AVERAGE RATING ---
+    let ratedCasesSum = 0;
+    let ratedCasesCount = 0;
+    cases.forEach((c) => {
+      if (
+        c.calculatedRating !== null &&
+        c.calculatedRating !== undefined &&
+        c.calculatedRating > 0
+      ) {
+        ratedCasesSum += c.calculatedRating;
+        ratedCasesCount++;
+      }
+    });
+
+    const averageCaseRating =
+      ratedCasesCount > 0 ? ratedCasesSum / ratedCasesCount : null;
     // --- END PIE DATA BUILDERS ---
 
     const resolutionData = calculateResolutionStats(cases);
@@ -210,6 +277,8 @@ const useCategorySignalStats = (
       // --- ADD TO RETURN ---
       priorityPieChartData,
       creatorPieChartData,
+      ratingTierDistributionData,
+      averageCaseRating, // <-- ADD THIS
     };
   }, [cases]);
 

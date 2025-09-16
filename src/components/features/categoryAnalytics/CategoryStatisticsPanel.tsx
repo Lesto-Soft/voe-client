@@ -13,6 +13,7 @@ import {
   ClockIcon,
   // DocumentTextIcon,
   InformationCircleIcon,
+  StarIcon,
 } from "@heroicons/react/24/outline";
 import StatisticPieChart from "../../charts/StatisticPieChart";
 import { PieSegmentData } from "../../charts/PieChart";
@@ -24,13 +25,20 @@ import {
   // translatePriority,
 } from "../../../utils/categoryDisplayUtils";
 import { CaseType, CasePriority } from "../../../db/interfaces";
-import { CaseStatusTab } from "../../../pages/Category";
+import { TIERS } from "../../../utils/GLOBAL_PARAMETERS";
+import { CaseStatusTab, RatingTierLabel } from "../../../pages/Category";
 
 interface CategoryStatisticsPanelProps {
   // --- MODIFIED: Update type ---
-  activeStatsView: "status" | "type" | "resolution" | "priority" | "user";
+  activeStatsView:
+    | "status"
+    | "type"
+    | "resolution"
+    | "priority"
+    | "user"
+    | "rating";
   setActiveStatsView: (
-    view: "status" | "type" | "resolution" | "priority" | "user"
+    view: "status" | "type" | "resolution" | "priority" | "user" | "rating"
   ) => void;
   isLoading?: boolean;
   onStatusClick?: (segment: PieSegmentData) => void;
@@ -52,12 +60,16 @@ interface CategoryStatisticsPanelProps {
   activeCreatorFilter: string | null;
   activePriorityLabel?: string | null;
   activeCreatorLabel?: string | null;
+  onRatingTierClick?: (segment: PieSegmentData) => void; // <-- ADD
+  activeRatingTierFilter: RatingTierLabel; // <-- ADD
+  activeRatingTierLabel: string | null; // <-- ADD
   // --- ADD CLEAR HANDLERS FOR DOT CLICK ---
   onClearStatusFilter?: () => void;
   onClearTypeFilter?: () => void;
   onClearResolutionFilter?: () => void;
   onClearPriorityFilter?: () => void;
   onClearCreatorFilter?: () => void;
+  onClearRatingTierFilter?: () => void; // <-- ADD
 }
 
 // const TEXT_STATS_AREA_HEIGHT = "h-28"; // This constant is no longer used but safe to keep
@@ -87,6 +99,16 @@ const StatItem: React.FC<{
   </div>
 );
 
+// Helper function for rating color (copied from RatingMetric panel)
+const getRatingStyleClass = (score: number | undefined | null): string => {
+  // Matches the default classes of the StatItem value
+  if (!score || score === 0) return "text-gray-800 text-base font-semibold";
+  if (score >= TIERS.GOLD) return "text-amber-500 text-base font-bold";
+  if (score >= TIERS.SILVER) return "text-slate-500 text-base font-bold";
+  if (score >= TIERS.BRONZE) return "text-orange-700 text-base font-bold";
+  return "text-red-500 text-base font-bold";
+};
+
 const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
   activeStatsView,
   setActiveStatsView,
@@ -109,12 +131,16 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
   activeCreatorFilter,
   activePriorityLabel,
   activeCreatorLabel,
+  onRatingTierClick, // <-- DESTRUCTURE
+  activeRatingTierFilter, // <-- DESTRUCTURE
+  activeRatingTierLabel, // <-- DESTRUCTURE
   // --- DESTRUCTURE NEW CLEAR HANDLERS ---
   onClearStatusFilter,
   onClearTypeFilter,
   onClearResolutionFilter,
   onClearPriorityFilter,
   onClearCreatorFilter,
+  onClearRatingTierFilter, // <-- DESTRUCTURE
 }) => {
   const pieTabsContainerRef = useRef<HTMLDivElement>(null); // <-- ADDED FOR SCROLL
 
@@ -124,7 +150,8 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
     onTypeClick ||
     onResolutionClick ||
     onPriorityClick ||
-    onUserClick;
+    onUserClick ||
+    onRatingTierClick; // <-- ADD
 
   // --- REMOVED: activeSignalStats logic is no longer needed ---
 
@@ -246,6 +273,12 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
       isActive: activeCreatorFilter !== null,
       clearFilter: onClearCreatorFilter,
     },
+    {
+      key: "rating",
+      label: "По Рейтинг",
+      isActive: activeRatingTierFilter !== "all",
+      clearFilter: onClearRatingTierFilter,
+    },
   ] as const;
 
   // --- The rest of the component is updated to use 'activeSignalStats' ---
@@ -322,6 +355,23 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
                   }
                   iconColorClass="text-purple-500"
                 />
+                {/* --- ADD NEW STAT ITEM FOR RATING --- */}
+                <StatItem
+                  icon={StarIcon}
+                  label="Среден рейтинг"
+                  value={
+                    textStats.averageCaseRating !== null
+                      ? textStats.averageCaseRating.toFixed(2)
+                      : "-"
+                  }
+                  iconColorClass="text-amber-500"
+                  valueClasses={
+                    textStats.averageCaseRating !== null
+                      ? getRatingStyleClass(textStats.averageCaseRating)
+                      : "-"
+                  }
+                />
+                {/* ---------------------------------- */}
               </div>
             ) : null}
           </div>
@@ -409,6 +459,14 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
                 pieData={pieChartStats?.creatorPieChartData}
                 onSegmentClick={onUserClick}
                 activeLabel={activeCreatorLabel}
+              />
+            )}
+            {activeStatsView === "rating" && (
+              <StatisticPieChart
+                title="Разпределение по Рейтинг"
+                pieData={pieChartStats?.ratingTierDistributionData}
+                onSegmentClick={onRatingTierClick}
+                activeLabel={activeRatingTierLabel}
               />
             )}
             {/* ---------------------------------- */}

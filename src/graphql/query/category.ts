@@ -104,6 +104,7 @@ export const GET_CATEGORY_BY_NAME = gql`
         priority
         status
         type
+        calculatedRating
         creator {
           _id
           name

@@ -40,7 +40,7 @@ import CategoryCasesList from "../components/features/categoryAnalytics/Category
 import CategoryStatisticsPanel from "../components/features/categoryAnalytics/CategoryStatisticsPanel"; // Adjust path
 
 // Constants
-import { ROLES } from "../utils/GLOBAL_PARAMETERS";
+import { ROLES, TIERS } from "../utils/GLOBAL_PARAMETERS";
 
 import { useAuthorization } from "../hooks/useAuthorization";
 import ForbiddenPage from "./ErrorPages/ForbiddenPage";
@@ -65,6 +65,21 @@ export type CaseStatusTab =
   | "AWAITING_FINANCE"
   | "CLOSED";
 
+/* Copied types from User.tsx */
+export type RatingTierLabel =
+  | "Отлични"
+  | "Добри"
+  | "Средни"
+  | "Проблемни"
+  | "all";
+
+const getTierForScore = (score: number): RatingTierLabel => {
+  if (score >= TIERS.GOLD) return "Отлични";
+  if (score >= TIERS.SILVER) return "Добри";
+  if (score >= TIERS.BRONZE) return "Средни";
+  return "Проблемни";
+};
+
 const Category: React.FC = () => {
   const { name: categoryNameFromParams } = useParams<{ name: string }>();
   const navigate = useNavigate();
@@ -88,6 +103,8 @@ const Category: React.FC = () => {
     id: string | null;
     name: string | null;
   }>({ id: null, name: null });
+  const [activeRatingTier, setActiveRatingTier] =
+    useState<RatingTierLabel>("all");
   // -------------------------------------
 
   const [dateRange, setDateRange] = useState<{
@@ -234,6 +251,20 @@ const Category: React.FC = () => {
         (c) => c.creator._id === activeCreator.id
       );
     }
+    if (activeRatingTier !== "all") {
+      casesToFilter = casesToFilter.filter((c) => {
+        if (c.calculatedRating === null || c.calculatedRating === undefined)
+          return false;
+        return getTierForScore(c.calculatedRating) === activeRatingTier;
+      });
+    }
+    if (activeRatingTier !== "all") {
+      casesToFilter = casesToFilter.filter((c) => {
+        if (c.calculatedRating === null || c.calculatedRating === undefined)
+          return false;
+        return getTierForScore(c.calculatedRating) === activeRatingTier;
+      });
+    }
     // --- END NEW FILTER LOGIC ---
     return casesToFilter;
   }, [
@@ -243,6 +274,7 @@ const Category: React.FC = () => {
     activeResolution,
     activePriority, // ADDED
     activeCreator.id, // ADDED
+    activeRatingTier, // ADDED
   ]);
 
   // --- REFACTORED LOGIC ---
@@ -317,7 +349,7 @@ const Category: React.FC = () => {
 
   // --- LIFTED STATE (was previously inside CategoryStatisticsPanel) ---
   const [activeStatsView, setActiveStatsView] = useState<
-    "status" | "type" | "resolution" | "priority" | "user"
+    "status" | "type" | "resolution" | "priority" | "user" | "rating"
   >("status");
   const [activePersonnelTab, setActivePersonnelTab] = useState<
     "experts" | "managers"
@@ -341,7 +373,8 @@ const Category: React.FC = () => {
       activeType !== "all" ||
       activeResolution !== "all" ||
       activePriority !== "all" || // ADDED
-      activeCreator.id !== null // ADDED
+      activeCreator.id !== null || // ADDED
+      activeRatingTier !== "all" // ADDED
     );
   }, [
     dateRange,
@@ -350,6 +383,7 @@ const Category: React.FC = () => {
     activeResolution,
     activePriority, // ADDED
     activeCreator.id, // ADDED
+    activeRatingTier, // ADDED
   ]);
 
   const handleClearAllFilters = () => {
@@ -359,6 +393,7 @@ const Category: React.FC = () => {
     setActiveResolution("all");
     setActivePriority("all"); // ADDED
     setActiveCreator({ id: null, name: null }); // ADDED
+    setActiveRatingTier("all"); // ADDED
   };
   // --------------------------------------------------------
 
@@ -422,6 +457,11 @@ const Category: React.FC = () => {
           : { id: creatorId, name: segment.label } // Use the null-coalesced value
     );
   };
+
+  const handleRatingTierClick = (segment: PieSegmentData) => {
+    const tierKey = segment.id as RatingTierLabel; // The ID is the label name
+    setActiveRatingTier((current) => (current === tierKey ? "all" : tierKey));
+  };
   // ------------------------------
 
   // Determine the active labels to pass down for styling
@@ -441,6 +481,13 @@ const Category: React.FC = () => {
     activePriority !== "all" ? translatePriority(activePriority) : null;
 
   const activeCreatorLabel = activeCreator.name;
+
+  const activeRatingTierLabel =
+    activeRatingTier !== "all"
+      ? pieChartStats?.ratingTierDistributionData.find(
+          (d) => d.id === activeRatingTier
+        )?.label || null
+      : null;
   // ---------------------------
 
   const handleCategoryFormSubmit = async (
@@ -538,6 +585,8 @@ const Category: React.FC = () => {
           onClearCreatorFilter={() =>
             setActiveCreator({ id: null, name: null })
           }
+          activeRatingTier={activeRatingTier}
+          onClearRatingTierFilter={() => setActiveRatingTier("all")}
         />
         <CategoryStatisticsPanel
           // --- REFACTORED: Pass the two new stats objects ---
@@ -550,6 +599,9 @@ const Category: React.FC = () => {
           activeCreatorFilter={activeCreator.id}
           activePriorityLabel={activePriorityLabel} // Pass label for highlighting
           activeCreatorLabel={activeCreatorLabel} // Pass label for highlighting
+          onRatingTierClick={handleRatingTierClick}
+          activeRatingTierFilter={activeRatingTier}
+          activeRatingTierLabel={activeRatingTierLabel}
           // --- PASS CLEAR HANDLERS FOR DOT CLICK ---
           onClearStatusFilter={() => setActiveStatus("all")}
           onClearTypeFilter={() => setActiveType("all")}
@@ -558,6 +610,7 @@ const Category: React.FC = () => {
           onClearCreatorFilter={() =>
             setActiveCreator({ id: null, name: null })
           }
+          onClearRatingTierFilter={() => setActiveRatingTier("all")}
           // --------------------
           activeStatsView={activeStatsView}
           setActiveStatsView={setActiveStatsView}

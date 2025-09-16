@@ -485,7 +485,7 @@ const RateCaseModal: React.FC<RateCaseModalProps> = ({
                             submittingScores ||
                             deletingScore
                           }
-                          className={`w-full rounded px-4 py-2 text-sm text-white transition-colors ${
+                          className={`cursor-pointer w-full rounded px-4 py-2 text-sm text-white transition-colors ${
                             !scoresHaveChanged || !hasAtLeastOneMetric
                               ? "bg-gray-400 font-medium"
                               : "bg-amber-600 hover:bg-amber-700 font-bold"

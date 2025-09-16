@@ -39,24 +39,19 @@ interface CategoryStatisticsPanelProps {
   activeStatusLabel?: string | null;
   activeTypeLabel?: string | null;
   activeResolutionLabel?: string | null;
-  statsForStatus: SignalStats | undefined | null;
-  statsForType: SignalStats | undefined | null;
-  statsForResolution: SignalStats | undefined | null;
+  // --- REFACTORED: Replace multiple stats props with two ---
+  pieChartStats: SignalStats | undefined | null;
+  textStats: SignalStats | undefined | null;
   // --- NEW PROPS FOR FILTER STATE ---
   activeStatusFilter: CaseStatusTab;
   activeTypeFilter: CaseType | "all";
   activeResolutionFilter: ResolutionCategoryKey | "all";
-  // --- ADD ALL THESE NEW PROPS ---
-  statsForPriority: SignalStats | undefined | null;
-  statsForUser: SignalStats | undefined | null;
   onPriorityClick?: (segment: PieSegmentData) => void;
   onUserClick?: (segment: PieSegmentData) => void;
   activePriorityFilter: CasePriority | "all";
   activeCreatorFilter: string | null;
   activePriorityLabel?: string | null;
   activeCreatorLabel?: string | null;
-  // --- ADD NEW PROP FOR DYNAMIC TEXT STATS ---
-  textStats: SignalStats | undefined | null;
   // --- ADD CLEAR HANDLERS FOR DOT CLICK ---
   onClearStatusFilter?: () => void;
   onClearTypeFilter?: () => void;
@@ -65,7 +60,7 @@ interface CategoryStatisticsPanelProps {
   onClearCreatorFilter?: () => void;
 }
 
-const TEXT_STATS_AREA_HEIGHT = "h-28";
+// const TEXT_STATS_AREA_HEIGHT = "h-28"; // This constant is no longer used but safe to keep
 
 // --- ADDED: Copied StatItem component from UserStatisticsPanel ---
 const StatItem: React.FC<{
@@ -102,22 +97,18 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
   activeStatusLabel,
   activeTypeLabel,
   activeResolutionLabel,
-  statsForStatus,
-  statsForType,
-  statsForResolution,
+  // --- DESTRUCTURE NEW PROPS ---
+  pieChartStats, // <-- DESTRUCTURE
+  textStats, // <-- DESTRUCTURE
   activeStatusFilter,
   activeTypeFilter,
   activeResolutionFilter,
-  // --- DESTRUCTURE NEW PROPS ---
-  statsForPriority,
-  statsForUser,
   onPriorityClick,
   onUserClick,
   activePriorityFilter,
   activeCreatorFilter,
   activePriorityLabel,
   activeCreatorLabel,
-  textStats,
   // --- DESTRUCTURE NEW CLEAR HANDLERS ---
   onClearStatusFilter,
   onClearTypeFilter,
@@ -135,18 +126,7 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
     onPriorityClick ||
     onUserClick;
 
-  // Determine which stats object to use based on the active tab
-  // --- MODIFIED: Update logic to include new stats objects ---
-  const activeSignalStats =
-    activeStatsView === "status"
-      ? statsForStatus
-      : activeStatsView === "type"
-      ? statsForType
-      : activeStatsView === "resolution"
-      ? statsForResolution
-      : activeStatsView === "priority"
-      ? statsForPriority
-      : statsForUser; // Fallback to user stats
+  // --- REMOVED: activeSignalStats logic is no longer needed ---
 
   // --- ADDED: Mouse-wheel scroll effect for pie tabs ---
   useEffect(() => {
@@ -173,6 +153,7 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
   }, []); // Empty deps, ref is stable
   // --- END: Mouse-wheel scroll effect ---
 
+  // --- ADD THIS NEW useEffect ---
   useEffect(() => {
     // Construct the ID of the active tab button
     const activeTabElement = document.getElementById(
@@ -187,28 +168,38 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
       });
     }
   }, [activeStatsView]); // This effect runs whenever the active stats view changes.
+  // --- END NEW useEffect ---
 
-  if (isLoading && !activeSignalStats) {
+  if (isLoading && !textStats) {
     // Keep skeleton as is
     return (
       <aside className="lg:col-span-3 bg-white rounded-lg shadow-lg flex flex-col overflow-hidden">
-        <div className="p-6 space-y-3 overflow-y-auto flex-1 animate-pulse custom-scrollbar-xs">
+        <div className="p-6 space-y-3 animate-pulse">
           <div className="h-7 bg-gray-200 rounded w-1/2 mb-4"></div>
-          <div className={`h-5 bg-gray-200 rounded w-full mb-3`}></div>
+          <div className="h-5 bg-gray-200 rounded w-full mb-3"></div>
           <div className="h-9 bg-gray-200 rounded w-full mb-4"></div>
-          <div
-            className={`${TEXT_STATS_AREA_HEIGHT} bg-gray-200 rounded w-full mb-3`}
-          ></div>
+          <div className="h-28 bg-gray-200 rounded w-full mb-3"></div>
           <div className="h-6 bg-gray-200 rounded w-3/4 mb-3"></div>
           <div className="flex justify-center mb-3">
             <div className="h-40 w-40 bg-gray-200 rounded-full"></div>
+          </div>
+          <div className="space-y-1">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="flex items-center justify-between px-2">
+                <div className="flex items-center w-3/5">
+                  <div className="h-2.5 w-2.5 rounded-full bg-gray-200 mr-2"></div>
+                  <div className="h-3 bg-gray-200 rounded w-full"></div>
+                </div>
+                <div className="h-3 bg-gray-200 rounded w-1/5"></div>
+              </div>
+            ))}
           </div>
         </div>
       </aside>
     );
   }
 
-  if (!activeSignalStats) {
+  if (!textStats || !pieChartStats || pieChartStats.totalSignals === 0) {
     // Keep "no stats" as is
     return (
       <aside className="lg:col-span-3 bg-white rounded-lg shadow-lg flex flex-col overflow-hidden">
@@ -223,6 +214,7 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
     );
   }
 
+  // --- MODIFIED: Add new tabs to the array ---
   const tabs = [
     {
       key: "status",
@@ -266,6 +258,7 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
             <span>Статистика</span>
 
             {/* --- NEW: RADIX UI TOOLTIP --- */}
+            {/* ... (Tooltip logic remains unchanged) ... */}
             {isInteractive && (
               <Tooltip.Root delayDuration={150}>
                 <Tooltip.Trigger asChild>
@@ -319,7 +312,6 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
                   value={textStats.closedSignals}
                   iconColorClass="text-gray-500"
                 /> */}
-
                 <StatItem
                   icon={ClockIcon}
                   label="Средно време (дни)"
@@ -331,18 +323,7 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
                   iconColorClass="text-purple-500"
                 />
               </div>
-            ) : (
-              // Fallback for old data structure just in case
-              <p className="flex items-center justify-between">
-                <span className="flex items-center">
-                  <ListBulletIcon className="h-5 w-5 mr-2 text-blue-500" /> Общо
-                  сигнали:
-                </span>
-                <strong className="text-gray-800 text-base">
-                  {activeSignalStats.totalSignals}
-                </strong>
-              </p>
-            )}
+            ) : null}
           </div>
 
           <div className="mt-2">
@@ -353,7 +334,7 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
               {tabs.map((tab) => (
                 <button
                   key={tab.key}
-                  id={`pie-tab-${tab.key}`}
+                  id={`pie-tab-${tab.key}`} // <-- ADDED ID
                   onClick={() => setActiveStatsView(tab.key)}
                   className={`cursor-pointer relative flex-1 py-2 px-3 text-sm font-medium focus:outline-none transition-colors duration-150 whitespace-nowrap ${
                     activeStatsView === tab.key
@@ -382,11 +363,9 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
           <div className="mt-3">
             {activeStatsView === "status" && (
               <div className="space-y-2">
-                {" "}
-                {/* REMOVED old text stats block */}
                 <StatisticPieChart
                   title="Разпределение по Статус"
-                  pieData={activeSignalStats.statusPieChartData}
+                  pieData={pieChartStats?.statusPieChartData}
                   onSegmentClick={onStatusClick}
                   activeLabel={activeStatusLabel}
                 />
@@ -395,11 +374,9 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
 
             {activeStatsView === "type" && (
               <div className="space-y-2">
-                {" "}
-                {/* REMOVED old text stats block */}
                 <StatisticPieChart
                   title="Разпределение по Тип"
-                  pieData={activeSignalStats.typePieChartData}
+                  pieData={pieChartStats?.typePieChartData}
                   onSegmentClick={onTypeClick}
                   activeLabel={activeTypeLabel}
                 />
@@ -408,21 +385,20 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
 
             {activeStatsView === "resolution" && (
               <div className="space-y-2">
-                {" "}
-                {/* REMOVED old text stats block */}
                 <StatisticPieChart
                   title="Разпределение по Резолюция"
-                  pieData={activeSignalStats.resolutionPieChartData}
+                  pieData={pieChartStats?.resolutionPieChartData}
                   onSegmentClick={onResolutionClick}
                   activeLabel={activeResolutionLabel}
                 />
               </div>
             )}
+
             {/* --- ADD THESE TWO NEW RENDER BLOCKS --- */}
             {activeStatsView === "priority" && (
               <StatisticPieChart
                 title="Разпределение по Приоритет"
-                pieData={activeSignalStats.priorityPieChartData}
+                pieData={pieChartStats?.priorityPieChartData}
                 onSegmentClick={onPriorityClick}
                 activeLabel={activePriorityLabel}
               />
@@ -430,7 +406,7 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
             {activeStatsView === "user" && (
               <StatisticPieChart
                 title="Разпределение по Създател"
-                pieData={activeSignalStats.creatorPieChartData}
+                pieData={pieChartStats?.creatorPieChartData}
                 onSegmentClick={onUserClick}
                 activeLabel={activeCreatorLabel}
               />

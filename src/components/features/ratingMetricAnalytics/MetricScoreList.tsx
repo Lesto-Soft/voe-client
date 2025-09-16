@@ -1,5 +1,5 @@
 // src/components/features/ratingMetricAnalytics/MetricScoreList.tsx
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useRef, useEffect } from "react";
 import { IMetricScore, ICategory } from "../../../db/interfaces";
 import MetricScoreItemCard from "./MetricScoreItemCard";
 import DateRangeSelector from "../userAnalytics/DateRangeSelector";
@@ -19,6 +19,8 @@ const getTierForScore = (score: number): TierTab => {
   if (score >= TIERS.BRONZE) return "bronze";
   return "problematic";
 };
+
+type MetricPieTabKey = "tier" | "user" | "category";
 
 // Update props to control the active tab from the parent
 interface MetricScoreListProps {
@@ -40,6 +42,7 @@ interface MetricScoreListProps {
   selectedCategoryId?: string | null;
   selectedCategoryName: string | null;
   onClearCategoryFilter: () => void;
+  onPieTabChange?: (tab: MetricPieTabKey) => void;
 }
 
 const MetricScoreList: React.FC<MetricScoreListProps> = ({
@@ -58,12 +61,37 @@ const MetricScoreList: React.FC<MetricScoreListProps> = ({
   selectedCategoryId,
   selectedCategoryName,
   onClearCategoryFilter,
+  onPieTabChange,
 }) => {
   // --- REMOVED: The internal state for the active tab is gone ---
   // const [activeTab, setActiveTab] = useState<TierTab>("all");
   const [isDateFilterVisible, setIsDateFilterVisible] = useState(false);
+  const filtersContainerRef = useRef<HTMLDivElement>(null);
   const isDateFilterActive =
     dateRange.startDate !== null || dateRange.endDate !== null;
+
+  // --- ADDED: Mouse-wheel scroll effect for filter bar ---
+  useEffect(() => {
+    const scrollContainer = filtersContainerRef.current;
+    if (!scrollContainer) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      if (e.deltaX !== 0) return;
+
+      if (
+        e.deltaY !== 0 &&
+        scrollContainer.scrollWidth > scrollContainer.clientWidth
+      ) {
+        e.preventDefault();
+        scrollContainer.scrollLeft += e.deltaY;
+      }
+    };
+    scrollContainer.addEventListener("wheel", handleWheel, { passive: false });
+    return () => {
+      scrollContainer.removeEventListener("wheel", handleWheel);
+    };
+  }, [isAnyFilterActive]); // Re-attach if bar appears/disappears
+  // --- END: Mouse-wheel scroll effect ---
 
   const dateFilteredScores = useMemo(() => {
     const { startDate, endDate } = dateRange;
@@ -203,41 +231,49 @@ const MetricScoreList: React.FC<MetricScoreListProps> = ({
 
         {/* --- NEW: Active Filters Display --- */}
         {isAnyFilterActive && (
-          <div className="px-4 py-2 border-t mt-2 border-gray-200 bg-gray-50 flex flex-wrap items-center gap-2">
-            <span className="text-xs font-semibold text-gray-600 mr-2">
-              Активни филтри:
-            </span>
-            {activeTierTab !== "all" && (
-              <FilterTag
-                label={`Оценка: ${
-                  tabs.find((t) => t.key === activeTierTab)?.label
-                }`}
-                onRemove={() => onTabChange("all")}
-              />
-            )}
-            {selectedUserId && selectedUserName && (
-              <FilterTag
-                label={`Потребител: ${selectedUserName}`}
-                onRemove={onClearUserFilter}
-              />
-            )}
-            {selectedCategoryId && selectedCategoryName && (
-              <FilterTag
-                label={`Категория: ${selectedCategoryName}`}
-                onRemove={onClearCategoryFilter}
-              />
-            )}
-            {isDateFilterActive && (
-              <FilterTag
-                label="Период"
-                onRemove={() =>
-                  onDateRangeChange({ startDate: null, endDate: null })
-                }
-              />
-            )}
+          <div className="px-4 py-1.5 border-t mt-2 border-gray-200 bg-gray-50 flex items-center justify-between gap-x-4">
+            <div
+              ref={filtersContainerRef} // <-- ADDED REF
+              className="flex items-center gap-2 overflow-x-auto custom-scrollbar-xs flex-nowrap py-1"
+            >
+              <span className="text-xs font-semibold text-gray-600 mr-2">
+                Активни филтри:
+              </span>
+              {activeTierTab !== "all" && (
+                <FilterTag
+                  label={`Оценка: ${
+                    tabs.find((t) => t.key === activeTierTab)?.label
+                  }`}
+                  onRemove={() => onTabChange("all")}
+                  onClick={() => onPieTabChange?.("tier")}
+                />
+              )}
+              {selectedCategoryId && selectedCategoryName && (
+                <FilterTag
+                  label={`Категория: ${selectedCategoryName}`}
+                  onRemove={onClearCategoryFilter}
+                  onClick={() => onPieTabChange?.("category")}
+                />
+              )}
+              {selectedUserId && selectedUserName && (
+                <FilterTag
+                  label={`Потребител: ${selectedUserName}`}
+                  onRemove={onClearUserFilter}
+                  onClick={() => onPieTabChange?.("user")}
+                />
+              )}
+              {isDateFilterActive && (
+                <FilterTag
+                  label="Период"
+                  onRemove={() =>
+                    onDateRangeChange({ startDate: null, endDate: null })
+                  }
+                />
+              )}
+            </div>
             <button
               onClick={onClearAllFilters}
-              className="cursor-pointer ml-auto text-xs font-semibold text-indigo-600 hover:text-indigo-800 hover:underline"
+              className="cursor-pointer text-xs font-semibold text-indigo-600 hover:text-indigo-800 hover:underline flex-shrink-0"
             >
               Изчисти всички
             </button>

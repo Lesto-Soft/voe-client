@@ -1,5 +1,5 @@
 // src/components/features/ratingMetricAnalytics/RatingMetricStatisticsPanel.tsx
-import React, { useState, useMemo } from "react";
+import React, { useMemo, useRef, useEffect } from "react";
 import * as Tooltip from "@radix-ui/react-tooltip"; // <-- ADD
 import { IMetricScore } from "../../../db/interfaces";
 import useRatingMetricStats from "../../../hooks/useRatingMetricStats";
@@ -14,6 +14,7 @@ import { PieSegmentData } from "../../charts/PieChart";
 import { TIERS } from "../../../utils/GLOBAL_PARAMETERS";
 import { TierTab } from "./MetricScoreList"; // <-- ADD
 
+// Define the type locally
 type StatsTab = "tier" | "user" | "category";
 
 // Helper to determine color for the average score
@@ -38,6 +39,13 @@ interface RatingMetricStatisticsPanelProps {
   onCategoryClick?: (segment: PieSegmentData) => void;
   activeCategoryLabel?: string | null;
   activeCategoryFilter: string | null;
+  // --- PROPS FOR STATE LIFTING ---
+  activePieTab: StatsTab;
+  onPieTabChange: (tab: StatsTab) => void;
+  // --- PROPS FOR CLICKABLE DOTS ---
+  onClearTierFilter: () => void;
+  onClearUserFilter: () => void;
+  onClearCategoryFilter: () => void;
 }
 
 const RatingMetricStatisticsPanel: React.FC<
@@ -56,8 +64,16 @@ const RatingMetricStatisticsPanel: React.FC<
   onCategoryClick,
   activeCategoryLabel,
   activeCategoryFilter,
+  // --- DESTRUCTURE NEW PROPS ---
+  activePieTab,
+  onPieTabChange,
+  onClearTierFilter,
+  onClearUserFilter,
+  onClearCategoryFilter,
 }) => {
-  const [activeTab, setActiveTab] = useState<StatsTab>("tier");
+  // --- REMOVED internal state, now controlled by activePieTab prop ---
+  // const [activeTab, setActiveTab] = useState<StatsTab>("tier");
+  const pieTabsContainerRef = useRef<HTMLDivElement>(null); // <-- ADDED FOR SCROLL
 
   const filteredScores = useMemo(() => {
     if (!dateRange.startDate || !dateRange.endDate) return scores;
@@ -71,6 +87,41 @@ const RatingMetricStatisticsPanel: React.FC<
 
   const stats = useRatingMetricStats(filteredScores);
   const isInteractive = onTierClick || onUserClick || onCategoryClick;
+
+  // --- ADDED: Mouse-wheel scroll effect for pie tabs ---
+  useEffect(() => {
+    const scrollContainer = pieTabsContainerRef.current;
+    if (!scrollContainer) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      if (e.deltaX !== 0) return;
+
+      if (
+        e.deltaY !== 0 &&
+        scrollContainer.scrollWidth > scrollContainer.clientWidth
+      ) {
+        e.preventDefault();
+        scrollContainer.scrollLeft += e.deltaY;
+      }
+    };
+
+    scrollContainer.addEventListener("wheel", handleWheel, { passive: false });
+    return () => {
+      scrollContainer.removeEventListener("wheel", handleWheel);
+    };
+  }, []); // Empty deps, ref is stable
+  // --- END: Mouse-wheel scroll effect ---
+
+  useEffect(() => {
+    const activeTabElement = document.getElementById(`pie-tab-${activePieTab}`);
+    if (activeTabElement) {
+      activeTabElement.scrollIntoView({
+        behavior: "smooth",
+        inline: "nearest",
+        block: "nearest",
+      });
+    }
+  }, [activePieTab]); // This effect runs whenever the active pie tab prop changes.
 
   if (isLoading) {
     return (
@@ -153,54 +204,80 @@ const RatingMetricStatisticsPanel: React.FC<
           </div>
 
           <div className="mt-2">
-            {/* --- MODIFIED: Add third button to the flex container --- */}
-            <div className="flex border-b border-gray-200 text-xs sm:text-sm">
+            <div
+              ref={pieTabsContainerRef} // <-- ADDED REF
+              className="flex border-b border-gray-200 overflow-x-auto custom-scrollbar-xs py-1"
+            >
               <button
-                onClick={() => setActiveTab("tier")}
-                className={`cursor-pointer relative flex-1 py-2 px-1 text-center font-medium focus:outline-none transition-colors duration-150 ${
-                  activeTab === "tier"
+                id="pie-tab-tier" // <-- ADDED ID
+                onClick={() => onPieTabChange("tier")} // <-- Use prop setter
+                className={`cursor-pointer relative flex-1 py-2 px-3 text-sm font-medium focus:outline-none transition-colors duration-150 whitespace-nowrap ${
+                  activePieTab === "tier" // <-- Use prop state
                     ? "border-b-2 border-indigo-500 text-indigo-600"
                     : "text-gray-500 hover:text-gray-700"
                 }`}
               >
                 По Оценка
                 {activeTierFilter !== "all" && (
-                  <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-indigo-500"></span>
+                  <span
+                    title="Изчисти филтъра"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onClearTierFilter?.();
+                    }}
+                    className="absolute top-1 right-1 h-2 w-2 rounded-full bg-indigo-500 hover:ring-2 hover:ring-indigo-300"
+                  ></span>
                 )}
               </button>
               {/* --- ADD NEW BUTTON --- */}
               <button
-                onClick={() => setActiveTab("category")}
-                className={`cursor-pointer relative flex-1 py-2 px-1 text-center font-medium focus:outline-none transition-colors duration-150 ${
-                  activeTab === "category"
+                id="pie-tab-category" // <-- ADDED ID
+                onClick={() => onPieTabChange("category")} // <-- Use prop setter
+                className={`cursor-pointer relative flex-1 py-2 px-3 text-sm font-medium focus:outline-none transition-colors duration-150 whitespace-nowrap ${
+                  activePieTab === "category" // <-- Use prop state
                     ? "border-b-2 border-indigo-500 text-indigo-600"
                     : "text-gray-500 hover:text-gray-700"
                 }`}
               >
                 По Категория
                 {activeCategoryFilter !== null && (
-                  <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-indigo-500"></span>
+                  <span
+                    title="Изчисти филтъра"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onClearCategoryFilter?.();
+                    }}
+                    className="absolute top-1 right-1 h-2 w-2 rounded-full bg-indigo-500 hover:ring-2 hover:ring-indigo-300"
+                  ></span>
                 )}
               </button>
               {/* -------------------- */}
               <button
-                onClick={() => setActiveTab("user")}
-                className={`cursor-pointer relative flex-1 py-2 px-1 text-center font-medium focus:outline-none transition-colors duration-150 ${
-                  activeTab === "user"
+                id="pie-tab-user" // <-- ADDED ID
+                onClick={() => onPieTabChange("user")} // <-- Use prop setter
+                className={`cursor-pointer relative flex-1 py-2 px-3 text-sm font-medium focus:outline-none transition-colors duration-150 whitespace-nowrap ${
+                  activePieTab === "user" // <-- Use prop state
                     ? "border-b-2 border-indigo-500 text-indigo-600"
                     : "text-gray-500 hover:text-gray-700"
                 }`}
               >
                 По Потребител
                 {activeUserFilter !== null && (
-                  <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-indigo-500"></span>
+                  <span
+                    title="Изчисти филтъра"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onClearUserFilter?.();
+                    }}
+                    className="absolute top-1 right-1 h-2 w-2 rounded-full bg-indigo-500 hover:ring-2 hover:ring-indigo-300"
+                  ></span>
                 )}
               </button>
             </div>
           </div>
 
           <div className="mt-3">
-            {activeTab === "tier" && (
+            {activePieTab === "tier" && (
               <StatisticPieChart
                 title="Разпределение по Оценки"
                 pieData={stats.tierDistributionData}
@@ -208,7 +285,7 @@ const RatingMetricStatisticsPanel: React.FC<
                 activeLabel={activeTierLabel}
               />
             )}
-            {activeTab === "user" && (
+            {activePieTab === "user" && (
               <StatisticPieChart
                 title="Разпределение по Потребители"
                 pieData={stats.userContributionData}
@@ -217,7 +294,7 @@ const RatingMetricStatisticsPanel: React.FC<
               />
             )}
             {/* --- ADD NEW RENDER BLOCK --- */}
-            {activeTab === "category" && (
+            {activePieTab === "category" && (
               <StatisticPieChart
                 title="Разпределение по Категории"
                 pieData={stats.categoryContributionData}
@@ -225,7 +302,6 @@ const RatingMetricStatisticsPanel: React.FC<
                 activeLabel={activeCategoryLabel}
               />
             )}
-            {/* ---------------------------- */}
           </div>
         </div>
       </aside>

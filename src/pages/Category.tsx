@@ -653,6 +653,7 @@ const Category: React.FC = () => {
           onClearResolutionFilter={() => setActiveType("all")}
           onClearTypeFilter={() => setActiveType("all")}
           // --- ADD NEW PROPS ---
+          onPieTabChange={setActiveStatsView}
           activePriority={activePriority}
           onClearPriorityFilter={() => setActivePriority("all")}
           activeCreatorName={activeCreator.name}
@@ -673,6 +674,14 @@ const Category: React.FC = () => {
           activeCreatorFilter={activeCreator.id}
           activePriorityLabel={activePriorityLabel} // Pass label for highlighting
           activeCreatorLabel={activeCreatorLabel} // Pass label for highlighting
+          // --- PASS CLEAR HANDLERS FOR DOT CLICK ---
+          onClearStatusFilter={() => setActiveStatus("all")}
+          onClearTypeFilter={() => setActiveType("all")}
+          onClearResolutionFilter={() => setActiveResolution("all")}
+          onClearPriorityFilter={() => setActivePriority("all")}
+          onClearCreatorFilter={() =>
+            setActiveCreator({ id: null, name: null })
+          }
           // --------------------
           activeStatsView={activeStatsView}
           setActiveStatsView={setActiveStatsView}

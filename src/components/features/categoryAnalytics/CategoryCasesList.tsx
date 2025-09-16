@@ -1,5 +1,5 @@
 // src/components/features/categoryAnalytics/CategoryCasesList.tsx
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useRef, useEffect } from "react";
 import { ICase, CaseType, CasePriority } from "../../../db/interfaces";
 import CategoryCaseCard from "./CategoryCaseCard";
 import {
@@ -20,6 +20,8 @@ import FilterTag from "../../global/FilterTag";
 
 // The local CaseStatusTab type can now be imported from Category.tsx
 import { CaseStatusTab } from "../../../pages/Category";
+
+type CategoryPieTabKey = "status" | "type" | "resolution" | "priority" | "user";
 
 // --- START: NEW PROPS INTERFACE ---
 interface CategoryCasesListProps {
@@ -49,6 +51,7 @@ interface CategoryCasesListProps {
   onClearPriorityFilter: () => void;
   activeCreatorName: string | null;
   onClearCreatorFilter: () => void;
+  onPieTabChange?: (tab: CategoryPieTabKey) => void;
 }
 
 const CategoryCasesList: React.FC<CategoryCasesListProps> = ({
@@ -75,8 +78,10 @@ const CategoryCasesList: React.FC<CategoryCasesListProps> = ({
   onClearPriorityFilter,
   activeCreatorName,
   onClearCreatorFilter,
+  onPieTabChange,
 }) => {
   const [isDateFilterVisible, setIsDateFilterVisible] = useState(false);
+  const filtersContainerRef = useRef<HTMLDivElement>(null);
 
   // ✅ MODIFIED: Changed from && to || to show active state if at least one date is selected.
   const isDateFilterActive =
@@ -108,6 +113,31 @@ const CategoryCasesList: React.FC<CategoryCasesListProps> = ({
     { key: "AWAITING_FINANCE", label: translateStatus("AWAITING_FINANCE") },
     { key: "CLOSED", label: translateStatus("CLOSED") },
   ];
+
+  // --- ADDED: Mouse-wheel scroll effect for filter bar ---
+  useEffect(() => {
+    const scrollContainer = filtersContainerRef.current;
+    if (!scrollContainer) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      if (e.deltaX !== 0) return;
+
+      if (
+        e.deltaY !== 0 &&
+        scrollContainer.scrollWidth > scrollContainer.clientWidth
+      ) {
+        e.preventDefault();
+        scrollContainer.scrollLeft += e.deltaY;
+      }
+    };
+
+    scrollContainer.addEventListener("wheel", handleWheel, { passive: false });
+
+    return () => {
+      scrollContainer.removeEventListener("wheel", handleWheel);
+    };
+  }, [isAnyFilterActive]); // Re-attach if bar appears/disappears
+  // --- END: Mouse-wheel scroll effect ---
 
   const casesToDisplay = allCases.slice(0, visibleCasesCount);
   const totalCasesCount = allCases.length;
@@ -192,57 +222,67 @@ const CategoryCasesList: React.FC<CategoryCasesListProps> = ({
 
       {/* --- NEW: Active Filters Display --- */}
       {isAnyFilterActive && (
-        <div className="px-4 py-2 border-b border-gray-200 bg-gray-50 flex flex-wrap items-center gap-2">
-          <span className="text-xs font-semibold text-gray-600 mr-2">
-            Активни филтри:
-          </span>
-          {activeStatus !== "all" && (
-            <FilterTag
-              label={`Статус: ${translateStatus(activeStatus)}`}
-              onRemove={() => setActiveStatus("all")}
-            />
-          )}
-          {activeType !== "all" && (
-            <FilterTag
-              label={`Тип: ${translateCaseType(activeType)}`}
-              onRemove={onClearTypeFilter}
-            />
-          )}
-          {activeResolution !== "all" && (
-            <FilterTag
-              label={`Резолюция: ${
-                RESOLUTION_CATEGORY_CONFIG.find(
-                  (c) => c.key === activeResolution
-                )?.label
-              }`}
-              onRemove={onClearResolutionFilter}
-            />
-          )}
-          {/* --- ADD THESE TWO NEW TAGS --- */}
-          {activePriority !== "all" && (
-            <FilterTag
-              label={`Приоритет: ${translatePriority(activePriority)}`}
-              onRemove={onClearPriorityFilter}
-            />
-          )}
-          {activeCreatorName && (
-            <FilterTag
-              label={`Създател: ${activeCreatorName}`}
-              onRemove={onClearCreatorFilter}
-            />
-          )}
-          {/* -------------------------- */}
-          {isDateFilterActive && (
-            <FilterTag
-              label="Период"
-              onRemove={() =>
-                onDateRangeChange({ startDate: null, endDate: null })
-              }
-            />
-          )}
+        <div className="px-4 py-1.5 border-b border-gray-200 bg-gray-50 flex items-center justify-between gap-x-4">
+          <div
+            ref={filtersContainerRef} // <-- ADDED REF
+            className="flex items-center gap-2 overflow-x-auto custom-scrollbar-xs flex-nowrap py-1"
+          >
+            <span className="text-xs font-semibold text-gray-600 mr-2">
+              Активни филтри:
+            </span>
+            {activeStatus !== "all" && (
+              <FilterTag
+                label={`Статус: ${translateStatus(activeStatus)}`}
+                onRemove={() => setActiveStatus("all")}
+                onClick={() => onPieTabChange?.("status")}
+              />
+            )}
+            {activeType !== "all" && (
+              <FilterTag
+                label={`Тип: ${translateCaseType(activeType)}`}
+                onRemove={onClearTypeFilter}
+                onClick={() => onPieTabChange?.("type")}
+              />
+            )}
+            {activeResolution !== "all" && (
+              <FilterTag
+                label={`Резолюция: ${
+                  RESOLUTION_CATEGORY_CONFIG.find(
+                    (c) => c.key === activeResolution
+                  )?.label
+                }`}
+                onRemove={onClearResolutionFilter}
+                onClick={() => onPieTabChange?.("resolution")}
+              />
+            )}
+            {/* --- ADD THESE TWO NEW TAGS --- */}
+            {activePriority !== "all" && (
+              <FilterTag
+                label={`Приоритет: ${translatePriority(activePriority)}`}
+                onRemove={onClearPriorityFilter}
+                onClick={() => onPieTabChange?.("priority")}
+              />
+            )}
+            {activeCreatorName && (
+              <FilterTag
+                label={`Създател: ${activeCreatorName}`}
+                onRemove={onClearCreatorFilter}
+                onClick={() => onPieTabChange?.("user")}
+              />
+            )}
+            {/* -------------------------- */}
+            {isDateFilterActive && (
+              <FilterTag
+                label="Период"
+                onRemove={() =>
+                  onDateRangeChange({ startDate: null, endDate: null })
+                }
+              />
+            )}
+          </div>
           <button
             onClick={onClearAllFilters}
-            className="cursor-pointer ml-auto text-xs font-semibold text-indigo-600 hover:text-indigo-800 hover:underline"
+            className="cursor-pointer text-xs font-semibold text-indigo-600 hover:text-indigo-800 hover:underline flex-shrink-0"
           >
             Изчисти всички
           </button>

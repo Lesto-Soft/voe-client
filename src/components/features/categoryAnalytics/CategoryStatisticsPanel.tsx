@@ -1,5 +1,5 @@
 // src/components/features/categoryAnalytics/CategoryStatisticsPanel.tsx
-import React from "react";
+import React, { useRef, useEffect, useState } from "react";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import {
   ChartPieIcon,
@@ -55,7 +55,12 @@ interface CategoryStatisticsPanelProps {
   activeCreatorFilter: string | null;
   activePriorityLabel?: string | null;
   activeCreatorLabel?: string | null;
-  // ----------------------------
+  // --- ADD CLEAR HANDLERS FOR DOT CLICK ---
+  onClearStatusFilter?: () => void;
+  onClearTypeFilter?: () => void;
+  onClearResolutionFilter?: () => void;
+  onClearPriorityFilter?: () => void;
+  onClearCreatorFilter?: () => void;
 }
 
 const TEXT_STATS_AREA_HEIGHT = "h-28";
@@ -85,7 +90,15 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
   activeCreatorFilter,
   activePriorityLabel,
   activeCreatorLabel,
+  // --- DESTRUCTURE NEW CLEAR HANDLERS ---
+  onClearStatusFilter,
+  onClearTypeFilter,
+  onClearResolutionFilter,
+  onClearPriorityFilter,
+  onClearCreatorFilter,
 }) => {
+  const pieTabsContainerRef = useRef<HTMLDivElement>(null); // <-- ADDED FOR SCROLL
+
   // This constant determines if any of the charts are interactive
   const isInteractive =
     onStatusClick ||
@@ -106,6 +119,46 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
       : activeStatsView === "priority"
       ? statsForPriority
       : statsForUser; // Fallback to user stats
+
+  // --- ADDED: Mouse-wheel scroll effect for pie tabs ---
+  useEffect(() => {
+    const scrollContainer = pieTabsContainerRef.current;
+    if (!scrollContainer) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      if (e.deltaX !== 0) return;
+
+      if (
+        e.deltaY !== 0 &&
+        scrollContainer.scrollWidth > scrollContainer.clientWidth
+      ) {
+        e.preventDefault();
+        scrollContainer.scrollLeft += e.deltaY;
+      }
+    };
+
+    scrollContainer.addEventListener("wheel", handleWheel, { passive: false });
+
+    return () => {
+      scrollContainer.removeEventListener("wheel", handleWheel);
+    };
+  }, []); // Empty deps, ref is stable
+  // --- END: Mouse-wheel scroll effect ---
+
+  useEffect(() => {
+    // Construct the ID of the active tab button
+    const activeTabElement = document.getElementById(
+      `pie-tab-${activeStatsView}`
+    );
+    // If the element is found, scroll it into the visible area of its container
+    if (activeTabElement) {
+      activeTabElement.scrollIntoView({
+        behavior: "smooth",
+        inline: "nearest", // Crucial for horizontal scrolling
+        block: "nearest",
+      });
+    }
+  }, [activeStatsView]); // This effect runs whenever the active stats view changes.
 
   if (isLoading && !activeSignalStats) {
     // Keep skeleton as is
@@ -147,22 +200,31 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
       key: "status",
       label: "По Статус",
       isActive: activeStatusFilter !== "all",
+      clearFilter: onClearStatusFilter,
     },
-    { key: "type", label: "По Тип", isActive: activeTypeFilter !== "all" },
+    {
+      key: "type",
+      label: "По Тип",
+      isActive: activeTypeFilter !== "all",
+      clearFilter: onClearTypeFilter,
+    },
     {
       key: "resolution",
       label: "По Време",
       isActive: activeResolutionFilter !== "all",
+      clearFilter: onClearResolutionFilter,
     },
     {
       key: "priority",
       label: "По Приоритет",
       isActive: activePriorityFilter !== "all",
+      clearFilter: onClearPriorityFilter,
     },
     {
       key: "user",
       label: "По Потребител",
       isActive: activeCreatorFilter !== null,
+      clearFilter: onClearCreatorFilter,
     },
   ] as const;
 
@@ -208,21 +270,33 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
           </div>
 
           <div className="mt-2">
-            <div className="flex border-b border-gray-200 text-xs sm:text-sm">
+            <div
+              ref={pieTabsContainerRef} // <-- ADDED REF
+              className="flex border-b border-gray-200 overflow-x-auto custom-scrollbar-xs py-1"
+            >
               {tabs.map((tab) => (
                 <button
                   key={tab.key}
+                  id={`pie-tab-${tab.key}`}
                   onClick={() => setActiveStatsView(tab.key)}
-                  className={`relative hover:cursor-pointer flex-1 py-2 px-1 text-center font-medium focus:outline-none transition-colors duration-150 whitespace-nowrap ${
+                  className={`cursor-pointer relative flex-1 py-2 px-3 text-sm font-medium focus:outline-none transition-colors duration-150 whitespace-nowrap ${
                     activeStatsView === tab.key
                       ? "border-b-2 border-indigo-500 text-indigo-600"
-                      : "text-gray-500 hover:text-gray-700 hover:border-gray-300 border-b-2 border-transparent"
+                      : "text-gray-500 hover:text-gray-700"
                   }`}
                 >
                   {tab.label}
                   {/* --- NEW: VISUAL INDICATOR DOT --- */}
+                  {/* --- MODIFIED: Dot is now a clickable clear button --- */}
                   {tab.isActive && (
-                    <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-indigo-500"></span>
+                    <span
+                      title="Изчисти филтъра"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        tab.clearFilter?.();
+                      }}
+                      className="absolute top-1 right-1 h-2 w-2 rounded-full bg-indigo-500 hover:ring-2 hover:ring-indigo-300"
+                    ></span>
                   )}
                 </button>
               ))}

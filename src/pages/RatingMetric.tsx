@@ -43,6 +43,9 @@ const RatingMetric: React.FC = () => {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
     null
   );
+  const [activePieTab, setActivePieTab] = useState<
+    "tier" | "user" | "category"
+  >("tier");
 
   // --- GraphQL Hooks ---
   const {
@@ -104,6 +107,9 @@ const RatingMetric: React.FC = () => {
       current === categoryId ? null : categoryId
     );
   };
+  const onClearTierFilter = () => setActiveTierTab("all");
+  const onClearUserFilter = () => setSelectedUserId(null);
+  const onClearCategoryFilter = () => setSelectedCategoryId(null);
 
   // --- Filter Logic for passing to MetricScoreList ---
   const isAnyFilterActive = useMemo(
@@ -123,6 +129,7 @@ const RatingMetric: React.FC = () => {
     setActiveTierTab("all");
     setSelectedUserId(null);
     setSelectedCategoryId(null);
+    setActivePieTab("tier");
   };
 
   const selectedUser = useMemo(() => {
@@ -205,10 +212,11 @@ const RatingMetric: React.FC = () => {
             isAnyFilterActive={isAnyFilterActive}
             onClearAllFilters={handleClearAllFilters}
             selectedUserName={selectedUser?.name || null}
-            onClearUserFilter={() => setSelectedUserId(null)}
+            onClearUserFilter={onClearUserFilter}
+            onPieTabChange={setActivePieTab}
             selectedCategoryId={selectedCategoryId}
             selectedCategoryName={selectedCategory?.name || null}
-            onClearCategoryFilter={() => setSelectedCategoryId(null)}
+            onClearCategoryFilter={onClearCategoryFilter}
           />
           <RatingMetricStatisticsPanel
             scores={scores}
@@ -223,6 +231,11 @@ const RatingMetric: React.FC = () => {
             onCategoryClick={handleCategoryClick}
             activeCategoryLabel={activeCategoryLabel}
             activeCategoryFilter={selectedCategoryId}
+            activePieTab={activePieTab}
+            onPieTabChange={setActivePieTab}
+            onClearTierFilter={onClearTierFilter}
+            onClearUserFilter={onClearUserFilter}
+            onClearCategoryFilter={onClearCategoryFilter}
           />
         </div>
       </div>

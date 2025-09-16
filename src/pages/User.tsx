@@ -39,8 +39,8 @@ import { containsAnyCategoryById } from "../utils/arrayUtils";
 import {
   getCaseResolutionCategory,
   RESOLUTION_CATEGORY_CONFIG,
-  translatePriority,
-  translateCaseType,
+  // translatePriority,
+  // translateCaseType,
 } from "../utils/categoryDisplayUtils";
 import { useAuthorization } from "../hooks/useAuthorization";
 import ForbiddenPage from "./ErrorPages/ForbiddenPage";

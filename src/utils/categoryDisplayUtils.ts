@@ -1,6 +1,6 @@
 // src/utils/categoryDisplayUtils.ts
 import moment from "moment";
-import { ICase, IAnswer, CasePriority } from "../db/interfaces"; // Adjust path as needed
+import { ICase, IAnswer } from "../db/interfaces"; // Adjust path as needed
 import { parseActivityDate } from "./dateUtils";
 
 export const STATUS_COLORS: Record<string, string> = {
@@ -144,21 +144,22 @@ export const tForCaseLink = (
   return key;
 };
 
-// --- START: REPLACEMENT for getCaseResolutionCategory ---
 export const getCaseResolutionCategory = (
   caseItem: ICase
 ): ResolutionCategoryKey => {
-  // --- START OF DEBUGGING LOGIC ---
-  console.log(`[DEBUG] Processing Case #${caseItem.case_number}...`);
-  // --- END OF DEBUGGING LOGIC ---
+  const isBeingDebugged: boolean = false; // <-- SET TO TRUE TO ENABLE LOGS
 
-  console.log("CASE ITEM: ", caseItem);
+  if (isBeingDebugged) {
+    console.log(`[DEBUG] Processing Case #${caseItem.case_number}...`);
+
+    console.log("CASE ITEM: ", caseItem);
+  }
 
   if (
     String(caseItem.status) !== "CLOSED" &&
     String(caseItem.status) !== "AWAITING_FINANCE"
   ) {
-    return "NOT_RESOLVED"; // <-- TASK 1 CHANGE: Return key for OPEN/IN_PROGRESS
+    return "NOT_RESOLVED"; // <-- Return key for OPEN/IN_PROGRESS
   }
 
   let latestResolutionDate: Date | null = null;
@@ -183,18 +184,22 @@ export const getCaseResolutionCategory = (
   }
 
   if (!latestResolutionDate) {
-    console.log(
-      `%c[DEBUG] Case #${caseItem.case_number}: FAILED. No valid approved answer date was found.`,
-      "color: red; font-weight: bold;"
-    );
-    return "NOT_RESOLVED"; // <-- MODIFIED: Also counts as unresolved
+    if (isBeingDebugged) {
+      console.log(
+        `%c[DEBUG] Case #${caseItem.case_number}: FAILED. No valid approved answer date was found.`,
+        "color: red; font-weight: bold;"
+      );
+    }
+    return "NOT_RESOLVED"; // <-- Also counts as unresolved
   }
   if (!caseItem.date) {
-    console.log(
-      `%c[DEBUG] Case #${caseItem.case_number}: FAILED. Case has no creation date.`,
-      "color: red; font-weight: bold;"
-    );
-    return "NOT_RESOLVED"; // <-- MODIFIED: Invalid data
+    if (isBeingDebugged) {
+      console.log(
+        `%c[DEBUG] Case #${caseItem.case_number}: FAILED. Case has no creation date.`,
+        "color: red; font-weight: bold;"
+      );
+    }
+    return "NOT_RESOLVED"; // <-- Invalid data
   }
 
   try {
@@ -203,13 +208,15 @@ export const getCaseResolutionCategory = (
     const diffTimeMs = endDate.diff(startDate);
 
     if (diffTimeMs < 0) {
-      console.log(
-        `%c[DEBUG] Case #${
-          caseItem.case_number
-        }: FAILED. Resolution date (${endDate.toISOString()}) is BEFORE creation date (${startDate.toISOString()}).`,
-        "color: red; font-weight: bold;"
-      );
-      return "NOT_RESOLVED"; // <-- MODIFIED: Invalid data
+      if (isBeingDebugged) {
+        console.log(
+          `%c[DEBUG] Case #${
+            caseItem.case_number
+          }: FAILED. Resolution date (${endDate.toISOString()}) is BEFORE creation date (${startDate.toISOString()}).`,
+          "color: red; font-weight: bold;"
+        );
+      }
+      return "NOT_RESOLVED"; // <-- Invalid data
     }
 
     if (diffTimeMs >= 0) {
@@ -220,13 +227,12 @@ export const getCaseResolutionCategory = (
       return "OVER_10_DAYS";
     }
   } catch (e) {
-    console.error("Error during final calculation:", e);
-    return "NOT_RESOLVED"; // <-- MODIFIED: Error case
+    console.error("Error during final calculation:", e); // This is a real error, not a debug log, so it stays.
+    return "NOT_RESOLVED"; // <-- Error case
   }
 
-  return "NOT_RESOLVED"; // <-- MODIFIED: Final fallback
+  return "NOT_RESOLVED"; // <-- Final fallback
 };
-// --- END: REPLACEMENT for getCaseResolutionCategory ---
 
 export const calculateResolutionStats = (cases: ICase[]) => {
   const resolutionTimeCounts: Record<ResolutionCategoryKey, number> = {

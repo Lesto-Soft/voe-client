@@ -653,7 +653,7 @@ const Category: React.FC = () => {
           onClearAllFilters={handleClearAllFilters}
           activeType={activeType}
           activeResolution={activeResolution}
-          onClearResolutionFilter={() => setActiveType("all")}
+          onClearResolutionFilter={() => setActiveResolution("all")}
           onClearTypeFilter={() => setActiveType("all")}
           // --- ADD NEW PROPS ---
           onPieTabChange={setActiveStatsView}

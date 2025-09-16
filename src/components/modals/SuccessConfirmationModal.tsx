@@ -19,7 +19,7 @@ const SuccessConfirmationModal: React.FC<SuccessConfirmationModalProps> = ({
   autoCloseDuration = 4000, // Default to 4 seconds
 }) => {
   useEffect(() => {
-    let timer: NodeJS.Timeout;
+    let timer: ReturnType<typeof setTimeout>;
     if (isOpen) {
       timer = setTimeout(() => {
         onClose();

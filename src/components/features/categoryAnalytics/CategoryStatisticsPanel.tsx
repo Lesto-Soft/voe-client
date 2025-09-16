@@ -1,27 +1,27 @@
 // src/components/features/categoryAnalytics/CategoryStatisticsPanel.tsx
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect } from "react";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import {
   ChartPieIcon,
   ListBulletIcon,
-  CheckCircleIcon,
-  ArrowPathIcon,
-  BanknotesIcon,
-  XCircleIcon,
-  LightBulbIcon,
-  ExclamationTriangleIcon,
+  // CheckCircleIcon,
+  // ArrowPathIcon,
+  // BanknotesIcon,
+  // XCircleIcon,
+  // LightBulbIcon,
+  // ExclamationTriangleIcon,
   ClockIcon,
-  DocumentTextIcon,
+  // DocumentTextIcon,
   InformationCircleIcon,
 } from "@heroicons/react/24/outline";
 import StatisticPieChart from "../../charts/StatisticPieChart";
 import { PieSegmentData } from "../../charts/PieChart";
 import { SignalStats } from "../../../hooks/useCategorySignalStats";
 import {
-  translateStatus,
-  translateCaseType,
+  // translateStatus,
+  // translateCaseType,
   ResolutionCategoryKey,
-  translatePriority,
+  // translatePriority,
 } from "../../../utils/categoryDisplayUtils";
 import { CaseType, CasePriority } from "../../../db/interfaces";
 import { CaseStatusTab } from "../../../pages/Category";

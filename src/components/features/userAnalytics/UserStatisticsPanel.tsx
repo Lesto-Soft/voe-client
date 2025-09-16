@@ -11,8 +11,8 @@ import {
   BanknotesIcon,
   GlobeAltIcon,
   CalendarDaysIcon,
-  CheckCircleIcon,
-  ClockIcon,
+  // CheckCircleIcon,
+  // ClockIcon,
 } from "@heroicons/react/24/outline";
 import { UserActivityStats } from "../../../hooks/useUserActivityStats";
 import StatisticPieChart from "../../charts/StatisticPieChart";

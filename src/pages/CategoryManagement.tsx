@@ -45,7 +45,7 @@ import { useCurrentUser } from "../context/UserContext"; // <-- NEW: Import curr
 import { IMe } from "../db/interfaces"; // <-- NEW: Import IMe
 import { ROLES } from "../utils/GLOBAL_PARAMETERS";
 
-import { PREDEFINED_CATEGORY_COLORS } from "../utils/colors";
+// import { PREDEFINED_CATEGORY_COLORS } from "../utils/colors";
 import { useGetAllPaletteColors } from "../graphql/hooks/colorPalette";
 
 // Define a lean user type that includes the role ID, matching GET_LEAN_USERS

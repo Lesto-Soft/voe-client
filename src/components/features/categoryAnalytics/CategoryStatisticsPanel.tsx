@@ -21,13 +21,17 @@ import {
   translateStatus,
   translateCaseType,
   ResolutionCategoryKey,
+  translatePriority,
 } from "../../../utils/categoryDisplayUtils";
-import { CaseType } from "../../../db/interfaces";
+import { CaseType, CasePriority } from "../../../db/interfaces";
 import { CaseStatusTab } from "../../../pages/Category";
 
 interface CategoryStatisticsPanelProps {
-  activeStatsView: "status" | "type" | "resolution";
-  setActiveStatsView: (view: "status" | "type" | "resolution") => void;
+  // --- MODIFIED: Update type ---
+  activeStatsView: "status" | "type" | "resolution" | "priority" | "user";
+  setActiveStatsView: (
+    view: "status" | "type" | "resolution" | "priority" | "user"
+  ) => void;
   isLoading?: boolean;
   onStatusClick?: (segment: PieSegmentData) => void;
   onTypeClick?: (segment: PieSegmentData) => void;
@@ -42,6 +46,16 @@ interface CategoryStatisticsPanelProps {
   activeStatusFilter: CaseStatusTab;
   activeTypeFilter: CaseType | "all";
   activeResolutionFilter: ResolutionCategoryKey | "all";
+  // --- ADD ALL THESE NEW PROPS ---
+  statsForPriority: SignalStats | undefined | null;
+  statsForUser: SignalStats | undefined | null;
+  onPriorityClick?: (segment: PieSegmentData) => void;
+  onUserClick?: (segment: PieSegmentData) => void;
+  activePriorityFilter: CasePriority | "all";
+  activeCreatorFilter: string | null;
+  activePriorityLabel?: string | null;
+  activeCreatorLabel?: string | null;
+  // ----------------------------
 }
 
 const TEXT_STATS_AREA_HEIGHT = "h-28";
@@ -59,21 +73,39 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
   statsForStatus,
   statsForType,
   statsForResolution,
-  // --- DESTRUCTURE NEW PROPS ---
   activeStatusFilter,
   activeTypeFilter,
   activeResolutionFilter,
+  // --- DESTRUCTURE NEW PROPS ---
+  statsForPriority,
+  statsForUser,
+  onPriorityClick,
+  onUserClick,
+  activePriorityFilter,
+  activeCreatorFilter,
+  activePriorityLabel,
+  activeCreatorLabel,
 }) => {
   // This constant determines if any of the charts are interactive
-  const isInteractive = onStatusClick || onTypeClick || onResolutionClick;
+  const isInteractive =
+    onStatusClick ||
+    onTypeClick ||
+    onResolutionClick ||
+    onPriorityClick ||
+    onUserClick;
 
   // Determine which stats object to use based on the active tab
+  // --- MODIFIED: Update logic to include new stats objects ---
   const activeSignalStats =
     activeStatsView === "status"
       ? statsForStatus
       : activeStatsView === "type"
       ? statsForType
-      : statsForResolution;
+      : activeStatsView === "resolution"
+      ? statsForResolution
+      : activeStatsView === "priority"
+      ? statsForPriority
+      : statsForUser; // Fallback to user stats
 
   if (isLoading && !activeSignalStats) {
     // Keep skeleton as is
@@ -121,6 +153,16 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
       key: "resolution",
       label: "По Време",
       isActive: activeResolutionFilter !== "all",
+    },
+    {
+      key: "priority",
+      label: "По Приоритет",
+      isActive: activePriorityFilter !== "all",
+    },
+    {
+      key: "user",
+      label: "По Потребител",
+      isActive: activeCreatorFilter !== null,
     },
   ] as const;
 
@@ -330,6 +372,24 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
                 />
               </div>
             )}
+            {/* --- ADD THESE TWO NEW RENDER BLOCKS --- */}
+            {activeStatsView === "priority" && (
+              <StatisticPieChart
+                title="Разпределение по Приоритет"
+                pieData={activeSignalStats.priorityPieChartData}
+                onSegmentClick={onPriorityClick}
+                activeLabel={activePriorityLabel}
+              />
+            )}
+            {activeStatsView === "user" && (
+              <StatisticPieChart
+                title="Разпределение по Създател"
+                pieData={activeSignalStats.creatorPieChartData}
+                onSegmentClick={onUserClick}
+                activeLabel={activeCreatorLabel}
+              />
+            )}
+            {/* ---------------------------------- */}
           </div>
         </div>
       </aside>

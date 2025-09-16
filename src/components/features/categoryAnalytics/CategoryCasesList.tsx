@@ -1,6 +1,6 @@
 // src/components/features/categoryAnalytics/CategoryCasesList.tsx
 import React, { useMemo, useState } from "react";
-import { ICase, CaseType } from "../../../db/interfaces";
+import { ICase, CaseType, CasePriority } from "../../../db/interfaces";
 import CategoryCaseCard from "./CategoryCaseCard";
 import {
   ArrowDownCircleIcon,
@@ -13,6 +13,7 @@ import {
   translateCaseType,
   RESOLUTION_CATEGORY_CONFIG,
   ResolutionCategoryKey,
+  translatePriority,
 } from "../../../utils/categoryDisplayUtils";
 import DateRangeSelector from "../userAnalytics/DateRangeSelector";
 import FilterTag from "../../global/FilterTag";
@@ -43,6 +44,11 @@ interface CategoryCasesListProps {
   onClearTypeFilter: () => void;
   activeResolution: ResolutionCategoryKey | "all";
   onClearResolutionFilter: () => void;
+  // --- ADD THESE NEW PROPS ---
+  activePriority: CasePriority | "all";
+  onClearPriorityFilter: () => void;
+  activeCreatorName: string | null;
+  onClearCreatorFilter: () => void;
 }
 
 const CategoryCasesList: React.FC<CategoryCasesListProps> = ({
@@ -64,6 +70,11 @@ const CategoryCasesList: React.FC<CategoryCasesListProps> = ({
   onClearTypeFilter,
   activeResolution,
   onClearResolutionFilter,
+  // --- DESTRUCTURE NEW PROPS ---
+  activePriority,
+  onClearPriorityFilter,
+  activeCreatorName,
+  onClearCreatorFilter,
 }) => {
   const [isDateFilterVisible, setIsDateFilterVisible] = useState(false);
 
@@ -207,6 +218,20 @@ const CategoryCasesList: React.FC<CategoryCasesListProps> = ({
               onRemove={onClearResolutionFilter}
             />
           )}
+          {/* --- ADD THESE TWO NEW TAGS --- */}
+          {activePriority !== "all" && (
+            <FilterTag
+              label={`Приоритет: ${translatePriority(activePriority)}`}
+              onRemove={onClearPriorityFilter}
+            />
+          )}
+          {activeCreatorName && (
+            <FilterTag
+              label={`Създател: ${activeCreatorName}`}
+              onRemove={onClearCreatorFilter}
+            />
+          )}
+          {/* -------------------------- */}
           {isDateFilterActive && (
             <FilterTag
               label="Период"

@@ -1,6 +1,6 @@
 // src/components/features/ratingMetricAnalytics/MetricScoreList.tsx
 import React, { useMemo, useState } from "react";
-import { IMetricScore } from "../../../db/interfaces";
+import { IMetricScore, ICategory } from "../../../db/interfaces";
 import MetricScoreItemCard from "./MetricScoreItemCard";
 import DateRangeSelector from "../userAnalytics/DateRangeSelector";
 import {
@@ -37,6 +37,9 @@ interface MetricScoreListProps {
   onClearAllFilters: () => void;
   selectedUserName: string | null;
   onClearUserFilter: () => void;
+  selectedCategoryId?: string | null;
+  selectedCategoryName: string | null;
+  onClearCategoryFilter: () => void;
 }
 
 const MetricScoreList: React.FC<MetricScoreListProps> = ({
@@ -52,6 +55,9 @@ const MetricScoreList: React.FC<MetricScoreListProps> = ({
   onClearAllFilters,
   selectedUserName,
   onClearUserFilter,
+  selectedCategoryId,
+  selectedCategoryName,
+  onClearCategoryFilter,
 }) => {
   // --- REMOVED: The internal state for the active tab is gone ---
   // const [activeTab, setActiveTab] = useState<TierTab>("all");
@@ -77,7 +83,8 @@ const MetricScoreList: React.FC<MetricScoreListProps> = ({
   }, [scores, dateRange]);
 
   // this second memo filters by the selected user ID
-  const filteredScores = useMemo(() => {
+  // --- RENAME this memo ---
+  const userAndDateFilteredScores = useMemo(() => {
     if (!selectedUserId) {
       return dateFilteredScores;
     }
@@ -85,6 +92,22 @@ const MetricScoreList: React.FC<MetricScoreListProps> = ({
       (score) => score.user._id === selectedUserId
     );
   }, [dateFilteredScores, selectedUserId]);
+
+  // --- ADD NEW MEMO for category filtering ---
+  const filteredScores = useMemo(() => {
+    if (!selectedCategoryId) {
+      return userAndDateFilteredScores;
+    }
+    return userAndDateFilteredScores.filter((score) => {
+      const categories = score.case?.categories;
+      if (!categories || categories.length === 0) {
+        return selectedCategoryId === "unknown";
+      }
+      return categories.some(
+        (cat: ICategory) => cat._id === selectedCategoryId
+      );
+    });
+  }, [userAndDateFilteredScores, selectedCategoryId]);
 
   const tierCounts = useMemo(() => {
     const counts: Record<TierTab, number> = {
@@ -196,6 +219,12 @@ const MetricScoreList: React.FC<MetricScoreListProps> = ({
               <FilterTag
                 label={`Потребител: ${selectedUserName}`}
                 onRemove={onClearUserFilter}
+              />
+            )}
+            {selectedCategoryId && selectedCategoryName && (
+              <FilterTag
+                label={`Категория: ${selectedCategoryName}`}
+                onRemove={onClearCategoryFilter}
               />
             )}
             {isDateFilterActive && (

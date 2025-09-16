@@ -1,6 +1,6 @@
 // src/utils/categoryDisplayUtils.ts
 import moment from "moment";
-import { ICase, IAnswer } from "../db/interfaces"; // Adjust path as needed
+import { ICase, IAnswer, CasePriority } from "../db/interfaces"; // Adjust path as needed
 import { parseActivityDate } from "./dateUtils";
 
 export const STATUS_COLORS: Record<string, string> = {
@@ -21,6 +21,7 @@ export const RESOLUTION_CATEGORY_CONFIG = [
   { label: "До 5 дни", key: "UNDER_5_DAYS", color: "#BAE6FD" }, // blue-200
   { label: "До 10 дни", key: "UNDER_10_DAYS", color: "#FDE68A" }, // yellow-200
   { label: "Над 10 дни", key: "OVER_10_DAYS", color: "#FECACA" }, // red-200
+  { label: "В изчакване", key: "NOT_RESOLVED", color: "#E5E7EB" }, // gray-200
 ] as const;
 
 export type ResolutionCategoryKey =
@@ -143,9 +144,10 @@ export const tForCaseLink = (
   return key;
 };
 
+// --- START: REPLACEMENT for getCaseResolutionCategory ---
 export const getCaseResolutionCategory = (
   caseItem: ICase
-): ResolutionCategoryKey | null => {
+): ResolutionCategoryKey => {
   // --- START OF DEBUGGING LOGIC ---
   console.log(`[DEBUG] Processing Case #${caseItem.case_number}...`);
   // --- END OF DEBUGGING LOGIC ---
@@ -156,7 +158,7 @@ export const getCaseResolutionCategory = (
     String(caseItem.status) !== "CLOSED" &&
     String(caseItem.status) !== "AWAITING_FINANCE"
   ) {
-    return null;
+    return "NOT_RESOLVED"; // <-- TASK 1 CHANGE: Return key for OPEN/IN_PROGRESS
   }
 
   let latestResolutionDate: Date | null = null;
@@ -180,29 +182,26 @@ export const getCaseResolutionCategory = (
     });
   }
 
-  // --- START OF DEBUGGING LOGIC ---
   if (!latestResolutionDate) {
     console.log(
       `%c[DEBUG] Case #${caseItem.case_number}: FAILED. No valid approved answer date was found.`,
       "color: red; font-weight: bold;"
     );
-    return null;
+    return "NOT_RESOLVED"; // <-- MODIFIED: Also counts as unresolved
   }
   if (!caseItem.date) {
     console.log(
       `%c[DEBUG] Case #${caseItem.case_number}: FAILED. Case has no creation date.`,
       "color: red; font-weight: bold;"
     );
-    return null;
+    return "NOT_RESOLVED"; // <-- MODIFIED: Invalid data
   }
-  // --- END OF DEBUGGING LOGIC ---
 
   try {
     const endDate = moment.utc(latestResolutionDate);
     const startDate = moment.utc(parseInt(caseItem.date, 10));
     const diffTimeMs = endDate.diff(startDate);
 
-    // --- START OF DEBUGGING LOGIC ---
     if (diffTimeMs < 0) {
       console.log(
         `%c[DEBUG] Case #${
@@ -210,9 +209,8 @@ export const getCaseResolutionCategory = (
         }: FAILED. Resolution date (${endDate.toISOString()}) is BEFORE creation date (${startDate.toISOString()}).`,
         "color: red; font-weight: bold;"
       );
-      return null;
+      return "NOT_RESOLVED"; // <-- MODIFIED: Invalid data
     }
-    // --- END OF DEBUGGING LOGIC ---
 
     if (diffTimeMs >= 0) {
       const diffDays = diffTimeMs / (1000 * 60 * 60 * 24);
@@ -223,11 +221,12 @@ export const getCaseResolutionCategory = (
     }
   } catch (e) {
     console.error("Error during final calculation:", e);
-    return null;
+    return "NOT_RESOLVED"; // <-- MODIFIED: Error case
   }
 
-  return null;
+  return "NOT_RESOLVED"; // <-- MODIFIED: Final fallback
 };
+// --- END: REPLACEMENT for getCaseResolutionCategory ---
 
 export const calculateResolutionStats = (cases: ICase[]) => {
   const resolutionTimeCounts: Record<ResolutionCategoryKey, number> = {
@@ -235,6 +234,7 @@ export const calculateResolutionStats = (cases: ICase[]) => {
     UNDER_5_DAYS: 0,
     UNDER_10_DAYS: 0,
     OVER_10_DAYS: 0,
+    NOT_RESOLVED: 0, // <-- MODIFIED: Add new key
   };
   let effectivelyResolvedCasesCount = 0;
   let totalResolutionTimeInDays = 0;
@@ -249,16 +249,23 @@ export const calculateResolutionStats = (cases: ICase[]) => {
       effectivelyResolvedCasesCount++;
     }
 
-    // This now uses the same simplified logic as the filter function
-    const resolutionCategory = getCaseResolutionCategory(caseItem);
-    if (resolutionCategory) {
-      resolutionTimeCounts[resolutionCategory]++;
+    // This will now always return a valid key thanks to our changes above
+    const resolutionCategory =
+      (getCaseResolutionCategory(caseItem) as ResolutionCategoryKey) ||
+      "NOT_RESOLVED";
 
+    // Increment the correct bucket
+    resolutionTimeCounts[resolutionCategory]++;
+
+    // *** Important: The average time calculation MUST ONLY include resolved cases ***
+    // We only add to the average if the case is completed AND it fell into a time-bucket (i.e., not "NOT_RESOLVED")
+    if (isCompleted && resolutionCategory !== "NOT_RESOLVED") {
+      // Logic to find latestResolutionDate (necessary duplication for this specific calculation)
       let latestResolutionDate: Date | null = null;
       if (caseItem.answers && caseItem.answers.length > 0) {
         caseItem.answers.forEach((answer: IAnswer) => {
           if (answer.approved) {
-            const resolutionDateStr = answer.date; // <-- SIMPLIFIED LOGIC
+            const resolutionDateStr = answer.date;
             if (resolutionDateStr) {
               const currentResolutionDate =
                 parseActivityDate(resolutionDateStr);
@@ -274,6 +281,7 @@ export const calculateResolutionStats = (cases: ICase[]) => {
       }
 
       if (latestResolutionDate) {
+        // This check should always pass if resolutionCategory is a time-bucket
         casesWithCalculableTime++;
         const endDate = moment.utc(latestResolutionDate);
         const startDate = moment.utc(parseInt(caseItem.date, 10));
@@ -290,6 +298,7 @@ export const calculateResolutionStats = (cases: ICase[]) => {
       ? totalResolutionTimeInDays / casesWithCalculableTime
       : 0;
 
+  // This logic now works perfectly because RESOLUTION_CATEGORY_CONFIG has all 5 keys
   const resolutionPieChartData = RESOLUTION_CATEGORY_CONFIG.map(
     (catConfig) => ({
       id: catConfig.key,

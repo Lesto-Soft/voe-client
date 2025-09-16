@@ -86,10 +86,7 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
     if (answerItem.case && answerItem.case.case_number) {
       caseToLinkForDisplay = answerItem.case;
       titleFragments.push(
-        <span
-          key="preposition"
-          className="ml-1 text-gray-700 whitespace-nowrap"
-        >
+        <span key="preposition" className="text-gray-700 whitespace-nowrap">
           по
         </span>
       );

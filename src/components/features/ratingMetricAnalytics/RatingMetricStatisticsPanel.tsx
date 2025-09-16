@@ -14,7 +14,7 @@ import { PieSegmentData } from "../../charts/PieChart";
 import { TIERS } from "../../../utils/GLOBAL_PARAMETERS";
 import { TierTab } from "./MetricScoreList"; // <-- ADD
 
-type StatsTab = "tier" | "user";
+type StatsTab = "tier" | "user" | "category";
 
 // Helper to determine color for the average score
 const getScoreCellStyle = (score: number | undefined | null): string => {
@@ -35,6 +35,9 @@ interface RatingMetricStatisticsPanelProps {
   activeUserLabel?: string | null;
   activeTierFilter: TierTab; // <-- ADD
   activeUserFilter: string | null; // <-- ADD
+  onCategoryClick?: (segment: PieSegmentData) => void;
+  activeCategoryLabel?: string | null;
+  activeCategoryFilter: string | null;
 }
 
 const RatingMetricStatisticsPanel: React.FC<
@@ -49,6 +52,10 @@ const RatingMetricStatisticsPanel: React.FC<
   activeUserLabel,
   activeTierFilter, // <-- DESTRUCTURE
   activeUserFilter,
+  // --- DESTRUCTURE NEW PROPS ---
+  onCategoryClick,
+  activeCategoryLabel,
+  activeCategoryFilter,
 }) => {
   const [activeTab, setActiveTab] = useState<StatsTab>("tier");
 
@@ -63,7 +70,7 @@ const RatingMetricStatisticsPanel: React.FC<
   }, [scores, dateRange]);
 
   const stats = useRatingMetricStats(filteredScores);
-  const isInteractive = onTierClick || onUserClick;
+  const isInteractive = onTierClick || onUserClick || onCategoryClick;
 
   if (isLoading) {
     return (
@@ -146,6 +153,7 @@ const RatingMetricStatisticsPanel: React.FC<
           </div>
 
           <div className="mt-2">
+            {/* --- MODIFIED: Add third button to the flex container --- */}
             <div className="flex border-b border-gray-200 text-xs sm:text-sm">
               <button
                 onClick={() => setActiveTab("tier")}
@@ -160,6 +168,21 @@ const RatingMetricStatisticsPanel: React.FC<
                   <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-indigo-500"></span>
                 )}
               </button>
+              {/* --- ADD NEW BUTTON --- */}
+              <button
+                onClick={() => setActiveTab("category")}
+                className={`cursor-pointer relative flex-1 py-2 px-1 text-center font-medium focus:outline-none transition-colors duration-150 ${
+                  activeTab === "category"
+                    ? "border-b-2 border-indigo-500 text-indigo-600"
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                По Категория
+                {activeCategoryFilter !== null && (
+                  <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-indigo-500"></span>
+                )}
+              </button>
+              {/* -------------------- */}
               <button
                 onClick={() => setActiveTab("user")}
                 className={`cursor-pointer relative flex-1 py-2 px-1 text-center font-medium focus:outline-none transition-colors duration-150 ${
@@ -193,6 +216,16 @@ const RatingMetricStatisticsPanel: React.FC<
                 activeLabel={activeUserLabel}
               />
             )}
+            {/* --- ADD NEW RENDER BLOCK --- */}
+            {activeTab === "category" && (
+              <StatisticPieChart
+                title="Разпределение по Категории"
+                pieData={stats.categoryContributionData}
+                onSegmentClick={onCategoryClick}
+                activeLabel={activeCategoryLabel}
+              />
+            )}
+            {/* ---------------------------- */}
           </div>
         </div>
       </aside>

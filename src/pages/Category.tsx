@@ -10,7 +10,7 @@ import {
 } from "../graphql/hooks/category"; // Adjust path
 import { useGetAllPaletteColors } from "../graphql/hooks/colorPalette";
 import { GET_LEAN_USERS } from "../graphql/query/user"; // Adjust path
-import { IMe, CaseType, IPaletteColor } from "../db/interfaces";
+import { IMe, CaseType, IPaletteColor, CasePriority } from "../db/interfaces";
 import {
   ResolutionCategoryKey,
   RESOLUTION_CATEGORY_CONFIG,
@@ -43,7 +43,10 @@ import { ROLES } from "../utils/GLOBAL_PARAMETERS";
 import { useAuthorization } from "../hooks/useAuthorization";
 import ForbiddenPage from "./ErrorPages/ForbiddenPage";
 import { translateStatus } from "../utils/categoryDisplayUtils";
-import { translateCaseType } from "../utils/categoryDisplayUtils";
+import {
+  translateCaseType,
+  translatePriority,
+} from "../utils/categoryDisplayUtils";
 
 interface ILeanUserForForm {
   _id: string;
@@ -74,6 +77,15 @@ const Category: React.FC = () => {
   const [activeResolution, setActiveResolution] = useState<
     ResolutionCategoryKey | "all"
   >("all");
+  // --- ADD NEW STATE FOR NEW FILTERS ---
+  const [activePriority, setActivePriority] = useState<CasePriority | "all">(
+    "all"
+  );
+  const [activeCreator, setActiveCreator] = useState<{
+    id: string | null;
+    name: string | null;
+  }>({ id: null, name: null });
+  // -------------------------------------
   const [dateRange, setDateRange] = useState<{
     startDate: Date | null;
     endDate: Date | null;
@@ -207,8 +219,27 @@ const Category: React.FC = () => {
         (c) => getCaseResolutionCategory(c) === activeResolution
       );
     }
+    // --- ADD NEW FILTER LOGIC ---
+    if (activePriority !== "all") {
+      casesToFilter = casesToFilter.filter(
+        (c) => c.priority === activePriority
+      );
+    }
+    if (activeCreator.id !== null) {
+      casesToFilter = casesToFilter.filter(
+        (c) => c.creator._id === activeCreator.id
+      );
+    }
+    // --- END NEW FILTER LOGIC ---
     return casesToFilter;
-  }, [dateFilteredCases, activeStatus, activeType, activeResolution]);
+  }, [
+    dateFilteredCases,
+    activeStatus,
+    activeType,
+    activeResolution,
+    activePriority, // ADDED
+    activeCreator.id, // ADDED
+  ]);
 
   // --- START: ADD THE FOLLOWING NEW MEMOIZED VALUES ---
 
@@ -223,8 +254,26 @@ const Category: React.FC = () => {
         (c) => getCaseResolutionCategory(c) === activeResolution
       );
     }
+    // --- ADD NEW FILTERS ---
+    if (activePriority !== "all") {
+      casesToFilter = casesToFilter.filter(
+        (c) => c.priority === activePriority
+      );
+    }
+    if (activeCreator.id !== null) {
+      casesToFilter = casesToFilter.filter(
+        (c) => c.creator._id === activeCreator.id
+      );
+    }
+    // ---------------------
     return casesToFilter;
-  }, [dateFilteredCases, activeType, activeResolution]);
+  }, [
+    dateFilteredCases,
+    activeType,
+    activeResolution,
+    activePriority, // ADDED
+    activeCreator.id, // ADDED
+  ]);
 
   // Data for the Type Chart/Legend (respects Status and Resolution filters)
   const dataForTypeCalculations = useMemo(() => {
@@ -237,8 +286,26 @@ const Category: React.FC = () => {
         (c) => getCaseResolutionCategory(c) === activeResolution
       );
     }
+    // --- ADD NEW FILTERS ---
+    if (activePriority !== "all") {
+      casesToFilter = casesToFilter.filter(
+        (c) => c.priority === activePriority
+      );
+    }
+    if (activeCreator.id !== null) {
+      casesToFilter = casesToFilter.filter(
+        (c) => c.creator._id === activeCreator.id
+      );
+    }
+    // ---------------------
     return casesToFilter;
-  }, [dateFilteredCases, activeStatus, activeResolution]);
+  }, [
+    dateFilteredCases,
+    activeStatus,
+    activeResolution,
+    activePriority, // ADDED
+    activeCreator.id, // ADDED
+  ]);
 
   // Data for the Resolution Chart/Legend (respects Status and Type filters)
   const dataForResolutionCalculations = useMemo(() => {
@@ -249,8 +316,84 @@ const Category: React.FC = () => {
     if (activeType !== "all") {
       casesToFilter = casesToFilter.filter((c) => c.type === activeType);
     }
+    // --- ADD NEW FILTERS ---
+    if (activePriority !== "all") {
+      casesToFilter = casesToFilter.filter(
+        (c) => c.priority === activePriority
+      );
+    }
+    if (activeCreator.id !== null) {
+      casesToFilter = casesToFilter.filter(
+        (c) => c.creator._id === activeCreator.id
+      );
+    }
+    // ---------------------
     return casesToFilter;
-  }, [dateFilteredCases, activeStatus, activeType]);
+  }, [
+    dateFilteredCases,
+    activeStatus,
+    activeType,
+    activePriority, // ADDED
+    activeCreator.id, // ADDED
+  ]);
+
+  // --- ADD TWO NEW DATASET MEMOS ---
+  // Data for the Priority Chart/Legend
+  const dataForPriorityCalculations = useMemo(() => {
+    let casesToFilter = dateFilteredCases;
+    if (activeStatus !== "all") {
+      casesToFilter = casesToFilter.filter((c) => c.status === activeStatus);
+    }
+    if (activeType !== "all") {
+      casesToFilter = casesToFilter.filter((c) => c.type === activeType);
+    }
+    if (activeResolution !== "all") {
+      casesToFilter = casesToFilter.filter(
+        (c) => getCaseResolutionCategory(c) === activeResolution
+      );
+    }
+    if (activeCreator.id !== null) {
+      casesToFilter = casesToFilter.filter(
+        (c) => c.creator._id === activeCreator.id
+      );
+    }
+    return casesToFilter;
+  }, [
+    dateFilteredCases,
+    activeStatus,
+    activeType,
+    activeResolution,
+    activeCreator.id,
+  ]);
+
+  // Data for the Creator Chart/Legend
+  const dataForCreatorCalculations = useMemo(() => {
+    let casesToFilter = dateFilteredCases;
+    if (activeStatus !== "all") {
+      casesToFilter = casesToFilter.filter((c) => c.status === activeStatus);
+    }
+    if (activeType !== "all") {
+      casesToFilter = casesToFilter.filter((c) => c.type === activeType);
+    }
+    if (activeResolution !== "all") {
+      casesToFilter = casesToFilter.filter(
+        (c) => getCaseResolutionCategory(c) === activeResolution
+      );
+    }
+    if (activePriority !== "all") {
+      casesToFilter = casesToFilter.filter(
+        (c) => c.priority === activePriority
+      );
+    }
+    return casesToFilter;
+  }, [
+    dateFilteredCases,
+    activeStatus,
+    activeType,
+    activeResolution,
+    activePriority,
+  ]);
+  // --- END: ADD NEW DATASET MEMOS ---
 
   // Now, call the stats hook for each dataset
   const statusSignalStats = useCategorySignalStats(dataForStatusCalculations);
@@ -258,6 +401,12 @@ const Category: React.FC = () => {
   const resolutionSignalStats = useCategorySignalStats(
     dataForResolutionCalculations
   );
+  // --- ADD NEW HOOK CALLS ---
+  const prioritySignalStats = useCategorySignalStats(
+    dataForPriorityCalculations
+  );
+  const creatorSignalStats = useCategorySignalStats(dataForCreatorCalculations);
+  // --------------------------
 
   // --- END: ADD THE NEW MEMOIZED VALUES ---
 
@@ -291,7 +440,7 @@ const Category: React.FC = () => {
   }, [dateFilteredCases]); // This runs whenever the list of cases changes
 
   const [activeStatsView, setActiveStatsView] = useState<
-    "status" | "type" | "resolution"
+    "status" | "type" | "resolution" | "priority" | "user"
   >("status");
   const [activePersonnelTab, setActivePersonnelTab] = useState<
     "experts" | "managers"
@@ -312,15 +461,26 @@ const Category: React.FC = () => {
       dateRange.endDate !== null ||
       activeStatus !== "all" ||
       activeType !== "all" ||
-      activeResolution !== "all"
+      activeResolution !== "all" ||
+      activePriority !== "all" || // ADDED
+      activeCreator.id !== null // ADDED
     );
-  }, [dateRange, activeStatus, activeType, activeResolution]);
+  }, [
+    dateRange,
+    activeStatus,
+    activeType,
+    activeResolution,
+    activePriority, // ADDED
+    activeCreator.id, // ADDED
+  ]);
 
   const handleClearAllFilters = () => {
     setDateRange({ startDate: null, endDate: null });
     setActiveStatus("all");
     setActiveType("all");
     setActiveResolution("all");
+    setActivePriority("all"); // ADDED
+    setActiveCreator({ id: null, name: null }); // ADDED
   };
 
   const serverBaseUrl = import.meta.env.VITE_API_URL || "";
@@ -367,6 +527,25 @@ const Category: React.FC = () => {
     }
   };
 
+  // --- ADD NEW CLICK HANDLERS ---
+  const handlePriorityClick = (segment: PieSegmentData) => {
+    const priorityKey = segment.id as CasePriority | "all";
+    setActivePriority((current) =>
+      current === priorityKey ? "all" : priorityKey
+    );
+  };
+
+  const handleCreatorClick = (segment: PieSegmentData) => {
+    const creatorId = segment.id || null; // Convert undefined to null
+    setActiveCreator(
+      (current) =>
+        current.id === creatorId
+          ? { id: null, name: null }
+          : { id: creatorId, name: segment.label } // Use the null-coalesced value
+    );
+  };
+  // ------------------------------
+
   // Determine the active labels to pass down for styling
   const activeStatusLabel =
     activeStatus !== "all" ? translateStatus(activeStatus) : null;
@@ -378,6 +557,13 @@ const Category: React.FC = () => {
       ? RESOLUTION_CATEGORY_CONFIG.find((c) => c.key === activeResolution)
           ?.label || null
       : null;
+
+  // --- ADD NEW ACTIVE LABELS ---
+  const activePriorityLabel =
+    activePriority !== "all" ? translatePriority(activePriority) : null;
+
+  const activeCreatorLabel = activeCreator.name;
+  // ---------------------------
 
   const handleCategoryFormSubmit = async (
     formData: CategoryFormData,
@@ -464,13 +650,30 @@ const Category: React.FC = () => {
           onClearAllFilters={handleClearAllFilters}
           activeType={activeType}
           activeResolution={activeResolution}
+          onClearResolutionFilter={() => setActiveType("all")}
           onClearTypeFilter={() => setActiveType("all")}
-          onClearResolutionFilter={() => setActiveResolution("all")}
+          // --- ADD NEW PROPS ---
+          activePriority={activePriority}
+          onClearPriorityFilter={() => setActivePriority("all")}
+          activeCreatorName={activeCreator.name}
+          onClearCreatorFilter={() =>
+            setActiveCreator({ id: null, name: null })
+          }
         />
         <CategoryStatisticsPanel
           statsForStatus={statusSignalStats}
           statsForType={typeSignalStats}
           statsForResolution={resolutionSignalStats}
+          // --- ADD NEW PROPS ---
+          statsForPriority={prioritySignalStats}
+          statsForUser={creatorSignalStats}
+          onPriorityClick={handlePriorityClick}
+          onUserClick={handleCreatorClick}
+          activePriorityFilter={activePriority}
+          activeCreatorFilter={activeCreator.id}
+          activePriorityLabel={activePriorityLabel} // Pass label for highlighting
+          activeCreatorLabel={activeCreatorLabel} // Pass label for highlighting
+          // --------------------
           activeStatsView={activeStatsView}
           setActiveStatsView={setActiveStatsView}
           isLoading={categoryLoading && !!category}

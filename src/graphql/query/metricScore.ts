@@ -46,6 +46,8 @@ export const GET_METRIC_SCORES_BY_METRIC = gql`
         }
         categories {
           _id
+          name # <-- ADDED THIS
+          color
           experts {
             _id
           }

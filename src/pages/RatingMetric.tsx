@@ -40,6 +40,9 @@ const RatingMetric: React.FC = () => {
   }>({ startDate: null, endDate: null });
   const [activeTierTab, setActiveTierTab] = useState<TierTab>("all");
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
+    null
+  );
 
   // --- GraphQL Hooks ---
   const {
@@ -94,6 +97,14 @@ const RatingMetric: React.FC = () => {
     setSelectedUserId((current) => (current === userId ? null : userId));
     // The line resetting the tier tab is now removed
   };
+
+  const handleCategoryClick = (segment: PieSegmentData) => {
+    const categoryId = segment.id || null;
+    setSelectedCategoryId((current) =>
+      current === categoryId ? null : categoryId
+    );
+  };
+
   // --- Filter Logic for passing to MetricScoreList ---
   const isAnyFilterActive = useMemo(
     () =>
@@ -101,15 +112,17 @@ const RatingMetric: React.FC = () => {
         dateRange.startDate ||
         dateRange.endDate ||
         activeTierTab !== "all" ||
-        selectedUserId !== null
+        selectedUserId !== null ||
+        selectedCategoryId !== null
       ),
-    [dateRange, activeTierTab, selectedUserId]
+    [dateRange, activeTierTab, selectedUserId, selectedCategoryId]
   );
 
   const handleClearAllFilters = () => {
     setDateRange({ startDate: null, endDate: null });
     setActiveTierTab("all");
     setSelectedUserId(null);
+    setSelectedCategoryId(null);
   };
 
   const selectedUser = useMemo(() => {
@@ -118,6 +131,20 @@ const RatingMetric: React.FC = () => {
     const scoreWithUser = scores.find((s) => s.user._id === selectedUserId);
     return scoreWithUser ? scoreWithUser.user : null;
   }, [selectedUserId, scores]);
+
+  const selectedCategory = useMemo(() => {
+    if (!selectedCategoryId) return null;
+    if (selectedCategoryId === "unknown")
+      return { _id: "unknown", name: "Без категория" };
+    // Find the category from *any* score that has it
+    for (const score of scores) {
+      const cat = score.case?.categories?.find(
+        (c) => c._id === selectedCategoryId
+      );
+      if (cat) return cat;
+    }
+    return null;
+  }, [selectedCategoryId, scores]);
 
   const tierTabs = useMemo(
     () => [
@@ -135,6 +162,7 @@ const RatingMetric: React.FC = () => {
   const activeTierLabel =
     tierTabs.find((t) => t.key === activeTierTab)?.label || null;
   const activeUserLabel = selectedUser?.name || null;
+  const activeCategoryLabel = selectedCategory?.name || null;
 
   // --- Status Handling ---
   if (!metricIdFromParams)
@@ -178,6 +206,9 @@ const RatingMetric: React.FC = () => {
             onClearAllFilters={handleClearAllFilters}
             selectedUserName={selectedUser?.name || null}
             onClearUserFilter={() => setSelectedUserId(null)}
+            selectedCategoryId={selectedCategoryId}
+            selectedCategoryName={selectedCategory?.name || null}
+            onClearCategoryFilter={() => setSelectedCategoryId(null)}
           />
           <RatingMetricStatisticsPanel
             scores={scores}
@@ -189,6 +220,9 @@ const RatingMetric: React.FC = () => {
             activeUserLabel={activeUserLabel}
             activeTierFilter={activeTierTab} // <-- ADD THIS
             activeUserFilter={selectedUserId} // <-- AND THIS
+            onCategoryClick={handleCategoryClick}
+            activeCategoryLabel={activeCategoryLabel}
+            activeCategoryFilter={selectedCategoryId}
           />
         </div>
       </div>

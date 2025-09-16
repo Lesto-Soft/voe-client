@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { ICase } from "../db/interfaces"; // Adjust path as needed
+import { ICase, CasePriority } from "../db/interfaces"; // Adjust path as needed
 import {
   getStatusStyle,
   TYPE_COLORS,
@@ -7,7 +7,24 @@ import {
   ResolutionCategoryKey,
   translateStatus, // Import the translation function for status
   translateCaseType, // Import the translation function for case type
+  translatePriority,
 } from "../utils/categoryDisplayUtils"; // Adjust path as needed
+import { PieSegmentData } from "../components/charts/PieChart";
+
+// --- ADD THIS HELPER FUNCTION (copied from useRatingMetricStats) ---
+const getColorForChart = (index: number): string => {
+  const colors = [
+    "#3B82F6",
+    "#10B981",
+    "#F59E0B",
+    "#EF4444",
+    "#8B5CF6",
+    "#6366F1",
+    "#EC4899",
+    "#6B7280",
+  ];
+  return colors[index % colors.length];
+};
 
 export interface SignalStats {
   totalSignals: number;
@@ -28,10 +45,15 @@ export interface SignalStats {
   }>;
   averageResolutionTime: number;
   resolutionTimeCounts: Record<ResolutionCategoryKey, number>;
+  // --- ADD THESE TWO NEW PROPERTIES ---
+  priorityPieChartData: PieSegmentData[];
+  creatorPieChartData: PieSegmentData[];
 }
 
-const useCategorySignalStats = (cases: ICase[] | undefined): SignalStats => {
-  const signalStats = useMemo((): SignalStats => {
+const useCategorySignalStats = (
+  cases: ICase[] | undefined
+): SignalStats | null => {
+  const signalStats = useMemo((): SignalStats | null => {
     if (!cases) {
       return {
         totalSignals: 0,
@@ -52,7 +74,11 @@ const useCategorySignalStats = (cases: ICase[] | undefined): SignalStats => {
           UNDER_5_DAYS: 0,
           UNDER_10_DAYS: 0,
           OVER_10_DAYS: 0,
+          NOT_RESOLVED: 0, // Ensure this is here from Task 1
         },
+        // --- ADD DEFAULTS ---
+        priorityPieChartData: [],
+        creatorPieChartData: [],
       };
     }
 
@@ -80,13 +106,38 @@ const useCategorySignalStats = (cases: ICase[] | undefined): SignalStats => {
 
     let problemCasesCount = 0;
     let suggestionCasesCount = 0;
+
+    // --- ADD NEW COUNT OBJECTS ---
+    const priorityCounts: Record<string, number> = {};
+    const creatorCounts: Record<
+      string,
+      { id: string; count: number; name: string }
+    > = {};
+
     cases.forEach((c: ICase) => {
       const caseTypeKey = String(c.type).toUpperCase();
       if (caseTypeKey === "PROBLEM") problemCasesCount++;
       else if (caseTypeKey === "SUGGESTION") suggestionCasesCount++;
+
+      // --- ADD COUNTING LOGIC ---
+      const priorityKey = c.priority || "NONE";
+      priorityCounts[priorityKey] = (priorityCounts[priorityKey] || 0) + 1;
+
+      if (c.creator && c.creator._id) {
+        const creatorId = c.creator._id;
+        if (!creatorCounts[creatorId]) {
+          creatorCounts[creatorId] = {
+            id: creatorId,
+            count: 0,
+            name: c.creator.name || "Unknown",
+          };
+        }
+        creatorCounts[creatorId].count++;
+      }
+      // --- END ADD COUNTING LOGIC ---
     });
 
-    const typePieChartData = [];
+    const typePieChartData: PieSegmentData[] = [];
     if (problemCasesCount > 0)
       typePieChartData.push({
         id: "PROBLEM",
@@ -101,6 +152,38 @@ const useCategorySignalStats = (cases: ICase[] | undefined): SignalStats => {
         value: suggestionCasesCount,
         color: TYPE_COLORS.SUGGESTION,
       });
+
+    // --- ADD PIE DATA BUILDERS ---
+    const priorityPieChartData: PieSegmentData[] = [
+      {
+        id: CasePriority.High,
+        label: translatePriority(CasePriority.High),
+        value: priorityCounts.HIGH || 0,
+        color: "#EF4444",
+      },
+      {
+        id: CasePriority.Medium,
+        label: translatePriority(CasePriority.Medium),
+        value: priorityCounts.MEDIUM || 0,
+        color: "#EAB308",
+      },
+      {
+        id: CasePriority.Low,
+        label: translatePriority(CasePriority.Low),
+        value: priorityCounts.LOW || 0,
+        color: "#22C55E",
+      },
+    ].filter((p) => p.value > 0);
+
+    const creatorPieChartData: PieSegmentData[] = Object.values(creatorCounts)
+      .map((data, index) => ({
+        id: data.id,
+        label: data.name,
+        value: data.count,
+        color: getColorForChart(index),
+      }))
+      .sort((a, b) => b.value - a.value);
+    // --- END PIE DATA BUILDERS ---
 
     const resolutionData = calculateResolutionStats(cases);
 
@@ -124,6 +207,9 @@ const useCategorySignalStats = (cases: ICase[] | undefined): SignalStats => {
       resolutionPieChartData,
       averageResolutionTime: resolutionData.averageResolutionTime,
       resolutionTimeCounts: resolutionData.resolutionTimeCounts,
+      // --- ADD TO RETURN ---
+      priorityPieChartData,
+      creatorPieChartData,
     };
   }, [cases]);
 

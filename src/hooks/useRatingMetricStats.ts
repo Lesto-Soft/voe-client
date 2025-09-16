@@ -1,6 +1,6 @@
 // src/hooks/useRatingMetricStats.ts
 import { useMemo } from "react";
-import { IMetricScore } from "../db/interfaces";
+import { IMetricScore, ICategory } from "../db/interfaces";
 import { PieSegmentData } from "../components/charts/PieChart";
 import { TIERS } from "../utils/GLOBAL_PARAMETERS";
 
@@ -23,6 +23,8 @@ export interface RatingMetricStats {
   averageScore: number;
   tierDistributionData: PieSegmentData[];
   userContributionData: PieSegmentData[];
+  // --- ADD NEW PROPERTY ---
+  categoryContributionData: PieSegmentData[];
 }
 
 const useRatingMetricStats = (
@@ -35,6 +37,7 @@ const useRatingMetricStats = (
         averageScore: 0,
         tierDistributionData: [],
         userContributionData: [],
+        categoryContributionData: [], // <-- Add default
       };
     }
 
@@ -98,11 +101,59 @@ const useRatingMetricStats = (
       }))
       .sort((a, b) => b.value - a.value);
 
+    // --- ADD NEW CALCULATION FOR CATEGORIES ---
+    const categoryCounts: {
+      [catId: string]: { value: number; name: string; color: string };
+    } = {};
+
+    scores.forEach((s) => {
+      const categories = s.case?.categories;
+      if (categories && Array.isArray(categories) && categories.length > 0) {
+        // A single score/case can belong to multiple categories, so count for each
+        categories.forEach((cat: ICategory) => {
+          if (cat && cat._id && cat.name) {
+            if (!categoryCounts[cat._id]) {
+              categoryCounts[cat._id] = {
+                value: 0,
+                name: cat.name,
+                color: cat.color || "#A9A9A9",
+              };
+            }
+            categoryCounts[cat._id].value++;
+          }
+        });
+      } else {
+        // Handle scores on cases with no category
+        const unknownId = "unknown"; // Special ID for "uncategorized"
+        if (!categoryCounts[unknownId]) {
+          categoryCounts[unknownId] = {
+            value: 0,
+            name: "Без категория",
+            color: "#888888",
+          };
+        }
+        categoryCounts[unknownId].value++;
+      }
+    });
+
+    const categoryContributionData: PieSegmentData[] = Object.entries(
+      categoryCounts
+    )
+      .map(([catId, data]) => ({
+        id: catId, // Use the category ID (or "unknown")
+        label: data.name,
+        value: data.value,
+        color: data.color,
+      }))
+      .sort((a, b) => b.value - a.value);
+    // --- END NEW CALCULATION ---
+
     return {
       totalScores,
       averageScore,
       tierDistributionData,
       userContributionData,
+      categoryContributionData,
     };
   }, [scores]);
 

@@ -421,7 +421,7 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
       )}
       <div
         ref={scrollableActivityListRef}
-        className="flex-1 overflow-y-auto custom-scrollbar-xs"
+        className="flex-1 overflow-y-auto custom-scrollbar-xs max-h-[calc(100vh-6rem)]"
       >
         {activitiesToDisplay.length > 0 ? (
           <>

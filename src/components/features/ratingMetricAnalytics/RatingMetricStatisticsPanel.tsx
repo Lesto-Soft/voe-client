@@ -26,10 +26,34 @@ const getScoreCellStyle = (score: number | undefined | null): string => {
   return "text-red-500 text-base font-bold";
 };
 
+const StatItem: React.FC<{
+  icon: React.ElementType;
+  label: string;
+  value: string | number | undefined;
+  iconColorClass?: string;
+  valueClasses?: string;
+}> = ({
+  icon: Icon,
+  label,
+  value,
+  iconColorClass = "text-gray-500",
+  valueClasses = "text-gray-800 text-base font-semibold",
+}) => (
+  <div className="flex items-center justify-between p-1 ">
+    <div className="flex items-center">
+      <Icon className={`h-5 w-5 mr-2 ${iconColorClass}`} />
+      <span className="text-sm text-gray-700">{label}:</span>
+    </div>
+    <strong className={valueClasses}>
+      {value !== undefined ? value : "-"}
+    </strong>
+  </div>
+);
+
 interface RatingMetricStatisticsPanelProps {
-  scores: IMetricScore[];
+  pieScores: IMetricScore[]; // <-- RENAMED: For pie charts (date-filtered only)
+  textScores: IMetricScore[]; // <-- ADDED: For text stats (fully-filtered)
   isLoading: boolean;
-  dateRange: { startDate: Date | null; endDate: Date | null };
   onTierClick?: (segment: PieSegmentData) => void;
   onUserClick?: (segment: PieSegmentData) => void;
   activeTierLabel?: string | null;
@@ -51,9 +75,9 @@ interface RatingMetricStatisticsPanelProps {
 const RatingMetricStatisticsPanel: React.FC<
   RatingMetricStatisticsPanelProps
 > = ({
-  scores,
+  pieScores, // <-- DESTRUCTURE
+  textScores, // <-- DESTRUCTURE
   isLoading,
-  dateRange,
   onTierClick,
   onUserClick,
   activeTierLabel,
@@ -75,17 +99,17 @@ const RatingMetricStatisticsPanel: React.FC<
   // const [activeTab, setActiveTab] = useState<StatsTab>("tier");
   const pieTabsContainerRef = useRef<HTMLDivElement>(null); // <-- ADDED FOR SCROLL
 
-  const filteredScores = useMemo(() => {
-    if (!dateRange.startDate || !dateRange.endDate) return scores;
-    return scores.filter((score) => {
-      const scoreDate = new Date(score.date);
-      return (
-        scoreDate >= dateRange.startDate! && scoreDate <= dateRange.endDate!
-      );
-    });
-  }, [scores, dateRange]);
+  // 1. Stats for the PIE CHARTS (use the consistent date-filtered list)
+  const pieChartStats = useRatingMetricStats(pieScores);
 
-  const stats = useRatingMetricStats(filteredScores);
+  // 2. Stats for the TEXT VALUES (use the fully-filtered dynamic list)
+  const textStats = useMemo(() => {
+    const totalScores = textScores.length;
+    const sumOfScores = textScores.reduce((sum, s) => sum + s.score, 0);
+    const averageScore = totalScores > 0 ? sumOfScores / totalScores : 0;
+    return { totalScores, averageScore };
+  }, [textScores]);
+
   const isInteractive = onTierClick || onUserClick || onCategoryClick;
 
   // --- ADDED: Mouse-wheel scroll effect for pie tabs ---
@@ -140,7 +164,8 @@ const RatingMetricStatisticsPanel: React.FC<
     );
   }
 
-  if (!stats || stats.totalScores === 0) {
+  // Use pieChartStats for the "no data" check (if no scores in date range, show nothing)
+  if (!pieChartStats || pieChartStats.totalScores === 0) {
     return (
       <aside className="lg:col-span-3 bg-white rounded-lg shadow-lg p-6 text-center flex flex-col justify-center">
         <InformationCircleIcon className="h-10 w-10 text-gray-400 mx-auto mb-2" />
@@ -181,26 +206,23 @@ const RatingMetricStatisticsPanel: React.FC<
             )}
           </h3>
 
-          <div className="space-y-1 text-sm text-gray-600">
-            <p className="flex items-center justify-between">
-              <span className="flex items-center">
-                <UsersIcon className="h-5 w-5 mr-2" />
-                Общо оценки:
-              </span>
-              <strong className="text-gray-800 text-base">
-                {stats.totalScores}
-              </strong>
-            </p>
-            {/* Apply the style to the average score */}
-            <p className="flex items-center justify-between">
-              <span className="flex items-center">
-                <StarIcon className="h-5 w-5 mr-2" />
-                Средна оценка:
-              </span>
-              <strong className={getScoreCellStyle(stats.averageScore)}>
-                {stats.averageScore.toFixed(2)}
-              </strong>
-            </p>
+          {/* --- REFACTORED: Use StatItem component --- */}
+          <div className="space-y-1">
+            <StatItem
+              icon={UsersIcon}
+              label="Общо оценки"
+              value={textStats.totalScores}
+            />
+            <StatItem
+              icon={StarIcon}
+              label="Средна оценка"
+              value={
+                textStats.averageScore > 0
+                  ? textStats.averageScore.toFixed(2)
+                  : "-"
+              }
+              valueClasses={getScoreCellStyle(textStats.averageScore)}
+            />
           </div>
 
           <div className="mt-2">
@@ -280,7 +302,7 @@ const RatingMetricStatisticsPanel: React.FC<
             {activePieTab === "tier" && (
               <StatisticPieChart
                 title="Разпределение по Оценки"
-                pieData={stats.tierDistributionData}
+                pieData={pieChartStats.tierDistributionData}
                 onSegmentClick={onTierClick}
                 activeLabel={activeTierLabel}
               />
@@ -288,7 +310,7 @@ const RatingMetricStatisticsPanel: React.FC<
             {activePieTab === "user" && (
               <StatisticPieChart
                 title="Разпределение по Потребители"
-                pieData={stats.userContributionData}
+                pieData={pieChartStats.userContributionData}
                 onSegmentClick={onUserClick}
                 activeLabel={activeUserLabel}
               />
@@ -297,7 +319,7 @@ const RatingMetricStatisticsPanel: React.FC<
             {activePieTab === "category" && (
               <StatisticPieChart
                 title="Разпределение по Категории"
-                pieData={stats.categoryContributionData}
+                pieData={pieChartStats.categoryContributionData}
                 onSegmentClick={onCategoryClick}
                 activeLabel={activeCategoryLabel}
               />

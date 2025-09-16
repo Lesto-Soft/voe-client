@@ -26,6 +26,14 @@ import { PieSegmentData } from "../components/charts/PieChart";
 
 // --- REMOVED: FilterTag component definition ---
 
+// --- ADDED: Helper function copied from MetricScoreList ---
+const getTierForScore = (score: number): TierTab => {
+  if (score >= TIERS.GOLD) return "gold";
+  if (score >= TIERS.SILVER) return "silver";
+  if (score >= TIERS.BRONZE) return "bronze";
+  return "problematic";
+};
+
 const RatingMetric: React.FC = () => {
   const { id: metricIdFromParams } = useParams<{ id: string }>();
   const currentUser = useCurrentUser() as IMe;
@@ -111,6 +119,55 @@ const RatingMetric: React.FC = () => {
   const onClearUserFilter = () => setSelectedUserId(null);
   const onClearCategoryFilter = () => setSelectedCategoryId(null);
 
+  // --- REFACTORED: Create two separate filtered lists ---
+
+  // 1. This list is filtered ONLY by the date range. It will feed the Pie Charts.
+  const dateFilteredScoresForPies = useMemo(() => {
+    // 1. Filter by Date
+    const { startDate, endDate } = dateRange;
+
+    if (!startDate && !endDate) return scores;
+
+    return scores.filter((score) => {
+      const scoreDate = new Date(score.date);
+      if (startDate && scoreDate < startDate) return false;
+      if (endDate && scoreDate > endDate) return false;
+      return true;
+    });
+  }, [scores, dateRange]);
+
+  // 2. This list is filtered by date AND all active pie filters. It will feed the Text Stats.
+  const fullyFilteredScores = useMemo(() => {
+    let filtered = dateFilteredScoresForPies; // Start with the date-filtered list
+    // 2. Filter by Tier
+    if (activeTierTab !== "all") {
+      filtered = filtered?.filter(
+        (score) => getTierForScore(score.score) === activeTierTab
+      );
+    }
+
+    // 3. Filter by User
+    if (selectedUserId) {
+      filtered = filtered?.filter((score) => score.user._id === selectedUserId);
+    }
+
+    // 4. Filter by Category
+    if (selectedCategoryId) {
+      filtered = filtered?.filter((score) => {
+        const categories = score.case?.categories;
+        if (!categories || categories.length === 0)
+          return selectedCategoryId === "unknown";
+        return categories.some((cat) => cat._id === selectedCategoryId);
+      });
+    }
+    return filtered;
+  }, [
+    dateFilteredScoresForPies,
+    activeTierTab,
+    selectedUserId,
+    selectedCategoryId,
+  ]);
+
   // --- Filter Logic for passing to MetricScoreList ---
   const isAnyFilterActive = useMemo(
     () =>
@@ -192,7 +249,7 @@ const RatingMetric: React.FC = () => {
 
   return (
     <>
-      <div className="container min-w-full mx-auto p-2 sm:p-6 bg-gray-50 flex flex-col h-[calc(100vh-6rem)]">
+      <div className="container min-w-full mx-auto p-2 sm:p-6 bg-gray-50 flex flex-col min-h-[calc(100vh-6rem)] lg:h-[calc(100vh-6rem)]">
         {/* --- REMOVED: Active Filters Display Block --- */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 overflow-hidden">
           <RatingMetricInformationPanel
@@ -219,9 +276,10 @@ const RatingMetric: React.FC = () => {
             onClearCategoryFilter={onClearCategoryFilter}
           />
           <RatingMetricStatisticsPanel
-            scores={scores}
+            pieScores={dateFilteredScoresForPies} // <-- Pass date-only list for pies
+            textScores={fullyFilteredScores} // <-- Pass fully-filtered list for text stats
             isLoading={scoresLoading}
-            dateRange={dateRange}
+            // dateRange prop is no longer needed
             onTierClick={handleTierClick}
             onUserClick={handleUserClick}
             activeTierLabel={activeTierLabel}

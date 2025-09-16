@@ -291,7 +291,7 @@ const CategoryCasesList: React.FC<CategoryCasesListProps> = ({
 
       <div
         ref={scrollableRef}
-        className="overflow-y-auto flex-1 custom-scrollbar-xs"
+        className="overflow-y-auto flex-1 custom-scrollbar-xs max-h-[calc(100vh-6rem)]"
       >
         {totalCasesCount > 0 ? (
           <>

@@ -408,6 +408,9 @@ const Category: React.FC = () => {
   const creatorSignalStats = useCategorySignalStats(dataForCreatorCalculations);
   // --------------------------
 
+  // --- ADD NEW: Create a master stats object based on the FINAL filtered list ---
+  const textSignalStats = useCategorySignalStats(finalFilteredCases);
+
   // --- END: ADD THE NEW MEMOIZED VALUES ---
 
   const isDataReady = !categoryLoading && !categoryError && !!category;
@@ -617,7 +620,7 @@ const Category: React.FC = () => {
   }
 
   return (
-    <div className="container min-w-full mx-auto p-2 sm:p-6 bg-gray-50 flex flex-col h-[calc(100vh-6rem)]">
+    <div className="container min-w-full mx-auto p-2 sm:p-6 bg-gray-50 flex flex-col min-h-[calc(100vh-6rem)] lg:h-[calc(100vh-6rem)]">
       <CategoryHeader
         isArchived={category.archived}
         categoryName={category.name}
@@ -673,6 +676,8 @@ const Category: React.FC = () => {
           activePriorityFilter={activePriority}
           activeCreatorFilter={activeCreator.id}
           activePriorityLabel={activePriorityLabel} // Pass label for highlighting
+          // --- ADD NEW PROP FOR DYNAMIC TEXT STATS ---
+          textStats={textSignalStats}
           activeCreatorLabel={activeCreatorLabel} // Pass label for highlighting
           // --- PASS CLEAR HANDLERS FOR DOT CLICK ---
           onClearStatusFilter={() => setActiveStatus("all")}

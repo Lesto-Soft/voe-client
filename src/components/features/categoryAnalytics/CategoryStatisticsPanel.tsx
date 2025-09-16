@@ -55,6 +55,8 @@ interface CategoryStatisticsPanelProps {
   activeCreatorFilter: string | null;
   activePriorityLabel?: string | null;
   activeCreatorLabel?: string | null;
+  // --- ADD NEW PROP FOR DYNAMIC TEXT STATS ---
+  textStats: SignalStats | undefined | null;
   // --- ADD CLEAR HANDLERS FOR DOT CLICK ---
   onClearStatusFilter?: () => void;
   onClearTypeFilter?: () => void;
@@ -64,6 +66,31 @@ interface CategoryStatisticsPanelProps {
 }
 
 const TEXT_STATS_AREA_HEIGHT = "h-28";
+
+// --- ADDED: Copied StatItem component from UserStatisticsPanel ---
+const StatItem: React.FC<{
+  icon: React.ElementType;
+  label: string;
+  value: string | number | undefined;
+  iconColorClass?: string;
+  valueClasses?: string;
+}> = ({
+  icon: Icon,
+  label,
+  value,
+  iconColorClass = "text-gray-500",
+  valueClasses = "text-gray-800 text-base font-semibold",
+}) => (
+  <div className="flex items-center justify-between p-1 ">
+    <div className="flex items-center">
+      <Icon className={`h-5 w-5 mr-2 ${iconColorClass}`} />
+      <span className="text-sm text-gray-700">{label}:</span>
+    </div>
+    <strong className={valueClasses}>
+      {value !== undefined ? value : "-"}
+    </strong>
+  </div>
+);
 
 const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
   activeStatsView,
@@ -90,6 +117,7 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
   activeCreatorFilter,
   activePriorityLabel,
   activeCreatorLabel,
+  textStats,
   // --- DESTRUCTURE NEW CLEAR HANDLERS ---
   onClearStatusFilter,
   onClearTypeFilter,
@@ -258,15 +286,63 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
             )}
           </h3>
           <div className="space-y-1 text-sm text-gray-600">
-            <p className="flex items-center justify-between">
-              <span className="flex items-center">
-                <ListBulletIcon className="h-5 w-5 mr-2 text-blue-500" /> Общо
-                сигнали:
-              </span>
-              <strong className="text-gray-800 text-base">
-                {activeSignalStats.totalSignals}
-              </strong>
-            </p>
+            {/* --- REFACTORED: Use textStats prop and StatItem component --- */}
+            {textStats ? (
+              <div className="space-y-1">
+                <StatItem
+                  icon={ListBulletIcon}
+                  label="Общо Сигнали"
+                  value={textStats.totalSignals}
+                  iconColorClass="text-blue-500"
+                />
+                {/* <StatItem
+                  icon={CheckCircleIcon}
+                  label={translateStatus("OPEN")}
+                  value={textStats.strictlyOpenSignals}
+                  iconColorClass="text-green-500"
+                />
+                <StatItem
+                  icon={ArrowPathIcon}
+                  label={translateStatus("IN_PROGRESS")}
+                  value={textStats.inProgressSignals}
+                  iconColorClass="text-yellow-500"
+                />
+                <StatItem
+                  icon={BanknotesIcon}
+                  label={translateStatus("AWAITING_FINANCE")}
+                  value={textStats.awaitingFinanceSignals}
+                  iconColorClass="text-blue-500"
+                />
+                <StatItem
+                  icon={XCircleIcon}
+                  label={translateStatus("CLOSED")}
+                  value={textStats.closedSignals}
+                  iconColorClass="text-gray-500"
+                /> */}
+
+                <StatItem
+                  icon={ClockIcon}
+                  label="Средно време (дни)"
+                  value={
+                    textStats.averageResolutionTime > 0
+                      ? textStats.averageResolutionTime.toFixed(2)
+                      : "-"
+                  }
+                  iconColorClass="text-purple-500"
+                />
+              </div>
+            ) : (
+              // Fallback for old data structure just in case
+              <p className="flex items-center justify-between">
+                <span className="flex items-center">
+                  <ListBulletIcon className="h-5 w-5 mr-2 text-blue-500" /> Общо
+                  сигнали:
+                </span>
+                <strong className="text-gray-800 text-base">
+                  {activeSignalStats.totalSignals}
+                </strong>
+              </p>
+            )}
           </div>
 
           <div className="mt-2">
@@ -306,46 +382,8 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
           <div className="mt-3">
             {activeStatsView === "status" && (
               <div className="space-y-2">
-                <div
-                  className={`space-y-1 text-sm text-gray-600 mb-3 ${TEXT_STATS_AREA_HEIGHT}`}
-                >
-                  <p className="flex items-center justify-between">
-                    <span className="flex items-center">
-                      <CheckCircleIcon className="h-5 w-5 mr-2 text-green-500 flex-shrink-0" />
-                      {translateStatus("OPEN")}:
-                    </span>
-                    <strong className="text-gray-800 text-base">
-                      {activeSignalStats.strictlyOpenSignals}
-                    </strong>
-                  </p>
-                  <p className="flex items-center justify-between">
-                    <span className="flex items-center">
-                      <ArrowPathIcon className="h-5 w-5 mr-2 text-yellow-500 flex-shrink-0" />
-                      {translateStatus("IN_PROGRESS")}:
-                    </span>
-                    <strong className="text-gray-800 text-base">
-                      {activeSignalStats.inProgressSignals}
-                    </strong>
-                  </p>
-                  <p className="flex items-center justify-between">
-                    <span className="flex items-center">
-                      <BanknotesIcon className="h-5 w-5 mr-2 text-blue-500 flex-shrink-0" />
-                      {translateStatus("AWAITING_FINANCE")}:
-                    </span>
-                    <strong className="text-gray-800 text-base">
-                      {activeSignalStats.awaitingFinanceSignals}
-                    </strong>
-                  </p>
-                  <p className="flex items-center justify-between">
-                    <span className="flex items-center">
-                      <XCircleIcon className="h-5 w-5 mr-2 text-gray-500 flex-shrink-0" />
-                      {translateStatus("CLOSED")}:
-                    </span>
-                    <strong className="text-gray-800 text-base">
-                      {activeSignalStats.closedSignals}
-                    </strong>
-                  </p>
-                </div>
+                {" "}
+                {/* REMOVED old text stats block */}
                 <StatisticPieChart
                   title="Разпределение по Статус"
                   pieData={activeSignalStats.statusPieChartData}
@@ -357,43 +395,8 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
 
             {activeStatsView === "type" && (
               <div className="space-y-2">
-                <div
-                  className={`space-y-1 text-sm text-gray-600 mb-3 ${TEXT_STATS_AREA_HEIGHT} ${
-                    activeSignalStats.problemCasesCount === 0 &&
-                    activeSignalStats.suggestionCasesCount === 0
-                      ? "pt-4 text-center"
-                      : ""
-                  }`}
-                >
-                  {activeSignalStats.problemCasesCount > 0 ||
-                  activeSignalStats.suggestionCasesCount > 0 ? (
-                    <>
-                      <p className="flex items-center justify-between w-full">
-                        <span className="flex items-center">
-                          <ExclamationTriangleIcon className="h-5 w-5 mr-2 text-red-500 flex-shrink-0" />
-                          {translateCaseType("PROBLEM")}:
-                        </span>
-                        <strong className="text-gray-800 text-base">
-                          {activeSignalStats.problemCasesCount}
-                        </strong>
-                      </p>
-                      <p className="flex items-center justify-between w-full">
-                        <span className="flex items-center">
-                          <LightBulbIcon className="h-5 w-5 mr-2 text-green-500 flex-shrink-0" />
-                          {translateCaseType("SUGGESTION")}:
-                        </span>
-                        <strong className="text-gray-800 text-base">
-                          {activeSignalStats.suggestionCasesCount}
-                        </strong>
-                      </p>
-                    </>
-                  ) : (
-                    // If no data, center this specific paragraph horizontally. Added pt-4 for some spacing.
-                    <p className="text-gray-500">
-                      Няма данни за типовете сигнали.
-                    </p>
-                  )}
-                </div>
+                {" "}
+                {/* REMOVED old text stats block */}
                 <StatisticPieChart
                   title="Разпределение по Тип"
                   pieData={activeSignalStats.typePieChartData}
@@ -405,39 +408,8 @@ const CategoryStatisticsPanel: React.FC<CategoryStatisticsPanelProps> = ({
 
             {activeStatsView === "resolution" && (
               <div className="space-y-2">
-                <div
-                  className={`space-y-1 text-sm text-gray-600 mb-3 ${TEXT_STATS_AREA_HEIGHT}`}
-                >
-                  <p className="flex items-center justify-between">
-                    <span className="flex items-center">
-                      <CheckCircleIcon className="h-5 w-5 mr-2 text-green-500 flex-shrink-0" />
-                      Приключени (за графиката):
-                    </span>
-                    <strong className="text-gray-800 text-base">
-                      {activeSignalStats.effectivelyResolvedCasesCount}
-                    </strong>
-                  </p>
-                  <p className="flex items-center justify-between">
-                    <span className="flex items-center">
-                      <ClockIcon className="h-5 w-5 mr-2 text-orange-500 flex-shrink-0" />
-                      В изчакване/други:
-                    </span>
-                    <strong className="text-gray-800 text-base">
-                      {activeSignalStats.unresolvedCasesCount}
-                    </strong>
-                  </p>
-                  {activeSignalStats.effectivelyResolvedCasesCount > 0 && (
-                    <p className="flex items-center justify-between mt-1">
-                      <span className="flex items-center">
-                        <DocumentTextIcon className="h-5 w-5 mr-2 text-purple-500 flex-shrink-0" />
-                        Средно време (дни):
-                      </span>
-                      <strong className="text-gray-800 text-base">
-                        {activeSignalStats.averageResolutionTime.toFixed(2)}
-                      </strong>
-                    </p>
-                  )}
-                </div>
+                {" "}
+                {/* REMOVED old text stats block */}
                 <StatisticPieChart
                   title="Разпределение по Резолюция"
                   pieData={activeSignalStats.resolutionPieChartData}

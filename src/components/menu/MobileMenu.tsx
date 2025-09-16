@@ -8,6 +8,7 @@ import {
   StarIcon,
   UserIcon,
   ArrowRightCircleIcon,
+  Cog6ToothIcon,
 } from "@heroicons/react/24/solid";
 import { useTranslation } from "react-i18next";
 import { NavLinkProps } from "./NavBar";
@@ -117,6 +118,13 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
           to={`/user/${me.username}`}
           icon={<UserIcon className="h-6 w-6" />} // Add icon if desired
           label={t("profile")}
+          onClick={onLinkClick}
+        />
+
+        <MobileNavLink
+          to="/settings"
+          icon={<Cog6ToothIcon className="h-6 w-6" />}
+          label={t("settings", "Настройки")}
           onClick={onLinkClick}
         />
         <button

@@ -20,6 +20,7 @@ import ProtectedRoute from "../components/auth/ProtectedRoute";
 import { ROLES } from "../utils/GLOBAL_PARAMETERS";
 import ServerErrorPage from "../pages/ErrorPages/ServerErrorPage";
 import NavbarSkeleton from "../components/skeletons/NavbarSkeleton";
+import UserSettingsPage from "../pages/UserSettingsPage";
 
 const AppLayout = () => {
   const { me, error, loading } = useGetMe();
@@ -114,6 +115,10 @@ const mainRouter = createBrowserRouter([
             <RatingMetric />
           </ProtectedRoute>
         ),
+      },
+      {
+        path: "/settings",
+        element: <UserSettingsPage />,
       },
       {
         path: "*",

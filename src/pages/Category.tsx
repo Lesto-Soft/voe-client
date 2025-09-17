@@ -40,7 +40,7 @@ import CategoryCasesList from "../components/features/categoryAnalytics/Category
 import CategoryStatisticsPanel from "../components/features/categoryAnalytics/CategoryStatisticsPanel"; // Adjust path
 
 // Constants
-import { ROLES, TIERS } from "../utils/GLOBAL_PARAMETERS";
+import { ROLES } from "../utils/GLOBAL_PARAMETERS";
 
 import { useAuthorization } from "../hooks/useAuthorization";
 import ForbiddenPage from "./ErrorPages/ForbiddenPage";
@@ -50,6 +50,7 @@ import {
   translateCaseType,
   translatePriority,
 } from "../utils/categoryDisplayUtils";
+import { RatingTierLabel, getTierForScore } from "../utils/ratingCalculations";
 
 interface ILeanUserForForm {
   _id: string;
@@ -64,21 +65,6 @@ export type CaseStatusTab =
   | "IN_PROGRESS"
   | "AWAITING_FINANCE"
   | "CLOSED";
-
-/* Copied types from User.tsx */
-export type RatingTierLabel =
-  | "Отлични"
-  | "Добри"
-  | "Средни"
-  | "Проблемни"
-  | "all";
-
-const getTierForScore = (score: number): RatingTierLabel => {
-  if (score >= TIERS.GOLD) return "Отлични";
-  if (score >= TIERS.SILVER) return "Добри";
-  if (score >= TIERS.BRONZE) return "Средни";
-  return "Проблемни";
-};
 
 const Category: React.FC = () => {
   const { name: categoryNameFromParams } = useParams<{ name: string }>();

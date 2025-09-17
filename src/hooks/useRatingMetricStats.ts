@@ -3,20 +3,7 @@ import { useMemo } from "react";
 import { IMetricScore, ICategory } from "../db/interfaces";
 import { PieSegmentData } from "../components/charts/PieChart";
 import { TIERS } from "../utils/GLOBAL_PARAMETERS";
-
-const getColorForChart = (index: number): string => {
-  const colors = [
-    "#3B82F6",
-    "#10B981",
-    "#F59E0B",
-    "#EF4444",
-    "#8B5CF6",
-    "#6366F1",
-    "#EC4899",
-    "#6B7280",
-  ];
-  return colors[index % colors.length];
-};
+import { getColorForChart } from "../utils/colors";
 
 export interface RatingMetricStats {
   totalScores: number;

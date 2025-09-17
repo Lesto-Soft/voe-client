@@ -23,16 +23,7 @@ import SuccessConfirmationModal from "../components/modals/SuccessConfirmationMo
 import { canViewRatingMetric } from "../utils/rightUtils";
 import { PieSegmentData } from "../components/charts/PieChart";
 // import { XMarkIcon } from "@heroicons/react/24/outline"; // <-- REMOVE THIS IMPORT
-
-// --- REMOVED: FilterTag component definition ---
-
-// --- ADDED: Helper function copied from MetricScoreList ---
-const getTierForScore = (score: number): TierTab => {
-  if (score >= TIERS.GOLD) return "gold";
-  if (score >= TIERS.SILVER) return "silver";
-  if (score >= TIERS.BRONZE) return "bronze";
-  return "problematic";
-};
+import { RatingTierLabel, getTierForScore } from "../utils/ratingCalculations";
 
 const RatingMetric: React.FC = () => {
   const { id: metricIdFromParams } = useParams<{ id: string }>();
@@ -141,8 +132,18 @@ const RatingMetric: React.FC = () => {
     let filtered = dateFilteredScoresForPies; // Start with the date-filtered list
     // 2. Filter by Tier
     if (activeTierTab !== "all") {
-      filtered = filtered?.filter(
-        (score) => getTierForScore(score.score) === activeTierTab
+      // The helper now returns a different type, but the logic is the same.
+      // We can map the tier tab key to the expected label from the helper.
+      const tierLabelMap: Record<TierTab, RatingTierLabel> = {
+        gold: "Отлични",
+        silver: "Добри",
+        bronze: "Средни",
+        problematic: "Проблемни",
+        all: "all",
+      };
+      const expectedLabel = tierLabelMap[activeTierTab];
+      filtered = filtered.filter(
+        (score) => getTierForScore(score.score) === expectedLabel
       );
     }
 

@@ -19,7 +19,8 @@ import DateRangeSelector from "../userAnalytics/DateRangeSelector";
 import FilterTag from "../../global/FilterTag";
 
 // The local CaseStatusTab type can now be imported from Category.tsx
-import { CaseStatusTab, RatingTierLabel } from "../../../pages/Category";
+import { CaseStatusTab } from "../../../pages/Category";
+import { RatingTierLabel } from "../../../utils/ratingCalculations";
 
 type CategoryPieTabKey =
   | "status"

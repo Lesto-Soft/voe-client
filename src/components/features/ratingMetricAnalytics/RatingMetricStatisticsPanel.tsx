@@ -13,42 +13,19 @@ import StatisticPieChart from "../../charts/StatisticPieChart";
 import { PieSegmentData } from "../../charts/PieChart";
 import { TIERS } from "../../../utils/GLOBAL_PARAMETERS";
 import { TierTab } from "./MetricScoreList"; // <-- ADD
+import StatItem from "../../global/StatItem";
 
 // Define the type locally
 type StatsTab = "tier" | "user" | "category";
 
-// Helper to determine color for the average score
-const getScoreCellStyle = (score: number | undefined | null): string => {
-  if (!score || score === 0) return "text-gray-800 text-base";
+const getRatingStyleClass = (score: number | undefined | null): string => {
+  // Matches the default classes of the StatItem value
+  if (!score || score === 0) return "text-gray-800 text-base font-semibold";
   if (score >= TIERS.GOLD) return "text-amber-500 text-base font-bold";
   if (score >= TIERS.SILVER) return "text-slate-500 text-base font-bold";
   if (score >= TIERS.BRONZE) return "text-orange-700 text-base font-bold";
   return "text-red-500 text-base font-bold";
 };
-
-const StatItem: React.FC<{
-  icon: React.ElementType;
-  label: string;
-  value: string | number | undefined;
-  iconColorClass?: string;
-  valueClasses?: string;
-}> = ({
-  icon: Icon,
-  label,
-  value,
-  iconColorClass = "text-gray-500",
-  valueClasses = "text-gray-800 text-base font-semibold",
-}) => (
-  <div className="flex items-center justify-between p-1 ">
-    <div className="flex items-center">
-      <Icon className={`h-5 w-5 mr-2 ${iconColorClass}`} />
-      <span className="text-sm text-gray-700">{label}:</span>
-    </div>
-    <strong className={valueClasses}>
-      {value !== undefined ? value : "-"}
-    </strong>
-  </div>
-);
 
 interface RatingMetricStatisticsPanelProps {
   pieScores: IMetricScore[]; // <-- RENAMED: For pie charts (date-filtered only)
@@ -221,7 +198,7 @@ const RatingMetricStatisticsPanel: React.FC<
                   ? textStats.averageScore.toFixed(2)
                   : "-"
               }
-              valueClasses={getScoreCellStyle(textStats.averageScore)}
+              valueClasses={getRatingStyleClass(textStats.averageScore)}
             />
           </div>
 

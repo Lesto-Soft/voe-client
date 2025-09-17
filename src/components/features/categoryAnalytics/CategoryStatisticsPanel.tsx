@@ -26,7 +26,9 @@ import {
 } from "../../../utils/categoryDisplayUtils";
 import { CaseType, CasePriority } from "../../../db/interfaces";
 import { TIERS } from "../../../utils/GLOBAL_PARAMETERS";
-import { CaseStatusTab, RatingTierLabel } from "../../../pages/Category";
+import { CaseStatusTab } from "../../../pages/Category";
+import { RatingTierLabel } from "../../../utils/ratingCalculations";
+import StatItem from "../../global/StatItem";
 
 interface CategoryStatisticsPanelProps {
   // --- MODIFIED: Update type ---
@@ -73,31 +75,6 @@ interface CategoryStatisticsPanelProps {
 }
 
 // const TEXT_STATS_AREA_HEIGHT = "h-28"; // This constant is no longer used but safe to keep
-
-// --- ADDED: Copied StatItem component from UserStatisticsPanel ---
-const StatItem: React.FC<{
-  icon: React.ElementType;
-  label: string;
-  value: string | number | undefined;
-  iconColorClass?: string;
-  valueClasses?: string;
-}> = ({
-  icon: Icon,
-  label,
-  value,
-  iconColorClass = "text-gray-500",
-  valueClasses = "text-gray-800 text-base font-semibold",
-}) => (
-  <div className="flex items-center justify-between p-1 ">
-    <div className="flex items-center">
-      <Icon className={`h-5 w-5 mr-2 ${iconColorClass}`} />
-      <span className="text-sm text-gray-700">{label}:</span>
-    </div>
-    <strong className={valueClasses}>
-      {value !== undefined ? value : "-"}
-    </strong>
-  </div>
-);
 
 // Helper function for rating color (copied from RatingMetric panel)
 const getRatingStyleClass = (score: number | undefined | null): string => {

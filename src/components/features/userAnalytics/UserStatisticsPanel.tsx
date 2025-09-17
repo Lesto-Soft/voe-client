@@ -27,6 +27,7 @@ import {
   translateStatus,
 } from "../../../utils/categoryDisplayUtils";
 import FilterTag from "../../global/FilterTag";
+import StatItem from "../../global/StatItem";
 
 // define a type for the text-based stats
 export interface UserTextStats {
@@ -108,21 +109,6 @@ type PieTab =
   | "status";
 
 export type { PieTab };
-
-// MODIFIED: Added 'ratings' tab configuration
-const activityTabsConfig: {
-  key: StatsActivityType;
-  label: string;
-  icon: React.ElementType;
-}[] = [
-  { key: "all", label: "Всички", icon: GlobeAltIcon },
-  { key: "cases", label: "Сигнали", icon: DocumentTextIcon },
-  { key: "answers", label: "Решения", icon: ChatBubbleBottomCenterTextIcon },
-  { key: "comments", label: "Коментари", icon: ChatBubbleOvalLeftEllipsisIcon },
-  { key: "ratings", label: "Оценки", icon: StarIcon },
-  { key: "approvals", label: "Одобрени", icon: HandThumbUpIcon },
-  { key: "finances", label: "Финанси", icon: BanknotesIcon },
-];
 
 const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
   textStats,
@@ -230,22 +216,23 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
   const isDateFilterActive =
     dateRange?.startDate !== null || dateRange?.endDate !== null;
 
-  const StatItem: React.FC<{
-    icon: React.ElementType;
+  const activityTabsConfig: {
+    key: StatsActivityType;
     label: string;
-    value: string | number | undefined;
-    iconColorClass?: string;
-  }> = ({ icon: Icon, label, value, iconColorClass = "text-gray-500" }) => (
-    <div className="flex items-center justify-between p-1 ">
-      <div className="flex items-center">
-        <Icon className={`h-5 w-5 mr-2 ${iconColorClass}`} />
-        <span className="text-sm text-gray-700">{label}:</span>
-      </div>
-      <strong className="text-gray-800 text-base font-semibold">
-        {value !== undefined ? value : "-"}
-      </strong>
-    </div>
-  );
+    icon: React.ElementType;
+  }[] = [
+    { key: "all", label: "Всички", icon: GlobeAltIcon },
+    { key: "cases", label: "Сигнали", icon: DocumentTextIcon },
+    { key: "answers", label: "Решения", icon: ChatBubbleBottomCenterTextIcon },
+    {
+      key: "comments",
+      label: "Коментари",
+      icon: ChatBubbleOvalLeftEllipsisIcon,
+    },
+    { key: "ratings", label: "Оценки", icon: StarIcon },
+    { key: "approvals", label: "Одобрени", icon: HandThumbUpIcon },
+    { key: "finances", label: "Финанси", icon: BanknotesIcon },
+  ];
 
   if (isLoading) {
     return (

@@ -26,6 +26,20 @@ export const getContrastingTextColor = (hex: string): "dark" | "light" => {
   return luminance > 150 ? "dark" : "light";
 };
 
+export const getColorForChart = (index: number): string => {
+  const colors = [
+    "#3B82F6", // blue-500
+    "#10B981", // emerald-500
+    "#F59E0B", // amber-500
+    "#EF4444", // red-500
+    "#8B5CF6", // violet-500
+    "#6366F1", // indigo-500
+    "#EC4899", // pink-500
+    "#6B7280", // gray-500
+  ];
+  return colors[index % colors.length];
+};
+
 export const PREDEFINED_CATEGORY_COLORS: string[] = [];
 // A curated selection of 40 visually distinct colors from the Tailwind CSS palette.
 // Organized by hue for easier visual scanning in the color picker.

@@ -87,7 +87,7 @@ const CategoryCaseCard: React.FC<CategoryCaseCardProps> = ({
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-gray-600 mb-2">
             {/* Changed to items-center */}
             {/* Case Link (no change to this specific element's structure) */}
-            <div className="flex-shrink-0">
+            <div className="flex-shrink-0  text-sm">
               <CaseLink
                 my_case={caseItem} // Or caseToLinkForDisplay if in UserActivityItemCard
                 t={tFunctionForCaseLinkTitle} // Or tFunctionForCaseLinkProp

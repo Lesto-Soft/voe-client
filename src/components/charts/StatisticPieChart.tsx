@@ -50,7 +50,6 @@ const StatisticPieChart: React.FC<StatisticPieChartProps> = ({
     }
   }, [debouncedHoveredLabel]);
 
-  // NEW: This useEffect handles scrolling when an item is actively selected.
   useEffect(() => {
     if (activeLabel && legendScrollRef.current) {
       const legendItem = document.getElementById(
@@ -61,12 +60,10 @@ const StatisticPieChart: React.FC<StatisticPieChartProps> = ({
         const itemRect = legendItem.getBoundingClientRect();
         const containerRect = container.getBoundingClientRect();
 
-        // Check if the item is outside the visible area of the scroll container
         if (
           itemRect.top < containerRect.top ||
           itemRect.bottom > containerRect.bottom
         ) {
-          // If it's not visible, scroll it into view
           legendItem.scrollIntoView({
             behavior: "smooth",
             block: "nearest",
@@ -74,7 +71,7 @@ const StatisticPieChart: React.FC<StatisticPieChartProps> = ({
         }
       }
     }
-  }, [activeLabel]); // This effect runs whenever the active selection changes.
+  }, [activeLabel]);
 
   if (
     !pieData ||
@@ -133,9 +130,9 @@ const StatisticPieChart: React.FC<StatisticPieChartProps> = ({
               return (
                 <li
                   key={item.label}
-                  // ADDED: A unique ID to each legend item to make it findable
                   id={createIdFromLabel(item.label)}
-                  className={`flex items-center justify-between px-1 py-0.5 rounded-md transition-colors ${
+                  // --- MODIFIED: Added gap for spacing ---
+                  className={`flex items-center justify-between gap-x-2 px-1 py-0.5 rounded-md transition-colors ${
                     onSegmentClick ? "cursor-pointer" : ""
                   } ${
                     isHovered
@@ -149,17 +146,22 @@ const StatisticPieChart: React.FC<StatisticPieChartProps> = ({
                   onMouseEnter={() => setHoveredLabel(item.label)}
                   onMouseLeave={() => setHoveredLabel(null)}
                   onClick={() => onSegmentClick?.(item)}
+                  title={`${item.label}: ${item.value} (${(
+                    (item.value / totalValue) *
+                    100
+                  ).toFixed(1)}%)`}
                 >
-                  <span className="flex items-center" title={item.label}>
+                  {/* --- MODIFIED: Added min-w-0 to allow this container to shrink --- */}
+                  <span className="flex items-center min-w-0">
                     <span
                       className="h-2.5 w-2.5 rounded-full mr-2 flex-shrink-0"
                       style={{ backgroundColor: item.color }}
                     />
-                    <span className="truncate max-w-[200px]">
-                      {item.label}:
-                    </span>
+                    {/* --- MODIFIED: Removed fixed max-width to make it fully dynamic --- */}
+                    <span className="truncate">{item.label}:</span>
                   </span>
-                  <span className="font-medium whitespace-nowrap">
+                  {/* --- MODIFIED: Added flex-shrink-0 to prevent this part from shrinking --- */}
+                  <span className="font-medium whitespace-nowrap flex-shrink-0">
                     {item.value} ({((item.value / totalValue) * 100).toFixed(1)}
                     %)
                   </span>

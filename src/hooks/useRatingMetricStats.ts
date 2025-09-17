@@ -68,12 +68,17 @@ const useRatingMetricStats = (
     ].filter((segment) => segment.value > 0);
 
     // store the count and the user ID
-    const userCounts: { [userId: string]: { value: number; name: string } } =
-      {};
+    const userCounts: {
+      [userId: string]: { value: number; name: string; username: string };
+    } = {};
     scores.forEach((s) => {
-      if (s.user && s.user._id && s.user.name) {
+      if (s.user && s.user._id && s.user.name && s.user.username) {
         if (!userCounts[s.user._id]) {
-          userCounts[s.user._id] = { value: 0, name: s.user.name };
+          userCounts[s.user._id] = {
+            value: 0,
+            name: s.user.name,
+            username: s.user.username,
+          };
         }
         userCounts[s.user._id].value++;
       }
@@ -82,7 +87,7 @@ const useRatingMetricStats = (
     const userContributionData: PieSegmentData[] = Object.entries(userCounts)
       .map(([userId, data], index) => ({
         id: userId, // Include the user's ID
-        label: data.name,
+        label: `${data.name} (${data.username})`,
         value: data.value,
         color: getColorForChart(index),
       }))

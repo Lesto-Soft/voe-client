@@ -41,6 +41,7 @@ export const GET_METRIC_SCORES_BY_METRIC = gql`
       case {
         _id
         case_number
+        status
         creator {
           _id
         }

@@ -102,7 +102,7 @@ const useCategorySignalStats = (
     const priorityCounts: Record<string, number> = {};
     const creatorCounts: Record<
       string,
-      { id: string; count: number; name: string }
+      { id: string; count: number; name: string; username: string }
     > = {};
 
     const tierCounts = {
@@ -121,13 +121,14 @@ const useCategorySignalStats = (
       const priorityKey = c.priority || "NONE";
       priorityCounts[priorityKey] = (priorityCounts[priorityKey] || 0) + 1;
 
-      if (c.creator && c.creator._id) {
+      if (c.creator && c.creator._id && c.creator.username) {
         const creatorId = c.creator._id;
         if (!creatorCounts[creatorId]) {
           creatorCounts[creatorId] = {
             id: creatorId,
             count: 0,
             name: c.creator.name || "Unknown",
+            username: c.creator.username,
           };
         }
         creatorCounts[creatorId].count++;
@@ -187,7 +188,7 @@ const useCategorySignalStats = (
     const creatorPieChartData: PieSegmentData[] = Object.values(creatorCounts)
       .map((data, index) => ({
         id: data.id,
-        label: data.name,
+        label: `${data.name} (${data.username})`,
         value: data.count,
         color: getColorForChart(index),
       }))

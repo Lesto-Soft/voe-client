@@ -204,7 +204,7 @@ const DateRangeSelector: React.FC<DateRangeSelectorProps> = ({
   return (
     // attach the ref and add horizontal padding here
     <div
-      className={`flex flex-row items-center space-x-5 ${
+      className={`flex flex-row items-center space-x-1 ${
         justify === "end" ? "justify-end" : "justify-between"
       }`}
     >

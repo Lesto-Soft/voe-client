@@ -1,3 +1,4 @@
+// src/graphql/client.ts
 import { ApolloClient, ApolloLink, InMemoryCache, split } from "@apollo/client";
 import { graphqlEndpoint } from "../db/config";
 import createUploadLink from "apollo-upload-client/createUploadLink.mjs";
@@ -6,12 +7,24 @@ import { GraphQLWsLink } from "@apollo/client/link/subscriptions";
 import { getMainDefinition } from "@apollo/client/utilities";
 import { createClient } from "graphql-ws";
 
+export const AUTH_ERROR_EVENT = "auth-error";
+
 const errorLink = onError(({ graphQLErrors, networkError }) => {
   if (graphQLErrors) {
-    graphQLErrors.forEach(({ message, locations, path }) => {
+    graphQLErrors.forEach(({ message, locations, path, extensions }) => {
       console.error(
         `[GraphQL error]: Message: ${message}, Location: ${locations}, Path: ${path}`
       );
+
+      const isAuthError =
+        extensions?.code === "UNAUTHENTICATED" ||
+        (message.includes("Cannot read properties of undefined") &&
+          path?.[0] === "me");
+
+      if (isAuthError) {
+        console.log("Authentication error detected, dispatching global event.");
+        window.dispatchEvent(new CustomEvent(AUTH_ERROR_EVENT));
+      }
     });
   }
   if (networkError) {
@@ -41,12 +54,12 @@ const splitLink = split(
       definition.operation === "subscription"
     );
   },
-  wsLink, // directs traffic to this link if the function returns true
-  httpLinkChain // directs traffic to this link if the function returns false
+  wsLink,
+  httpLinkChain
 );
 
 export const apolloClient = new ApolloClient({
-  link: splitLink, // Use the new split link
+  link: splitLink,
   cache: new InMemoryCache(),
   defaultOptions: {
     watchQuery: {

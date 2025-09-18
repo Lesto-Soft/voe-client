@@ -1,7 +1,7 @@
 import axios from "axios";
 import { useState } from "react";
 import { endpoint } from "../db/config";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
 // import LanguageSwitcher from "../components/modals/LanguageSwitcher";
 import {
@@ -78,6 +78,7 @@ const LoginForm = ({
 }: {
   setIsLogin: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
+  const navigate = useNavigate();
   const { t } = useTranslation("home");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -101,17 +102,20 @@ const LoginForm = ({
       );
       setIsLoading(false);
       if (response.data.message === "Login successful") {
-        window.location.href = "/dashboard";
+        navigate("/dashboard");
       } else {
         setError(response.data.message || "Login failed");
       }
     } catch (err) {
       setIsLoading(false);
-      console.error(err);
-      if ((err as any)?.response?.status === 403) {
-        setError(
-          "Този потребител е напуснал. Моля, използвайте друг акаунт или се свържете с администратора."
-        );
+      const errorResponse = (err as any)?.response;
+      if (errorResponse?.status === 500) {
+        setError(t("home.errors.wrong_credentials"));
+        return;
+      }
+
+      if (errorResponse?.status === 403) {
+        setError(t("home.errors.user_left"));
         return;
       }
       setError(
@@ -156,7 +160,7 @@ const LoginForm = ({
             {error}
           </div>
         )}
-        <div className="mt-6 w-full text-center">
+        <div className="lg:w-88 w-full pt-2">
           <button
             type="submit"
             disabled={isLoading}
@@ -166,7 +170,7 @@ const LoginForm = ({
           </button>
         </div>
       </form>
-      <div className="mt-6 w-full text-center">
+      <div className="mt-4 w-full text-center">
         <button
           onClick={() => setIsLogin(false)}
           disabled={isLoading}

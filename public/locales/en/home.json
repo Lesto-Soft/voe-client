@@ -9,5 +9,10 @@
     "submitCase": "Submit Case",
     "login": "Log in",
     "loggingIn": "Logging in..."
+  },
+  "errors": {
+    "wrong_credentials": "Wrong username or password.",
+    "user_left": "This user has left. Please use another account or contact the administrator.",
+    "network_error": "Network error. Please try again later."
   }
 }

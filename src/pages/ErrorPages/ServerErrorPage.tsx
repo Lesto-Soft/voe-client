@@ -1,3 +1,5 @@
+import { useNavigate } from "react-router";
+
 // The SVG icon component remains the same
 const ServerIcon = () => (
   <svg
@@ -36,8 +38,9 @@ const ServerIcon = () => (
 
 const ServerErrorPage = () => {
   // Function to handle click - redirects to the homepage
+  const navigate = useNavigate();
   const goToHomepage = () => {
-    window.location.href = "/";
+    navigate("/");
   };
 
   return (

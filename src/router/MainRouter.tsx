@@ -1,4 +1,5 @@
-import { createBrowserRouter, Outlet, RouterProvider } from "react-router";
+// src/router/MainRouter.tsx
+import { createBrowserRouter, Outlet } from "react-router"; // Changed import
 import Home from "../pages/Home";
 import CaseSubmission from "../pages/CaseSubmission";
 import Dashboard from "../pages/Dashboard";
@@ -20,12 +21,24 @@ import ProtectedRoute from "../components/auth/ProtectedRoute";
 import { ROLES } from "../utils/GLOBAL_PARAMETERS";
 import ServerErrorPage from "../pages/ErrorPages/ServerErrorPage";
 import NavbarSkeleton from "../components/skeletons/NavbarSkeleton";
+import { useAuthModal } from "../context/AuthModalContext"; // NEW IMPORT
 
 const AppLayout = () => {
   const { me, error, loading } = useGetMe();
+  const { isAuthModalOpen } = useAuthModal(); // NEW HOOK
 
-  if (loading) return <NavbarSkeleton />;
-  if (error) return (window.location.href = "/");
+  // If loading user, or if an auth error occurred (modal is open), show a skeleton.
+  // This prevents the redirect and keeps the user on the intended page.
+  if (loading || error || isAuthModalOpen) {
+    return (
+      <div className="w-full min-h-screen flex flex-col">
+        <NavbarSkeleton />
+        <div className="flex-1" /> {/* Empty main content */}
+      </div>
+    );
+  }
+
+  // This check now serves as a fallback for non-auth errors.
   if (!me || !me.me) return <div>Неуспешно зареждане на потребител.</div>;
   const currentUserData: IMe = me.me;
 
@@ -43,7 +56,8 @@ const AppLayout = () => {
   );
 };
 
-const mainRouter = createBrowserRouter([
+// We keep this configuration but will use it in App.tsx
+export const mainRouter = createBrowserRouter([
   {
     path: "/",
     element: <Home />,
@@ -63,10 +77,7 @@ const mainRouter = createBrowserRouter([
   {
     element: <AppLayout />,
     children: [
-      {
-        path: "/dashboard",
-        element: <Dashboard />,
-      },
+      { path: "/dashboard", element: <Dashboard /> },
       {
         path: "/user-management",
         element: (
@@ -91,22 +102,10 @@ const mainRouter = createBrowserRouter([
           </ProtectedRoute>
         ),
       },
-      {
-        path: "/analyses",
-        element: <Analyses />,
-      },
-      {
-        path: "/user/:username",
-        element: <User />,
-      },
-      {
-        path: "/category/:name",
-        element: <Category />,
-      },
-      {
-        path: "/case/:number",
-        element: <Case />,
-      },
+      { path: "/analyses", element: <Analyses /> },
+      { path: "/user/:username", element: <User /> },
+      { path: "/category/:name", element: <Category /> },
+      { path: "/case/:number", element: <Case /> },
       {
         path: "/rating-metric/:id",
         element: (
@@ -115,14 +114,7 @@ const mainRouter = createBrowserRouter([
           </ProtectedRoute>
         ),
       },
-      {
-        path: "*",
-        element: <NotFoundPage />,
-      },
+      { path: "*", element: <NotFoundPage /> },
     ],
   },
 ]);
-
-const Router = () => <RouterProvider router={mainRouter} />;
-
-export default Router;

@@ -68,20 +68,56 @@ export function useCategoryFormState({
       setArchived(initialData.archived || false);
       setColor(initialData.color || fallbackColor);
 
-      // Set initial values for dirty check
       setInitialName(initialData.name || "");
       setInitialProblem(initialData.problem || "");
       setInitialSuggestion(initialData.suggestion || "");
       setInitialExpertIds(K_experts.map((e) => e._id));
       setInitialManagerIds(K_managers.map((m) => m._id));
       setInitialArchived(initialData.archived || false);
-      setInitialColor(initialData.color || fallbackColor);
+      setInitialColor(initialData.color || "");
 
       setInitialExpertObjects(K_experts);
       setInitialManagerObjects(K_managers);
     } else {
       // --- CREATE MODE ---
 
+      // This block now only runs when switching to create mode (initialData becomes null).
+      // It resets the form to a blank state. The color is handled by the effect below.
+      setName("");
+      setProblem("");
+      setSuggestion("");
+      setExpertIds([]);
+      setManagerIds([]);
+      setArchived(false);
+      setColor(""); // Start with no color
+
+      // Reset initial values for dirty check
+      setInitialName("");
+      setInitialProblem("");
+      setInitialSuggestion("");
+      setInitialExpertIds([]);
+      setInitialManagerIds([]);
+      setInitialArchived(false);
+      setInitialColor(""); // Will be set by the color effect
+
+      setInitialExpertObjects([]);
+      setInitialManagerObjects([]);
+    }
+    setNameError(null);
+  }, [initialData]); // This effect ONLY depends on initialData
+
+  // This separate effect handles setting the color, without resetting the rest of the form.
+  useEffect(() => {
+    if (initialData) return; // Only run this logic for CREATE mode.
+
+    const isSelectedColorValid =
+      color &&
+      paletteColors.some(
+        (p) => p.hexCode.toUpperCase() === color.toUpperCase()
+      );
+
+    // If no color is selected OR the selected one is no longer in the palette...
+    if (!isSelectedColorValid) {
       const usedHexCodes = new Set(
         usedColors.map((c) => c.color.toUpperCase())
       );
@@ -92,28 +128,14 @@ export function useCategoryFormState({
         ? firstAvailableColor.hexCode
         : "";
 
-      setName("");
-      setProblem("");
-      setSuggestion("");
-      setExpertIds([]);
-      setManagerIds([]);
-      setArchived(false);
-      setColor(defaultColor); // Use the calculated default color
+      setColor(defaultColor);
 
-      // Reset initial values for dirty check
-      setInitialName("");
-      setInitialProblem("");
-      setInitialSuggestion("");
-      setInitialExpertIds([]);
-      setInitialManagerIds([]);
-      setInitialArchived(false);
-      setInitialColor(defaultColor); // Use the same default for comparison
-
-      setInitialExpertObjects([]);
-      setInitialManagerObjects([]);
+      // On first load, `initialColor` is "", so we sync it to prevent a false dirty state.
+      if (initialColor === "") {
+        setInitialColor(defaultColor);
+      }
     }
-    setNameError(null);
-  }, [initialData, paletteColors, usedColors]); // Re-run effect if palette changes
+  }, [paletteColors, usedColors, initialData, color, initialColor]);
 
   const isDirty = useMemo((): boolean => {
     // isDirty logic remains the same and will work correctly

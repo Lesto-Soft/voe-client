@@ -92,6 +92,7 @@ const CategoryCasesList: React.FC<CategoryCasesListProps> = ({
   onClearRatingTierFilter, // <-- DESTRUCTURE
 }) => {
   const [isDateFilterVisible, setIsDateFilterVisible] = useState(false);
+  const tabsContainerRef = useRef<HTMLDivElement>(null);
   const filtersContainerRef = useRef<HTMLDivElement>(null);
 
   // ✅ MODIFIED: Changed from && to || to show active state if at least one date is selected.
@@ -124,6 +125,32 @@ const CategoryCasesList: React.FC<CategoryCasesListProps> = ({
     { key: "AWAITING_FINANCE", label: translateStatus("AWAITING_FINANCE") },
     { key: "CLOSED", label: translateStatus("CLOSED") },
   ];
+
+  useEffect(() => {
+    const scrollContainer = tabsContainerRef.current;
+
+    if (!scrollContainer) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      // If there's horizontal scroll, let the browser handle it natively
+      if (e.deltaX !== 0) return;
+
+      // If there's vertical scroll and the container is overflowing, convert it
+      if (
+        e.deltaY !== 0 &&
+        scrollContainer.scrollWidth > scrollContainer.clientWidth
+      ) {
+        e.preventDefault();
+        scrollContainer.scrollLeft += e.deltaY;
+      }
+    };
+
+    scrollContainer.addEventListener("wheel", handleWheel, { passive: false });
+
+    return () => {
+      scrollContainer.removeEventListener("wheel", handleWheel);
+    };
+  }, []);
 
   // --- ADDED: Mouse-wheel scroll effect for filter bar ---
   useEffect(() => {
@@ -189,7 +216,10 @@ const CategoryCasesList: React.FC<CategoryCasesListProps> = ({
     <main className="lg:col-span-6 bg-white rounded-lg shadow-lg flex flex-col overflow-hidden">
       <div className="p-1 sm:p-2 border-b border-gray-200">
         <div className="flex items-center justify-between pb-1">
-          <div className="flex space-x-1 sm:space-x-2 overflow-x-auto custom-scrollbar-xs">
+          <div
+            ref={tabsContainerRef}
+            className="flex space-x-1 sm:space-x-2 overflow-x-auto custom-scrollbar-xs"
+          >
             {tabs.map((tab) => (
               <button
                 key={tab.key}

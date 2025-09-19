@@ -38,16 +38,20 @@ const ShowDate = ({
     parseDate = moment.utc(parseInt(date, 10));
   } else parseDate = date;
 
+  const fullFormatDate = moment(parseDate).local().format("lll");
+  const relativeFormatDate = moment(parseDate).fromNow();
+
   return (
     <div
-      className={`w-36 whitespace-nowrap text-sm text-gray-500 flex items-center ${
+      className={`whitespace-nowrap text-sm text-gray-500 flex items-center flex-shrink-0 ${
         centered ? "justify-center" : ""
-      } gap-2 px-2 group relative hover:cursor-pointer`}
+      } gap-1.5 group relative hover:cursor-pointer`}
       onClick={() => setShowDate(!showDate)}
+      title={showDate ? relativeFormatDate : fullFormatDate}
     >
       <CalendarIcon className="!h-4 !w-4 min-w-4 min-h-4" />
-      {!showDate && <span>{moment(parseDate).fromNow()}</span>}
-      {showDate && <span>{moment(parseDate).local().format("lll")}</span>}
+      {!showDate && <span>{relativeFormatDate}</span>}
+      {showDate && <span>{fullFormatDate}</span>}
     </div>
   );
 };

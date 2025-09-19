@@ -202,8 +202,12 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
           {icon || <LinkIcon className="h-5 w-5 text-gray-400" />}
         </div>
         <div className="flex-1 min-w-0">
-          <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between text-sm">
-            <div className="flex items-baseline gap-x-1.5 min-w-0 mr-2">
+          <div
+            className={`flex flex-row sm:items-baseline sm:justify-between text-sm ${
+              view === "compact" ? "md:flex-wrap" : "flex-wrap"
+            }`}
+          >
+            <div className="flex items-baseline flex-wrap gap-x-1.5 min-w-0 mr-2">
               {view === "full" && (
                 <span className="text-gray-700 flex items-baseline gap-x-1 flex-shrink min-w-0">
                   {titleFragments.map((frag, index) => (
@@ -212,7 +216,7 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
                 </span>
               )}
               {caseToLinkForDisplay && caseToLinkForDisplay.case_number && (
-                <div className="w-[70px] flex-shrink-0">
+                <div className="flex-shrink-0">
                   <CaseLink
                     my_case={caseToLinkForDisplay as ICase}
                     t={tFunctionForCaseLinkProp}
@@ -224,12 +228,12 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
                   className="mt-1 ml-1 text-sm text-sm text-gray-600 line-clamp-1"
                   title={stripHtmlTags(itemContent)}
                 >
-                  {contentPreview}...
+                  {contentPreview}
                 </span>
               )}
             </div>
             {date && (
-              <span className="text-xs text-gray-400 whitespace-nowrap flex-shrink-0 mt-1 sm:mt-0 self-start sm:self-baseline">
+              <span className="text-xs text-gray-400 whitespace-nowrap flex-shrink-0 mt-0 sm:mt-1 self-start sm:self-baseline">
                 <ShowDate date={date} isCase={activityType === "case"} />
               </span>
             )}

@@ -64,7 +64,7 @@ const RatingMetricInformationPanel: React.FC<
               <PencilSquareIcon className="h-6 w-6" />
             </button>
           )}
-          <h1 className="text-xl font-bold text-gray-800 pr-8">
+          <h1 className="truncate text-xl font-bold text-gray-800 pr-8">
             {metric.name}
           </h1>
         </div>

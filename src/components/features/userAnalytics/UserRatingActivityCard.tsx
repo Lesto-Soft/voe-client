@@ -49,23 +49,27 @@ const UserRatingActivityCard: React.FC<UserRatingActivityCardProps> = ({
           <StarIcon className="h-5 w-5 text-yellow-500" />
         </div>
         <div className="flex-1 min-w-0">
-          <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between text-sm">
-            <div className="flex items-baseline gap-x-1.5 min-w-0 mr-2 text-gray-700">
+          <div
+            className={`flex flex-row sm:items-baseline sm:justify-between text-sm ${
+              view === "compact" ? "md:flex-wrap" : ""
+            }`}
+          >
+            <div className="flex items-baseline flex-wrap gap-x-1.5 min-w-0 mr-2 text-gray-700">
               {view === "full" && (
                 <span className="whitespace-nowrap">Даде на сигнал</span>
               )}
-              <div className="w-[70px] flex-shrink-0">
+              <div className="flex-shrink-0">
                 <CaseLink my_case={ratedCase} t={tFunctionForCaseLinkProp} />
               </div>
               <div className="text-sm flex items-center">
-                {view === "full" && <p className="text-gray-700"> оценка:</p>}
+                {<span className=""> оценка</span>}
                 <p className={`ml-2 text-base ${scoreStyle}`}>
                   {averageScore.toFixed(2)}
                 </p>
               </div>
             </div>
             {date && (
-              <span className="text-xs text-gray-400 whitespace-nowrap flex-shrink-0 mt-1 sm:mt-0 self-start sm:self-baseline">
+              <span className="text-xs text-gray-400 whitespace-nowrap flex-shrink-0 mt-0 sm:mt-1 self-start sm:self-center">
                 <ShowDate date={date} />
               </span>
             )}

@@ -14,6 +14,7 @@ import {
 import { getTextLength } from "../../../../utils/contentRenderer";
 import Mention from "@tiptap/extension-mention";
 import { createMentionSuggestion } from "./MentionSuggestion";
+import { useTranslation } from "react-i18next";
 
 export interface TextEditorProps {
   content?: string;
@@ -45,6 +46,7 @@ interface MenuBarProps {
   renderKey?: number;
 }
 const MenuBar: React.FC<MenuBarProps> = ({ editor, className }) => {
+  const { t } = useTranslation("menu");
   if (!editor) return null;
 
   const iconSizeClass = "w-5 h-5";
@@ -57,7 +59,7 @@ const MenuBar: React.FC<MenuBarProps> = ({ editor, className }) => {
       isActive: (e) => e.isActive("bold"),
       canExecute: (e) => e.can().toggleBold(),
       label: <span className={`font-bold ${textLabelBaseClass}`}>B</span>,
-      title: "Bold (Ctrl+B)",
+      title: t("rte.bold") || "Bold (Ctrl+B)",
     },
     {
       id: "italic",
@@ -65,7 +67,7 @@ const MenuBar: React.FC<MenuBarProps> = ({ editor, className }) => {
       isActive: (e) => e.isActive("italic"),
       canExecute: (e) => e.can().toggleItalic(),
       label: <span className={`italic ${textLabelBaseClass}`}>I</span>,
-      title: "Italic (Ctrl+I)",
+      title: t("rte.italic") || "Italic (Ctrl+I)",
     },
     {
       id: "underline",
@@ -73,7 +75,7 @@ const MenuBar: React.FC<MenuBarProps> = ({ editor, className }) => {
       isActive: (e) => e.isActive("underline"),
       canExecute: (e) => e.can().toggleUnderline(),
       label: <span className={`underline ${textLabelBaseClass}`}>U</span>,
-      title: "Underline (Ctrl+U)",
+      title: t("rte.underline") || "Underline (Ctrl+U)",
     },
     {
       id: "strike",
@@ -81,7 +83,7 @@ const MenuBar: React.FC<MenuBarProps> = ({ editor, className }) => {
       isActive: (e) => e.isActive("strike"),
       canExecute: (e) => e.can().toggleStrike(),
       label: <span className={`line-through ${textLabelBaseClass}`}>S</span>,
-      title: "Strikethrough",
+      title: t("rte.strikethrough") || "Strikethrough",
     },
     {
       id: "bulletList",
@@ -89,7 +91,7 @@ const MenuBar: React.FC<MenuBarProps> = ({ editor, className }) => {
       isActive: (e) => e.isActive("bulletList"),
       canExecute: (e) => e.isEditable,
       label: <ListBulletIcon className={iconSizeClass} />,
-      title: "Bullet List",
+      title: t("rte.bulletList") || "Bullet List",
     },
     {
       id: "orderedList",
@@ -97,7 +99,7 @@ const MenuBar: React.FC<MenuBarProps> = ({ editor, className }) => {
       isActive: (e) => e.isActive("orderedList"),
       canExecute: (e) => e.isEditable,
       label: <NumberedListIcon className={iconSizeClass} />,
-      title: "Ordered List",
+      title: t("rte.orderedList") || "Ordered List",
     },
     {
       id: "alignLeft",
@@ -105,7 +107,7 @@ const MenuBar: React.FC<MenuBarProps> = ({ editor, className }) => {
       isActive: (e) => e.isActive({ textAlign: "left" }),
       canExecute: (e) => e.can().setTextAlign("left"),
       label: <Bars3BottomLeftIcon className={iconSizeClass} />,
-      title: "Align Left",
+      title: t("rte.alignLeft") || "Align Left",
     },
     {
       id: "alignCenter",
@@ -113,7 +115,7 @@ const MenuBar: React.FC<MenuBarProps> = ({ editor, className }) => {
       isActive: (e) => e.isActive({ textAlign: "center" }),
       canExecute: (e) => e.can().setTextAlign("center"),
       label: <Bars3Icon className={iconSizeClass} />,
-      title: "Align Center",
+      title: t("rte.alignCenter") || "Align Center",
     },
     {
       id: "alignRight",
@@ -121,7 +123,7 @@ const MenuBar: React.FC<MenuBarProps> = ({ editor, className }) => {
       isActive: (e) => e.isActive({ textAlign: "right" }),
       canExecute: (e) => e.can().setTextAlign("right"),
       label: <Bars3BottomRightIcon className={iconSizeClass} />,
-      title: "Align Right",
+      title: t("rte.alignRight") || "Align Right",
     },
   ];
 
@@ -142,7 +144,7 @@ const MenuBar: React.FC<MenuBarProps> = ({ editor, className }) => {
             onClick={() => item.action(editor)}
             title={item.title}
             disabled={item.canExecute ? !item.canExecute(editor) : false}
-            className={`px-2 py-1 flex items-center justify-center rounded
+            className={`cursor-pointer px-2 py-1 flex items-center justify-center rounded
                                   text-gray-700 hover:bg-gray-200
                                   focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:z-10
                                   disabled:opacity-40 disabled:cursor-not-allowed
@@ -230,7 +232,6 @@ const TextEditor: React.FC<TextEditorProps> = ({
       attributes: {
         class:
           "prose prose-sm sm:prose-base max-w-none p-3 pr-4 focus:outline-none custom-tiptap-editor",
-        // Added bottom padding to make space for the counter
         style: `height: ${height}; overflow-y: auto; padding-bottom: 2rem;`,
       },
     },

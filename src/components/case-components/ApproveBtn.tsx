@@ -11,12 +11,12 @@ import LoadingModal from "../modals/LoadingModal";
 import ErrorModal from "../modals/ErrorModal";
 const ApproveBtn: React.FC<{
   approved: boolean;
-  setApproved: React.Dispatch<React.SetStateAction<boolean>>;
   t: (word: string) => string;
   answer: IAnswer;
   me: any;
   refetch: () => void;
-}> = ({ approved, setApproved, t, answer, me, refetch }) => {
+  caseNumber: number;
+}> = ({ approved, t, answer, me, caseNumber }) => {
   const [open, setOpen] = useState(false);
   const [needsFinance, setNeedsFinance] = useState(!!answer.needs_finance);
 
@@ -26,19 +26,16 @@ const ApproveBtn: React.FC<{
     loading: unapproveLoading,
     error: unapproveError,
   } = useUnapproveAnswer();
-
-  const handleApprove = async () => {
+  const handleConfirmAction = async () => {
+    setOpen(false);
     try {
       if (approved) {
-        await unapproveAnswer(answer._id);
+        await unapproveAnswer(answer._id, caseNumber);
       } else {
-        await approveAnswer(answer._id, me._id, needsFinance);
+        await approveAnswer(answer._id, me._id, needsFinance, caseNumber);
       }
-      setApproved((prev) => !prev);
-    } catch (error) {
-      console.error("Error approving answer:", error);
-    } finally {
-      await refetch();
+    } catch (err) {
+      console.error("Failed to update approval status:", err);
     }
   };
 
@@ -120,11 +117,7 @@ const ApproveBtn: React.FC<{
                   ? "bg-btnRed hover:bg-btnRedHover text-white hover:cursor-pointer"
                   : "bg-btnGreen hover:bg-btnGreenHover text-white hover:cursor-pointer"
               }`}
-              onClick={() => {
-                setApproved((v) => !v);
-                setOpen(false);
-                handleApprove();
-              }}
+              onClick={handleConfirmAction}
               type="button"
             >
               {approved ? t("unapprove") : t("approve")}

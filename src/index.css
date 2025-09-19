@@ -694,3 +694,11 @@ body.scrolled .notification-toast {
   border: 2px solid rgba(59, 130, 246, 0.5); /* blue-500 */
   background-color: rgba(59, 130, 246, 0.05); /* blue-100 */
 }
+
+.highlight {
+  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.7); /* A blue glow, for example */
+  background-color: rgba(219, 234, 254, 0.7);
+  border-radius: 8px; /* Optional: adds a nice rounded corner to the highlight */
+  transition: box-shadow 0.3s ease-in-out, background-color 0.3s ease-in-out;
+  animation: pulse-glow 2s infinite;
+}

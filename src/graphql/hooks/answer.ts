@@ -17,11 +17,16 @@ export const useApproveAnswer = () => {
   const approveAnswer = async (
     answerId: string,
     userId: string,
-    needsFinance: boolean
+    needsFinance: boolean,
+    caseNumber: number
   ) => {
     try {
       const response = await approveAnswerMutation({
         variables: { answerId, userId, needsFinance },
+        refetchQueries: [
+          { query: GET_CASE_BY_CASE_NUMBER, variables: { caseNumber } },
+        ],
+        awaitRefetchQueries: true,
       });
       return response.data.approveAnswer;
     } catch (err) {
@@ -42,10 +47,14 @@ export const useUnapproveAnswer = () => {
   const [unapproveAnswerMutation, { data, loading, error }] =
     useMutation(UNAPPROVE_ANSWER);
 
-  const unapproveAnswer = async (answerId: string) => {
+  const unapproveAnswer = async (answerId: string, caseNumber: number) => {
     try {
       const response = await unapproveAnswerMutation({
         variables: { answerId },
+        refetchQueries: [
+          { query: GET_CASE_BY_CASE_NUMBER, variables: { caseNumber } },
+        ],
+        awaitRefetchQueries: true,
       });
       return response.data.unapproveAnswer;
     } catch (err) {
@@ -67,10 +76,18 @@ export const useApproveFinanceAnswer = () => {
     APPROVE_ANSWER_FINANCE
   );
 
-  const approveFinanceAnswer = async (answerId: string, userId: string) => {
+  const approveFinanceAnswer = async (
+    answerId: string,
+    userId: string,
+    caseNumber: number
+  ) => {
     try {
       const response = await approveFinanceAnswerMutation({
         variables: { answerId, userId },
+        refetchQueries: [
+          { query: GET_CASE_BY_CASE_NUMBER, variables: { caseNumber } },
+        ],
+        awaitRefetchQueries: true,
       });
       return response.data.approveFinanceAnswer;
     } catch (err) {
@@ -91,10 +108,17 @@ export const useUnapproveFinanceAnswer = () => {
   const [unapproveFinanceAnswerMutation, { data, loading, error }] =
     useMutation(UNAPPROVE_ANSWER_FINANCE);
 
-  const unapproveFinanceAnswer = async (answerId: string) => {
+  const unapproveFinanceAnswer = async (
+    answerId: string,
+    caseNumber: number
+  ) => {
     try {
       const response = await unapproveFinanceAnswerMutation({
         variables: { answerId },
+        refetchQueries: [
+          { query: GET_CASE_BY_CASE_NUMBER, variables: { caseNumber } },
+        ],
+        awaitRefetchQueries: true,
       });
       return response.data.unapproveFinanceAnswer;
     } catch (err) {

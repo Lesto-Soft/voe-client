@@ -301,16 +301,13 @@ export const useCountUsersByExactUsername = (
   };
 };
 
-// --- useGetMe Hook (Unchanged) ---
 export const useGetMe = () => {
   const { loading, error, data, refetch } = useQuery(GET_ME);
-  // --- CHECK data access for 'me' ---
-  // If GET_ME returns { me: { ... } }, it should be data?.me
-  // If it returns { _id: ..., name: ... } directly, then data is correct
+
   return {
     loading,
     error,
-    me: data, // <= CHECK YOUR QUERY RESPONSE FIELD NAME! (Maybe data?.me ?)
+    me: data,
     refetch,
   };
 };

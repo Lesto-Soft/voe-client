@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ChatBubbleBottomCenterTextIcon,
   ChatBubbleOvalLeftEllipsisIcon,
@@ -11,7 +11,7 @@ import Answer from "./Answer";
 import AddComment from "./AddComment";
 import AddAnswer from "./AddAnswer";
 import { USER_RIGHTS } from "../../utils/GLOBAL_PARAMETERS";
-const LOCAL_STORAGE_KEY = "case-submenu-view";
+import { useLocation } from "react-router";
 
 interface SubmenuProps {
   caseData: ICase;
@@ -22,6 +22,29 @@ interface SubmenuProps {
   mentions?: { name: string; username: string; _id: string }[];
 }
 
+const getStateFromHash = () => {
+  const hash = window.location.hash.substring(1);
+
+  if (hash.startsWith("comments-")) {
+    return { view: "comments" as const, targetId: hash };
+  }
+  if (hash.startsWith("answers-")) {
+    return { view: "answers" as const, targetId: hash };
+  }
+  if (hash === "comments") {
+    return { view: "comments" as const, targetId: null };
+  }
+  if (hash === "answers") {
+    return { view: "answers" as const, targetId: null };
+  }
+  if (hash === "history") {
+    return { view: "history" as const, targetId: null };
+  }
+
+  // Default state if hash is empty or unrecognized
+  return { view: "answers" as const, targetId: null };
+};
+
 const Submenu: React.FC<SubmenuProps> = ({
   caseData,
   t,
@@ -30,18 +53,57 @@ const Submenu: React.FC<SubmenuProps> = ({
   userRights,
   mentions = [],
 }) => {
-  const [view, setView] = useState<"answers" | "comments" | "history">(() => {
-    const stored = sessionStorage.getItem(LOCAL_STORAGE_KEY);
-    if (stored === "answers" || stored === "comments" || stored === "history") {
-      return stored;
-    }
-    return "answers";
-  });
+  const [view, setView] = useState(() => getStateFromHash().view);
+  const [targetId, setTargetId] = useState<string | null>(null);
+  const [childTargetId, setChildTargetId] = useState<string | null>(null);
+  const location = useLocation();
+  useEffect(() => {
+    const handleNavigation = async () => {
+      const processUrl = () => {
+        const fullHash = location.hash.substring(1);
+        const isCommentLink = fullHash.includes("?comment=true");
+        const hashPart = fullHash.split("?")[0];
 
-  useLayoutEffect(() => {
-    sessionStorage.setItem(LOCAL_STORAGE_KEY, view);
-  }, [view]);
+        if (hashPart.startsWith("answers-") && isCommentLink) {
+          const commentId = hashPart.split("-")[1];
+          const parentAnswer = (caseData.answers || []).find((answer) =>
+            answer.comments?.some((c) => c._id === commentId)
+          );
+          if (parentAnswer) {
+            setView("answers");
+            setTargetId(`answers-${parentAnswer._id}`);
+            setChildTargetId(`comments-${commentId}`);
+          }
+          return;
+        }
 
+        setChildTargetId(null);
+        if (hashPart.startsWith("comments-")) {
+          setView("comments");
+          setTargetId(hashPart);
+        } else if (hashPart.startsWith("answers-")) {
+          setView("answers");
+          setTargetId(hashPart);
+        } else if (hashPart === "history" || hashPart === "comments") {
+          setView(hashPart as "history" | "comments");
+          setTargetId(null);
+        } else {
+          setView("answers");
+          setTargetId(null);
+        }
+      };
+
+      const isTargetingSpecificItem = location.hash.includes("-");
+
+      if (isTargetingSpecificItem) {
+        await refetch();
+      }
+
+      processUrl();
+    };
+
+    handleNavigation();
+  }, [caseData.answers, location.hash, refetch]);
   const isCreatorAndNothingElse =
     userRights.length === 1 && userRights.includes("creator");
 
@@ -54,7 +116,6 @@ const Submenu: React.FC<SubmenuProps> = ({
           <sup>{caseData?.answers?.length || 0}</sup>
         </>
       ),
-      // --- FIXED: Added mr-2 for spacing ---
       icon: <ChatBubbleBottomCenterTextIcon className="h-5 w-5 mr-2" />,
     },
     {
@@ -83,10 +144,26 @@ const Submenu: React.FC<SubmenuProps> = ({
     submenu.splice(2, 2);
   }
 
+  const visibleAnswers = (caseData.answers || []).filter((answer) => {
+    const isMentionedInAnswer =
+      answer.content?.includes(`data-id="${me.username}"`) ?? false;
+    const isMentionedInComment =
+      answer.comments?.some((comment) =>
+        comment.content?.includes(`data-id="${me.username}"`)
+      ) ?? false;
+
+    return (
+      answer.approved ||
+      userRights.includes(USER_RIGHTS.EXPERT) ||
+      userRights.includes(USER_RIGHTS.MANAGER) ||
+      userRights.includes(USER_RIGHTS.ADMIN) ||
+      isMentionedInAnswer ||
+      isMentionedInComment
+    );
+  });
+
   return (
-    // --- NEW: Flex container for sticky layout ---
     <div className="flex flex-col h-full">
-      {/* --- NEW: Sticky Header --- */}
       <div className="flex-shrink-0 sticky top-0 z-1 bg-white border-b border-gray-200">
         <div className="flex justify-center gap-2 py-4">
           {submenu.map((item) => (
@@ -99,9 +176,7 @@ const Submenu: React.FC<SubmenuProps> = ({
                   : "border-gray-300 shadow-sm bg-gray-100 text-gray-700 hover:bg-red-100 hover:text-btnRedHover hover:cursor-pointer"
               }`}
               type="button"
-              onClick={() =>
-                setView(item.key as "answers" | "comments" | "history")
-              }
+              onClick={() => (window.location.hash = item.key)}
             >
               {item.icon}
               {item.label}
@@ -114,6 +189,7 @@ const Submenu: React.FC<SubmenuProps> = ({
       <div className="flex-grow overflow-y-auto pt-6">
         {view === "answers" && (
           <>
+            {/* Block for AddAnswer form OR placeholder messages */}
             {userRights.includes(USER_RIGHTS.EXPERT) ||
             userRights.includes(USER_RIGHTS.MANAGER) ||
             userRights.includes(USER_RIGHTS.ADMIN) ? (
@@ -124,16 +200,24 @@ const Submenu: React.FC<SubmenuProps> = ({
                 me={me}
                 mentions={mentions}
               />
-            ) : (caseData?.answers?.length ?? 0) < 1 ? (
+            ) : // **MODIFIED**: Logic for non-privileged users
+            // If there are no visible answers for this user...
+            visibleAnswers.length === 0 &&
+              // ...and there are no answers on the case at all, show "no answers".
+              (caseData.answers || []).length === 0 ? (
               <div className="text-center text-gray-500">{t("no_answers")}</div>
-            ) : (
+            ) : // ...otherwise, if there are answers but none are visible, show "waiting for approval".
+            visibleAnswers.length === 0 ? (
               <div className="text-center text-gray-500">
                 {t("waiting_approval")}
               </div>
-            )}
-            {caseData.answers && caseData.answers.length > 0 ? (
+            ) : null}
+
+            {/* Block for the list of answers */}
+            {/* **MODIFIED**: We map over the pre-filtered visibleAnswers array */}
+            {visibleAnswers.length > 0 ? (
               <>
-                {[...caseData.answers]
+                {visibleAnswers
                   .sort((a, b) => {
                     if (a.approved && !b.approved) return -1;
                     if (!a.approved && b.approved) return 1;
@@ -141,33 +225,24 @@ const Submenu: React.FC<SubmenuProps> = ({
                     const dateB = new Date(b.date).getTime();
                     return dateB - dateA;
                   })
-                  .map((answer: IAnswer) => {
-                    const showThisAnswer =
-                      answer.approved ||
-                      userRights.includes(USER_RIGHTS.EXPERT) ||
-                      userRights.includes(USER_RIGHTS.MANAGER) ||
-                      userRights.includes(USER_RIGHTS.ADMIN);
-                    // --- SIMPLIFIED LOGIC ---
-                    return showThisAnswer ? (
-                      <Answer
-                        key={answer._id}
-                        answer={answer}
-                        me={me}
-                        refetch={refetch}
-                        caseNumber={caseData.case_number}
-                        status={caseData.status}
-                        caseCategories={caseData.categories}
-                        mentions={mentions}
-                      />
-                    ) : null;
-                  })}
+                  .map((answer: IAnswer) => (
+                    <Answer
+                      key={answer._id}
+                      answer={answer}
+                      me={me}
+                      refetch={refetch}
+                      caseNumber={caseData.case_number}
+                      status={caseData.status}
+                      caseCategories={caseData.categories}
+                      mentions={mentions}
+                      targetId={targetId}
+                      childTargetId={childTargetId}
+                    />
+                  ))}
               </>
-            ) : (
-              <div className="text-center text-gray-500">{t("no_answers")}</div>
-            )}
+            ) : null}
           </>
         )}
-
         {view === "comments" && (
           <>
             <AddComment
@@ -193,6 +268,7 @@ const Submenu: React.FC<SubmenuProps> = ({
                       me={me}
                       caseNumber={caseData.case_number}
                       mentions={mentions}
+                      targetId={targetId}
                     />
                   ))}
               </>

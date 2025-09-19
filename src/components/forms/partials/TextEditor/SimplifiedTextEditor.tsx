@@ -7,6 +7,7 @@ import { createMentionSuggestion } from "./MentionSuggestion";
 import { CustomMention } from "./CustomMention";
 import { QuestionMarkCircleIcon } from "@heroicons/react/24/solid";
 import HelpModal from "./HelperModal";
+import { useTranslation } from "react-i18next";
 
 interface SimpleTextEditorProps {
   content?: string;
@@ -30,8 +31,8 @@ const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
   mentions = [],
 }) => {
   const [charCount, setCharCount] = useState(0);
-  const [isHelpModalOpen, setIsHelpModalOpen] = useState(false); // 👈 1. Manage state here
-
+  const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
+  const { t } = useTranslation("menu");
   const mentionSuggestionConfig = useMemo(
     () => createMentionSuggestion(mentions),
     [mentions]
@@ -135,7 +136,7 @@ const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
                     ? "bg-blue-100 text-blue-700 ring-1 ring-blue-300"
                     : "text-gray-700 hover:bg-gray-200 hover:text-gray-900"
                 }`}
-                title="Bold (Ctrl+B)"
+                title={t("rte.bold") || "Bold (Ctrl+B)"}
               >
                 <strong>B</strong>
               </button>
@@ -147,7 +148,7 @@ const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
                     ? "bg-blue-100 text-blue-700 ring-1 ring-blue-300"
                     : "text-gray-700 hover:bg-gray-200 hover:text-gray-900"
                 }`}
-                title="Italic (Ctrl+I)"
+                title={t("rte.italic") || "Italic (Ctrl+I)"}
               >
                 <em>I</em>
               </button>
@@ -159,7 +160,7 @@ const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
                     ? "bg-blue-100 text-blue-700 ring-1 ring-blue-300"
                     : "text-gray-700 hover:bg-gray-200 hover:text-gray-900"
                 }`}
-                title="Underline (Ctrl+U)"
+                title={t("rte.underline") || "Underline (Ctrl+U)"}
               >
                 <u>U</u>
               </button>
@@ -171,7 +172,7 @@ const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
                   return;
                 }}
                 className="cursor-pointer px-2 py-1 rounded text-sm font-medium transition-colors text-gray-700 hover:bg-gray-200 hover:text-gray-900"
-                title="Mention User (@)"
+                title={t("rte.mention") || "Mention User (@)"}
               >
                 <strong className="text-blue-600">@</strong>
               </button>

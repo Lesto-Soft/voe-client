@@ -48,7 +48,25 @@
     "add_expert_to_category": "Expert <1>{{username}}</1> added to: <1>{{categoryName}}</1>",
     "add_manager_to_category": "Manager <1>{{username}}</1> added to: <1>{{categoryName}}</1>",
     "add_financial_approver": "<1>{{username}}</1> added as financial approver",
-    "mention_in_answer": "<1>{{username}}</1> ви спомена в отговора си",
-    "mention_in_comment": "<1>{{username}}</1> ви спомена в коментара си"
+    "mention_in_answer": "<1>{{username}}</1> mentioned you in their answer",
+    "mention_in_comment": "<1>{{username}}</1> mentioned you in their comment",
+    "mention_in_answer_comment": "<1>{{username}}</1> mentioned you in a comment on answer",
+    "mark_as_read": "Mark as read",
+    "mark_as_unread": "Mark as unread",
+    "delete_notification": "Delete notification",
+    "reopen_case": "Case <1>{{caseNumber}}</1> was set to <1>Open</1>",
+    "reopen_finance_case": "Case <1>{{caseNumber}}</1> was set to <1>Awaiting Finance</1>"
+  },
+  "rte": {
+    "bold": "Bold (Ctrl+B)",
+    "italic": "Italic (Ctrl+I)",
+    "underline": "Underline (Ctrl+U)",
+    "Strikethrough": "Strikethrough",
+    "bulletList": "Bullet List",
+    "orderedList": "Ordered List",
+    "alignLeft": "Align Left",
+    "alignCenter": "Align Center",
+    "alignRight": "Align Right",
+    "mention": "Mention User (@)"
   }
 }

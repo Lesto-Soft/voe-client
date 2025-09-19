@@ -10,6 +10,13 @@ export const NOTIFICATION_SUBSCRIPTION = gql`
       caseNumber
       username
       new_categories
+      entityId
     }
+  }
+`;
+
+export const NOTIFICATIONS_REMOVED_SUBSCRIPTION = gql`
+  subscription OnNotificationsRemoved($userId: ID!) {
+    notificationsRemoved(userId: $userId)
   }
 `;

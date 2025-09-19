@@ -28,6 +28,7 @@ import { useGetActiveCategories } from "../../graphql/hooks/category";
 import CaseDialog from "../modals/CaseDialog";
 import UserAvatar from "../cards/UserAvatar";
 import NotificationCenter from "../notification/NotificationCenter";
+import { useNavigate } from "react-router";
 
 export interface NavLinkProps {
   to: string;
@@ -50,7 +51,6 @@ const NavLink: React.FC<NavLinkProps> = ({
   const location = useLocation();
   const isActive = location.pathname === to;
 
-  // Conditionally set class names based on the theme
   const themeClasses = {
     red: {
       hover: "hover:text-btnRedHover",
@@ -81,6 +81,7 @@ const NavLink: React.FC<NavLinkProps> = ({
 
 const NavBar: React.FC<{ me: IMe }> = ({ me }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const [isMgmtDropdownOpen, setIsMgmtDropdownOpen] = useState(false);
@@ -107,10 +108,8 @@ const NavBar: React.FC<{ me: IMe }> = ({ me }) => {
           withCredentials: true,
         }
       );
-      // Clear all session storage for this tab
       sessionStorage.clear();
-
-      window.location.href = "/";
+      navigate("/");
     } catch (err) {
       console.error("Error during sign out:", err);
     }

@@ -10,11 +10,12 @@ import {
   EnvelopeOpenIcon,
   EnvelopeIcon,
   TrashIcon,
+  HandThumbDownIcon,
 } from "@heroicons/react/24/outline";
 import { INotification } from "../../db/interfaces";
 import { clsx } from "clsx";
 import moment from "moment";
-import { Trans } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import {
   useDeleteNotification,
@@ -25,15 +26,18 @@ import { AcademicCapIcon, AtSymbolIcon } from "@heroicons/react/24/solid";
 
 interface NotificationItemProps {
   notification: INotification;
+  setDropdownOpen?: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const NotificationItem: React.FC<NotificationItemProps> = ({
   notification,
+  setDropdownOpen,
 }) => {
   const navigate = useNavigate();
   const [markAsRead] = useMarkAsRead();
   const [deleteNotification] = useDeleteNotification();
   const [markAsUnread] = useMarkAsUnread();
+  const { t } = useTranslation("menu");
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
@@ -49,10 +53,14 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
         );
       case "approve_answer_close_case":
         return <HandThumbUpIcon className="h-5 w-5 text-green-600" />;
+      case "reopen_case":
+        return <HandThumbDownIcon className="h-5 w-5 text-red-600" />;
       case "approve_answer_await_finance_case":
         return <BanknotesIcon className="h-5 w-5 text-gray-500" />;
       case "approve_answer_finance_case":
         return <BanknotesIcon className="h-5 w-5 text-green-500" />;
+      case "reopen_finance_case":
+        return <BanknotesIcon className="h-5 w-5 text-red-500" />;
       case "add_expert_to_category":
         return <AcademicCapIcon className="h-5 w-5 text-yellow-500" />;
       case "add_manager_to_category":
@@ -62,6 +70,8 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
       case "mention_in_answer":
         return <AtSymbolIcon className="h-5 w-5 text-green-600" />;
       case "mention_in_comment":
+        return <AtSymbolIcon className="h-5 w-5 text-purple-600" />;
+      case "mention_in_answer_comment":
         return <AtSymbolIcon className="h-5 w-5 text-purple-600" />;
       default:
         return <InformationCircleIcon className="h-5 w-5 text-gray-500" />;
@@ -97,12 +107,39 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
       <div
         className="flex flex-1 items-start gap-4 min-w-0"
         onClick={() => {
+          if (setDropdownOpen) setDropdownOpen(false);
           markAsRead({ variables: { notificationIds: [notification._id] } });
-          if (notification.caseNumber) {
-            return navigate(`/case/${notification.caseNumber}`);
+          const { content, caseNumber, entityId, username } = notification;
+          console.log(content);
+          if (content.includes("reopen_")) {
+            console.log("here");
+            return navigate(`/case/${caseNumber}`, {
+              state: { refetch: true },
+            });
           }
-          if (notification.username) {
-            return navigate(`/user/${notification.username}`);
+          if (content.includes("approve_answer_finance_case")) {
+            return navigate(`/case/${caseNumber}`, {
+              state: { refetch: true },
+            });
+          }
+          if (caseNumber && entityId) {
+            if (content.includes("answer_comment")) {
+              return navigate(
+                `/case/${caseNumber}#answers-${entityId}?comment=true`
+              );
+            }
+            if (content.includes("comment")) {
+              return navigate(`/case/${caseNumber}#comments-${entityId}`);
+            }
+            if (content.includes("answer")) {
+              return navigate(`/case/${caseNumber}#answers-${entityId}`);
+            }
+          }
+          if (caseNumber) {
+            return navigate(`/case/${caseNumber}`);
+          }
+          if (username) {
+            return navigate(`/user/${username}`);
           }
         }}
       >
@@ -161,16 +198,15 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
             <button
               onClick={handleMarkAsUnread}
               className="p-1 rounded-full hover:bg-gray-200 cursor-pointer"
-              title="Mark as unread"
+              title={t("notification_contents.mark_as_unread")}
             >
               <EnvelopeIcon className="h-5 w-5 text-gray-600" />
             </button>
           ) : (
-            // If the notification is UNREAD, show "Mark as Read" button
             <button
               onClick={handleMarkAsRead}
               className="p-1 rounded-full hover:bg-gray-200 cursor-pointer"
-              title="Mark as read"
+              title={t("notification_contents.mark_as_read")}
             >
               <EnvelopeOpenIcon className="h-5 w-5 text-gray-600" />
             </button>
@@ -178,7 +214,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
           <button
             onClick={handleDelete}
             className="p-1 rounded-full hover:bg-gray-200 cursor-pointer"
-            title="Delete notification"
+            title={t("notification_contents.delete_notification")}
           >
             <TrashIcon className="h-5 w-5 text-gray-600" />
           </button>

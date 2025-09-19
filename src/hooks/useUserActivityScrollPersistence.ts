@@ -39,11 +39,13 @@ const getInitialTabStates = () => ({
   finances: { scrollTop: 0, visibleCount: INITIAL_VISIBLE_COUNT },
 });
 
+// Fix 1: Reorder parameters so required ones come before optional/default ones.
 const useUserActivityScrollPersistence = (
-  userId?: string,
+  userId: string | undefined,
+  activeTab: ActivityTab,
   isDataReady: boolean = false
 ) => {
-  const [activeTab, setActiveTab] = useState<ActivityTab>("all");
+  // REMOVED: Internal activeTab state management
   const [tabScrollStates, setTabScrollStates] = useState<TabScrollStates>(
     getInitialTabStates()
   );
@@ -115,26 +117,7 @@ const useUserActivityScrollPersistence = (
     const keys = getStorageKeys(userId);
 
     try {
-      // Load active tab
-      const savedActiveTab = sessionStorage.getItem(
-        keys.activeTab
-      ) as ActivityTab;
-      if (
-        savedActiveTab &&
-        [
-          "all",
-          "cases",
-          "answers",
-          "comments",
-          "ratings",
-          "approvals",
-          "finances",
-        ].includes(savedActiveTab)
-      ) {
-        setActiveTab(savedActiveTab);
-      }
-
-      // Load scroll states
+      // MODIFIED: Only load scroll states. Active tab is managed by parent.
       const savedScrollStates = sessionStorage.getItem(keys.scrollStates);
       if (savedScrollStates) {
         const parsedStates = JSON.parse(savedScrollStates) as TabScrollStates;
@@ -201,7 +184,7 @@ const useUserActivityScrollPersistence = (
     const scrollContainer = scrollableActivityListRef.current;
     if (!scrollContainer || !userId) return;
 
-    let scrollTimeout: NodeJS.Timeout;
+    let scrollTimeout: number;
 
     const handleScroll = () => {
       // Debounce scroll saving to avoid excessive writes
@@ -221,34 +204,7 @@ const useUserActivityScrollPersistence = (
     };
   }, [userId, saveCurrentScrollPosition]);
 
-  // Handle tab change
-  const handleTabChange = useCallback(
-    (newTab: ActivityTab) => {
-      if (newTab === activeTab) return; // Don't do anything if it's the same tab
-
-      if (!userId) {
-        setActiveTab(newTab);
-        return;
-      }
-
-      // Save current scroll position before switching
-      if (!isRestoringScroll.current) {
-        saveCurrentScrollPosition();
-      }
-
-      // Update active tab
-      setActiveTab(newTab);
-
-      // Save active tab to sessionStorage
-      const keys = getStorageKeys(userId);
-      try {
-        sessionStorage.setItem(keys.activeTab, newTab);
-      } catch (error) {
-        console.warn("Failed to save active tab to sessionStorage:", error);
-      }
-    },
-    [activeTab, userId, saveCurrentScrollPosition, getStorageKeys]
-  );
+  // REMOVED: handleTabChange is now managed by the parent component
 
   // Handle load more items
   const handleLoadMoreItems = useCallback(() => {
@@ -299,10 +255,8 @@ const useUserActivityScrollPersistence = (
 
   // 2. EXPORT THE NEW FUNCTION
   return {
-    activeTab,
     visibleCounts,
     scrollableActivityListRef,
-    handleTabChange,
     handleLoadMoreItems,
     resetScrollAndVisibleCount, // Export the function
     tabScrollStates,

@@ -66,20 +66,30 @@ export const subDays = (date: Date, days: number): Date => {
 };
 
 // ✅ MODIFIED: This function is now more robust and handles all known date formats.
-export const parseActivityDate = (dateValue: string | number): Date => {
-  // 1. Handle stringified timestamps (from ICase)
-  if (typeof dateValue === "string" && /^\d+$/.test(dateValue)) {
-    return new Date(parseInt(dateValue, 10));
+export const parseActivityDate = (dateValue: string | number | Date): Date => {
+  // If it's already a valid Date object, return it immediately.
+  if (dateValue instanceof Date) {
+    return dateValue;
   }
 
-  // 2. Handle the "DD-Mon-YYYY HH:mm" format (from IAnswer, IComment) using moment.js
+  // Handle numeric timestamps or stringified timestamps (e.g., from case.date).
+  if (
+    typeof dateValue === "number" ||
+    (typeof dateValue === "string" && /^\d+$/.test(dateValue))
+  ) {
+    return new Date(parseInt(String(dateValue), 10));
+  }
+
+  // For the specific "DD-Mon-YYYY HH:mm" format (from older answer.date fields),
+  // parse it as if it were a UTC time to resolve the timezone mismatch.
   if (
     typeof dateValue === "string" &&
     /^\d{2}-[A-Za-z]{3}-\d{4} \d{2}:\d{2}$/.test(dateValue)
   ) {
-    return moment(dateValue, "DD-MMM-YYYY HH:mm", "en").toDate();
+    return moment.utc(dateValue, "DD-MMM-YYYY HH:mm", "en").toDate();
   }
 
-  // 3. Handle standard formats (ISO 8601 from IMetricScore, or a direct Date object)
-  return new Date(dateValue);
+  // For all other standard formats (like full ISO 8601 strings from newer approved_date fields),
+  // let moment handle the parsing.
+  return moment(dateValue).toDate();
 };

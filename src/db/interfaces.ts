@@ -21,12 +21,19 @@ export interface ICase {
 export interface ICategory {
   _id: string;
   name: string;
+  color?: string;
   problem?: string;
   suggestion?: string;
   cases?: ICase[];
   experts?: IUser[] | [];
   managers?: IUser[] | [];
   archived?: boolean;
+}
+
+export interface IPaletteColor {
+  _id: string;
+  hexCode: string;
+  label?: string;
 }
 
 export interface IUser {

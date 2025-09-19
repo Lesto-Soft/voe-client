@@ -188,7 +188,7 @@ const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
           </div>
         )}
         {/* This div is now the scrollable container */}
-        <div className="relative flex-grow overflow-y-auto custom-scrollbar">
+        <div className="relative flex-grow overflow-y-auto custom-scrollbar-xs">
           <EditorContent editor={editor} />
           {maxLength && (
             // The counter is now sticky to the bottom of this scrollable container

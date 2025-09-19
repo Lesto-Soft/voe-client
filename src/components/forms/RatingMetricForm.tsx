@@ -176,11 +176,11 @@ const RatingMetricForm: React.FC<RatingMetricFormProps> = ({
             name="metricArchived"
             checked={archived}
             onChange={(e) => setArchived(e.target.checked)}
-            className="h-4 w-4 rounded border-gray-300 text-blue-600 shadow-sm focus:ring-blue-500"
+            className="cursor-pointer h-4 w-4 rounded border-gray-300 text-blue-600 shadow-sm focus:ring-blue-500"
           />
           <label
             htmlFor="metricArchived"
-            className="ml-2 text-sm font-medium text-gray-700"
+            className="cursor-pointer ml-2 text-sm font-medium text-gray-700"
           >
             Архивирана
           </label>

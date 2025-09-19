@@ -53,6 +53,7 @@ fragment FullUserFragment on User {
         categories {
           _id
           name
+          color
           experts {
             _id
           }
@@ -62,6 +63,8 @@ fragment FullUserFragment on User {
         }
         answers {
           needs_finance
+          approved { _id }
+          date
         }
         readBy {
           user {
@@ -84,15 +87,22 @@ fragment FullUserFragment on User {
           _id
           case_number
           status
+          date
+          priority
+          type
+          calculatedRating # MODIFIED: Added
           creator {
             _id
           }
           categories {
             _id
             name
+            color
           }
           answers {
             needs_finance
+            date
+            approved {_id}
           }
           readBy {
             user {
@@ -110,16 +120,23 @@ fragment FullUserFragment on User {
         case {
           _id
           case_number
+          date
           status
+          priority
+          type
+          calculatedRating # MODIFIED: Added
           creator {
             _id
           }
           categories {
             _id
             name
+            color
           }
           answers {
             needs_finance
+            date
+            approved {_id}
           }
           readBy {
             user {
@@ -132,21 +149,29 @@ fragment FullUserFragment on User {
         _id
         content
         date
+        approved {_id}
         financial_approved_date
         financial_approved {_id}
         case {
           _id
           case_number
+          date
           status
+          priority
+          type
+          calculatedRating # MODIFIED: Added
           creator {
             _id
           }
           categories {
             _id
             name
+            color
           }
           answers {
             needs_finance
+            approved {_id}
+            date
           }
           readBy {
             user {
@@ -162,16 +187,23 @@ fragment FullUserFragment on User {
         case {
           _id
           case_number
+          date
           status
+          priority
+          type
+          calculatedRating # MODIFIED: Added
           creator {
             _id
           }
           categories {
             _id
             name
+            color
           }
           answers {
             needs_finance
+            approved { _id }
+            date
           }
           readBy {
             user {
@@ -181,19 +213,28 @@ fragment FullUserFragment on User {
         }
         answer {
           _id
+          approved { _id }
+          date
           case {
             _id
             case_number
             status
+            priority
+            date
+            type
+            calculatedRating # MODIFIED: Added
             creator {
               _id
             }
             categories {
               _id
               name
+              color
             }
             answers {
               needs_finance
+              approved { _id }
+              date
             }
             readBy {
               user {
@@ -235,15 +276,22 @@ fragment FullUserFragment on User {
           _id
           case_number
           status
+          date
+          priority
+          type
+          calculatedRating # MODIFIED: Added
           creator {
             _id
           }
           categories {
             _id
             name
+            color
           }
           answers {
             needs_finance
+            approved { _id }
+            date
           }
           readBy {
             user {

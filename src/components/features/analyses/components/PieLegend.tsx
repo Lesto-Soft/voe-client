@@ -38,7 +38,7 @@ const PieLegend = React.forwardRef<HTMLDivElement, PieLegendProps>(
               <div
                 id={createIdFromLabel(item.label)} // Add a unique ID to each item
                 key={item.label}
-                className={`flex items-center justify-between text-xs sm:text-sm mb-1 p-1 rounded-md transition-colors ${
+                className={`flex items-center justify-between text-xs sm:text-sm mb-1 p-0 rounded-md transition-colors ${
                   isHovered ? "bg-sky-100" : ""
                 } ${onMiddleClick ? "cursor-pointer" : ""}`}
                 onMouseEnter={() => onHover(item.label)}
@@ -59,7 +59,7 @@ const PieLegend = React.forwardRef<HTMLDivElement, PieLegendProps>(
                     {item.label}
                   </span>
                 </div>
-                <span className="font-medium text-gray-700 whitespace-nowrap ml-2">
+                <span className="font-medium text-gray-700 whitespace-nowrap">
                   {item.value}
                   <span className="text-gray-500">
                     &nbsp;({((item.value / total) * 100).toFixed(1)}%)

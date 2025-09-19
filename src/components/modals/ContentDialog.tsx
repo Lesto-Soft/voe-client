@@ -81,7 +81,7 @@ const ContentDialog: React.FC<ContentDialogProps> = ({
           {/* Body with two columns */}
           <div className="flex-grow flex flex-col md:flex-row overflow-hidden p-4">
             {/* Left Column: Metadata */}
-            <div className="md:w-1/3 lg:w-1/4 flex-shrink-0 flex flex-col gap-4 overflow-y-auto custom-scrollbar pr-2">
+            <div className="md:w-1/3 lg:w-1/4 flex-shrink-0 flex flex-col gap-4 overflow-y-auto custom-scrollbar-xs pr-2">
               <div className="flex flex-col items-center justify-center w-full gap-1">
                 <Creator creator={creator} />
                 {date && <ShowDate date={date} centered={true} isCase={true} />}
@@ -167,7 +167,7 @@ const ContentDialog: React.FC<ContentDialogProps> = ({
               <div className="text-sm font-semibold text-gray-400">
                 {t("dashboard:content")}:
               </div>
-              <div className="bg-gray-50 rounded-md p-4 mb-2 text-gray-900 overflow-y-auto custom-scrollbar break-words flex-grow">
+              <div className="bg-gray-50 rounded-md p-4 mb-2 text-gray-900 overflow-y-auto custom-scrollbar-xs break-words flex-grow">
                 {renderContentSafely(content)}
               </div>
             </div>

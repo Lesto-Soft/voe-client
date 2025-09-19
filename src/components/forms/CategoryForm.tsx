@@ -1,16 +1,18 @@
 // src/components/forms/CategoryForm.tsx
 // NOTE: This file was renamed from CreateCategoryForm.tsx
 import React, { useState, useRef } from "react";
-import { ICategory } from "../../db/interfaces"; // Adjust path
+import { ICategory, IPaletteColor } from "../../db/interfaces"; // Adjust path
 import { useCategoryFormState } from "./hooks/useCategoryFormState"; // Adjust path
 import CategoryInputFields from "./partials/CategoryInputFields"; // Adjust path
 import { getTextLength } from "../../utils/contentRenderer";
 import { CATEGORY_HELPERS } from "../../utils/GLOBAL_PARAMETERS";
 import ConfirmActionDialog from "../modals/ConfirmActionDialog";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
+import ColorManagementDialog from "./partials/ColorManagementDialog";
 
 export interface CategoryFormData {
   name: string;
+  color: string;
   problem?: string;
   suggestion?: string;
   expertIds?: string[];
@@ -36,8 +38,14 @@ interface CategoryFormProps {
   submitButtonText?: string;
   isSubmitting?: boolean;
   onDirtyChange?: (isDirty: boolean) => void;
+  usedColors: { color: string; categoryName: string }[];
   allUsersForForm: ILeanUserForForm[];
   allUsersForFormLoading: boolean;
+  paletteColors: IPaletteColor[];
+  setPaletteColors: (colors: IPaletteColor[]) => void; // For optimistic DnD updates
+  allCategories: ICategory[]; // To check color usage
+  paletteColorsLoading: boolean;
+  canManageColors: boolean;
 }
 
 // Component name updated
@@ -47,8 +55,14 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
   submitButtonText,
   isSubmitting = false,
   onDirtyChange,
+  usedColors,
   allUsersForForm,
   allUsersForFormLoading,
+  paletteColors,
+  setPaletteColors,
+  allCategories,
+  paletteColorsLoading,
+  canManageColors,
 }) => {
   const {
     name,
@@ -63,13 +77,22 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
     setManagerIds,
     archived,
     setArchived,
+    color,
+    setColor,
     nameError,
     setNameError,
     initialExpertObjects,
     initialManagerObjects,
-  } = useCategoryFormState({ initialData, onDirtyChange });
+  } = useCategoryFormState({
+    initialData,
+    onDirtyChange,
+    paletteColors,
+    usedColors,
+  });
 
+  const [isColorManagerOpen, setIsColorManagerOpen] = useState(false);
   const [formSubmitError, setFormSubmitError] = useState<string | null>(null);
+  const [colorError, setColorError] = useState<string | null>(null);
   const [problemError, setProblemError] = useState<string | null>(null);
   const [suggestionError, setSuggestionError] = useState<string | null>(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
@@ -93,6 +116,7 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
     event.preventDefault();
     setFormSubmitError(null);
     setNameError(null);
+    setColorError(null);
     setProblemError(null);
     setSuggestionError(null);
 
@@ -100,6 +124,13 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
     const problemLength = getTextLength(problem);
     const suggestionLength = getTextLength(suggestion);
     let hasValidationErrors = false;
+
+    if (!color) {
+      setColorError(
+        "Моля, изберете цвят за категорията. Ако няма свободни цветове, моля добавете нов от менюто за управление."
+      );
+      hasValidationErrors = true;
+    }
 
     if (!finalTrimmedName) {
       setNameError("Името на категорията е задължително.");
@@ -146,6 +177,7 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
 
     const formDataObject: CategoryFormData = {
       name: finalTrimmedName,
+      color: color,
       problem: problem, // Send the full HTML
       suggestion: suggestion, // Send the full HTML
       expertIds: expertIds.length > 0 ? expertIds : undefined,
@@ -187,28 +219,38 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
     <>
       <form onSubmit={handleSubmit} noValidate>
         <div className="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2">
-          <CategoryInputFields
-            name={name}
-            setName={setName}
-            nameError={nameError}
-            problem={problem}
-            setProblem={setProblem}
-            problemError={problemError}
-            suggestion={suggestion}
-            setSuggestion={setSuggestion}
-            suggestionError={suggestionError}
-            expertIds={expertIds}
-            setExpertIds={setExpertIds}
-            managerIds={managerIds}
-            setManagerIds={setManagerIds}
-            archived={archived}
-            setArchived={setArchived}
-            errorPlaceholderClass={errorPlaceholderClass}
-            initialExperts={initialExpertObjects as ILeanUserForForm[]}
-            initialManagers={initialManagerObjects as ILeanUserForForm[]}
-            allUsersForAssigning={allUsersForForm}
-            usersLoading={allUsersForFormLoading}
-          />
+          <div className="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2 col-span-2">
+            <CategoryInputFields
+              name={name}
+              setName={setName}
+              nameError={nameError}
+              problem={problem}
+              setProblem={setProblem}
+              problemError={problemError}
+              suggestion={suggestion}
+              setSuggestion={setSuggestion}
+              suggestionError={suggestionError}
+              expertIds={expertIds}
+              setExpertIds={setExpertIds}
+              managerIds={managerIds}
+              setManagerIds={setManagerIds}
+              archived={archived}
+              setArchived={setArchived}
+              color={color}
+              setColor={setColor}
+              colorError={colorError}
+              usedColors={usedColors}
+              errorPlaceholderClass={errorPlaceholderClass}
+              initialExperts={initialExpertObjects as ILeanUserForForm[]}
+              initialManagers={initialManagerObjects as ILeanUserForForm[]}
+              allUsersForAssigning={allUsersForForm}
+              usersLoading={allUsersForFormLoading}
+              paletteColors={paletteColors}
+              paletteColorsLoading={paletteColorsLoading}
+              canManageColors={canManageColors}
+              onOpenColorManager={() => setIsColorManagerOpen(true)}
+            />
+          </div>
         </div>
 
         {formSubmitError && (
@@ -230,6 +272,17 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
           </button>
         </div>
       </form>
+      {canManageColors && (
+        <ColorManagementDialog
+          isOpen={isColorManagerOpen}
+          onClose={() => setIsColorManagerOpen(false)}
+          paletteColors={paletteColors}
+          setPaletteColors={setPaletteColors}
+          allCategories={allCategories}
+          isLoading={paletteColorsLoading}
+        />
+      )}
+
       {/* add the dialog to the component's render output */}
       <ConfirmActionDialog
         isOpen={isConfirmOpen}

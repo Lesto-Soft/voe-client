@@ -1,43 +1,71 @@
 // src/components/features/categoryAnalytics/CategoryCasesList.tsx
-import React, { useMemo, useState } from "react";
-import { ICase } from "../../../db/interfaces"; // Adjust path
-import CategoryCaseCard from "./CategoryCaseCard"; // Adjust path
+import React, { useMemo, useState, useRef, useEffect } from "react";
+import { ICase, CaseType, CasePriority } from "../../../db/interfaces";
+import CategoryCaseCard from "./CategoryCaseCard";
 import {
   ArrowDownCircleIcon,
   InboxIcon,
   CalendarDaysIcon,
+  // XMarkIcon,
 } from "@heroicons/react/24/outline";
-import { translateStatus } from "../../../utils/categoryDisplayUtils";
+import {
+  translateStatus,
+  translateCaseType,
+  RESOLUTION_CATEGORY_CONFIG,
+  ResolutionCategoryKey,
+  translatePriority,
+} from "../../../utils/categoryDisplayUtils";
 import DateRangeSelector from "../userAnalytics/DateRangeSelector";
+import FilterTag from "../../global/FilterTag";
 
-type CaseStatusTab =
-  | "all"
-  | "OPEN"
-  | "IN_PROGRESS"
-  | "AWAITING_FINANCE"
-  | "CLOSED";
+// The local CaseStatusTab type can now be imported from Category.tsx
+import { CaseStatusTab } from "../../../pages/Category";
+import { RatingTierLabel } from "../../../utils/ratingCalculations";
 
+type CategoryPieTabKey =
+  | "status"
+  | "type"
+  | "resolution"
+  | "priority"
+  | "user"
+  | "rating";
+
+// --- START: NEW PROPS INTERFACE ---
 interface CategoryCasesListProps {
   allCases: ICase[];
-  dateFilteredCases: ICase[];
+  casesForTabCounts: ICase[];
   visibleCasesCount: number;
   handleLoadMoreCases: () => void;
   scrollableRef: React.RefObject<HTMLDivElement | null>;
   serverBaseUrl: string;
   isLoading?: boolean;
   categoryName?: string;
-  activeStatus: CaseStatusTab;
-  setActiveStatus: (status: CaseStatusTab) => void;
   dateRange: { startDate: Date | null; endDate: Date | null };
   onDateRangeChange: (range: {
     startDate: Date | null;
     endDate: Date | null;
   }) => void;
+  isAnyFilterActive: boolean;
+  onClearAllFilters: () => void; // State and setters for filters
+  activeStatus: CaseStatusTab;
+  setActiveStatus: (status: CaseStatusTab) => void;
+  activeType: CaseType | "all";
+  onClearTypeFilter: () => void;
+  activeResolution: ResolutionCategoryKey | "all";
+  onClearResolutionFilter: () => void;
+  // --- ADD THESE NEW PROPS ---
+  activePriority: CasePriority | "all";
+  onClearPriorityFilter: () => void;
+  activeCreatorName: string | null;
+  onClearCreatorFilter: () => void;
+  onPieTabChange?: (tab: CategoryPieTabKey) => void;
+  activeRatingTier: RatingTierLabel; // <-- ADD
+  onClearRatingTierFilter: () => void; // <-- ADD
 }
 
 const CategoryCasesList: React.FC<CategoryCasesListProps> = ({
   allCases,
-  dateFilteredCases,
+  casesForTabCounts,
   visibleCasesCount,
   handleLoadMoreCases,
   scrollableRef,
@@ -48,8 +76,24 @@ const CategoryCasesList: React.FC<CategoryCasesListProps> = ({
   setActiveStatus,
   dateRange,
   onDateRangeChange,
+  isAnyFilterActive,
+  onClearAllFilters,
+  activeType,
+  onClearTypeFilter,
+  activeResolution,
+  onClearResolutionFilter,
+  // --- DESTRUCTURE NEW PROPS ---
+  activePriority,
+  onClearPriorityFilter,
+  activeCreatorName,
+  onClearCreatorFilter,
+  onPieTabChange,
+  activeRatingTier, // <-- DESTRUCTURE
+  onClearRatingTierFilter, // <-- DESTRUCTURE
 }) => {
   const [isDateFilterVisible, setIsDateFilterVisible] = useState(false);
+  const tabsContainerRef = useRef<HTMLDivElement>(null);
+  const filtersContainerRef = useRef<HTMLDivElement>(null);
 
   // ✅ MODIFIED: Changed from && to || to show active state if at least one date is selected.
   const isDateFilterActive =
@@ -63,15 +107,16 @@ const CategoryCasesList: React.FC<CategoryCasesListProps> = ({
       AWAITING_FINANCE: 0,
       CLOSED: 0,
     };
-    counts.all = dateFilteredCases.length;
-    dateFilteredCases.forEach((c) => {
+    // <-- UPDATE THE LOGIC TO USE THE NEW PROP -->
+    counts.all = casesForTabCounts.length;
+    casesForTabCounts.forEach((c) => {
       const status = c.status as CaseStatusTab;
       if (counts[status] !== undefined) {
         counts[status]++;
       }
     });
     return counts;
-  }, [dateFilteredCases]);
+  }, [casesForTabCounts]); // <-- UPDATE THE DEPENDENCY -->
 
   const tabs: { key: CaseStatusTab; label: string }[] = [
     { key: "all", label: "Всички" },
@@ -80,6 +125,57 @@ const CategoryCasesList: React.FC<CategoryCasesListProps> = ({
     { key: "AWAITING_FINANCE", label: translateStatus("AWAITING_FINANCE") },
     { key: "CLOSED", label: translateStatus("CLOSED") },
   ];
+
+  useEffect(() => {
+    const scrollContainer = tabsContainerRef.current;
+
+    if (!scrollContainer) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      // If there's horizontal scroll, let the browser handle it natively
+      if (e.deltaX !== 0) return;
+
+      // If there's vertical scroll and the container is overflowing, convert it
+      if (
+        e.deltaY !== 0 &&
+        scrollContainer.scrollWidth > scrollContainer.clientWidth
+      ) {
+        e.preventDefault();
+        scrollContainer.scrollLeft += e.deltaY;
+      }
+    };
+
+    scrollContainer.addEventListener("wheel", handleWheel, { passive: false });
+
+    return () => {
+      scrollContainer.removeEventListener("wheel", handleWheel);
+    };
+  }, []);
+
+  // --- ADDED: Mouse-wheel scroll effect for filter bar ---
+  useEffect(() => {
+    const scrollContainer = filtersContainerRef.current;
+    if (!scrollContainer) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      if (e.deltaX !== 0) return;
+
+      if (
+        e.deltaY !== 0 &&
+        scrollContainer.scrollWidth > scrollContainer.clientWidth
+      ) {
+        e.preventDefault();
+        scrollContainer.scrollLeft += e.deltaY;
+      }
+    };
+
+    scrollContainer.addEventListener("wheel", handleWheel, { passive: false });
+
+    return () => {
+      scrollContainer.removeEventListener("wheel", handleWheel);
+    };
+  }, [isAnyFilterActive]); // Re-attach if bar appears/disappears
+  // --- END: Mouse-wheel scroll effect ---
 
   const casesToDisplay = allCases.slice(0, visibleCasesCount);
   const totalCasesCount = allCases.length;
@@ -94,7 +190,7 @@ const CategoryCasesList: React.FC<CategoryCasesListProps> = ({
         </div>
         <div
           ref={scrollableRef}
-          className="overflow-y-auto flex-1 p-4 custom-scrollbar"
+          className="overflow-y-auto flex-1 p-4 custom-scrollbar-xs"
         >
           {[...Array(3)].map((_, index) => (
             <div
@@ -120,7 +216,10 @@ const CategoryCasesList: React.FC<CategoryCasesListProps> = ({
     <main className="lg:col-span-6 bg-white rounded-lg shadow-lg flex flex-col overflow-hidden">
       <div className="p-1 sm:p-2 border-b border-gray-200">
         <div className="flex items-center justify-between pb-1">
-          <div className="flex space-x-1 sm:space-x-2 overflow-x-auto custom-scrollbar-xs">
+          <div
+            ref={tabsContainerRef}
+            className="flex space-x-1 sm:space-x-2 overflow-x-auto custom-scrollbar-xs"
+          >
             {tabs.map((tab) => (
               <button
                 key={tab.key}
@@ -162,9 +261,85 @@ const CategoryCasesList: React.FC<CategoryCasesListProps> = ({
         )}
       </div>
 
+      {/* --- NEW: Active Filters Display --- */}
+      {isAnyFilterActive && (
+        <div className="px-4 py-1.5 border-b border-gray-200 bg-gray-50 flex items-center justify-between gap-x-4">
+          <div
+            ref={filtersContainerRef}
+            className="flex items-center gap-2 overflow-x-auto custom-scrollbar-xs flex-nowrap py-1"
+          >
+            <span className="text-xs font-semibold text-gray-600 mr-2">
+              Активни филтри:
+            </span>
+            {activeStatus !== "all" && (
+              <FilterTag
+                label={`Статус: ${translateStatus(activeStatus)}`}
+                onRemove={() => setActiveStatus("all")}
+                onClick={() => onPieTabChange?.("status")}
+              />
+            )}
+            {activeType !== "all" && (
+              <FilterTag
+                label={`Тип: ${translateCaseType(activeType)}`}
+                onRemove={onClearTypeFilter}
+                onClick={() => onPieTabChange?.("type")}
+              />
+            )}
+            {activeResolution !== "all" && (
+              <FilterTag
+                label={`Резолюция: ${
+                  RESOLUTION_CATEGORY_CONFIG.find(
+                    (c) => c.key === activeResolution
+                  )?.label
+                }`}
+                onRemove={onClearResolutionFilter}
+                onClick={() => onPieTabChange?.("resolution")}
+              />
+            )}
+            {/* --- ADD THESE TWO NEW TAGS --- */}
+            {activePriority !== "all" && (
+              <FilterTag
+                label={`Приоритет: ${translatePriority(activePriority)}`}
+                onRemove={onClearPriorityFilter}
+                onClick={() => onPieTabChange?.("priority")}
+              />
+            )}
+            {activeCreatorName && (
+              <FilterTag
+                label={`Създател: ${activeCreatorName}`}
+                onRemove={onClearCreatorFilter}
+                onClick={() => onPieTabChange?.("user")}
+              />
+            )}
+            {activeRatingTier !== "all" && (
+              <FilterTag
+                label={`Рейтинг: ${activeRatingTier}`}
+                onRemove={onClearRatingTierFilter}
+                onClick={() => onPieTabChange?.("rating")}
+              />
+            )}
+            {/* -------------------------- */}
+            {isDateFilterActive && (
+              <FilterTag
+                label="Период"
+                onRemove={() =>
+                  onDateRangeChange({ startDate: null, endDate: null })
+                }
+              />
+            )}
+          </div>
+          <button
+            onClick={onClearAllFilters}
+            className="cursor-pointer text-xs font-semibold text-indigo-600 hover:text-indigo-800 hover:underline flex-shrink-0"
+          >
+            Изчисти всички
+          </button>
+        </div>
+      )}
+
       <div
         ref={scrollableRef}
-        className="overflow-y-auto flex-1 custom-scrollbar"
+        className="overflow-y-auto flex-1 custom-scrollbar-xs max-h-[calc(100vh-6rem)]"
       >
         {totalCasesCount > 0 ? (
           <>
@@ -181,7 +356,7 @@ const CategoryCasesList: React.FC<CategoryCasesListProps> = ({
               <div className="p-4 flex justify-center mt-2 mb-2">
                 <button
                   onClick={handleLoadMoreCases}
-                  className="flex items-center px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded-md hover:bg-blue-600 transition-colors duration-150"
+                  className="cursor-pointer flex items-center px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded-md hover:bg-blue-600 transition-colors duration-150"
                 >
                   <ArrowDownCircleIcon className="h-5 w-5 mr-2" />
                   Зареди още... ({totalCasesCount - visibleCasesCount} остават)

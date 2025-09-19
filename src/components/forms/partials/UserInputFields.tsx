@@ -242,7 +242,7 @@ const UserInputFields: React.FC<UserInputFieldsProps> = ({
                 onChange={(e) => onRoleChange(e.target.value)}
                 required
                 disabled={!canEditSensitiveFields}
-                className={`w-full rounded-md border p-2 shadow-sm focus:outline-none focus:border-indigo-500 ${disabledClasses} ${
+                className={`cursor-pointer w-full rounded-md border p-2 shadow-sm focus:outline-none focus:border-indigo-500 ${disabledClasses} ${
                   roleError ? "border-red-500" : "border-gray-300"
                 }`}
               >
@@ -275,11 +275,11 @@ const UserInputFields: React.FC<UserInputFieldsProps> = ({
                   checked={financialApprover}
                   onChange={(e) => setFinancialApprover(e.target.checked)}
                   disabled={!canEditSensitiveFields}
-                  className={`h-5 w-5 rounded border-gray-300 text-blue-600 shadow-sm focus:outline-none focus:border-indigo-500 ${disabledClasses}`}
+                  className={`cursor-pointer h-5 w-5 rounded border-gray-300 text-blue-600 shadow-sm focus:outline-none focus:border-indigo-500 ${disabledClasses}`}
                 />
                 <label
                   htmlFor="financial_approver"
-                  className="ml-2 text-sm font-medium text-gray-700"
+                  className="cursor-pointer ml-2 text-sm font-medium text-gray-700"
                 >
                   Финансов Одобрител
                 </label>

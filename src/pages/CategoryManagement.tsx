@@ -19,7 +19,11 @@ import {
   CreateCategoryInput,
   UpdateCategoryInput,
 } from "../graphql/mutation/category"; // Adjust path as needed
-import { ICategory, ICaseStatus as CaseStatus } from "../db/interfaces"; // Adjust path as needed, Added IUser
+import {
+  ICategory,
+  ICaseStatus as CaseStatus,
+  IPaletteColor,
+} from "../db/interfaces"; // Adjust path as needed, Added IUser
 import CategoryTable from "../components/features/categoryManagement/CategoryTable"; // Adjust path as needed
 import {
   useCategoryManagement,
@@ -40,6 +44,9 @@ import { GET_LEAN_USERS } from "../graphql/query/user"; // Adjust path for GET_L
 import { useCurrentUser } from "../context/UserContext"; // <-- NEW: Import current user hook
 import { IMe } from "../db/interfaces"; // <-- NEW: Import IMe
 import { ROLES } from "../utils/GLOBAL_PARAMETERS";
+
+// import { PREDEFINED_CATEGORY_COLORS } from "../utils/colors";
+import { useGetAllPaletteColors } from "../graphql/hooks/colorPalette";
 
 // Define a lean user type that includes the role ID, matching GET_LEAN_USERS
 interface ILeanUserForForm {
@@ -73,6 +80,31 @@ const CategoryManagement: React.FC = () => {
   // --- NEW: Get current user and determine if they are an admin ---
   const currentUser = useCurrentUser() as IMe | undefined;
   const isAdmin = currentUser?.role?._id === ROLES.ADMIN;
+
+  const {
+    paletteColors: fetchedPaletteColors,
+    loading: paletteColorsLoading,
+    error: paletteColorsError,
+  } = useGetAllPaletteColors();
+
+  // State to hold colors for optimistic updates
+  const [paletteColors, setPaletteColors] = useState<IPaletteColor[]>([]);
+
+  useEffect(() => {
+    if (fetchedPaletteColors) {
+      // Use a functional update to access the previous state
+      setPaletteColors((prevColors) => {
+        // Only update state if the content has actually changed
+        if (
+          JSON.stringify(prevColors) !== JSON.stringify(fetchedPaletteColors)
+        ) {
+          return fetchedPaletteColors;
+        }
+        // Otherwise, return the old state to prevent a re-render
+        return prevColors;
+      });
+    }
+  }, [fetchedPaletteColors]); // Corrected: Only depend on fetchedPaletteColors
 
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<ICategory | null>(
@@ -421,7 +453,8 @@ const CategoryManagement: React.FC = () => {
       awaitingFinanceError ||
       closedError ||
       absoluteTotalCaseCountError ||
-      allUsersForFormError,
+      allUsersForFormError ||
+      paletteColorsError,
     [
       categoriesListError,
       categoryCountErrorForTable,
@@ -433,6 +466,7 @@ const CategoryManagement: React.FC = () => {
       closedError,
       absoluteTotalCaseCountError,
       allUsersForFormError,
+      paletteColorsError,
     ]
   );
 
@@ -457,6 +491,23 @@ const CategoryManagement: React.FC = () => {
     categoriesListLoading,
     categoryCountLoadingForTable,
   ]);
+
+  // fetch all categories for the color picker
+  const { categories: allCategoriesForPicker } = useGetAllLeanCategories({});
+
+  // Computes the list of colors used by *other* categories.
+  const usedColors = useMemo(() => {
+    if (!allCategoriesForPicker) return [];
+    return (
+      allCategoriesForPicker
+        // 1. Filter out the category currently being edited.
+        .filter((cat) => cat._id !== editingCategory?._id)
+        // 2. Filter for categories that have a color defined.
+        .filter((cat) => !!cat.color)
+        // 3. Map to the required structure.
+        .map((cat) => ({ color: cat.color!, categoryName: cat.name }))
+    );
+  }, [allCategoriesForPicker, editingCategory]); // Dependency array updated
 
   const handleCaseStatusCardClick = (status: CaseStatus | string | null) => {
     const newStatus =
@@ -496,6 +547,7 @@ const CategoryManagement: React.FC = () => {
   ) => {
     const inputForMutation = {
       name: formData.name,
+      color: formData.color,
       problem: formData.problem || "",
       suggestion: formData.suggestion || "",
       experts: formData.expertIds,
@@ -728,7 +780,7 @@ const CategoryManagement: React.FC = () => {
             Грешка при запис: {mutationError.message || "Неизвестна грешка"}
           </div>
         )}
-        {!(createCategoryLoading || updateCategoryLoading) && (
+        {!updateCategoryLoading && (
           <CategoryForm
             key={editingCategory ? editingCategory._id : "create-new-category"}
             onSubmit={handleCategoryFormSubmit}
@@ -739,8 +791,14 @@ const CategoryManagement: React.FC = () => {
             }
             isSubmitting={createCategoryLoading || updateCategoryLoading}
             onDirtyChange={setFormHasUnsavedChanges}
+            usedColors={usedColors}
             allUsersForForm={allUsersDataForForm?.getLeanUsers || []}
             allUsersForFormLoading={allUsersForFormLoading}
+            paletteColors={paletteColors}
+            setPaletteColors={setPaletteColors}
+            allCategories={allCategoriesForPicker || []}
+            paletteColorsLoading={paletteColorsLoading}
+            canManageColors={isAdmin}
           />
         )}
       </CategoryModal>

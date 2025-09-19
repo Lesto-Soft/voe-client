@@ -53,7 +53,7 @@ const AnalysesControls: React.FC<AnalysesControlsProps> = (props) => {
     customEndDate,
     handleCustomDateRangeChange,
     startDateForPies,
-    endDateForPies,
+    // endDateForPies,
   } = props;
 
   const renderToggles = () => (
@@ -133,6 +133,7 @@ const AnalysesControls: React.FC<AnalysesControlsProps> = (props) => {
     }
 
     let displayedPeriod = "Зареждане...";
+    console.log(displayedPeriod);
     if (viewMode === "all") {
       displayedPeriod = "Всички данни";
     } else if (viewMode === "yearly") {

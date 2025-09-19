@@ -37,30 +37,31 @@ const MetricScoreItemCard: React.FC<MetricScoreItemCardProps> = ({ score }) => {
 
   return (
     <div className="p-3 sm:p-4 border-b border-gray-100 hover:bg-gray-50 group transition-colors duration-150">
-      <div className="flex items-center justify-between space-x-2 sm:space-x-3">
-        <div className="flex items-center space-x-2 min-w-0">
+      {/* MODIFIED: Added flex-wrap and gap for responsiveness */}
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+        <div className="flex items-center flex-wrap gap-x-2 min-w-0 text-sm">
           <div className="flex-shrink-0">
             <UserLink user={score.user} />
           </div>
-          <div className="text-sm text-gray-600 min-w-0">
-            <span className="mx-1">даде оценка от</span>
+          <div className="text-gray-600 min-w-0 hidden sm:block">
+            <span className="mx-0">даде</span>
           </div>
           <div
-            className={`flex items-center text-sm font-bold ${scoreColorClass}`}
+            className={`flex items-center justify-center font-bold ${scoreColorClass}`}
             title={`Оценка: ${score.score} от 5`}
           >
             <StarIcon className={`h-5 w-5 mr-1 ${scoreColorClass}`} />
             <span>{score.score} / 5</span>
           </div>
-          <div className="text-sm text-gray-600 min-w-0">
-            <span className="mx-1">на сигнал</span>
+          <div className="text-gray-600 min-w-0 hidden sm:block">
+            <span className="mx-0">на</span>
           </div>
-          {/* Apply fixed width to this div */}
-          <div className="w-[70px] flex-shrink-0">
+          {/* MODIFIED: Removed fixed width div */}
+          <div className="flex-shrink-0">
             <CaseLink my_case={score.case} t={tFunctionForCaseLink} />
           </div>
         </div>
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-4 self-center">
           <div className="text-xs text-gray-400 whitespace-nowrap flex-shrink-0">
             <ShowDate date={score.date} />
           </div>

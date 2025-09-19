@@ -5,6 +5,7 @@ const categoryFragment = `
   fragment MutationCategoryFragment on Category {
     _id
     name
+    color
     archived
     problem
     suggestion
@@ -44,6 +45,7 @@ export const DELETE_CATEGORY = gql`
 
 export type CreateCategoryInput = {
   name: string;
+  color: string;
   problem?: string;
   suggestion?: string;
   experts?: string[];
@@ -53,6 +55,7 @@ export type CreateCategoryInput = {
 
 export type UpdateCategoryInput = {
   name?: string;
+  color?: string;
   problem?: string;
   suggestion?: string;
   experts?: string[];

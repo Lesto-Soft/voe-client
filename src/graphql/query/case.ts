@@ -43,6 +43,7 @@ const caseFragment = gql`
     categories {
       _id
       name
+      color
       experts {
         _id
       }

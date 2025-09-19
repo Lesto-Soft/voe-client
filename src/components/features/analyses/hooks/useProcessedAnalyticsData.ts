@@ -14,7 +14,6 @@ import {
   PRIORITY_TRANSLATIONS,
   TYPE_COLORS,
   TypeColorKey,
-  CATEGORY_COLORS,
 } from "../constants";
 
 // --- TYPE DEFINITIONS ---
@@ -205,7 +204,7 @@ export const useProcessedAnalyticsData = (
         return { periodLabel: dayName, ...aggregateCases(dayCases) };
       });
     } else if (viewMode === "custom") {
-      let periodString = "Целия период"; // Default for custom view with no dates
+      let periodString = "Цял период"; // Default for custom view with no dates
       const startStr = startDateForPies?.toLocaleDateString("bg-BG");
       const endStr = endDateForPies?.toLocaleDateString("bg-BG");
 
@@ -266,23 +265,37 @@ export const useProcessedAnalyticsData = (
   const categoryPieData = useMemo(() => {
     if (!filteredCasesForPieCharts || filteredCasesForPieCharts.length === 0)
       return [];
-    // Store the count and the ID
-    const counts: { [key: string]: { value: number; id: string } } = {};
+
+    // 2. UPDATE THE `counts` OBJECT TYPE TO STORE COLOR
+    const counts: {
+      [key: string]: { value: number; id: string; color: string };
+    } = {};
+
     filteredCasesForPieCharts.forEach((c: ICase) => {
       (c.categories || []).forEach((cat: ICategory) => {
-        if (!counts[cat.name]) {
-          counts[cat.name] = { value: 0, id: cat._id };
+        if (cat && cat.name) {
+          // Add a check for cat object
+          if (!counts[cat.name]) {
+            // 3. STORE THE COLOR FROM THE CATEGORY OBJECT
+            counts[cat.name] = {
+              value: 0,
+              id: cat._id,
+              color: cat.color || "#A9A9A9", // Use the color with a fallback
+            };
+          }
+          counts[cat.name].value++;
         }
-        counts[cat.name].value++;
       });
     });
+
     return Object.entries(counts)
       .sort(([, aData], [, bData]) => bData.value - aData.value)
-      .map(([label, data], index) => ({
+      .map(([label, data]) => ({
         label,
         value: data.value,
         id: data.id,
-        color: CATEGORY_COLORS[index % CATEGORY_COLORS.length],
+        // 4. USE THE STORED COLOR
+        color: data.color,
       }));
   }, [filteredCasesForPieCharts]);
 

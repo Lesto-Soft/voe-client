@@ -437,7 +437,8 @@ const UserManagement: React.FC = () => {
                 <p className="text-sm">
                   Има {misconfiguredExpertsCount} потребител
                   {misconfiguredExpertsCount === 1 ? "" : "и"} с роля 'Експерт',
-                  на които не са зададени категории.
+                  на {misconfiguredExpertsCount === 1 ? "когото" : "които"} не
+                  са зададени категории.
                 </p>
               </div>
             </div>

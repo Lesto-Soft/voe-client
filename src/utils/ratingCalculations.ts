@@ -21,3 +21,19 @@
 //   const sum = validRatings.reduce((acc, rating) => acc + rating, 0);
 //   return sum / validRatings.length;
 // };
+
+import { TIERS } from "./GLOBAL_PARAMETERS";
+
+export type RatingTierLabel =
+  | "Отлични"
+  | "Добри"
+  | "Средни"
+  | "Проблемни"
+  | "all";
+
+export const getTierForScore = (score: number): RatingTierLabel => {
+  if (score >= TIERS.GOLD) return "Отлични";
+  if (score >= TIERS.SILVER) return "Добри";
+  if (score >= TIERS.BRONZE) return "Средни";
+  return "Проблемни";
+};

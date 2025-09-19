@@ -1,4 +1,6 @@
-import React, { useState, useMemo } from "react";
+// src/components/features/ratingMetricAnalytics/RatingMetricStatisticsPanel.tsx
+import React, { useMemo, useRef, useEffect } from "react";
+import * as Tooltip from "@radix-ui/react-tooltip"; // <-- ADD
 import { IMetricScore } from "../../../db/interfaces";
 import useRatingMetricStats from "../../../hooks/useRatingMetricStats";
 import {
@@ -8,13 +10,17 @@ import {
   UsersIcon,
 } from "@heroicons/react/24/outline";
 import StatisticPieChart from "../../charts/StatisticPieChart";
-import { TIERS } from "../../../utils/GLOBAL_PARAMETERS"; // <-- Import TIERS
+import { PieSegmentData } from "../../charts/PieChart";
+import { TIERS } from "../../../utils/GLOBAL_PARAMETERS";
+import { TierTab } from "./MetricScoreList"; // <-- ADD
+import StatItem from "../../global/StatItem";
 
-type StatsTab = "tier" | "user";
+// Define the type locally
+type StatsTab = "tier" | "user" | "category";
 
-// Helper to determine color for the average score
-const getScoreCellStyle = (score: number | undefined | null): string => {
-  if (!score || score === 0) return "text-gray-800 text-base";
+const getRatingStyleClass = (score: number | undefined | null): string => {
+  // Matches the default classes of the StatItem value
+  if (!score || score === 0) return "text-gray-800 text-base font-semibold";
   if (score >= TIERS.GOLD) return "text-amber-500 text-base font-bold";
   if (score >= TIERS.SILVER) return "text-slate-500 text-base font-bold";
   if (score >= TIERS.BRONZE) return "text-orange-700 text-base font-bold";
@@ -22,27 +28,101 @@ const getScoreCellStyle = (score: number | undefined | null): string => {
 };
 
 interface RatingMetricStatisticsPanelProps {
-  scores: IMetricScore[];
+  pieScores: IMetricScore[]; // <-- RENAMED: For pie charts (date-filtered only)
+  textScores: IMetricScore[]; // <-- ADDED: For text stats (fully-filtered)
   isLoading: boolean;
-  dateRange: { startDate: Date | null; endDate: Date | null };
+  onTierClick?: (segment: PieSegmentData) => void;
+  onUserClick?: (segment: PieSegmentData) => void;
+  activeTierLabel?: string | null;
+  activeUserLabel?: string | null;
+  activeTierFilter: TierTab; // <-- ADD
+  activeUserFilter: string | null; // <-- ADD
+  onCategoryClick?: (segment: PieSegmentData) => void;
+  activeCategoryLabel?: string | null;
+  activeCategoryFilter: string | null;
+  // --- PROPS FOR STATE LIFTING ---
+  activePieTab: StatsTab;
+  onPieTabChange: (tab: StatsTab) => void;
+  // --- PROPS FOR CLICKABLE DOTS ---
+  onClearTierFilter: () => void;
+  onClearUserFilter: () => void;
+  onClearCategoryFilter: () => void;
 }
 
 const RatingMetricStatisticsPanel: React.FC<
   RatingMetricStatisticsPanelProps
-> = ({ scores, isLoading, dateRange }) => {
-  const [activeTab, setActiveTab] = useState<StatsTab>("tier");
+> = ({
+  pieScores, // <-- DESTRUCTURE
+  textScores, // <-- DESTRUCTURE
+  isLoading,
+  onTierClick,
+  onUserClick,
+  activeTierLabel,
+  activeUserLabel,
+  activeTierFilter, // <-- DESTRUCTURE
+  activeUserFilter,
+  // --- DESTRUCTURE NEW PROPS ---
+  onCategoryClick,
+  activeCategoryLabel,
+  activeCategoryFilter,
+  // --- DESTRUCTURE NEW PROPS ---
+  activePieTab,
+  onPieTabChange,
+  onClearTierFilter,
+  onClearUserFilter,
+  onClearCategoryFilter,
+}) => {
+  // --- REMOVED internal state, now controlled by activePieTab prop ---
+  // const [activeTab, setActiveTab] = useState<StatsTab>("tier");
+  const pieTabsContainerRef = useRef<HTMLDivElement>(null); // <-- ADDED FOR SCROLL
 
-  const filteredScores = useMemo(() => {
-    if (!dateRange.startDate || !dateRange.endDate) return scores;
-    return scores.filter((score) => {
-      const scoreDate = new Date(score.date);
-      return (
-        scoreDate >= dateRange.startDate! && scoreDate <= dateRange.endDate!
-      );
-    });
-  }, [scores, dateRange]);
+  // 1. Stats for the PIE CHARTS (use the consistent date-filtered list)
+  const pieChartStats = useRatingMetricStats(pieScores);
 
-  const stats = useRatingMetricStats(filteredScores);
+  // 2. Stats for the TEXT VALUES (use the fully-filtered dynamic list)
+  const textStats = useMemo(() => {
+    const totalScores = textScores.length;
+    const sumOfScores = textScores.reduce((sum, s) => sum + s.score, 0);
+    const averageScore = totalScores > 0 ? sumOfScores / totalScores : 0;
+    return { totalScores, averageScore };
+  }, [textScores]);
+
+  const isInteractive = onTierClick || onUserClick || onCategoryClick;
+
+  // --- ADDED: Mouse-wheel scroll effect for pie tabs ---
+  useEffect(() => {
+    const scrollContainer = pieTabsContainerRef.current;
+    if (!scrollContainer) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      if (e.deltaX !== 0) return;
+
+      if (
+        e.deltaY !== 0 &&
+        scrollContainer.scrollWidth > scrollContainer.clientWidth
+      ) {
+        e.preventDefault();
+        scrollContainer.scrollLeft += e.deltaY;
+      }
+    };
+
+    scrollContainer.addEventListener("wheel", handleWheel, { passive: false });
+    return () => {
+      scrollContainer.removeEventListener("wheel", handleWheel);
+    };
+  }, []); // Empty deps, ref is stable
+  // --- END: Mouse-wheel scroll effect ---
+
+  useEffect(() => {
+    const activeTabElement = document.getElementById(`pie-tab-${activePieTab}`);
+    if (activeTabElement) {
+      activeTabElement.scrollIntoView({
+        behavior: "smooth",
+        inline: "nearest",
+        block: "nearest",
+      });
+    }
+  }, [activePieTab]); // This effect runs whenever the active pie tab prop changes.
 
   if (isLoading) {
     return (
@@ -61,7 +141,8 @@ const RatingMetricStatisticsPanel: React.FC<
     );
   }
 
-  if (!stats || stats.totalScores === 0) {
+  // Use pieChartStats for the "no data" check (if no scores in date range, show nothing)
+  if (!pieChartStats || pieChartStats.totalScores === 0) {
     return (
       <aside className="lg:col-span-3 bg-white rounded-lg shadow-lg p-6 text-center flex flex-col justify-center">
         <InformationCircleIcon className="h-10 w-10 text-gray-400 mx-auto mb-2" />
@@ -76,75 +157,154 @@ const RatingMetricStatisticsPanel: React.FC<
   }
 
   return (
-    <aside className="lg:col-span-3 bg-white rounded-lg shadow-lg flex flex-col overflow-hidden">
-      <div className="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1 custom-scrollbar">
-        <h3 className="text-xl font-semibold text-gray-700 mb-1 flex items-center">
-          <ChartPieIcon className="h-6 w-6 mr-2 text-teal-600" /> Статистика
-        </h3>
+    <Tooltip.Provider>
+      <aside className="lg:col-span-3 bg-white rounded-lg shadow-lg flex flex-col overflow-hidden">
+        <div className="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1 custom-scrollbar-xs">
+          <h3 className="text-xl font-semibold text-gray-700 mb-1 flex items-center gap-x-2">
+            <ChartPieIcon className="h-6 w-6 mr-2 text-teal-600" />
+            <span>Статистика</span>
+            {isInteractive && (
+              <Tooltip.Root delayDuration={150}>
+                <Tooltip.Trigger asChild>
+                  <button className="cursor-help text-gray-400 hover:text-sky-600">
+                    <InformationCircleIcon className="h-5 w-5" />
+                  </button>
+                </Tooltip.Trigger>
+                <Tooltip.Portal>
+                  <Tooltip.Content
+                    className="select-none rounded-md bg-gray-800 px-3 py-2 text-sm leading-tight text-white shadow-lg z-50"
+                    sideOffset={5}
+                  >
+                    Кликнете върху диаграмите, за да филтрирате.
+                    <Tooltip.Arrow className="fill-gray-800" />
+                  </Tooltip.Content>
+                </Tooltip.Portal>
+              </Tooltip.Root>
+            )}
+          </h3>
 
-        <div className="space-y-1 text-sm text-gray-600">
-          <p className="flex items-center justify-between">
-            <span className="flex items-center">
-              <UsersIcon className="h-5 w-5 mr-2" />
-              Общо оценки:
-            </span>
-            <strong className="text-gray-800 text-base">
-              {stats.totalScores}
-            </strong>
-          </p>
-          {/* Apply the style to the average score */}
-          <p className="flex items-center justify-between">
-            <span className="flex items-center">
-              <StarIcon className="h-5 w-5 mr-2" />
-              Средна оценка:
-            </span>
-            <strong className={getScoreCellStyle(stats.averageScore)}>
-              {stats.averageScore.toFixed(2)}
-            </strong>
-          </p>
-        </div>
+          {/* --- REFACTORED: Use StatItem component --- */}
+          <div className="space-y-1">
+            <StatItem
+              icon={UsersIcon}
+              label="Общо оценки"
+              value={textStats.totalScores}
+            />
+            <StatItem
+              icon={StarIcon}
+              label="Средна оценка"
+              value={
+                textStats.averageScore > 0
+                  ? textStats.averageScore.toFixed(2)
+                  : "-"
+              }
+              valueClasses={getRatingStyleClass(textStats.averageScore)}
+            />
+          </div>
 
-        <div className="mt-2">
-          <div className="flex border-b border-gray-200 text-xs sm:text-sm">
-            <button
-              onClick={() => setActiveTab("tier")}
-              className={`flex-1 py-2 px-1 text-center font-medium focus:outline-none transition-colors duration-150 ${
-                activeTab === "tier"
-                  ? "border-b-2 border-indigo-500 text-indigo-600"
-                  : "text-gray-500 hover:text-gray-700"
-              }`}
+          <div className="mt-2">
+            <div
+              ref={pieTabsContainerRef} // <-- ADDED REF
+              className="flex border-b border-gray-200 overflow-x-auto custom-scrollbar-xs py-1"
             >
-              По Оценка
-            </button>
-            <button
-              onClick={() => setActiveTab("user")}
-              className={`flex-1 py-2 px-1 text-center font-medium focus:outline-none transition-colors duration-150 ${
-                activeTab === "user"
-                  ? "border-b-2 border-indigo-500 text-indigo-600"
-                  : "text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              По Потребител
-            </button>
+              <button
+                id="pie-tab-tier" // <-- ADDED ID
+                onClick={() => onPieTabChange("tier")} // <-- Use prop setter
+                className={`cursor-pointer relative flex-1 py-2 px-3 text-sm font-medium focus:outline-none transition-colors duration-150 whitespace-nowrap ${
+                  activePieTab === "tier" // <-- Use prop state
+                    ? "border-b-2 border-indigo-500 text-indigo-600"
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                По Оценка
+                {activeTierFilter !== "all" && (
+                  <span
+                    title="Изчисти филтъра"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onClearTierFilter?.();
+                    }}
+                    className="absolute top-1 right-1 h-2 w-2 rounded-full bg-indigo-500 hover:ring-2 hover:ring-indigo-300"
+                  ></span>
+                )}
+              </button>
+              {/* --- ADD NEW BUTTON --- */}
+              <button
+                id="pie-tab-category" // <-- ADDED ID
+                onClick={() => onPieTabChange("category")} // <-- Use prop setter
+                className={`cursor-pointer relative flex-1 py-2 px-3 text-sm font-medium focus:outline-none transition-colors duration-150 whitespace-nowrap ${
+                  activePieTab === "category" // <-- Use prop state
+                    ? "border-b-2 border-indigo-500 text-indigo-600"
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                По Категория
+                {activeCategoryFilter !== null && (
+                  <span
+                    title="Изчисти филтъра"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onClearCategoryFilter?.();
+                    }}
+                    className="absolute top-1 right-1 h-2 w-2 rounded-full bg-indigo-500 hover:ring-2 hover:ring-indigo-300"
+                  ></span>
+                )}
+              </button>
+              {/* -------------------- */}
+              <button
+                id="pie-tab-user" // <-- ADDED ID
+                onClick={() => onPieTabChange("user")} // <-- Use prop setter
+                className={`cursor-pointer relative flex-1 py-2 px-3 text-sm font-medium focus:outline-none transition-colors duration-150 whitespace-nowrap ${
+                  activePieTab === "user" // <-- Use prop state
+                    ? "border-b-2 border-indigo-500 text-indigo-600"
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                По Потребител
+                {activeUserFilter !== null && (
+                  <span
+                    title="Изчисти филтъра"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onClearUserFilter?.();
+                    }}
+                    className="absolute top-1 right-1 h-2 w-2 rounded-full bg-indigo-500 hover:ring-2 hover:ring-indigo-300"
+                  ></span>
+                )}
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-3">
+            {activePieTab === "tier" && (
+              <StatisticPieChart
+                title="Разпределение по Оценки"
+                pieData={pieChartStats.tierDistributionData}
+                onSegmentClick={onTierClick}
+                activeLabel={activeTierLabel}
+              />
+            )}
+            {activePieTab === "user" && (
+              <StatisticPieChart
+                title="Разпределение по Потребители"
+                pieData={pieChartStats.userContributionData}
+                onSegmentClick={onUserClick}
+                activeLabel={activeUserLabel}
+              />
+            )}
+            {/* --- ADD NEW RENDER BLOCK --- */}
+            {activePieTab === "category" && (
+              <StatisticPieChart
+                title="Разпределение по Категории"
+                pieData={pieChartStats.categoryContributionData}
+                onSegmentClick={onCategoryClick}
+                activeLabel={activeCategoryLabel}
+              />
+            )}
           </div>
         </div>
-
-        <div className="mt-3">
-          {activeTab === "tier" && (
-            <StatisticPieChart
-              title="Разпределение по Оценки"
-              pieData={stats.tierDistributionData}
-            />
-          )}
-          {activeTab === "user" && (
-            <StatisticPieChart
-              title="Разпределение по Потребители"
-              pieData={stats.userContributionData}
-            />
-          )}
-        </div>
-      </div>
-    </aside>
+      </aside>
+    </Tooltip.Provider>
   );
 };
 

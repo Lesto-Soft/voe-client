@@ -56,7 +56,8 @@
     "mark_as_unread": "Маркирай като непрочетено",
     "delete_notification": "Изтрий известието",
     "reopen_case": "Сигнал <1>{{caseNumber}}</1> бе върнат като <1>Отворен</1>",
-    "reopen_finance_case": "Сигнал <1>{{caseNumber}}</1> бе върнат като <1>Очакващ финансиране</1>"
+    "reopen_finance_case": "Сигнал <1>{{caseNumber}}</1> бе върнат като <1>Очакващ финансиране</1>",
+    "case_reminder": "Напомняне: Сигнал <1>{{caseNumber}}</1> чака вашето действие"
   },
   "rte": {
     "bold": "Удебелен (Ctrl+B)",

@@ -99,7 +99,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }) => {
       }, 100); // Throttle to execute at most once every 100ms
     };
 
-    window.addEventListener("scroll", handleScroll); // Cleanup listener on component unmount
+    window.addEventListener("scroll", handleScroll);
 
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -118,9 +118,19 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }) => {
     });
   };
 
+  const handleDropdownOpenChange = (open: boolean) => {
+    if (open) {
+      toast.dismiss();
+    }
+    setDropdownOpen(open);
+  };
+
   return (
     <>
-      <DropdownMenu.Root open={isDropdownOpen} onOpenChange={setDropdownOpen}>
+      <DropdownMenu.Root
+        open={isDropdownOpen}
+        onOpenChange={handleDropdownOpenChange}
+      >
         <DropdownMenu.Trigger asChild>
           <button
             className="cursor-pointer inline-flex items-center justify-center p-2 text-gray-600 focus:outline-none hover:text-gray-900 rounded-full transition-colors duration-150 hover:bg-gray-300 data-[state=open]:bg-gray-500 data-[state=open]:text-gray-100"

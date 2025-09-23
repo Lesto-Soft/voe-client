@@ -1,5 +1,5 @@
-// Mock configuration for notification types. In a real app, this might come from a shared constants file.
-import React, { useState } from "react";
+// src/components/features/userSettings/NotificationSettings.tsx
+import React, { useState, useMemo } from "react";
 import * as Switch from "@radix-ui/react-switch";
 
 const mockNotificationTypes = [
@@ -30,38 +30,167 @@ const mockNotificationTypes = [
   },
 ];
 
+type Priority = "LOW" | "MEDIUM" | "HIGH";
+type NotificationType = "inApp" | "email";
+type Preferences = { [key in Priority]: boolean };
+
 interface NotificationSettingsProps {
   settings: {
-    inApp: { [key: string]: boolean };
-    email: { [key: string]: boolean };
+    inApp: { [key: string]: Preferences };
+    email: { [key: string]: Preferences };
   };
-  onChange: (type: "inApp" | "email", key: string, value: boolean) => void;
-  density: "comfortable" | "compact"; // <-- Add density prop
+  onChange: (
+    type: NotificationType,
+    key: string,
+    priority: Priority | "all",
+    value: boolean
+  ) => void;
+  density: "comfortable" | "compact";
 }
+
+const priorityStyles: {
+  [key in Priority]: { text: string; accent: string; bg: string };
+} = {
+  LOW: {
+    text: "text-green-600 dark:text-green-400",
+    accent: "accent-green-500",
+    bg: "bg-green-100 dark:bg-green-900/50",
+  },
+  MEDIUM: {
+    text: "text-yellow-600 dark:text-yellow-400",
+    accent: "accent-yellow-500",
+    bg: "bg-yellow-100 dark:bg-yellow-900/50",
+  },
+  HIGH: {
+    text: "text-red-600 dark:text-red-400",
+    accent: "accent-red-500",
+    bg: "bg-red-100 dark:bg-red-900/50",
+  },
+};
+
+const NotificationRow: React.FC<{
+  type: NotificationType;
+  config: (typeof mockNotificationTypes)[0];
+  preferences: Preferences;
+  density: "comfortable" | "compact";
+  onChange: NotificationSettingsProps["onChange"];
+}> = ({ type, config, preferences = {}, density, onChange }) => {
+  const { key, label, description } = config;
+
+  const isAllOn = !!(preferences.LOW && preferences.MEDIUM && preferences.HIGH);
+  const isAnyOn = !!(preferences.LOW || preferences.MEDIUM || preferences.HIGH);
+  const isIndeterminate = isAnyOn && !isAllOn;
+
+  return (
+    <div
+      className={`flex flex-col sm:flex-row sm:items-start sm:justify-between ${
+        density === "compact" ? "py-3" : "py-4"
+      } border-b border-gray-200 dark:border-slate-700 last:border-b-0`}
+    >
+      <div className="flex items-start gap-4 pr-4">
+        <Switch.Root
+          checked={isAllOn}
+          onCheckedChange={(checked) => onChange(type, key, "all", checked)}
+          className={`group mt-1 relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800 
+              ${
+                isAllOn
+                  ? "bg-indigo-600"
+                  : isIndeterminate
+                  ? "bg-slate-400 dark:bg-slate-500"
+                  : "bg-gray-200 dark:bg-slate-600"
+              }`}
+          title={isAllOn ? "Изключи всички" : "Включи всички"}
+        >
+          <Switch.Thumb className="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out data-[state=checked]:translate-x-5" />
+        </Switch.Root>
+        <div>
+          <p className="font-medium text-gray-800 dark:text-gray-200">
+            {label}
+          </p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            {description}
+          </p>
+        </div>
+      </div>
+
+      <div
+        className={`flex-shrink-0 flex items-center gap-3 sm:gap-4 mt-3 sm:mt-1 ${
+          density === "compact" ? "pl-12" : "pl-16"
+        }`}
+      >
+        {(["LOW", "MEDIUM", "HIGH"] as Priority[]).map((priority) => (
+          <div key={priority} className="flex items-center">
+            <input
+              type="checkbox"
+              id={`${type}-${key}-${priority}`}
+              checked={preferences[priority] || false}
+              onChange={(e) => onChange(type, key, priority, e.target.checked)}
+              className={`h-4 w-4 rounded border-gray-300 dark:border-slate-600 focus:ring-indigo-500 bg-gray-100 dark:bg-slate-900 cursor-pointer ${priorityStyles[priority].accent}`}
+            />
+            <label
+              htmlFor={`${type}-${key}-${priority}`}
+              className={`ml-2 text-xs font-medium ${priorityStyles[priority].text} cursor-pointer`}
+            >
+              {priority}
+            </label>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
 
 const NotificationSettings: React.FC<NotificationSettingsProps> = ({
   settings,
   onChange,
   density,
 }) => {
-  const [activeTab, setActiveTab] = useState<"inApp" | "email">("inApp");
+  const [activeTab, setActiveTab] = useState<NotificationType>("inApp");
 
-  const renderToggles = (type: "inApp" | "email") => (
-    <div className={density === "compact" ? "space-y-3" : "space-y-4"}>
-      {mockNotificationTypes.map(({ key, label, description }) => (
-        <div key={key} className="flex items-start justify-between">
-          <div className="pr-4">
-            <p className="font-medium text-gray-800">{label}</p>
-            <p className="text-xs text-gray-500">{description}</p>
-          </div>
-          <Switch.Root
-            checked={settings[type][key] || false}
-            onCheckedChange={(checked) => onChange(type, key, checked)}
-            className="group relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-gray-200 transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 data-[state=checked]:bg-indigo-600"
-          >
-            <Switch.Thumb className="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out data-[state=checked]:translate-x-5" />
-          </Switch.Root>
+  const handleToggleAllByPriority = (priority: Priority) => {
+    const currentTabSettings = settings[activeTab];
+    // Check if ALL notifications for this priority are already ON
+    const areAllCurrentlyOn = mockNotificationTypes.every(
+      (config) => currentTabSettings[config.key]?.[priority]
+    );
+    // If they are all on, the new value will be false (turn them off). Otherwise, turn them on.
+    const newValue = !areAllCurrentlyOn;
+    mockNotificationTypes.forEach((config) => {
+      onChange(activeTab, config.key, priority, newValue);
+    });
+  };
+
+  const renderToggles = (type: NotificationType) => (
+    <div>
+      {/* Header for Priority Toggles */}
+      <div
+        className={`hidden sm:flex justify-end ${
+          density === "compact" ? "pb-2" : "pb-3"
+        }`}
+      >
+        <div className={`flex items-center gap-3 sm:gap-4`}>
+          {(["LOW", "MEDIUM", "HIGH"] as Priority[]).map((priority) => (
+            <button
+              key={priority}
+              onClick={() => handleToggleAllByPriority(priority)}
+              className={`px-2 py-1 text-xs font-bold rounded-md transition-colors ${priorityStyles[priority].text} ${priorityStyles[priority].bg} hover:opacity-80`}
+              title={`Превключи всички ${priority} известия`}
+            >
+              Превключи
+            </button>
+          ))}
         </div>
+      </div>
+
+      {mockNotificationTypes.map((config) => (
+        <NotificationRow
+          key={config.key}
+          type={type}
+          config={config}
+          preferences={settings[type][config.key]}
+          density={density}
+          onChange={onChange}
+        />
       ))}
     </div>
   );
@@ -103,7 +232,7 @@ const NotificationSettings: React.FC<NotificationSettingsProps> = ({
             </button>
           </nav>
         </div>
-        <div className={density === "compact" ? "p-5" : "p-6"}>
+        <div className={density === "compact" ? "px-5" : "px-6"}>
           {activeTab === "inApp"
             ? renderToggles("inApp")
             : renderToggles("email")}

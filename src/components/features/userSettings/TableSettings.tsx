@@ -2,6 +2,7 @@
 import React from "react";
 import * as Switch from "@radix-ui/react-switch";
 
+// This configuration defines the tables and their customizable columns.
 const mockTableConfigs = {
   dashboard: {
     label: "Табло (Сигнали)",
@@ -20,6 +21,7 @@ const mockTableConfigs = {
       role: "Роля",
     },
   },
+  // Add other tables like 'categoryManagement' here
 };
 
 interface TableSettingsProps {
@@ -30,8 +32,11 @@ interface TableSettingsProps {
       [tableKey: string]: { [columnKey: string]: boolean };
     };
   };
+  // The handler signature is now more specific for type safety
   onTableSettingChange: (
-    newSettings: Partial<TableSettingsProps["settings"]>
+    settings: Partial<
+      Pick<TableSettingsProps["settings"], "itemsPerPage" | "filtersVisible">
+    >
   ) => void;
   onColumnVisibilityChange: (
     table: string,
@@ -64,6 +69,7 @@ const TableSettings: React.FC<TableSettingsProps> = ({
           density === "compact" ? "py-4 space-y-4" : "py-5 space-y-6"
         }`}
       >
+        {/* General Table Settings */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           <div>
             <label
@@ -102,13 +108,15 @@ const TableSettings: React.FC<TableSettingsProps> = ({
                 onCheckedChange={(checked) =>
                   onTableSettingChange({ filtersVisible: checked })
                 }
-                className="group relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-gray-200 dark:bg-slate-600 transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 data-[state=checked]:bg-indigo-600"
+                className="group relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-gray-200 dark:bg-slate-600 transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800 data-[state=checked]:bg-indigo-600"
               >
                 <Switch.Thumb className="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out data-[state=checked]:translate-x-5" />
               </Switch.Root>
             </div>
           </div>
         </div>
+
+        {/* Column Visibility Settings */}
         <div>
           <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200">
             Видимост на колони
@@ -140,11 +148,11 @@ const TableSettings: React.FC<TableSettingsProps> = ({
                               e.target.checked
                             )
                           }
-                          className="h-4 w-4 rounded border-gray-300 dark:border-slate-600 text-indigo-600 focus:ring-indigo-500 bg-gray-100 dark:bg-slate-900"
+                          className="h-4 w-4 rounded border-gray-300 dark:border-slate-600 text-indigo-600 focus:ring-indigo-500 bg-gray-100 dark:bg-slate-900 cursor-pointer"
                         />
                         <label
                           htmlFor={`${tableKey}-${columnKey}`}
-                          className="ml-2 text-sm text-gray-700 dark:text-gray-300"
+                          className="ml-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer"
                         >
                           {columnLabel}
                         </label>

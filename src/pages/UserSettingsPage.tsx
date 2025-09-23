@@ -5,8 +5,43 @@ import AppearanceSettings from "../components/features/userSettings/AppearanceSe
 import NotificationSettings from "../components/features/userSettings/NotificationSettings";
 import TableSettings from "../components/features/userSettings/TableSettings";
 import PanelSettings from "../components/features/userSettings/PanelSettings";
+import { useCurrentUser } from "../context/UserContext";
+import { ROLES } from "../utils/GLOBAL_PARAMETERS";
+import AdminSettings from "../components/features/userSettings/AdminSettings"; // New Admin Component
 
-const mockUserSettings = {
+// --- TYPE DEFINITIONS ---
+// (These types remain the same as the previous version)
+type Theme = "light" | "dark";
+type LayoutDensity = "comfortable" | "compact";
+type DateFormat = "relative" | "absolute";
+type Priority = "LOW" | "MEDIUM" | "HIGH";
+type NotificationPreferences = { [key in Priority]: boolean };
+interface INotificationSettings {
+  inApp: { [key: string]: NotificationPreferences };
+  email: { [key: string]: NotificationPreferences };
+}
+interface IUserSettings {
+  appearance: {
+    theme: Theme;
+    layoutDensity: LayoutDensity;
+    defaultDateFormat: DateFormat;
+  };
+  panelStates: {
+    [key: string]: {
+      leftPanelCollapsed: boolean;
+      rightPanelCollapsed: boolean;
+    };
+  };
+  notifications: INotificationSettings;
+  tables: {
+    itemsPerPage: number;
+    filtersVisible: boolean;
+    columnVisibility: { [tableKey: string]: { [columnKey: string]: boolean } };
+  };
+}
+
+// --- MOCK DATA ---
+const mockUserSettings: IUserSettings = {
   appearance: {
     theme: "light",
     layoutDensity: "comfortable",
@@ -14,21 +49,17 @@ const mockUserSettings = {
   },
   panelStates: {
     userPage: { leftPanelCollapsed: false, rightPanelCollapsed: false },
-    categoryPage: { leftPanelCollapsed: false, rightPanelCollapsed: false },
   },
   notifications: {
     inApp: {
-      new_comment_on_case: true,
-      new_answer_on_case: true,
-      mention_in_comment: true,
-      mention_in_answer: false,
-      approve_answer_close_case: true,
+      new_comment_on_case: { LOW: true, MEDIUM: true, HIGH: true },
+      new_answer_on_case: { LOW: false, MEDIUM: true, HIGH: true },
+      mention_in_comment: { LOW: true, MEDIUM: true, HIGH: true },
     },
     email: {
-      new_comment_on_case: false,
-      new_answer_on_case: true,
-      mention_in_comment: true,
-      mention_in_answer: false,
+      new_comment_on_case: { LOW: false, MEDIUM: false, HIGH: true },
+      new_answer_on_case: { LOW: false, MEDIUM: true, HIGH: true },
+      mention_in_comment: { LOW: false, MEDIUM: true, HIGH: true },
     },
   },
   tables: {
@@ -41,19 +72,53 @@ const mockUserSettings = {
   },
 };
 
-const UserSettingsPage: React.FC = () => {
-  const [settings, setSettings] = useState(mockUserSettings);
-  const [hasChanges, setHasChanges] = useState(false);
+// Mock data for the new Admin section
+const mockGlobalSettings = {
+  priorityReminderDeadlines: {
+    LOW: { value: 7, unit: "days" },
+    MEDIUM: { value: 3, unit: "days" },
+    HIGH: { value: 24, unit: "hours" },
+  },
+};
 
+const mockUsersForAdmin = [
+  {
+    _id: "1",
+    name: "John Doe",
+    username: "john.doe",
+    role: { name: "Expert" },
+  },
+  {
+    _id: "2",
+    name: "Jane Smith",
+    username: "jane.smith",
+    role: { name: "Manager" },
+  },
+  {
+    _id: "3",
+    name: "Peter Jones",
+    username: "peter.jones",
+    role: { name: "Admin" },
+  },
+];
+
+const UserSettingsPage: React.FC = () => {
+  const [settings, setSettings] = useState<IUserSettings>(mockUserSettings);
+  // Add state for the global admin settings
+  const [globalSettings, setGlobalSettings] = useState(mockGlobalSettings);
+  const [hasChanges, setHasChanges] = useState(false);
+  const currentUser = useCurrentUser();
+  const isAdmin = currentUser.role._id === ROLES.ADMIN;
+
+  // Handlers for user-specific settings... (these remain the same as before)
   const handleSaveChanges = () => {
-    console.log("Saving settings:", settings);
+    console.log("Saving settings:", settings, globalSettings);
     setHasChanges(false);
     alert("Settings saved! (Check console for output)");
   };
-
   const handleSettingsChange = (
-    section: keyof typeof settings,
-    newValues: any
+    section: "appearance",
+    newValues: Partial<IUserSettings["appearance"]>
   ) => {
     setSettings((prev) => ({
       ...prev,
@@ -61,30 +126,46 @@ const UserSettingsPage: React.FC = () => {
     }));
     setHasChanges(true);
   };
-
-  const handleTableSettingsChange = (newValues: any) => {
+  const handleTableSettingChange = (
+    newValues: Partial<Omit<IUserSettings["tables"], "columnVisibility">>
+  ) => {
     setSettings((prev) => ({
       ...prev,
       tables: { ...prev.tables, ...newValues },
     }));
     setHasChanges(true);
   };
-
   const handleNotificationChange = (
     type: "inApp" | "email",
     key: string,
+    priority: Priority | "all",
     value: boolean
   ) => {
-    setSettings((prev) => ({
-      ...prev,
-      notifications: {
-        ...prev.notifications,
-        [type]: { ...prev.notifications[type], [key]: value },
-      },
-    }));
+    setSettings((prev) => {
+      const newPrefs = {
+        ...(prev.notifications[type][key] || {
+          LOW: true,
+          MEDIUM: true,
+          HIGH: true,
+        }),
+      };
+      if (priority === "all") {
+        newPrefs.LOW = value;
+        newPrefs.MEDIUM = value;
+        newPrefs.HIGH = value;
+      } else {
+        newPrefs[priority] = value;
+      }
+      return {
+        ...prev,
+        notifications: {
+          ...prev.notifications,
+          [type]: { ...prev.notifications[type], [key]: newPrefs },
+        },
+      };
+    });
     setHasChanges(true);
   };
-
   const handleColumnVisibilityChange = (
     table: string,
     column: string,
@@ -96,21 +177,21 @@ const UserSettingsPage: React.FC = () => {
         ...prev.tables,
         columnVisibility: {
           ...prev.tables.columnVisibility,
-          [table]: {
-            ...prev.tables.columnVisibility[
-              table as keyof typeof prev.tables.columnVisibility
-            ],
-            [column]: value,
-          },
+          [table]: { ...prev.tables.columnVisibility[table], [column]: value },
         },
       },
     }));
     setHasChanges(true);
   };
 
+  // New handler for Global Settings changes
+  const handleGlobalSettingsChange = (newGlobalSettings: any) => {
+    setGlobalSettings((prev) => ({ ...prev, ...newGlobalSettings }));
+    setHasChanges(true);
+  };
+
   return (
-    // This wrapper now controls the theme for the entire page
-    <div className={settings.appearance.theme === "light" ? "dark" : ""}>
+    <div className={settings.appearance.theme}>
       <div className="bg-gray-100 dark:bg-slate-900 min-h-full transition-colors">
         <div className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8">
           <UserSettingsHeader
@@ -118,11 +199,24 @@ const UserSettingsPage: React.FC = () => {
             isSaving={false}
             hasChanges={hasChanges}
           />
-          <div className="space-y-6 mt-6">
+
+          {/* Admin-only settings section */}
+          {isAdmin && (
+            <div className="my-8">
+              <AdminSettings
+                globalSettings={globalSettings}
+                onGlobalSettingsChange={handleGlobalSettingsChange}
+                users={mockUsersForAdmin}
+              />
+            </div>
+          )}
+
+          {/* User-specific settings sections */}
+          <div className="space-y-8 mt-6">
             <AppearanceSettings
               settings={settings.appearance}
-              onChange={(newAppearanceSettings) =>
-                handleSettingsChange("appearance", newAppearanceSettings)
+              onChange={(newValues) =>
+                handleSettingsChange("appearance", newValues)
               }
             />
             <NotificationSettings
@@ -133,7 +227,7 @@ const UserSettingsPage: React.FC = () => {
             <TableSettings
               settings={settings.tables}
               density={settings.appearance.layoutDensity}
-              onTableSettingChange={handleTableSettingsChange}
+              onTableSettingChange={handleTableSettingChange}
               onColumnVisibilityChange={handleColumnVisibilityChange}
             />
             <PanelSettings density={settings.appearance.layoutDensity} />

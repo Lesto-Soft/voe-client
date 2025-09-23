@@ -2,6 +2,11 @@
 import React from "react";
 import { CalendarIcon, ClockIcon } from "@heroicons/react/24/outline";
 
+// Define specific types for props for clarity and type safety
+type Theme = "light" | "dark";
+type LayoutDensity = "comfortable" | "compact";
+type DateFormat = "relative" | "absolute";
+
 // A more flexible button that can contain complex visual previews
 const SettingButton = <T extends string>({
   label,
@@ -16,7 +21,7 @@ const SettingButton = <T extends string>({
   currentValue: T;
   value: T;
   onClick: (value: T) => void;
-  density: "comfortable" | "compact";
+  density: LayoutDensity;
 }) => {
   const isActive = currentValue === value;
   const heightClass = density === "compact" ? "h-28" : "h-32"; // Compact is shorter
@@ -39,7 +44,7 @@ const SettingButton = <T extends string>({
   );
 };
 
-// A simple button for the date format setting
+// A simpler button for the date format setting
 const SimpleSettingButton = <T extends string>({
   option,
   currentValue,
@@ -49,7 +54,7 @@ const SimpleSettingButton = <T extends string>({
   option: { value: T; label: string; icon: React.ElementType };
   currentValue: T;
   onClick: (value: T) => void;
-  density: "comfortable" | "compact";
+  density: LayoutDensity;
 }) => {
   const isActive = currentValue === option.value;
   const heightClass = density === "compact" ? "h-20" : "h-24";
@@ -72,9 +77,9 @@ const SimpleSettingButton = <T extends string>({
 
 interface AppearanceSettingsProps {
   settings: {
-    theme: "light" | "dark";
-    layoutDensity: "comfortable" | "compact";
-    defaultDateFormat: "relative" | "absolute";
+    theme: Theme;
+    layoutDensity: LayoutDensity;
+    defaultDateFormat: DateFormat;
   };
   onChange: (newSettings: Partial<AppearanceSettingsProps["settings"]>) => void;
 }
@@ -127,9 +132,9 @@ const AppearanceSettings: React.FC<AppearanceSettingsProps> = ({
               density={density}
             >
               <div className="w-full h-full p-2 bg-white rounded flex flex-col justify-between border border-gray-200">
-                <div className="h-1 w-3/4 bg-gray-700 rounded-sm"></div>
-                <div className="h-1 w-1/2 bg-indigo-500 rounded-sm"></div>
-                <div className="h-1 w-full bg-gray-300 rounded-sm"></div>
+                <div className="h-2 w-3/4 bg-gray-700 rounded-sm"></div>
+                <div className="h-2 w-1/2 bg-indigo-500 rounded-sm"></div>
+                <div className="h-2 w-full bg-gray-300 rounded-sm"></div>
               </div>
             </SettingButton>
             <SettingButton
@@ -140,9 +145,9 @@ const AppearanceSettings: React.FC<AppearanceSettingsProps> = ({
               density={density}
             >
               <div className="w-full h-full p-2 bg-slate-800 rounded flex flex-col justify-between border border-slate-700">
-                <div className="h-1 w-3/4 bg-slate-300 rounded-sm"></div>
-                <div className="h-1 w-1/2 bg-indigo-500 rounded-sm"></div>
-                <div className="h-1 w-full bg-slate-600 rounded-sm"></div>
+                <div className="h-2 w-3/4 bg-slate-300 rounded-sm"></div>
+                <div className="h-2 w-1/2 bg-indigo-500 rounded-sm"></div>
+                <div className="h-2 w-full bg-slate-600 rounded-sm"></div>
               </div>
             </SettingButton>
           </div>
@@ -161,9 +166,9 @@ const AppearanceSettings: React.FC<AppearanceSettingsProps> = ({
               density={density}
             >
               <div className="w-full h-full p-2 flex flex-col justify-center space-y-2">
-                <div className="h-1 rounded-sm bg-gray-400 dark:bg-slate-500"></div>
-                <div className="h-1 rounded-sm bg-gray-400 dark:bg-slate-500"></div>
-                <div className="h-1 rounded-sm bg-gray-400 dark:bg-slate-500"></div>
+                <div className="h-2 rounded-sm bg-gray-400 dark:bg-slate-500"></div>
+                <div className="h-2 rounded-sm bg-gray-400 dark:bg-slate-500"></div>
+                <div className="h-2 rounded-sm bg-gray-400 dark:bg-slate-500"></div>
               </div>
             </SettingButton>
             <SettingButton
@@ -174,9 +179,9 @@ const AppearanceSettings: React.FC<AppearanceSettingsProps> = ({
               density={density}
             >
               <div className="w-full h-full p-2 flex flex-col justify-center space-y-1">
-                <div className="h-1 rounded-sm bg-gray-400 dark:bg-slate-500"></div>
-                <div className="h-1 rounded-sm bg-gray-400 dark:bg-slate-500"></div>
-                <div className="h-1 rounded-sm bg-gray-400 dark:bg-slate-500"></div>
+                <div className="h-2 rounded-sm bg-gray-400 dark:bg-slate-500"></div>
+                <div className="h-2 rounded-sm bg-gray-400 dark:bg-slate-500"></div>
+                <div className="h-2 rounded-sm bg-gray-400 dark:bg-slate-500"></div>
               </div>
             </SettingButton>
           </div>

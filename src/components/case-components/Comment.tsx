@@ -8,7 +8,7 @@ import ImagePreviewModal from "../modals/ImagePreviewModal";
 import DeleteModal from "../modals/DeleteModal";
 import { renderContentSafely } from "../../utils/contentRenderer";
 import { useDeleteComment } from "../../graphql/hooks/comment";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 
 interface CommentProps {
   comment: IComment;

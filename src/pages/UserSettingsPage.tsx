@@ -7,10 +7,9 @@ import TableSettings from "../components/features/userSettings/TableSettings";
 import PanelSettings from "../components/features/userSettings/PanelSettings";
 import { useCurrentUser } from "../context/UserContext";
 import { ROLES } from "../utils/GLOBAL_PARAMETERS";
-import AdminSettings from "../components/features/userSettings/AdminSettings"; // New Admin Component
+import AdminSettings from "../components/features/userSettings/AdminSettings";
 
 // --- TYPE DEFINITIONS ---
-// (These types remain the same as the previous version)
 type Theme = "light" | "dark";
 type LayoutDensity = "comfortable" | "compact";
 type DateFormat = "relative" | "absolute";
@@ -41,6 +40,7 @@ interface IUserSettings {
 }
 
 // --- MOCK DATA ---
+// This object defines the default state. Note that `theme` is set to 'light'.
 const mockUserSettings: IUserSettings = {
   appearance: {
     theme: "light",
@@ -49,6 +49,7 @@ const mockUserSettings: IUserSettings = {
   },
   panelStates: {
     userPage: { leftPanelCollapsed: false, rightPanelCollapsed: false },
+    categoryPage: { leftPanelCollapsed: false, rightPanelCollapsed: false },
   },
   notifications: {
     inApp: {
@@ -72,7 +73,6 @@ const mockUserSettings: IUserSettings = {
   },
 };
 
-// Mock data for the new Admin section
 const mockGlobalSettings = {
   priorityReminderDeadlines: {
     LOW: { value: 7, unit: "days" },
@@ -104,13 +104,11 @@ const mockUsersForAdmin = [
 
 const UserSettingsPage: React.FC = () => {
   const [settings, setSettings] = useState<IUserSettings>(mockUserSettings);
-  // Add state for the global admin settings
   const [globalSettings, setGlobalSettings] = useState(mockGlobalSettings);
   const [hasChanges, setHasChanges] = useState(false);
   const currentUser = useCurrentUser();
   const isAdmin = currentUser.role._id === ROLES.ADMIN;
 
-  // Handlers for user-specific settings... (these remain the same as before)
   const handleSaveChanges = () => {
     console.log("Saving settings:", settings, globalSettings);
     setHasChanges(false);
@@ -183,8 +181,6 @@ const UserSettingsPage: React.FC = () => {
     }));
     setHasChanges(true);
   };
-
-  // New handler for Global Settings changes
   const handleGlobalSettingsChange = (newGlobalSettings: any) => {
     setGlobalSettings((prev) => ({ ...prev, ...newGlobalSettings }));
     setHasChanges(true);
@@ -199,8 +195,6 @@ const UserSettingsPage: React.FC = () => {
             isSaving={false}
             hasChanges={hasChanges}
           />
-
-          {/* Admin-only settings section */}
           {isAdmin && (
             <div className="my-8">
               <AdminSettings
@@ -210,8 +204,6 @@ const UserSettingsPage: React.FC = () => {
               />
             </div>
           )}
-
-          {/* User-specific settings sections */}
           <div className="space-y-8 mt-6">
             <AppearanceSettings
               settings={settings.appearance}

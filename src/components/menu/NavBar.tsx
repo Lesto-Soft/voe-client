@@ -367,12 +367,22 @@ const NavBar: React.FC<{ me: IMe }> = ({ me }) => {
                         theme="red"
                       />
                     </DropdownMenu.Item>
+                    {/* <DropdownMenu.Item asChild className="focus:outline-none">
+                      <NavLink
+                        to="/settings1"
+                        dropdown={true}
+                        label={t("settings", "Настройки 1")}
+                        icon={<Cog6ToothIcon className="h-6 w-6" />}
+                        onClick={() => setIsUserDropdownOpen(false)}
+                        theme="red"
+                      />
+                    </DropdownMenu.Item> */}
                     <DropdownMenu.Item asChild className="focus:outline-none">
                       <NavLink
-                        to="/settings"
+                        to="/settings2"
                         dropdown={true}
                         label={t("settings", "Настройки")}
-                        icon={<Cog6ToothIcon className="h-6 w-6" />}
+                        icon={<WrenchScrewdriverIcon className="h-6 w-6" />}
                         onClick={() => setIsUserDropdownOpen(false)}
                         theme="red"
                       />

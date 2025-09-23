@@ -1,7 +1,11 @@
 // src/components/features/userManagement/UserTable.tsx
 import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router"; // Corrected import
-import { PencilSquareIcon, TrashIcon } from "@heroicons/react/24/solid"; // Or your preferred variant
+import {
+  PencilSquareIcon,
+  TrashIcon,
+  Cog8ToothIcon,
+} from "@heroicons/react/24/solid"; // Or your preferred variant
 import UserAvatar from "../../cards/UserAvatar"; // Adjust path
 import UserTableSkeleton from "../../skeletons/UserTableSkeleton"; // Adjust path
 import Pagination from "../../tables/Pagination"; // Adjust path
@@ -31,6 +35,9 @@ interface UserTableProps {
   createLoading: boolean;
   updateLoading: boolean;
   deleteUserLoading?: boolean; // New prop
+  selectedUserIds: string[];
+  setSelectedUserIds: React.Dispatch<React.SetStateAction<string[]>>;
+  onEditUserSettings: (user: IUser) => void;
 }
 
 const MIN_SKELETON_TIME = 250;
@@ -52,6 +59,9 @@ const UserTable: React.FC<UserTableProps> = ({
   // createLoading,
   // updateLoading,
   // deleteUserLoading, // Destructure new prop
+  selectedUserIds,
+  setSelectedUserIds,
+  onEditUserSettings,
 }) => {
   const [showSkeleton, setShowSkeleton] = useState(true);
   const skeletonTimerRef = useRef<number | null>(null);
@@ -94,6 +104,24 @@ const UserTable: React.FC<UserTableProps> = ({
       </div>
     );
 
+  // Handler for main checkbox
+  const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.checked) {
+      setSelectedUserIds(users.map((u) => u._id));
+    } else {
+      setSelectedUserIds([]);
+    }
+  };
+
+  // Handler for row checkbox
+  const handleSelectOne = (userId: string) => {
+    if (selectedUserIds.includes(userId)) {
+      setSelectedUserIds(selectedUserIds.filter((id) => id !== userId));
+    } else {
+      setSelectedUserIds([...selectedUserIds, userId]);
+    }
+  };
+
   return (
     <>
       <section className="flex flex-col shadow-md rounded-lg overflow-hidden bg-white border border-gray-200">
@@ -101,6 +129,17 @@ const UserTable: React.FC<UserTableProps> = ({
           <table className="min-w-full divide-y divide-gray-200 table-fixed">
             <thead className="bg-gray-500 sticky top-0 z-10">
               <tr>
+                <th scope="col" className="p-4">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 rounded"
+                    checked={
+                      users.length > 0 &&
+                      selectedUserIds.length === users.length
+                    }
+                    onChange={handleSelectAll}
+                  />
+                </th>
                 <th
                   scope="col"
                   className={`${columnWidths.avatar} px-3 py-4 text-center text-sm font-semibold text-white uppercase tracking-wide`}
@@ -175,13 +214,13 @@ const UserTable: React.FC<UserTableProps> = ({
 
                 if (isMisconfiguredExpert) {
                   rowClasses += " bg-yellow-50 hover:bg-yellow-100";
-                  firstCellClasses += " shadow-[inset_4px_0_0_#EAB308]";
+                  // firstCellClasses += " shadow-[inset_4px_0_0_#EAB308]";
                 } else if (isInactive) {
                   rowClasses = "bg-gray-50 text-gray-400 hover:bg-gray-100";
-                  firstCellClasses += " shadow-[inset_4px_0_0_transparent]";
+                  // firstCellClasses += " shadow-[inset_4px_0_0_transparent]";
                 } else {
                   rowClasses += " hover:bg-gray-100";
-                  firstCellClasses += " shadow-[inset_4px_0_0_transparent]";
+                  // firstCellClasses += " shadow-[inset_4px_0_0_transparent]";
                 }
 
                 if (isInactive) {
@@ -198,6 +237,14 @@ const UserTable: React.FC<UserTableProps> = ({
 
                 return (
                   <tr key={user._id} className={rowClasses}>
+                    <td className="p-4">
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 rounded"
+                        checked={selectedUserIds.includes(user._id)}
+                        onChange={() => handleSelectOne(user._id)}
+                      />
+                    </td>
                     <td className={firstCellClasses}>
                       <UserAvatar
                         name={user.name || user.username || "U"}
@@ -330,8 +377,8 @@ const UserTable: React.FC<UserTableProps> = ({
                           className={`${
                             isInactive ? "opacity-50" : "" // pointer-events-none" : ""
                           } ${
-                            canDeleteUser ? "w-10" : "w-20"
-                          } inline-flex justify-center items-center rounded bg-sky-100 p-1.5 text-sky-700 border border-sky-200 hover:border-sky-300 transition-all duration-150 ease-in-out hover:cursor-pointer hover:bg-sky-200 hover:text-sky-800 active:bg-sky-300 active:scale-[0.96] disabled:bg-gray-100 disabled:text-gray-400 disabled:opacity-70 disabled:cursor-not-allowed disabled:scale-100`}
+                            canDeleteUser ? "w-10 " : "w-20 mr-1 "
+                          }inline-flex justify-center items-center rounded bg-sky-100 p-1.5 text-sky-700 border border-sky-200 hover:border-sky-300 transition-all duration-150 ease-in-out hover:cursor-pointer hover:bg-sky-200 hover:text-sky-800 active:bg-sky-300 active:scale-[0.96] disabled:bg-gray-100 disabled:text-gray-400 disabled:opacity-70 disabled:cursor-not-allowed disabled:scale-100`}
                           aria-label={`Редактирай ${user.username}`}
                           title={`Редактирай ${user.username}`}
                           disabled={
@@ -368,6 +415,16 @@ const UserTable: React.FC<UserTableProps> = ({
                             <TrashIcon className="h-5 w-5" />
                           </button>
                         )}
+
+                        {/* NEW: Link to Edit User Settings */}
+                        <button
+                          onClick={() => onEditUserSettings(user)}
+                          className="w-10 inline-flex justify-center items-center rounded bg-gray-100 p-1.5 text-gray-700 border border-gray-200 hover:border-gray-300 transition-all duration-150 ease-in-out hover:cursor-pointer hover:bg-gray-200"
+                          aria-label={`Настройки за ${user.username}`}
+                          title={`Настройки за ${user.username}`}
+                        >
+                          <Cog8ToothIcon className="h-5 w-5" />
+                        </button>
                       </div>
                     </td>
                   </tr>

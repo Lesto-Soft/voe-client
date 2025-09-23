@@ -1,7 +1,8 @@
 // src/components/features/userSettings/NotificationSettings.tsx
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import * as Switch from "@radix-ui/react-switch";
 
+// This configuration defines the notification types available to the user.
 const mockNotificationTypes = [
   {
     key: "new_comment_on_case",
@@ -32,7 +33,7 @@ const mockNotificationTypes = [
 
 type Priority = "LOW" | "MEDIUM" | "HIGH";
 type NotificationType = "inApp" | "email";
-type Preferences = { [key in Priority]: boolean };
+type Preferences = { [key in Priority]?: boolean };
 
 interface NotificationSettingsProps {
   settings: {
@@ -125,7 +126,7 @@ const NotificationRow: React.FC<{
               id={`${type}-${key}-${priority}`}
               checked={preferences[priority] || false}
               onChange={(e) => onChange(type, key, priority, e.target.checked)}
-              className={`h-4 w-4 rounded border-gray-300 dark:border-slate-600 focus:ring-indigo-500 bg-gray-100 dark:bg-slate-900 cursor-pointer ${priorityStyles[priority].accent}`}
+              className={`h-4 w-4 rounded border-gray-300 dark:border-slate-600 text-indigo-600 focus:ring-indigo-500 bg-gray-100 dark:bg-slate-900 cursor-pointer ${priorityStyles[priority].accent}`}
             />
             <label
               htmlFor={`${type}-${key}-${priority}`}
@@ -149,11 +150,9 @@ const NotificationSettings: React.FC<NotificationSettingsProps> = ({
 
   const handleToggleAllByPriority = (priority: Priority) => {
     const currentTabSettings = settings[activeTab];
-    // Check if ALL notifications for this priority are already ON
     const areAllCurrentlyOn = mockNotificationTypes.every(
       (config) => currentTabSettings[config.key]?.[priority]
     );
-    // If they are all on, the new value will be false (turn them off). Otherwise, turn them on.
     const newValue = !areAllCurrentlyOn;
     mockNotificationTypes.forEach((config) => {
       onChange(activeTab, config.key, priority, newValue);
@@ -162,13 +161,12 @@ const NotificationSettings: React.FC<NotificationSettingsProps> = ({
 
   const renderToggles = (type: NotificationType) => (
     <div>
-      {/* Header for Priority Toggles */}
       <div
         className={`hidden sm:flex justify-end ${
           density === "compact" ? "pb-2" : "pb-3"
         }`}
       >
-        <div className={`flex items-center gap-3 sm:gap-4`}>
+        <div className="flex items-center gap-3 sm:gap-4">
           {(["LOW", "MEDIUM", "HIGH"] as Priority[]).map((priority) => (
             <button
               key={priority}
@@ -181,7 +179,6 @@ const NotificationSettings: React.FC<NotificationSettingsProps> = ({
           ))}
         </div>
       </div>
-
       {mockNotificationTypes.map((config) => (
         <NotificationRow
           key={config.key}

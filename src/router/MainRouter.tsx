@@ -21,6 +21,8 @@ import { ROLES } from "../utils/GLOBAL_PARAMETERS";
 import ServerErrorPage from "../pages/ErrorPages/ServerErrorPage";
 import NavbarSkeleton from "../components/skeletons/NavbarSkeleton";
 import UserSettingsPage from "../pages/UserSettingsPage";
+import SettingsPage from "../pages/Settings/SettingsPage";
+import AdminUserSettingsPage from "../pages/Settings/components/AdminUserSettingsPage";
 
 const AppLayout = () => {
   const { me, error, loading } = useGetMe();
@@ -117,9 +119,20 @@ const mainRouter = createBrowserRouter([
         ),
       },
       {
-        path: "/settings",
+        path: "/settings1",
         element: <UserSettingsPage />,
       },
+
+      {
+        path: "/settings2",
+        element: <SettingsPage />,
+      },
+
+      {
+        path: "/settings/user/:username",
+        element: <AdminUserSettingsPage />,
+      },
+
       {
         path: "*",
         element: <NotFoundPage />,

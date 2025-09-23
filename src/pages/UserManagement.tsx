@@ -33,8 +33,10 @@ import SuccessConfirmationModal from "../components/modals/SuccessConfirmationMo
 import UserStats from "../components/features/userManagement/UserStats";
 import UserFilters from "../components/features/userManagement/UserFilters";
 import UserTable from "../components/features/userManagement/UserTable";
+import { BulkActionsModal } from "../components/modals/BulkActionsModal";
 import { useUserManagement } from "../hooks/useUserManagement"; // Adjust path
 import { ROLES } from "../utils/GLOBAL_PARAMETERS";
+import { IndividualUserSettingsModal } from "../components/modals/IndividualUserSettingsModal";
 
 const UserManagement: React.FC = () => {
   const {
@@ -63,6 +65,12 @@ const UserManagement: React.FC = () => {
   // --- NEW: Get current user and determine if they are an admin ---
   const currentUser = useCurrentUser() as IMe | undefined;
   const isAdmin = currentUser?.role?._id === ROLES.ADMIN;
+
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+  const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
+
+  // --- NEW: State for editing a single user ---
+  const [userToEdit, setUserToEdit] = useState<IUser | null>(null);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<IUser | null>(null);
@@ -373,6 +381,7 @@ const UserManagement: React.FC = () => {
           isLoadingRoleDefinitions={isLoadingUserStatsRoleDefinitionsAndCounts}
           dynamicRoleCounts={dynamicRoleCounts}
         />
+
         <div className="flex flex-col sm:flex-row gap-2 items-center md:items-start flex-shrink-0 mt-4 md:mt-0">
           <button
             className="w-full sm:w-auto flex justify-center items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-gray-500 text-white hover:bg-gray-600 hover:cursor-pointer"
@@ -452,6 +461,21 @@ const UserManagement: React.FC = () => {
         </div>
       )}
 
+      {/* --- NEW: Bulk Actions Button --- */}
+      {selectedUserIds.length > 0 && (
+        <div className="mb-4 p-2 bg-blue-50 border border-blue-200 rounded-md flex items-center justify-between">
+          <span className="text-sm font-medium text-blue-800">
+            {selectedUserIds.length} потребителя избрани
+          </span>
+          <button
+            onClick={() => setIsBulkModalOpen(true)}
+            className="bg-blue-600 text-white px-4 py-1.5 rounded-md text-sm font-semibold hover:bg-blue-700"
+          >
+            Масови действия
+          </button>
+        </div>
+      )}
+
       <UserTable
         users={usersForTable}
         isLoadingUsers={isLoadingTableData}
@@ -463,12 +487,15 @@ const UserManagement: React.FC = () => {
         onItemsPerPageChange={handleItemsPerPageChange}
         onEditUser={openEditModal}
         onDeleteUser={triggerDeleteUser}
+        onEditUserSettings={setUserToEdit}
         serverBaseUrl={serverBaseUrl}
         avatarVersion={avatarVersion}
         currentQueryInput={currentQueryInput}
         createLoading={createLoading}
         updateLoading={updateLoading}
         deleteUserLoading={deleteUserLoading}
+        selectedUserIds={selectedUserIds}
+        setSelectedUserIds={setSelectedUserIds}
       />
 
       <UserModal
@@ -516,6 +543,21 @@ const UserManagement: React.FC = () => {
         confirmButtonText="Изтрий потребител"
         isDestructiveAction={true}
       />
+
+      <BulkActionsModal
+        isOpen={isBulkModalOpen}
+        onClose={() => setIsBulkModalOpen(false)}
+        selectedUserIds={selectedUserIds}
+        // Pass any other necessary data like roles, categories etc.
+      />
+
+      {userToEdit && (
+        <IndividualUserSettingsModal
+          isOpen={!!userToEdit}
+          onClose={() => setUserToEdit(null)}
+          user={userToEdit}
+        />
+      )}
 
       <SuccessConfirmationModal
         isOpen={isSuccessModalOpen}

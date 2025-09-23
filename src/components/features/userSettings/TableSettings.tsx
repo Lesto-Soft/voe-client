@@ -2,7 +2,6 @@
 import React from "react";
 import * as Switch from "@radix-ui/react-switch";
 
-// This configuration defines the tables and their customizable columns.
 const mockTableConfigs = {
   dashboard: {
     label: "Табло (Сигнали)",
@@ -21,7 +20,6 @@ const mockTableConfigs = {
       role: "Роля",
     },
   },
-  // Add other tables like 'categoryManagement' here
 };
 
 interface TableSettingsProps {
@@ -32,9 +30,8 @@ interface TableSettingsProps {
       [tableKey: string]: { [columnKey: string]: boolean };
     };
   };
-  // The handler signature is now more specific for type safety
   onTableSettingChange: (
-    settings: Partial<
+    newSettings: Partial<
       Pick<TableSettingsProps["settings"], "itemsPerPage" | "filtersVisible">
     >
   ) => void;
@@ -69,7 +66,6 @@ const TableSettings: React.FC<TableSettingsProps> = ({
           density === "compact" ? "py-4 space-y-4" : "py-5 space-y-6"
         }`}
       >
-        {/* General Table Settings */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           <div>
             <label
@@ -116,7 +112,6 @@ const TableSettings: React.FC<TableSettingsProps> = ({
           </div>
         </div>
 
-        {/* Column Visibility Settings */}
         <div>
           <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200">
             Видимост на колони

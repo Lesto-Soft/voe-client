@@ -41,7 +41,7 @@ const UserSearchBar: React.FC<UserSearchBarProps> = ({
         <div>
           <label
             htmlFor="filterName"
-            className="block text-sm font-medium text-gray-700 mb-1"
+            className="block text-sm font-medium text-gray-700 mb-1 truncate"
           >
             Име на потребител
           </label>
@@ -59,7 +59,7 @@ const UserSearchBar: React.FC<UserSearchBarProps> = ({
         <div>
           <label
             htmlFor="filterUsername"
-            className="block text-sm font-medium text-gray-700 mb-1"
+            className="block text-sm font-medium text-gray-700 mb-1 truncate"
           >
             Потребителско име
           </label>

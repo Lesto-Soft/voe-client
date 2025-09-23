@@ -4,6 +4,7 @@ import UserSearchBar from "../../../../components/tables/UserSearchBar";
 const UserManagementSettings: React.FC = () => {
   // State for the User Management default settings
   const [isFilterOpen, setIsFilterOpen] = useState(true);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const [filterName, setFilterName] = useState("");
   const [filterUsername, setFilterUsername] = useState("");
   const [filterPosition, setFilterPosition] = useState("");
@@ -39,6 +40,26 @@ const UserManagementSettings: React.FC = () => {
             Филтрите да са отворени по подразбиране
           </span>
         </label>
+      </div>
+
+      {/* --- NEW: Items Per Page Setting --- */}
+      <div>
+        <label
+          htmlFor="items-per-page-usermgmt"
+          className="block text-sm font-medium text-gray-700"
+        >
+          Резултати на страница по подразбиране
+        </label>
+        <select
+          id="items-per-page-usermgmt"
+          value={itemsPerPage}
+          onChange={(e) => setItemsPerPage(Number(e.target.value))}
+          className="mt-1 max-w-xs w-full rounded-md border-gray-300 p-2 shadow-sm focus:outline-none focus:border-indigo-500"
+        >
+          <option value={10}>10</option>
+          <option value={20}>20</option>
+          <option value={50}>50</option>
+        </select>
       </div>
 
       <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">

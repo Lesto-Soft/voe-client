@@ -9,6 +9,7 @@ const DashboardSettings: React.FC = () => {
 
   // State to hold the default filter values for the dashboard
   const [isFilterOpen, setIsFilterOpen] = useState(true);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const [caseNumber, setCaseNumber] = useState("");
   const [priority, setPriority] = useState("");
   const [type, setType] = useState("");
@@ -53,6 +54,25 @@ const DashboardSettings: React.FC = () => {
             Филтрите да са отворени по подразбиране
           </span>
         </label>
+      </div>
+
+      <div>
+        <label
+          htmlFor="items-per-page-dashboard"
+          className="block text-sm font-medium text-gray-700"
+        >
+          Резултати на страница по подразбиране
+        </label>
+        <select
+          id="items-per-page-dashboard"
+          value={itemsPerPage}
+          onChange={(e) => setItemsPerPage(Number(e.target.value))}
+          className="mt-1 max-w-xs w-full rounded-md border-gray-300 p-2 shadow-sm focus:outline-none focus:border-indigo-500"
+        >
+          <option value={10}>10</option>
+          <option value={20}>20</option>
+          <option value={50}>50</option>
+        </select>
       </div>
 
       <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">

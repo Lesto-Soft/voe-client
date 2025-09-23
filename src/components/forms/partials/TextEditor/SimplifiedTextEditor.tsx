@@ -8,7 +8,6 @@ import { CustomMention } from "./CustomMention";
 import { QuestionMarkCircleIcon } from "@heroicons/react/24/solid";
 import HelpModal from "./HelperModal";
 import { useTranslation } from "react-i18next";
-
 interface SimpleTextEditorProps {
   content?: string;
   onUpdate?: (html: string) => void;
@@ -30,9 +29,9 @@ const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
   minLength,
   mentions = [],
 }) => {
+  const { t } = useTranslation("menu");
   const [charCount, setCharCount] = useState(0);
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
-  const { t } = useTranslation("menu");
   const mentionSuggestionConfig = useMemo(
     () => createMentionSuggestion(mentions),
     [mentions]
@@ -181,7 +180,7 @@ const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
               type="button"
               onClick={() => setIsHelpModalOpen(true)} // 👈 3. Call the function from the parent
               className="cursor-pointer p-1 rounded text-gray-500 hover:bg-gray-200 hover:text-gray-700"
-              title="Help"
+              title={t("rte.help") || "Help"}
             >
               <QuestionMarkCircleIcon className="w-5 h-5" />
             </button>

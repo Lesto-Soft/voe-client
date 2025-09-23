@@ -74,6 +74,7 @@
     "alignLeft": "Align Left",
     "alignCenter": "Align Center",
     "alignRight": "Align Right",
-    "mention": "Mention User (@)"
+    "mention": "Mention User (@)",
+    "help": "Help"
   }
 }

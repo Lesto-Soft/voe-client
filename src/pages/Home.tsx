@@ -109,7 +109,7 @@ const LoginForm = ({
     } catch (err) {
       setIsLoading(false);
       const errorResponse = (err as any)?.response;
-      if (errorResponse?.status === 500) {
+      if (errorResponse?.status === 500 || errorResponse?.status === 401) {
         setError(t("home.errors.wrong_credentials"));
         return;
       }

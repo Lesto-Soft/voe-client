@@ -9,7 +9,7 @@ import AppearanceSettings from "./components/AppearanceSettings";
 import NotificationSettings from "./components/NotificationSettings";
 import BehaviorSettings from "./components/BehaviourSettings";
 import AutomationSettings from "./components/AutomationSettings";
-import TemplatesSettings from "./components/TemplateSettings";
+import TemplatesSettings from "./components/TemplatesSettings";
 import BulkChangesSettings from "./components/BulkChangesSettings";
 
 const SettingsPage: React.FC = () => {

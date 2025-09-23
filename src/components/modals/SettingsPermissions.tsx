@@ -21,11 +21,11 @@ const SettingsPermissions: React.FC<SettingsPermissionsProps> = ({ user }) => {
     { key: "account", label: 'Редакция на "Акаунт"' },
     { key: "appearance", label: 'Редакция на "Визия"' },
     { key: "notifications", label: 'Редакция на "Известия"' },
-    { key: "behavior", label: 'Редакция на "Поведение"' },
+    { key: "behavior", label: 'Редакция на "Изгледи"' },
   ];
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+    <div className="bg-white p-6 rounded-lg h-126 shadow-sm border border-gray-200">
       <h2 className="text-xl font-semibold text-gray-800">
         Заключване на настройки
       </h2>

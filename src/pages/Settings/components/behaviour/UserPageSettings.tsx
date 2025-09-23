@@ -154,7 +154,7 @@ const UserPageSettings: React.FC = () => {
         </div>
       </div>
 
-      <div className="pt-4 border-t text-right">
+      <div className="pt-4 border-t border-t-gray-200 text-right">
         <button
           onClick={handleSave}
           className="bg-blue-600 text-white px-5 py-2 rounded-md text-sm font-semibold hover:bg-blue-700"

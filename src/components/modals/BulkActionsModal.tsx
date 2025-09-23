@@ -2,14 +2,15 @@ import React, { useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import {
-  PencilSquareIcon,
+  PaintBrushIcon,
   RectangleStackIcon,
   LockClosedIcon,
   BellIcon,
+  Cog6ToothIcon,
 } from "@heroicons/react/24/solid";
 import NotificationSettings from "../../pages/Settings/components/NotificationSettings";
-import { IUser } from "../../db/interfaces";
 import SettingsPermissions from "./SettingsPermissions";
+import { IUser } from "../../db/interfaces";
 
 interface BulkActionsModalProps {
   isOpen: boolean;
@@ -17,11 +18,13 @@ interface BulkActionsModalProps {
   selectedUserIds: string[];
 }
 
+// A generic component to represent a setting that can be overridden
 const OverridableSetting: React.FC<{
   label: string;
   children: React.ReactNode;
 }> = ({ label, children }) => {
   const [isOverridden, setIsOverridden] = useState(false);
+
   return (
     <div
       className={`p-3 rounded-md transition-colors ${
@@ -34,7 +37,7 @@ const OverridableSetting: React.FC<{
           type="checkbox"
           checked={isOverridden}
           onChange={() => setIsOverridden(!isOverridden)}
-          className="h-4 w-4 rounded"
+          className="h-4 w-4 rounded text-blue-600 focus:ring-blue-500"
         />
         <label
           htmlFor={`override-${label}`}
@@ -59,9 +62,11 @@ export const BulkActionsModal: React.FC<BulkActionsModalProps> = ({
   onClose,
   selectedUserIds,
 }) => {
+  // MODIFIED: Added 'behavior' and renamed 'edit' to 'appearance'
   const [activeTab, setActiveTab] = useState<
-    "edit" | "template" | "notifications" | "lock"
-  >("edit");
+    "appearance" | "behavior" | "notifications" | "template" | "lock"
+  >("appearance");
+  const [selectedTemplate, setSelectedTemplate] = useState("");
 
   const handleSave = () => {
     alert(
@@ -77,7 +82,7 @@ export const BulkActionsModal: React.FC<BulkActionsModalProps> = ({
   }> = ({ tabKey, label, icon: Icon }) => (
     <button
       onClick={() => setActiveTab(tabKey)}
-      className={`flex-1 p-3 text-sm font-medium flex items-center justify-center gap-2 ${
+      className={`flex-1 p-3 text-xs sm:text-sm font-medium flex items-center justify-center gap-2 ${
         activeTab === tabKey
           ? "border-b-2 border-blue-600 text-blue-600"
           : "text-gray-500 hover:bg-gray-100"
@@ -92,7 +97,7 @@ export const BulkActionsModal: React.FC<BulkActionsModalProps> = ({
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50" />
         <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[90vw] max-w-2xl bg-white rounded-lg shadow-xl max-h-[85vh] flex flex-col">
-          <header className="p-4 border-b flex justify-between items-center flex-shrink-0">
+          <header className="p-4 border-b border-b-gray-400 flex justify-between items-center flex-shrink-0">
             <Dialog.Title className="text-lg font-semibold">
               Масови действия за {selectedUserIds.length} потребителя
             </Dialog.Title>
@@ -103,13 +108,18 @@ export const BulkActionsModal: React.FC<BulkActionsModalProps> = ({
             </Dialog.Close>
           </header>
 
-          <div className="border-b flex flex-shrink-0">
-            <TabButton tabKey="edit" label="Редакция" icon={PencilSquareIcon} />
+          <div className="border-b border-b-gray-400 flex flex-shrink-0">
+            <TabButton
+              tabKey="appearance"
+              label="Визия"
+              icon={PaintBrushIcon}
+            />
             <TabButton
               tabKey="notifications"
               label="Известия"
               icon={BellIcon}
             />
+            <TabButton tabKey="behavior" label="Изгледи" icon={Cog6ToothIcon} />
             <TabButton
               tabKey="template"
               label="Шаблон"
@@ -119,18 +129,31 @@ export const BulkActionsModal: React.FC<BulkActionsModalProps> = ({
           </div>
 
           <main className="p-6 overflow-y-auto flex-1 bg-gray-50">
-            {activeTab === "edit" && (
-              <div className="space-y-4">
+            {activeTab === "appearance" && (
+              <div className="space-y-4 h-105">
                 <OverridableSetting label="Тема">
                   <select className="w-full p-2 border rounded-md border-gray-300">
                     <option>Светла</option>
                     <option>Тъмна</option>
+                    <option>Системна</option>
                   </select>
                 </OverridableSetting>
                 <OverridableSetting label="Наситеност">
                   <select className="w-full p-2 border rounded-md border-gray-300">
                     <option>Комфортна</option>
                     <option>Компактна</option>
+                  </select>
+                </OverridableSetting>
+                <OverridableSetting label="Език">
+                  <select className="w-full p-2 border rounded-md border-gray-300">
+                    <option>Български</option>
+                    <option>English</option>
+                  </select>
+                </OverridableSetting>
+                <OverridableSetting label="Формат на дати">
+                  <select className="w-full p-2 border rounded-md border-gray-300">
+                    <option>Относителен</option>
+                    <option>Абсолютен</option>
                   </select>
                 </OverridableSetting>
               </div>
@@ -146,15 +169,57 @@ export const BulkActionsModal: React.FC<BulkActionsModalProps> = ({
                 </div>
               </OverridableSetting>
             )}
+            {activeTab === "behavior" && (
+              <div className="space-y-4 h-105">
+                <OverridableSetting label="Резултати на страница">
+                  <select className="w-full p-2 border rounded-md border-gray-300">
+                    <option>10</option>
+                    <option>20</option>
+                    <option>50</option>
+                  </select>
+                </OverridableSetting>
+                <OverridableSetting label="Таб на сигнал по подразбиране">
+                  <select className="w-full p-2 border rounded-md border-gray-300">
+                    <option>Решения</option>
+                    <option>Коментари</option>
+                    <option>История</option>
+                  </select>
+                </OverridableSetting>
+                {/* Add more behavior settings as needed */}
+              </div>
+            )}
             {activeTab === "template" && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Изберете шаблон
-                </label>
-                <select className="w-full p-2 border rounded-md border-gray-300">
-                  <option>Нов служител - Базов достъп</option>
-                  <option>Мениджър на категория</option>
-                </select>
+              <div className="space-y-4 h-105">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Изберете шаблон за прилагане
+                  </label>
+                  <select
+                    value={selectedTemplate}
+                    onChange={(e) => setSelectedTemplate(e.target.value)}
+                    className="w-full p-2 border rounded-md border-gray-300"
+                  >
+                    <option value="">-- Изберете --</option>
+                    <option value="t1">Нов служител - Базов достъп</option>
+                    <option value="t2">Мениджър на категория</option>
+                  </select>
+                </div>
+                {selectedTemplate && (
+                  <div className="p-4 border border-dashed border-gray-300 rounded-lg">
+                    <h4 className="font-semibold text-gray-800">
+                      Преглед на шаблон:
+                    </h4>
+                    <ul className="mt-2 text-sm text-gray-600 list-disc list-inside space-y-1">
+                      {/* This would be dynamically populated based on the selected template's data */}
+                      <li>Тема: Светла</li>
+                      <li>Език: Български</li>
+                      <li>
+                        Известия за @споменаване: Включени за всички приоритети
+                      </li>
+                      <li>Заключени секции: Акаунт</li>
+                    </ul>
+                  </div>
+                )}
               </div>
             )}
             {activeTab === "lock" && (
@@ -166,7 +231,7 @@ export const BulkActionsModal: React.FC<BulkActionsModalProps> = ({
             )}
           </main>
 
-          <footer className="p-4 border-t flex justify-end flex-shrink-0 bg-white">
+          <footer className="p-4 border-t border-t-gray-400 flex justify-end flex-shrink-0 bg-white">
             <button
               onClick={handleSave}
               className="bg-blue-600 text-white px-5 py-2 rounded-md text-sm font-semibold hover:bg-blue-700"

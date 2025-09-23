@@ -64,11 +64,11 @@ const BulkChangesSettings: React.FC = () => {
         className="w-full p-2 border rounded-md border-gray-300 mb-4"
       />
 
-      <div className="max-h-96 overflow-y-auto border rounded-md">
+      <div className="max-h-96 overflow-y-auto rounded-xs">
         {filteredUsers.map((user) => (
           <div
             key={user._id}
-            className="flex items-center justify-between p-3 border-b hover:bg-gray-50 last:border-b-0"
+            className="flex items-center justify-between p-3 border-b border-b-gray-200 hover:bg-gray-50 last:border-b-0"
           >
             <label className="flex items-center gap-3 cursor-pointer flex-grow">
               <input

@@ -34,7 +34,7 @@ const AutomationSettings: React.FC = () => {
       <div className="space-y-4 max-w-md">
         {/* High Priority */}
         <div className="flex items-center gap-4">
-          <label className="w-36 flex items-center gap-1.5 font-semibold text-red-600 flex-shrink-0">
+          <label className="w-48 flex items-center gap-1.5 font-semibold text-red-600 flex-shrink-0">
             <FlagIcon className="h-5 w-5" />
             Висок приоритет:
           </label>
@@ -66,7 +66,7 @@ const AutomationSettings: React.FC = () => {
 
         {/* Medium Priority */}
         <div className="flex items-center gap-4">
-          <label className="w-36 flex items-center gap-1.5 font-semibold text-yellow-600 flex-shrink-0">
+          <label className="w-48 flex items-center gap-1.5 font-semibold text-yellow-600 flex-shrink-0">
             <FlagIcon className="h-5 w-5" />
             Среден приоритет:
           </label>
@@ -98,7 +98,7 @@ const AutomationSettings: React.FC = () => {
 
         {/* Low Priority */}
         <div className="flex items-center gap-4">
-          <label className="w-36 flex items-center gap-1.5 font-semibold text-green-600 flex-shrink-0">
+          <label className="w-48 flex items-center gap-1.5 font-semibold text-green-600 flex-shrink-0">
             <FlagIcon className="h-5 w-5" />
             Нисък приоритет:
           </label>

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { BellIcon } from "@heroicons/react/24/outline";
 import {
   useDeleteNotifications,
   useGetNotifications,
@@ -12,10 +11,20 @@ import { toast } from "react-toastify";
 import { useTranslation, Trans } from "react-i18next";
 import NotificationItem from "./NotificationItem";
 import ConfirmActionDialog from "../modals/ConfirmActionDialog";
+import {
+  BellIcon,
+  RectangleStackIcon,
+  DocumentTextIcon,
+  ChatBubbleBottomCenterTextIcon,
+  ChatBubbleOvalLeftEllipsisIcon,
+  AtSymbolIcon,
+} from "@heroicons/react/24/solid";
 
 interface NotificationCenterProps {
   userId: string;
 }
+
+type NotificationTab = "ALL" | "CASES" | "ANSWERS" | "COMMENTS" | "MENTIONS";
 
 const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }) => {
   const { t } = useTranslation("menu");
@@ -23,11 +32,16 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }) => {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isDropdownOpen, setDropdownOpen] = useState(false);
   const [deleteNotifications] = useDeleteNotifications();
-  const { data: initialData, loading: initialLoading } = useGetNotifications();
+  const {
+    data: initialData,
+    loading: initialLoading,
+    refetch,
+  } = useGetNotifications();
 
   useNotificationSubscription({
     variables: { userId },
     onData: ({ data }) => {
+      refetch();
       const newNotification = data.data?.notificationAdded;
       if (newNotification) {
         setNotifications((prev) => [newNotification, ...prev]);

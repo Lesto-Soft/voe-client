@@ -58,7 +58,12 @@
     "reopen_case": "Сигнал <1>{{caseNumber}}</1> бе върнат като <1>Отворен</1>",
     "reopen_finance_case": "Сигнал <1>{{caseNumber}}</1> бе върнат като <1>Очакващ финансиране</1>",
     "case_reminder": "Напомняне: Сигнал <1>{{caseNumber}}</1> чака вашето действие",
-    "mark_all_read": "Прочети"
+    "mark_all_read": "Прочети",
+    "all": "Всички",
+    "answers": "Решения",
+    "cases": "Сигнали",
+    "comments": "Коментари",
+    "mark_all_read_title": "Маркирай всички като прочетени"
   },
   "rte": {
     "bold": "Удебелен (Ctrl+B)",

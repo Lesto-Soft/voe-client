@@ -57,7 +57,12 @@
     "reopen_case": "Case <1>{{caseNumber}}</1> was set to <1>Open</1>",
     "reopen_finance_case": "Case <1>{{caseNumber}}</1> was set to <1>Awaiting Finance</1>",
     "case_reminder": "Reminder: Case <1>{{caseNumber}}</1> is awaiting your action",
-    "mark_all_read": "Read all"
+    "mark_all_read": "Read all",
+    "all": "All",
+    "answers": "Answers",
+    "cases": "Cases",
+    "comments": "Comments",
+    "mark_all_read_title": "Mark all as read"
   },
   "rte": {
     "bold": "Bold (Ctrl+B)",

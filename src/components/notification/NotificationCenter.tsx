@@ -17,8 +17,6 @@ import {
   DocumentTextIcon,
   ChatBubbleBottomCenterTextIcon,
   ChatBubbleOvalLeftEllipsisIcon,
-  EnvelopeIcon,
-  SparklesIcon,
 } from "@heroicons/react/24/solid";
 import { BellIcon } from "@heroicons/react/24/outline";
 
@@ -26,7 +24,7 @@ interface NotificationCenterProps {
   userId: string;
 }
 
-type NotificationTab = "ALL" | "CASES" | "ANSWERS" | "COMMENTS" | "UNREAD";
+type NotificationTab = "ALL" | "CASES" | "ANSWERS" | "COMMENTS";
 const filterMap: Record<
   Exclude<NotificationTab, "ALL" | "UNREAD">,
   string[]
@@ -149,31 +147,37 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }) => {
     icon: React.ElementType;
     title: string;
   }[] = [
-    { name: "ALL", icon: RectangleStackIcon, title: t("All") },
-    { name: "UNREAD", icon: EnvelopeIcon, title: t("Unread") },
-    { name: "CASES", icon: DocumentTextIcon, title: t("Cases") },
+    {
+      name: "ALL",
+      icon: RectangleStackIcon,
+      title: t("notification_contents.all"),
+    },
+    // { name: "UNREAD", icon: EnvelopeIcon, title: t("Unread") },
+    {
+      name: "CASES",
+      icon: DocumentTextIcon,
+      title: t("notification_contents.cases"),
+    },
     {
       name: "ANSWERS",
       icon: ChatBubbleBottomCenterTextIcon,
-      title: t("Answers"),
+      title: t("notification_contents.answers"),
     },
     {
       name: "COMMENTS",
       icon: ChatBubbleOvalLeftEllipsisIcon,
-      title: t("Comments"),
+      title: t("notification_contents.comments"),
     },
   ];
   const unreadCountsByTab = useMemo(() => {
     const counts: Record<NotificationTab, number> = {
       ALL: 0,
-      UNREAD: 0,
       CASES: 0,
       ANSWERS: 0,
       COMMENTS: 0,
     };
     const unreadNotifications = notifications.filter((n) => !n.read);
     counts.ALL = unreadNotifications.length;
-    counts.UNREAD = unreadNotifications.length;
 
     unreadNotifications.forEach((n) => {
       if (filterMap.CASES.includes(n.content)) counts.CASES++;
@@ -185,9 +189,9 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }) => {
   }, [notifications]);
 
   const filteredNotifications = useMemo(() => {
-    if (activeTab === "UNREAD") {
-      return notifications.filter((n) => !n.read);
-    }
+    // if (activeTab === "UNREAD") {
+    //   return notifications.filter((n) => !n.read);
+    // }
 
     if (activeTab === "ALL") {
       return notifications;
@@ -355,7 +359,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }) => {
                   >
                     <Icon className="h-5 w-5" />
                     {count > 0 && (
-                      <span className="absolute top-1 right-2 bg-red-500 text-white text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center">
+                      <span className="absolute top-1 right-4 bg-red-500 text-white text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center">
                         {count > 9 ? "9+" : count}
                       </span>
                     )}

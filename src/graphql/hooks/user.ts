@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { useQuery, useMutation, ApolloError } from "@apollo/client";
 import {
   GET_USERS,
@@ -11,6 +11,9 @@ import {
   GET_FULL_USER_BY_USERNAME,
   GET_RANKED_USERS,
   GET_USER_MENTIONS,
+  REQUEST_PASSWORD_RESET,
+  RESET_PASSWORD,
+  VERIFY_RESET_TOKEN,
 } from "../query/user"; // Adjust path if needed
 import {
   CREATE_USER,
@@ -358,4 +361,68 @@ export const useGetUserMentions = (categories: string[]) => {
     loading,
     error,
   };
+};
+
+export const useRequestPasswordReset = () => {
+  const [requestPasswordResetMutation, { loading, error }] = useMutation(
+    REQUEST_PASSWORD_RESET
+  );
+
+  const requestReset = useCallback(
+    async (variables: { email?: string; username?: string }) => {
+      try {
+        const response = await requestPasswordResetMutation({ variables });
+        return response.data?.requestPasswordReset;
+      } catch (err) {
+        throw err;
+      }
+    },
+    [requestPasswordResetMutation]
+  );
+
+  return { requestReset, loading, error };
+};
+
+/**
+ * Hook to verify a password reset token.
+ */
+export const useVerifyResetToken = () => {
+  const [verifyTokenMutation, { loading, error }] =
+    useMutation(VERIFY_RESET_TOKEN);
+
+  const verifyToken = useCallback(
+    async (token: string) => {
+      try {
+        const response = await verifyTokenMutation({ variables: { token } });
+        return response.data?.verifyResetToken;
+      } catch (err) {
+        throw err;
+      }
+    },
+    [verifyTokenMutation]
+  );
+
+  return { verifyToken, loading, error };
+};
+
+/**
+ * Hook to submit a new password with a valid token.
+ */
+export const useResetPassword = () => {
+  const [resetPasswordMutation, { loading, error }] =
+    useMutation(RESET_PASSWORD);
+
+  const resetPassword = useCallback(
+    async (variables: { token: string; newPassword: string }) => {
+      try {
+        const response = await resetPasswordMutation({ variables });
+        return response.data?.resetPassword;
+      } catch (err) {
+        throw err;
+      }
+    },
+    [resetPasswordMutation]
+  );
+
+  return { resetPassword, loading, error };
 };

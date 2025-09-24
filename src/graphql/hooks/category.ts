@@ -102,7 +102,6 @@ export const useGetActiveCategories = () => {
   };
 };
 export const useGetCategoryByName = (name: string | undefined) => {
-  // console.log("[HOOK] Attempting to fetch category with input name:", name);
   const { loading, error, data, refetch } = useQuery<{
     getCategoryByName: ICategory;
   }>(GET_CATEGORY_BY_NAME, {

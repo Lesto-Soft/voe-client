@@ -207,7 +207,7 @@ const NotificationSettings: React.FC = () => {
         <nav className="-mb-px flex space-x-6" aria-label="Tabs">
           <button
             onClick={() => setActiveTab("inApp")}
-            className={`whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm ${
+            className={`cursor-pointer whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm ${
               activeTab === "inApp"
                 ? "border-blue-500 text-blue-600"
                 : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
@@ -217,7 +217,7 @@ const NotificationSettings: React.FC = () => {
           </button>
           <button
             onClick={() => setActiveTab("email")}
-            className={`whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm ${
+            className={`cursor-pointer whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm ${
               activeTab === "email"
                 ? "border-blue-500 text-blue-600"
                 : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
@@ -309,7 +309,7 @@ const NotificationSettings: React.FC = () => {
       <div className="pt-6 mt-6 border-t border-gray-200 text-right">
         <button
           onClick={handleSave}
-          className="bg-blue-600 text-white px-5 py-2 rounded-md text-sm font-semibold hover:bg-blue-700"
+          className="cursor-pointer bg-blue-600 text-white px-5 py-2 rounded-md text-sm font-semibold hover:bg-blue-700"
         >
           Запази промените
         </button>

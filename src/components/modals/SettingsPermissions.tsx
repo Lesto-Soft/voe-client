@@ -44,7 +44,7 @@ const SettingsPermissions: React.FC<SettingsPermissionsProps> = ({ user }) => {
               type="checkbox"
               checked={!lockedSettings.includes(opt.key)}
               onChange={() => handleToggle(opt.key)}
-              className="h-5 w-5 rounded"
+              className="cursor-pointer h-5 w-5 rounded"
             />
             <span className="font-medium text-gray-700">{opt.label}</span>
           </label>

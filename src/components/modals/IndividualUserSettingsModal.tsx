@@ -36,7 +36,7 @@ export const IndividualUserSettingsModal: React.FC<
               {title}
             </Dialog.Title>
             <Dialog.Close asChild>
-              <button className="p-1 rounded-full hover:bg-gray-100">
+              <button className="cursor-pointer p-1 rounded-full hover:bg-gray-100">
                 <XMarkIcon className="h-6 w-6" />
               </button>
             </Dialog.Close>
@@ -49,14 +49,18 @@ export const IndividualUserSettingsModal: React.FC<
                 onClick={() => setActiveTab("account")}
                 className={`w-full text-left p-2 rounded text-sm ${
                   activeTab === "account" ? "bg-blue-100" : "hover:bg-gray-200"
-                } ${isTemplateMode ? "opacity-50 cursor-not-allowed" : ""}`}
+                } ${
+                  isTemplateMode
+                    ? "opacity-50 cursor-not-allowed"
+                    : "cursor-pointer"
+                }`}
                 disabled={isTemplateMode}
               >
                 Акаунт
               </button>
               <button
                 onClick={() => setActiveTab("appearance")}
-                className={`w-full text-left p-2 rounded text-sm ${
+                className={`cursor-pointer w-full text-left p-2 rounded text-sm ${
                   activeTab === "appearance"
                     ? "bg-blue-100"
                     : "hover:bg-gray-200"
@@ -66,7 +70,7 @@ export const IndividualUserSettingsModal: React.FC<
               </button>
               <button
                 onClick={() => setActiveTab("notifications")}
-                className={`w-full text-left p-2 rounded text-sm ${
+                className={`cursor-pointer w-full text-left p-2 rounded text-sm ${
                   activeTab === "notifications"
                     ? "bg-blue-100"
                     : "hover:bg-gray-200"
@@ -76,7 +80,7 @@ export const IndividualUserSettingsModal: React.FC<
               </button>
               <button
                 onClick={() => setActiveTab("behavior")}
-                className={`w-full text-left p-2 rounded text-sm ${
+                className={`cursor-pointer w-full text-left p-2 rounded text-sm ${
                   activeTab === "behavior" ? "bg-blue-100" : "hover:bg-gray-200"
                 }`}
               >
@@ -85,7 +89,7 @@ export const IndividualUserSettingsModal: React.FC<
               {/* MODIFIED: This button is now ALWAYS enabled */}
               <button
                 onClick={() => setActiveTab("permissions")}
-                className={`w-full text-left p-2 rounded text-sm ${
+                className={`cursor-pointer w-full text-left p-2 rounded text-sm ${
                   activeTab === "permissions"
                     ? "bg-blue-100 text-blue-800 font-semibold"
                     : "hover:bg-gray-200"

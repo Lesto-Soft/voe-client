@@ -49,7 +49,7 @@ const BulkChangesSettings: React.FC = () => {
         <button
           onClick={() => setIsBulkModalOpen(true)}
           disabled={selectedUserIds.length === 0}
-          className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="cursor-pointer bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Масови действия ({selectedUserIds.length})
         </button>
@@ -73,7 +73,7 @@ const BulkChangesSettings: React.FC = () => {
             <label className="flex items-center gap-3 cursor-pointer flex-grow">
               <input
                 type="checkbox"
-                className="h-4 w-4 rounded text-blue-600 focus:ring-blue-500"
+                className="cursor-pointer h-4 w-4 rounded text-blue-600 focus:ring-blue-500"
                 checked={selectedUserIds.includes(user._id)}
                 onChange={() => handleSelectUser(user._id)}
               />
@@ -84,7 +84,7 @@ const BulkChangesSettings: React.FC = () => {
             </label>
             <button
               onClick={() => setUserToEdit(user)}
-              className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+              className="cursor-pointer p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
               title={`Редактирай настройките на ${user.name}`}
             >
               <PencilSquareIcon className="h-5 w-5" />

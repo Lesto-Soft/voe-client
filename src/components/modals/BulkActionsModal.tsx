@@ -38,11 +38,11 @@ const OverridableSetting: React.FC<{
           type="checkbox"
           checked={isOverridden}
           onChange={() => setIsOverridden(!isOverridden)}
-          className="h-4 w-4 rounded text-blue-600 focus:ring-blue-500"
+          className="cursor-pointer h-4 w-4 rounded text-blue-600 focus:ring-blue-500"
         />
         <label
           htmlFor={`override-${label}`}
-          className="ml-2 text-sm font-medium text-gray-800"
+          className="cursor-pointer ml-2 text-sm font-medium text-gray-800"
         >
           Промени "{label}"
         </label>
@@ -92,7 +92,7 @@ export const BulkActionsModal: React.FC<BulkActionsModalProps> = ({
   }> = ({ tabKey, label, icon: Icon }) => (
     <button
       onClick={() => setActiveTab(tabKey)}
-      className={`flex-1 p-3 text-xs sm:text-sm font-medium flex items-center justify-center gap-2 ${
+      className={`cursor-pointer flex-1 p-3 text-xs sm:text-sm font-medium flex items-center justify-center gap-2 ${
         activeTab === tabKey
           ? "border-b-2 border-blue-600 text-blue-600"
           : "text-gray-500 hover:bg-gray-100"
@@ -113,7 +113,7 @@ export const BulkActionsModal: React.FC<BulkActionsModalProps> = ({
                 Масови действия за {selectedUserIds.length} потребителя
               </Dialog.Title>
               <Dialog.Close asChild>
-                <button className="p-1 rounded-full hover:bg-gray-100">
+                <button className="cursor-pointer p-1 rounded-full hover:bg-gray-100">
                   <XMarkIcon className="h-6 w-6" />
                 </button>
               </Dialog.Close>
@@ -151,26 +151,26 @@ export const BulkActionsModal: React.FC<BulkActionsModalProps> = ({
               {activeTab === "appearance" && (
                 <div className="space-y-4 h-105">
                   <OverridableSetting label="Тема">
-                    <select className="w-full p-2 border rounded-md border-gray-300">
+                    <select className="cursor-pointer w-full p-2 border rounded-md border-gray-300">
                       <option>Светла</option>
                       <option>Тъмна</option>
                       <option>Системна</option>
                     </select>
                   </OverridableSetting>
                   <OverridableSetting label="Наситеност">
-                    <select className="w-full p-2 border rounded-md border-gray-300">
+                    <select className="cursor-pointer w-full p-2 border rounded-md border-gray-300">
                       <option>Комфортна</option>
                       <option>Компактна</option>
                     </select>
                   </OverridableSetting>
                   <OverridableSetting label="Език">
-                    <select className="w-full p-2 border rounded-md border-gray-300">
+                    <select className="cursor-pointer w-full p-2 border rounded-md border-gray-300">
                       <option>Български</option>
                       <option>English</option>
                     </select>
                   </OverridableSetting>
                   <OverridableSetting label="Формат на дати">
-                    <select className="w-full p-2 border rounded-md border-gray-300">
+                    <select className="cursor-pointer w-full p-2 border rounded-md border-gray-300">
                       <option>Относителен</option>
                       <option>Абсолютен</option>
                     </select>
@@ -180,14 +180,14 @@ export const BulkActionsModal: React.FC<BulkActionsModalProps> = ({
               {activeTab === "behavior" && (
                 <div className="space-y-4">
                   <OverridableSetting label="Резултати на страница">
-                    <select className="w-full p-2 border rounded-md border-gray-300">
+                    <select className="cursor-pointer w-full p-2 border rounded-md border-gray-300">
                       <option>10</option>
                       <option>20</option>
                       <option>50</option>
                     </select>
                   </OverridableSetting>
                   <OverridableSetting label="Таб на сигнал по подразбиране">
-                    <select className="w-full p-2 border rounded-md border-gray-300">
+                    <select className="cursor-pointer w-full p-2 border rounded-md border-gray-300">
                       <option>Решения</option>
                       <option>Коментари</option>
                       <option>История</option>
@@ -195,23 +195,32 @@ export const BulkActionsModal: React.FC<BulkActionsModalProps> = ({
                   </OverridableSetting>
 
                   <OverridableSetting label="Изглед по подразбиране за страници">
-                    <select className="w-full p-2 border rounded-md border-gray-300">
+                    <select className="cursor-pointer w-full p-2 border rounded-md border-gray-300">
                       <option value="standard">Стандартен</option>
                       <option value="analytical">Аналитичен</option>
                     </select>
                   </OverridableSetting>
                   <OverridableSetting label="Панели по подразбиране за страници">
                     <div className="space-y-2 pt-1">
-                      <label className="flex items-center gap-2">
-                        <input type="checkbox" className="h-4 w-4 rounded" />{" "}
+                      <label className="cursor-pointer flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          className="cursor-pointer h-4 w-4 rounded"
+                        />{" "}
                         Панел "Информация"
                       </label>
-                      <label className="flex items-center gap-2">
-                        <input type="checkbox" className="h-4 w-4 rounded" />{" "}
+                      <label className="cursor-pointer flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          className="cursor-pointer h-4 w-4 rounded"
+                        />{" "}
                         Панел "Активност"
                       </label>
-                      <label className="flex items-center gap-2">
-                        <input type="checkbox" className="h-4 w-4 rounded" />{" "}
+                      <label className="cursor-pointer flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          className="cursor-pointer h-4 w-4 rounded"
+                        />{" "}
                         Панел "Статистика"
                       </label>
                     </div>
@@ -238,7 +247,7 @@ export const BulkActionsModal: React.FC<BulkActionsModalProps> = ({
                     <select
                       value={selectedTemplate}
                       onChange={(e) => setSelectedTemplate(e.target.value)}
-                      className="w-full p-2 border rounded-md border-gray-300"
+                      className="cursor-pointer w-full p-2 border rounded-md border-gray-300"
                     >
                       <option value="">-- Изберете --</option>
                       <option value="t1">Нов служител - Базов достъп</option>
@@ -266,7 +275,7 @@ export const BulkActionsModal: React.FC<BulkActionsModalProps> = ({
                       <div className="text-right mt-3">
                         <button
                           onClick={() => setIsConfirmApplyOpen(true)}
-                          className="bg-green-600 text-white px-4 py-1.5 rounded-md text-sm font-semibold hover:bg-green-700"
+                          className="cursor-pointer bg-green-600 text-white px-4 py-1.5 rounded-md text-sm font-semibold hover:bg-green-700"
                         >
                           Приложи този шаблон
                         </button>
@@ -288,7 +297,7 @@ export const BulkActionsModal: React.FC<BulkActionsModalProps> = ({
               <button
                 onClick={handleApplyOverrides}
                 disabled={activeTab === "template"} // The main button is disabled when in template mode
-                className="bg-blue-600 text-white px-5 py-2 rounded-md text-sm font-semibold hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                className="cursor-pointer bg-blue-600 text-white px-5 py-2 rounded-md text-sm font-semibold hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
               >
                 Приложи
               </button>

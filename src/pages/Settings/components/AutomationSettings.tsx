@@ -57,7 +57,7 @@ const AutomationSettings: React.FC = () => {
                 high: { ...p.high, unit: e.target.value },
               }))
             }
-            className="rounded-md border-gray-300 p-2"
+            className="cursor-pointer rounded-md border-gray-300 p-2"
           >
             <option value="days">Дни</option>
             <option value="hours">Часове</option>
@@ -89,7 +89,7 @@ const AutomationSettings: React.FC = () => {
                 medium: { ...p.medium, unit: e.target.value },
               }))
             }
-            className="rounded-md border-gray-300 p-2"
+            className="cursor-pointer rounded-md border-gray-300 p-2"
           >
             <option value="days">Дни</option>
             <option value="hours">Часове</option>
@@ -121,7 +121,7 @@ const AutomationSettings: React.FC = () => {
                 low: { ...p.low, unit: e.target.value },
               }))
             }
-            className="rounded-md border-gray-300 p-2"
+            className="cursor-pointer rounded-md border-gray-300 p-2"
           >
             <option value="days">Дни</option>
             <option value="hours">Часове</option>
@@ -136,7 +136,7 @@ const AutomationSettings: React.FC = () => {
             type="checkbox"
             checked={includeWeekends}
             onChange={(e) => setIncludeWeekends(e.target.checked)}
-            className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            className="cursor-pointer h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
           />
           <span className="font-medium">
             Включи уикендите в изчисляването на периода
@@ -151,7 +151,7 @@ const AutomationSettings: React.FC = () => {
       <div className="pt-6 mt-2 border-t border-gray-200 text-right">
         <button
           onClick={handleSave}
-          className="bg-blue-600 text-white px-5 py-2 rounded-md text-sm font-semibold hover:bg-blue-700"
+          className="cursor-pointer bg-blue-600 text-white px-5 py-2 rounded-md text-sm font-semibold hover:bg-blue-700"
         >
           Запази промените
         </button>

@@ -50,7 +50,7 @@ const AnalysesSettings: React.FC = () => {
           <div className="flex gap-2">
             <button
               onClick={() => setDefaultMainView("cases")}
-              className={`px-3 py-1 text-sm rounded ${
+              className={`cursor-pointer px-3 py-1 text-sm rounded ${
                 defaultMainView === "cases"
                   ? "bg-blue-600 text-white"
                   : "bg-white hover:bg-gray-100"
@@ -60,7 +60,7 @@ const AnalysesSettings: React.FC = () => {
             </button>
             <button
               onClick={() => setDefaultMainView("users")}
-              className={`px-3 py-1 text-sm rounded ${
+              className={`cursor-pointer px-3 py-1 text-sm rounded ${
                 defaultMainView === "users"
                   ? "bg-blue-600 text-white"
                   : "bg-white hover:bg-gray-100"
@@ -75,7 +75,7 @@ const AnalysesSettings: React.FC = () => {
           <div className="flex gap-2">
             <button
               onClick={() => setDefaultChartView("type")}
-              className={`px-3 py-1 text-sm rounded ${
+              className={`cursor-pointer px-3 py-1 text-sm rounded ${
                 defaultChartView === "type"
                   ? "bg-blue-600 text-white"
                   : "bg-white hover:bg-gray-100"
@@ -85,7 +85,7 @@ const AnalysesSettings: React.FC = () => {
             </button>
             <button
               onClick={() => setDefaultChartView("priority")}
-              className={`px-3 py-1 text-sm rounded ${
+              className={`cursor-pointer px-3 py-1 text-sm rounded ${
                 defaultChartView === "priority"
                   ? "bg-blue-600 text-white"
                   : "bg-white hover:bg-gray-100"
@@ -100,7 +100,7 @@ const AnalysesSettings: React.FC = () => {
           <div className="flex gap-2">
             <button
               onClick={() => setDefaultChartStyle("grouped")}
-              className={`px-3 py-1 text-sm rounded ${
+              className={`cursor-pointer px-3 py-1 text-sm rounded ${
                 defaultChartStyle === "grouped"
                   ? "bg-blue-600 text-white"
                   : "bg-white hover:bg-gray-100"
@@ -110,7 +110,7 @@ const AnalysesSettings: React.FC = () => {
             </button>
             <button
               onClick={() => setDefaultChartStyle("stacked")}
-              className={`px-3 py-1 text-sm rounded ${
+              className={`cursor-pointer px-3 py-1 text-sm rounded ${
                 defaultChartStyle === "stacked"
                   ? "bg-blue-600 text-white"
                   : "bg-white hover:bg-gray-100"
@@ -128,7 +128,7 @@ const AnalysesSettings: React.FC = () => {
                 type="checkbox"
                 checked={isDateFilterOpen}
                 onChange={(e) => setIsDateFilterOpen(e.target.checked)}
-                className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                className="cursor-pointer h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
               />
               <span className="font-medium text-gray-700 text-sm">
                 Активен по подразбиране

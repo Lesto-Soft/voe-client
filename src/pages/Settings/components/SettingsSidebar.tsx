@@ -54,7 +54,7 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
     return (
       <button
         onClick={() => setActiveTab(item.key as SettingsTab)}
-        className={`flex items-center w-full text-left px-3 py-2.5 rounded-md text-sm transition-colors duration-150 ${
+        className={`cursor-pointer flex items-center w-full text-left px-3 py-2.5 rounded-md text-sm transition-colors duration-150 ${
           isActive ? activeClasses : inactiveClasses
         }`}
       >

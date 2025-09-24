@@ -97,7 +97,7 @@ const BehaviorSettings: React.FC = () => {
             const isGroupActive = group.items.some(
               (item) => item.key === activeTab
             );
-            const commonClasses = `whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm focus:outline-none`;
+            const commonClasses = `cursor-pointer whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm focus:outline-none`;
             const activeClasses = `border-blue-500 text-blue-600`;
             const inactiveClasses = `border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300`;
 

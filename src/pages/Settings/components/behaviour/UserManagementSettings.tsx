@@ -54,7 +54,7 @@ const UserManagementSettings: React.FC = () => {
           id="items-per-page-usermgmt"
           value={itemsPerPage}
           onChange={(e) => setItemsPerPage(Number(e.target.value))}
-          className="mt-1 max-w-xs w-full rounded-md border-gray-300 p-2 shadow-sm focus:outline-none focus:border-indigo-500"
+          className="cursor-pointer mt-1 max-w-xs w-full rounded-md border-gray-300 p-2 shadow-sm focus:outline-none focus:border-indigo-500"
         >
           <option value={10}>10</option>
           <option value={20}>20</option>

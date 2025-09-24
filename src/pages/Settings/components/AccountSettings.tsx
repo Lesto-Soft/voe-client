@@ -161,7 +161,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({
         <div className="text-right mt-6">
           <button
             onClick={handleProfileInfoSave}
-            className="bg-blue-600 text-white px-5 py-2 rounded-md text-sm font-semibold hover:bg-blue-700"
+            className="cursor-pointer bg-blue-600 text-white px-5 py-2 rounded-md text-sm font-semibold hover:bg-blue-700"
           >
             Запази промените
           </button>
@@ -187,7 +187,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({
         <div className="text-right mt-6">
           <button
             onClick={handleAvatarSave}
-            className="bg-blue-600 text-white px-5 py-2 rounded-md text-sm font-semibold hover:bg-blue-700"
+            className="cursor-pointer bg-blue-600 text-white px-5 py-2 rounded-md text-sm font-semibold hover:bg-blue-700"
           >
             Запази аватара
           </button>
@@ -213,7 +213,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({
           <div className="text-right mt-6">
             <button
               onClick={handleChangePassword}
-              className="bg-blue-600 text-white px-5 py-2 rounded-md text-sm font-semibold hover:bg-blue-700 disabled:opacity-50"
+              className="cursor-pointer bg-blue-600 text-white px-5 py-2 rounded-md text-sm font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={!newPassword}
             >
               Смени паролата

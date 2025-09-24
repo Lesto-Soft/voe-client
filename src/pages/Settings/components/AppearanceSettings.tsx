@@ -53,7 +53,7 @@ const AppearanceSettings: React.FC = () => {
           <div className="flex gap-2 sm:gap-4">
             <button
               onClick={() => setTheme("light")}
-              className={`px-4 py-2 text-sm rounded-md border ${
+              className={`cursor-pointer px-4 py-2 text-sm rounded-md border ${
                 theme === "light"
                   ? "bg-blue-600 text-white border-blue-600"
                   : "bg-white hover:bg-gray-100"
@@ -63,7 +63,7 @@ const AppearanceSettings: React.FC = () => {
             </button>
             <button
               onClick={() => setTheme("dark")}
-              className={`px-4 py-2 text-sm rounded-md border ${
+              className={`cursor-pointer px-4 py-2 text-sm rounded-md border ${
                 theme === "dark"
                   ? "bg-blue-600 text-white border-blue-600"
                   : "bg-white hover:bg-gray-100"
@@ -73,7 +73,7 @@ const AppearanceSettings: React.FC = () => {
             </button>
             <button
               onClick={() => setTheme("system")}
-              className={`px-4 py-2 text-sm rounded-md border ${
+              className={`cursor-pointer px-4 py-2 text-sm rounded-md border ${
                 theme === "system"
                   ? "bg-blue-600 text-white border-blue-600"
                   : "bg-white hover:bg-gray-100"
@@ -91,7 +91,7 @@ const AppearanceSettings: React.FC = () => {
           <div className="flex gap-4">
             <button
               onClick={() => setDensity("comfortable")}
-              className={`px-4 py-2 text-sm rounded-md border ${
+              className={`cursor-pointer px-4 py-2 text-sm rounded-md border ${
                 density === "comfortable"
                   ? "bg-blue-600 text-white border-blue-600"
                   : "bg-white hover:bg-gray-100"
@@ -101,7 +101,7 @@ const AppearanceSettings: React.FC = () => {
             </button>
             <button
               onClick={() => setDensity("compact")}
-              className={`px-4 py-2 text-sm rounded-md border ${
+              className={`cursor-pointer px-4 py-2 text-sm rounded-md border ${
                 density === "compact"
                   ? "bg-blue-600 text-white border-blue-600"
                   : "bg-white hover:bg-gray-100"
@@ -116,7 +116,7 @@ const AppearanceSettings: React.FC = () => {
           <select
             value={language}
             onChange={(e) => setLanguage(e.target.value)}
-            className="max-w-xs w-full rounded-md border border-gray-300 p-2 shadow-sm focus:outline-none focus:border-indigo-500"
+            className="cursor-pointer max-w-xs w-full rounded-md border border-gray-300 p-2 shadow-sm focus:outline-none focus:border-indigo-500"
           >
             <option value="bg">Български</option>
             <option value="en">English</option>
@@ -128,23 +128,23 @@ const AppearanceSettings: React.FC = () => {
           description="Изберете как да се показват датите в приложението."
         >
           <div className="mt-2 space-y-3">
-            <label className="flex items-center gap-2">
+            <label className="cursor-pointer flex items-center gap-2">
               <input
                 type="radio"
                 name="date"
                 checked={dateFormat === "relative"}
                 onChange={() => setDateFormat("relative")}
-                className="h-4 w-4 text-blue-600"
+                className="cursor-pointer h-4 w-4 text-blue-600"
               />{" "}
               Относителен (преди 5 минути)
             </label>
-            <label className="flex items-center gap-2">
+            <label className="cursor-pointer flex items-center gap-2">
               <input
                 type="radio"
                 name="date"
                 checked={dateFormat === "absolute"}
                 onChange={() => setDateFormat("absolute")}
-                className="h-4 w-4 text-blue-600"
+                className="cursor-pointer h-4 w-4 text-blue-600"
               />{" "}
               Абсолютен (23.09.2025 09:30)
             </label>
@@ -155,7 +155,7 @@ const AppearanceSettings: React.FC = () => {
       <div className="pt-6 mt-6 border-t border-gray-200 text-right">
         <button
           onClick={handleSave}
-          className="bg-blue-600 text-white px-5 py-2 rounded-md text-sm font-semibold hover:bg-blue-700"
+          className="cursor-pointer bg-blue-600 text-white px-5 py-2 rounded-md text-sm font-semibold hover:bg-blue-700"
         >
           Запази промените
         </button>

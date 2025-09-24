@@ -46,7 +46,7 @@ const TemplatesSettings: React.FC = () => {
         </div>
         <button
           onClick={handleCreateNew}
-          className="bg-green-600 text-white px-4 py-2 rounded-md text-sm font-semibold hover:bg-green-700"
+          className="cursor-pointer bg-green-600 text-white px-4 py-2 rounded-md text-sm font-semibold hover:bg-green-700"
         >
           Създай нов шаблон
         </button>
@@ -78,20 +78,20 @@ const TemplatesSettings: React.FC = () => {
                     onClick={() =>
                       alert("Functionality to apply template to users.")
                     }
-                    className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-md"
+                    className="cursor-pointer p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-md"
                     title="Приложи шаблон"
                   >
                     <DocumentDuplicateIcon className="h-5 w-5" />
                   </button>
                   <button
                     onClick={() => handleEdit(template)}
-                    className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-md"
+                    className="cursor-pointer p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-md"
                     title="Редактирай"
                   >
                     <PencilSquareIcon className="h-5 w-5" />
                   </button>
                   <button
-                    className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-md"
+                    className="cursor-pointer p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-md"
                     title="Изтрий"
                   >
                     <TrashIcon className="h-5 w-5" />

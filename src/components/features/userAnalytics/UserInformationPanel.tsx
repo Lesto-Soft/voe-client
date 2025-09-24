@@ -13,8 +13,10 @@ import {
   PencilSquareIcon,
   ClockIcon,
   XMarkIcon,
+  Cog8ToothIcon, // <-- NEW: Import settings icon
 } from "@heroicons/react/24/outline";
 import * as Tooltip from "@radix-ui/react-tooltip";
+import { IndividualUserSettingsModal } from "../../../components/modals/IndividualUserSettingsModal"; // <-- NEW: Import the modal
 
 interface UserInformationPanelProps {
   user: IUser | undefined | null;
@@ -37,7 +39,8 @@ const UserInformationPanel: React.FC<UserInformationPanelProps> = ({
 }) => {
   const [activeCategoryRoleTab, setActiveCategoryRoleTab] =
     useState<CategoryRoleTab>("manages");
-  const [isWarningVisible, setIsWarningVisible] = useState(true); // add state for the warning message
+  const [isWarningVisible, setIsWarningVisible] = useState(true);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false); // <-- NEW: State for the settings modal
 
   useEffect(() => {
     if (user) {
@@ -61,17 +64,12 @@ const UserInformationPanel: React.FC<UserInformationPanelProps> = ({
           </div>
           <hr className="my-4 border-gray-200" />
           <div className="space-y-3">
-            {[...Array(5)].map(
-              (
-                _,
-                i // Changed to 5 for the new item
-              ) => (
-                <div key={i} className="flex items-center space-x-3">
-                  <div className="h-5 w-5 bg-gray-300 rounded-full"></div>
-                  <div className="h-4 bg-gray-300 rounded w-5/6"></div>
-                </div>
-              )
-            )}
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="flex items-center space-x-3">
+                <div className="h-5 w-5 bg-gray-300 rounded-full"></div>
+                <div className="h-4 bg-gray-300 rounded w-5/6"></div>
+              </div>
+            ))}
           </div>
           <hr className="my-4 border-gray-200" />
           <div className="h-10 bg-gray-300 rounded w-full mb-2"></div>
@@ -142,16 +140,27 @@ const UserInformationPanel: React.FC<UserInformationPanelProps> = ({
       <div className="p-6 space-y-4 overflow-y-auto custom-scrollbar-xs">
         <div className="relative flex flex-col items-center text-center space-y-2">
           {canEdit && (
-            // conditionally apply animation class
-            <button
-              onClick={onEditUser}
-              className="hover:cursor-pointer absolute top-0 right-0 p-1 text-gray-500 rounded-md hover:bg-gray-100 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-              //isMisconfigured ? "animate-pulse-glow" : ""
-
-              title="Редактирай потребител"
-            >
-              <PencilSquareIcon className="h-6 w-6" />
-            </button>
+            // MODIFIED: Wrapper div for the two admin buttons
+            <>
+              <div className="absolute top-0 left-0 flex items-center gap-1">
+                <button
+                  onClick={() => setIsSettingsModalOpen(true)}
+                  className="p-2 text-gray-500 rounded-md hover:bg-gray-100 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                  title="Редактирай настройките на потребителя"
+                >
+                  <Cog8ToothIcon className="cursor-pointer h-6 w-6" />
+                </button>
+              </div>
+              <div className="absolute top-0 right-0 flex items-center gap-1">
+                <button
+                  onClick={onEditUser}
+                  className="cursor-pointer p-2 text-gray-500 rounded-md hover:bg-gray-100 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                  title="Редактирай потребител"
+                >
+                  <PencilSquareIcon className="h-6 w-6" />
+                </button>
+              </div>
+            </>
           )}
           <UserAvatar
             name={user.name}
@@ -159,7 +168,7 @@ const UserInformationPanel: React.FC<UserInformationPanelProps> = ({
             size={96}
             enablePreview={true}
           />
-          <h1 className="text-xl font-bold text-gray-800">{user.name}</h1>
+          <h1 className="text-xl font-bold text-gray-800 pt-2">{user.name}</h1>
           {user.username && (
             <p className="text-sm text-gray-500">@{user.username}</p>
           )}
@@ -311,6 +320,11 @@ const UserInformationPanel: React.FC<UserInformationPanelProps> = ({
           </>
         )}
       </div>
+      <IndividualUserSettingsModal
+        isOpen={isSettingsModalOpen}
+        onClose={() => setIsSettingsModalOpen(false)}
+        user={user}
+      />
     </aside>
   );
 };

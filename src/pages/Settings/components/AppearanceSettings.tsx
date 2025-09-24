@@ -1,5 +1,11 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
+import {
+  SunIcon,
+  MoonIcon,
+  ArrowsPointingOutIcon,
+  ArrowsPointingInIcon,
+} from "@heroicons/react/24/solid";
 
 type Theme = "light" | "dark";
 type Density = "comfortable" | "compact";
@@ -176,7 +182,7 @@ const AppearanceSettings: React.FC = () => {
           <div className="flex gap-2 sm:gap-4">
             <button
               onClick={() => setTheme("light")}
-              className={`cursor-pointer rounded-md border ${
+              className={`flex items-center gap-2 cursor-pointer rounded-md border ${
                 densityStyles[density].buttonPadding
               } ${
                 theme === "light"
@@ -184,11 +190,12 @@ const AppearanceSettings: React.FC = () => {
                   : "bg-gray-200 text-gray-800 hover:bg-gray-300"
               }`}
             >
+              <SunIcon className="h-4 w-4" />
               {t("light")}
             </button>
             <button
               onClick={() => setTheme("dark")}
-              className={`cursor-pointer rounded-md border ${
+              className={`flex items-center gap-2 cursor-pointer rounded-md border ${
                 densityStyles[density].buttonPadding
               } ${
                 theme === "dark"
@@ -196,6 +203,7 @@ const AppearanceSettings: React.FC = () => {
                   : "bg-gray-700 text-white hover:bg-gray-600"
               }`}
             >
+              <MoonIcon className="h-4 w-4" />
               {t("dark")}
             </button>
           </div>
@@ -205,7 +213,7 @@ const AppearanceSettings: React.FC = () => {
           <div className="flex gap-4">
             <button
               onClick={() => setDensity("comfortable")}
-              className={`cursor-pointer rounded-md border ${
+              className={`flex items-center gap-2 cursor-pointer rounded-md border ${
                 densityStyles[density].buttonPadding
               } ${
                 density === "comfortable"
@@ -215,11 +223,12 @@ const AppearanceSettings: React.FC = () => {
                     } hover:bg-gray-500/20`
               }`}
             >
+              <ArrowsPointingOutIcon className="h-4 w-4" />
               {t("comfortable")}
             </button>
             <button
               onClick={() => setDensity("compact")}
-              className={`cursor-pointer rounded-md border ${
+              className={`flex items-center gap-2 cursor-pointer rounded-md border ${
                 densityStyles[density].buttonPadding
               } ${
                 density === "compact"
@@ -229,6 +238,7 @@ const AppearanceSettings: React.FC = () => {
                     } hover:bg-gray-500/20`
               }`}
             >
+              <ArrowsPointingInIcon className="h-4 w-4" />
               {t("compact")}
             </button>
           </div>

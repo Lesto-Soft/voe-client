@@ -34,13 +34,14 @@ const UserLink: React.FC<UserLinkProps> = ({ user }) => {
   const title = isAllowed ? user.name : "Нямате права за достъп до този профил";
 
   const linkContent = (
-    <>
-      <span className="block sm:hidden">{getInitials(user.name)}</span>
-      <span className="hidden sm:block lg:hidden truncate">
+    // MODIFIED: Combined spans for cleaner responsive display and truncation
+    <span className="truncate">
+      <span className="sm:hidden">{getInitials(user.name)}</span>
+      <span className="hidden sm:inline lg:hidden">
         {getFirstName(user.name)}
       </span>
-      <span className="hidden lg:block truncate">{user.name}</span>
-    </>
+      <span className="hidden lg:inline">{user.name}</span>
+    </span>
   );
 
   if (isAllowed) {

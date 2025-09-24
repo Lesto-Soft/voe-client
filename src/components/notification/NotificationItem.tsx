@@ -22,7 +22,11 @@ import {
   useMarkAsRead,
   useMarkAsUnread,
 } from "../../graphql/hooks/notificationHook";
-import { AcademicCapIcon, AtSymbolIcon } from "@heroicons/react/24/solid";
+import {
+  AcademicCapIcon,
+  AtSymbolIcon,
+  BellAlertIcon,
+} from "@heroicons/react/24/solid";
 
 interface NotificationItemProps {
   notification: INotification;
@@ -40,10 +44,15 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
   const { t } = useTranslation("menu");
 
   const getNotificationIcon = (type: string) => {
+    console.log(type);
     switch (type) {
-      case "new_comment":
+      case "new_comment_case":
         return (
           <ChatBubbleOvalLeftEllipsisIcon className="h-5 w-5 text-purple-500" />
+        );
+      case "new_answer_comment":
+        return (
+          <ChatBubbleOvalLeftEllipsisIcon className="h-5 w-5 text-green-500" />
         );
       case "new_case":
         return <DocumentTextIcon className="h-5 w-5 text-blue-500" />;
@@ -73,6 +82,8 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
         return <AtSymbolIcon className="h-5 w-5 text-purple-600" />;
       case "mention_in_answer_comment":
         return <AtSymbolIcon className="h-5 w-5 text-purple-600" />;
+      case "case_reminder":
+        return <BellAlertIcon className="h-5 w-5 text-red-600" />;
       default:
         return <InformationCircleIcon className="h-5 w-5 text-gray-500" />;
     }

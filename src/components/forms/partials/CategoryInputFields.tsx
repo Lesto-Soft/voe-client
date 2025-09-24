@@ -4,6 +4,8 @@ import { XMarkIcon } from "@heroicons/react/24/outline";
 // Removed IUser import as ILeanUserForForm is more specific here
 import TextEditor from "./TextEditor/TextEditor";
 import { CATEGORY_HELPERS, ROLES } from "../../../utils/GLOBAL_PARAMETERS";
+import { IPaletteColor } from "../../../db/interfaces";
+import ColorPicker from "./ColorPicker";
 
 // Define a lean user type that includes the role ID for the form, matching what parent passes
 interface ILeanUserForForm {
@@ -36,11 +38,19 @@ interface CategoryInputFieldsProps {
   setManagerIds: (ids: string[]) => void;
   archived: boolean;
   setArchived: (isChecked: boolean) => void;
+  color: string;
+  setColor: (value: string) => void;
+  colorError: string | null;
+  usedColors: { color: string; categoryName: string }[];
   errorPlaceholderClass: string;
-  initialExperts?: ILeanUserForForm[]; // Used for pre-selecting and displaying names
-  initialManagers?: ILeanUserForForm[]; // Used for pre-selecting and displaying names
-  allUsersForAssigning: ILeanUserForForm[]; // Users passed from parent
-  usersLoading: boolean; // Loading state for allUsersForAssigning
+  initialExperts?: ILeanUserForForm[];
+  initialManagers?: ILeanUserForForm[];
+  allUsersForAssigning: ILeanUserForForm[];
+  usersLoading: boolean;
+  paletteColors: IPaletteColor[];
+  paletteColorsLoading: boolean;
+  canManageColors: boolean;
+  onOpenColorManager: () => void;
 }
 
 const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
@@ -59,11 +69,19 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
   setManagerIds,
   archived,
   setArchived,
+  color,
+  setColor,
+  colorError,
+  usedColors,
   errorPlaceholderClass,
   initialExperts = [],
   initialManagers = [],
   allUsersForAssigning,
   usersLoading,
+  paletteColors,
+  paletteColorsLoading,
+  canManageColors,
+  onOpenColorManager,
 }) => {
   const t = (key: string) => key; // Placeholder for translations
 
@@ -217,14 +235,13 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
 
   return (
     <>
-      {/* Row 1: Name | Archived */}
+      {/* Name Input */}
       <div>
         <label
           htmlFor="categoryName"
           className="mb-1 block text-sm font-medium text-gray-700"
         >
-          {t("Име на категория")}
-          <span className="text-red-500">*</span>
+          {t("Име на категория")} <span className="text-red-500">*</span>
         </label>
         <input
           type="text"
@@ -245,26 +262,21 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
         </p>
       </div>
 
-      <div>
-        <label className="mb-1 block text-sm font-medium text-transparent select-none">
-          &nbsp;
+      {/* Archived Checkbox */}
+      <div className="flex items-center">
+        <input
+          type="checkbox"
+          id="categoryArchived"
+          checked={archived}
+          onChange={(e) => setArchived(e.target.checked)}
+          className="cursor-pointer h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+        />
+        <label
+          htmlFor="categoryArchived"
+          className="cursor-pointer ml-2 block text-sm text-gray-900"
+        >
+          {t("Архивирана категория")}
         </label>
-        <div className="flex items-center">
-          <input
-            type="checkbox"
-            id="categoryArchived"
-            checked={archived}
-            onChange={(e) => setArchived(e.target.checked)}
-            className="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-          />
-          <label
-            htmlFor="categoryArchived"
-            className="ml-2 block text-sm text-gray-900"
-          >
-            {t("Архивирана категория")}
-          </label>
-        </div>
-        <p className={`${errorPlaceholderClass}`}>&nbsp;</p>
       </div>
 
       {/* Row 2: Experts | Managers */}
@@ -294,7 +306,7 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
                 setExpertIds([]);
                 setExpertSearchTerm("");
               }}
-              className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700"
+              className="cursor-pointer absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700"
               title={t("Изчисти експерти")}
             >
               <XMarkIcon className="h-5 w-5" />
@@ -392,7 +404,7 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
                 setManagerIds([]);
                 setManagerSearchTerm("");
               }}
-              className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700"
+              className="cursor-pointer absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700"
               title={t("Изчисти мениджъри")}
             >
               <XMarkIcon className="h-5 w-5" />
@@ -464,8 +476,34 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
         <p className={`${errorPlaceholderClass}`}>&nbsp;</p>
       </div>
 
-      {/* Row 3: Problem | Suggestion - Using TextEditor */}
-      <div>
+      {/* Color Picker (spanning both columns) */}
+      <div className="md:col-span-2">
+        <label className="mb-1 block text-sm font-medium text-gray-700">
+          {t("Цвят на категория")} <span className="text-red-500">*</span>
+        </label>
+        {paletteColorsLoading ? (
+          <div className="h-24 w-full animate-pulse rounded-md bg-gray-200"></div>
+        ) : (
+          <ColorPicker
+            selectedColor={color}
+            onSelectColor={setColor}
+            usedColors={usedColors}
+            paletteColors={paletteColors}
+            canManageColors={canManageColors}
+            onOpenManager={onOpenColorManager}
+          />
+        )}
+        <p
+          className={`${errorPlaceholderClass} ${
+            colorError ? "text-red-500" : ""
+          }`}
+        >
+          {colorError || <>&nbsp;</>}
+        </p>
+      </div>
+
+      {/* Problem and Suggestion Text Editors (spanning both columns) */}
+      <div className="md:col-span-1">
         <label
           htmlFor="categoryProblem"
           className="mb-1 block text-sm font-medium text-gray-700"
@@ -492,7 +530,7 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
               : ""
           }`}
         >
-          {problemError}
+          {problemError} {` `}
           {isProblemTooLong &&
             `Съдържанието надвишава лимита от ${CATEGORY_HELPERS.MAX} символа.`}
           {isProblemTooShort &&
@@ -503,7 +541,7 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
         </p>
       </div>
 
-      <div>
+      <div className="md:col-span-1">
         <label
           htmlFor="categorySuggestion"
           className="mb-1 block text-sm font-medium text-gray-700"
@@ -530,7 +568,7 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
               : ""
           }`}
         >
-          {suggestionError}
+          {suggestionError} {` `}
           {isSuggestionTooLong &&
             `Съдържанието надвишава лимита от ${CATEGORY_HELPERS.MAX} символа.`}
           {isSuggestionTooShort &&

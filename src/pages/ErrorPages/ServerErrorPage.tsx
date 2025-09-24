@@ -1,3 +1,5 @@
+import { useNavigate } from "react-router";
+
 // The SVG icon component remains the same
 const ServerIcon = () => (
   <svg
@@ -36,8 +38,9 @@ const ServerIcon = () => (
 
 const ServerErrorPage = () => {
   // Function to handle click - redirects to the homepage
+  const navigate = useNavigate();
   const goToHomepage = () => {
-    window.location.href = "/";
+    navigate("/");
   };
 
   return (
@@ -54,7 +57,7 @@ const ServerErrorPage = () => {
         </p>
         <button
           onClick={goToHomepage}
-          className="rounded-full bg-blue-500 px-6 py-3 font-semibold text-white shadow-lg shadow-blue-500/40 transition-transform duration-200 ease-in-out hover:bg-blue-600 hover:shadow-xl hover:-translate-y-1"
+          className="cursor-pointer rounded-full bg-blue-500 px-6 py-3 font-semibold text-white shadow-lg shadow-blue-500/40 transition-transform duration-200 ease-in-out hover:bg-blue-600 hover:shadow-xl hover:-translate-y-1"
         >
           Върнете се към началото
         </button>

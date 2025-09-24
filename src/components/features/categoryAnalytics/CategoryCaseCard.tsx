@@ -6,12 +6,14 @@ import CaseLink from "../../../components/global/CaseLink"; // Adjust path as ne
 import UserLink from "../../../components/global/UserLink"; // Adjust path as needed
 import ShowDate from "../../../components/global/ShowDate"; // Adjust path as needed
 import { FlagIcon as SolidFlagIcon } from "@heroicons/react/24/solid"; // Use solid as per CaseInfo
+import { StarIcon as SolidStarIcon } from "@heroicons/react/24/solid";
 
 // Import style helpers from your file
 import {
   getStatusStyle as getStatusStyleFromHelper,
   getPriorityStyle as getPriorityStyleFromHelper,
   getTypeBadgeStyle as getTypeBadgeStyleFromHelper,
+  getCalculatedRatingStyle as getCalculatedRatingStyleFromHelper,
 } from "../../../utils/style-helpers"; // Adjust path to your style-helpers.ts
 
 // Import translation helpers and tForCaseLink from categoryDisplayUtils
@@ -56,6 +58,11 @@ const CategoryCaseCard: React.FC<CategoryCaseCardProps> = ({
   );
   const translatedPriorityText = translatePriority(caseItem.priority as string);
 
+  const calculatedRatingTextColorClass =
+    caseItem.calculatedRating != null
+      ? getCalculatedRatingStyleFromHelper(caseItem.calculatedRating)
+      : null;
+
   // This t function is for the CaseLink title, as per previous discussions
   const tFunctionForCaseLinkTitle = (key: string): string => {
     if (key === "details_for") {
@@ -80,7 +87,7 @@ const CategoryCaseCard: React.FC<CategoryCaseCardProps> = ({
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-gray-600 mb-2">
             {/* Changed to items-center */}
             {/* Case Link (no change to this specific element's structure) */}
-            <div className="flex-shrink-0">
+            <div className="flex-shrink-0  text-sm">
               <CaseLink
                 my_case={caseItem} // Or caseToLinkForDisplay if in UserActivityItemCard
                 t={tFunctionForCaseLinkTitle} // Or tFunctionForCaseLinkProp
@@ -110,6 +117,18 @@ const CategoryCaseCard: React.FC<CategoryCaseCardProps> = ({
                 >
                   <SolidFlagIcon className="h-3.5 w-3.5 mr-1 flex-shrink-0" />
                   {translatedPriorityText}
+                </span>
+              )}
+            {/* --- ADD RATING BADGE --- */}
+            {calculatedRatingTextColorClass &&
+              caseItem.calculatedRating != null && (
+                <span
+                  className={`inline-flex items-center px-1 py-0.5 rounded-full font-medium ${calculatedRatingTextColorClass}`}
+                >
+                  <SolidStarIcon className="h-3.5 w-3.5 mr-1 flex-shrink-0" />
+                  <span className="brightness-75">
+                    {caseItem.calculatedRating.toFixed(2)}
+                  </span>
                 </span>
               )}
             {/* Creator (no change to this specific element's structure) */}

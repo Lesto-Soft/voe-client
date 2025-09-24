@@ -296,8 +296,17 @@ const CategoryTable: React.FC<CategoryTableProps> = ({
                         - No 'onClick' prop forwarding (cannot prevent navigation for inactive).
                         - Styling (padding, font size) is fixed by CategoryLink (text-xs).
                       */}
-                      <div className="flex items-center">
-                        <CategoryLink {...category} />
+                      <div className="flex items-center gap-x-1">
+                        <span
+                          className="h-5.5 w-4 rounded flex-shrink-0 border border-gray-300 mb-1.5"
+                          style={{
+                            backgroundColor: category.color || "#A9A9A9",
+                          }}
+                          title={category.color}
+                        ></span>
+                        <div className="flex-grow min-w-0">
+                          <CategoryLink {...category} />
+                        </div>
                         {isMisconfigured && (
                           <Tooltip.Provider delayDuration={100}>
                             <Tooltip.Root>

@@ -138,8 +138,8 @@ const UserInformationPanel: React.FC<UserInformationPanelProps> = ({
     user.managed_categories && user.managed_categories.length > 0;
 
   return (
-    <aside className="lg:col-span-3 bg-white rounded-lg shadow-lg flex flex-col overflow-hidden">
-      <div className="p-6 space-y-4 overflow-y-auto custom-scrollbar">
+    <aside className="bg-white rounded-lg shadow-lg flex flex-col overflow-hidden h-full">
+      <div className="p-6 space-y-4 overflow-y-auto custom-scrollbar-xs">
         <div className="relative flex flex-col items-center text-center space-y-2">
           {canEdit && (
             // conditionally apply animation class

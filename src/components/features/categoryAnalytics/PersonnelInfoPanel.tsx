@@ -6,10 +6,10 @@ import {
   UserGroupIcon,
   LightBulbIcon,
   ExclamationTriangleIcon,
-  TagIcon,
   PencilSquareIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
+import { TagIcon } from "@heroicons/react/24/solid";
 import * as Tooltip from "@radix-ui/react-tooltip";
 
 // Note: No need for useCurrentUser or role checks here.
@@ -103,12 +103,15 @@ const PersonnelInfoPanel: React.FC<PersonnelInfoPanelProps> = ({
 
   return (
     <aside className="lg:col-span-3 bg-white rounded-lg shadow-lg flex flex-col overflow-hidden">
-      <div className="p-6 space-y-6 overflow-y-auto flex-1 custom-scrollbar">
+      <div className="p-6 space-y-6 overflow-y-auto flex-1 custom-scrollbar-xs">
         {/* Category Name Display */}
         <div className="mb-4 pb-3 border-b border-gray-200">
           <div className="flex justify-between items-start gap-2">
             <h1 className="text-xl font-bold text-gray-800 flex items-center min-w-0">
-              <TagIcon className="h-6 w-6 mr-2 text-gray-500 flex-shrink-0" />
+              <TagIcon
+                className="h-6 w-6 mr-2 flex-shrink-0"
+                style={{ color: category.color || "text-gray-500" }} // Use inline style
+              />
               <span className="truncate" title={category.name}>
                 {category.name}
               </span>

@@ -1,15 +1,18 @@
 // src/components/features/ratingMetricAnalytics/MetricScoreList.tsx
-import React, { useMemo, useState } from "react";
-import { IMetricScore } from "../../../db/interfaces";
+import React, { useMemo, useState, useRef, useEffect } from "react";
+import { IMetricScore, ICategory } from "../../../db/interfaces";
 import MetricScoreItemCard from "./MetricScoreItemCard";
 import DateRangeSelector from "../userAnalytics/DateRangeSelector";
-import { InboxIcon, CalendarDaysIcon } from "@heroicons/react/24/outline";
+import {
+  InboxIcon,
+  CalendarDaysIcon,
+  // XMarkIcon,
+} from "@heroicons/react/24/outline";
+import FilterTag from "../../global/FilterTag";
 import { TIERS } from "../../../utils/GLOBAL_PARAMETERS";
 
-// Define the types for our filter tabs
-type TierTab = "all" | "gold" | "silver" | "bronze" | "problematic";
+export type TierTab = "all" | "gold" | "silver" | "bronze" | "problematic";
 
-// Helper function to classify a score into a tier
 const getTierForScore = (score: number): TierTab => {
   if (score >= TIERS.GOLD) return "gold";
   if (score >= TIERS.SILVER) return "silver";
@@ -17,6 +20,9 @@ const getTierForScore = (score: number): TierTab => {
   return "problematic";
 };
 
+type MetricPieTabKey = "tier" | "user" | "category";
+
+// Update props to control the active tab from the parent
 interface MetricScoreListProps {
   scores: IMetricScore[];
   isLoading: boolean;
@@ -25,6 +31,18 @@ interface MetricScoreListProps {
     startDate: Date | null;
     endDate: Date | null;
   }) => void;
+  activeTierTab: TierTab;
+  onTabChange: (tab: TierTab) => void;
+  selectedUserId?: string | null;
+  // --- ADD THESE NEW PROPS FOR FILTER TAGS ---
+  isAnyFilterActive: boolean;
+  onClearAllFilters: () => void;
+  selectedUserName: string | null;
+  onClearUserFilter: () => void;
+  selectedCategoryId?: string | null;
+  selectedCategoryName: string | null;
+  onClearCategoryFilter: () => void;
+  onPieTabChange?: (tab: MetricPieTabKey) => void;
 }
 
 const MetricScoreList: React.FC<MetricScoreListProps> = ({
@@ -32,13 +50,75 @@ const MetricScoreList: React.FC<MetricScoreListProps> = ({
   isLoading,
   dateRange,
   onDateRangeChange,
+  activeTierTab,
+  onTabChange,
+  selectedUserId,
+  // --- DESTRUCTURE NEW PROPS ---
+  isAnyFilterActive,
+  onClearAllFilters,
+  selectedUserName,
+  onClearUserFilter,
+  selectedCategoryId,
+  selectedCategoryName,
+  onClearCategoryFilter,
+  onPieTabChange,
 }) => {
-  const [activeTab, setActiveTab] = useState<TierTab>("all");
+  // --- REMOVED: The internal state for the active tab is gone ---
+  // const [activeTab, setActiveTab] = useState<TierTab>("all");
   const [isDateFilterVisible, setIsDateFilterVisible] = useState(false);
-
-  // ✅ MODIFIED: Changed from && to || to show active state if at least one date is selected.
+  const tabsContainerRef = useRef<HTMLDivElement>(null);
+  const filtersContainerRef = useRef<HTMLDivElement>(null);
   const isDateFilterActive =
     dateRange.startDate !== null || dateRange.endDate !== null;
+
+  useEffect(() => {
+    const scrollContainer = tabsContainerRef.current;
+
+    if (!scrollContainer) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      // If there's horizontal scroll, let the browser handle it natively
+      if (e.deltaX !== 0) return;
+
+      // If there's vertical scroll and the container is overflowing, convert it
+      if (
+        e.deltaY !== 0 &&
+        scrollContainer.scrollWidth > scrollContainer.clientWidth
+      ) {
+        e.preventDefault();
+        scrollContainer.scrollLeft += e.deltaY;
+      }
+    };
+
+    scrollContainer.addEventListener("wheel", handleWheel, { passive: false });
+
+    return () => {
+      scrollContainer.removeEventListener("wheel", handleWheel);
+    };
+  }, []);
+
+  // --- ADDED: Mouse-wheel scroll effect for filter bar ---
+  useEffect(() => {
+    const scrollContainer = filtersContainerRef.current;
+    if (!scrollContainer) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      if (e.deltaX !== 0) return;
+
+      if (
+        e.deltaY !== 0 &&
+        scrollContainer.scrollWidth > scrollContainer.clientWidth
+      ) {
+        e.preventDefault();
+        scrollContainer.scrollLeft += e.deltaY;
+      }
+    };
+    scrollContainer.addEventListener("wheel", handleWheel, { passive: false });
+    return () => {
+      scrollContainer.removeEventListener("wheel", handleWheel);
+    };
+  }, [isAnyFilterActive]); // Re-attach if bar appears/disappears
+  // --- END: Mouse-wheel scroll effect ---
 
   const dateFilteredScores = useMemo(() => {
     const { startDate, endDate } = dateRange;
@@ -57,6 +137,33 @@ const MetricScoreList: React.FC<MetricScoreListProps> = ({
     });
   }, [scores, dateRange]);
 
+  // this second memo filters by the selected user ID
+  // --- RENAME this memo ---
+  const userAndDateFilteredScores = useMemo(() => {
+    if (!selectedUserId) {
+      return dateFilteredScores;
+    }
+    return dateFilteredScores.filter(
+      (score) => score.user._id === selectedUserId
+    );
+  }, [dateFilteredScores, selectedUserId]);
+
+  // --- ADD NEW MEMO for category filtering ---
+  const filteredScores = useMemo(() => {
+    if (!selectedCategoryId) {
+      return userAndDateFilteredScores;
+    }
+    return userAndDateFilteredScores.filter((score) => {
+      const categories = score.case?.categories;
+      if (!categories || categories.length === 0) {
+        return selectedCategoryId === "unknown";
+      }
+      return categories.some(
+        (cat: ICategory) => cat._id === selectedCategoryId
+      );
+    });
+  }, [userAndDateFilteredScores, selectedCategoryId]);
+
   const tierCounts = useMemo(() => {
     const counts: Record<TierTab, number> = {
       all: 0,
@@ -65,34 +172,30 @@ const MetricScoreList: React.FC<MetricScoreListProps> = ({
       bronze: 0,
       problematic: 0,
     };
-    counts.all = dateFilteredScores.length;
-    dateFilteredScores.forEach((score) => {
+    counts.all = filteredScores.length;
+    filteredScores.forEach((score) => {
       const tier = getTierForScore(score.score);
       counts[tier]++;
     });
     return counts;
-  }, [dateFilteredScores]);
+  }, [filteredScores]);
 
-  const finalFilteredScores = useMemo(() => {
-    if (activeTab === "all") {
-      return dateFilteredScores;
+  const finalScoresToDisplay = useMemo(() => {
+    if (activeTierTab === "all") {
+      return filteredScores;
     }
-    return dateFilteredScores.filter((score) => {
+    return filteredScores.filter((score) => {
       const tier = getTierForScore(score.score);
-      return tier === activeTab;
+      return tier === activeTierTab;
     });
-  }, [dateFilteredScores, activeTab]);
+  }, [filteredScores, activeTierTab]);
 
   const tabs: { key: TierTab; label: string; count: number }[] = [
     { key: "all", label: "Всички", count: tierCounts.all },
     { key: "gold", label: "Отлични", count: tierCounts.gold },
     { key: "silver", label: "Добри", count: tierCounts.silver },
     { key: "bronze", label: "Средни", count: tierCounts.bronze },
-    {
-      key: "problematic",
-      label: "Проблемни",
-      count: tierCounts.problematic,
-    },
+    { key: "problematic", label: "Проблемни", count: tierCounts.problematic },
   ];
 
   if (isLoading) {
@@ -115,14 +218,17 @@ const MetricScoreList: React.FC<MetricScoreListProps> = ({
     <div className="lg:col-span-6 bg-white rounded-lg shadow-lg flex flex-col overflow-hidden max-h-full">
       <div className="p-1 sm:p-2 border-b border-gray-200">
         <div className="flex items-center justify-between pb-1">
-          <div className="flex space-x-1 sm:space-x-2 overflow-x-auto custom-scrollbar-xs">
+          <div
+            ref={tabsContainerRef}
+            className="flex space-x-1 sm:space-x-2 overflow-x-auto custom-scrollbar-xs"
+          >
             {tabs.map((tab) => (
               <button
                 key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
-                disabled={tab.count === 0 && activeTab !== tab.key}
+                onClick={() => onTabChange(tab.key)}
+                disabled={tab.count === 0 && activeTierTab !== tab.key}
                 className={`hover:cursor-pointer px-3 py-1.5 text-xs sm:text-sm font-medium rounded-md whitespace-nowrap transition-colors duration-150 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed ${
-                  activeTab === tab.key
+                  activeTierTab === tab.key
                     ? "bg-indigo-600 text-white shadow-sm"
                     : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                 }`}
@@ -131,16 +237,13 @@ const MetricScoreList: React.FC<MetricScoreListProps> = ({
               </button>
             ))}
           </div>
-
           <button
             onClick={() => setIsDateFilterVisible((prev) => !prev)}
-            title="Filter by date"
-            className={`hover:cursor-pointer p-2 rounded-md transition-colors duration-150 ml-2 ${
-              isDateFilterVisible
-                ? "bg-indigo-100 text-indigo-600" // Style when selector is OPEN
-                : isDateFilterActive
-                ? "bg-indigo-100 text-gray-500" // Style when selector is CLOSED but filter is ACTIVE
-                : "bg-gray-100 text-gray-500 hover:bg-gray-200" // Style when selector is CLOSED and INACTIVE
+            title="Филтрирай по дата"
+            className={`p-2 rounded-md transition-colors duration-150 ml-2 ${
+              isDateFilterActive
+                ? "bg-indigo-100 text-indigo-600 hover:bg-indigo-200"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
             }`}
           >
             <CalendarDaysIcon className="h-5 w-5" />
@@ -155,21 +258,72 @@ const MetricScoreList: React.FC<MetricScoreListProps> = ({
             />
           </div>
         )}
+
+        {/* --- NEW: Active Filters Display --- */}
+        {isAnyFilterActive && (
+          <div className="px-4 py-1.5 border-t mt-2 border-gray-200 bg-gray-50 flex items-center justify-between gap-x-4">
+            <div
+              ref={filtersContainerRef} // <-- ADDED REF
+              className="flex items-center gap-2 overflow-x-auto custom-scrollbar-xs flex-nowrap py-1"
+            >
+              <span className="text-xs font-semibold text-gray-600 mr-2">
+                Активни филтри:
+              </span>
+              {activeTierTab !== "all" && (
+                <FilterTag
+                  label={`Оценка: ${
+                    tabs.find((t) => t.key === activeTierTab)?.label
+                  }`}
+                  onRemove={() => onTabChange("all")}
+                  onClick={() => onPieTabChange?.("tier")}
+                />
+              )}
+              {selectedCategoryId && selectedCategoryName && (
+                <FilterTag
+                  label={`Категория: ${selectedCategoryName}`}
+                  onRemove={onClearCategoryFilter}
+                  onClick={() => onPieTabChange?.("category")}
+                />
+              )}
+              {selectedUserId && selectedUserName && (
+                <FilterTag
+                  label={`Потребител: ${selectedUserName}`}
+                  onRemove={onClearUserFilter}
+                  onClick={() => onPieTabChange?.("user")}
+                />
+              )}
+              {isDateFilterActive && (
+                <FilterTag
+                  label="Период"
+                  onRemove={() =>
+                    onDateRangeChange({ startDate: null, endDate: null })
+                  }
+                />
+              )}
+            </div>
+            <button
+              onClick={onClearAllFilters}
+              className="cursor-pointer text-xs font-semibold text-indigo-600 hover:text-indigo-800 hover:underline flex-shrink-0"
+            >
+              Изчисти всички
+            </button>
+          </div>
+        )}
       </div>
 
-      <div className="flex-1 overflow-y-auto custom-scrollbar">
-        {finalFilteredScores.length > 0 ? (
+      <div className="flex-1 overflow-y-auto custom-scrollbar-xs max-h-[calc(100vh-6rem)]">
+        {finalScoresToDisplay.length > 0 ? (
           <div>
-            {finalFilteredScores.map((score) => (
+            {finalScoresToDisplay.map((score) => (
               <MetricScoreItemCard key={score._id} score={score} />
             ))}
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center text-center p-10 text-gray-500 h-full">
-            <InboxIcon className="h-12 w-12 mb-3 text-gray-300" />
-            <p className="text-md font-medium">Няма намерени оценки</p>
+            <InboxIcon className="h-16 w-16 mb-4" />
+            <p className="text-lg font-semibold">Няма намерени оценки</p>
             <p className="text-sm">
-              Няма оценки за избрания период или за тази метрика.
+              Няма оценки, които да съвпадат с текущите филтри.
             </p>
           </div>
         )}

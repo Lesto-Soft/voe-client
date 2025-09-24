@@ -1,21 +1,53 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { BellIcon } from "@heroicons/react/24/outline";
 import {
   useDeleteNotifications,
   useGetNotifications,
   useNotificationSubscription,
   useNotificationsRemovedSubscription,
+  useMarkAsRead,
 } from "../../graphql/hooks/notificationHook";
 import { INotification } from "../../db/interfaces";
 import { toast } from "react-toastify";
 import { useTranslation, Trans } from "react-i18next";
 import NotificationItem from "./NotificationItem";
 import ConfirmActionDialog from "../modals/ConfirmActionDialog";
+import {
+  RectangleStackIcon,
+  DocumentTextIcon,
+  ChatBubbleBottomCenterTextIcon,
+  ChatBubbleOvalLeftEllipsisIcon,
+} from "@heroicons/react/24/solid";
+import { BellIcon } from "@heroicons/react/24/outline";
 
 interface NotificationCenterProps {
   userId: string;
 }
+
+type NotificationTab = "ALL" | "CASES" | "ANSWERS" | "COMMENTS";
+const filterMap: Record<
+  Exclude<NotificationTab, "ALL" | "UNREAD">,
+  string[]
+> = {
+  CASES: [
+    "new_case",
+    "approve_answer_close_case",
+    "reopen_case",
+    "case_reminder",
+  ],
+  ANSWERS: [
+    "new_answer",
+    "approve_answer_await_finance_case",
+    "approve_answer_finance_case",
+    "mention_in_answer",
+  ],
+  COMMENTS: [
+    "new_comment_case",
+    "new_answer_comment",
+    "mention_in_comment",
+    "mention_in_answer_comment",
+  ],
+};
 
 const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }) => {
   const { t } = useTranslation("menu");
@@ -23,11 +55,19 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }) => {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isDropdownOpen, setDropdownOpen] = useState(false);
   const [deleteNotifications] = useDeleteNotifications();
-  const { data: initialData, loading: initialLoading } = useGetNotifications();
+  const [activeTab, setActiveTab] = useState<NotificationTab>("ALL");
+  const [markAsRead] = useMarkAsRead();
+
+  const {
+    data: initialData,
+    loading: initialLoading,
+    refetch,
+  } = useGetNotifications();
 
   useNotificationSubscription({
     variables: { userId },
     onData: ({ data }) => {
+      refetch();
       const newNotification = data.data?.notificationAdded;
       if (newNotification) {
         setNotifications((prev) => [newNotification, ...prev]);
@@ -64,9 +104,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }) => {
     onData: ({ data }) => {
       const removedIds = data.data?.notificationsRemoved;
       if (removedIds && removedIds.length > 0) {
-        // Create a Set for efficient lookup
         const removedIdSet = new Set(removedIds);
-        // Filter out the notifications whose IDs were received
         setNotifications((prev) => {
           const newState = prev.filter((notif) => !removedIdSet.has(notif._id));
           return newState;
@@ -96,31 +134,153 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }) => {
           document.body.classList.remove("scrolled");
         }
         isThrottled = false;
-      }, 100); // Throttle to execute at most once every 100ms
+      }, 100);
     };
 
-    window.addEventListener("scroll", handleScroll); // Cleanup listener on component unmount
+    window.addEventListener("scroll", handleScroll);
 
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const unreadCount = notifications.filter((n) => !n.read).length;
+  const tabs: {
+    name: NotificationTab;
+    icon: React.ElementType;
+    title: string;
+  }[] = [
+    {
+      name: "ALL",
+      icon: RectangleStackIcon,
+      title: t("notification_contents.all"),
+    },
+    // { name: "UNREAD", icon: EnvelopeIcon, title: t("Unread") },
+    {
+      name: "CASES",
+      icon: DocumentTextIcon,
+      title: t("notification_contents.cases"),
+    },
+    {
+      name: "ANSWERS",
+      icon: ChatBubbleBottomCenterTextIcon,
+      title: t("notification_contents.answers"),
+    },
+    {
+      name: "COMMENTS",
+      icon: ChatBubbleOvalLeftEllipsisIcon,
+      title: t("notification_contents.comments"),
+    },
+  ];
+  const unreadCountsByTab = useMemo(() => {
+    const counts: Record<NotificationTab, number> = {
+      ALL: 0,
+      CASES: 0,
+      ANSWERS: 0,
+      COMMENTS: 0,
+    };
+    const unreadNotifications = notifications.filter((n) => !n.read);
+    counts.ALL = unreadNotifications.length;
+
+    unreadNotifications.forEach((n) => {
+      if (filterMap.CASES.includes(n.content)) counts.CASES++;
+      if (filterMap.ANSWERS.includes(n.content)) counts.ANSWERS++;
+      if (filterMap.COMMENTS.includes(n.content)) counts.COMMENTS++;
+    });
+
+    return counts;
+  }, [notifications]);
+
+  const filteredNotifications = useMemo(() => {
+    // if (activeTab === "UNREAD") {
+    //   return notifications.filter((n) => !n.read);
+    // }
+
+    if (activeTab === "ALL") {
+      return notifications;
+    }
+
+    const filterMap: Record<
+      Exclude<NotificationTab, "ALL" | "UNREAD">,
+      string[]
+    > = {
+      CASES: [
+        "new_case",
+        "approve_answer_close_case",
+        "reopen_case",
+        "case_reminder",
+      ],
+      ANSWERS: [
+        "new_answer",
+        "approve_answer_await_finance_case",
+        "approve_answer_finance_case",
+        "mention_in_answer",
+      ],
+      COMMENTS: [
+        "new_comment_case",
+        "new_answer_comment",
+        "mention_in_comment",
+        "mention_in_answer_comment",
+      ],
+    };
+
+    const keywords = filterMap[activeTab];
+    return notifications.filter((n) => keywords.includes(n.content));
+  }, [notifications, activeTab]);
+
+  const unreadNotificationsInTab = useMemo(() => {
+    return filteredNotifications.filter((n) => !n.read);
+  }, [filteredNotifications]);
+
+  const handleMarkTabAsRead = () => {
+    const idsToMark = unreadNotificationsInTab.map((n) => n._id);
+    if (idsToMark.length === 0) return;
+
+    markAsRead({ variables: { notificationIds: idsToMark } })
+      .then(() => {
+        const idSet = new Set(idsToMark);
+        setNotifications((prev) =>
+          prev.map((n) => (idSet.has(n._id) ? { ...n, read: true } : n))
+        );
+      })
+      .catch((err) => {
+        console.error("Failed to mark notifications as read:", err);
+        toast.error("Could not mark notifications as read.");
+      });
+  };
 
   const handleDeleteAll = () => {
     deleteNotifications({
       variables: {
-        notificationIds: notifications.map((n) => n._id),
+        notificationIds: filteredNotifications.map((n) => n._id),
       },
     });
     setNotifications([]);
     toast.success(t("notification_contents.all_removed"), {
       className: "notification-toast",
+      position: "top-right",
+      autoClose: 5000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
+      style: {
+        marginTop: "130px",
+      },
     });
+  };
+
+  const handleDropdownOpenChange = (open: boolean) => {
+    if (open) {
+      toast.dismiss();
+    }
+    setDropdownOpen(open);
   };
 
   return (
     <>
-      <DropdownMenu.Root open={isDropdownOpen} onOpenChange={setDropdownOpen}>
+      <DropdownMenu.Root
+        open={isDropdownOpen}
+        onOpenChange={handleDropdownOpenChange}
+      >
         <DropdownMenu.Trigger asChild>
           <button
             className="cursor-pointer inline-flex items-center justify-center p-2 text-gray-600 focus:outline-none hover:text-gray-900 rounded-full transition-colors duration-150 hover:bg-gray-300 data-[state=open]:bg-gray-500 data-[state=open]:text-gray-100"
@@ -130,7 +290,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }) => {
             {/* This wrapper ensures the dot is positioned relative to the icon */}
             <div className="relative">
               <BellIcon className="h-6 w-6" />
-              {unreadCount > 0 && (
+              {unreadCountsByTab.ALL > 0 && (
                 <span className="absolute top-0 right-0 block h-3 w-3 transform -translate-y-1/4 translate-x-1/4">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75"></span>
                   <span className="absolute inline-flex h-3 w-3 rounded-full bg-red-500"></span>
@@ -151,20 +311,61 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }) => {
                 {t("notifications")}
                 <span className="text-md font-normal text-gray-400">
                   {" "}
-                  ({unreadCount})
+                  ({unreadCountsByTab.ALL})
                 </span>
               </h3>
-              <button
-                className="cursor-pointer text-sm text-blue-500 hover:underline disabled:cursor-not-allowed disabled:text-gray-400"
-                onClick={() => {
-                  setShowConfirmModal(true);
-                  setDropdownOpen(false);
-                }}
-                title={t("notification_contents.remove_all_title")}
-                disabled={!notifications || notifications.length === 0}
-              >
-                {t("notification_contents.remove_all")}
-              </button>
+              <div className="flex items-center space-x-3">
+                <button
+                  className="cursor-pointer text-sm text-blue-500 hover:underline disabled:cursor-not-allowed disabled:text-gray-400"
+                  onClick={handleMarkTabAsRead}
+                  title={t("notification_contents.mark_all_read_title")}
+                  disabled={unreadNotificationsInTab.length === 0}
+                >
+                  {t("notification_contents.mark_all_read", "Mark as Read")}
+                </button>
+                <button
+                  className="cursor-pointer text-sm text-blue-500 hover:underline disabled:cursor-not-allowed disabled:text-gray-400"
+                  onClick={() => {
+                    setShowConfirmModal(true);
+                    setDropdownOpen(false);
+                  }}
+                  title={t("notification_contents.remove_all_title")}
+                  disabled={filteredNotifications.length === 0}
+                >
+                  {t("notification_contents.remove_all")}
+                </button>
+              </div>
+            </div>
+            {/* Tabs */}
+            <div className="flex justify-around p-1 border-b border-gray-200 bg-gray-50">
+              {tabs.map((tab) => {
+                const Icon = tab.icon;
+                const count = unreadCountsByTab[tab.name];
+                const isActive = activeTab === tab.name;
+
+                return (
+                  <button
+                    key={tab.name}
+                    onClick={() => {
+                      toast.dismiss();
+                      setActiveTab(tab.name);
+                    }}
+                    className={`cursor-pointer mx-0.5 p-2 rounded-md transition-colors duration-150 flex items-center justify-center flex-1 relative ${
+                      isActive
+                        ? "bg-blue-100 text-blue-600"
+                        : "text-gray-500 hover:bg-gray-200"
+                    }`}
+                    title={tab.title}
+                  >
+                    <Icon className="h-5 w-5" />
+                    {count > 0 && (
+                      <span className="absolute top-1 right-4 bg-red-500 text-white text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center">
+                        {count > 9 ? "9+" : count}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
 
             <div className="max-h-96 overflow-y-auto">
@@ -174,14 +375,14 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }) => {
                 </div>
               )}
 
-              {!initialLoading && notifications.length === 0 && (
+              {!initialLoading && filteredNotifications.length === 0 && (
                 <div className="p-4 text-center text-gray-500">
                   {t("notification_contents.no_notifications")}
                 </div>
               )}
 
               {!initialLoading &&
-                notifications.map((notif) => (
+                filteredNotifications.map((notif) => (
                   <NotificationItem
                     key={notif._id}
                     notification={notif}

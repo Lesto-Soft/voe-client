@@ -10,14 +10,23 @@ import {
 } from "@heroicons/react/24/outline";
 import useUserActivityScrollPersistence from "../../../hooks/useUserActivityScrollPersistence";
 import DateRangeSelector from "./DateRangeSelector";
-import { parseActivityDate } from "../../../utils/dateUtils";
+import { CasePriority, CaseType, ICaseStatus } from "../../../db/interfaces";
+import { StatsActivityType } from "./UserStatisticsPanel";
+import { RatingTierLabel } from "../../../pages/User";
+import FilterTag from "../../global/FilterTag";
+import {
+  translateCaseType,
+  translatePriority,
+  translateStatus,
+} from "../../../utils/categoryDisplayUtils";
+import { PieTab } from "./UserStatisticsPanel";
 
-// Represents a case that the user has rated, with their average score
+// REMOVED: Local ActivityTab type is no longer needed
+
 interface RatedCaseActivity {
   case: ICase;
   averageScore: number;
 }
-
 interface CombinedActivity {
   id: string;
   date: string;
@@ -31,17 +40,9 @@ interface CombinedActivity {
     | "finance_approval";
 }
 
-type ActivityTab =
-  | "all"
-  | "cases"
-  | "answers"
-  | "comments"
-  | "ratings"
-  | "approvals"
-  | "finances";
-
 interface UserActivityListProps {
   user: IUser | undefined | null;
+  activities: CombinedActivity[];
   isLoading?: boolean;
   counts: {
     all: number;
@@ -58,56 +59,99 @@ interface UserActivityListProps {
     startDate: Date | null;
     endDate: Date | null;
   }) => void;
+  isAnyFilterActive: boolean;
+  onClearAllFilters: () => void;
+  activeCategoryName: string | null;
+  onClearCategoryFilter: () => void;
+  activeRatingTier: RatingTierLabel;
+  onClearRatingTierFilter: () => void;
+  activePriority: CasePriority | "all";
+  onClearPriorityFilter: () => void;
+  activeType: CaseType | "all";
+  onClearTypeFilter: () => void;
+  activeResolution: string; // The label string
+  onClearResolutionFilter: () => void;
+  activeStatus: ICaseStatus | "all";
+  onClearStatusFilter: () => void;
+  onPieTabChange?: (tab: PieTab) => void;
+  cardView?: "full" | "compact";
+  // MODIFIED: Added props to control the component
+  activeTab: StatsActivityType;
+  onTabChange: (tab: StatsActivityType) => void;
+  showDateFilter?: boolean; // Add a new prop to control visibility
+  showFiltersBar?: boolean;
 }
 
 const UserActivityList: React.FC<UserActivityListProps> = ({
   user,
+  activities,
   isLoading,
   counts,
   userId,
   dateRange,
   onDateRangeChange,
+  isAnyFilterActive,
+  onClearAllFilters,
+  activeCategoryName,
+  onClearCategoryFilter,
+  activeRatingTier,
+  onClearRatingTierFilter,
+  activePriority,
+  onClearPriorityFilter,
+  activeType,
+  onClearTypeFilter,
+  activeResolution,
+  onClearResolutionFilter,
+  activeStatus,
+  onClearStatusFilter,
+  onPieTabChange,
+  cardView = "full",
+  activeTab,
+  onTabChange,
+  showDateFilter = true, // Default the new prop to true
+  showFiltersBar = true,
 }) => {
   const [isDateFilterVisible, setIsDateFilterVisible] = useState(false);
-
-  // ✅ MODIFIED: Changed from && to || to show active state if at least one date is selected.
   const isDateFilterActive =
     dateRange.startDate !== null || dateRange.endDate !== null;
-
   const isDataReady = !isLoading && !!user;
-
-  // Add ref for the tabs container
   const tabsContainerRef = useRef<HTMLDivElement>(null);
+  const filtersContainerRef = useRef<HTMLDivElement>(null);
 
   const {
-    activeTab,
     visibleCounts,
     scrollableActivityListRef,
-    handleTabChange,
     handleLoadMoreItems,
     resetScrollAndVisibleCount,
-  } = useUserActivityScrollPersistence(userId, isDataReady);
+  } = useUserActivityScrollPersistence(userId, activeTab, isDataReady); // MODIFIED: Pass activeTab to the hook
 
   useEffect(() => {
     if (resetScrollAndVisibleCount) {
       resetScrollAndVisibleCount();
     }
-  }, [dateRange, resetScrollAndVisibleCount]);
+  }, [
+    dateRange,
+    activeCategoryName,
+    activeRatingTier,
+    resetScrollAndVisibleCount,
+  ]);
 
-  // Add effect for horizontal scrolling with mouse wheel
   useEffect(() => {
     const scrollContainer = tabsContainerRef.current;
 
     if (!scrollContainer) return;
 
     const handleWheel = (e: WheelEvent) => {
-      if (e.deltaY !== 0) {
+      // If there's horizontal scroll, let the browser handle it natively
+      if (e.deltaX !== 0) return;
+
+      // If there's vertical scroll and the container is overflowing, convert it
+      if (
+        e.deltaY !== 0 &&
+        scrollContainer.scrollWidth > scrollContainer.clientWidth
+      ) {
         e.preventDefault();
-        const scrollAmount = e.deltaY * 1.5;
-        scrollContainer.scrollBy({
-          left: scrollAmount,
-          behavior: "smooth",
-        });
+        scrollContainer.scrollLeft += e.deltaY;
       }
     };
 
@@ -118,183 +162,80 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
     };
   }, []);
 
-  const allActivities = useMemo((): CombinedActivity[] => {
-    if (!user) return [];
+  // add a new useEffect to handle mouse wheel scrolling on the filters bar
+  useEffect(() => {
+    const scrollContainer = filtersContainerRef.current;
+    if (!scrollContainer) return;
 
-    const isInDateRange = (itemDateStr: string | number) => {
-      const { startDate, endDate } = dateRange;
-      if (!startDate && !endDate) return true;
+    const handleWheel = (e: WheelEvent) => {
+      // Proceed only if scrolling vertically and the container is overflowing
+      // If there's horizontal scroll, let the browser handle it natively
+      if (e.deltaX !== 0) return;
 
-      const itemDate = parseActivityDate(itemDateStr);
-
-      if (startDate && itemDate < startDate) {
-        return false;
+      // If there's vertical scroll and the container is overflowing, convert it
+      if (
+        e.deltaY !== 0 &&
+        scrollContainer.scrollWidth > scrollContainer.clientWidth
+      ) {
+        e.preventDefault(); // Prevent the main page from scrolling
+        scrollContainer.scrollLeft += e.deltaY;
       }
-      if (endDate && itemDate > endDate) {
-        return false;
-      }
-      return true;
     };
+    scrollContainer.addEventListener("wheel", handleWheel, { passive: false });
+    return () => scrollContainer.removeEventListener("wheel", handleWheel);
+  }, [isAnyFilterActive]);
 
-    const ratedCases: Map<
-      string,
-      { scores: number[]; latestDate: string; caseData: ICase }
-    > = new Map();
+  // NEW: This effect triggers whenever the active tab changes.
+  useEffect(() => {
+    // Find the HTML element for the currently active tab using its ID.
+    const activeTabElement = document.getElementById(
+      `activity-tab-${activeTab}`
+    );
 
-    if (user.metricScores) {
-      user.metricScores
-        .filter((score) => isInDateRange(score.date))
-        .forEach((score) => {
-          if (!ratedCases.has(score.case._id)) {
-            ratedCases.set(score.case._id, {
-              scores: [],
-              latestDate: score.date,
-              caseData: score.case,
-            });
-          }
-          const entry = ratedCases.get(score.case._id)!;
-          entry.scores.push(score.score);
-          if (new Date(score.date) > new Date(entry.latestDate)) {
-            entry.latestDate = score.date;
-          }
-        });
-    }
-
-    const activities: CombinedActivity[] = [];
-
-    if (user.cases) {
-      user.cases
-        .filter((c) => isInDateRange(c.date))
-        .forEach((caseItem) =>
-          activities.push({
-            id: `case-${caseItem._id}`,
-            date: caseItem.date,
-            item: caseItem,
-            activityType: "case",
-          })
-        );
-    }
-
-    if (user.answers) {
-      user.answers
-        .filter((a) => isInDateRange(a.date))
-        .forEach((answerItem) =>
-          activities.push({
-            id: `answer-${answerItem._id}`,
-            date: answerItem.date,
-            item: answerItem,
-            activityType: "answer",
-          })
-        );
-    }
-
-    if (user.approvedAnswers) {
-      user.approvedAnswers
-        .filter((a) => {
-          const dateToFilterBy = a.approved_date || a.date;
-          return isInDateRange(dateToFilterBy);
-        })
-        .forEach((answerItem) =>
-          activities.push({
-            id: `base-approval-${answerItem._id}`,
-            date: answerItem.approved_date || answerItem.date,
-            item: answerItem,
-            activityType: "base_approval",
-          })
-        );
-    }
-
-    if (user.financialApprovedAnswers) {
-      user.financialApprovedAnswers
-        .filter((a) => {
-          const dateToFilterBy = a.financial_approved_date || a.date;
-          return isInDateRange(dateToFilterBy);
-        })
-        .forEach((answerItem) =>
-          activities.push({
-            id: `finance-approval-${answerItem._id}`,
-            date: answerItem.financial_approved_date || answerItem.date,
-            item: answerItem,
-            activityType: "finance_approval",
-          })
-        );
-    }
-
-    if (user.comments) {
-      user.comments
-        .filter((c) => isInDateRange(c.date))
-        .forEach((commentItem) =>
-          activities.push({
-            id: `comment-${commentItem._id}`,
-            date: commentItem.date,
-            item: commentItem,
-            activityType: "comment",
-          })
-        );
-    }
-
-    ratedCases.forEach((value, key) => {
-      const averageScore =
-        value.scores.reduce((a, b) => a + b, 0) / value.scores.length;
-      activities.push({
-        id: `rating-${key}`,
-        date: value.latestDate,
-        item: {
-          case: value.caseData,
-          averageScore,
-        },
-        activityType: "rating",
+    // If the element is found, scroll it into the visible area.
+    if (activeTabElement) {
+      activeTabElement.scrollIntoView({
+        behavior: "smooth", // For a smooth scrolling animation
+        inline: "nearest", // Ensures horizontal alignment
+        block: "nearest", // Ensures vertical alignment
       });
-    });
-
-    return activities.sort((a, b) => {
-      return (
-        parseActivityDate(b.date).getTime() -
-        parseActivityDate(a.date).getTime()
-      );
-    });
-  }, [user, dateRange]);
+    }
+  }, [activeTab]); // The effect depends on the activeTab prop.
 
   const activitiesToDisplay = useMemo((): CombinedActivity[] => {
     let baseActivities: CombinedActivity[];
     switch (activeTab) {
       case "cases":
-        baseActivities = allActivities.filter((a) => a.activityType === "case");
+        baseActivities = activities.filter((a) => a.activityType === "case");
         break;
       case "answers":
-        baseActivities = allActivities.filter(
-          (a) => a.activityType === "answer"
-        );
+        baseActivities = activities.filter((a) => a.activityType === "answer");
         break;
       case "comments":
-        baseActivities = allActivities.filter(
-          (a) => a.activityType === "comment"
-        );
+        baseActivities = activities.filter((a) => a.activityType === "comment");
         break;
       case "ratings":
-        baseActivities = allActivities.filter(
-          (a) => a.activityType === "rating"
-        );
+        baseActivities = activities.filter((a) => a.activityType === "rating");
         break;
       case "approvals":
-        baseActivities = allActivities.filter(
+        baseActivities = activities.filter(
           (a) => a.activityType === "base_approval"
         );
         break;
       case "finances":
-        baseActivities = allActivities.filter(
+        baseActivities = activities.filter(
           (a) => a.activityType === "finance_approval"
         );
         break;
       case "all":
       default:
-        baseActivities = allActivities;
+        baseActivities = activities;
         break;
     }
     return baseActivities.slice(0, visibleCounts[activeTab]);
-  }, [activeTab, allActivities, visibleCounts]);
+  }, [activeTab, activities, visibleCounts]);
 
-  const tabs: { key: ActivityTab; label: string; count: number }[] = [
+  const tabs: { key: StatsActivityType; label: string; count: number }[] = [
     { key: "all", label: "Всички", count: counts.all },
     { key: "cases", label: "Сигнали", count: counts.cases },
     { key: "answers", label: "Решения", count: counts.answers },
@@ -307,23 +248,22 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
   const getCurrentTabTotalCount = (): number => {
     switch (activeTab) {
       case "cases":
-        return allActivities.filter((a) => a.activityType === "case").length;
+        return activities.filter((a) => a.activityType === "case").length;
       case "answers":
-        return allActivities.filter((a) => a.activityType === "answer").length;
+        return activities.filter((a) => a.activityType === "answer").length;
       case "comments":
-        return allActivities.filter((a) => a.activityType === "comment").length;
+        return activities.filter((a) => a.activityType === "comment").length;
       case "ratings":
-        return allActivities.filter((a) => a.activityType === "rating").length;
+        return activities.filter((a) => a.activityType === "rating").length;
       case "approvals":
-        return allActivities.filter((a) => a.activityType === "base_approval")
+        return activities.filter((a) => a.activityType === "base_approval")
           .length;
       case "finances":
-        return allActivities.filter(
-          (a) => a.activityType === "finance_approval"
-        ).length;
+        return activities.filter((a) => a.activityType === "finance_approval")
+          .length;
       case "all":
       default:
-        return allActivities.length;
+        return activities.length;
     }
   };
 
@@ -358,7 +298,7 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
   }
 
   return (
-    <div className="lg:col-span-6 bg-white rounded-lg shadow-lg flex flex-col overflow-hidden max-h-full">
+    <div className="bg-white rounded-lg shadow-lg flex flex-col overflow-hidden max-h-full  h-full">
       <div className="p-1 sm:p-2 border-b border-gray-200">
         <div className="flex items-center justify-between pb-1">
           <div
@@ -368,8 +308,10 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
             {tabs.map((tab) => (
               <button
                 key={tab.key}
-                onClick={() => handleTabChange(tab.key)}
-                disabled={tab.count === 0 && activeTab !== tab.key}
+                // ADDED: A unique ID to make the button findable in the DOM.
+                id={`activity-tab-${tab.key}`}
+                onClick={() => onTabChange(tab.key)}
+                disabled={tab.count === 0}
                 className={`hover:cursor-pointer px-3 py-1.5 text-xs sm:text-sm font-medium rounded-md whitespace-nowrap transition-colors duration-150 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed ${
                   activeTab === tab.key
                     ? "bg-indigo-600 text-white shadow-sm"
@@ -381,22 +323,26 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
             ))}
           </div>
 
-          <button
-            onClick={() => setIsDateFilterVisible((prev) => !prev)}
-            title="Filter by date"
-            className={`hover:cursor-pointer p-2 rounded-md transition-colors duration-150 ${
-              isDateFilterVisible
-                ? "bg-indigo-100 text-indigo-600" // Style when selector is OPEN
-                : isDateFilterActive
-                ? "bg-indigo-100 text-gray-500" // Style when selector is CLOSED but filter is ACTIVE
-                : "bg-gray-100 text-gray-500 hover:bg-gray-200" // Style when selector is CLOSED and INACTIVE
-            }`}
-          >
-            <CalendarDaysIcon className="h-5 w-5" />
-          </button>
+          {/* Conditionally render the calendar button */}
+          {showDateFilter && (
+            <button
+              onClick={() => setIsDateFilterVisible((prev) => !prev)}
+              title="Filter by date"
+              className={`hover:cursor-pointer p-2 rounded-md transition-colors duration-150 ${
+                isDateFilterVisible
+                  ? "bg-indigo-100 text-indigo-600"
+                  : isDateFilterActive
+                  ? "bg-indigo-100 text-gray-500"
+                  : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+              }`}
+            >
+              <CalendarDaysIcon className="h-5 w-5" />
+            </button>
+          )}
         </div>
 
-        {isDateFilterVisible && (
+        {/* Conditionally render the DateRangeSelector itself */}
+        {showDateFilter && isDateFilterVisible && (
           <div className=" border-t pt-1 border-gray-200">
             <DateRangeSelector
               dateRange={dateRange}
@@ -405,10 +351,77 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
           </div>
         )}
       </div>
-
+      {showFiltersBar && isAnyFilterActive && (
+        <div className="px-4 py-1.5 border-b border-gray-200 bg-gray-50 flex items-center justify-between gap-x-4">
+          <div
+            ref={filtersContainerRef}
+            className="flex items-center gap-2 overflow-x-auto custom-scrollbar-xs flex-nowrap py-1"
+          >
+            <span className="text-xs font-semibold text-gray-600 mr-2 flex-shrink-0">
+              Активни филтри:
+            </span>
+            {activeCategoryName && (
+              <FilterTag
+                label={`Категория: ${activeCategoryName}`}
+                onRemove={onClearCategoryFilter}
+                onClick={() => onPieTabChange?.("categories")}
+              />
+            )}
+            {activeRatingTier !== "all" && (
+              <FilterTag
+                label={`Оценка: ${activeRatingTier}`}
+                onRemove={onClearRatingTierFilter}
+                onClick={() => onPieTabChange?.("ratings")}
+              />
+            )}
+            {activePriority !== "all" && (
+              <FilterTag
+                label={`Приоритет: ${translatePriority(activePriority)}`}
+                onRemove={onClearPriorityFilter}
+                onClick={() => onPieTabChange?.("priority")}
+              />
+            )}
+            {activeType !== "all" && (
+              <FilterTag
+                label={`Тип: ${translateCaseType(activeType)}`}
+                onRemove={onClearTypeFilter}
+                onClick={() => onPieTabChange?.("type")}
+              />
+            )}
+            {activeResolution !== "all" && (
+              <FilterTag
+                label={`Реакция: ${activeResolution}`}
+                onRemove={onClearResolutionFilter}
+                onClick={() => onPieTabChange?.("resolution")}
+              />
+            )}
+            {activeStatus !== "all" && (
+              <FilterTag
+                label={`Статус: ${translateStatus(activeStatus)}`}
+                onRemove={onClearStatusFilter}
+                onClick={() => onPieTabChange?.("status")}
+              />
+            )}
+            {isDateFilterActive && (
+              <FilterTag
+                label="Период"
+                onRemove={() =>
+                  onDateRangeChange({ startDate: null, endDate: null })
+                }
+              />
+            )}
+          </div>
+          <button
+            onClick={onClearAllFilters}
+            className="cursor-pointer text-xs font-semibold text-indigo-600 hover:text-indigo-800 hover:underline flex-shrink-0"
+          >
+            Изчисти всички
+          </button>
+        </div>
+      )}
       <div
         ref={scrollableActivityListRef}
-        className="flex-1 overflow-y-auto custom-scrollbar"
+        className="flex-1 overflow-y-auto custom-scrollbar-xs max-h-[calc(100vh-6rem)]"
       >
         {activitiesToDisplay.length > 0 ? (
           <>
@@ -423,6 +436,7 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
                     }
                     date={activity.date}
                     actor={user!}
+                    view={cardView}
                   />
                 ) : (
                   <UserActivityItemCard
@@ -438,6 +452,7 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
                     }
                     actor={user!}
                     date={activity.date}
+                    view={cardView}
                   />
                 )
               )}
@@ -447,7 +462,7 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
               <div className="p-4 flex justify-center mt-2 mb-2">
                 <button
                   onClick={handleLoadMoreItems}
-                  className="flex items-center px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded-md hover:bg-blue-600 transition-colors duration-150"
+                  className="cursor-pointer flex items-center px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded-md hover:bg-blue-600 transition-colors duration-150"
                 >
                   <ArrowDownCircleIcon className="h-5 w-5 mr-2" />
                   Зареди още... (

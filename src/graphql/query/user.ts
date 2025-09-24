@@ -427,3 +427,30 @@ export const GET_USER_MENTIONS = gql`
     }
   }
 `;
+
+export const REQUEST_PASSWORD_RESET = gql`
+  mutation RequestPasswordReset($email: String, $username: String) {
+    requestPasswordReset(email: $email, username: $username) {
+      success
+      message
+    }
+  }
+`;
+
+export const VERIFY_RESET_TOKEN = gql`
+  mutation VerifyResetToken($token: String!) {
+    verifyResetToken(token: $token) {
+      success
+      message
+    }
+  }
+`;
+
+export const RESET_PASSWORD = gql`
+  mutation ResetPassword($token: String!, $newPassword: String!) {
+    resetPassword(token: $token, newPassword: $newPassword) {
+      success
+      message
+    }
+  }
+`;

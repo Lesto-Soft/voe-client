@@ -3,11 +3,11 @@ import { useState } from "react";
 import { endpoint } from "../db/config";
 import { Link, useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
-// import LanguageSwitcher from "../components/modals/LanguageSwitcher";
 import {
   LightBulbIcon,
   ExclamationTriangleIcon,
 } from "@heroicons/react/24/solid";
+import ForgotPasswordModal from "../components/modals/ForgotPasswordModal";
 
 const FormHeader = ({ subtitleKey }: { subtitleKey: string }) => {
   const { t } = useTranslation();
@@ -61,7 +61,7 @@ const CaseForm = ({
           </Link>
         </div>
       </div>
-      <div className="mt-6 w-full text-center">
+      <div className="mt-4 w-full text-center">
         <button
           className="text-gray-600 hover:text-gray-700 font-medium transition-all duration-300 hover:cursor-pointer"
           onClick={() => setIsLogin(true)}
@@ -83,6 +83,8 @@ const LoginForm = ({
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isForgotPasswordModalOpen, setIsForgotPasswordModalOpen] =
+    useState(false);
   const [error, setError] = useState<string | null>(null);
   const FORM_SECTION_MIN_HEIGHT = "min-h-55";
 
@@ -126,60 +128,77 @@ const LoginForm = ({
   };
 
   return (
-    <div className={`text-center lg:w-full space-y-6`}>
-      <form
-        onSubmit={handleLoginSubmit}
-        className={`flex flex-col justify-center items-center space-y-4 ${FORM_SECTION_MIN_HEIGHT}`}
-      >
-        <div>
-          <input
-            type="text"
-            id="username"
-            placeholder={t("login.usernamePlaceholder", "Потребител")}
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-            disabled={isLoading}
-            className="lg:w-88 w-full py-3 px-5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-          />
-        </div>
-        <div>
-          <input
-            type="password"
-            id="password"
-            placeholder={t("login.passwordPlaceholder", "Парола")}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            disabled={isLoading}
-            className="lg:w-88 w-full py-3 px-5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-          />
-        </div>
-        {error && (
-          <div className="mt-2 text-red-600 text-sm w-full text-center">
-            {error}
+    <>
+      <ForgotPasswordModal
+        isOpen={isForgotPasswordModalOpen}
+        onOpenChange={setIsForgotPasswordModalOpen}
+      />
+      <div className={`text-center lg:w-full space-y-6`}>
+        <form
+          onSubmit={handleLoginSubmit}
+          className={`flex flex-col justify-center items-center space-y-4 ${FORM_SECTION_MIN_HEIGHT}`}
+        >
+          <div>
+            <input
+              type="text"
+              id="username"
+              placeholder={t("login.usernamePlaceholder", "Потребител")}
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+              disabled={isLoading}
+              className="lg:w-88 w-full py-3 px-5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+            />
           </div>
-        )}
-        <div className="lg:w-88 w-full pt-2">
+          <div>
+            <input
+              type="password"
+              id="password"
+              placeholder={t("login.passwordPlaceholder", "Парола")}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              disabled={isLoading}
+              className="lg:w-88 w-full py-3 px-5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+            />
+          </div>
+
+          {error && (
+            <div className="mt-2 text-red-600 text-sm w-full text-center">
+              {error}
+            </div>
+          )}
+          <div className="lg:w-88 w-full pt-2">
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="bg-blue-400 hover:bg-blue-800 active:bg-blue-500 text-white rounded-lg w-full py-3 px-5 uppercase font-bold shadow-xl lg:text-2xl transition-all duration-300 hover:cursor-pointer disabled:bg-blue-200 disabled:cursor-not-allowed" // Already w-full
+            >
+              {isLoading ? t("home.loggingIn") : t("home.login")}
+            </button>
+            <div className="mt-2 text-sm text-center">
+              <button
+                type="button" // Important: type="button" to prevent form submission
+                onClick={() => setIsForgotPasswordModalOpen(true)}
+                disabled={isLoading}
+                className="cursor-pointer hover:underline font-medium text-blue-600 hover:text-blue-500 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {t("login.forgotPassword", "Забравена парола?")}
+              </button>
+            </div>
+          </div>
+        </form>
+        <div className="mt-4 w-full text-center">
           <button
-            type="submit"
+            onClick={() => setIsLogin(false)}
             disabled={isLoading}
-            className="bg-blue-400 hover:bg-blue-800 active:bg-blue-500 text-white rounded-lg w-full py-3 px-5 uppercase font-bold shadow-xl lg:text-2xl transition-all duration-300 hover:cursor-pointer disabled:bg-blue-200 disabled:cursor-not-allowed" // Already w-full
+            className="text-gray-600 hover:text-gray-700 font-medium transition-all duration-300 hover:cursor-pointer disabled:opacity-50"
           >
-            {isLoading ? t("home.loggingIn") : t("home.login")}
+            &larr; {t("home.submitCase")}
           </button>
         </div>
-      </form>
-      <div className="mt-4 w-full text-center">
-        <button
-          onClick={() => setIsLogin(false)}
-          disabled={isLoading}
-          className="text-gray-600 hover:text-gray-700 font-medium transition-all duration-300 hover:cursor-pointer disabled:opacity-50"
-        >
-          &larr; {t("home.submitCase")}
-        </button>
       </div>
-    </div>
+    </>
   );
 };
 

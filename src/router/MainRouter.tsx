@@ -22,6 +22,7 @@ import { ROLES } from "../utils/GLOBAL_PARAMETERS";
 import ServerErrorPage from "../pages/ErrorPages/ServerErrorPage";
 import NavbarSkeleton from "../components/skeletons/NavbarSkeleton";
 import { useAuthModal } from "../context/AuthModalContext"; // NEW IMPORT
+import ResetPassword from "../pages/ResetPassword";
 
 const AppLayout = () => {
   const { me, error, loading } = useGetMe();
@@ -75,6 +76,10 @@ export const mainRouter = createBrowserRouter([
     element: <ServerErrorPage />,
   },
   {
+    path: "/reset-password/:token",
+    element: <ResetPassword />,
+  },
+  {
     element: <AppLayout />,
     children: [
       { path: "/dashboard", element: <Dashboard /> },
@@ -114,6 +119,7 @@ export const mainRouter = createBrowserRouter([
           </ProtectedRoute>
         ),
       },
+
       { path: "*", element: <NotFoundPage /> },
     ],
   },

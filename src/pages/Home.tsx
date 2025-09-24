@@ -44,7 +44,7 @@ const CaseForm = ({
             className="flex items-center gap-x-4 group"
           >
             <ExclamationTriangleIcon className="h-10 w-10 text-btnRed group-hover:scale-110 transition-transform duration-300" />
-            <button className="bg-btnRed hover:bg-red-800 active:bg-red-500 hover:cursor-pointer text-white rounded-lg w-full py-3 px-5 uppercase font-bold shadow-xl lg:text-2xl transition-all duration-300">
+            <button className="bg-btnRed hover:bg-red-800 active:bg-red-500 hover:cursor-pointer text-white rounded-lg w-full py-3 px-5 uppercase font-bold shadow-md lg:text-2xl transition-all duration-300">
               {t("home.problem")}
             </button>
           </Link>
@@ -55,13 +55,13 @@ const CaseForm = ({
             className="flex items-center gap-x-4 group"
           >
             <LightBulbIcon className="h-10 w-10 text-btnGreen group-hover:scale-110 transition-transform duration-300" />
-            <button className="bg-btnGreen hover:bg-green-700 active:bg-green-500 hover:cursor-pointer text-white rounded-lg w-full py-3 px-5 uppercase font-bold shadow-xl lg:text-2xl transition-all duration-300">
+            <button className="bg-btnGreen hover:bg-green-700 active:bg-green-500 hover:cursor-pointer text-white rounded-lg w-full py-3 px-5 uppercase font-bold shadow-md lg:text-2xl transition-all duration-300">
               {t("home.suggestion")}
             </button>
           </Link>
         </div>
       </div>
-      <div className="mt-4 w-full text-center">
+      <div className="mt-2 w-full text-center">
         <button
           className="text-gray-600 hover:text-gray-700 font-medium transition-all duration-300 hover:cursor-pointer"
           onClick={() => setIsLogin(true)}
@@ -168,15 +168,15 @@ const LoginForm = ({
               {error}
             </div>
           )}
-          <div className="lg:w-88 w-full pt-2">
+          <div className="lg:w-88 w-full space-y-2">
             <button
               type="submit"
               disabled={isLoading}
-              className="bg-blue-400 hover:bg-blue-800 active:bg-blue-500 text-white rounded-lg w-full py-3 px-5 uppercase font-bold shadow-xl lg:text-2xl transition-all duration-300 hover:cursor-pointer disabled:bg-blue-200 disabled:cursor-not-allowed" // Already w-full
+              className="bg-blue-400 hover:bg-blue-800 active:bg-blue-500 text-white rounded-lg w-full py-3 px-5 uppercase font-bold shadow-md lg:text-2xl transition-all duration-300 hover:cursor-pointer disabled:bg-blue-200 disabled:cursor-not-allowed" // Already w-full
             >
               {isLoading ? t("home.loggingIn") : t("home.login")}
             </button>
-            <div className="mt-2 text-sm text-center">
+            <div className="text-sm text-center">
               <button
                 type="button" // Important: type="button" to prevent form submission
                 onClick={() => setIsForgotPasswordModalOpen(true)}
@@ -188,7 +188,7 @@ const LoginForm = ({
             </div>
           </div>
         </form>
-        <div className="mt-4 w-full text-center">
+        <div className=" w-full text-center">
           <button
             onClick={() => setIsLogin(false)}
             disabled={isLoading}

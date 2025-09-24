@@ -20,7 +20,7 @@
     "close": "Close",
     "email": {
       "description": "Enter your email to receive a password reset link.",
-      "placeholder": "vasia_email@domain.com",
+      "placeholder": "email@domain.com",
       "submitButton": "Send link",
       "switchToNoEmail": "I don't have access to email"
     },

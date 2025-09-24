@@ -214,7 +214,7 @@ const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
           <div className="flex justify-end">
             <Dialog.Close asChild>
               <button
-                className="absolute top-3 right-3 p-1 rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-colors"
+                className="cursor-pointer absolute top-3 right-3 p-1 rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-colors"
                 aria-label={t("forgotPassword.close")!}
               >
                 <XMarkIcon className="h-5 w-5" />

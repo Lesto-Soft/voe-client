@@ -25,7 +25,7 @@
     "close": "Затвори",
     "email": {
       "description": "Въведете имейла си, за да получите връзка за възстановяване на паролата.",
-      "placeholder": "vasia_email@domain.com",
+      "placeholder": "email@domain.com",
       "submitButton": "Изпрати връзка",
       "switchToNoEmail": "Нямам достъп до имейл"
     },

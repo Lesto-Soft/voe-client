@@ -93,10 +93,6 @@ const Answer: React.FC<{
         const childWrapperRef = commentRefs.current.get(commentId);
 
         if (childWrapperRef) {
-          console.log(
-            `ANSWER (${answer._id}): Found ref for child, now highlighting!`
-          );
-
           // SCROLL TO THE CHILD'S WRAPPER
           childWrapperRef.scrollIntoView({
             behavior: "smooth",

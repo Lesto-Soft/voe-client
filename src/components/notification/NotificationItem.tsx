@@ -44,7 +44,6 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
   const { t } = useTranslation("menu");
 
   const getNotificationIcon = (type: string) => {
-    console.log(type);
     switch (type) {
       case "new_comment_case":
         return (
@@ -121,9 +120,10 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
           if (setDropdownOpen) setDropdownOpen(false);
           markAsRead({ variables: { notificationIds: [notification._id] } });
           const { content, caseNumber, entityId, username } = notification;
-          console.log(content);
+          if (content.includes("_to_category")) {
+            return navigate(`/category/${notification.new_categories?.[0]}`);
+          }
           if (content.includes("reopen_")) {
-            console.log("here");
             return navigate(`/case/${caseNumber}`, {
               state: { refetch: true },
             });

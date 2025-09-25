@@ -3,6 +3,8 @@ import {
   ChatBubbleBottomCenterTextIcon,
   ChatBubbleOvalLeftEllipsisIcon,
   ClockIcon,
+  PlusCircleIcon,
+  MinusCircleIcon,
 } from "@heroicons/react/24/solid";
 import { IAnswer, ICase, IComment, IMe } from "../../db/interfaces";
 import CaseHistoryContent from "./CaseHistoryContent";
@@ -10,7 +12,7 @@ import Comment from "./Comment";
 import Answer from "./Answer";
 import AddComment from "./AddComment";
 import AddAnswer from "./AddAnswer";
-import { USER_RIGHTS } from "../../utils/GLOBAL_PARAMETERS";
+import { USER_RIGHTS, CASE_STATUS } from "../../utils/GLOBAL_PARAMETERS";
 import { useLocation } from "react-router";
 
 interface SubmenuProps {
@@ -57,6 +59,18 @@ const Submenu: React.FC<SubmenuProps> = ({
   const [targetId, setTargetId] = useState<string | null>(null);
   const [childTargetId, setChildTargetId] = useState<string | null>(null);
   const location = useLocation();
+
+  // State to control the visibility of the AddAnswer form.
+  // It defaults to 'true' (visible) if the case status is OPEN or IN_PROGRESS.
+  const [isAddAnswerVisible, setIsAddAnswerVisible] = useState(() => {
+    const { status } = caseData;
+    return status === CASE_STATUS.OPEN || status === CASE_STATUS.IN_PROGRESS;
+  });
+
+  // State to control the visibility of the AddComment form for the case.
+  const [isAddCommentVisible, setIsAddCommentVisible] =
+    useState(isAddAnswerVisible);
+
   useEffect(() => {
     const handleNavigation = async () => {
       const processUrl = () => {
@@ -106,6 +120,11 @@ const Submenu: React.FC<SubmenuProps> = ({
   }, [caseData.answers, location.hash, refetch]);
   const isCreatorAndNothingElse =
     userRights.length === 1 && userRights.includes("creator");
+
+  const canAddAnswer =
+    userRights.includes(USER_RIGHTS.EXPERT) ||
+    userRights.includes(USER_RIGHTS.MANAGER) ||
+    userRights.includes(USER_RIGHTS.ADMIN);
 
   const submenu = [
     {
@@ -189,25 +208,45 @@ const Submenu: React.FC<SubmenuProps> = ({
       <div className="flex-grow overflow-y-auto pt-6">
         {view === "answers" && (
           <>
-            {/* Block for AddAnswer form OR placeholder messages */}
-            {userRights.includes(USER_RIGHTS.EXPERT) ||
-            userRights.includes(USER_RIGHTS.MANAGER) ||
-            userRights.includes(USER_RIGHTS.ADMIN) ? (
-              <AddAnswer
-                caseNumber={caseData.case_number}
-                caseId={caseData._id}
-                t={t}
-                me={me}
-                mentions={mentions}
-              />
-            ) : // **MODIFIED**: Logic for non-privileged users
-            // If there are no visible answers for this user...
+            {canAddAnswer ? (
+              <div className="mb-8 transition-all duration-300">
+                <div className="mx-5">
+                  <button
+                    onClick={() => setIsAddAnswerVisible((prev) => !prev)}
+                    className="cursor-pointer w-full flex justify-between items-center p-3 bg-gray-100 hover:bg-gray-200 rounded-lg text-left text-gray-700 font-semibold ring-1 ring-gray-300 focus:outline-none active:ring-2 active:ring-indigo-400 transition-colors"
+                    aria-expanded={isAddAnswerVisible}
+                    aria-controls="add-answer-form"
+                  >
+                    <span className="flex items-center justify-center gap-2">
+                      <ChatBubbleBottomCenterTextIcon className="h-6 w-6 text-gray-500" />
+                      {isAddAnswerVisible
+                        ? "Скрий писане на решение"
+                        : "Напиши решение"}
+                    </span>
+                    {isAddAnswerVisible ? (
+                      <MinusCircleIcon className="h-6 w-6 text-gray-500" />
+                    ) : (
+                      <PlusCircleIcon className="h-6 w-6 text-gray-500" />
+                    )}
+                  </button>
+                </div>
+                {isAddAnswerVisible && (
+                  <div id="add-answer-form" className="mt-4">
+                    <AddAnswer
+                      caseNumber={caseData.case_number}
+                      caseId={caseData._id}
+                      t={t}
+                      me={me}
+                      mentions={mentions}
+                    />
+                  </div>
+                )}
+              </div>
+            ) : // Existing placeholder messages for non-privileged users
             visibleAnswers.length === 0 &&
-              // ...and there are no answers on the case at all, show "no answers".
               (caseData.answers || []).length === 0 ? (
               <div className="text-center text-gray-500">{t("no_answers")}</div>
-            ) : // ...otherwise, if there are answers but none are visible, show "waiting for approval".
-            visibleAnswers.length === 0 ? (
+            ) : visibleAnswers.length === 0 ? (
               <div className="text-center text-gray-500">
                 {t("waiting_approval")}
               </div>
@@ -245,15 +284,41 @@ const Submenu: React.FC<SubmenuProps> = ({
         )}
         {view === "comments" && (
           <>
-            <AddComment
-              key="main-case-comment-box"
-              caseId={caseData._id}
-              t={t}
-              me={me}
-              caseNumber={caseData.case_number}
-              inputId={`file-upload-comment-case-${caseData._id}`}
-              mentions={mentions}
-            />
+            <div className="mb-8 transition-all duration-300">
+              <div className="mx-5">
+                <button
+                  onClick={() => setIsAddCommentVisible((prev) => !prev)}
+                  className="cursor-pointer w-full flex justify-between items-center p-3 bg-gray-100 hover:bg-gray-200 rounded-lg text-left text-gray-700 font-semibold ring-1 ring-gray-300 focus:outline-none active:ring-2 active:ring-indigo-400 transition-colors"
+                  aria-expanded={isAddCommentVisible}
+                  aria-controls="add-comment-form"
+                >
+                  <span className="flex items-center justify-center gap-2">
+                    <ChatBubbleOvalLeftEllipsisIcon className="h-6 w-6 text-gray-500" />
+                    {isAddCommentVisible
+                      ? "Скрий писане на коментар"
+                      : "Напиши коментар"}
+                  </span>
+                  {isAddCommentVisible ? (
+                    <MinusCircleIcon className="h-6 w-6 text-gray-500" />
+                  ) : (
+                    <PlusCircleIcon className="h-6 w-6 text-gray-500" />
+                  )}
+                </button>
+              </div>
+              {isAddCommentVisible && (
+                <div id="add-comment-form" className="mt-4">
+                  <AddComment
+                    key="main-case-comment-box"
+                    caseId={caseData._id}
+                    t={t}
+                    me={me}
+                    caseNumber={caseData.case_number}
+                    inputId={`file-upload-comment-case-${caseData._id}`}
+                    mentions={mentions}
+                  />
+                </div>
+              )}
+            </div>
             {caseData.comments && caseData.comments.length > 0 ? (
               <>
                 {[...caseData.comments]
@@ -273,9 +338,12 @@ const Submenu: React.FC<SubmenuProps> = ({
                   ))}
               </>
             ) : (
-              <div className="text-center text-gray-500">
-                {t("no_comments")}
-              </div>
+              // Hide "no comments" message if the user is about to write one
+              !isAddCommentVisible && (
+                <div className="text-center text-gray-500">
+                  {t("no_comments")}
+                </div>
+              )
             )}
           </>
         )}

@@ -7,23 +7,24 @@ import { canViewCase } from "../../utils/rightUtils";
 interface ICaseLinkProps {
   my_case: ICase;
   t: (key: string) => string;
+  targetId?: string; // 1. Add optional targetId prop
 }
 
-const CaseLink: React.FC<ICaseLinkProps> = ({ my_case, t }) => {
+const CaseLink: React.FC<ICaseLinkProps> = ({ my_case, t, targetId }) => {
+  // 2. Destructure prop
   const currentUser = useCurrentUser();
 
   if (!my_case || !currentUser) {
     return null;
   }
 
-  const isUnread =
-    // my_case.creator?._id !== currentUser._id &&
-    !my_case.readBy?.some((entry) => entry.user._id === currentUser._id);
+  const isUnread = !my_case.readBy?.some(
+    (entry) => entry.user._id === currentUser._id
+  );
 
   const isAllowed = canViewCase(currentUser, my_case);
   const isClosed = my_case.status === "CLOSED";
 
-  // 1. Add `relative` positioning here to contain the accent bar
   const baseClasses =
     "relative inline-flex items-center justify-center w-full px-2 py-1 rounded-md transition-colors duration-150 border shadow-sm";
 
@@ -32,12 +33,11 @@ const CaseLink: React.FC<ICaseLinkProps> = ({ my_case, t }) => {
     ? `${t("details_for")} ${my_case.case_number}`
     : "Нямате права за достъп до този сигнал";
 
-  // 2. Define the classes for the accent bar pseudo-element
   const unreadAccentClasses = isUnread
     ? `before:content-[''] before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1 before:rounded-l-md ${
         isClosed ? "before:bg-blue-300" : "before:bg-blue-500"
       }`
-    : ""; // Return an empty string if not unread
+    : "";
 
   const linkContent = (
     <>
@@ -62,10 +62,14 @@ const CaseLink: React.FC<ICaseLinkProps> = ({ my_case, t }) => {
       ? "bg-blue-100 text-blue-800 font-bold hover:bg-blue-200 border-blue-300"
       : "bg-blue-100 text-blue-700 hover:bg-blue-200 hover:text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 cursor-pointer border-blue-200";
 
+    // 3. Construct the path with the optional hash
+    const path = `/case/${my_case.case_number}${
+      targetId ? `#${targetId}` : ""
+    }`;
+
     return (
       <Link
-        to={`/case/${my_case.case_number}`}
-        // 3. Combine all the classes together
+        to={path} // 4. Use the new path variable
         className={`${baseClasses} ${activeClasses} ${unreadAccentClasses}`}
         title={title}
         tabIndex={0}
@@ -74,7 +78,6 @@ const CaseLink: React.FC<ICaseLinkProps> = ({ my_case, t }) => {
       </Link>
     );
   } else {
-    // For a disabled link, we always use the more subdued "closed" styling, plus the disabled effect.
     const finalDisabledClasses = `${baseClasses} bg-blue-50 text-blue-400 border-blue-200 ${disabledClasses}`;
     return (
       <span className={finalDisabledClasses} title={title}>

@@ -28,8 +28,8 @@ import {
 } from "../../../utils/style-helpers";
 import CategoryLink from "../../global/CategoryLink";
 import {
-  getContentPreview,
   stripHtmlTags,
+  renderContentSafely,
 } from "../../../utils/contentRenderer";
 
 type ActivityItem = ICase | IAnswer | IComment;
@@ -56,14 +56,19 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
   let icon: React.ReactNode;
   let titleFragments: React.ReactNode[] = [];
   let caseToLinkForDisplay: Partial<ICase> | undefined;
+  let targetId: string | undefined;
 
   const itemContent =
     (item as ICase)?.content ||
     (item as IAnswer)?.content ||
     (item as IComment)?.content ||
     "";
-  const contentPreview = getContentPreview(itemContent, 150);
-
+  // This will replace <br> and paragraph breaks with a space, then strip the leftover <p> tags.
+  const flattenedContent = itemContent
+    .replace(/<br\s*\/?>/g, " ")
+    .replace(/<\/p>\s*<p.*?>/g, " ")
+    .replace(/<\/?p.*?>/g, "")
+    .trim();
   if (activityType === "case" && "case_number" in item) {
     const caseItem = item as ICase;
     icon = <DocumentTextIcon className="h-5 w-5 text-blue-500" />;
@@ -75,6 +80,7 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
     caseToLinkForDisplay = caseItem;
   } else if (activityType === "answer" && "case" in item) {
     const answerItem = item as IAnswer;
+    targetId = `answers-${answerItem._id}`;
     icon = (
       <ChatBubbleBottomCenterTextIcon className="h-5 w-5 text-green-500" />
     );
@@ -93,6 +99,7 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
     }
   } else if (activityType === "base_approval" && "case" in item) {
     const answerItem = item as IAnswer;
+    targetId = `answers-${answerItem._id}`;
     icon = <HandThumbUpIcon className="h-5 w-5 text-sky-500" />;
     titleFragments.push(
       <span key="action" className="whitespace-nowrap">
@@ -107,6 +114,7 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
     );
   } else if (activityType === "finance_approval" && "case" in item) {
     const answerItem = item as IAnswer;
+    targetId = `answers-${answerItem._id}`;
     icon = <BanknotesIcon className="h-5 w-5 text-emerald-500" />;
     titleFragments.push(
       <span key="action" className="whitespace-nowrap">
@@ -129,6 +137,7 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
       commentItem.answer.case &&
       commentItem.answer.case.case_number
     ) {
+      targetId = `answers-${commentItem._id}?comment=true`;
       titleFragments.push(
         <span key="action" className="text-gray-700 whitespace-nowrap">
           Написа коментар по решение
@@ -141,6 +150,7 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
         </span>
       );
     } else if (commentItem.case && commentItem.case.case_number) {
+      targetId = `comments-${commentItem._id}`;
       titleFragments.push(
         <span key="action" className="text-gray-700 whitespace-nowrap">
           Написа коментар
@@ -220,16 +230,17 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
                   <CaseLink
                     my_case={caseToLinkForDisplay as ICase}
                     t={tFunctionForCaseLinkProp}
+                    targetId={targetId}
                   />
                 </div>
               )}
-              {view === "compact" && contentPreview && (
-                <span
-                  className="mt-1 ml-1 text-sm text-sm text-gray-600 line-clamp-1"
+              {view === "compact" && itemContent && (
+                <div
+                  className="mt-1 ml-1 text-sm text-gray-600 line-clamp-1 prose prose-sm max-w-none [&_p]:m-0"
                   title={stripHtmlTags(itemContent)}
                 >
-                  {contentPreview}
-                </span>
+                  {renderContentSafely(flattenedContent)}
+                </div>
               )}
             </div>
             {date && (
@@ -240,13 +251,13 @@ const UserActivityItemCard: React.FC<UserActivityItemCardProps> = ({
           </div>
           {view === "full" && (
             <>
-              {contentPreview && (
-                <p
-                  className="mt-1 text-sm text-gray-600 leading-relaxed line-clamp-2 sm:line-clamp-1"
+              {itemContent && (
+                <div
+                  className="mt-1 text-sm text-gray-600 leading-relaxed line-clamp-2 sm:line-clamp-1 prose prose-sm max-w-none [&_p]:my-0"
                   title={stripHtmlTags(itemContent)}
                 >
-                  {contentPreview}
-                </p>
+                  {renderContentSafely(flattenedContent)}
+                </div>
               )}
               {activityType === "case" &&
                 "status" in item &&

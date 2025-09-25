@@ -19,6 +19,7 @@ import { ROLES } from "../../utils/GLOBAL_PARAMETERS";
 import { useCurrentUser } from "../../context/UserContext";
 import ConfirmActionDialog from "../modals/ConfirmActionDialog";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
+import { MAX_UPLOAD_MB } from "../../db/config";
 
 const VALIDATION = {
   USERNAME: { MIN: 3, MAX: 25 },
@@ -27,9 +28,6 @@ const VALIDATION = {
   POSITION: { MIN: 3, MAX: 50 },
   EMAIL: { MAX: 50 },
 };
-
-const MAX_AVATAR_SIZE_MB = 3;
-const MAX_AVATAR_SIZE_BYTES = MAX_AVATAR_SIZE_MB * 1024 * 1024;
 
 interface UserFormProps {
   onSubmit: (
@@ -184,9 +182,9 @@ const UserForm: React.FC<UserFormProps> = ({
     const file = event.target.files?.[0];
     if (!file) return;
 
-    if (file.size > MAX_AVATAR_SIZE_BYTES) {
+    if (file.size > MAX_UPLOAD_MB * 1024 * 1024) {
       setAvatarError(
-        `Файлът е твърде голям. Максималният размер е ${MAX_AVATAR_SIZE_MB}MB.`
+        `Файлът е твърде голям. Максималният размер е ${MAX_UPLOAD_MB}MB.`
       );
       if (fileInputRef.current) {
         fileInputRef.current.value = "";

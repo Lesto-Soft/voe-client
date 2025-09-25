@@ -1,10 +1,10 @@
 import React from "react";
-import { MAX_FILES, MAX_FILE_SIZE_MB } from "../../utils/attachment-handling";
 import { handleFileChange } from "../../utils/attachment-handling";
 import { useTranslation } from "react-i18next";
 import ImagePreviewModal from "../modals/ImagePreviewModal";
 import { XMarkIcon } from "@heroicons/react/24/solid";
 import { createFileUrl } from "../../utils/fileUtils";
+import { MAX_UPLOAD_FILES, MAX_UPLOAD_MB } from "../../db/config";
 
 interface FileAttachmentBtnProps {
   attachments: File[];
@@ -59,7 +59,7 @@ const FileAttachmentBtn: React.FC<FileAttachmentBtnProps> = ({
           <p className="text-xs font-semibold text-gray-600 mb-1">
             {t("caseSubmission.currentFiles", {
               count: existingAttachments.length,
-              max: MAX_FILES,
+              max: MAX_UPLOAD_FILES,
             })}
           </p>
           <div className="mt-2 text-sm text-gray-600 space-y-1 overflow-y-auto rounded p-2 bg-gray-100 border border-gray-200 max-h-32">
@@ -107,27 +107,28 @@ const FileAttachmentBtn: React.FC<FileAttachmentBtnProps> = ({
       )}
       <label className="block text-sm font-medium text-gray-700 mb-1">
         {/* Update label to show current count vs max */}
-        {MAX_FILES - (existingAttachments.length + attachments.length) > 0
+        {MAX_UPLOAD_FILES - (existingAttachments.length + attachments.length) >
+        0
           ? t("caseSubmission.attachmentsLabel", {
               count: attachments.length,
-              max: MAX_FILES - existingAttachments.length,
-              maxSize: MAX_FILE_SIZE_MB,
+              max: MAX_UPLOAD_FILES - existingAttachments.length,
+              maxSize: MAX_UPLOAD_MB,
             })
           : t("caseSubmission.noMoreAttachmentsAllowed", {
-              max: MAX_FILES,
+              max: MAX_UPLOAD_FILES,
             })}
       </label>
       {/* Styled Label acting as Button - Disable visually if max files reached */}
       <label
         htmlFor="file-upload-input"
         className={`w-full text-center inline-block rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm ${
-          existingAttachments.length + attachments.length >= MAX_FILES
+          existingAttachments.length + attachments.length >= MAX_UPLOAD_FILES
             ? "opacity-75 cursor-not-allowed" // Disabled style
             : "cursor-pointer hover:bg-gray-200 active:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2" // Enabled style
         }`}
         // Prevent triggering input if disabled (CSS should suffice, but JS backup)
         onClick={(e) => {
-          if (attachments.length >= MAX_FILES) e.preventDefault();
+          if (attachments.length >= MAX_UPLOAD_FILES) e.preventDefault();
         }}
       >
         {t("caseSubmission.selectFilesButton")}
@@ -148,7 +149,9 @@ const FileAttachmentBtn: React.FC<FileAttachmentBtnProps> = ({
           )
         }
         className="sr-only"
-        disabled={attachments.length + existingAttachments.length >= MAX_FILES}
+        disabled={
+          attachments.length + existingAttachments.length >= MAX_UPLOAD_FILES
+        }
       />
 
       {/* Display File Errors */}

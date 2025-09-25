@@ -16,6 +16,7 @@ import { useDeleteAnswer } from "../../graphql/hooks/answer";
 import DeleteModal from "../modals/DeleteModal";
 import { renderContentSafely } from "../../utils/contentRenderer";
 import { ROLES } from "../../utils/GLOBAL_PARAMETERS";
+import UserAvatar from "../cards/UserAvatar";
 
 const Answer: React.FC<{
   answer: IAnswer;
@@ -47,6 +48,45 @@ const Answer: React.FC<{
   const isAdmin = me.role?._id === ROLES.ADMIN;
   const answerRef = useRef<HTMLDivElement>(null);
   const commentRefs = useRef(new Map<string, HTMLDivElement>());
+
+  // --- 1. ADD REFS AND STATE FOR THE MARQUEE ---
+  const positionContainerRef = useRef<HTMLDivElement>(null);
+  const positionTextRef = useRef<HTMLSpanElement>(null);
+  const [isPositionOverflowing, setIsPositionOverflowing] = useState(false);
+  const [scrollDuration, setScrollDuration] = useState(0);
+  const [isHovering, setIsHovering] = useState(false);
+
+  // --- 2. ADD USEEFFECT TO CHECK FOR OVERFLOW ---
+  useEffect(() => {
+    const checkOverflow = () => {
+      if (positionContainerRef.current && positionTextRef.current) {
+        const containerWidth = positionContainerRef.current.clientWidth;
+        const textWidth = positionTextRef.current.scrollWidth;
+        const isOverflowing = textWidth > containerWidth;
+
+        setIsPositionOverflowing(isOverflowing);
+
+        if (isOverflowing) {
+          // Define a consistent speed (e.g., 50 pixels per second)
+          const scrollSpeed = 10;
+          // Calculate the distance the text needs to travel
+          const overflowDistance = textWidth - containerWidth;
+          // Calculate the duration in seconds
+          const dynamicDuration = overflowDistance / scrollSpeed;
+
+          setScrollDuration(dynamicDuration);
+        }
+      }
+    };
+
+    const timer = setTimeout(checkOverflow, 50);
+    window.addEventListener("resize", checkOverflow);
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("resize", checkOverflow);
+    };
+  }, [answer.creator.position]);
 
   const managedCategoryIds = me?.managed_categories.map(
     (cat: ICategory) => cat._id
@@ -155,14 +195,14 @@ const Answer: React.FC<{
 
       <div className="flex flex-wrap justify-between items-center gap-2 text-gray-500 text-xs italic mt-2">
         {answer.approved && (
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 mb-2">
             <p>{t("approvedBy")}</p>
             <UserLink user={answer.approved} />
             {answer.approved_date && <ShowDate date={answer.approved_date} />}
           </div>
         )}
         {answer.financial_approved && (
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 mb-2">
             <p>{t("financedBy")}</p>
             <UserLink user={answer.financial_approved} />
             {answer.financial_approved_date && (
@@ -230,78 +270,114 @@ const Answer: React.FC<{
   );
 
   return (
-    <div className="my-8 min-w-full px-5 transition-all duration-500">
+    <div className="my-6 min-w-full px-5 transition-all duration-500">
       <div
-        className={`bg-white shadow-md rounded-lg p-4 lg:p-6 ${
+        className={`bg-white shadow-md rounded-lg p-4 transition-colors ${
           approved
-            ? "border border-l-8 border-l-btnGreenHover border-gray-300"
-            : ""
+            ? "border-l-4 border-l-btnGreenHover"
+            : "border-l-4 border-transparent"
         }`}
+        id={`answers-${answer._id}`}
+        ref={answerRef}
       >
-        {/* --- UNIFIED RESPONSIVE LAYOUT --- */}
-        <div
-          className="flex flex-row gap-4"
-          id={`answers-${answer._id}`} // Moved ID and Ref here for consistent targeting
-          ref={answerRef}
-        >
-          {/* Creator's avatar/info on the left */}
-          <Creator creator={answer.creator} />
+        {/* --- NEW UNIFIED HEADER --- */}
+        <div className="flex justify-between items-start gap-4 mb-3">
+          {/* Left side: Avatar, Name, Date */}
+          <div className="flex items-center gap-3">
+            <UserAvatar
+              name={answer.creator.name}
+              imageUrl={
+                answer.creator.avatar
+                  ? `${import.meta.env.VITE_API_URL}/static/avatars/${
+                      answer.creator._id
+                    }/${answer.creator.avatar}`
+                  : null
+              }
+              size={56}
+              enablePreview={true}
+            />
+            <div className="flex flex-col items-center">
+              <UserLink user={answer.creator} />
 
-          {/* All content to the right of the creator */}
-          <div className="flex-1 flex flex-col min-w-0">
-            {/* Header: Contains all action buttons and the date */}
-            <div className="flex flex-wrap justify-between items-center gap-y-2 gap-x-4 mb-2">
-              {/* Approval buttons will appear on the left */}
-              {(showApproveBtn || showFinanceApproveBtn) && (
-                <div className="flex items-center flex-wrap gap-2">
-                  {showApproveBtn && (
-                    <ApproveBtn
-                      approved={approved}
-                      refetch={refetch} // ✅ PASS refetch instead
-                      t={t}
-                      answer={answer}
-                      me={me}
-                      caseNumber={caseNumber}
-                    />
-                  )}
-                  {showFinanceApproveBtn && (
-                    <FinanceApproveBtn
-                      approved={financialApproved}
-                      {...{ t, answer, me, caseNumber }}
-                    />
-                  )}
-                </div>
-              )}
-
-              {/* Edit/Delete/History/Date buttons. This group is pushed to the right on large screens. */}
-              <div className="flex items-center gap-2 lg:ml-auto">
-                {canEditOrDelete && !answer.approved && (
-                  <>
-                    {answer.history && answer.history.length > 0 && (
-                      <AnswerHistoryModal history={answer.history} />
-                    )}
-                    <EditAnswerButton
-                      {...{ answer, caseNumber, me }}
-                      currentAttachments={answer.attachments || []}
-                      mentions={mentions}
-                    />
-                    <DeleteModal
-                      title="deleteAnswer"
-                      content="deleteAnswerInfo"
-                      onDelete={() => deleteAnswer(answer._id.toString())}
-                    />
-                  </>
-                )}
-                <ShowDate date={answer.date} />
+              {/* --- 3. UPDATE THE JSX FOR THE MARQUEE --- */}
+              <div
+                ref={positionContainerRef}
+                onMouseEnter={() => setIsHovering(true)}
+                onMouseLeave={() => setIsHovering(false)}
+                className={`w-40 h-5 overflow-hidden ${
+                  isPositionOverflowing
+                    ? "scroll-hint" // We no longer need the 'group' class
+                    : "flex justify-center items-center"
+                } ${isHovering ? "is-hovered" : ""}`} // Add 'is-hovered' class based on state
+              >
+                <span
+                  ref={positionTextRef}
+                  className={`text-xs text-gray-400 whitespace-nowrap ${
+                    isPositionOverflowing
+                      ? "scrolling-text inline-block"
+                      : "truncate"
+                  }`}
+                  title={answer.creator.position}
+                  // NEW: Apply the dynamic duration as an inline style
+                  style={{ animationDuration: `${scrollDuration}s` }}
+                >
+                  {answer.creator.position}
+                </span>
               </div>
             </div>
 
-            {/* The main content of the answer */}
-            <div>{answerContentAndAttachments}</div>
+            {/* Approval buttons */}
+            {(showApproveBtn || showFinanceApproveBtn) && (
+              <div className="flex items-center justify-center flex-wrap gap-2 ml-4">
+                {showApproveBtn && (
+                  <ApproveBtn
+                    approved={approved}
+                    refetch={refetch}
+                    t={t}
+                    answer={answer}
+                    me={me}
+                    caseNumber={caseNumber}
+                  />
+                )}
+                {showFinanceApproveBtn && (
+                  <FinanceApproveBtn
+                    approved={financialApproved}
+                    {...{ t, answer, me, caseNumber }}
+                  />
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Right side: Actions (Edit/Delete/History) */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {canEditOrDelete && !answer.approved && (
+              <>
+                {answer.history && answer.history.length > 0 && (
+                  <AnswerHistoryModal history={answer.history} />
+                )}
+                <EditAnswerButton
+                  {...{ answer, caseNumber, me }}
+                  currentAttachments={answer.attachments || []}
+                  mentions={mentions}
+                />
+                <DeleteModal
+                  title="deleteAnswer"
+                  content="deleteAnswerInfo"
+                  onDelete={() => deleteAnswer(answer._id.toString())}
+                />
+              </>
+            )}
           </div>
         </div>
 
-        {commentsSection}
+        {/* --- MAIN CONTENT & APPROVALS --- */}
+        <div className="pl-2">
+          {/* The main content of the answer */}
+          {answerContentAndAttachments}
+        </div>
+
+        <div className="border-t border-gray-100">{commentsSection}</div>
       </div>
     </div>
   );

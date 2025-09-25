@@ -9,6 +9,7 @@ import DeleteModal from "../modals/DeleteModal";
 import { renderContentSafely } from "../../utils/contentRenderer";
 import { useDeleteComment } from "../../graphql/hooks/comment";
 import { useEffect, useRef } from "react";
+import UserAvatar from "../cards/UserAvatar";
 
 interface CommentProps {
   comment: IComment;
@@ -75,29 +76,42 @@ const Comment: React.FC<CommentProps> = ({
         comment._id
       }`}
       ref={commentRef}
-      className="py-8 px-5 m-5  transition-all duration-500 flex flex-row items-stretch gap-3 rounded min-w-11/12"
+      className="p-3 bg-white rounded-md border border-gray-200 transition-all duration-500"
     >
-      {/* Left: Creator info */}
-      <div className="flex flex-col justify-center items-center w-38">
-        <UserLink user={comment.creator} />
-        {comment.creator.position && (
-          <span className="text-xs text-gray-400 italic mt-1 text-center w-full block">
+      {/* --- NEW: COMPACT HEADER --- */}
+      <div className="flex justify-between items-center mb-2">
+        <div className="flex flex-row items-center justify-center gap-2">
+          <UserLink user={comment.creator} />
+          <span className="text-xs text-gray-400">
             {comment.creator.position}
           </span>
-        )}
-        {/* --- Mobile-only date and actions --- */}
-        <div className="lg:hidden flex flex-col justify-center items-center mt-2 gap-2">
-          <ShowDate date={comment.date} centered={true} />
-          {actions}
+        </div>
+        {/* Actions (Edit/Delete) */}
+
+        <div className="flex items-center gap-1.5">
+          <ShowDate date={comment.date} />
+          {me &&
+            (me._id === comment.creator._id || admin_check(me.role.name)) && (
+              <div className="flex items-center gap-1.5">
+                <EditButton
+                  comment={comment}
+                  currentAttachments={comment.attachments}
+                  caseNumber={caseNumber}
+                  mentions={mentions}
+                />
+                <DeleteModal
+                  title="deleteComment"
+                  content="deleteCommentInfo"
+                  onDelete={() => deleteComment(comment._id)}
+                />
+              </div>
+            )}
         </div>
       </div>
 
-      {/* Separator */}
-      <div className="h-auto w-px bg-gray-200 mx-2" />
-
-      {/* Right: Content */}
-      <div className="flex-1 flex flex-col">
-        <div className="text-sm text-gray-800 whitespace-pre-line bg-gray-50 rounded p-3 max-h-32 overflow-y-auto break-all">
+      {/* --- CONTENT & ATTACHMENTS --- */}
+      <div className="">
+        <div className="text-sm text-gray-800 whitespace-pre-line bg-gray-50 rounded p-2 max-h-48 overflow-y-auto break-words custom-scrollbar-xs">
           {renderContentSafely(comment.content)}
         </div>
         {comment.attachments && comment.attachments.length > 0 && (
@@ -111,12 +125,6 @@ const Comment: React.FC<CommentProps> = ({
             ))}
           </div>
         )}
-      </div>
-
-      {/* --- Desktop-only date and actions --- */}
-      <div className="hidden lg:flex flex-col justify-center items-center gap-2">
-        {actions}
-        <ShowDate date={comment.date} />
       </div>
     </div>
   );

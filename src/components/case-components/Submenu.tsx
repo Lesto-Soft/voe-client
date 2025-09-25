@@ -209,7 +209,7 @@ const Submenu: React.FC<SubmenuProps> = ({
         {view === "answers" && (
           <>
             {canAddAnswer ? (
-              <div className="mb-8 transition-all duration-300">
+              <div className="mb-2 transition-all duration-300">
                 <div className="mx-5">
                   <button
                     onClick={() => setIsAddAnswerVisible((prev) => !prev)}
@@ -284,7 +284,7 @@ const Submenu: React.FC<SubmenuProps> = ({
         )}
         {view === "comments" && (
           <>
-            <div className="mb-8 transition-all duration-300">
+            <div className="mb-2 transition-all duration-300">
               <div className="mx-5">
                 <button
                   onClick={() => setIsAddCommentVisible((prev) => !prev)}
@@ -320,7 +320,7 @@ const Submenu: React.FC<SubmenuProps> = ({
               )}
             </div>
             {caseData.comments && caseData.comments.length > 0 ? (
-              <>
+              <div className="mx-5 space-y-2">
                 {[...caseData.comments]
                   .sort(
                     (a, b) =>
@@ -336,7 +336,7 @@ const Submenu: React.FC<SubmenuProps> = ({
                       targetId={targetId}
                     />
                   ))}
-              </>
+              </div>
             ) : (
               // Hide "no comments" message if the user is about to write one
               !isAddCommentVisible && (

@@ -88,7 +88,7 @@ const ApproveBtn: React.FC<{
                 onCheckedChange={setNeedsFinance}
                 className={`${
                   needsFinance ? "bg-btnGreen" : "bg-gray-300"
-                } relative inline-flex h-6 w-11 items-center rounded-full transition-colors outline-none`}
+                } relative inline-flex h-6 w-11 items-center rounded-full transition-colors outline-none cursor-pointer`}
                 id="needs-finance-switch"
               >
                 <Switch.Thumb

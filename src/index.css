@@ -377,6 +377,102 @@ body,
   animation: fadeInRed 0.3s ease-in-out;
 }
 
+/* in index.css */
+@keyframes marquee {
+  /* Start paused for a moment */
+  /* 0%, 10%  */
+  0% {
+    transform: translateX(0);
+  }
+  /* Scroll to the end */
+  45% {
+    transform: translateX(calc(-100% + 10rem - 10px));
+  }
+  /* Pause at the end */
+  55% {
+    transform: translateX(calc(-100% + 10rem - 10px));
+  }
+  /* Scroll back to the start */
+  90%,
+  100% {
+    transform: translateX(0);
+  }
+}
+
+/*
+ * This rule looks for a parent with the 'group' class.
+ * When that parent is hovered, it finds the child with the
+ * '.scrolling-text' class and applies the marquee animation to it.
+*/
+.scrolling-text {
+  animation-name: marquee;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  animation-play-state: paused; /* Start paused */
+  /* animation-direction: alternate; */
+}
+
+.group:hover .scrolling-text {
+  animation-play-state: running; /* Play on hover */
+}
+
+.scroll-hint {
+  position: relative;
+}
+
+/* Also update the rule for the original right-side fade */
+.scroll-hint::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 20px;
+  /* Use the specific hex code for white here as well for consistency */
+  background: linear-gradient(to right, transparent, #ffffff);
+  pointer-events: none;
+  transition: opacity 0.2s ease-in-out;
+  z-index: 10;
+}
+
+.scroll-hint::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 20px;
+  background: linear-gradient(to right, #ffffff, transparent);
+  pointer-events: none;
+  transition: opacity 0.2s ease-in-out;
+  opacity: 0;
+  visibility: hidden;
+  z-index: 10;
+}
+
+/*
+  UPDATE 1: Play the animation when the 'is-hovered' class is present.
+*/
+.is-hovered .scrolling-text {
+  animation-play-state: running;
+}
+
+/*
+  UPDATE 2: Make the right-side fade disappear when 'is-hovered' is present.
+  We use .scroll-hint.is-hovered for a more specific selector.
+*/
+.scroll-hint.is-hovered::after {
+  opacity: 0.5;
+}
+
+/*
+  UPDATE 3: Make the left-side fade appear when 'is-hovered' is present.
+*/
+.scroll-hint.is-hovered::before {
+  opacity: 0.5;
+  visibility: visible;
+}
+
 @keyframes fadeInGreen {
   from {
     background-color: transparent;

@@ -17,6 +17,11 @@ import DeleteModal from "../modals/DeleteModal";
 import { renderContentSafely } from "../../utils/contentRenderer";
 import { ROLES } from "../../utils/GLOBAL_PARAMETERS";
 import UserAvatar from "../cards/UserAvatar";
+import {
+  ChevronDownIcon,
+  ChevronUpIcon,
+  ChatBubbleOvalLeftEllipsisIcon,
+} from "@heroicons/react/24/solid";
 
 const Answer: React.FC<{
   answer: IAnswer;
@@ -48,6 +53,7 @@ const Answer: React.FC<{
   const isAdmin = me.role?._id === ROLES.ADMIN;
   const answerRef = useRef<HTMLDivElement>(null);
   const commentRefs = useRef(new Map<string, HTMLDivElement>());
+  const [areCommentsVisible, setAreCommentsVisible] = useState(true);
 
   // --- 1. ADD REFS AND STATE FOR THE MARQUEE ---
   const positionContainerRef = useRef<HTMLDivElement>(null);
@@ -215,58 +221,80 @@ const Answer: React.FC<{
   );
 
   const commentsSection = (
-    <>
-      <div className="mt-5">
-        <div className="flex justify-center items-center mb-2">
+    <div className="mt-2 pt-2 border-t border-gray-100">
+      {/* --- NEW: Combined Controls Row using Absolute Positioning --- */}
+      <div className="relative flex items-center h-10 mb-2">
+        {/* Left Side: Add Comment Button */}
+        <button
+          className="cursor-pointer absolute left-2 top-1/2 -translate-y-1/2 w-36 px-2 py-1 rounded bg-gray-100 hover:bg-gray-300 text-sm text-gray-800 font-semibold transition-colors duration-200"
+          onClick={() => setShowCommentBox((v) => !v)}
+        >
+          <div className="flex w-full items-center gap-2">
+            <ChatBubbleOvalLeftEllipsisIcon className="h-5 w-5 flex-shrink-0 text-gray-500" />
+            <div className="flex-1 text-center">
+              {showCommentBox ? t("cancel") : t("addComment")}
+            </div>
+          </div>
+        </button>
+
+        {/* Center: Toggle Comments List */}
+        {answer.comments && answer.comments.length > 0 && (
           <button
-            className="w-32 px-3 py-1 rounded bg-btnGreen hover:bg-btnGreenHover border border-btngreenHover text-white font-semibold transition-colors duration-200 hover:cursor-pointer"
-            onClick={() => setShowCommentBox((v) => !v)}
+            onClick={() => setAreCommentsVisible((prev) => !prev)}
+            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-2 cursor-pointer text-sm font-semibold text-gray-600 hover:text-gray-800 p-2 rounded-md hover:bg-gray-50 focus:outline-none transition-colors"
+            aria-expanded={areCommentsVisible}
           >
-            {showCommentBox ? t("cancel") : t("addComment")}
+            {areCommentsVisible ? (
+              <ChevronUpIcon className="h-5 w-5" />
+            ) : (
+              <ChevronDownIcon className="h-5 w-5" />
+            )}
+            <span>Коментари ({answer.comments.length})</span>
           </button>
-        </div>
-        {showCommentBox && (
-          <AddComment
-            key={answer._id}
-            t={t}
-            answerId={answer._id}
-            caseNumber={caseNumber}
-            me={me}
-            inputId={`file-upload-comment-answer-${answer._id}`}
-            mentions={mentions}
-          />
         )}
       </div>
-      {answer.comments && answer.comments.length > 0 && (
-        <div className="mt-3">
-          <hr className="my-2 border-gray-200" />
-          <div className="flex flex-col gap-2">
-            {answer.comments.map((comment: IComment) => (
-              <div
+
+      {/* Add Comment Form (conditionally rendered) */}
+      {showCommentBox && (
+        <AddComment
+          key={answer._id}
+          t={t}
+          answerId={answer._id}
+          caseNumber={caseNumber}
+          me={me}
+          inputId={`file-upload-comment-answer-${answer._id}`}
+          mentions={mentions}
+        />
+      )}
+
+      {/* Comments List (conditionally rendered) */}
+      {answer.comments && answer.comments.length > 0 && areCommentsVisible && (
+        <div className="mt-2 pl-4 max-h-96 overflow-y-auto custom-scrollbar-xs space-y-2">
+          {answer.comments.map((comment: IComment) => (
+            <div
+              key={comment._id}
+              ref={(node) => {
+                if (node) {
+                  commentRefs.current.set(comment._id, node);
+                } else {
+                  commentRefs.current.delete(comment._id);
+                }
+              }}
+            >
+              <Comment
                 key={comment._id}
-                ref={(node) => {
-                  if (node) {
-                    commentRefs.current.set(comment._id, node);
-                  } else {
-                    commentRefs.current.delete(comment._id);
-                  }
-                }}
-              >
-                <Comment
-                  key={comment._id}
-                  comment={comment}
-                  me={me}
-                  caseNumber={caseNumber}
-                  mentions={mentions}
-                  parentType="answer"
-                  targetId={childTargetId}
-                />
-              </div>
-            ))}
-          </div>
+                comment={comment}
+                me={me}
+                caseNumber={caseNumber}
+                mentions={mentions}
+                parentType="answer"
+                targetId={childTargetId}
+              />
+            </div>
+          ))}
         </div>
       )}
-    </>
+    </div>
   );
 
   return (
@@ -283,7 +311,7 @@ const Answer: React.FC<{
         {/* --- NEW UNIFIED HEADER --- */}
         <div className="flex justify-between items-start gap-4 mb-3">
           {/* Left side: Avatar, Name, Date */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <UserAvatar
               name={answer.creator.name}
               imageUrl={
@@ -351,11 +379,12 @@ const Answer: React.FC<{
 
           {/* Right side: Actions (Edit/Delete/History) */}
           <div className="flex items-center gap-2 flex-shrink-0">
+            {answer.history && answer.history.length > 0 && (
+              <AnswerHistoryModal history={answer.history} />
+            )}
+            <ShowDate date={answer.date} />
             {canEditOrDelete && !answer.approved && (
               <>
-                {answer.history && answer.history.length > 0 && (
-                  <AnswerHistoryModal history={answer.history} />
-                )}
                 <EditAnswerButton
                   {...{ answer, caseNumber, me }}
                   currentAttachments={answer.attachments || []}
@@ -377,7 +406,8 @@ const Answer: React.FC<{
           {answerContentAndAttachments}
         </div>
 
-        <div className="border-t border-gray-100">{commentsSection}</div>
+        {/* --- COMMENTS SECTION --- */}
+        {commentsSection}
       </div>
     </div>
   );

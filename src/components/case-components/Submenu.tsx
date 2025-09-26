@@ -5,7 +5,7 @@ import {
   ClockIcon,
   PlusCircleIcon,
   MinusCircleIcon,
-  ArrowUpCircleIcon,
+  ChevronDoubleUpIcon,
 } from "@heroicons/react/24/solid";
 import { IAnswer, ICase, IComment, IMe } from "../../db/interfaces";
 import CaseHistoryContent from "./CaseHistoryContent";
@@ -15,6 +15,7 @@ import AddComment from "./AddComment";
 import AddAnswer from "./AddAnswer";
 import { USER_RIGHTS, CASE_STATUS } from "../../utils/GLOBAL_PARAMETERS";
 import { useLocation } from "react-router";
+import useMediaQuery from "../../hooks/useMediaQuery";
 
 interface SubmenuProps {
   caseData: ICase;
@@ -76,6 +77,8 @@ const Submenu: React.FC<SubmenuProps> = ({
   const [isScrollTopButtonVisible, setIsScrollTopButtonVisible] =
     useState(false);
 
+  const isDesktop = useMediaQuery("(min-width: 1024px)");
+
   useEffect(() => {
     const handleNavigation = async () => {
       const processUrl = () => {
@@ -126,25 +129,29 @@ const Submenu: React.FC<SubmenuProps> = ({
 
   // useEfect for scroll to top listener
   useEffect(() => {
-    const container = scrollableContainerRef.current;
+    // Determine the scroll target: the div on desktop, the whole window on mobile
+    const scrollTarget = isDesktop ? scrollableContainerRef.current : window;
+    if (!scrollTarget) return;
 
     const handleScroll = () => {
-      if (container) {
-        // Show button if scrolled down more than 300px
-        setIsScrollTopButtonVisible(container.scrollTop > 300);
-      }
+      const scrollTop = isDesktop
+        ? (scrollTarget as HTMLElement).scrollTop // For the div
+        : (scrollTarget as Window).scrollY; // For the window
+
+      setIsScrollTopButtonVisible(scrollTop > 300);
     };
 
-    container?.addEventListener("scroll", handleScroll);
+    scrollTarget.addEventListener("scroll", handleScroll);
 
-    // Cleanup function to remove the listener when the component unmounts
+    // Cleanup listener
     return () => {
-      container?.removeEventListener("scroll", handleScroll);
+      scrollTarget.removeEventListener("scroll", handleScroll);
     };
-  }, []); // Empty dependency array ensures this effect runs only once
+  }, [isDesktop]); // Re-run this effect if the screen size crosses the breakpoint
 
   const scrollToTop = () => {
-    scrollableContainerRef.current?.scrollTo({
+    const target = isDesktop ? scrollableContainerRef.current : window;
+    target?.scrollTo({
       top: 0,
       behavior: "smooth",
     });
@@ -406,11 +413,13 @@ const Submenu: React.FC<SubmenuProps> = ({
       {isScrollTopButtonVisible && (
         <button
           onClick={scrollToTop}
-          className="cursor-pointer absolute bottom-6 right-6 z-20 p-2 bg-gray-500 text-white rounded-full shadow-lg hover:bg-gray-700 focus:outline-none active:ring-2 active:ring-offset-2 active:ring-gray-500 transition-transform hover:scale-110"
+          className={`cursor-pointer z-20 p-2 bg-gray-500 text-white rounded-full shadow-lg hover:bg-gray-700 focus:outline-none active:ring-2 active:ring-offset-2 active:ring-gray-500 transition-transform hover:scale-110 ${
+            isDesktop ? "absolute bottom-6 right-6" : "fixed bottom-6 right-6"
+          }`}
           aria-label="Scroll to top"
           title="Върнете се най-нагоре"
         >
-          <ArrowUpCircleIcon className="h-7 w-7" />
+          <ChevronDoubleUpIcon className="h-7 w-7" />
         </button>
       )}
     </div>

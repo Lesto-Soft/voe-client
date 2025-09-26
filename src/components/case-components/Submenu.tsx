@@ -77,6 +77,10 @@ const Submenu: React.FC<SubmenuProps> = ({
   const [isScrollTopButtonVisible, setIsScrollTopButtonVisible] =
     useState(false);
 
+  // refs for the toggleable sections we want to scroll to
+  const addAnswerContainerRef = useRef<HTMLDivElement>(null);
+  const addCommentContainerRef = useRef<HTMLDivElement>(null);
+
   const isDesktop = useMediaQuery("(min-width: 1024px)");
 
   useEffect(() => {
@@ -148,6 +152,32 @@ const Submenu: React.FC<SubmenuProps> = ({
       scrollTarget.removeEventListener("scroll", handleScroll);
     };
   }, [isDesktop]); // Re-run this effect if the screen size crosses the breakpoint
+
+  // useEffect for scrolling to the AddAnswer form
+  useEffect(() => {
+    // If the form was just opened, scroll to it.
+    if (isAddAnswerVisible) {
+      // A short timeout ensures the element has been rendered before we try to scroll.
+      setTimeout(() => {
+        addAnswerContainerRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest", // 'nearest' is less jarring than 'center'
+        });
+      }, 100);
+    }
+  }, [isAddAnswerVisible]);
+
+  // useEffect for scrolling to the AddComment form
+  useEffect(() => {
+    if (isAddCommentVisible) {
+      setTimeout(() => {
+        addCommentContainerRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+        });
+      }, 100);
+    }
+  }, [isAddCommentVisible]);
 
   const scrollToTop = () => {
     const target = isDesktop ? scrollableContainerRef.current : window;
@@ -229,7 +259,7 @@ const Submenu: React.FC<SubmenuProps> = ({
   });
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full relative">
       <div className="flex-shrink-0 sticky top-0 z-1 bg-white border-b border-gray-200">
         <div className="flex justify-center gap-2 py-4">
           {submenu.map((item) => (
@@ -259,7 +289,10 @@ const Submenu: React.FC<SubmenuProps> = ({
         {view === "answers" && (
           <>
             {canAddAnswer ? (
-              <div className="mb-2 transition-all duration-300">
+              <div
+                ref={addAnswerContainerRef}
+                className="mb-2 transition-all duration-300"
+              >
                 <div className="mx-5">
                   <button
                     onClick={() => setIsAddAnswerVisible((prev) => !prev)}
@@ -335,7 +368,10 @@ const Submenu: React.FC<SubmenuProps> = ({
         )}
         {view === "comments" && (
           <>
-            <div className="mb-2 transition-all duration-300">
+            <div
+              ref={addCommentContainerRef}
+              className="mb-2 transition-all duration-300"
+            >
               <div className="mx-5">
                 <button
                   onClick={() => setIsAddCommentVisible((prev) => !prev)}

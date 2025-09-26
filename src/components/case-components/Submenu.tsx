@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   ChatBubbleBottomCenterTextIcon,
   ChatBubbleOvalLeftEllipsisIcon,
   ClockIcon,
   PlusCircleIcon,
   MinusCircleIcon,
+  ArrowUpCircleIcon,
 } from "@heroicons/react/24/solid";
 import { IAnswer, ICase, IComment, IMe } from "../../db/interfaces";
 import CaseHistoryContent from "./CaseHistoryContent";
@@ -71,6 +72,10 @@ const Submenu: React.FC<SubmenuProps> = ({
   const [isAddCommentVisible, setIsAddCommentVisible] =
     useState(isAddAnswerVisible);
 
+  const scrollableContainerRef = useRef<HTMLDivElement>(null);
+  const [isScrollTopButtonVisible, setIsScrollTopButtonVisible] =
+    useState(false);
+
   useEffect(() => {
     const handleNavigation = async () => {
       const processUrl = () => {
@@ -118,6 +123,32 @@ const Submenu: React.FC<SubmenuProps> = ({
 
     handleNavigation();
   }, [caseData.answers, location.hash, refetch]);
+
+  // useEfect for scroll to top listener
+  useEffect(() => {
+    const container = scrollableContainerRef.current;
+
+    const handleScroll = () => {
+      if (container) {
+        // Show button if scrolled down more than 300px
+        setIsScrollTopButtonVisible(container.scrollTop > 300);
+      }
+    };
+
+    container?.addEventListener("scroll", handleScroll);
+
+    // Cleanup function to remove the listener when the component unmounts
+    return () => {
+      container?.removeEventListener("scroll", handleScroll);
+    };
+  }, []); // Empty dependency array ensures this effect runs only once
+
+  const scrollToTop = () => {
+    scrollableContainerRef.current?.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  };
 
   const handleAnswerSubmitted = () => {
     setIsAddAnswerVisible(false);
@@ -214,7 +245,10 @@ const Submenu: React.FC<SubmenuProps> = ({
       </div>
 
       {/* Scrollable Content Area */}
-      <div className="flex-grow overflow-y-auto pt-6">
+      <div
+        ref={scrollableContainerRef}
+        className="flex-grow overflow-y-auto pt-6"
+      >
         {view === "answers" && (
           <>
             {canAddAnswer ? (
@@ -368,6 +402,17 @@ const Submenu: React.FC<SubmenuProps> = ({
             <div className="text-center text-gray-500">{t("no_history")}</div>
           ))}
       </div>
+
+      {isScrollTopButtonVisible && (
+        <button
+          onClick={scrollToTop}
+          className="cursor-pointer absolute bottom-6 right-6 z-20 p-2 bg-gray-500 text-white rounded-full shadow-lg hover:bg-gray-700 focus:outline-none active:ring-2 active:ring-offset-2 active:ring-gray-500 transition-transform hover:scale-110"
+          aria-label="Scroll to top"
+          title="Върнете се най-нагоре"
+        >
+          <ArrowUpCircleIcon className="h-7 w-7" />
+        </button>
+      )}
     </div>
   );
 };

@@ -171,6 +171,10 @@ const Answer: React.FC<{
     }
   }, [targetId, childTargetId, answer._id]);
 
+  const handleCommentSubmitted = () => {
+    setShowCommentBox(false); // This will close the AddComment form
+  };
+
   const answerContentAndAttachments = (
     <>
       <div
@@ -264,6 +268,7 @@ const Answer: React.FC<{
           me={me}
           inputId={`file-upload-comment-answer-${answer._id}`}
           mentions={mentions}
+          onCommentSubmitted={handleCommentSubmitted}
         />
       )}
 

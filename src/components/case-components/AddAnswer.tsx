@@ -15,6 +15,7 @@ interface AddAnswerProps {
   me: any; // User object, assuming it has an _id property
   caseNumber: number;
   mentions?: { name: string; username: string; _id: string }[];
+  onAnswerSubmitted?: () => void;
 }
 
 // The AddAnswer component
@@ -24,6 +25,7 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
   me,
   caseNumber,
   mentions,
+  onAnswerSubmitted,
 }) => {
   // State for attachments, file errors, content input, and submission errors
   const [attachments, setAttachments] = useState<File[]>([]);
@@ -94,6 +96,11 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
       // Reset form fields on successful submission
       setContent("");
       setAttachments([]);
+
+      if (onAnswerSubmitted) {
+        onAnswerSubmitted();
+      }
+
       // Optionally, you can clear submissionError here or rely on API success to imply no error
       // setSubmissionError(null); // Or show a success message
       toast.success(t("answerSubmitted"), {
@@ -188,7 +195,7 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
             onClick={submitAnswer}
             disabled={isSubmitDisabled}
             aria-label={t("submitAnswer") || "Submit Answer"}
-            className={`flex items-center justify-center h-36 w-24 min-w-24 rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-btnRedHover disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150`}
+            className={`cursor-pointer flex items-center justify-center h-36 w-24 min-w-24 rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-btnRedHover disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150`}
             title="Изпрати"
           >
             {loading ? (

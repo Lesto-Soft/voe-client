@@ -118,6 +118,15 @@ const Submenu: React.FC<SubmenuProps> = ({
 
     handleNavigation();
   }, [caseData.answers, location.hash, refetch]);
+
+  const handleAnswerSubmitted = () => {
+    setIsAddAnswerVisible(false);
+  };
+
+  const handleCaseCommentSubmitted = () => {
+    setIsAddCommentVisible(false); // This will close the case-level comment form
+  };
+
   const isCreatorAndNothingElse =
     userRights.length === 1 && userRights.includes("creator");
 
@@ -238,6 +247,7 @@ const Submenu: React.FC<SubmenuProps> = ({
                       t={t}
                       me={me}
                       mentions={mentions}
+                      onAnswerSubmitted={handleAnswerSubmitted}
                     />
                   </div>
                 )}
@@ -315,6 +325,7 @@ const Submenu: React.FC<SubmenuProps> = ({
                     caseNumber={caseData.case_number}
                     inputId={`file-upload-comment-case-${caseData._id}`}
                     mentions={mentions}
+                    onCommentSubmitted={handleCaseCommentSubmitted}
                   />
                 </div>
               )}

@@ -16,6 +16,7 @@ interface AddCommentProps {
   answerId?: string;
   inputId?: string; // Optional input ID for file attachment
   mentions?: { name: string; username: string; _id: string }[];
+  onCommentSubmitted?: () => void;
 }
 
 // The AddComment component
@@ -27,6 +28,7 @@ const AddComment: React.FC<AddCommentProps> = ({
   answerId,
   inputId,
   mentions = [],
+  onCommentSubmitted,
 }) => {
   // State for attachments, file errors, content input, and submission errors
   const [attachments, setAttachments] = useState<File[]>([]);
@@ -134,6 +136,11 @@ const AddComment: React.FC<AddCommentProps> = ({
       setAttachments([]);
       // No 'data' returned from hook, so success message is harder to implement here
       // Could set a temporary success message state if needed.
+
+      // If the callback prop is provided, call it.
+      if (onCommentSubmitted) {
+        onCommentSubmitted();
+      }
     } catch (error: any) {
       // Catch errors from the createComment promise itself
       console.error("Error creating comment:", error);
@@ -217,7 +224,7 @@ const AddComment: React.FC<AddCommentProps> = ({
             onClick={submitComment}
             disabled={isSubmitDisabled}
             aria-label={t("submitComment") || "Submit Comment"}
-            className={`flex items-center justify-center h-auto w-24 rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-btnRedHover disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150`}
+            className={`cursor-pointer flex items-center justify-center h-auto w-24 rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-btnRedHover disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150`}
             title="Изпрати"
             // h-24 to match textarea, w-24 for a squarer look with the icon
           >

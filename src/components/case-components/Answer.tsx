@@ -53,6 +53,7 @@ const Answer: React.FC<{
   const isAdmin = me.role?._id === ROLES.ADMIN;
   const answerRef = useRef<HTMLDivElement>(null);
   const commentRefs = useRef(new Map<string, HTMLDivElement>());
+  const isInitialMount = useRef(true); // Ref to track the first render
   const [areCommentsVisible, setAreCommentsVisible] = useState(true);
 
   // --- 1. ADD REFS AND STATE FOR THE MARQUEE ---
@@ -170,6 +171,23 @@ const Answer: React.FC<{
       }
     }
   }, [targetId, childTargetId, answer._id]);
+
+  // useEffect for auto-scrolling on internal state changes
+  useEffect(() => {
+    // We don't want to scroll when the component first mounts,
+    // only when the user interacts with it.
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+    } else {
+      // After any change in visibility, scroll the answer container into view.
+      setTimeout(() => {
+        answerRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }, 100); // A small delay helps ensure the layout has settled.
+    }
+  }, [showCommentBox, areCommentsVisible]); // This effect runs whenever these states change.
 
   const handleCommentSubmitted = () => {
     setShowCommentBox(false); // This will close the AddComment form

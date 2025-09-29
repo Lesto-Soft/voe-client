@@ -63,7 +63,7 @@ const CaseSubmissionHeader: React.FC<CaseSubmissionHeaderProps> = ({
         </Link>
         <button
           type="submit"
-          form="case-form" // Associates button with the form in CaseSubmissionPage
+          form="case-form"
           className={submitButtonClassName}
           disabled={isSubmitDisabled}
         >

@@ -1,19 +1,22 @@
+// src/pages/CaseSubmission.tsx
 import React, { useState, useMemo, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
+import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+
 import { useGetActiveCategories } from "../graphql/hooks/category";
 import { useCreateCase } from "../graphql/hooks/case";
 import { useCaseFormState } from "../components/features/caseSubmission/hooks/useCaseFormState";
 import { FormCategory } from "../components/features/caseSubmission/types";
+import { MAX_UPLOAD_FILES, MAX_UPLOAD_MB } from "../db/config";
+
 import CaseSubmissionHeader from "../components/features/caseSubmission/components/CaseSubmissionHeader";
 import CaseSubmissionLeftPanel from "../components/features/caseSubmission/components/CaseSubmissionLeftPanel";
 import CaseSubmissionRightPanel from "../components/features/caseSubmission/components/CaseSubmissionRightPanel";
 import HelpModal from "../components/modals/HelpModal";
 import SuccessConfirmationModal from "../components/modals/SuccessConfirmationModal";
 import CaseSubmissionSkeleton from "../components/skeletons/CaseSubmissionSkeleton";
-import { MAX_UPLOAD_FILES, MAX_UPLOAD_MB } from "../db/config";
-import { toast } from "react-toastify";
 
 const CaseSubmissionPage: React.FC = () => {
   const { t } = useTranslation("caseSubmission");
@@ -75,11 +78,20 @@ const CaseSubmissionPage: React.FC = () => {
   });
 
   const [isHelpModalOpen, setIsHelpModalOpen] = useState<boolean>(false);
+
   useEffect(() => {
     const handlePaste = (event: ClipboardEvent) => {
-      if (isHelpModalOpen) {
-        return;
-      }
+      if (isHelpModalOpen) return;
+
+      const items = event.clipboardData?.items;
+      if (!items) return; // Check if clipboard contains any files before proceeding
+
+      const containsFiles = Array.from(items).some(
+        (item) => item.kind === "file"
+      );
+      if (!containsFiles) {
+        return; // It's just text, let the browser handle it.
+      } // File logic now only runs if files are on the clipboard
 
       const currentFilesCount = formState.attachments.length;
       if (currentFilesCount >= MAX_UPLOAD_FILES) {
@@ -91,11 +103,6 @@ const CaseSubmissionPage: React.FC = () => {
         return;
       }
 
-      const items = event.clipboardData?.items;
-      if (!items) {
-        return;
-      }
-
       const availableSlots = MAX_UPLOAD_FILES - currentFilesCount;
       const pastedBlobs: Blob[] = [];
 
@@ -104,15 +111,14 @@ const CaseSubmissionPage: React.FC = () => {
         if (item.kind === "file" && item.type.startsWith("image/")) {
           const blob = item.getAsFile();
           if (blob) {
-            // Check file size
             if (blob.size > MAX_UPLOAD_MB * 1024 * 1024) {
               toast.error(
-                t("caseSubmission.errors.fileTooLarge", {
+                t("errors.fileTooLarge", {
                   fileName: "Pasted image",
                   maxSize: MAX_UPLOAD_MB,
                 })
               );
-              continue; // Skip this oversized file
+              continue;
             }
             pastedBlobs.push(blob);
           }
@@ -121,15 +127,10 @@ const CaseSubmissionPage: React.FC = () => {
 
       if (pastedBlobs.length > 0) {
         event.preventDefault();
-
         const blobsToProcess = pastedBlobs.slice(0, availableSlots);
 
         if (pastedBlobs.length > blobsToProcess.length) {
-          toast.warn(
-            t("caseSubmission.errors.maxFilesExceeded", {
-              max: MAX_UPLOAD_FILES,
-            })
-          );
+          toast.warn(t("errors.maxFilesExceeded", { max: MAX_UPLOAD_FILES }));
         }
 
         const newFiles = blobsToProcess.map((blob, index) => {
@@ -172,17 +173,16 @@ const CaseSubmissionPage: React.FC = () => {
   if (categoriesError) {
     return (
       <div className="p-6 text-red-600 text-center">
-        {t("caseSubmission.loadingCategoriesError", {
+        {" "}
+        {t("loadingCategoriesError", {
           message: categoriesError.message,
-        })}
+        })}{" "}
       </div>
     );
   }
   if (!caseTypeParam) {
     return (
-      <div className="p-6 text-red-600 text-center">
-        {t("caseSubmission.invalidType")}
-      </div>
+      <div className="p-6 text-red-600 text-center">{t("invalidType")} </div>
     );
   }
 
@@ -193,7 +193,9 @@ const CaseSubmissionPage: React.FC = () => {
 
   return (
     <>
+      {" "}
       <div className="min-h-screen p-6 grid grid-cols-1 md:grid-cols-2 gap-6 bg-stone-200 grid-rows-[auto_1fr]">
+        {" "}
         <CaseSubmissionHeader
           caseTypeParam={caseTypeParam}
           t={t}
@@ -202,15 +204,15 @@ const CaseSubmissionPage: React.FC = () => {
             createCaseLoadingHook
           )}
           isSubmitDisabled={isOverallSubmittingOrLoading}
-          isSubmittingText={t("caseSubmission.submittingButton")}
-          submitText={t("caseSubmission.submitButton")}
-        />
-
+          isSubmittingText={t("submittingButton")}
+          submitText={t("submitButton")}
+        />{" "}
         <form
           id="case-form"
           className="contents"
           onSubmit={formState.handleSubmit}
         >
+          {" "}
           <CaseSubmissionLeftPanel
             t={t}
             usernameInput={formState.usernameInput}
@@ -223,7 +225,7 @@ const CaseSubmissionPage: React.FC = () => {
             onContentChange={formState.setContent}
             priority={formState.priority}
             onPriorityChange={formState.setPriority}
-          />
+          />{" "}
           <CaseSubmissionRightPanel
             t={t}
             categoryList={formCategories}
@@ -232,24 +234,22 @@ const CaseSubmissionPage: React.FC = () => {
             getCategoryClass={formState.getCategoryClass}
             attachments={formState.attachments}
             onAttachmentsChange={formState.setAttachments}
-          />
-        </form>
-      </div>
-
+          />{" "}
+        </form>{" "}
+      </div>{" "}
       <HelpModal
         isOpen={isHelpModalOpen}
         onClose={() => setIsHelpModalOpen(false)}
-        title={t("caseSubmission.helpModal.title")}
+        title={t("helpModal.title")}
       >
-        {formState.helpModalContent}
-      </HelpModal>
-
+        {formState.helpModalContent}{" "}
+      </HelpModal>{" "}
       <SuccessConfirmationModal
         isOpen={isSuccessModalOpen}
         onClose={handleSuccessModalClose}
         message={successModalMessage}
-        title={t("caseSubmission.successModalTitle", "Изпратено Успешно!")}
-      />
+        title={t("successModalTitle", "Изпратено Успешно!")}
+      />{" "}
     </>
   );
 };

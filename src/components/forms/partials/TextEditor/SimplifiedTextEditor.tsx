@@ -93,9 +93,18 @@ const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
           "prose prose-sm max-w-none p-3 pr-4 focus:outline-none custom-simple-editor",
         style: `padding-bottom: 2rem; min-height: 100%;`, // Use min-height to ensure it fills the scrollable area
       },
-      handlePaste: (view, event) => {
+      handlePaste: (_, event) => {
         if (!onPasteFiles) {
-          return false; // Default Tiptap behavior
+          return false;
+        }
+        const items = event.clipboardData?.items;
+        if (!items) return false;
+
+        const containsFiles = Array.from(items).some(
+          (item) => item.kind === "file"
+        );
+        if (!containsFiles) {
+          return false;
         }
 
         if (attachmentCount >= MAX_UPLOAD_FILES) {
@@ -107,9 +116,6 @@ const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
           event.preventDefault();
           return true;
         }
-
-        const items = event.clipboardData?.items;
-        if (!items) return false;
 
         const availableSlots = MAX_UPLOAD_FILES - attachmentCount;
         const pastedBlobs: Blob[] = [];
@@ -140,6 +146,7 @@ const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
             toast.warn(
               t("caseSubmission:caseSubmission.noMoreAttachmentsAllowed", {
                 max: MAX_UPLOAD_FILES,
+                toastId: "paste-limit",
               })
             );
           }

@@ -159,6 +159,16 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
 
   useEffect(() => {
     const handlePaste = (event: ClipboardEvent) => {
+      const items = event.clipboardData?.items;
+      if (!items) return;
+
+      const containsFiles = Array.from(items).some(
+        (item) => item.kind === "file"
+      );
+      if (!containsFiles) {
+        return; // It's just text, let the browser handle it.
+      }
+
       const currentFilesCount =
         newAttachments.length + existingAttachments.length;
       if (currentFilesCount >= MAX_UPLOAD_FILES) {
@@ -169,9 +179,6 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
         );
         return;
       }
-
-      const items = event.clipboardData?.items;
-      if (!items) return;
 
       const availableSlots = MAX_UPLOAD_FILES - currentFilesCount;
       const pastedBlobs: Blob[] = [];

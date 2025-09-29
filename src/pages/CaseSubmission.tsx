@@ -1,20 +1,19 @@
-// src/pages/CaseSubmission.tsx
 import React, { useState, useMemo, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
-import "react-toastify/dist/ReactToastify.css"; // Ensure toast styles are imported
-
+import "react-toastify/dist/ReactToastify.css";
 import { useGetActiveCategories } from "../graphql/hooks/category";
 import { useCreateCase } from "../graphql/hooks/case";
 import { useCaseFormState } from "../components/features/caseSubmission/hooks/useCaseFormState";
 import { FormCategory } from "../components/features/caseSubmission/types";
-
 import CaseSubmissionHeader from "../components/features/caseSubmission/components/CaseSubmissionHeader";
 import CaseSubmissionLeftPanel from "../components/features/caseSubmission/components/CaseSubmissionLeftPanel";
 import CaseSubmissionRightPanel from "../components/features/caseSubmission/components/CaseSubmissionRightPanel";
 import HelpModal from "../components/modals/HelpModal";
 import SuccessConfirmationModal from "../components/modals/SuccessConfirmationModal";
 import CaseSubmissionSkeleton from "../components/skeletons/CaseSubmissionSkeleton";
+import { MAX_UPLOAD_FILES, MAX_UPLOAD_MB } from "../db/config";
+import { toast } from "react-toastify";
 
 const CaseSubmissionPage: React.FC = () => {
   const { t } = useTranslation("caseSubmission");
@@ -76,6 +75,87 @@ const CaseSubmissionPage: React.FC = () => {
   });
 
   const [isHelpModalOpen, setIsHelpModalOpen] = useState<boolean>(false);
+  useEffect(() => {
+    const handlePaste = (event: ClipboardEvent) => {
+      if (isHelpModalOpen) {
+        return;
+      }
+
+      const currentFilesCount = formState.attachments.length;
+      if (currentFilesCount >= MAX_UPLOAD_FILES) {
+        toast.warn(
+          t("caseSubmission.noMoreAttachmentsAllowed", {
+            max: MAX_UPLOAD_FILES,
+          })
+        );
+        return;
+      }
+
+      const items = event.clipboardData?.items;
+      if (!items) {
+        return;
+      }
+
+      const availableSlots = MAX_UPLOAD_FILES - currentFilesCount;
+      const pastedBlobs: Blob[] = [];
+
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        if (item.kind === "file" && item.type.startsWith("image/")) {
+          const blob = item.getAsFile();
+          if (blob) {
+            // Check file size
+            if (blob.size > MAX_UPLOAD_MB * 1024 * 1024) {
+              toast.error(
+                t("caseSubmission.errors.fileTooLarge", {
+                  fileName: "Pasted image",
+                  maxSize: MAX_UPLOAD_MB,
+                })
+              );
+              continue; // Skip this oversized file
+            }
+            pastedBlobs.push(blob);
+          }
+        }
+      }
+
+      if (pastedBlobs.length > 0) {
+        event.preventDefault();
+
+        const blobsToProcess = pastedBlobs.slice(0, availableSlots);
+
+        if (pastedBlobs.length > blobsToProcess.length) {
+          toast.warn(
+            t("caseSubmission.errors.maxFilesExceeded", {
+              max: MAX_UPLOAD_FILES,
+            })
+          );
+        }
+
+        const newFiles = blobsToProcess.map((blob, index) => {
+          const extension = blob.type.split("/")[1] || "png";
+          const newFileName = `pasted-image-${Date.now()}-${index}.${extension}`;
+          return new File([blob], newFileName, { type: blob.type });
+        });
+
+        if (newFiles.length > 0) {
+          formState.setAttachments((prevAttachments) => [
+            ...prevAttachments,
+            ...newFiles,
+          ]);
+          toast.success(
+            t("caseSubmission.filesAdded", { count: newFiles.length })
+          );
+        }
+      }
+    };
+
+    document.addEventListener("paste", handlePaste);
+
+    return () => {
+      document.removeEventListener("paste", handlePaste);
+    };
+  }, [isHelpModalOpen, formState.attachments, formState.setAttachments, t]);
 
   useEffect(() => {
     const timer = setTimeout(() => {

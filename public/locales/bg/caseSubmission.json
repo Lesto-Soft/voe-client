@@ -28,6 +28,7 @@
     "noMoreAttachmentsAllowed": "Максимум {{max}} прикачени файла е достигнат.",
     "currentFiles": "Текущи файлове ({{count}} от {{max}} макс.):",
     "success": "Успешно изпратено!",
+    "filesAdded": "Добавен файл",
     "priority": {
       "low": "Нисък",
       "medium": "Среден",

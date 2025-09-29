@@ -240,7 +240,7 @@ const CaseSubmissionPage: React.FC = () => {
       <HelpModal
         isOpen={isHelpModalOpen}
         onClose={() => setIsHelpModalOpen(false)}
-        title={t("helpModal.title")}
+        title={t("caseSubmission.helpModal.title")}
       >
         {formState.helpModalContent}{" "}
       </HelpModal>{" "}

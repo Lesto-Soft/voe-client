@@ -76,7 +76,9 @@ const Comment: React.FC<CommentProps> = ({
         comment._id
       }`}
       ref={commentRef}
-      className="p-2 mb-1 rounded-md border border-gray-200 transition-all duration-500"
+      className={`p-2 mb-1 rounded-md border border-gray-200 transition-all duration-500 ${
+        parentType === "answer" ? "" : "bg-white"
+      }`}
     >
       {/* --- NEW: COMPACT HEADER --- */}
       <div className="flex justify-between items-center mb-2">

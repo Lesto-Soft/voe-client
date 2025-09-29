@@ -53,7 +53,6 @@ const Answer: React.FC<{
   const isAdmin = me.role?._id === ROLES.ADMIN;
   const answerRef = useRef<HTMLDivElement>(null);
   const commentRefs = useRef(new Map<string, HTMLDivElement>());
-  const isInitialMount = useRef(true); // Ref to track the first render
   const [areCommentsVisible, setAreCommentsVisible] = useState(true);
 
   // --- 1. ADD REFS AND STATE FOR THE MARQUEE ---
@@ -135,6 +134,9 @@ const Answer: React.FC<{
     }
     // Action 2: Check if there is a child comment to highlight.
     if (childTargetId) {
+      if (!areCommentsVisible) {
+        setAreCommentsVisible(true);
+      }
       const timer = setTimeout(() => {
         const commentId = childTargetId.split("-")[1];
         const childWrapperRef = commentRefs.current.get(commentId);
@@ -172,22 +174,16 @@ const Answer: React.FC<{
     }
   }, [targetId, childTargetId, answer._id]);
 
-  // useEffect for auto-scrolling on internal state changes
-  useEffect(() => {
-    // We don't want to scroll when the component first mounts,
-    // only when the user interacts with it.
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-    } else {
-      // After any change in visibility, scroll the answer container into view.
-      setTimeout(() => {
-        answerRef.current?.scrollIntoView({
-          behavior: "smooth",
-          block: "center",
-        });
-      }, 100); // A small delay helps ensure the layout has settled.
-    }
-  }, [showCommentBox, areCommentsVisible]); // This effect runs whenever these states change.
+  // A reusable function to handle the scroll action
+  const focusOnAnswer = () => {
+    // Delay to allow the DOM to update (e.g., the comment box to render) before scrolling
+    setTimeout(() => {
+      answerRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }, 100);
+  };
 
   const handleCommentSubmitted = () => {
     setShowCommentBox(false); // This will close the AddComment form
@@ -249,7 +245,10 @@ const Answer: React.FC<{
         {/* Left Side: Add Comment Button */}
         <button
           className="cursor-pointer  text-gray-800 bg-gray-100 hover:bg-gray-200 absolute left-2 top-1/2 -translate-y-1/2 w-42 px-2 py-1 rounded text-sm font-semibold transition-colors duration-200"
-          onClick={() => setShowCommentBox((v) => !v)}
+          onClick={() => {
+            setShowCommentBox((v) => !v);
+            focusOnAnswer(); // Call scroll function directly
+          }}
         >
           <div className="flex w-full items-center gap-2">
             <ChatBubbleOvalLeftEllipsisIcon className="h-5 w-5 flex-shrink-0 text-gray-500" />
@@ -262,7 +261,10 @@ const Answer: React.FC<{
         {/* Center: Toggle Comments List */}
         {answer.comments && answer.comments.length > 0 && (
           <button
-            onClick={() => setAreCommentsVisible((prev) => !prev)}
+            onClick={() => {
+              setAreCommentsVisible((prev) => !prev);
+              focusOnAnswer(); // Call scroll function directly
+            }}
             className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-2 cursor-pointer text-sm font-semibold text-gray-600 hover:text-gray-800 p-2 rounded-md hover:bg-gray-50 focus:outline-none transition-colors"
             aria-expanded={areCommentsVisible}
           >
@@ -307,7 +309,7 @@ const Answer: React.FC<{
                   commentRefs.current.delete(comment._id);
                 }
               }}
-              className="mx-1"
+              className="mx-1 mt-1"
             >
               <Comment
                 key={comment._id}

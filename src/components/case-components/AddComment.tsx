@@ -123,8 +123,9 @@ const AddComment: React.FC<AddCommentProps> = ({
         return;
       }
 
-      await createComment(commentPayload); // Reset form fields on successful submission
+      const newComment = await createComment(commentPayload);
 
+      // Reset form fields on successful submission
       setContent("");
       setAttachments([]);
       // No 'data' returned from hook, so success message is harder to implement here
@@ -133,6 +134,18 @@ const AddComment: React.FC<AddCommentProps> = ({
       // If the callback prop is provided, call it.
       if (onCommentSubmitted) {
         onCommentSubmitted();
+      }
+
+      // Set the URL hash to focus the new comment
+      // We only do this if it's a comment on an answer (`answerId` is present)
+      //if (newComment && newComment._id && answerId) {
+      if (newComment && newComment._id) {
+        const commentHighlightHash = answerId
+          ? `answers-${newComment._id}?comment=true`
+          : `comments-${newComment._id}`;
+        setTimeout(() => {
+          window.location.hash = commentHighlightHash;
+        }, 100);
       }
     } catch (error: any) {
       // Catch errors from the createComment promise itself

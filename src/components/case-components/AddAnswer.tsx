@@ -82,18 +82,29 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
 
     try {
       // Call the createAnswer mutation
-      await createAnswer({
+      // Capture the response from the mutation
+      const newAnswer = await createAnswer({
         case: caseId,
         attachments,
         content,
         creator: me._id,
-      }); // Reset form fields on successful submission
+      });
 
+      // Reset form fields on successful submission
       setContent("");
       setAttachments([]);
 
       if (onAnswerSubmitted) {
         onAnswerSubmitted();
+      }
+
+      // Set the URL hash to focus the new answer
+      if (newAnswer && newAnswer._id) {
+        // A brief timeout allows the UI to re-render from the refetch
+        // before the hash change triggers the scroll effect.
+        setTimeout(() => {
+          window.location.hash = `answers-${newAnswer._id}`;
+        }, 100);
       }
 
       // Optionally, you can clear submissionError here or rely on API success to imply no error

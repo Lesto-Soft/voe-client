@@ -201,7 +201,11 @@ const AddComment: React.FC<AddCommentProps> = ({
             <SimpleTextEditor
               content={content}
               onUpdate={handleContentChange}
-              placeholder={"Напишете решение..."}
+              placeholder={
+                answerId
+                  ? "Напишете коментар към решението..."
+                  : "Напишете коментар..."
+              }
               maxLength={COMMENT_CONTENT.MAX}
               minLength={COMMENT_CONTENT.MIN}
               wrapperClassName="transition-colors duration-150 h-36"

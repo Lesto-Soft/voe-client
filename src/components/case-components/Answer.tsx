@@ -248,13 +248,13 @@ const Answer: React.FC<{
       <div className="relative flex items-center h-10 mb-2">
         {/* Left Side: Add Comment Button */}
         <button
-          className="cursor-pointer absolute left-2 top-1/2 -translate-y-1/2 w-36 px-2 py-1 rounded bg-gray-100 hover:bg-gray-300 text-sm text-gray-800 font-semibold transition-colors duration-200"
+          className="cursor-pointer  text-gray-800 bg-gray-100 hover:bg-gray-200 absolute left-2 top-1/2 -translate-y-1/2 w-42 px-2 py-1 rounded text-sm font-semibold transition-colors duration-200"
           onClick={() => setShowCommentBox((v) => !v)}
         >
           <div className="flex w-full items-center gap-2">
             <ChatBubbleOvalLeftEllipsisIcon className="h-5 w-5 flex-shrink-0 text-gray-500" />
             <div className="flex-1 text-center">
-              {showCommentBox ? t("cancel") : t("addComment")}
+              {showCommentBox ? t("cancelWriting") : t("addComment")}
             </div>
           </div>
         </button>
@@ -271,7 +271,11 @@ const Answer: React.FC<{
             ) : (
               <ChevronDownIcon className="h-5 w-5" />
             )}
-            <span>Коментари ({answer.comments.length})</span>
+            <span>{`${areCommentsVisible ? "Скрий" : "Покажи"} ${
+              answer.comments.length == 1 ? "коментар" : "коментари"
+            } към решението ${
+              answer.comments.length > 1 ? `(${answer.comments.length})` : ""
+            }`}</span>
           </button>
         )}
       </div>

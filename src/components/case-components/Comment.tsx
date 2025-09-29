@@ -111,7 +111,7 @@ const Comment: React.FC<CommentProps> = ({
 
       {/* --- CONTENT & ATTACHMENTS --- */}
       <div className="">
-        <div className="text-sm text-gray-800 whitespace-pre-line bg-gray-50 rounded p-2 max-h-48 overflow-y-auto break-words custom-scrollbar-xs">
+        <div className="text-sm text-gray-800 whitespace-pre-line bg-gray-50 rounded p-2 max-h-38 overflow-y-auto break-words custom-scrollbar-xs">
           {renderContentSafely(comment.content)}
         </div>
         {comment.attachments && comment.attachments.length > 0 && (

@@ -24,6 +24,7 @@
   "send": "Send",
   "hideComment": "Hide comment",
   "addComment": "Comment",
+  "cancelWriting": "Cancel writing",
   "writeComment": "Write a comment...",
   "rte": {
     "title": "Editor Help",

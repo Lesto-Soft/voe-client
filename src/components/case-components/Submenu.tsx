@@ -282,168 +282,174 @@ const Submenu: React.FC<SubmenuProps> = ({
       </div>
 
       {/* Scrollable Content Area */}
-      <div
-        ref={scrollableContainerRef}
-        className="flex-grow overflow-y-auto pt-6"
-      >
-        {view === "answers" && (
-          <>
-            {canAddAnswer ? (
+      {/* 1. This outer div is now the flex item. Its job is to grow and establish a boundary. */}
+      <div className="flex-grow min-h-0 relative">
+        {/* 2. This inner div is for scrolling. It's absolutely positioned to fill its parent. */}
+        <div
+          ref={scrollableContainerRef}
+          className="absolute inset-0 overflow-y-auto pt-6"
+        >
+          {view === "answers" && (
+            <>
+              {canAddAnswer ? (
+                <div
+                  ref={addAnswerContainerRef}
+                  className="mb-2 transition-all duration-300"
+                >
+                  <div className="mx-5">
+                    <button
+                      onClick={() => setIsAddAnswerVisible((prev) => !prev)}
+                      className="cursor-pointer w-full flex justify-between items-center p-3 bg-gray-100 hover:bg-gray-200 rounded-lg text-left text-gray-700 font-semibold ring-1 ring-gray-300 focus:outline-none active:ring-2 active:ring-indigo-400 transition-colors"
+                      aria-expanded={isAddAnswerVisible}
+                      aria-controls="add-answer-form"
+                    >
+                      <span className="flex items-center justify-center gap-2">
+                        <ChatBubbleBottomCenterTextIcon className="h-6 w-6 text-gray-500" />
+                        {isAddAnswerVisible
+                          ? "Скрий писане на решение"
+                          : "Напиши решение"}
+                      </span>
+                      {isAddAnswerVisible ? (
+                        <MinusCircleIcon className="h-6 w-6 text-gray-500" />
+                      ) : (
+                        <PlusCircleIcon className="h-6 w-6 text-gray-500" />
+                      )}
+                    </button>
+                  </div>
+                  {isAddAnswerVisible && (
+                    <div id="add-answer-form" className="mt-4">
+                      <AddAnswer
+                        caseNumber={caseData.case_number}
+                        caseId={caseData._id}
+                        t={t}
+                        me={me}
+                        mentions={mentions}
+                        onAnswerSubmitted={handleAnswerSubmitted}
+                      />
+                    </div>
+                  )}
+                </div>
+              ) : // Existing placeholder messages for non-privileged users
+              visibleAnswers.length === 0 &&
+                (caseData.answers || []).length === 0 ? (
+                <div className="text-center text-gray-500">
+                  {t("no_answers")}
+                </div>
+              ) : visibleAnswers.length === 0 ? (
+                <div className="text-center text-gray-500">
+                  {t("waiting_approval")}
+                </div>
+              ) : null}
+
+              {/* Block for the list of answers */}
+              {/* We map over the pre-filtered visibleAnswers array */}
+              {visibleAnswers.length > 0 ? (
+                <>
+                  {visibleAnswers
+                    .sort((a, b) => {
+                      if (a.approved && !b.approved) return -1;
+                      if (!a.approved && b.approved) return 1;
+                      const dateA = new Date(a.date).getTime();
+                      const dateB = new Date(b.date).getTime();
+                      return dateB - dateA;
+                    })
+                    .map((answer: IAnswer) => (
+                      <Answer
+                        key={answer._id}
+                        answer={answer}
+                        me={me}
+                        refetch={refetch}
+                        caseNumber={caseData.case_number}
+                        status={caseData.status}
+                        caseCategories={caseData.categories}
+                        mentions={mentions}
+                        targetId={targetId}
+                        childTargetId={childTargetId}
+                      />
+                    ))}
+                </>
+              ) : null}
+            </>
+          )}
+          {view === "comments" && (
+            <>
               <div
-                ref={addAnswerContainerRef}
+                ref={addCommentContainerRef}
                 className="mb-2 transition-all duration-300"
               >
                 <div className="mx-5">
                   <button
-                    onClick={() => setIsAddAnswerVisible((prev) => !prev)}
+                    onClick={() => setIsAddCommentVisible((prev) => !prev)}
                     className="cursor-pointer w-full flex justify-between items-center p-3 bg-gray-100 hover:bg-gray-200 rounded-lg text-left text-gray-700 font-semibold ring-1 ring-gray-300 focus:outline-none active:ring-2 active:ring-indigo-400 transition-colors"
-                    aria-expanded={isAddAnswerVisible}
-                    aria-controls="add-answer-form"
+                    aria-expanded={isAddCommentVisible}
+                    aria-controls="add-comment-form"
                   >
                     <span className="flex items-center justify-center gap-2">
-                      <ChatBubbleBottomCenterTextIcon className="h-6 w-6 text-gray-500" />
-                      {isAddAnswerVisible
-                        ? "Скрий писане на решение"
-                        : "Напиши решение"}
+                      <ChatBubbleOvalLeftEllipsisIcon className="h-6 w-6 text-gray-500" />
+                      {isAddCommentVisible
+                        ? "Скрий писане на коментар"
+                        : "Напиши коментар"}
                     </span>
-                    {isAddAnswerVisible ? (
+                    {isAddCommentVisible ? (
                       <MinusCircleIcon className="h-6 w-6 text-gray-500" />
                     ) : (
                       <PlusCircleIcon className="h-6 w-6 text-gray-500" />
                     )}
                   </button>
                 </div>
-                {isAddAnswerVisible && (
-                  <div id="add-answer-form" className="mt-4">
-                    <AddAnswer
-                      caseNumber={caseData.case_number}
+                {isAddCommentVisible && (
+                  <div id="add-comment-form" className="mt-4">
+                    <AddComment
+                      key="main-case-comment-box"
                       caseId={caseData._id}
                       t={t}
                       me={me}
+                      caseNumber={caseData.case_number}
+                      inputId={`file-upload-comment-case-${caseData._id}`}
                       mentions={mentions}
-                      onAnswerSubmitted={handleAnswerSubmitted}
+                      onCommentSubmitted={handleCaseCommentSubmitted}
                     />
                   </div>
                 )}
               </div>
-            ) : // Existing placeholder messages for non-privileged users
-            visibleAnswers.length === 0 &&
-              (caseData.answers || []).length === 0 ? (
-              <div className="text-center text-gray-500">{t("no_answers")}</div>
-            ) : visibleAnswers.length === 0 ? (
-              <div className="text-center text-gray-500">
-                {t("waiting_approval")}
-              </div>
-            ) : null}
-
-            {/* Block for the list of answers */}
-            {/* **MODIFIED**: We map over the pre-filtered visibleAnswers array */}
-            {visibleAnswers.length > 0 ? (
-              <>
-                {visibleAnswers
-                  .sort((a, b) => {
-                    if (a.approved && !b.approved) return -1;
-                    if (!a.approved && b.approved) return 1;
-                    const dateA = new Date(a.date).getTime();
-                    const dateB = new Date(b.date).getTime();
-                    return dateB - dateA;
-                  })
-                  .map((answer: IAnswer) => (
-                    <Answer
-                      key={answer._id}
-                      answer={answer}
-                      me={me}
-                      refetch={refetch}
-                      caseNumber={caseData.case_number}
-                      status={caseData.status}
-                      caseCategories={caseData.categories}
-                      mentions={mentions}
-                      targetId={targetId}
-                      childTargetId={childTargetId}
-                    />
-                  ))}
-              </>
-            ) : null}
-          </>
-        )}
-        {view === "comments" && (
-          <>
-            <div
-              ref={addCommentContainerRef}
-              className="mb-2 transition-all duration-300"
-            >
-              <div className="mx-5">
-                <button
-                  onClick={() => setIsAddCommentVisible((prev) => !prev)}
-                  className="cursor-pointer w-full flex justify-between items-center p-3 bg-gray-100 hover:bg-gray-200 rounded-lg text-left text-gray-700 font-semibold ring-1 ring-gray-300 focus:outline-none active:ring-2 active:ring-indigo-400 transition-colors"
-                  aria-expanded={isAddCommentVisible}
-                  aria-controls="add-comment-form"
-                >
-                  <span className="flex items-center justify-center gap-2">
-                    <ChatBubbleOvalLeftEllipsisIcon className="h-6 w-6 text-gray-500" />
-                    {isAddCommentVisible
-                      ? "Скрий писане на коментар"
-                      : "Напиши коментар"}
-                  </span>
-                  {isAddCommentVisible ? (
-                    <MinusCircleIcon className="h-6 w-6 text-gray-500" />
-                  ) : (
-                    <PlusCircleIcon className="h-6 w-6 text-gray-500" />
-                  )}
-                </button>
-              </div>
-              {isAddCommentVisible && (
-                <div id="add-comment-form" className="mt-4">
-                  <AddComment
-                    key="main-case-comment-box"
-                    caseId={caseData._id}
-                    t={t}
-                    me={me}
-                    caseNumber={caseData.case_number}
-                    inputId={`file-upload-comment-case-${caseData._id}`}
-                    mentions={mentions}
-                    onCommentSubmitted={handleCaseCommentSubmitted}
-                  />
+              {caseData.comments && caseData.comments.length > 0 ? (
+                <div className="mx-5 space-y-2">
+                  {[...caseData.comments]
+                    .sort(
+                      (a, b) =>
+                        new Date(b.date).getTime() - new Date(a.date).getTime()
+                    )
+                    .map((comment: IComment) => (
+                      <Comment
+                        key={comment._id}
+                        comment={comment}
+                        me={me}
+                        caseNumber={caseData.case_number}
+                        mentions={mentions}
+                        targetId={targetId}
+                      />
+                    ))}
                 </div>
+              ) : (
+                // Hide "no comments" message if the user is about to write one
+                !isAddCommentVisible && (
+                  <div className="text-center text-gray-500">
+                    {t("no_comments")}
+                  </div>
+                )
               )}
-            </div>
-            {caseData.comments && caseData.comments.length > 0 ? (
-              <div className="mx-5 space-y-2">
-                {[...caseData.comments]
-                  .sort(
-                    (a, b) =>
-                      new Date(b.date).getTime() - new Date(a.date).getTime()
-                  )
-                  .map((comment: IComment) => (
-                    <Comment
-                      key={comment._id}
-                      comment={comment}
-                      me={me}
-                      caseNumber={caseData.case_number}
-                      mentions={mentions}
-                      targetId={targetId}
-                    />
-                  ))}
+            </>
+          )}
+
+          {view === "history" &&
+            (caseData.history && caseData.history.length > 0 ? (
+              <div className="flex flex-col gap-4 mb-8 ml-4">
+                <CaseHistoryContent history={caseData.history} />
               </div>
             ) : (
-              // Hide "no comments" message if the user is about to write one
-              !isAddCommentVisible && (
-                <div className="text-center text-gray-500">
-                  {t("no_comments")}
-                </div>
-              )
-            )}
-          </>
-        )}
-
-        {view === "history" &&
-          (caseData.history && caseData.history.length > 0 ? (
-            <div className="flex flex-col gap-4 mb-8 ml-4">
-              <CaseHistoryContent history={caseData.history} />
-            </div>
-          ) : (
-            <div className="text-center text-gray-500">{t("no_history")}</div>
-          ))}
+              <div className="text-center text-gray-500">{t("no_history")}</div>
+            ))}
+        </div>
       </div>
 
       {isScrollTopButtonVisible && (

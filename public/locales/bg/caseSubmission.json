@@ -29,6 +29,7 @@
     "currentFiles": "Текущи файлове ({{count}} от {{max}} макс.):",
     "success": "Успешно изпратено!",
     "filesAdded": "Добавен файл",
+    "successModalTitle": "Сигналът е изпратен успешно!",
     "priority": {
       "low": "Нисък",
       "medium": "Среден",

@@ -174,7 +174,7 @@ const CaseSubmissionPage: React.FC = () => {
     return (
       <div className="p-6 text-red-600 text-center">
         {" "}
-        {t("loadingCategoriesError", {
+        {t("caseSubmission.loadingCategoriesError", {
           message: categoriesError.message,
         })}{" "}
       </div>
@@ -204,8 +204,8 @@ const CaseSubmissionPage: React.FC = () => {
             createCaseLoadingHook
           )}
           isSubmitDisabled={isOverallSubmittingOrLoading}
-          isSubmittingText={t("submittingButton")}
-          submitText={t("submitButton")}
+          isSubmittingText={t("caseSubmission.submittingButton")}
+          submitText={t("caseSubmission.submitButton")}
         />{" "}
         <form
           id="case-form"
@@ -248,7 +248,7 @@ const CaseSubmissionPage: React.FC = () => {
         isOpen={isSuccessModalOpen}
         onClose={handleSuccessModalClose}
         message={successModalMessage}
-        title={t("successModalTitle", "Изпратено Успешно!")}
+        title={t("caseSubmission.successModalTitle", "Изпратено Успешно!")}
       />{" "}
     </>
   );

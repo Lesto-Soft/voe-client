@@ -1,3 +1,4 @@
+// src/components/case-components/AddComment.tsx
 import { useState, useMemo, useEffect } from "react";
 import { useCreateComment } from "../../graphql/hooks/comment";
 import FileAttachmentAnswer from "../global/FileAttachmentAnswer";
@@ -40,9 +41,8 @@ const AddComment: React.FC<AddCommentProps> = ({
     error: apiError,
   } = useCreateComment(caseNumber);
 
-  const charCount = useMemo(() => content.length, [content]);
+  const charCount = useMemo(() => content.length, [content]); // ADDED: validation for both min and max length
 
-  // ADDED: validation for both min and max length
   const isContentTooLong = useMemo(
     () => charCount > COMMENT_CONTENT.MAX,
     [charCount]
@@ -51,9 +51,8 @@ const AddComment: React.FC<AddCommentProps> = ({
     () => charCount > 0 && charCount < COMMENT_CONTENT.MIN,
     [charCount]
   );
-  const isInvalid = isContentTooLong || isContentTooShort;
+  const isInvalid = isContentTooLong || isContentTooShort; // Effect to handle API errors from the useCreateComment hook
 
-  // Effect to handle API errors from the useCreateComment hook
   useEffect(() => {
     if (apiError) {
       setSubmissionError(
@@ -62,30 +61,26 @@ const AddComment: React.FC<AddCommentProps> = ({
           "An API error occurred."
       );
     }
-  }, [apiError, t]);
+  }, [apiError, t]); // Memoize object URLs for each file
 
-  // Memoize object URLs for each file
   const fileObjectUrls = useMemo(() => {
     const map = new Map<string, string>();
     attachments.forEach((file) => {
       map.set(file.name + "-" + file.lastModified, URL.createObjectURL(file));
     });
     return map;
-  }, [attachments]);
+  }, [attachments]); // Cleanup object URLs on unmount or when attachments change
 
-  // Cleanup object URLs on unmount or when attachments change
   useEffect(() => {
     return () => {
       fileObjectUrls.forEach((url) => URL.revokeObjectURL(url));
     };
-  }, [fileObjectUrls]);
+  }, [fileObjectUrls]); // Function to handle form submission
 
-  // Function to handle form submission
   const submitComment = async (event: React.FormEvent) => {
     event.preventDefault(); // Prevent default form submission behavior
-    setSubmissionError(null); // Clear previous errors
+    setSubmissionError(null); // Clear previous errors // UPDATED: Validate content length
 
-    // UPDATED: Validate content length
     if (isContentTooLong) {
       setSubmissionError(
         `Коментарът не може да надвишава ${COMMENT_CONTENT.MAX} символа.`
@@ -97,8 +92,7 @@ const AddComment: React.FC<AddCommentProps> = ({
         `Коментарът трябва да е поне ${COMMENT_CONTENT.MIN} символа.`
       );
       return;
-    }
-    // Validate if content or attachments are present
+    } // Validate if content or attachments are present
     if (!content.trim() && attachments.length === 0) {
       setSubmissionError(
         t("caseSubmission.errors.submission.emptyComment") || // Specific key for comment
@@ -127,13 +121,10 @@ const AddComment: React.FC<AddCommentProps> = ({
         return;
       }
 
-      await createComment(commentPayload);
+      await createComment(commentPayload); // Reset form fields on successful submission
 
-      // Reset form fields on successful submission
       setContent("");
-      setAttachments([]);
-      // No 'data' returned from hook, so success message is harder to implement here
-      // Could set a temporary success message state if needed.
+      setAttachments([]); // No 'data' returned from hook, so success message is harder to implement here // Could set a temporary success message state if needed.
     } catch (error: any) {
       // Catch errors from the createComment promise itself
       console.error("Error creating comment:", error);
@@ -143,26 +134,22 @@ const AddComment: React.FC<AddCommentProps> = ({
           "Failed to submit comment."
       );
     }
-  };
+  }; // Function to remove an attachment
 
-  // Function to remove an attachment
   const handleRemoveAttachment = (fileNameToRemove: string) => {
     setFileError(null); // Clear any existing file error
     setAttachments((prevAttachments) =>
       prevAttachments.filter((file) => file.name !== fileNameToRemove)
     );
-  };
+  }; // Function to handle changes in the textarea content
 
-  // Function to handle changes in the textarea content
   const handleContentChange = (html: string) => {
-    setContent(html);
-    // Clear submission error related to length if user corrects it
+    setContent(html); // Clear submission error related to length if user corrects it
     if (submissionError && getTextLength(html) <= COMMENT_CONTENT.MAX) {
       setSubmissionError(null);
     }
-  };
+  }; // Determine if the submit button should be disabled
 
-  // Determine if the submit button should be disabled
   const isSubmitDisabled =
     isInvalid || // UPDATED
     loading ||
@@ -170,27 +157,18 @@ const AddComment: React.FC<AddCommentProps> = ({
 
   return (
     <div>
-      {/* Main container for the input area */}
+            {/* Main container for the input area */}     {" "}
       <div className="flex flex-col gap-2 mx-5">
+               {" "}
         {/* Flex container for textarea, attachment button, and submit button */}
-        {/* UPDATED: Container now stretches children to be equal height */}
+               {" "}
+        {/* UPDATED: Container now stretches children to be equal height */}   
+           {" "}
         <div className="flex items-stretch gap-2">
-          {/* Container for the textarea and character counter */}
+                    {/* Container for the textarea and character counter */}   
+               {" "}
           <div className="flex-grow relative">
-            {/* <textarea
-              className={`border border-gray-300 bg-white rounded-lg p-3 w-full h-full resize-none focus:outline-none focus:ring-1 ${
-                isInvalid
-                  ? "ring-red-500 border-red-500" // Style for any invalid state
-                  : "border-gray-300 focus:ring-blue-500"
-              } transition-colors duration-150`}
-              placeholder={t("writeComment") || "Write your comment..."}
-              value={content}
-              onChange={handleContentChange}
-              minLength={COMMENT_CONTENT.MIN}
-              maxLength={COMMENT_CONTENT.MAX}
-              aria-invalid={isInvalid}
-              aria-describedby="comment-char-counter submission-error-display"
-            /> */}
+                       {" "}
             <SimpleTextEditor
               content={content}
               onUpdate={handleContentChange}
@@ -199,12 +177,16 @@ const AddComment: React.FC<AddCommentProps> = ({
               minLength={COMMENT_CONTENT.MIN}
               wrapperClassName="transition-colors duration-150 h-36"
               height="36"
-              mentions={mentions}
+              mentions={mentions} // --- PASTE LOGIC: PASSING PROPS TO EDITOR ---
+              attachmentCount={attachments.length}
+              onPasteFiles={(files) => {
+                setAttachments((prev) => [...prev, ...files]);
+              }}
             />
+                     {" "}
           </div>
-          {/* File attachment component */}
-          {/* NOTE: For FileAttachmentAnswer to match height, its internal button should also be h-24.
-              This might require changes within FileAttachmentAnswer or passing height props/classes. */}
+                    {/* File attachment component */}
+                   {" "}
           <FileAttachmentAnswer
             inputId={inputId ?? "default"}
             attachments={attachments}
@@ -212,15 +194,15 @@ const AddComment: React.FC<AddCommentProps> = ({
             setFileError={setFileError}
             height={36}
           />
-          {/* Submit button */}
+                    {/* Submit button */}         {" "}
           <button
             onClick={submitComment}
             disabled={isSubmitDisabled}
             aria-label={t("submitComment") || "Submit Comment"}
             className={`flex items-center justify-center h-auto w-24 rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-btnRedHover disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150`}
             title="Изпрати"
-            // h-24 to match textarea, w-24 for a squarer look with the icon
           >
+                       {" "}
             {loading ? (
               // Loading spinner
               <svg
@@ -229,6 +211,7 @@ const AddComment: React.FC<AddCommentProps> = ({
                 fill="none"
                 viewBox="0 0 24 24"
               >
+                               {" "}
                 <circle
                   className="opacity-25"
                   cx="12"
@@ -237,35 +220,40 @@ const AddComment: React.FC<AddCommentProps> = ({
                   stroke="currentColor"
                   strokeWidth="4"
                 ></circle>
+                               {" "}
                 <path
                   className="opacity-75"
                   fill="currentColor"
                   d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                 ></path>
+                             {" "}
               </svg>
             ) : (
               // Paper airplane icon (h-6 w-6 is a bit smaller for h-24 button)
               <PaperAirplaneIcon className="h-6 w-6 text-blue-600" />
             )}
+                     {" "}
           </button>
+                 {" "}
         </div>
+             {" "}
       </div>
-
-      {/* Display file errors */}
+            {/* Display file errors */}     {" "}
       {fileError && (
         <div className="mx-5 mt-2 px-2">
-          {" "}
-          {/* Consistent margin with mx-5 */}
+                              {/* Consistent margin with mx-5 */}         {" "}
           <p className="text-sm text-red-500 transition-opacity duration-200 opacity-100">
-            {fileError || "\u00A0"}
+                        {fileError || "\u00A0"}         {" "}
           </p>
+                 {" "}
         </div>
       )}
-
-      {/* Display list of attached files */}
+            {/* Display list of attached files */}     {" "}
       {attachments.length > 0 && (
         <div className="mx-5 mt-2 text-sm text-gray-600 space-y-1 overflow-y-auto rounded p-2 bg-gray-100 border border-gray-200 max-h-28">
+                   {" "}
           <div className="flex flex-wrap gap-2">
+                       {" "}
             {attachments.map((file) => {
               const fileKey = file.name + "-" + file.lastModified;
               const fileUrl = fileObjectUrls.get(fileKey) || "";
@@ -276,6 +264,7 @@ const AddComment: React.FC<AddCommentProps> = ({
                   className="flex items-center gap-2 px-3 py-1.5 text-sm bg-gray-200 rounded-full hover:bg-gray-300"
                   title={file.name}
                 >
+                                   {" "}
                   <ImagePreviewModal
                     imageUrl={fileUrl}
                     fileName={file.name}
@@ -285,10 +274,11 @@ const AddComment: React.FC<AddCommentProps> = ({
                         className="truncate max-w-[150px] sm:max-w-xs cursor-pointer"
                         title={file.name}
                       >
-                        {file.name}
+                                                {file.name}                     {" "}
                       </button>
                     }
                   />
+                                   {" "}
                   <button
                     type="button"
                     onClick={() => handleRemoveAttachment(file.name)}
@@ -297,31 +287,39 @@ const AddComment: React.FC<AddCommentProps> = ({
                       file.name
                     }`}
                   >
+                                       {" "}
                     <XMarkIcon className="h-4 w-4 text-btnRed hover:text-red-700" />
+                                     {" "}
                   </button>
+                                 {" "}
                 </div>
               );
             })}
+                     {" "}
           </div>
+                 {" "}
         </div>
       )}
-
+           {" "}
       {/* Submission Error Display - Always rendered, uses opacity for transition */}
+           {" "}
       <div
         id="submission-error-display" // Ensure this ID is unique if multiple instances on one page or use aria-describedby on textarea
         className={`mx-5 mt-3 col-span-1 md:col-span-2 p-3 rounded-md border
-          transition-opacity duration-300
-          ${
-            submissionError
-              ? "bg-red-100 border-red-400 text-red-700 opacity-100" // Visible styles
-              : "border-transparent text-transparent opacity-0 h-0 p-0 overflow-hidden" // Hidden and collapse space
-          }`}
+          transition-opacity duration-300
+          ${
+          submissionError
+            ? "bg-red-100 border-red-400 text-red-700 opacity-100" // Visible styles
+            : "border-transparent text-transparent opacity-0 h-0 p-0 overflow-hidden" // Hidden and collapse space
+        }`}
         aria-live="polite"
         role="alert"
       >
+               {" "}
         {/* Display error or non-breaking space to maintain height when not fully collapsed */}
-        {submissionError}
+                {submissionError}     {" "}
       </div>
+         {" "}
     </div>
   );
 };

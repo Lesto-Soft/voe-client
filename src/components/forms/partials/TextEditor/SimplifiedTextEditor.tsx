@@ -8,6 +8,9 @@ import { CustomMention } from "./CustomMention";
 import { QuestionMarkCircleIcon } from "@heroicons/react/24/solid";
 import HelpModal from "./HelperModal";
 import { useTranslation } from "react-i18next";
+import { toast } from "react-toastify";
+import { MAX_UPLOAD_FILES, MAX_UPLOAD_MB } from "../../../../db/config";
+
 interface SimpleTextEditorProps {
   content?: string;
   onUpdate?: (html: string) => void;
@@ -17,6 +20,8 @@ interface SimpleTextEditorProps {
   maxLength?: number;
   minLength?: number;
   mentions?: { name: string; username: string; _id: string }[];
+  onPasteFiles?: (files: File[]) => void;
+  attachmentCount?: number;
 }
 
 const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
@@ -28,8 +33,10 @@ const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
   maxLength,
   minLength,
   mentions = [],
+  onPasteFiles,
+  attachmentCount = 0,
 }) => {
-  const { t } = useTranslation("menu");
+  const { t } = useTranslation(["menu", "caseSubmission"]);
   const [charCount, setCharCount] = useState(0);
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
   const mentionSuggestionConfig = useMemo(
@@ -86,6 +93,80 @@ const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
           "prose prose-sm max-w-none p-3 pr-4 focus:outline-none custom-simple-editor",
         style: `padding-bottom: 2rem; min-height: 100%;`, // Use min-height to ensure it fills the scrollable area
       },
+      handlePaste: (_, event) => {
+        if (!onPasteFiles) {
+          return false;
+        }
+        const items = event.clipboardData?.items;
+        if (!items) return false;
+
+        const containsFiles = Array.from(items).some(
+          (item) => item.kind === "file"
+        );
+        if (!containsFiles) {
+          return false;
+        }
+
+        if (attachmentCount >= MAX_UPLOAD_FILES) {
+          toast.warn(
+            t("caseSubmission:caseSubmission.noMoreAttachmentsAllowed", {
+              max: MAX_UPLOAD_FILES,
+            })
+          );
+          event.preventDefault();
+          return true;
+        }
+
+        const availableSlots = MAX_UPLOAD_FILES - attachmentCount;
+        const pastedBlobs: Blob[] = [];
+
+        for (let i = 0; i < items.length; i++) {
+          const item = items[i];
+          if (item.kind === "file" && item.type.startsWith("image/")) {
+            const blob = item.getAsFile();
+            if (blob) {
+              if (blob.size > MAX_UPLOAD_MB * 1024 * 1024) {
+                toast.error(
+                  t("caseSubmission:errors.fileTooLarge", {
+                    fileName: "Pasted image",
+                    maxSize: MAX_UPLOAD_MB,
+                  })
+                );
+                continue;
+              }
+              pastedBlobs.push(blob);
+            }
+          }
+        }
+
+        if (pastedBlobs.length > 0) {
+          event.preventDefault();
+          const blobsToProcess = pastedBlobs.slice(0, availableSlots);
+          if (pastedBlobs.length > blobsToProcess.length) {
+            toast.warn(
+              t("caseSubmission:caseSubmission.noMoreAttachmentsAllowed", {
+                max: MAX_UPLOAD_FILES,
+                toastId: "paste-limit",
+              })
+            );
+          }
+          const filesToAdd = blobsToProcess.map((blob, index) => {
+            const extension = blob.type.split("/")[1] || "png";
+            const newFileName = `pasted-image-${Date.now()}-${index}.${extension}`;
+            return new File([blob], newFileName, { type: blob.type });
+          });
+          if (filesToAdd.length > 0) {
+            onPasteFiles(filesToAdd);
+            toast.success(
+              t("caseSubmission:caseSubmission.filesAdded", {
+                count: filesToAdd.length,
+              })
+            );
+          }
+          return true; // Event handled
+        }
+        return false; // Not handled, let Tiptap proceed
+      },
     },
   });
 
@@ -135,7 +216,7 @@ const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
                     ? "bg-blue-100 text-blue-700 ring-1 ring-blue-300"
                     : "text-gray-700 hover:bg-gray-200 hover:text-gray-900"
                 }`}
-                title={t("rte.bold") || "Bold (Ctrl+B)"}
+                title={t("menu:rte.bold") || "Bold (Ctrl+B)"}
               >
                 <strong>B</strong>
               </button>
@@ -147,7 +228,7 @@ const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
                     ? "bg-blue-100 text-blue-700 ring-1 ring-blue-300"
                     : "text-gray-700 hover:bg-gray-200 hover:text-gray-900"
                 }`}
-                title={t("rte.italic") || "Italic (Ctrl+I)"}
+                title={t("menu:rte.italic") || "Italic (Ctrl+I)"}
               >
                 <em>I</em>
               </button>
@@ -159,7 +240,7 @@ const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
                     ? "bg-blue-100 text-blue-700 ring-1 ring-blue-300"
                     : "text-gray-700 hover:bg-gray-200 hover:text-gray-900"
                 }`}
-                title={t("rte.underline") || "Underline (Ctrl+U)"}
+                title={t("menu:rte.underline") || "Underline (Ctrl+U)"}
               >
                 <u>U</u>
               </button>
@@ -171,7 +252,7 @@ const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
                   return;
                 }}
                 className="cursor-pointer px-2 py-1 rounded text-sm font-medium transition-colors text-gray-700 hover:bg-gray-200 hover:text-gray-900"
-                title={t("rte.mention") || "Mention User (@)"}
+                title={t("menu:rte.mention") || "Mention User (@)"}
               >
                 <strong className="text-blue-600">@</strong>
               </button>
@@ -180,7 +261,7 @@ const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
               type="button"
               onClick={() => setIsHelpModalOpen(true)} // 👈 3. Call the function from the parent
               className="cursor-pointer p-1 rounded text-gray-500 hover:bg-gray-200 hover:text-gray-700"
-              title={t("rte.help") || "Help"}
+              title={t("menu:rte.help") || "Help"}
             >
               <QuestionMarkCircleIcon className="w-5 h-5" />
             </button>

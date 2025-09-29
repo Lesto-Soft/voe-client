@@ -28,6 +28,8 @@
     "noMoreAttachmentsAllowed": "Maximum {{max}} attachments reached.",
     "currentFiles": "Current files ({{count}} of {{max}} max):",
     "success": "Submitted successfully!",
+    "filesAdded": "File added",
+    "successModalTitle": "Case submitted successfully!",
     "priority": {
       "low": "Low",
       "medium": "Medium",

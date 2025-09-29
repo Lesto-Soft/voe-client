@@ -1,8 +1,5 @@
 import { ChangeEvent, Dispatch } from "react";
-
-export const MAX_FILES = 5;
-export const MAX_FILE_SIZE_MB = 1;
-export const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024; // 2MB in bytes
+import { MAX_UPLOAD_FILES, MAX_UPLOAD_MB } from "../db/config";
 
 export const handleFileChange = (
   t: (key: string, options?: Record<string, any>) => string, // Updated type for t
@@ -26,12 +23,12 @@ export const handleFileChange = (
   // Use setAttachments callback form to reliably access previous state
   setAttachments((prevAttachments: any) => {
     const currentCount = prevAttachments.length + existingAttachments.length;
-    const availableSlots = MAX_FILES - currentCount;
+    const availableSlots = MAX_UPLOAD_FILES - currentCount;
 
     // --- Check 1: Max file count ---
     if (availableSlots <= 0) {
       processingError = t("caseSubmission.errors.file.maxCountExceeded", {
-        max: MAX_FILES,
+        max: MAX_UPLOAD_FILES,
       });
       // Return previous state immediately, no need to process files
       return prevAttachments;
@@ -53,7 +50,7 @@ export const handleFileChange = (
       const file = selectedFiles[i];
 
       // --- Check 2: Individual file size ---
-      if (file.size > MAX_FILE_SIZE_BYTES) {
+      if (file.size > MAX_UPLOAD_MB * 1024 * 1024) {
         oversizedFiles.push(file.name);
         continue; // Skip this file
       }
@@ -77,20 +74,20 @@ export const handleFileChange = (
     // --- Set Feedback Messages (Prioritized) ---
     if (oversizedFiles.length > 0) {
       processingError = t("caseSubmission.errors.file.oversized", {
-        maxSize: MAX_FILE_SIZE_MB,
+        maxSize: MAX_UPLOAD_MB,
         fileList: oversizedFiles.join(", "),
       });
       // Optionally append count limit message if applicable
       if (countLimitedFiles.length > 0) {
         processingError += ` ${t(
           "caseSubmission.errors.file.oversizedAndMaxCount",
-          { max: MAX_FILES }
+          { max: MAX_UPLOAD_FILES }
         )}`;
       }
     } else if (countLimitedFiles.length > 0) {
       // This message now implies files were skipped *only* due to the count limit
       processingError = t("caseSubmission.errors.file.maxCountReached", {
-        max: MAX_FILES,
+        max: MAX_UPLOAD_FILES,
         count: countLimitedFiles.length,
       });
     } else if (duplicateFiles.length > 0 && validFilesToAdd.length === 0) {

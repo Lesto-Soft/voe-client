@@ -129,6 +129,12 @@ const EditAnswerButton: React.FC<EditButtonProps> = ({
               wrapperClassName="transition-colors duration-150 h-36"
               height="36"
               mentions={mentions}
+              onPasteFiles={(files) =>
+                setNewAttachments((prev) => [...prev, ...files])
+              }
+              attachmentCount={
+                newAttachments.length + existingAttachments.length
+              }
             />
           </div>
 

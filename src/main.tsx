@@ -14,7 +14,7 @@ createRoot(document.getElementById("root")!).render(
   <ApolloProvider client={apolloClient}>
     <StrictMode>
       <ToastContainer />
-      <App /> {/* <-- Използваме App вместо Router */}
+      <App />
     </StrictMode>
   </ApolloProvider>
 );

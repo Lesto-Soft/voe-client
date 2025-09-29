@@ -1,3 +1,4 @@
+// src/components/case-components/AddAnswer.tsx
 import { useState, useMemo, useEffect } from "react";
 import FileAttachmentAnswer from "../global/FileAttachmentAnswer";
 import { PaperAirplaneIcon, XMarkIcon } from "@heroicons/react/24/solid";
@@ -31,16 +32,14 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
   const [attachments, setAttachments] = useState<File[]>([]);
   const [fileError, setFileError] = useState<string | null>(null);
   const [content, setContent] = useState<string>("");
-  const [submissionError, setSubmissionError] = useState<string | null>(null);
+  const [submissionError, setSubmissionError] = useState<string | null>(null); // Using the actual useCreateAnswer hook
 
-  // Using the actual useCreateAnswer hook
   const {
     createAnswer,
     loading,
     error: apiError,
-  } = useCreateAnswer(caseNumber);
+  } = useCreateAnswer(caseNumber); // Effect to handle API errors from the useCreateAnswer hook
 
-  // Effect to handle API errors from the useCreateAnswer hook
   useEffect(() => {
     if (apiError) {
       setSubmissionError(
@@ -49,14 +48,12 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
           "An API error occurred."
       );
     }
-  }, [apiError, t]);
+  }, [apiError, t]); // Function to handle form submission
 
-  // Function to handle form submission
   const submitAnswer = async (event: React.FormEvent) => {
     event.preventDefault();
-    setSubmissionError(null); // Clear previous errors
+    setSubmissionError(null); // Clear previous errors // Validate content length using plain text length
 
-    // Validate content length using plain text length
     const textLength = getTextLength(content);
     if (textLength > ANSWER_CONTENT.MAX) {
       setSubmissionError(
@@ -72,9 +69,8 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
         `Решението трябва да е поне ${ANSWER_CONTENT.MIN} символа.`
       );
       return;
-    }
+    } // Validate if content or attachments are present
 
-    // Validate if content or attachments are present
     const hasContent = content.trim() && textLength > 0;
     if (!hasContent && attachments.length === 0) {
       setSubmissionError(
@@ -91,9 +87,8 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
         attachments,
         content,
         creator: me._id,
-      });
+      }); // Reset form fields on successful submission
 
-      // Reset form fields on successful submission
       setContent("");
       setAttachments([]);
 
@@ -125,39 +120,33 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
           "Failed to submit answer."
       );
     }
-  };
+  }; // Function to remove an attachment
 
-  // Function to remove an attachment
   const handleRemoveAttachment = (fileNameToRemove: string) => {
     setFileError(null); // Clear any existing file error
     setAttachments((prevAttachments) =>
       prevAttachments.filter((file) => file.name !== fileNameToRemove)
     );
-  };
+  }; // Updated to handle TextEditor content changes
 
-  // Updated to handle TextEditor content changes
   const handleContentChange = (html: string) => {
-    setContent(html);
-    // Clear submission error related to length if user corrects it
+    setContent(html); // Clear submission error related to length if user corrects it
     if (submissionError && getTextLength(html) <= ANSWER_CONTENT.MAX) {
       setSubmissionError(null);
     }
-  };
+  }; // Updated submit button disabled condition
 
-  // Updated submit button disabled condition
   const isSubmitDisabled =
-    loading || getTextLength(content) < ANSWER_CONTENT.MIN;
+    loading || getTextLength(content) < ANSWER_CONTENT.MIN; // Memoize object URLs for each file
 
-  // Memoize object URLs for each file
   const fileObjectUrls = useMemo(() => {
     const map = new Map<string, string>();
     attachments.forEach((file) => {
       map.set(file.name + "-" + file.lastModified, URL.createObjectURL(file));
     });
     return map;
-  }, [attachments]);
+  }, [attachments]); // Cleanup object URLs on unmount or when attachments change
 
-  // Cleanup object URLs on unmount or when attachments change
   useEffect(() => {
     return () => {
       fileObjectUrls.forEach((url) => URL.revokeObjectURL(url));
@@ -166,11 +155,13 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
 
   return (
     <div>
-      {/* Main container for the input area */}
+      {/* Main container for the input area */}{" "}
       <div className="flex flex-col gap-2 mx-5">
+        {" "}
         <div className="flex items-stretch gap-2">
-          {/* Container for the TextEditor and character counter */}
+          {/* Container for the TextEditor and character counter */}{" "}
           <div className="flex-grow relative min-w-0 max-w-full">
+            {" "}
             <SimpleTextEditor
               content={content}
               onUpdate={handleContentChange}
@@ -179,10 +170,14 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
               minLength={ANSWER_CONTENT.MIN}
               wrapperClassName="transition-colors duration-150 h-36"
               height="36"
-              mentions={mentions}
-            />
+              mentions={mentions} // --- PASTE LOGIC: PASSING PROPS TO EDITOR ---
+              attachmentCount={attachments.length}
+              onPasteFiles={(files) => {
+                setAttachments((prev) => [...prev, ...files]);
+              }}
+            />{" "}
           </div>
-          {/* File attachment component */}
+          {/* File attachment component */}{" "}
           <FileAttachmentAnswer
             inputId="file-upload-answer"
             attachments={attachments}
@@ -190,7 +185,7 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
             setFileError={setFileError}
             height={36}
           />
-          {/* Submit button */}
+          {/* Submit button */}{" "}
           <button
             onClick={submitAnswer}
             disabled={isSubmitDisabled}
@@ -198,6 +193,7 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
             className={`cursor-pointer flex items-center justify-center h-36 w-24 min-w-24 rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-btnRedHover disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150`}
             title="Изпрати"
           >
+            {" "}
             {loading ? (
               // Loading spinner
               <svg
@@ -206,6 +202,7 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
                 fill="none"
                 viewBox="0 0 24 24"
               >
+                {" "}
                 <circle
                   className="opacity-25"
                   cx="12"
@@ -213,37 +210,36 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
                   r="10"
                   stroke="currentColor"
                   strokeWidth="4"
-                ></circle>
+                ></circle>{" "}
                 <path
                   className="opacity-75"
                   fill="currentColor"
                   d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                ></path>
+                ></path>{" "}
               </svg>
             ) : (
               // Paper airplane icon
               <PaperAirplaneIcon className="h-8 w-8 text-blue-600" /> // Matched spinner color
-            )}
-          </button>
-        </div>
+            )}{" "}
+          </button>{" "}
+        </div>{" "}
       </div>
-
-      {/* Display file errors */}
+      {/* Display file errors */}{" "}
       {fileError && (
         <div className="mx-5 mt-2 px-2">
-          {" "}
-          {/* Consistent margin with mx-5 */}
+          {/* Consistent margin with mx-5 */}{" "}
           <p className="text-sm text-red-500 transition-opacity duration-200 opacity-100">
             {fileError || "\u00A0"}{" "}
-            {/* Non-breaking space for layout consistency */}
-          </p>
+            {/* Non-breaking space for layout consistency */}{" "}
+          </p>{" "}
         </div>
       )}
-
-      {/* Display list of attached files */}
+      {/* Display list of attached files */}{" "}
       {attachments.length > 0 && (
         <div className="mx-5 mt-2 text-sm text-gray-600 space-y-1 overflow-y-auto rounded p-2 bg-gray-100 border border-gray-200 max-h-32">
+          {" "}
           <div className="flex flex-wrap gap-2">
+            {" "}
             {attachments.map((file) => {
               const fileKey = file.name + "-" + file.lastModified;
               const fileUrl = fileObjectUrls.get(fileKey) || "";
@@ -254,6 +250,7 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
                   className="flex items-center gap-2 px-3 py-1.5 text-sm bg-gray-200 rounded-full hover:bg-gray-300"
                   title={file.name}
                 >
+                  {" "}
                   <ImagePreviewModal
                     imageUrl={fileUrl}
                     fileName={file.name}
@@ -263,10 +260,10 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
                         className="truncate max-w-[150px] sm:max-w-xs cursor-pointer"
                         title={file.name}
                       >
-                        {file.name}
+                        {file.name}{" "}
                       </button>
                     }
-                  />
+                  />{" "}
                   <button
                     type="button"
                     onClick={() => handleRemoveAttachment(file.name)}
@@ -275,17 +272,17 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
                       file.name
                     }`}
                   >
-                    <XMarkIcon className="h-4 w-4 text-btnRed hover:text-red-700" />
-                  </button>
+                    {" "}
+                    <XMarkIcon className="h-4 w-4 text-btnRed hover:text-red-700" />{" "}
+                  </button>{" "}
                 </div>
               );
-            })}
-          </div>
+            })}{" "}
+          </div>{" "}
         </div>
       )}
-
-      {/* Submission Error Display */}
-      {/* This uses conditional rendering for the error message for clarity and accessibility */}
+      {/* Submission Error Display */}{" "}
+      {/* This uses conditional rendering for the error message for clarity and accessibility */}{" "}
       {
         <div
           id="submission-error-display" // Ensure this ID is unique if multiple instances on one page or use aria-describedby on textarea
@@ -299,10 +296,11 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
           aria-live="polite"
           role="alert"
         >
+          {" "}
           {/* Display error or non-breaking space to maintain height when not fully collapsed */}
-          {submissionError}
+          {submissionError}{" "}
         </div>
-      }
+      }{" "}
     </div>
   );
 };

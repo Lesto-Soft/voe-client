@@ -76,7 +76,7 @@ const Comment: React.FC<CommentProps> = ({
         comment._id
       }`}
       ref={commentRef}
-      className="p-3 bg-white rounded-md border border-gray-200 transition-all duration-500"
+      className="p-2 mb-1 rounded-md border border-gray-200 transition-all duration-500"
     >
       {/* --- NEW: COMPACT HEADER --- */}
       <div className="flex justify-between items-center mb-2">

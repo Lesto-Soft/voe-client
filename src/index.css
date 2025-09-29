@@ -435,6 +435,11 @@ body,
   z-index: 10;
 }
 
+.highlight .scroll-hint::after,
+.highlight .scroll-hint::before {
+  background: none;
+}
+
 .scroll-hint::before {
   content: "";
   position: absolute;

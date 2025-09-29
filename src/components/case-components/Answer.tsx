@@ -307,6 +307,7 @@ const Answer: React.FC<{
                   commentRefs.current.delete(comment._id);
                 }
               }}
+              className="mx-1"
             >
               <Comment
                 key={comment._id}

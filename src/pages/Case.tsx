@@ -174,7 +174,7 @@ const Case = () => {
         />
       </div>
 
-      <div className="flex-1 w-full lg:w-auto order-2 lg:order-none lg:h-full">
+      <div className="w-full lg:flex-1 lg:w-auto order-2 lg:order-none lg:h-full">
         <Submenu
           caseData={c}
           t={t}

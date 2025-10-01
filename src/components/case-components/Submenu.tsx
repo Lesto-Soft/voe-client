@@ -259,7 +259,7 @@ const Submenu: React.FC<SubmenuProps> = ({
   });
 
   return (
-    <div className="flex flex-col h-full relative">
+    <div className="flex flex-col lg:h-full relative">
       <div className="flex-shrink-0 sticky top-0 z-1 bg-white border-b border-gray-200">
         <div className="flex justify-center gap-2 py-4">
           {submenu.map((item) => (
@@ -281,13 +281,13 @@ const Submenu: React.FC<SubmenuProps> = ({
         </div>
       </div>
 
-      {/* Scrollable Content Area */}
-      {/* 1. This outer div is now the flex item. Its job is to grow and establish a boundary. */}
-      <div className="flex-grow min-h-0 relative">
-        {/* 2. This inner div is for scrolling. It's absolutely positioned to fill its parent. */}
+      {/* Scrollable Content Area - MODIFIED FOR RESPONSIVENESS */}
+      {/* 1. This outer div now establishes the boundary ONLY ON DESKTOP. */}
+      <div className="lg:flex-grow lg:min-h-0 lg:relative">
+        {/* 2. This inner div handles scrolling ON DESKTOP and provides padding for all views. */}
         <div
           ref={scrollableContainerRef}
-          className="absolute inset-0 overflow-y-auto pt-6"
+          className="pt-6 lg:absolute lg:inset-0 lg:overflow-y-auto"
         >
           {view === "answers" && (
             <>

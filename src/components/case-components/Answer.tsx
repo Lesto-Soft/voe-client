@@ -263,9 +263,9 @@ const Answer: React.FC<{
           <button
             onClick={() => {
               setAreCommentsVisible((prev) => !prev);
-              focusOnAnswer(); // Call scroll function directly
+              focusOnAnswer();
             }}
-            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-2 cursor-pointer text-sm font-semibold text-gray-600 hover:text-gray-800 p-2 rounded-md hover:bg-gray-50 focus:outline-none transition-colors"
+            className="absolute top-1/2 -translate-y-1/2 right-2 md:right-auto md:left-1/2 md:-translate-x-1/2 flex items-center gap-2 cursor-pointer text-sm font-semibold text-gray-600 hover:text-gray-800 p-2 rounded-md hover:bg-gray-50 focus:outline-none transition-colors"
             aria-expanded={areCommentsVisible}
           >
             {areCommentsVisible ? (
@@ -273,11 +273,18 @@ const Answer: React.FC<{
             ) : (
               <ChevronDownIcon className="h-5 w-5" />
             )}
-            <span>{`${areCommentsVisible ? "Скрий" : "Покажи"} ${
-              answer.comments.length == 1 ? "коментар" : "коментари"
-            } към решението ${
-              answer.comments.length > 1 ? `(${answer.comments.length})` : ""
-            }`}</span>
+
+            {/* MODIFIED TEXT SPAN */}
+            <span>
+              {`${areCommentsVisible ? "Скрий" : "Покажи"} ${
+                answer.comments.length === 1 ? "коментар" : "коментари"
+              }`}
+              {/* This span will only appear on screens md and larger */}
+              <span className="hidden md:inline"> към решението</span>
+              {` ${
+                answer.comments.length > 1 ? `(${answer.comments.length})` : ""
+              }`}
+            </span>
           </button>
         )}
       </div>
@@ -362,11 +369,12 @@ const Answer: React.FC<{
                 ref={positionContainerRef}
                 onMouseEnter={() => setIsHovering(true)}
                 onMouseLeave={() => setIsHovering(false)}
-                className={`w-40 h-5 overflow-hidden ${
+                // CHANGE THIS LINE
+                className={`w-28 sm:w-32 md:w-40 h-5 overflow-hidden ${
                   isPositionOverflowing
-                    ? "scroll-hint" // We no longer need the 'group' class
+                    ? "scroll-hint"
                     : "flex justify-center items-center"
-                } ${isHovering ? "is-hovered" : ""}`} // Add 'is-hovered' class based on state
+                } ${isHovering ? "is-hovered" : ""}`}
               >
                 <span
                   ref={positionTextRef}

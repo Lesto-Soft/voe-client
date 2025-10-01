@@ -84,7 +84,10 @@ const Comment: React.FC<CommentProps> = ({
       <div className="flex justify-between items-center mb-2">
         <div className="flex flex-row items-center justify-center gap-2">
           <UserLink user={comment.creator} />
-          <span className="text-xs text-gray-400">
+          <span
+            className="text-xs text-gray-400 truncate max-w-20 sm:max-w-28 md:max-w-40 lg:max-w-56"
+            title={comment.creator.position}
+          >
             {comment.creator.position}
           </span>
         </div>

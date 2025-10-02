@@ -5,8 +5,7 @@ import Placeholder from "@tiptap/extension-placeholder";
 import { getTextLength } from "../../../../utils/contentRenderer";
 import { createMentionSuggestion } from "./MentionSuggestion";
 import { CustomMention } from "./CustomMention";
-import { QuestionMarkCircleIcon } from "@heroicons/react/24/solid";
-import HelpModal from "./HelperModal";
+import HelperModal from "./HelperModal";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
 import { MAX_UPLOAD_FILES, MAX_UPLOAD_MB } from "../../../../db/config";
@@ -38,7 +37,6 @@ const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
 }) => {
   const { t } = useTranslation(["menu", "caseSubmission"]);
   const [charCount, setCharCount] = useState(0);
-  const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
   const mentionSuggestionConfig = useMemo(
     () => createMentionSuggestion(mentions),
     [mentions]
@@ -200,90 +198,81 @@ const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
     ${wrapperClassName || ""}
   `;
   return (
-    <>
-      <div
-        className={finalWrapperClassName.trim()}
-        style={height !== "auto" ? { height } : {}}
-      >
-        {editor && (
-          <div className="flex-shrink-0 flex items-center justify-between gap-1 p-2 border-b border-gray-200 bg-gray-50 rounded-t-md z-10">
-            <div className="flex items-center gap-1">
-              <button
-                type="button"
-                onClick={() => editor.chain().focus().toggleBold().run()}
-                className={`px-2 py-1 rounded text-sm font-medium transition-colors cursor-pointer ${
-                  editor.isActive("bold")
-                    ? "bg-blue-100 text-blue-700 ring-1 ring-blue-300"
-                    : "text-gray-700 hover:bg-gray-200 hover:text-gray-900"
-                }`}
-                title={t("menu:rte.bold") || "Bold (Ctrl+B)"}
-              >
-                <strong>B</strong>
-              </button>
-              <button
-                type="button"
-                onClick={() => editor.chain().focus().toggleItalic().run()}
-                className={`px-2 py-1 rounded text-sm font-medium transition-colors cursor-pointer ${
-                  editor.isActive("italic")
-                    ? "bg-blue-100 text-blue-700 ring-1 ring-blue-300"
-                    : "text-gray-700 hover:bg-gray-200 hover:text-gray-900"
-                }`}
-                title={t("menu:rte.italic") || "Italic (Ctrl+I)"}
-              >
-                <em>I</em>
-              </button>
-              <button
-                type="button"
-                onClick={() => editor.chain().focus().toggleUnderline().run()}
-                className={`px-2 py-1 rounded text-sm font-medium transition-colors cursor-pointer ${
-                  editor.isActive("underline")
-                    ? "bg-blue-100 text-blue-700 ring-1 ring-blue-300"
-                    : "text-gray-700 hover:bg-gray-200 hover:text-gray-900"
-                }`}
-                title={t("menu:rte.underline") || "Underline (Ctrl+U)"}
-              >
-                <u>U</u>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  const { from } = editor.state.selection;
-                  editor.chain().focus().insertContentAt(from, " @").run();
-                  return;
-                }}
-                className="cursor-pointer px-2 py-1 rounded text-sm font-medium transition-colors text-gray-700 hover:bg-gray-200 hover:text-gray-900"
-                title={t("menu:rte.mention") || "Mention User (@)"}
-              >
-                <strong className="text-blue-600">@</strong>
-              </button>
-            </div>
+    <div
+      className={finalWrapperClassName.trim()}
+      style={height !== "auto" ? { height } : {}}
+    >
+      {editor && (
+        <div className="flex-shrink-0 flex items-center justify-between gap-1 p-2 border-b border-gray-200 bg-gray-50 rounded-t-md z-10">
+          <div className="flex items-center gap-1">
             <button
               type="button"
-              onClick={() => setIsHelpModalOpen(true)} // 👈 3. Call the function from the parent
-              className="cursor-pointer p-1 rounded text-gray-500 hover:bg-gray-200 hover:text-gray-700"
-              title={t("menu:rte.help") || "Help"}
+              onClick={() => editor.chain().focus().toggleBold().run()}
+              className={`px-2 py-1 rounded text-sm font-medium transition-colors cursor-pointer ${
+                editor.isActive("bold")
+                  ? "bg-blue-100 text-blue-700 ring-1 ring-blue-300"
+                  : "text-gray-700 hover:bg-gray-200 hover:text-gray-900"
+              }`}
+              title={t("menu:rte.bold") || "Bold (Ctrl+B)"}
             >
-              <QuestionMarkCircleIcon className="w-5 h-5" />
+              <strong>B</strong>
+            </button>
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().toggleItalic().run()}
+              className={`px-2 py-1 rounded text-sm font-medium transition-colors cursor-pointer ${
+                editor.isActive("italic")
+                  ? "bg-blue-100 text-blue-700 ring-1 ring-blue-300"
+                  : "text-gray-700 hover:bg-gray-200 hover:text-gray-900"
+              }`}
+              title={t("menu:rte.italic") || "Italic (Ctrl+I)"}
+            >
+              <em>I</em>
+            </button>
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().toggleUnderline().run()}
+              className={`px-2 py-1 rounded text-sm font-medium transition-colors cursor-pointer ${
+                editor.isActive("underline")
+                  ? "bg-blue-100 text-blue-700 ring-1 ring-blue-300"
+                  : "text-gray-700 hover:bg-gray-200 hover:text-gray-900"
+              }`}
+              title={t("menu:rte.underline") || "Underline (Ctrl+U)"}
+            >
+              <u>U</u>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const { from } = editor.state.selection;
+                editor.chain().focus().insertContentAt(from, " @").run();
+                return;
+              }}
+              className="cursor-pointer px-2 py-1 rounded text-sm font-medium transition-colors text-gray-700 hover:bg-gray-200 hover:text-gray-900"
+              title={t("menu:rte.mention") || "Mention User (@)"}
+            >
+              <strong className="text-blue-600">@</strong>
             </button>
           </div>
-        )}
-        {/* This div is now the scrollable container */}
-        <div className="relative flex-grow overflow-y-auto custom-scrollbar-xs">
-          <EditorContent editor={editor} />
-          {maxLength && (
-            // The counter is now sticky to the bottom of this scrollable container
-            <div
-              className={`sticky bottom-2 right-4 float-right text-xs ${
-                isInvalid ? "text-red-600 font-semibold" : "text-gray-500"
-              } bg-white px-1 rounded shadow-sm`}
-            >
-              {charCount}/{maxLength}
-            </div>
-          )}
+          {/* Replace the old help button with the new Popover structure */}
+          <HelperModal />
         </div>
+      )}
+      {/* This div is now the scrollable container */}
+      <div className="relative flex-grow overflow-y-auto custom-scrollbar-xs">
+        <EditorContent editor={editor} />
+        {maxLength && (
+          // The counter is now sticky to the bottom of this scrollable container
+          <div
+            className={`sticky bottom-2 right-4 float-right text-xs ${
+              isInvalid ? "text-red-600 font-semibold" : "text-gray-500"
+            } bg-white px-1 rounded shadow-sm`}
+          >
+            {charCount}/{maxLength}
+          </div>
+        )}
       </div>
-      <HelpModal isOpen={isHelpModalOpen} onOpenChange={setIsHelpModalOpen} />
-    </>
+    </div>
   );
 };
 

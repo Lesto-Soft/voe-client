@@ -15,6 +15,7 @@ import { getTextLength } from "../../../../utils/contentRenderer";
 import Mention from "@tiptap/extension-mention";
 import { createMentionSuggestion } from "./MentionSuggestion";
 import { useTranslation } from "react-i18next";
+import TextEditorHelper from "./TextEditorHelper";
 
 export interface TextEditorProps {
   content?: string;
@@ -131,20 +132,21 @@ const MenuBar: React.FC<MenuBarProps> = ({ editor, className }) => {
     <div
       className={
         className ||
-        "flex flex-wrap items-center gap-x-1 gap-y-1 p-2 border-b border-gray-200 bg-gray-50 rounded-t-md"
+        "flex flex-wrap items-center justify-between gap-x-1 gap-y-1 p-2 border-b border-gray-200 bg-gray-50 rounded-t-md"
       }
     >
-      {menuItems.map((item) => {
-        const isActive =
-          editor && item.isActive ? item.isActive(editor) : false;
-        return (
-          <button
-            key={item.id}
-            type="button"
-            onClick={() => item.action(editor)}
-            title={item.title}
-            disabled={item.canExecute ? !item.canExecute(editor) : false}
-            className={`cursor-pointer px-2 py-1 flex items-center justify-center rounded
+      <div className="flex flex-wrap items-center gap-x-1 gap-y-1">
+        {menuItems.map((item) => {
+          const isActive =
+            editor && item.isActive ? item.isActive(editor) : false;
+          return (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => item.action(editor)}
+              title={item.title}
+              disabled={item.canExecute ? !item.canExecute(editor) : false}
+              className={`cursor-pointer px-2 py-1 flex items-center justify-center rounded
                                   text-gray-700 hover:bg-gray-200
                                   focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:z-10
                                   disabled:opacity-40 disabled:cursor-not-allowed
@@ -153,13 +155,15 @@ const MenuBar: React.FC<MenuBarProps> = ({ editor, className }) => {
                                       ? "bg-indigo-100 text-indigo-700 hover:bg-indigo-200 ring-1 ring-indigo-500"
                                       : "bg-transparent"
                                   }`}
-            aria-pressed={isActive}
-            style={{ minWidth: "36px", minHeight: "36px" }}
-          >
-            {item.label}
-          </button>
-        );
-      })}
+              aria-pressed={isActive}
+              style={{ minWidth: "36px", minHeight: "36px" }}
+            >
+              {item.label}
+            </button>
+          );
+        })}
+      </div>
+      <TextEditorHelper />
     </div>
   );
 };

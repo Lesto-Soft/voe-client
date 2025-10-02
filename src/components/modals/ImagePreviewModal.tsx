@@ -9,6 +9,7 @@ import {
 } from "@heroicons/react/24/solid";
 import { DocumentIcon, PhotoIcon } from "@heroicons/react/24/outline";
 import { Document, Page, pdfjs } from "react-pdf";
+import { getIconForFile } from "../../utils/fileUtils";
 
 // Setting up the PDF worker
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
@@ -50,6 +51,8 @@ const ImagePreviewModal: React.FC<ImagePreviewProps> = ({
 
   // --- Adjustable setting for mouse wheel zoom sensitivity ---
   const mouseWheelZoomStrength = 0.2; // Increase for faster zoom, decrease for slower
+
+  const IconComponent = getIconForFile(fileName || "");
 
   // Determine file type based on extension
   const isImageFile = useMemo(() => {
@@ -267,6 +270,7 @@ const ImagePreviewModal: React.FC<ImagePreviewProps> = ({
         type="button"
         title={fileName}
       >
+        <IconComponent className="h-4 w-4 text-gray-600 flex-shrink-0" />
         <span className="truncate max-w-32 overflow-hidden whitespace-nowrap">
           {fileName}
         </span>
@@ -274,7 +278,6 @@ const ImagePreviewModal: React.FC<ImagePreviewProps> = ({
     ) : null;
 
   const trigger = triggerElement || children || defaultTrigger;
-
   return (
     <Dialog.Root>
       <Dialog.Trigger asChild>{trigger}</Dialog.Trigger>

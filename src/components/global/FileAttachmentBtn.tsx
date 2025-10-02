@@ -5,6 +5,7 @@ import ImagePreviewModal from "../modals/ImagePreviewModal";
 import { XMarkIcon } from "@heroicons/react/24/solid";
 import { createFileUrl } from "../../utils/fileUtils";
 import { MAX_UPLOAD_FILES, MAX_UPLOAD_MB } from "../../db/config";
+import { getIconForFile } from "../../utils/fileUtils";
 
 interface FileAttachmentBtnProps {
   attachments: File[];
@@ -70,6 +71,7 @@ const FileAttachmentBtn: React.FC<FileAttachmentBtnProps> = ({
                 if (type && objectId) {
                   fileUrl = createFileUrl(type, objectId, fileName);
                 }
+                const Icon = getIconForFile(filename); // 2. Get the icon
 
                 return (
                   <div
@@ -83,9 +85,10 @@ const FileAttachmentBtn: React.FC<FileAttachmentBtnProps> = ({
                       triggerElement={
                         <button
                           type="button"
-                          className="truncate max-w-[150px] sm:max-w-xs cursor-pointer"
+                          className="flex items-center gap-1.5 truncate max-w-[150px] sm:max-w-xs cursor-pointer"
                           title={filename}
                         >
+                          <Icon className="h-4 w-4 text-gray-600 flex-shrink-0" />
                           {filename}
                         </button>
                       }
@@ -178,7 +181,7 @@ const FileAttachmentBtn: React.FC<FileAttachmentBtnProps> = ({
               {attachments.map((file) => {
                 const fileKey = file.name + "-" + file.lastModified;
                 const fileUrl = fileObjectUrls.get(fileKey) || "";
-
+                const Icon = getIconForFile(file.name);
                 return (
                   <div
                     key={file.name + "-" + file.lastModified}
@@ -191,9 +194,10 @@ const FileAttachmentBtn: React.FC<FileAttachmentBtnProps> = ({
                       triggerElement={
                         <button
                           type="button"
-                          className="truncate max-w-[150px] sm:max-w-xs cursor-pointer"
+                          className="flex items-center gap-1.5 truncate max-w-[150px] sm:max-w-xs cursor-pointer"
                           title={file.name}
                         >
+                          <Icon className="h-4 w-4 text-gray-600 flex-shrink-0" />
                           {file.name}{" "}
                           <span className="text-xs text-gray-500">
                             ({(file.size / 1024 / 1024).toFixed(2)} MB)

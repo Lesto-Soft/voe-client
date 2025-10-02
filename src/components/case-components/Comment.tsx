@@ -10,6 +10,7 @@ import { renderContentSafely } from "../../utils/contentRenderer";
 import { useDeleteComment } from "../../graphql/hooks/comment";
 import { useEffect, useRef } from "react";
 import UserAvatar from "../cards/UserAvatar";
+import ActionMenu from "../global/ActionMenu";
 
 interface CommentProps {
   comment: IComment;
@@ -30,25 +31,6 @@ const Comment: React.FC<CommentProps> = ({
 }) => {
   const { deleteComment } = useDeleteComment(caseNumber);
   const commentRef = useRef<HTMLDivElement>(null);
-
-  // Actions block is defined once to avoid repetition.
-  const actions = me &&
-    me.role &&
-    (me._id === comment.creator._id || admin_check(me.role.name)) && (
-      <div className="flex items-center gap-2">
-        <EditButton
-          comment={comment}
-          currentAttachments={comment.attachments}
-          caseNumber={caseNumber}
-          mentions={mentions}
-        />
-        <DeleteModal
-          title="deleteComment"
-          content="deleteCommentInfo"
-          onDelete={() => deleteComment(comment._id)}
-        />
-      </div>
-    );
 
   useEffect(() => {
     const elementId = `${
@@ -92,24 +74,26 @@ const Comment: React.FC<CommentProps> = ({
           </span>
         </div>
         {/* Actions (Edit/Delete) */}
-
+        {/* MODIFIED ACTIONS SECTION */}
         <div className="flex items-center gap-1.5">
           <ShowDate date={comment.date} />
           {me &&
             (me._id === comment.creator._id || admin_check(me.role.name)) && (
-              <div className="flex items-center gap-1.5">
+              <ActionMenu>
                 <EditButton
                   comment={comment}
                   currentAttachments={comment.attachments}
                   caseNumber={caseNumber}
                   mentions={mentions}
+                  showText={true}
                 />
                 <DeleteModal
                   title="deleteComment"
                   content="deleteCommentInfo"
                   onDelete={() => deleteComment(comment._id)}
+                  showText={true}
                 />
-              </div>
+              </ActionMenu>
             )}
         </div>
       </div>

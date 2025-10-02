@@ -22,6 +22,7 @@ import {
   ChevronUpIcon,
   ChatBubbleOvalLeftEllipsisIcon,
 } from "@heroicons/react/24/solid";
+import ActionMenu from "../global/ActionMenu";
 
 const Answer: React.FC<{
   answer: IAnswer;
@@ -421,19 +422,23 @@ const Answer: React.FC<{
               <AnswerHistoryModal history={answer.history} />
             )}
             <ShowDate date={answer.date} />
+
+            {/* 2. Replace the old buttons with the ActionMenu */}
             {canEditOrDelete && !answer.approved && (
-              <>
+              <ActionMenu>
                 <EditAnswerButton
                   {...{ answer, caseNumber, me }}
                   currentAttachments={answer.attachments || []}
                   mentions={mentions}
+                  showText={true}
                 />
                 <DeleteModal
                   title="deleteAnswer"
                   content="deleteAnswerInfo"
                   onDelete={() => deleteAnswer(answer._id.toString())}
+                  showText={true}
                 />
-              </>
+              </ActionMenu>
             )}
           </div>
         </div>

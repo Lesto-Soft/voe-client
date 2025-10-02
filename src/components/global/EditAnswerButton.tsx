@@ -15,6 +15,7 @@ interface EditButtonProps {
   caseNumber: number;
   me: any;
   mentions: { name: string; username: string; _id: string }[];
+  showText?: boolean;
 }
 
 export interface UpdateAnswerInput {
@@ -28,6 +29,7 @@ const EditAnswerButton: React.FC<EditButtonProps> = ({
   caseNumber,
   me,
   mentions,
+  showText = false,
 }) => {
   if (!answer) {
     return <div>Loading...</div>;
@@ -97,12 +99,18 @@ const EditAnswerButton: React.FC<EditButtonProps> = ({
   return (
     <Dialog.Root open={isOpen} onOpenChange={setIsOpen}>
       <Dialog.Trigger asChild>
+        {/* MODIFIED BUTTON with responsive styles */}
         <button
-          className="hover:cursor-pointer ml-2 flex items-center px-2 py-1 rounded text-xs font-medium border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 transition"
+          className={`cursor-pointer ${
+            showText
+              ? "flex items-center gap-2 w-full p-2 text-sm text-blue-700 rounded-md hover:bg-blue-50 transition-colors"
+              : "p-1.5 rounded-md text-blue-700 hover:bg-blue-100 transition-colors"
+          }`}
           type="button"
           title="Редактирай"
         >
-          <PencilIcon className="h-4 w-4 " />
+          <PencilIcon className="h-4 w-4" />
+          {showText && <span>Редактирай</span>}
         </button>
       </Dialog.Trigger>
       <Dialog.Portal>

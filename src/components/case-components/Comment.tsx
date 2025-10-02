@@ -4,11 +4,11 @@ import ShowDate from "../global/ShowDate";
 import EditButton from "../global/EditCommentButton";
 import { admin_check } from "../../utils/rowStringCheckers";
 import { createFileUrl } from "../../utils/fileUtils";
-import ImagePreviewModal from "../modals/ImagePreviewModal";
+import ImagePreviewModal, { GalleryItem } from "../modals/ImagePreviewModal";
 import DeleteModal from "../modals/DeleteModal";
 import { renderContentSafely } from "../../utils/contentRenderer";
 import { useDeleteComment } from "../../graphql/hooks/comment";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useMemo } from "react";
 import UserAvatar from "../cards/UserAvatar";
 import ActionMenu from "../global/ActionMenu";
 
@@ -52,6 +52,14 @@ const Comment: React.FC<CommentProps> = ({
       });
     }
   }, [targetId, comment._id, parentType]);
+
+  const galleryItems: GalleryItem[] = useMemo(() => {
+    return (comment.attachments || []).map((file) => ({
+      url: createFileUrl("comments", comment._id, file),
+      name: file,
+    }));
+  }, [comment.attachments, comment._id]);
+
   return (
     <div
       id={`${parentType === "answer" ? "answers-comment" : "comments"}-${
@@ -108,6 +116,7 @@ const Comment: React.FC<CommentProps> = ({
             {comment.attachments.map((file) => (
               <ImagePreviewModal
                 key={file}
+                galleryItems={galleryItems}
                 imageUrl={createFileUrl("comments", comment._id, file)}
                 fileName={file}
               />

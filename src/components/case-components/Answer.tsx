@@ -1,15 +1,15 @@
 import { IAnswer, ICategory, IComment, IMe } from "../../db/interfaces";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import Comment from "./Comment";
 import ShowDate from "../global/ShowDate";
 import { useTranslation } from "react-i18next";
-import Creator from "./Creator";
+// import Creator from "./Creator";
 import UserLink from "../global/UserLink";
 import ApproveBtn from "./ApproveBtn";
 import AnswerHistoryModal from "../modals/AnswerHistoryModal";
 import FinanceApproveBtn from "./FinanceApproveBtn";
 import { createFileUrl } from "../../utils/fileUtils";
-import ImagePreviewModal from "../modals/ImagePreviewModal";
+import ImagePreviewModal, { GalleryItem } from "../modals/ImagePreviewModal";
 import AddComment from "./AddComment";
 import EditAnswerButton from "../global/EditAnswerButton";
 import { useDeleteAnswer } from "../../graphql/hooks/answer";
@@ -190,6 +190,13 @@ const Answer: React.FC<{
     setShowCommentBox(false); // This will close the AddComment form
   };
 
+  const galleryItems: GalleryItem[] = useMemo(() => {
+    return (answer.attachments || []).map((file) => ({
+      url: createFileUrl("answers", answer._id, file),
+      name: file,
+    }));
+  }, [answer.attachments, answer._id]);
+
   const answerContentAndAttachments = (
     <>
       <div
@@ -211,6 +218,7 @@ const Answer: React.FC<{
           {answer.attachments.map((file) => (
             <ImagePreviewModal
               key={file}
+              galleryItems={galleryItems}
               imageUrl={createFileUrl("answers", answer._id, file)}
               fileName={file}
             />

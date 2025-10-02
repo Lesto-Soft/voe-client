@@ -14,7 +14,7 @@ import { labelTextClass, caseBoxClasses } from "../../ui/reusable-styles";
 import { useTranslation } from "react-i18next";
 import Creator from "./Creator";
 import ShowDate from "../global/ShowDate";
-import ImagePreviewModal from "../modals/ImagePreviewModal";
+import ImagePreviewModal, { GalleryItem } from "../modals/ImagePreviewModal";
 import { createFileUrl } from "../../utils/fileUtils";
 import FullScreenContentDialog from "../modals/ContentDialog";
 import { CASE_STATUS, USER_RIGHTS } from "../../utils/GLOBAL_PARAMETERS";
@@ -85,7 +85,14 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
     [metricScores, me._id]
   );
 
-  // 3. ADD AUTHORIZATION LOGIC
+  // 1. ADD THIS useMemo TO CREATE THE GALLERY ITEMS
+  const galleryItems: GalleryItem[] = useMemo(() => {
+    return attachments.map((file) => ({
+      url: createFileUrl("cases", caseId, file),
+      name: file,
+    }));
+  }, [attachments, caseId]);
+
   const canViewReadBy =
     rights.includes("admin") ||
     rights.includes("manager") ||
@@ -198,6 +205,7 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
               {attachments.map((file) => (
                 <ImagePreviewModal
                   key={file}
+                  galleryItems={galleryItems}
                   imageUrl={createFileUrl("cases", caseId, file)}
                   fileName={file}
                 />

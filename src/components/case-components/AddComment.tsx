@@ -4,7 +4,7 @@ import { useCreateComment } from "../../graphql/hooks/comment";
 import FileAttachmentAnswer from "../global/FileAttachmentAnswer";
 import { PaperAirplaneIcon, XMarkIcon } from "@heroicons/react/24/solid";
 import { COMMENT_CONTENT } from "../../utils/GLOBAL_PARAMETERS";
-import ImagePreviewModal from "../modals/ImagePreviewModal";
+import ImagePreviewModal, { GalleryItem } from "../modals/ImagePreviewModal";
 import SimpleTextEditor from "../forms/partials/TextEditor/SimplifiedTextEditor";
 import { getTextLength } from "../../utils/contentRenderer";
 
@@ -72,6 +72,17 @@ const AddComment: React.FC<AddCommentProps> = ({
     });
     return map;
   }, [attachments]); // Cleanup object URLs on unmount or when attachments change
+
+  // 1. ADD THIS useMemo TO CREATE THE GALLERY ITEMS
+  const galleryItems: GalleryItem[] = useMemo(() => {
+    return attachments.map((file) => {
+      const fileKey = file.name + "-" + file.lastModified;
+      return {
+        url: fileObjectUrls.get(fileKey) || "",
+        name: file.name,
+      };
+    });
+  }, [attachments, fileObjectUrls]);
 
   useEffect(() => {
     return () => {
@@ -279,20 +290,20 @@ const AddComment: React.FC<AddCommentProps> = ({
                   className="flex items-center gap-2 px-3 py-1.5 text-sm bg-gray-200 rounded-full hover:bg-gray-300"
                   title={file.name}
                 >
-                  {" "}
                   <ImagePreviewModal
-                    imageUrl={fileUrl}
-                    fileName={file.name}
+                    galleryItems={galleryItems} // Pass the full gallery
+                    imageUrl={fileUrl} // The URL for this specific trigger
+                    fileName={file.name} // The name for this specific trigger
                     triggerElement={
                       <button
                         type="button"
                         className="truncate max-w-[150px] sm:max-w-xs cursor-pointer"
                         title={file.name}
                       >
-                        {file.name}{" "}
+                        {file.name}
                       </button>
                     }
-                  />{" "}
+                  />
                   <button
                     type="button"
                     onClick={() => handleRemoveAttachment(file.name)}

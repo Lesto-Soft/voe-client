@@ -1,7 +1,7 @@
 import React from "react";
 import { handleFileChange } from "../../utils/attachment-handling";
 import { useTranslation } from "react-i18next";
-import ImagePreviewModal from "../modals/ImagePreviewModal";
+import ImagePreviewModal, { GalleryItem } from "../modals/ImagePreviewModal";
 import { XMarkIcon } from "@heroicons/react/24/solid";
 import { createFileUrl } from "../../utils/fileUtils";
 import { MAX_UPLOAD_FILES, MAX_UPLOAD_MB } from "../../db/config";
@@ -35,6 +35,28 @@ const FileAttachmentBtn: React.FC<FileAttachmentBtnProps> = ({
     });
     return map;
   }, [attachments]);
+
+  // this memo is for managing the combined gallery between added and to-be-added files
+  const galleryItems: GalleryItem[] = React.useMemo(() => {
+    const existingItems = (existingAttachments || []).map((fileName) => {
+      const filename = fileName.split("/").pop() || fileName;
+      let fileUrl = "";
+      if (type && objectId) {
+        fileUrl = createFileUrl(type, objectId, fileName);
+      }
+      return { url: fileUrl, name: filename };
+    });
+
+    const newItems = attachments.map((file) => {
+      const fileKey = file.name + "-" + file.lastModified;
+      return {
+        url: fileObjectUrls.get(fileKey) || "",
+        name: file.name,
+      };
+    });
+
+    return [...existingItems, ...newItems];
+  }, [existingAttachments, attachments, fileObjectUrls, type, objectId]);
 
   // Cleanup object URLs on unmount or when attachments change
   React.useEffect(() => {
@@ -80,6 +102,7 @@ const FileAttachmentBtn: React.FC<FileAttachmentBtnProps> = ({
                     title={filename}
                   >
                     <ImagePreviewModal
+                      galleryItems={galleryItems}
                       imageUrl={fileUrl}
                       fileName={filename}
                       triggerElement={
@@ -189,6 +212,7 @@ const FileAttachmentBtn: React.FC<FileAttachmentBtnProps> = ({
                     title={file.name}
                   >
                     <ImagePreviewModal
+                      galleryItems={galleryItems}
                       imageUrl={fileUrl}
                       fileName={file.name}
                       triggerElement={

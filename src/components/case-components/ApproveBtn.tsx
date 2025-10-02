@@ -43,7 +43,8 @@ const ApproveBtn: React.FC<{
     <Dialog.Root open={open} onOpenChange={setOpen}>
       <Dialog.Trigger asChild>
         <button
-          className={`w-32 hover:cursor-pointer flex items-center justify-center gap-2 px-2 py-1 rounded-lg text-xs font-medium shadow-md transition-all duration-200 ${
+          className={`hover:cursor-pointer flex items-center justify-center gap-2 px-2 py-1 rounded-lg text-xs font-medium shadow-md transition-all duration-200 w-10 sm:w-32 ${
+            // Responsive width
             !approved
               ? "bg-btnGreen text-white hover:bg-btnGreenHover focus:ring-2 focus:ring-green-300"
               : "bg-btnRed text-white hover:bg-btnRedHover focus:ring-2 focus:ring-red-300"
@@ -56,7 +57,9 @@ const ApproveBtn: React.FC<{
           ) : (
             <HandThumbDownIcon className="h-5 w-5 text-white" />
           )}
-          <span>{approved ? t("unapprove") : t("approve")}</span>
+          <span className="hidden sm:inline">
+            {approved ? t("unapprove") : t("approve")}
+          </span>
         </button>
       </Dialog.Trigger>
       {loading || unapproveLoading ? <LoadingModal /> : null}

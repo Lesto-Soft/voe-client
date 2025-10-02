@@ -223,7 +223,9 @@ const Answer: React.FC<{
           <div className="flex items-center gap-1 mb-2">
             <p>{t("approvedBy")}</p>
             <UserLink user={answer.approved} />
-            {answer.approved_date && <ShowDate date={answer.approved_date} />}
+            {answer.approved_date && (
+              <ShowDate collapsible={true} date={answer.approved_date} />
+            )}
           </div>
         )}
         {answer.financial_approved && (
@@ -231,7 +233,10 @@ const Answer: React.FC<{
             <p>{t("financedBy")}</p>
             <UserLink user={answer.financial_approved} />
             {answer.financial_approved_date && (
-              <ShowDate date={answer.financial_approved_date} />
+              <ShowDate
+                collapsible={true}
+                date={answer.financial_approved_date}
+              />
             )}
           </div>
         )}
@@ -421,7 +426,7 @@ const Answer: React.FC<{
             {answer.history && answer.history.length > 0 && (
               <AnswerHistoryModal history={answer.history} />
             )}
-            <ShowDate date={answer.date} />
+            <ShowDate collapsible={true} date={answer.date} />
 
             {/* 2. Replace the old buttons with the ActionMenu */}
             {canEditOrDelete && !answer.approved && (

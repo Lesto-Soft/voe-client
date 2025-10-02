@@ -27,10 +27,12 @@ const ShowDate = ({
   date,
   centered = false,
   isCase = false,
+  collapsible = false,
 }: {
   date: string;
   centered?: boolean;
   isCase?: boolean;
+  collapsible?: boolean;
 }) => {
   const [showDate, setShowDate] = useState(false);
   let parseDate;
@@ -40,6 +42,7 @@ const ShowDate = ({
 
   const fullFormatDate = moment(parseDate).local().format("lll");
   const relativeFormatDate = moment(parseDate).fromNow();
+  const textVisibilityClass = collapsible ? "hidden sm:inline" : "";
 
   return (
     <div
@@ -50,8 +53,12 @@ const ShowDate = ({
       title={showDate ? relativeFormatDate : fullFormatDate}
     >
       <CalendarIcon className="!h-4 !w-4 min-w-4 min-h-4" />
-      {!showDate && <span>{relativeFormatDate}</span>}
-      {showDate && <span>{fullFormatDate}</span>}
+      {!showDate && (
+        <span className={textVisibilityClass}>{relativeFormatDate}</span>
+      )}
+      {showDate && (
+        <span className={textVisibilityClass}>{fullFormatDate}</span>
+      )}
     </div>
   );
 };

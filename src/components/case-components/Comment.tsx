@@ -76,7 +76,7 @@ const Comment: React.FC<CommentProps> = ({
         {/* Actions (Edit/Delete) */}
         {/* MODIFIED ACTIONS SECTION */}
         <div className="flex items-center gap-1.5">
-          <ShowDate date={comment.date} />
+          <ShowDate collapsible={true} date={comment.date} />
           {me &&
             (me._id === comment.creator._id || admin_check(me.role.name)) && (
               <ActionMenu>

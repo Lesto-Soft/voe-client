@@ -22,7 +22,7 @@ const HelperModal: React.FC = () => {
         <Popover.Content
           sideOffset={5}
           align="end"
-          className="w-[400px] bg-white rounded-lg shadow-xl border border-gray-200 p-4 z-40 data-[state=open]:animate-contentShow"
+          className="w-[400px] bg-white rounded-lg shadow-xl border border-gray-200 p-4 z-50 data-[state=open]:animate-contentShow"
         >
           {/* Content is now directly inside */}
           <h3 className="text-md font-medium text-gray-900">

@@ -9,7 +9,7 @@ import DeleteModal from "../modals/DeleteModal";
 import { renderContentSafely } from "../../utils/contentRenderer";
 import { useDeleteComment } from "../../graphql/hooks/comment";
 import { useEffect, useRef, useMemo } from "react";
-import UserAvatar from "../cards/UserAvatar";
+// import UserAvatar from "../cards/UserAvatar";
 import ActionMenu from "../global/ActionMenu";
 
 interface CommentProps {

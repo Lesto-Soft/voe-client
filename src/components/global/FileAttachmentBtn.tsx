@@ -218,7 +218,7 @@ const FileAttachmentBtn: React.FC<FileAttachmentBtnProps> = ({
                       triggerElement={
                         <button
                           type="button"
-                          className="flex items-center gap-1.5 truncate max-w-[150px] sm:max-w-xs cursor-pointer"
+                          className="w-38 flex items-center gap-1.5 truncate cursor-pointer"
                           title={file.name}
                         >
                           <Icon className="h-4 w-4 text-gray-600 flex-shrink-0" />

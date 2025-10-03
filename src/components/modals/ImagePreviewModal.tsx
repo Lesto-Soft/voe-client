@@ -272,12 +272,12 @@ const ImagePreviewModal: React.FC<ImagePreviewProps> = ({
   const defaultTrigger =
     !isAvatar && fileName ? (
       <button
-        className="hover:cursor-pointer flex items-center gap-2 px-3 py-1 text-sm bg-gray-200 rounded-full hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400"
+        className="w-38 hover:cursor-pointer flex items-center gap-2 px-3 py-1 text-sm bg-gray-200 rounded-full hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400"
         type="button"
         title={fileName}
       >
         <TriggerIconComponent className="h-4 w-4 text-gray-600 flex-shrink-0" />
-        <span className="truncate max-w-32 overflow-hidden whitespace-nowrap">
+        <span className="truncate overflow-hidden whitespace-nowrap">
           {fileName}
         </span>
       </button>

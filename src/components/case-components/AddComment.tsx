@@ -7,6 +7,7 @@ import { COMMENT_CONTENT } from "../../utils/GLOBAL_PARAMETERS";
 import ImagePreviewModal, { GalleryItem } from "../modals/ImagePreviewModal";
 import SimpleTextEditor from "../forms/partials/TextEditor/SimplifiedTextEditor";
 import { getTextLength } from "../../utils/contentRenderer";
+import { getIconForFile } from "../../utils/fileUtils";
 
 // Interface for the props of the AddComment component
 interface AddCommentProps {
@@ -283,6 +284,7 @@ const AddComment: React.FC<AddCommentProps> = ({
             {attachments.map((file) => {
               const fileKey = file.name + "-" + file.lastModified;
               const fileUrl = fileObjectUrls.get(fileKey) || "";
+              const Icon = getIconForFile(file.name);
 
               return (
                 <div
@@ -297,9 +299,10 @@ const AddComment: React.FC<AddCommentProps> = ({
                     triggerElement={
                       <button
                         type="button"
-                        className="truncate max-w-[150px] sm:max-w-xs cursor-pointer"
+                        className="w-38 flex items-center gap-1.5 truncate cursor-pointer"
                         title={file.name}
                       >
+                        <Icon className="h-4 w-4 text-gray-600 flex-shrink-0" />
                         {file.name}
                       </button>
                     }

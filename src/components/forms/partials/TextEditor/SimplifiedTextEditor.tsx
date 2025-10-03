@@ -21,6 +21,7 @@ interface SimpleTextEditorProps {
   mentions?: { name: string; username: string; _id: string }[];
   onPasteFiles?: (files: File[]) => void;
   attachmentCount?: number;
+  autoFocus?: boolean;
 }
 
 const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
@@ -34,6 +35,7 @@ const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
   mentions = [],
   onPasteFiles,
   attachmentCount = 0,
+  autoFocus = false,
 }) => {
   const { t } = useTranslation(["menu", "caseSubmission"]);
   const [charCount, setCharCount] = useState(0);
@@ -167,6 +169,18 @@ const SimpleTextEditor: React.FC<SimpleTextEditorProps> = ({
       },
     },
   });
+
+  useEffect(() => {
+    if (editor && autoFocus) {
+      // A timeout helps ensure the editor is fully rendered and visible before focusing,
+      // especially in components that are toggled or appear in modals.
+      const timer = setTimeout(() => {
+        editor.chain().focus("end").run();
+      }, 100);
+
+      return () => clearTimeout(timer);
+    }
+  }, [editor, autoFocus]);
 
   useEffect(() => {
     setCharCount(getTextLength(content || ""));

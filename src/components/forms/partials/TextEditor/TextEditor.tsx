@@ -29,6 +29,7 @@ export interface TextEditorProps {
   maxLength?: number;
   minLength?: number;
   mentions?: { name: string; username: string; _id: string }[];
+  autoFocus?: boolean;
 }
 
 // MenuBar component remains the same...
@@ -181,6 +182,7 @@ const TextEditor: React.FC<TextEditorProps> = ({
   maxLength,
   minLength,
   mentions,
+  autoFocus = false,
 }) => {
   const [renderKey, setRenderKey] = useState(0);
   const [charCount, setCharCount] = useState(0);
@@ -240,6 +242,17 @@ const TextEditor: React.FC<TextEditorProps> = ({
       },
     },
   });
+
+  useEffect(() => {
+    if (editor && autoFocus) {
+      // A timeout ensures the editor is fully rendered before focusing.
+      const timer = setTimeout(() => {
+        editor.chain().focus("end").run();
+      }, 100);
+
+      return () => clearTimeout(timer);
+    }
+  }, [editor, autoFocus]);
 
   // Effect to initialize/update character count from prop
   useEffect(() => {

@@ -303,7 +303,7 @@ const Submenu: React.FC<SubmenuProps> = ({
                       aria-expanded={isAddAnswerVisible}
                       aria-controls="add-answer-form"
                     >
-                      <span className="flex items-center justify-center gap-2">
+                      <span className="flex items-center justify-center gap-2 text-sm">
                         <ChatBubbleBottomCenterTextIcon className="h-6 w-6 text-gray-500" />
                         {isAddAnswerVisible
                           ? "Скрий писане на решение"
@@ -384,7 +384,7 @@ const Submenu: React.FC<SubmenuProps> = ({
                     aria-expanded={isAddCommentVisible}
                     aria-controls="add-comment-form"
                   >
-                    <span className="flex items-center justify-center gap-2">
+                    <span className="flex items-center justify-center gap-2 text-sm">
                       <ChatBubbleOvalLeftEllipsisIcon className="h-6 w-6 text-gray-500" />
                       {isAddCommentVisible
                         ? "Скрий писане на коментар"

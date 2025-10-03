@@ -133,6 +133,7 @@ const CaseSubmissionLeftPanel: React.FC<CaseSubmissionLeftPanelProps> = ({
           maxLength={CASE_CONTENT.MAX}
           minLength={CASE_CONTENT.MIN}
           wrapperClassName="w-full rounded-md shadow-sm overflow-hidden bg-white"
+          autoFocus={true}
         />
       </div>
       <div>

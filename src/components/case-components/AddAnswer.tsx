@@ -178,13 +178,11 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
 
   return (
     <div>
-      {/* Main container for the input area */}{" "}
+      {/* Main container for the input area */}
       <div className="flex flex-col gap-2 mx-5">
-        {" "}
         <div className="flex items-stretch gap-2">
-          {/* Container for the TextEditor and character counter */}{" "}
+          {/* Container for the TextEditor and character counter */}
           <div className="flex-grow relative min-w-0 max-w-full">
-            {" "}
             <SimpleTextEditor
               content={content}
               onUpdate={handleContentChange}
@@ -198,9 +196,10 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
               onPasteFiles={(files) => {
                 setAttachments((prev) => [...prev, ...files]);
               }}
-            />{" "}
+              autoFocus={true} // Auto-focus the editor on mount
+            />
           </div>
-          {/* File attachment component */}{" "}
+          {/* File attachment component */}
           <FileAttachmentAnswer
             inputId="file-upload-answer"
             attachments={attachments}

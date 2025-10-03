@@ -143,6 +143,7 @@ const EditAnswerButton: React.FC<EditButtonProps> = ({
               attachmentCount={
                 newAttachments.length + existingAttachments.length
               }
+              autoFocus={true} // Auto-focus the editor on mount
             />
           </div>
 

@@ -191,15 +191,13 @@ const AddComment: React.FC<AddCommentProps> = ({
 
   return (
     <div>
-      {/* Main container for the input area */}{" "}
+      {/* Main container for the input area */}
       <div className="flex flex-col gap-2 mx-5">
-        {" "}
-        {/* Flex container for textarea, attachment button, and submit button */}{" "}
-        {/* UPDATED: Container now stretches children to be equal height */}{" "}
+        {/* Flex container for textarea, attachment button, and submit button */}
+        {/* UPDATED: Container now stretches children to be equal height */}
         <div className="flex items-stretch gap-2">
-          {/* Container for the textarea and character counter */}{" "}
+          {/* Container for the textarea and character counter */}
           <div className="flex-grow relative">
-            {" "}
             <SimpleTextEditor
               content={content}
               onUpdate={handleContentChange}
@@ -217,9 +215,10 @@ const AddComment: React.FC<AddCommentProps> = ({
               onPasteFiles={(files) => {
                 setAttachments((prev) => [...prev, ...files]);
               }}
-            />{" "}
+              autoFocus={true} // Auto-focus the editor on mount
+            />
           </div>
-          {/* File attachment component */}{" "}
+          {/* File attachment component */}
           <FileAttachmentAnswer
             inputId={inputId ?? "default"}
             attachments={attachments}

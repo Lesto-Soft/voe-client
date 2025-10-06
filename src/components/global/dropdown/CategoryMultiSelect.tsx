@@ -2,8 +2,8 @@
 
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { useLazyQuery } from "@apollo/client";
-import { ICategory } from "../../db/interfaces";
-import { GET_ACTIVE_CATEGORIES } from "../../graphql/query/category";
+import { ICategory } from "../../../db/interfaces";
+import { GET_ACTIVE_CATEGORIES } from "../../../graphql/query/category";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 
 interface CategoryMultiSelectProps {

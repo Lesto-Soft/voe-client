@@ -1,9 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
-import { useLazyQuery } from "@apollo/client"; // Assuming Apollo Client
-import { ICase, ICategory } from "../../db/interfaces";
-import { GET_LEAN_USERS } from "../../graphql/query/user";
-import { GET_ACTIVE_CATEGORIES } from "../../graphql/query/category";
-import { XMarkIcon, CalendarDaysIcon } from "@heroicons/react/24/outline"; // Import icons
+import { ICase } from "../../db/interfaces";
+import { XMarkIcon, CalendarDaysIcon } from "@heroicons/react/24/outline";
 import DateRangeSelector from "../features/userAnalytics/DateRangeSelector";
 import CustomDropdown from "../global/CustomDropdown";
 import CustomMultiSelectDropdown from "../global/CustomMultiSelectDropdown";
@@ -13,16 +10,9 @@ import {
   getStatusOptions,
   getTypeOptions,
 } from "../../utils/dashboardFilterUtils";
-import CategoryMultiSelect from "../global/CategoryMultiSelect";
+import CategoryMultiSelect from "../global/dropdown/CategoryMultiSelect";
+import UserSelector from "../global/dropdown/UserSelector";
 
-// Interface for Lean User (assuming structure)
-interface ILeanUser {
-  _id: string;
-  name: string;
-  username: string;
-}
-
-// Define the shape of the props
 interface CaseSearchBarProps {
   caseNumber: string;
   setCaseNumber: (v: string) => void;
@@ -70,9 +60,7 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
   t,
 }) => {
   const [creatorInput, setCreatorInput] = useState("");
-  const [selectedCreator, setSelectedCreator] = useState<ILeanUser | null>(
-    null
-  );
+
   const [isDropdownVisible, setIsDropdownVisible] = useState(false);
   const [fetchedInitialCreator, setFetchedInitialCreator] = useState(false);
   const creatorInputRef = useRef<HTMLInputElement>(null);
@@ -85,193 +73,11 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
   const isDateFilterActive =
     dateRange.startDate !== null || dateRange.endDate !== null;
 
-  const [serverFetchedUsers, setServerFetchedUsers] = useState<ILeanUser[]>([]);
-
-  const [
-    fetchUsers,
-    { loading: loadingUsers, error: usersError, data: usersData },
-  ] = useLazyQuery<{ getLeanUsers: ILeanUser[] }>(GET_LEAN_USERS, {
-    onCompleted: (data) => {
-      setServerFetchedUsers(data?.getLeanUsers || []);
-    },
-  });
-
-  useEffect(() => {
-    if (creatorId && !creatorInput && !fetchedInitialCreator) {
-      fetchUsers({ variables: { userId: creatorId } });
-      setFetchedInitialCreator(true);
-      setIsDropdownVisible(false);
-    }
-  }, [creatorId, creatorInput, fetchedInitialCreator, fetchUsers]);
-
-  useEffect(() => {
-    if (fetchedInitialCreator && !creatorInput && usersData?.getLeanUsers) {
-      const initialUser = usersData.getLeanUsers.find(
-        (u) => u._id === creatorId
-      );
-      if (initialUser) {
-        setSelectedCreator(initialUser);
-        setCreatorInput(initialUser.name + `(${initialUser.username})`);
-        setIsDropdownVisible(false);
-        setServerFetchedUsers(usersData.getLeanUsers);
-      } else {
-        setCreatorId("");
-        setFetchedInitialCreator(false);
-        setSelectedCreator(null);
-      }
-    }
-  }, [usersData, fetchedInitialCreator, creatorId, creatorInput, setCreatorId]);
-
-  useEffect(() => {
-    if (!creatorId) {
-      setCreatorInput("");
-      setSelectedCreator(null);
-      setFetchedInitialCreator(false);
-    }
-  }, [creatorId]);
   useEffect(() => {
     if (!dateRange.startDate && !dateRange.endDate) {
       setIsDateSelectorVisible(false);
     }
   }, [dateRange]);
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        creatorInputRef.current &&
-        !creatorInputRef.current.contains(event.target as Node) &&
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        setIsDropdownVisible(false);
-        if (!creatorId) {
-          setCreatorInput("");
-        }
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [creatorId]);
-
-  const handleCreatorInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = e.target.value;
-    setCreatorInput(newValue);
-    if (creatorId && fetchedInitialCreator) {
-      setCreatorId("");
-      setSelectedCreator(null);
-    }
-    setFetchedInitialCreator(false);
-    setIsDropdownVisible(true);
-  };
-
-  const handleCreatorInputFocus = () => {
-    setIsDropdownVisible(true);
-    if (creatorInput === "" && !fetchedInitialCreator) {
-      fetchUsers({ variables: { search: "" } }).catch((error) => {
-        console.error("Error fetching all users:", error);
-      });
-    }
-  };
-
-  const handleUserSelect = (user: ILeanUser) => {
-    setCreatorId(user._id);
-    setSelectedCreator(user);
-    setCreatorInput(user.name + `(${user.username})`);
-    setIsDropdownVisible(false);
-    setFetchedInitialCreator(true);
-  };
-
-  const clearCreatorSelection = () => {
-    setCreatorId("");
-    setCreatorInput("");
-    setSelectedCreator(null);
-    setFetchedInitialCreator(false);
-    setIsDropdownVisible(false);
-    creatorInputRef.current?.focus();
-  };
-
-  const filteredDisplayUsers = useMemo(() => {
-    if (!creatorInput) {
-      return serverFetchedUsers;
-    }
-    const lowerCaseInput = creatorInput.toLowerCase();
-    return serverFetchedUsers.filter(
-      (user) =>
-        user.name.toLowerCase().includes(lowerCaseInput) ||
-        user.username.toLowerCase().includes(lowerCaseInput)
-    );
-  }, [creatorInput, serverFetchedUsers]);
-
-  const [isCategoryDropdownVisible, setIsCategoryDropdownVisible] =
-    useState(false);
-  const categoryInputRef = useRef<HTMLInputElement>(null);
-  const categoryDropdownRef = useRef<HTMLDivElement>(null);
-  const [serverFetchedCategories, setServerFetchedCategories] = useState<
-    ICategory[]
-  >([]);
-  const [categorySearch, setCategorySearch] = useState("");
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        categoryInputRef.current &&
-        !categoryInputRef.current.contains(event.target as Node) &&
-        categoryDropdownRef.current &&
-        !categoryDropdownRef.current.contains(event.target as Node)
-      ) {
-        setIsCategoryDropdownVisible(false);
-        if (!creatorId) {
-          setCreatorInput("");
-        }
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [creatorId]);
-
-  const filteredCategories = useMemo(() => {
-    const search = categorySearch.trim().toLowerCase();
-    return serverFetchedCategories.filter((cat) =>
-      cat.name.toLowerCase().includes(search)
-    );
-  }, [serverFetchedCategories, categorySearch]);
-
-  const selectedCategoryNames = useMemo(() => {
-    return serverFetchedCategories
-      .filter((cat) => categoryIds.includes(cat._id))
-      .map((cat) => cat.name)
-      .join(", ");
-  }, [categoryIds, serverFetchedCategories]);
-
-  const handleCategoryToggle = (catId: string) => {
-    if (categoryIds.includes(catId)) {
-      setCategoryIds(categoryIds.filter((id) => id !== catId));
-    } else {
-      setCategoryIds([...categoryIds, catId]);
-    }
-  };
-
-  const handleCategoryInputClick = () => {
-    setIsCategoryDropdownVisible((v) => !v);
-  };
-
-  const handleCategorySearchChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    setCategorySearch(e.target.value);
-  };
-
-  const handleReopenCreatorDropdown = () => {
-    setSelectedCreator(null);
-    setCreatorId("");
-    setCreatorInput("");
-    setFetchedInitialCreator(false);
-    setIsDropdownVisible(true);
-    if (serverFetchedUsers.length === 0) {
-      fetchUsers({ variables: { search: "" } });
-    }
-  };
 
   const showDropdown = isDropdownVisible;
   const priorityOptions = getPriorityOptions(t);
@@ -328,97 +134,13 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
           value={type}
           onChange={(value) => setType(value as ICase["type"] | "")}
         />
-        <div className="relative flex-1 min-w-[200px]">
-          <label
-            htmlFor="creator"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            {t("creator")}
-          </label>
-          {selectedCreator ? (
-            <div
-              onClick={handleReopenCreatorDropdown}
-              className="cursor-pointer bg-white w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm flex justify-between items-center"
-            >
-              <span
-                className="text-gray-800 truncate max-w-[170px]"
-                title={selectedCreator.name}
-              >
-                {selectedCreator.name}
-              </span>
-              <span className="font-semibold text-gray-500 mr-6">
-                {selectedCreator.username}
-              </span>
-            </div>
-          ) : (
-            <input
-              type="text"
-              id="creator"
-              ref={creatorInputRef}
-              value={creatorInput}
-              onChange={handleCreatorInputChange}
-              onFocus={handleCreatorInputFocus}
-              className="cursor-pointer bg-white w-full px-3 pr-8 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition duration-150 ease-in-out"
-              placeholder={t("choose_creator")}
-              autoComplete="off"
-            />
-          )}
-          {creatorId && (
-            <button
-              type="button"
-              onClick={clearCreatorSelection}
-              className="mt-6 absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 hover:text-gray-900 focus:outline-none cursor-pointer"
-              title={t("clear_creator")}
-            >
-              <XMarkIcon className="h-5 w-5" />
-            </button>
-          )}
-          {showDropdown && (
-            <div
-              ref={dropdownRef}
-              className="absolute z-50 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto"
-            >
-              {loadingUsers && serverFetchedUsers.length === 0 ? (
-                <div className="px-3 py-2 text-sm text-gray-500">
-                  {t("loading")}
-                </div>
-              ) : usersError ? (
-                <div className="px-3 py-2 text-sm text-red-600">
-                  {t("error")}: {usersError.message}
-                </div>
-              ) : filteredDisplayUsers.length === 0 ? (
-                <div className="px-3 py-2 text-sm text-gray-500">
-                  {t("no_users")}
-                </div>
-              ) : (
-                filteredDisplayUsers.map((user) => (
-                  <div
-                    key={user._id}
-                    className="px-3 py-2 text-sm text-gray-800 hover:bg-indigo-50 cursor-pointer"
-                    onMouseDown={() => handleUserSelect(user)}
-                  >
-                    <div className="flex justify-between items-center w-full">
-                      <span
-                        className="text-gray-800 truncate max-w-[170px]"
-                        title={user.name}
-                      >
-                        {user.name}
-                      </span>
-                      <span className="font-semibold text-gray-500">
-                        {user.username}
-                      </span>
-                    </div>
-                  </div>
-                ))
-              )}
-              {loadingUsers && serverFetchedUsers.length > 0 && (
-                <div className="px-3 py-1 text-xs text-gray-400 text-center">
-                  {t("refreshing")}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+        <UserSelector
+          label={t("creator")}
+          placeholder={t("choose_creator")}
+          selectedUserId={creatorId}
+          setSelectedUserId={setCreatorId}
+          t={t}
+        />
         <CategoryMultiSelect
           label={t("categories")}
           placeholder={t("choose_categories")}

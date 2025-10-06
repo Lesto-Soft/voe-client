@@ -296,35 +296,33 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
                       file.name
                     }`}
                   >
-                    {" "}
-                    <XMarkIcon className="h-4 w-4 text-btnRed hover:text-red-700" />{" "}
-                  </button>{" "}
+                    <XMarkIcon className="h-4 w-4 text-btnRed hover:text-red-700" />
+                  </button>
                 </div>
               );
-            })}{" "}
-          </div>{" "}
+            })}
+          </div>
         </div>
       )}
-      {/* Submission Error Display */}{" "}
-      {/* This uses conditional rendering for the error message for clarity and accessibility */}{" "}
+      {/* Submission Error Display */}
+      {/* This uses conditional rendering for the error message for clarity and accessibility */}
       {
         <div
           id="submission-error-display" // Ensure this ID is unique if multiple instances on one page or use aria-describedby on textarea
-          className={`mx-5 mt-3 col-span-1 md:col-span-2 p-3 rounded-md border
+          className={`mx-5 col-span-1 md:col-span-2 pb-2 rounded-md border
          transition-opacity duration-300
          ${
            submissionError
-             ? "bg-red-100 border-red-400 text-red-700 opacity-100" // Visible styles
+             ? "my-2 p-2 bg-red-100 border-red-400 text-red-700 opacity-100" // Visible styles
              : "border-transparent text-transparent opacity-0 h-0 p-0 overflow-hidden" // Hidden and collapse space
          }`}
           aria-live="polite"
           role="alert"
         >
-          {" "}
           {/* Display error or non-breaking space to maintain height when not fully collapsed */}
-          {submissionError}{" "}
+          {submissionError}
         </div>
-      }{" "}
+      }
     </div>
   );
 };

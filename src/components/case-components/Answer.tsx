@@ -282,9 +282,9 @@ const Answer: React.FC<{
     <div className="mt-2 pt-2 border-t border-gray-100">
       {/* --- NEW: Combined Controls Row using Absolute Positioning --- */}
       <div
-        className={`relative flex items-center h-10 mb-2 bg-white z-10 transition-shadow duration-200 ${
-          isCommentScrolled && areCommentsVisible
-            ? "shadow-[0_5px_10px_-5px_rgba(0,0,0,0.1)] border-b border-gray-100 [clip-path:inset(0_0_-10px_0)]"
+        className={`relative flex items-center h-10 bg-white rounded-md z-10 transition-shadow duration-200 ${
+          isCommentScrolled && areCommentsVisible && !showCommentBox
+            ? "shadow-[0_5px_10px_-5px_rgba(0,0,0,0.1)] [clip-path:inset(0_0_-10px_0)]"
             : ""
         }`}
       >
@@ -343,54 +343,68 @@ const Answer: React.FC<{
 
       {/* Add Comment Form (conditionally rendered) */}
       {showCommentBox && (
-        <AddComment
-          key={answer._id}
-          t={t}
-          answerId={answer._id}
-          caseNumber={caseNumber}
-          me={me}
-          inputId={`file-upload-comment-answer-${answer._id}`}
-          mentions={mentions}
-          onCommentSubmitted={handleCommentSubmitted}
-        />
+        <div className="mt-1">
+          <AddComment
+            key={answer._id}
+            t={t}
+            answerId={answer._id}
+            caseNumber={caseNumber}
+            me={me}
+            inputId={`file-upload-comment-answer-${answer._id}`}
+            mentions={mentions}
+            onCommentSubmitted={handleCommentSubmitted}
+          />
+        </div>
       )}
 
       {/* Comments List (conditionally rendered) */}
       {answer.comments && answer.comments.length > 0 && areCommentsVisible && (
-        <div
-          ref={commentsContainerRef}
-          className="mt-2 pl-4 max-h-96 overflow-y-auto custom-scrollbar-xs space-y-2"
-        >
-          {answer.comments.map((comment: IComment) => (
-            <div
-              key={comment._id}
-              ref={(node) => {
-                if (node) {
-                  commentRefs.current.set(comment._id, node);
-                } else {
-                  commentRefs.current.delete(comment._id);
-                }
-              }}
-              className="mx-1 mt-1"
-            >
-              <Comment
+        // 1. Add a new parent div with `relative` positioning.
+        <div className="relative">
+          <div
+            ref={commentsContainerRef}
+            className="pl-4 max-h-96 overflow-y-auto custom-scrollbar-xs space-y-2"
+          >
+            {answer.comments.map((comment: IComment) => (
+              <div
                 key={comment._id}
-                comment={comment}
-                me={me}
-                caseNumber={caseNumber}
-                mentions={mentions}
-                parentType="answer"
-                targetId={childTargetId}
-              />
-            </div>
-          ))}
+                ref={(node) => {
+                  if (node) {
+                    commentRefs.current.set(comment._id, node);
+                  } else {
+                    commentRefs.current.delete(comment._id);
+                  }
+                }}
+                className="ml-1 mt-1 mr-2"
+              >
+                <Comment
+                  key={comment._id}
+                  comment={comment}
+                  me={me}
+                  caseNumber={caseNumber}
+                  mentions={mentions}
+                  parentType="answer"
+                  targetId={childTargetId}
+                />
+              </div>
+            ))}
+          </div>
+
+          <div
+            className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-b from-gray-200 to-transparent pointer-events-none transition-opacity duration-300 ${
+              isCommentScrolled && areCommentsVisible && showCommentBox
+                ? "opacity-100"
+                : "opacity-0"
+            }`}
+            aria-hidden="true"
+          />
         </div>
       )}
     </div>
   );
 
   return (
-    <div className="my-6 min-w-full px-5 transition-all duration-500">
+    <div className="mt-3 mb-3 min-w-full px-5 transition-all duration-500">
       <div
         className={`bg-white shadow-md rounded-lg p-4 transition-colors ${
           approved

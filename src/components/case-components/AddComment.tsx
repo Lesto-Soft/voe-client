@@ -231,7 +231,7 @@ const AddComment: React.FC<AddCommentProps> = ({
             onClick={submitComment}
             disabled={isSubmitDisabled}
             aria-label={t("submitComment") || "Submit Comment"}
-            className={`cursor-pointer flex items-center justify-center h-auto w-24 rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-btnRedHover disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150`}
+            className={`cursor-pointer flex items-center justify-center h-auto w-24 min-w-24 rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-btnRedHover disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150`}
             title="Изпрати"
           >
             {" "}
@@ -314,32 +314,30 @@ const AddComment: React.FC<AddCommentProps> = ({
                       file.name
                     }`}
                   >
-                    {" "}
-                    <XMarkIcon className="h-4 w-4 text-btnRed hover:text-red-700" />{" "}
-                  </button>{" "}
+                    <XMarkIcon className="h-4 w-4 text-btnRed hover:text-red-700" />
+                  </button>
                 </div>
               );
-            })}{" "}
-          </div>{" "}
+            })}
+          </div>
         </div>
-      )}{" "}
-      {/* Submission Error Display - Always rendered, uses opacity for transition */}{" "}
+      )}
+      {/* Submission Error Display - Always rendered, uses opacity for transition */}
       <div
         id="submission-error-display" // Ensure this ID is unique if multiple instances on one page or use aria-describedby on textarea
-        className={`mx-5 mt-3 col-span-1 md:col-span-2 p-3 rounded-md border
+        className={`mx-5 col-span-1 md:col-span-2 pb-2 rounded-md border
           transition-opacity duration-300
           ${
             submissionError
-              ? "bg-red-100 border-red-400 text-red-700 opacity-100" // Visible styles
+              ? "my-2 p-2 bg-red-100 border-red-400 text-red-700 opacity-100" // Visible styles
               : "border-transparent text-transparent opacity-0 h-0 p-0 overflow-hidden" // Hidden and collapse space
           }`}
         aria-live="polite"
         role="alert"
       >
-        {" "}
         {/* Display error or non-breaking space to maintain height when not fully collapsed */}
-        {submissionError}{" "}
-      </div>{" "}
+        {submissionError}
+      </div>
     </div>
   );
 };

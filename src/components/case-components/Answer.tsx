@@ -34,6 +34,8 @@ const Answer: React.FC<{
   mentions: { name: string; username: string; _id: string }[];
   targetId?: string | null;
   childTargetId?: string | null;
+  areCommentsVisible: boolean;
+  onToggleComments: (answerId: string) => void;
 }> = ({
   answer,
   me,
@@ -44,6 +46,8 @@ const Answer: React.FC<{
   mentions,
   targetId,
   childTargetId = null,
+  areCommentsVisible,
+  onToggleComments,
 }) => {
   const { t } = useTranslation("answer");
   const approved = !!answer.approved;
@@ -54,7 +58,6 @@ const Answer: React.FC<{
   const isAdmin = me.role?._id === ROLES.ADMIN;
   const answerRef = useRef<HTMLDivElement>(null);
   const commentRefs = useRef(new Map<string, HTMLDivElement>());
-  const [areCommentsVisible, setAreCommentsVisible] = useState(true);
 
   // --- 1. ADD REFS AND STATE FOR THE MARQUEE ---
   const positionContainerRef = useRef<HTMLDivElement>(null);
@@ -136,7 +139,7 @@ const Answer: React.FC<{
     // Action 2: Check if there is a child comment to highlight.
     if (childTargetId) {
       if (!areCommentsVisible) {
-        setAreCommentsVisible(true);
+        onToggleComments(answer._id);
       }
       const timer = setTimeout(() => {
         const commentId = childTargetId.split("-")[1];
@@ -276,7 +279,7 @@ const Answer: React.FC<{
         {answer.comments && answer.comments.length > 0 && (
           <button
             onClick={() => {
-              setAreCommentsVisible((prev) => !prev);
+              onToggleComments(answer._id);
               focusOnAnswer();
             }}
             className="absolute top-1/2 -translate-y-1/2 right-2 md:right-auto md:left-1/2 md:-translate-x-1/2 flex items-center gap-2 cursor-pointer text-sm font-semibold text-gray-600 hover:text-gray-800 p-2 rounded-md hover:bg-gray-50 focus:outline-none transition-colors"

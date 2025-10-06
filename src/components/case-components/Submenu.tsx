@@ -61,6 +61,16 @@ const Submenu: React.FC<SubmenuProps> = ({
   const [targetId, setTargetId] = useState<string | null>(null);
   const [childTargetId, setChildTargetId] = useState<string | null>(null);
   const location = useLocation();
+  const [answerCommentsVisibility, setAnswerCommentsVisibility] = useState<
+    Record<string, boolean>
+  >({});
+
+  const handleToggleAnswerComments = (answerId: string) => {
+    setAnswerCommentsVisibility((prev) => ({
+      ...prev,
+      [answerId]: !(prev[answerId] ?? true), // Default is visible, so toggle it
+    }));
+  };
 
   // State to control the visibility of the AddAnswer form.
   // It defaults to 'true' (visible) if the case status is OPEN or IN_PROGRESS.
@@ -365,6 +375,10 @@ const Submenu: React.FC<SubmenuProps> = ({
                         mentions={mentions}
                         targetId={targetId}
                         childTargetId={childTargetId}
+                        areCommentsVisible={
+                          answerCommentsVisibility[answer._id] ?? true
+                        }
+                        onToggleComments={handleToggleAnswerComments}
                       />
                     ))}
                 </>

@@ -71,19 +71,28 @@ const Comment: React.FC<CommentProps> = ({
       }`}
     >
       {/* --- NEW: COMPACT HEADER --- */}
-      <div className="flex justify-between items-center mb-2">
-        <div className="flex flex-row items-center justify-center gap-2">
-          <UserLink user={comment.creator} />
+      <div className="flex items-center justify-between gap-4 mb-2">
+        {/* Left Side: User Info 
+    - `min-w-0` is the key here. It allows the child elements inside 
+      this flex container to truncate properly.
+  */}
+        <div className="flex min-w-0 flex-row items-center gap-2">
+          {/* `flex-shrink-0` prevents the UserLink from being squished */}
+          <div className="flex-shrink-0">
+            <UserLink user={comment.creator} />
+          </div>
           <span
-            className="text-xs text-gray-400 truncate max-w-20 sm:max-w-28 md:max-w-40 lg:max-w-56"
+            className="truncate text-xs text-gray-400"
             title={comment.creator.position}
           >
             {comment.creator.position}
           </span>
         </div>
-        {/* Actions (Edit/Delete) */}
-        {/* MODIFIED ACTIONS SECTION */}
-        <div className="flex items-center gap-1.5">
+
+        {/* Right Side: Actions
+    - `flex-shrink-0` ensures this section is never squished and keeps its position.
+  */}
+        <div className="flex flex-shrink-0 items-center gap-1.5">
           <ShowDate collapsible={true} date={comment.date} />
           {me &&
             (me._id === comment.creator._id || admin_check(me.role.name)) && (

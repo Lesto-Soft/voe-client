@@ -66,6 +66,9 @@ const Answer: React.FC<{
   const [scrollDuration, setScrollDuration] = useState(0);
   const [isHovering, setIsHovering] = useState(false);
 
+  const [isCommentScrolled, setIsCommentScrolled] = useState(false);
+  const commentsContainerRef = useRef<HTMLDivElement>(null);
+
   // --- 2. ADD USEEFFECT TO CHECK FOR OVERFLOW ---
   useEffect(() => {
     const checkOverflow = () => {
@@ -97,6 +100,26 @@ const Answer: React.FC<{
       window.removeEventListener("resize", checkOverflow);
     };
   }, [answer.creator.position]);
+
+  useEffect(() => {
+    const container = commentsContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      // Set state to true if the container is scrolled down at all
+      setIsCommentScrolled(container.scrollTop > 0);
+    };
+
+    container.addEventListener("scroll", handleScroll);
+
+    // Also run it once on mount in case the list is already scrolled
+    handleScroll();
+
+    // Cleanup the listener when the component unmounts or hides
+    return () => {
+      container.removeEventListener("scroll", handleScroll);
+    };
+  }, [areCommentsVisible]); // Re-run this effect when the comment list is shown/hidden
 
   const managedCategoryIds = me?.managed_categories.map(
     (cat: ICategory) => cat._id
@@ -258,10 +281,16 @@ const Answer: React.FC<{
   const commentsSection = (
     <div className="mt-2 pt-2 border-t border-gray-100">
       {/* --- NEW: Combined Controls Row using Absolute Positioning --- */}
-      <div className="relative flex items-center h-10 mb-2">
+      <div
+        className={`relative flex items-center h-10 mb-2 bg-white z-10 transition-shadow duration-200 ${
+          isCommentScrolled && areCommentsVisible
+            ? "shadow-[0_5px_10px_-5px_rgba(0,0,0,0.1)] border-b border-gray-100 [clip-path:inset(0_0_-10px_0)]"
+            : ""
+        }`}
+      >
         {/* Left Side: Add Comment Button */}
         <button
-          className="cursor-pointer  text-gray-800 bg-gray-100 hover:bg-gray-200 absolute left-2 top-1/2 -translate-y-1/2 w-42 px-2 py-1 rounded text-sm font-semibold transition-colors duration-200"
+          className="cursor-pointer text-gray-800 bg-gray-100 hover:bg-gray-200 absolute left-2 top-1/2 -translate-y-1/2 w-42 px-2 py-1 rounded text-sm font-semibold transition-colors duration-200"
           onClick={() => {
             setShowCommentBox((v) => !v);
             focusOnAnswer(); // Call scroll function directly
@@ -291,13 +320,19 @@ const Answer: React.FC<{
               <ChevronDownIcon className="h-5 w-5" />
             )}
 
-            {/* MODIFIED TEXT SPAN */}
             <span>
-              {`${areCommentsVisible ? "Скрий" : "Покажи"} ${
-                answer.comments.length === 1 ? "коментар" : "коментари"
-              }`}
-              {/* This span will only appear on screens md and larger */}
+              {/* "Покажи" or "Скрий" - always visible */}
+              {`${areCommentsVisible ? "Скрий" : "Покажи"}`}
+
+              {/* "коментар/и" - hidden on mobile (xs), visible from sm upwards */}
+              <span className="hidden sm:inline">
+                {` ${answer.comments.length === 1 ? "коментар" : "коментари"}`}
+              </span>
+
+              {/* "към решението" - hidden below md, visible from md upwards */}
               <span className="hidden md:inline"> към решението</span>
+
+              {/* The count - always visible if > 1 */}
               {` ${
                 answer.comments.length > 1 ? `(${answer.comments.length})` : ""
               }`}
@@ -322,7 +357,10 @@ const Answer: React.FC<{
 
       {/* Comments List (conditionally rendered) */}
       {answer.comments && answer.comments.length > 0 && areCommentsVisible && (
-        <div className="mt-2 pl-4 max-h-96 overflow-y-auto custom-scrollbar-xs space-y-2">
+        <div
+          ref={commentsContainerRef}
+          className="mt-2 pl-4 max-h-96 overflow-y-auto custom-scrollbar-xs space-y-2"
+        >
           {answer.comments.map((comment: IComment) => (
             <div
               key={comment._id}
@@ -363,7 +401,7 @@ const Answer: React.FC<{
         ref={answerRef}
       >
         {/* --- NEW UNIFIED HEADER --- */}
-        <div className="flex justify-between items-start gap-4 mb-3">
+        <div className="flex justify-between items-start gap-1 mb-3">
           {/* Left side: Avatar, Name, Date */}
           <div className="flex items-center gap-2">
             <UserAvatar

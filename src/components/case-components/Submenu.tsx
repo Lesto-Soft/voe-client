@@ -13,7 +13,7 @@ import Comment from "./Comment";
 import Answer from "./Answer";
 import AddComment from "./AddComment";
 import AddAnswer from "./AddAnswer";
-import { USER_RIGHTS, CASE_STATUS } from "../../utils/GLOBAL_PARAMETERS";
+import { USER_RIGHTS /*, CASE_STATUS */ } from "../../utils/GLOBAL_PARAMETERS";
 import { useLocation } from "react-router";
 import useMediaQuery from "../../hooks/useMediaQuery";
 
@@ -68,7 +68,7 @@ const Submenu: React.FC<SubmenuProps> = ({
   const handleToggleAnswerComments = (answerId: string) => {
     setAnswerCommentsVisibility((prev) => ({
       ...prev,
-      [answerId]: !(prev[answerId] ?? true), // Default is visible, so toggle it
+      [answerId]: !(prev[answerId] ?? false), // Default is hidden, so toggle it off
     }));
   };
 
@@ -288,7 +288,7 @@ const Submenu: React.FC<SubmenuProps> = ({
   });
 
   return (
-    <div className="flex flex-col lg:h-full relative">
+    <div className="flex flex-col lg:h-full relative custom-scrollbar-xs">
       <div className="flex-shrink-0 sticky top-0 z-1 bg-white border-b border-gray-200">
         <div className="flex justify-center gap-2 py-4">
           {submenu.map((item) => (
@@ -395,7 +395,7 @@ const Submenu: React.FC<SubmenuProps> = ({
                         targetId={targetId}
                         childTargetId={childTargetId}
                         areCommentsVisible={
-                          answerCommentsVisibility[answer._id] ?? true
+                          answerCommentsVisibility[answer._id] ?? false
                         }
                         onToggleComments={handleToggleAnswerComments}
                       />

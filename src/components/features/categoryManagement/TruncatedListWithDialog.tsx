@@ -5,7 +5,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { XMarkIcon } from "@heroicons/react/24/solid";
 
 // Import UserLink (ensure path is correct)
-import UserLink from "../../global/UserLink";
+import UserLink from "../../global/links/UserLink";
 import { IUser } from "../../../db/interfaces"; // Assuming IUser is available
 
 // ListItem should ideally be IUser or compatible for passing to UserLink

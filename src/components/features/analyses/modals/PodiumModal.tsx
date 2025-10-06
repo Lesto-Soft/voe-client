@@ -1,7 +1,7 @@
 import React from "react";
 import { IUser } from "../../../../db/interfaces";
 import UserAvatar from "../../../cards/UserAvatar";
-import UserLink from "../../../global/UserLink";
+import UserLink from "../../../global/links/UserLink";
 
 // We define this type here for now. We can move it to a shared types file later.
 type RankedUser = {

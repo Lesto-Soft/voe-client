@@ -1,7 +1,7 @@
 import React from "react";
 import { ICase, IUser } from "../../../db/interfaces";
 import ShowDate from "../../global/ShowDate";
-import CaseLink from "../../global/CaseLink";
+import CaseLink from "../../global/links/CaseLink";
 import { StarIcon } from "@heroicons/react/24/outline";
 import { TIERS } from "../../../utils/GLOBAL_PARAMETERS";
 

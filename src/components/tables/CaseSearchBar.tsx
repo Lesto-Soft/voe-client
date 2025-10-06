@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { ICase } from "../../db/interfaces";
-import { XMarkIcon, CalendarDaysIcon } from "@heroicons/react/24/outline";
+import { CalendarDaysIcon } from "@heroicons/react/24/outline";
 import DateRangeSelector from "../features/userAnalytics/DateRangeSelector";
-import CustomDropdown from "../global/CustomDropdown";
-import CustomMultiSelectDropdown from "../global/CustomMultiSelectDropdown";
+import CustomDropdown from "../global/dropdown/CustomDropdown";
+import CustomMultiSelectDropdown from "../global/dropdown/CustomMultiSelectDropdown";
 import {
   getPriorityOptions,
   getReadStatusOptions,

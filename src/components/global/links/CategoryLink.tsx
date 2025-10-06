@@ -1,7 +1,7 @@
 import { Link } from "react-router";
-import { ICategory } from "../../db/interfaces";
-import { useCurrentUser } from "../../context/UserContext";
-import { canViewCategory } from "../../utils/rightUtils";
+import { ICategory } from "../../../db/interfaces";
+import { useCurrentUser } from "../../../context/UserContext";
+import { canViewCategory } from "../../../utils/rightUtils";
 
 const CategoryLink = (category: ICategory) => {
   // URL-encode the category name to ensure it's safe for URL path

@@ -1,8 +1,8 @@
 import React from "react";
 import { Link } from "react-router";
-import { ICase } from "../../db/interfaces";
-import { useCurrentUser } from "../../context/UserContext";
-import { canViewCase } from "../../utils/rightUtils";
+import { ICase } from "../../../db/interfaces";
+import { useCurrentUser } from "../../../context/UserContext";
+import { canViewCase } from "../../../utils/rightUtils";
 
 interface ICaseLinkProps {
   my_case: ICase;

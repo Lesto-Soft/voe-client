@@ -11,9 +11,9 @@ import moment from "moment";
 import "moment/dist/locale/bg";
 import { ICase } from "../../db/interfaces";
 import { useEffect, useState } from "react";
-import UserLink from "../global/UserLink";
-import CategoryLink from "../global/CategoryLink";
-import CaseLink from "../global/CaseLink";
+import UserLink from "../global/links/UserLink";
+import CategoryLink from "../global/links/CategoryLink";
+import CaseLink from "../global/links/CaseLink";
 import {
   getPriorityStyle,
   getStatusStyle,

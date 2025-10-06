@@ -8,7 +8,7 @@ import { renderContentSafely } from "../../utils/contentRenderer";
 import { ICategory, IMe, IMetricScore, IUser } from "../../db/interfaces"; // UPDATED
 import Creator from "../case-components/Creator";
 import ShowDate from "../global/ShowDate";
-import CategoryLink from "../global/CategoryLink";
+import CategoryLink from "../global/links/CategoryLink";
 import ImagePreviewModal from "./ImagePreviewModal";
 import { createFileUrl } from "../../utils/fileUtils";
 import { getPriorityStyle, getTypeBadgeStyle } from "../../utils/style-helpers";

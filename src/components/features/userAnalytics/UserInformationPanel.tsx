@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { IUser, ICategory } from "../../../db/interfaces";
 import UserAvatar from "../../../components/cards/UserAvatar";
-import CategoryLink from "../../../components/global/CategoryLink";
+import CategoryLink from "../../../components/global/links/CategoryLink";
 import {
   AtSymbolIcon,
   BriefcaseIcon,

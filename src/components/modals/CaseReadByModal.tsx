@@ -3,7 +3,7 @@ import React, { useMemo } from "react";
 import ReactDOM from "react-dom";
 import { IReadBy } from "../../db/interfaces";
 import UserAvatar from "../cards/UserAvatar";
-import UserLink from "../global/UserLink";
+import UserLink from "../global/links/UserLink";
 import ShowDate from "../global/ShowDate";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { EyeIcon } from "@heroicons/react/24/solid";

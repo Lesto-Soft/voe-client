@@ -1,6 +1,6 @@
 import React from "react";
 import { ArchivedFilterStatus } from "../../../hooks/useRatingMetricManagement";
-import CustomDropdown from "../../global/CustomDropdown";
+import CustomDropdown from "../../global/dropdown/CustomDropdown";
 import ClearableInput from "../../global/inputs/ClearableInput";
 
 interface RatingMetricFiltersProps {
@@ -45,7 +45,6 @@ const RatingMetricFilters: React.FC<RatingMetricFiltersProps> = ({
           onChange={setFilterDescription}
           placeholder="Търси по описание..."
         />
-        {/* 2. Replace the entire old dropdown with the new component */}
         <CustomDropdown
           label="Статус"
           options={statusOptions}

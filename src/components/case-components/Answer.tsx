@@ -4,7 +4,7 @@ import Comment from "./Comment";
 import ShowDate from "../global/ShowDate";
 import { useTranslation } from "react-i18next";
 import Creator from "./Creator";
-import UserLink from "../global/UserLink";
+import UserLink from "../global/links/UserLink";
 import ApproveBtn from "./ApproveBtn";
 import AnswerHistoryModal from "../modals/AnswerHistoryModal";
 import FinanceApproveBtn from "./FinanceApproveBtn";

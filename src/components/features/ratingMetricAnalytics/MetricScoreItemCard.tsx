@@ -1,8 +1,8 @@
 import React from "react";
 import { IMetricScore } from "../../../db/interfaces";
 import ShowDate from "../../global/ShowDate";
-import CaseLink from "../../global/CaseLink";
-import UserLink from "../../global/UserLink";
+import CaseLink from "../../global/links/CaseLink";
+import UserLink from "../../global/links/UserLink";
 import { StarIcon } from "@heroicons/react/24/solid";
 import { TIERS } from "../../../utils/GLOBAL_PARAMETERS";
 

@@ -2,7 +2,7 @@
 import React from "react";
 import { ICase, IAnswer, IComment, IUser } from "../../../db/interfaces";
 import ShowDate from "../../../components/global/ShowDate";
-import CaseLink from "../../../components/global/CaseLink";
+import CaseLink from "../../../components/global/links/CaseLink";
 import {
   ChatBubbleOvalLeftEllipsisIcon,
   ChatBubbleBottomCenterTextIcon,
@@ -26,7 +26,7 @@ import {
   getTypeBadgeStyle as getTypeBadgeStyleFromHelper,
   getCalculatedRatingStyle as getCalculatedRatingStyleFromHelper,
 } from "../../../utils/style-helpers";
-import CategoryLink from "../../global/CategoryLink";
+import CategoryLink from "../../global/links/CategoryLink";
 import {
   stripHtmlTags,
   renderContentSafely,

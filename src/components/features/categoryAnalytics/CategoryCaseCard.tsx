@@ -2,8 +2,8 @@
 import React from "react";
 import { ICase } from "../../../db/interfaces"; // Adjust path as needed
 import UserAvatar from "../../../components/cards/UserAvatar"; // Adjust path as needed
-import CaseLink from "../../../components/global/CaseLink"; // Adjust path as needed
-import UserLink from "../../../components/global/UserLink"; // Adjust path as needed
+import CaseLink from "../../../components/global/links/CaseLink"; // Adjust path as needed
+import UserLink from "../../../components/global/links/UserLink"; // Adjust path as needed
 import ShowDate from "../../../components/global/ShowDate"; // Adjust path as needed
 import { FlagIcon as SolidFlagIcon } from "@heroicons/react/24/solid"; // Use solid as per CaseInfo
 import { StarIcon as SolidStarIcon } from "@heroicons/react/24/solid";

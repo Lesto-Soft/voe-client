@@ -102,7 +102,7 @@ function TruncatedListWithDialog({
             1. No e.stopPropagation(): Clicking UserLink will navigate AND may trigger the dialog.
             2. Styling is fixed by UserLink.
           */}
-          <UserLink user={userItem} />
+          <UserLink user={userItem} initialsOnlyMobile={true} />
         </div>
       );
     } else {

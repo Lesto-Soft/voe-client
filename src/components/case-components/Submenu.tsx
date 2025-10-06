@@ -489,7 +489,7 @@ const Submenu: React.FC<SubmenuProps> = ({
         <button
           onClick={scrollToTop}
           className={`cursor-pointer z-20 p-2 bg-gray-500 text-white rounded-full shadow-lg hover:bg-gray-700 focus:outline-none active:ring-2 active:ring-offset-2 active:ring-gray-500 transition-transform hover:scale-110 ${
-            isDesktop ? "absolute bottom-6 right-6" : "fixed bottom-6 right-6"
+            isDesktop ? "absolute bottom-6 right-6" : "fixed bottom-3 right-3"
           }`}
           aria-label="Scroll to top"
           title="Върнете се най-нагоре"

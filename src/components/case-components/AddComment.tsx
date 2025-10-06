@@ -194,8 +194,7 @@ const AddComment: React.FC<AddCommentProps> = ({
       {/* Main container for the input area */}
       <div className="flex flex-col gap-2 mx-5">
         {/* Flex container for textarea, attachment button, and submit button */}
-        {/* UPDATED: Container now stretches children to be equal height */}
-        <div className="flex items-stretch gap-2">
+        <div className="flex flex-col md:flex-row md:items-stretch gap-2">
           {/* Container for the textarea and character counter */}
           <div className="flex-grow relative">
             <SimpleTextEditor
@@ -218,63 +217,64 @@ const AddComment: React.FC<AddCommentProps> = ({
               autoFocus={true} // Auto-focus the editor on mount
             />
           </div>
-          {/* File attachment component */}
-          <FileAttachmentAnswer
-            inputId={inputId ?? "default"}
-            attachments={attachments}
-            setAttachments={setAttachments}
-            setFileError={setFileError}
-            height={36}
-          />
-          {/* Submit button */}{" "}
-          <button
-            onClick={submitComment}
-            disabled={isSubmitDisabled}
-            aria-label={t("submitComment") || "Submit Comment"}
-            className={`cursor-pointer flex items-center justify-center h-auto w-24 min-w-24 rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-btnRedHover disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150`}
-            title="Изпрати"
-          >
-            {" "}
-            {loading ? (
-              // Loading spinner
-              <svg
-                className="animate-spin h-5 w-5 text-blue-600"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                {" "}
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                ></circle>{" "}
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                ></path>{" "}
-              </svg>
-            ) : (
-              // Paper airplane icon (h-6 w-6 is a bit smaller for h-24 button)
-              <PaperAirplaneIcon className="h-6 w-6 text-blue-600" />
-            )}{" "}
-          </button>{" "}
-        </div>{" "}
+          <div className="flex justify-between gap-4 md:contents">
+            {/* File attachment component */}
+            <FileAttachmentAnswer
+              inputId={inputId ?? "default"}
+              attachments={attachments}
+              setAttachments={setAttachments}
+              setFileError={setFileError}
+              wrapperClassName="flex-1 md:flex-none"
+              heightClass="h-14 md:h-36"
+            />
+            {/* Submit button */}
+            <button
+              onClick={submitComment}
+              disabled={isSubmitDisabled}
+              aria-label={t("submitComment") || "Submit Comment"}
+              className={`flex-1 md:flex-none cursor-pointer flex items-center justify-center h-14 md:h-36 md:w-24 md:min-w-24 rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-btnRedHover disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150`}
+              title="Изпрати"
+            >
+              {loading ? (
+                // Loading spinner
+                <svg
+                  className="animate-spin h-5 w-5 text-blue-600"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+              ) : (
+                // Paper airplane icon (h-6 w-6 is a bit smaller for h-24 button)
+                <PaperAirplaneIcon className="h-6 w-6 text-blue-600" />
+              )}
+            </button>
+          </div>
+        </div>
       </div>
-      {/* Display file errors */}{" "}
+      {/* Display file errors */}
       {fileError && (
         <div className="mx-5 mt-2 px-2">
-          {/* Consistent margin with mx-5 */}{" "}
+          {/* Consistent margin with mx-5 */}
           <p className="text-sm text-red-500 transition-opacity duration-200 opacity-100">
-            {fileError || "\u00A0"}{" "}
-          </p>{" "}
+            {fileError || "\u00A0"}
+          </p>
         </div>
       )}
-      {/* Display list of attached files */}{" "}
+      {/* Display list of attached files */}
       {attachments.length > 0 && (
         <div className="mx-5 mt-2 text-sm text-gray-600 space-y-1 overflow-y-auto rounded p-2 bg-gray-100 border border-gray-200 max-h-28">
           {" "}

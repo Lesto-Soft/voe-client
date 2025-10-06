@@ -38,10 +38,9 @@ type CaseFilters = {
 
 interface CaseTableWithFiltersProps {
   fetchHook: FetchHook;
-  clearFiltersSignal?: any;
   filter: boolean;
   t: (key: string) => string;
-  initialFiltersOverride?: CaseFilters; // New prop for "props mode"
+  initialFiltersOverride?: CaseFilters;
 }
 
 function useDebounce<T>(value: T, delay: number): T {
@@ -60,6 +59,7 @@ function getFiltersFromParams(params: URLSearchParams): CaseFilters {
     : [];
   const statusParam = params.get("status");
   const status = statusParam ? statusParam.split(",").filter(Boolean) : [];
+
   return {
     caseNumber: params.get("caseNumber") || "",
     priority: (params.get("priority") || "") as ICase["priority"] | "",
@@ -112,6 +112,18 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
   const navigate = useNavigate();
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
+  const clearAllFilters = useCallback(() => {
+    setCaseNumber("");
+    setPriority("");
+    setType("");
+    setCreatorId("");
+    setCategoryIds([]);
+    setContent("");
+    setStatus([]);
+    setReadStatus("ALL");
+    setDateRange({ startDate: null, endDate: null });
+  }, []);
+
   // Determine initial filters based on prop or URL
   const initialFilters = useMemo(() => {
     if (initialFiltersOverride) {
@@ -147,6 +159,25 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
     endDate: initialFilters.endDate || null,
   });
 
+  useEffect(() => {
+    const filters = initialFilters; // Get the latest calculated filters
+    setCaseNumber(filters.caseNumber || "");
+    setPriority(filters.priority || "");
+    setType(filters.type || "");
+    setCreatorId(filters.creatorId || "");
+    setCategoryIds(filters.categoryIds || []);
+    setContent(filters.content || "");
+    setStatus(filters.status || []);
+    setReadStatus(filters.readStatus || "ALL");
+    setDateRange({
+      startDate: filters.startDate || null,
+      endDate: filters.endDate || null,
+    }); // Also sync the current page from the URL
+    setCurrentPage(
+      Number(new URLSearchParams(location.search).get("page")) || 1
+    );
+  }, [initialFilters, location.search]);
+
   const debouncedCaseNumber = useDebounce(caseNumber, 500);
   const debouncedContent = useDebounce(content, 500);
 
@@ -157,12 +188,12 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
     if (initialFiltersOverride) return;
 
     const filtersForUrl = {
-      caseNumber: debouncedCaseNumber,
+      caseNumber: caseNumber,
       priority,
       type,
       creatorId,
       categoryIds,
-      content: debouncedContent,
+      content: content,
       status,
       readStatus,
       startDate: dateRange.startDate,
@@ -211,12 +242,12 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
       };
     }
   }, [
-    debouncedCaseNumber,
+    caseNumber,
     priority,
     type,
     creatorId,
     categoryIds,
-    debouncedContent,
+    content,
     status,
     readStatus,
     itemsPerPage,

@@ -122,6 +122,18 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
   }, [usersData, fetchedInitialCreator, creatorId, creatorInput, setCreatorId]);
 
   useEffect(() => {
+    if (!creatorId) {
+      setCreatorInput("");
+      setSelectedCreator(null);
+      setFetchedInitialCreator(false);
+    }
+  }, [creatorId]);
+  useEffect(() => {
+    if (!dateRange.startDate && !dateRange.endDate) {
+      setIsDateSelectorVisible(false);
+    }
+  }, [dateRange]);
+  useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
         creatorInputRef.current &&
@@ -130,13 +142,16 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
         !dropdownRef.current.contains(event.target as Node)
       ) {
         setIsDropdownVisible(false);
+        if (!creatorId) {
+          setCreatorInput("");
+        }
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, []);
+  }, [creatorId]);
 
   const handleCreatorInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
@@ -233,11 +248,14 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
         !categoryDropdownRef.current.contains(event.target as Node)
       ) {
         setIsCategoryDropdownVisible(false);
+        if (!creatorId) {
+          setCreatorInput("");
+        }
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  }, [creatorId]);
 
   const filteredCategories = useMemo(() => {
     const search = categorySearch.trim().toLowerCase();

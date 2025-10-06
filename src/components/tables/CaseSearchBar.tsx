@@ -13,6 +13,7 @@ import {
   getStatusOptions,
   getTypeOptions,
 } from "../../utils/dashboardFilterUtils";
+import CategoryMultiSelect from "../global/CategoryMultiSelect";
 
 // Interface for Lean User (assuming structure)
 interface ILeanUser {
@@ -211,34 +212,6 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
   >([]);
   const [categorySearch, setCategorySearch] = useState("");
 
-  const [
-    fetchCategories,
-    { loading: loadingCategories, error: categoriesError },
-  ] = useLazyQuery<{ getLeanActiveCategories: ICategory[] }>(
-    GET_ACTIVE_CATEGORIES,
-    {
-      onCompleted: (data) => {
-        setServerFetchedCategories(data?.getLeanActiveCategories || []);
-      },
-    }
-  );
-
-  useEffect(() => {
-    if (categoryIds.length > 0 && serverFetchedCategories.length === 0) {
-      fetchCategories();
-    }
-  }, [categoryIds, serverFetchedCategories.length, fetchCategories]);
-
-  useEffect(() => {
-    if (isCategoryDropdownVisible && serverFetchedCategories.length === 0) {
-      fetchCategories();
-    }
-  }, [
-    isCategoryDropdownVisible,
-    serverFetchedCategories.length,
-    fetchCategories,
-  ]);
-
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -310,20 +283,38 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
     <div className="px-4 sm:px-6 lg:px-8 py-5">
       <div className="flex flex-wrap gap-x-4 gap-y-3 items-end">
         <div>
+                   {" "}
           <label
             htmlFor="caseNumber"
             className="block text-sm font-medium text-gray-700 mb-1"
           >
-            {t("case_number")}
+                        {t("case_number")}         {" "}
           </label>
-          <input
-            type="text"
-            id="caseNumber"
-            value={caseNumber}
-            onChange={(e) => setCaseNumber(e.target.value)}
-            className="bg-white w-28 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition duration-150 ease-in-out"
-            placeholder={t("search_by_case_number")}
-          />
+          {/* We add a relative div wrapper here */}
+          <div className="relative">
+                     {" "}
+            <input
+              type="text"
+              id="caseNumber"
+              value={caseNumber}
+              onChange={(e) => setCaseNumber(e.target.value)}
+              // Add right padding for the icon
+              className="bg-white w-28 px-3 pr-8 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition duration-150 ease-in-out"
+              placeholder={t("search_by_case_number")}
+            />
+            {/* Conditionally render the clear button */}
+            {caseNumber && (
+              <button
+                type="button"
+                onClick={() => setCaseNumber("")}
+                className="absolute inset-y-0 right-0 flex items-center pr-2 text-gray-400 hover:text-gray-600 cursor-pointer"
+                title={t("clear")}
+              >
+                <XMarkIcon className="h-5 w-5" />
+              </button>
+            )}
+          </div>
+                 {" "}
         </div>
         <CustomDropdown
           label={t("priority")}
@@ -428,87 +419,44 @@ const CaseSearchBar: React.FC<CaseSearchBarProps> = ({
             </div>
           )}
         </div>
-        <div className="relative flex-1 min-w-[200px]">
-          <label
-            htmlFor="category"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            {t("categories")}
-          </label>
-          <input
-            type="text"
-            id="category"
-            ref={categoryInputRef}
-            value={selectedCategoryNames}
-            onClick={handleCategoryInputClick}
-            readOnly
-            className="bg-white w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm cursor-pointer"
-            placeholder={t("choose_categories")}
-            autoComplete="off"
-          />
-          {isCategoryDropdownVisible && (
-            <div
-              ref={categoryDropdownRef}
-              className="absolute z-50 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto"
-            >
-              <div className="p-2">
-                <input
-                  type="text"
-                  value={categorySearch}
-                  onChange={handleCategorySearchChange}
-                  placeholder={t("search")}
-                  className="w-full px-2 py-1 mb-2 border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500 text-sm"
-                />
-              </div>
-              {loadingCategories && serverFetchedCategories.length === 0 ? (
-                <div className="px-3 py-2 text-sm text-gray-500">
-                  {t("loading")}
-                </div>
-              ) : categoriesError ? (
-                <div className="px-3 py-2 text-sm text-red-600">
-                  {t("error")}: {categoriesError.message}
-                </div>
-              ) : filteredCategories.length === 0 ? (
-                <div className="px-3 py-2 text-sm text-gray-500">
-                  {t("no_categories")}
-                </div>
-              ) : (
-                filteredCategories.map((cat) => (
-                  <label
-                    key={cat._id}
-                    className="flex items-center px-3 py-2 cursor-pointer hover:bg-indigo-50"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={categoryIds.includes(cat._id)}
-                      onChange={() => handleCategoryToggle(cat._id)}
-                      className="form-checkbox h-5 w-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                    />
-                    <span className="ml-2 text-sm text-gray-800">
-                      {cat.name}
-                    </span>
-                  </label>
-                ))
-              )}
-            </div>
-          )}
-        </div>
+        <CategoryMultiSelect
+          label={t("categories")}
+          placeholder={t("choose_categories")}
+          selectedCategoryIds={categoryIds}
+          setSelectedCategoryIds={setCategoryIds}
+          t={t}
+        />
         <div className="flex w-full items-end gap-x-4 xl:flex-1 xl:w-auto">
           <div className="flex-1 min-w-[200px]">
+                       {" "}
             <label
               htmlFor="content"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              {t("description")}
+                            {t("description")}           {" "}
             </label>
-            <input
-              type="text"
-              id="content"
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              className="bg-white w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition duration-150 ease-in-out"
-              placeholder={t("search_by_description")}
-            />
+            {/* We add a relative div wrapper here */}
+            <div className="relative">
+                         {" "}
+              <input
+                type="text"
+                id="content"
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                className="bg-white w-full px-3 pr-8 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition duration-150 ease-in-out"
+                placeholder={t("search_by_description")}
+              />
+              {content && (
+                <button
+                  type="button"
+                  onClick={() => setContent("")}
+                  className="absolute inset-y-0 right-0 flex items-center pr-2 text-gray-400 hover:text-gray-600 cursor-pointer"
+                  title={t("clear")}
+                >
+                  <XMarkIcon className="h-5 w-5" />
+                </button>
+              )}
+            </div>
           </div>
           <div>
             <label

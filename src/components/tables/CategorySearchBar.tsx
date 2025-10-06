@@ -1,15 +1,10 @@
-import React, {
-  useState,
-  useRef,
-  useEffect,
-  useMemo,
-  useCallback,
-} from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useLazyQuery } from "@apollo/client";
 import { GET_LEAN_USERS } from "../../graphql/query/user";
-import { ChevronDownIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { XMarkIcon } from "@heroicons/react/24/outline";
 import CustomDropdown from "../global/CustomDropdown";
 import UserMultiSelector from "../global/dropdown/UserMultiSelector";
+import ClearableInput from "../global/inputs/ClearableInput";
 
 interface ILeanUser {
   _id: string;
@@ -43,7 +38,6 @@ const CategorySearchBar: React.FC<CategorySearchBarProps> = ({
   setFilterArchived,
   refetchKey,
 }) => {
-  // Ensure expertIds and managerIds are always arrays
   const expertIds = expertIdsProp || [];
   const managerIds = managerIdsProp || [];
 
@@ -133,35 +127,13 @@ const CategorySearchBar: React.FC<CategorySearchBarProps> = ({
     <div className="pt-2.5">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-3 items-start">
         {/* Name Filter */}
-        <div>
-          <label
-            htmlFor="filterCategoryName"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            {t_hardcoded("Име на категория")}
-          </label>
-          <div className="relative">
-            <input
-              type="text"
-              id="filterCategoryName"
-              value={filterName}
-              onChange={(e) => setFilterName(e.target.value)}
-              className="bg-white w-full px-3 py-2 pr-10 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              placeholder={t_hardcoded("Търси по име...")}
-            />
-            {filterName && (
-              <button
-                type="button"
-                onClick={() => setFilterName("")}
-                className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700"
-                title={t_hardcoded("Изчисти име")}
-              >
-                <XMarkIcon className="h-5 w-5" />
-              </button>
-            )}
-          </div>
-        </div>
-
+        <ClearableInput
+          id="filterCategoryName"
+          label={t_hardcoded("Име на категория")}
+          value={filterName}
+          onChange={setFilterName}
+          placeholder={t_hardcoded("Търси по име...")}
+        />
         <UserMultiSelector
           label={t_hardcoded("Експерти")}
           placeholder={t_hardcoded("Избери експерти...")}
@@ -173,7 +145,6 @@ const CategorySearchBar: React.FC<CategorySearchBarProps> = ({
           error={usersError}
           t={t_hardcoded}
         />
-
         <UserMultiSelector
           label={t_hardcoded("Мениджъри")}
           placeholder={t_hardcoded("Избери мениджъри...")}
@@ -185,7 +156,6 @@ const CategorySearchBar: React.FC<CategorySearchBarProps> = ({
           error={usersError}
           t={t_hardcoded}
         />
-
         {/* Status Filter */}
         <CustomDropdown
           label={t_hardcoded("Статус")}

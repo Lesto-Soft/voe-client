@@ -57,6 +57,8 @@ const CategoryMultiSelect: React.FC<CategoryMultiSelectProps> = ({
   }, [isDropdownVisible, serverFetchedCategories.length, fetchCategories]);
 
   useEffect(() => {
+    if (!isDropdownVisible) return;
+
     const handleClickOutside = (event: MouseEvent) => {
       if (
         inputRef.current &&
@@ -67,9 +69,10 @@ const CategoryMultiSelect: React.FC<CategoryMultiSelectProps> = ({
         setIsDropdownVisible(false);
       }
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+    document.addEventListener("mousedown", handleClickOutside, true);
+    return () =>
+      document.removeEventListener("mousedown", handleClickOutside, true);
+  }, [isDropdownVisible]);
 
   const filteredCategories = useMemo(() => {
     const search = categorySearch.trim().toLowerCase();

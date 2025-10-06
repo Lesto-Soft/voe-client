@@ -280,7 +280,7 @@ const DashboardPage: React.FC<DashboardContentProps> = ({
               {t("filter")}
             </button>
             <button
-              className="w-32 flex items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-red-500 text-white hover:bg-red-600 hover:cursor-pointer"
+              className="w-32 flex items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-btnRed text-white hover:bg-btnRedHover hover:cursor-pointer"
               title={t("clear_filters")}
               onClick={handleClearFilters}
             >

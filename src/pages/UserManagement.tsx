@@ -60,6 +60,17 @@ const UserManagement: React.FC = () => {
     currentQueryInput,
   } = useUserManagement();
 
+  const handleClearAllFilters = () => {
+    setFilterName("");
+    setFilterUsername("");
+    setFilterPosition("");
+    setFilterEmail("");
+    setFilterRoleIds([]);
+    setFilterFinancial(false);
+    setFilterManager(false);
+    handlePageChange(1);
+  };
+
   // --- NEW: Get current user and determine if they are an admin ---
   const currentUser = useCurrentUser() as IMe | undefined;
   const isAdmin = currentUser?.role?._id === ROLES.ADMIN;
@@ -374,22 +385,34 @@ const UserManagement: React.FC = () => {
           dynamicRoleCounts={dynamicRoleCounts}
         />
         <div className="flex flex-col sm:flex-row gap-2 items-center md:items-start flex-shrink-0 mt-4 md:mt-0">
-          <button
-            className="w-full sm:w-auto flex justify-center items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-gray-500 text-white hover:bg-gray-600 hover:cursor-pointer"
-            title={showFilters ? "Скрий филтри" : "Покажи филтри"}
-            onClick={() => setShowFilters(!showFilters)}
-          >
-            {showFilters ? (
-              <ChevronUpIcon className="h-5 w-5 mr-1" />
-            ) : (
-              <ChevronDownIcon className="h-5 w-5 mr-1" />
-            )}
-            Филтри
-          </button>
+          <div className="flex gap-2 w-full sm:w-auto">
+            <button
+              className="w-full sm:w-auto flex justify-center items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-gray-500 text-white hover:bg-gray-600 hover:cursor-pointer"
+              title={showFilters ? "Скрий филтри" : "Покажи филтри"}
+              onClick={() => setShowFilters(!showFilters)}
+            >
+              {showFilters ? (
+                <ChevronUpIcon className="h-5 w-5 mr-1" />
+              ) : (
+                <ChevronDownIcon className="h-5 w-5 mr-1" />
+              )}
+              Филтри
+            </button>
+            <button
+              type="button"
+              onClick={handleClearAllFilters}
+              className="hover:cursor-pointer w-full sm:w-auto flex justify-center items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-btnRed text-white hover:bg-btnRedHover"
+              title="Изчисти всички филтри"
+            >
+              <XMarkIcon className="h-5 w-5 mr-1" />
+              Изчисти
+            </button>
+          </div>
+
           {isAdmin && (
             <button
               onClick={openCreateModal}
-              className="w-full sm:w-[280px] flex flex-shrink-0 justify-center items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-green-500 text-white hover:bg-green-600 hover:cursor-pointer active:bg-green-700 active:shadow-inner disabled:cursor-not-allowed"
+              className="sm:w-54 w-full flex flex-shrink-0 justify-center items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-green-500 text-white hover:bg-green-600 hover:cursor-pointer active:bg-green-700 active:shadow-inner disabled:cursor-not-allowed"
               disabled={createLoading || updateLoading}
             >
               <PlusIconSolid className="h-5 w-5 mr-1" />
@@ -482,7 +505,7 @@ const UserManagement: React.FC = () => {
         )}
         {(createError || updateError) && !(createLoading || updateLoading) && (
           <div className="p-4 mb-4 text-center text-red-600 bg-red-100 rounded-md">
-            Грешка при запис:{" "}
+            Грешка при запис:
             {createError?.message ||
               updateError?.message ||
               "Неизвестна грешка"}

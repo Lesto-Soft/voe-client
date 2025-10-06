@@ -1,6 +1,5 @@
-// src/components/features/categoryManagement/CategoryFilters.tsx
 import React from "react";
-import CategorySearchBar from "../../tables/CategorySearchBar"; // Corrected path assumption
+import CategorySearchBar from "../../tables/CategorySearchBar";
 
 interface CategoryFiltersProps {
   filterName: string;

@@ -39,6 +39,8 @@ const UserMultiSelector: React.FC<UserMultiSelectorProps> = ({
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (!isDropdownVisible) return;
+
     const handleClickOutside = (event: MouseEvent) => {
       if (
         displayRef.current &&
@@ -49,9 +51,10 @@ const UserMultiSelector: React.FC<UserMultiSelectorProps> = ({
         setIsDropdownVisible(false);
       }
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+    document.addEventListener("mousedown", handleClickOutside, true);
+    return () =>
+      document.removeEventListener("mousedown", handleClickOutside, true);
+  }, [isDropdownVisible]);
 
   const selectedUserNames = useMemo(() => {
     return selectedUserIds

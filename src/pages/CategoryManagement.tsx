@@ -1,4 +1,3 @@
-// src/pages/CategoryManagement.tsx
 import React, { useState, useEffect, useMemo } from "react";
 import {
   ChevronUpIcon,
@@ -77,7 +76,15 @@ const CategoryManagement: React.FC = () => {
     currentQueryInput,
   } = useCategoryManagement();
 
-  // --- NEW: Get current user and determine if they are an admin ---
+  const handleClearAllFilters = () => {
+    setFilterName("");
+    setFilterExpertIds([]);
+    setFilterManagerIds([]);
+    setFilterArchived(undefined);
+    setFilterCaseStatus(null);
+    handlePageChange(1);
+  };
+
   const currentUser = useCurrentUser() as IMe | undefined;
   const isAdmin = currentUser?.role?._id === ROLES.ADMIN;
 
@@ -659,24 +666,35 @@ const CategoryManagement: React.FC = () => {
           isLoadingStatusSpecificCounts={isLoadingStatusSpecificCaseCounts}
         />
         <div className="flex flex-col sm:flex-row gap-2 items-center md:items-start flex-shrink-0 mt-4 md:mt-0">
-          <button
-            type="button"
-            className="w-full sm:w-auto flex justify-center items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-gray-500 text-white hover:bg-gray-600 hover:cursor-pointer"
-            title={showFilters ? "Скрий филтри" : "Покажи филтри"}
-            onClick={() => setShowFilters(!showFilters)}
-          >
-            {showFilters ? (
-              <ChevronUpIcon className="h-5 w-5 mr-1" />
-            ) : (
-              <ChevronDownIcon className="h-5 w-5 mr-1" />
-            )}
-            Филтри
-          </button>
+          <div className="flex gap-2 w-full sm:w-auto">
+            <button
+              type="button"
+              className="w-full sm:w-auto flex justify-center items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-gray-500 text-white hover:bg-gray-600 hover:cursor-pointer"
+              title={showFilters ? "Скрий филтри" : "Покажи филтри"}
+              onClick={() => setShowFilters(!showFilters)}
+            >
+              {showFilters ? (
+                <ChevronUpIcon className="h-5 w-5 mr-1" />
+              ) : (
+                <ChevronDownIcon className="h-5 w-5 mr-1" />
+              )}
+              Филтри
+            </button>
+            <button
+              type="button"
+              onClick={handleClearAllFilters}
+              className="w-full sm:w-auto flex justify-center items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-btnRed text-white hover:bg-btnRedHover hover:cursor-pointer"
+              title="Изчисти всички филтри"
+            >
+              <XMarkIcon className="h-5 w-5 mr-1" />
+              Изчисти
+            </button>
+          </div>
           {isAdmin && (
             <button
               type="button"
               onClick={openCreateCategoryModal}
-              className="w-full sm:w-[280px] flex justify-center items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-green-500 text-white hover:bg-green-600 hover:cursor-pointer active:bg-green-700 active:shadow-inner disabled:cursor-not-allowed"
+              className="sm:w-54 w-full flex justify-center items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-green-500 text-white hover:bg-green-600 hover:cursor-pointer active:bg-green-700 active:shadow-inner disabled:cursor-not-allowed"
               disabled={mutationInProgress || isCurrentlyLoadingPageData}
             >
               <PlusIconSolid className="h-5 w-5 mr-1" />
@@ -794,6 +812,7 @@ const CategoryManagement: React.FC = () => {
             usedColors={usedColors}
             allUsersForForm={allUsersDataForForm?.getLeanUsers || []}
             allUsersForFormLoading={allUsersForFormLoading}
+            allUsersForFormError={allUsersForFormError}
             paletteColors={paletteColors}
             setPaletteColors={setPaletteColors}
             allCategories={allCategoriesForPicker || []}

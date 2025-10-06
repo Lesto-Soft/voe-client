@@ -75,8 +75,11 @@ const Submenu: React.FC<SubmenuProps> = ({
   // State to control the visibility of the AddAnswer form.
   // It defaults to 'true' (visible) if the case status is OPEN or IN_PROGRESS.
   const [isAddAnswerVisible, setIsAddAnswerVisible] = useState(() => {
-    const { status } = caseData;
-    return status === CASE_STATUS.OPEN || status === CASE_STATUS.IN_PROGRESS;
+    // const { status } = caseData;
+    // return status === CASE_STATUS.OPEN || status === CASE_STATUS.IN_PROGRESS;
+
+    // making it always false after the latest autoFocus changes (1 click either way to start typing)
+    return false;
   });
 
   // State to control the visibility of the AddComment form for the case.
@@ -163,38 +166,54 @@ const Submenu: React.FC<SubmenuProps> = ({
     };
   }, [isDesktop]); // Re-run this effect if the screen size crosses the breakpoint
 
-  // useEffect for scrolling to the AddAnswer form
-  useEffect(() => {
-    // If the form was just opened, scroll to it.
-    if (isAddAnswerVisible) {
-      // A short timeout ensures the element has been rendered before we try to scroll.
-      setTimeout(() => {
-        addAnswerContainerRef.current?.scrollIntoView({
-          behavior: "smooth",
-          block: "nearest", // 'nearest' is less jarring than 'center'
-        });
-      }, 100);
-    }
-  }, [isAddAnswerVisible]);
-
-  // useEffect for scrolling to the AddComment form
-  useEffect(() => {
-    if (isAddCommentVisible) {
-      setTimeout(() => {
-        addCommentContainerRef.current?.scrollIntoView({
-          behavior: "smooth",
-          block: "nearest",
-        });
-      }, 100);
-    }
-  }, [isAddCommentVisible]);
-
   const scrollToTop = () => {
     const target = isDesktop ? scrollableContainerRef.current : window;
     target?.scrollTo({
       top: 0,
       behavior: "smooth",
     });
+  };
+
+  const handleToggleAddAnswer = () => {
+    // Check if we are about to OPEN the accordion
+    if (!isAddAnswerVisible) {
+      // First, set the state to true so the component renders
+      setIsAddAnswerVisible(true);
+
+      // Use a timeout to wait for the DOM to update after the state change
+      setTimeout(() => {
+        const container = addAnswerContainerRef.current;
+        if (container) {
+          // Scroll the container into view
+          container.scrollIntoView({ behavior: "smooth", block: "nearest" });
+
+          // Find the editor element inside and focus it
+          const editorElement =
+            container.querySelector<HTMLElement>(".ProseMirror");
+          editorElement?.focus();
+        }
+      }, 100);
+    } else {
+      // If it's already open, just close it
+      setIsAddAnswerVisible(false);
+    }
+  };
+
+  const handleToggleAddComment = () => {
+    if (!isAddCommentVisible) {
+      setIsAddCommentVisible(true);
+      setTimeout(() => {
+        const container = addCommentContainerRef.current;
+        if (container) {
+          container.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          const editorElement =
+            container.querySelector<HTMLElement>(".ProseMirror");
+          editorElement?.focus();
+        }
+      }, 100);
+    } else {
+      setIsAddCommentVisible(false);
+    }
   };
 
   const handleAnswerSubmitted = () => {
@@ -308,7 +327,7 @@ const Submenu: React.FC<SubmenuProps> = ({
                 >
                   <div className="mx-5">
                     <button
-                      onClick={() => setIsAddAnswerVisible((prev) => !prev)}
+                      onClick={() => handleToggleAddAnswer()}
                       className="cursor-pointer w-full flex justify-between items-center p-3 bg-gray-100 hover:bg-gray-200 rounded-lg text-left text-gray-700 font-semibold ring-1 ring-gray-300 focus:outline-none active:ring-2 active:ring-indigo-400 transition-colors"
                       aria-expanded={isAddAnswerVisible}
                       aria-controls="add-answer-form"
@@ -393,7 +412,7 @@ const Submenu: React.FC<SubmenuProps> = ({
               >
                 <div className="mx-5">
                   <button
-                    onClick={() => setIsAddCommentVisible((prev) => !prev)}
+                    onClick={() => handleToggleAddComment()}
                     className="cursor-pointer w-full flex justify-between items-center p-3 bg-gray-100 hover:bg-gray-200 rounded-lg text-left text-gray-700 font-semibold ring-1 ring-gray-300 focus:outline-none active:ring-2 active:ring-indigo-400 transition-colors"
                     aria-expanded={isAddCommentVisible}
                     aria-controls="add-comment-form"

@@ -124,12 +124,12 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
             return navigate(`/category/${notification.new_categories?.[0]}`);
           }
           if (content.includes("reopen_")) {
-            return navigate(`/case/${caseNumber}`, {
+            return navigate(`/case/${caseNumber}#answers`, {
               state: { refetch: true },
             });
           }
           if (content.includes("approve_answer_finance_case")) {
-            return navigate(`/case/${caseNumber}`, {
+            return navigate(`/case/${caseNumber}#answers`, {
               state: { refetch: true },
             });
           }
@@ -147,7 +147,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
             }
           }
           if (caseNumber) {
-            return navigate(`/case/${caseNumber}`);
+            return navigate(`/case/${caseNumber}#answers`);
           }
           if (username) {
             return navigate(`/user/${username}`);

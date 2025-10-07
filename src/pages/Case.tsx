@@ -147,9 +147,6 @@ const Case = () => {
 
   const expert_managers = getUniqueMentionableUsers(c.categories, c.creator);
   return (
-    // browser-level navigation away is handled by the default browser alert prompts (moving from .../case/351 to .../dashboard)
-    // higher level browser-level navigation is not handled (moving from our address to google for example)
-    // the refresh after case submit should be handled by reformatting the CaseDialog instead probably
     <UnsavedChangesProvider>
       <div className="flex flex-col lg:flex-row bg-gray-50 lg:h-[calc(100vh-6rem)] w-full">
         <div

@@ -5,6 +5,7 @@ import React, {
   useState,
   useCallback,
   ReactNode,
+  useEffect,
 } from "react";
 import { useBlocker } from "react-router";
 import ConfirmActionDialog from "../components/modals/ConfirmActionDialog";
@@ -37,8 +38,27 @@ export const UnsavedChangesProvider: React.FC<{ children: ReactNode }> = ({
 
   const hasUnsavedChanges = dirtySources.size > 0;
 
-  // useBlocker will block navigation if hasUnsavedChanges is true
+  // This hook handles in-app navigation (e.g., clicking a <Link>)
   const blocker = useBlocker(hasUnsavedChanges);
+
+  // this useEffect to handle browser-level events
+  useEffect(() => {
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      // Standard way to trigger the browser's native confirmation dialog
+      event.preventDefault();
+      event.returnValue = ""; // Required for most browsers
+    };
+
+    if (hasUnsavedChanges) {
+      window.addEventListener("beforeunload", handleBeforeUnload);
+    }
+
+    // Cleanup function removes the listener when the component unmounts
+    // or when hasUnsavedChanges becomes false.
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [hasUnsavedChanges]); // Re-runs when the dirty state changes
 
   const addDirtySource = useCallback((id: string) => {
     setDirtySources((prev) => {

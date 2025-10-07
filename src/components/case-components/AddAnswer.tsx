@@ -20,6 +20,8 @@ interface AddAnswerProps {
   onAnswerSubmitted?: () => void;
   content: string; // From parent
   setContent: (content: string) => void; // To parent
+  attachments: File[]; // ADD THIS
+  setAttachments: (attachments: File[] | ((prev: File[]) => File[])) => void; // ADD THIS
 }
 
 // The AddAnswer component
@@ -32,9 +34,10 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
   onAnswerSubmitted,
   content, // Use prop
   setContent, // Use prop
+  attachments, // ADD THIS
+  setAttachments, // ADD THIS
 }) => {
-  // State for attachments, file errors, content input, and submission errors
-  const [attachments, setAttachments] = useState<File[]>([]);
+  // State for file errors, content input, and submission errors
   const [fileError, setFileError] = useState<string | null>(null);
   const [submissionError, setSubmissionError] = useState<string | null>(null); // Using the actual useCreateAnswer hook
 

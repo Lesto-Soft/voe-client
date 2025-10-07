@@ -17,12 +17,16 @@ interface WarningDialogContent {
  */
 export const useUnsavedChangesWarning = (
   content: string,
-  enabled: boolean = true
+  enabled: boolean = true,
+  attachmentCount: number = 0 // add attachmentCount to the signature
 ) => {
   const { t } = useTranslation("modals");
-  const uniqueId = useId(); // Generate a unique ID for this hook instance
+  const uniqueId = useId();
   const { addDirtySource, removeDirtySource } = useUnsavedChanges();
-  const isDirty = getTextLength(content) > 0;
+
+  // isDirty to check both content and attachments
+  const isDirty = getTextLength(content) > 0 || attachmentCount > 0;
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const proceedCallback = useRef<(() => void) | null>(null);
 
@@ -74,7 +78,7 @@ export const useUnsavedChangesWarning = (
     title: t("unsavedChangesTitle", "Незапазени промени"),
     description: t(
       "unsavedChangesDescription",
-      "Имате въведен текст, който ще бъде изгубен. Сигурни ли сте, че искате да затворите редактора?"
+      "Имате незапазен текст или прикачени файлове, които ще бъдат изгубени. Сигурни ли сте, че искате да затворите?"
     ),
     confirmText: t("closeEditor", "Затвори"),
   };

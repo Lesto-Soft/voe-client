@@ -74,9 +74,13 @@ const Submenu: React.FC<SubmenuProps> = ({
     }));
   };
 
-  // NEW: State for editor content
+  // NEW: State for editor content AND attachments
   const [answerContent, setAnswerContent] = useState("");
+  const [answerAttachments, setAnswerAttachments] = useState<File[]>([]);
   const [caseCommentContent, setCaseCommentContent] = useState("");
+  const [caseCommentAttachments, setCaseCommentAttachments] = useState<File[]>(
+    []
+  );
 
   // State to control the visibility of the AddAnswer form.
   // It defaults to 'true' (visible) if the case status is OPEN or IN_PROGRESS.
@@ -99,7 +103,11 @@ const Submenu: React.FC<SubmenuProps> = ({
     handleCancel: cancelCloseAnswer,
     withWarning: withAnswerWarning,
     dialogContent: answerDialogContent,
-  } = useUnsavedChangesWarning(answerContent, isAddAnswerVisible);
+  } = useUnsavedChangesWarning(
+    answerContent,
+    isAddAnswerVisible,
+    answerAttachments.length
+  );
 
   const {
     isDialogOpen: isCommentWarningOpen,
@@ -107,7 +115,11 @@ const Submenu: React.FC<SubmenuProps> = ({
     handleCancel: cancelCloseComment,
     withWarning: withCommentWarning,
     dialogContent: commentDialogContent,
-  } = useUnsavedChangesWarning(caseCommentContent, isAddCommentVisible);
+  } = useUnsavedChangesWarning(
+    caseCommentContent,
+    isAddCommentVisible,
+    caseCommentAttachments.length
+  );
 
   const scrollableContainerRef = useRef<HTMLDivElement>(null);
   const [isScrollTopButtonVisible, setIsScrollTopButtonVisible] =
@@ -249,11 +261,13 @@ const Submenu: React.FC<SubmenuProps> = ({
   const handleAnswerSubmitted = () => {
     setIsAddAnswerVisible(false);
     setAnswerContent(""); // Clear content
+    setAnswerAttachments([]); // Add this
   };
 
   const handleCaseCommentSubmitted = () => {
     setIsAddCommentVisible(false); // This will close the case-level comment form
     setCaseCommentContent(""); // Clear content
+    setCaseCommentAttachments([]); // Add this
   };
 
   const isCreatorAndNothingElse =
@@ -389,6 +403,8 @@ const Submenu: React.FC<SubmenuProps> = ({
                         onAnswerSubmitted={handleAnswerSubmitted}
                         content={answerContent}
                         setContent={setAnswerContent}
+                        attachments={answerAttachments}
+                        setAttachments={setAnswerAttachments}
                       />
                     </div>
                   )}
@@ -480,6 +496,8 @@ const Submenu: React.FC<SubmenuProps> = ({
                       onCommentSubmitted={handleCaseCommentSubmitted}
                       content={caseCommentContent}
                       setContent={setCaseCommentContent}
+                      attachments={caseCommentAttachments}
+                      setAttachments={setCaseCommentAttachments}
                     />
                   </div>
                 )}

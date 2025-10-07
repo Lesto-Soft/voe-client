@@ -21,6 +21,8 @@ interface AddCommentProps {
   onCommentSubmitted?: () => void;
   content: string; // REQUIRED
   setContent: (content: string) => void; // REQUIRED
+  attachments: File[]; // ADD THIS
+  setAttachments: (attachments: File[] | ((prev: File[]) => File[])) => void; // ADD THIS
 }
 
 // The AddComment component
@@ -35,9 +37,10 @@ const AddComment: React.FC<AddCommentProps> = ({
   onCommentSubmitted,
   content, // Use prop
   setContent, // Use prop
+  attachments, // ADD THIS
+  setAttachments, // ADD THIS
 }) => {
-  // State for attachments, file errors, content input, and submission errors
-  const [attachments, setAttachments] = useState<File[]>([]);
+  // State for file errors, content input, and submission errors
   const [fileError, setFileError] = useState<string | null>(null);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
 

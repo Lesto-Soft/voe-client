@@ -56,6 +56,7 @@ const Answer: React.FC<{
   const financialApproved = !!answer.financial_approved;
 
   const [commentContent, setCommentContent] = useState("");
+  const [commentAttachments, setCommentAttachments] = useState<File[]>([]); // ADD THIS
   const [showCommentBox, setShowCommentBox] = useState(false);
   const isCreator = me._id === answer.creator._id;
   const isAdmin = me.role?._id === ROLES.ADMIN;
@@ -68,7 +69,11 @@ const Answer: React.FC<{
     handleCancel: cancelCloseComment,
     withWarning: withCommentWarning,
     dialogContent: commentDialogContent,
-  } = useUnsavedChangesWarning(commentContent, showCommentBox);
+  } = useUnsavedChangesWarning(
+    commentContent,
+    showCommentBox,
+    commentAttachments.length
+  );
 
   const [isCommentScrolled, setIsCommentScrolled] = useState(false);
   const commentsContainerRef = useRef<HTMLDivElement>(null);
@@ -187,6 +192,7 @@ const Answer: React.FC<{
   const handleCommentSubmitted = () => {
     setShowCommentBox(false);
     setCommentContent("");
+    setCommentAttachments([]); // Add this
   };
 
   const handleToggleCommentBox = () => {
@@ -197,6 +203,7 @@ const Answer: React.FC<{
       withCommentWarning(() => {
         setShowCommentBox(false);
         setCommentContent("");
+        setCommentAttachments([]); // Add this
       });
     }
   };
@@ -337,6 +344,8 @@ const Answer: React.FC<{
             onCommentSubmitted={handleCommentSubmitted}
             content={commentContent}
             setContent={setCommentContent}
+            attachments={commentAttachments}
+            setAttachments={setCommentAttachments}
           />
         </div>
       )}

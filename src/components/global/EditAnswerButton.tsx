@@ -254,7 +254,7 @@ const EditAnswerButton: React.FC<EditButtonProps> = ({
         title={t("unsavedChangesTitle", "Незапазени промени")}
         description={t(
           "unsavedChangesDescription",
-          "Имате въведени промени, които ще бъдат изгубени. Сигурни ли сте, че искате да затворите редактора?"
+          "Имате незапазен текст или прикачени файлове, които ще бъдат изгубени. Сигурни ли сте, че искате да затворите?"
         )}
         confirmButtonText={t("closeEditor", "Затвори")}
         isDestructiveAction={true}

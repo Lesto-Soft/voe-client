@@ -320,7 +320,8 @@ const Submenu: React.FC<SubmenuProps> = ({
         >
           {view === "answers" && (
             <>
-              {canAddAnswer ? (
+              {/* This section for the "Add Answer" button remains unchanged */}
+              {canAddAnswer && (
                 <div
                   ref={addAnswerContainerRef}
                   className="mb-2 transition-all duration-300"
@@ -358,20 +359,9 @@ const Submenu: React.FC<SubmenuProps> = ({
                     </div>
                   )}
                 </div>
-              ) : // Existing placeholder messages for non-privileged users
-              visibleAnswers.length === 0 &&
-                (caseData.answers || []).length === 0 ? (
-                <div className="text-center text-gray-500">
-                  {t("no_answers")}
-                </div>
-              ) : visibleAnswers.length === 0 ? (
-                <div className="text-center text-gray-500">
-                  {t("waiting_approval")}
-                </div>
-              ) : null}
+              )}
 
-              {/* Block for the list of answers */}
-              {/* We map over the pre-filtered visibleAnswers array */}
+              {/* Renders the list of answers if there are any */}
               {visibleAnswers.length > 0 ? (
                 <>
                   {visibleAnswers
@@ -401,7 +391,20 @@ const Submenu: React.FC<SubmenuProps> = ({
                       />
                     ))}
                 </>
-              ) : null}
+              ) : (
+                // If there are no visible answers, show a placeholder message,
+                // but only if the user is NOT currently writing a new answer.
+                !isAddAnswerVisible &&
+                ((caseData.answers || []).length === 0 ? (
+                  <div className="text-center text-gray-500">
+                    {t("no_answers")}
+                  </div>
+                ) : (
+                  <div className="text-center text-gray-500">
+                    {t("waiting_approval")}
+                  </div>
+                ))
+              )}
             </>
           )}
           {view === "comments" && (

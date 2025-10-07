@@ -7,6 +7,7 @@ import { IComment } from "../../db/interfaces";
 import { useUpdateComment } from "../../graphql/hooks/comment";
 import { COMMENT_CONTENT } from "../../utils/GLOBAL_PARAMETERS";
 import SimpleTextEditor from "../forms/partials/TextEditor/SimplifiedTextEditor";
+import { getTextLength } from "../../utils/contentRenderer";
 import ConfirmActionDialog from "../modals/ConfirmActionDialog";
 
 interface EditButtonProps {
@@ -43,7 +44,6 @@ const EditButton: React.FC<EditButtonProps> = ({
     string[]
   >([]);
 
-  const [charCount, setCharCount] = useState<number>(0);
   const [existingAttachments, setExistingAttachments] = useState<string[]>([]);
   const [newAttachments, setNewAttachments] = useState<File[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -57,11 +57,6 @@ const EditButton: React.FC<EditButtonProps> = ({
     error: apiError,
   } = useUpdateComment(caseNumber);
 
-  const isInvalid =
-    charCount > COMMENT_CONTENT.MAX ||
-    charCount == 0 ||
-    charCount < COMMENT_CONTENT.MIN;
-
   useEffect(() => {
     if (isOpen) {
       const initialContentValue = comment.content || "";
@@ -69,8 +64,6 @@ const EditButton: React.FC<EditButtonProps> = ({
 
       setContent(initialContentValue);
       setInitialContent(initialContentValue); // Set initial
-
-      setCharCount(initialContentValue.length);
 
       setExistingAttachments(initialAttachmentsValue);
       setInitialExistingAttachments(initialAttachmentsValue); // Set initial
@@ -116,7 +109,9 @@ const EditButton: React.FC<EditButtonProps> = ({
 
   const handleSave = async () => {
     setError(null);
-    if (isInvalid) {
+    // Add this validation block
+    const textLength = getTextLength(content);
+    if (textLength < COMMENT_CONTENT.MIN || textLength > COMMENT_CONTENT.MAX) {
       setError(
         `Коментарът трябва да е между ${COMMENT_CONTENT.MIN} и ${COMMENT_CONTENT.MAX} символа.`
       );

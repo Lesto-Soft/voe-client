@@ -47,18 +47,6 @@ const AddComment: React.FC<AddCommentProps> = ({
     error: apiError,
   } = useCreateComment(caseNumber);
 
-  const charCount = useMemo(() => content.length, [content]); // ADDED: validation for both min and max length
-
-  const isContentTooLong = useMemo(
-    () => charCount > COMMENT_CONTENT.MAX,
-    [charCount]
-  );
-  const isContentTooShort = useMemo(
-    () => charCount > 0 && charCount < COMMENT_CONTENT.MIN,
-    [charCount]
-  );
-  const isInvalid = isContentTooLong || isContentTooShort; // Effect to handle API errors from the useCreateComment hook
-
   useEffect(() => {
     if (apiError) {
       setSubmissionError(
@@ -98,25 +86,21 @@ const AddComment: React.FC<AddCommentProps> = ({
     event.preventDefault(); // Prevent default form submission behavior
     setSubmissionError(null); // Clear previous errors // UPDATED: Validate content length
 
-    if (isContentTooLong) {
+    // REPLACE the old validation block with this one
+    const textLength = getTextLength(content);
+    if (textLength < COMMENT_CONTENT.MIN) {
+      setSubmissionError(
+        `Коментарът трябва да е поне ${COMMENT_CONTENT.MIN} символа.`
+      );
+      return;
+    }
+    if (textLength > COMMENT_CONTENT.MAX) {
       setSubmissionError(
         `Коментарът не може да надвишава ${COMMENT_CONTENT.MAX} символа.`
       );
       return;
     }
-    if (content.length > 0 && content.length < COMMENT_CONTENT.MIN) {
-      setSubmissionError(
-        `Коментарът трябва да е поне ${COMMENT_CONTENT.MIN} символа.`
-      );
-      return;
-    } // Validate if content or attachments are present
-    if (!content.trim() && attachments.length === 0) {
-      setSubmissionError(
-        t("caseSubmission.errors.submission.emptyComment") || // Specific key for comment
-          "Cannot submit an empty comment."
-      );
-      return;
-    }
+    // The old check for empty content is no longer needed.
 
     try {
       const commentPayload: any = {
@@ -187,10 +171,11 @@ const AddComment: React.FC<AddCommentProps> = ({
     }
   }; // Determine if the submit button should be disabled
 
-  const isSubmitDisabled =
-    isInvalid || // UPDATED
-    loading ||
-    (!content.trim() && attachments.length === 0);
+  // ADD this new textLength calculation
+  const textLength = useMemo(() => getTextLength(content), [content]);
+
+  // REPLACE the old isSubmitDisabled with this new one
+  const isSubmitDisabled = loading || textLength < COMMENT_CONTENT.MIN;
 
   return (
     <div>

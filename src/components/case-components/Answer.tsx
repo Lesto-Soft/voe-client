@@ -62,13 +62,6 @@ const Answer: React.FC<{
   const answerRef = useRef<HTMLDivElement>(null);
   const commentRefs = useRef(new Map<string, HTMLDivElement>());
 
-  // --- 1. ADD REFS AND STATE FOR THE MARQUEE ---
-  const positionContainerRef = useRef<HTMLDivElement>(null);
-  const positionTextRef = useRef<HTMLSpanElement>(null);
-  const [isPositionOverflowing, setIsPositionOverflowing] = useState(false);
-  const [scrollDuration, setScrollDuration] = useState(0);
-  const [isHovering, setIsHovering] = useState(false);
-
   const {
     isDialogOpen: isCommentWarningOpen,
     handleConfirm: confirmCloseComment,
@@ -79,38 +72,6 @@ const Answer: React.FC<{
 
   const [isCommentScrolled, setIsCommentScrolled] = useState(false);
   const commentsContainerRef = useRef<HTMLDivElement>(null);
-
-  // --- 2. ADD USEEFFECT TO CHECK FOR OVERFLOW ---
-  useEffect(() => {
-    const checkOverflow = () => {
-      if (positionContainerRef.current && positionTextRef.current) {
-        const containerWidth = positionContainerRef.current.clientWidth;
-        const textWidth = positionTextRef.current.scrollWidth;
-        const isOverflowing = textWidth > containerWidth;
-
-        setIsPositionOverflowing(isOverflowing);
-
-        if (isOverflowing) {
-          // Define a consistent speed (e.g., 50 pixels per second)
-          const scrollSpeed = 10;
-          // Calculate the distance the text needs to travel
-          const overflowDistance = textWidth - containerWidth;
-          // Calculate the duration in seconds
-          const dynamicDuration = overflowDistance / scrollSpeed;
-
-          setScrollDuration(dynamicDuration);
-        }
-      }
-    };
-
-    const timer = setTimeout(checkOverflow, 50);
-    window.addEventListener("resize", checkOverflow);
-
-    return () => {
-      clearTimeout(timer);
-      window.removeEventListener("resize", checkOverflow);
-    };
-  }, [answer.creator.position]);
 
   useEffect(() => {
     const container = commentsContainerRef.current;
@@ -438,9 +399,9 @@ const Answer: React.FC<{
         ref={answerRef}
       >
         {/* --- NEW UNIFIED HEADER --- */}
-        <div className="flex justify-between items-start gap-1 mb-3">
-          {/* Left side: Avatar, Name, Date */}
-          <div className="flex items-center gap-2">
+        <div className="flex justify-between items-start gap-4 mb-3">
+          {/* Left side: Avatar, Creator Info, and potentially Buttons */}
+          <div className="flex min-w-0 flex-grow items-center gap-3">
             <UserAvatar
               name={answer.creator.name}
               imageUrl={
@@ -453,68 +414,61 @@ const Answer: React.FC<{
               size={56}
               enablePreview={true}
             />
-            <div className="flex flex-col items-center">
-              <UserLink user={answer.creator} />
 
-              {/* --- 3. UPDATE THE JSX FOR THE MARQUEE --- */}
-              <div
-                ref={positionContainerRef}
-                onMouseEnter={() => setIsHovering(true)}
-                onMouseLeave={() => setIsHovering(false)}
-                // CHANGE THIS LINE
-                className={`w-28 sm:w-32 md:w-40 h-5 overflow-hidden ${
-                  isPositionOverflowing
-                    ? "scroll-hint"
-                    : "flex justify-center items-center"
-                } ${isHovering ? "is-hovered" : ""}`}
-              >
-                <span
-                  ref={positionTextRef}
-                  className={`text-xs text-gray-400 whitespace-nowrap ${
-                    isPositionOverflowing
-                      ? "scrolling-text inline-block"
-                      : "truncate"
-                  }`}
+            {showApproveBtn || showFinanceApproveBtn ? (
+              // Layout WITH Buttons: Vertical stack for info, buttons next to it
+              <>
+                <div className="flex flex-col items-center flex-shrink-0">
+                  <UserLink user={answer.creator} />
+                  <p
+                    className="w-28 sm:w-32 md:w-40 truncate text-center text-xs text-gray-400"
+                    title={answer.creator.position}
+                  >
+                    {answer.creator.position}
+                  </p>
+                </div>
+                <div className="flex items-center justify-center flex-wrap gap-2">
+                  {showApproveBtn && (
+                    <ApproveBtn
+                      approved={approved}
+                      refetch={refetch}
+                      t={t}
+                      answer={answer}
+                      me={me}
+                      caseNumber={caseNumber}
+                    />
+                  )}
+                  {showFinanceApproveBtn && (
+                    <FinanceApproveBtn
+                      approved={financialApproved}
+                      {...{ t, answer, me, caseNumber }}
+                    />
+                  )}
+                </div>
+              </>
+            ) : (
+              // Layout WITHOUT Buttons: Horizontal, flexible, and truncating
+              <div className="flex min-w-0 items-center gap-2">
+                <div className="flex-shrink-0">
+                  <UserLink user={answer.creator} />
+                </div>
+                <p
+                  className="min-w-0 truncate text-xs text-gray-400"
                   title={answer.creator.position}
-                  // NEW: Apply the dynamic duration as an inline style
-                  style={{ animationDuration: `${scrollDuration}s` }}
                 >
                   {answer.creator.position}
-                </span>
-              </div>
-            </div>
-
-            {/* Approval buttons */}
-            {(showApproveBtn || showFinanceApproveBtn) && (
-              <div className="flex items-center justify-center flex-wrap gap-2 ml-4">
-                {showApproveBtn && (
-                  <ApproveBtn
-                    approved={approved}
-                    refetch={refetch}
-                    t={t}
-                    answer={answer}
-                    me={me}
-                    caseNumber={caseNumber}
-                  />
-                )}
-                {showFinanceApproveBtn && (
-                  <FinanceApproveBtn
-                    approved={financialApproved}
-                    {...{ t, answer, me, caseNumber }}
-                  />
-                )}
+                </p>
               </div>
             )}
           </div>
 
           {/* Right side: Actions (Edit/Delete/History) */}
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex flex-shrink-0 items-center gap-2">
             {answer.history && answer.history.length > 0 && (
               <AnswerHistoryModal history={answer.history} />
             )}
             <ShowDate collapsible={true} date={answer.date} />
 
-            {/* 2. Replace the old buttons with the ActionMenu */}
             {canEditOrDelete && !answer.approved && (
               <ActionMenu>
                 <EditAnswerButton

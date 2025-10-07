@@ -19,6 +19,8 @@ interface AddCommentProps {
   inputId?: string; // Optional input ID for file attachment
   mentions?: { name: string; username: string; _id: string }[];
   onCommentSubmitted?: () => void;
+  content: string; // REQUIRED
+  setContent: (content: string) => void; // REQUIRED
 }
 
 // The AddComment component
@@ -31,11 +33,12 @@ const AddComment: React.FC<AddCommentProps> = ({
   inputId,
   mentions = [],
   onCommentSubmitted,
+  content, // Use prop
+  setContent, // Use prop
 }) => {
   // State for attachments, file errors, content input, and submission errors
   const [attachments, setAttachments] = useState<File[]>([]);
   const [fileError, setFileError] = useState<string | null>(null);
-  const [content, setContent] = useState<string>("");
   const [submissionError, setSubmissionError] = useState<string | null>(null);
 
   const {

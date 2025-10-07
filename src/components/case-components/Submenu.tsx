@@ -16,6 +16,8 @@ import AddAnswer from "./AddAnswer";
 import { USER_RIGHTS /*, CASE_STATUS */ } from "../../utils/GLOBAL_PARAMETERS";
 import { useLocation } from "react-router";
 import useMediaQuery from "../../hooks/useMediaQuery";
+import { useUnsavedChangesWarning } from "../../hooks/useUnsavedWarning";
+import ConfirmActionDialog from "../modals/ConfirmActionDialog";
 
 interface SubmenuProps {
   caseData: ICase;
@@ -72,6 +74,10 @@ const Submenu: React.FC<SubmenuProps> = ({
     }));
   };
 
+  // NEW: State for editor content
+  const [answerContent, setAnswerContent] = useState("");
+  const [caseCommentContent, setCaseCommentContent] = useState("");
+
   // State to control the visibility of the AddAnswer form.
   // It defaults to 'true' (visible) if the case status is OPEN or IN_PROGRESS.
   const [isAddAnswerVisible, setIsAddAnswerVisible] = useState(() => {
@@ -85,6 +91,23 @@ const Submenu: React.FC<SubmenuProps> = ({
   // State to control the visibility of the AddComment form for the case.
   const [isAddCommentVisible, setIsAddCommentVisible] =
     useState(isAddAnswerVisible);
+
+  // NEW: Hooks for unsaved changes warnings
+  const {
+    isDialogOpen: isAnswerWarningOpen,
+    handleConfirm: confirmCloseAnswer,
+    handleCancel: cancelCloseAnswer,
+    withWarning: withAnswerWarning,
+    dialogContent: answerDialogContent,
+  } = useUnsavedChangesWarning(answerContent, isAddAnswerVisible);
+
+  const {
+    isDialogOpen: isCommentWarningOpen,
+    handleConfirm: confirmCloseComment,
+    handleCancel: cancelCloseComment,
+    withWarning: withCommentWarning,
+    dialogContent: commentDialogContent,
+  } = useUnsavedChangesWarning(caseCommentContent, isAddCommentVisible);
 
   const scrollableContainerRef = useRef<HTMLDivElement>(null);
   const [isScrollTopButtonVisible, setIsScrollTopButtonVisible] =
@@ -194,8 +217,11 @@ const Submenu: React.FC<SubmenuProps> = ({
         }
       }, 100);
     } else {
-      // If it's already open, just close it
-      setIsAddAnswerVisible(false);
+      // NEW: Use warning for close action
+      withAnswerWarning(() => {
+        setIsAddAnswerVisible(false);
+        setAnswerContent("");
+      });
     }
   };
 
@@ -212,16 +238,22 @@ const Submenu: React.FC<SubmenuProps> = ({
         }
       }, 100);
     } else {
-      setIsAddCommentVisible(false);
+      // NEW: Use warning for close action
+      withCommentWarning(() => {
+        setIsAddCommentVisible(false);
+        setCaseCommentContent("");
+      });
     }
   };
 
   const handleAnswerSubmitted = () => {
     setIsAddAnswerVisible(false);
+    setAnswerContent(""); // Clear content
   };
 
   const handleCaseCommentSubmitted = () => {
     setIsAddCommentVisible(false); // This will close the case-level comment form
+    setCaseCommentContent(""); // Clear content
   };
 
   const isCreatorAndNothingElse =
@@ -328,7 +360,7 @@ const Submenu: React.FC<SubmenuProps> = ({
                 >
                   <div className="mx-5">
                     <button
-                      onClick={() => handleToggleAddAnswer()}
+                      onClick={handleToggleAddAnswer}
                       className="cursor-pointer w-full flex justify-between items-center p-3 bg-gray-100 hover:bg-gray-200 rounded-lg text-left text-gray-700 font-semibold ring-1 ring-gray-300 focus:outline-none active:ring-2 active:ring-indigo-400 transition-colors"
                       aria-expanded={isAddAnswerVisible}
                       aria-controls="add-answer-form"
@@ -355,6 +387,8 @@ const Submenu: React.FC<SubmenuProps> = ({
                         me={me}
                         mentions={mentions}
                         onAnswerSubmitted={handleAnswerSubmitted}
+                        content={answerContent}
+                        setContent={setAnswerContent}
                       />
                     </div>
                   )}
@@ -415,7 +449,7 @@ const Submenu: React.FC<SubmenuProps> = ({
               >
                 <div className="mx-5">
                   <button
-                    onClick={() => handleToggleAddComment()}
+                    onClick={handleToggleAddComment}
                     className="cursor-pointer w-full flex justify-between items-center p-3 bg-gray-100 hover:bg-gray-200 rounded-lg text-left text-gray-700 font-semibold ring-1 ring-gray-300 focus:outline-none active:ring-2 active:ring-indigo-400 transition-colors"
                     aria-expanded={isAddCommentVisible}
                     aria-controls="add-comment-form"
@@ -444,6 +478,8 @@ const Submenu: React.FC<SubmenuProps> = ({
                       inputId={`file-upload-comment-case-${caseData._id}`}
                       mentions={mentions}
                       onCommentSubmitted={handleCaseCommentSubmitted}
+                      content={caseCommentContent}
+                      setContent={setCaseCommentContent}
                     />
                   </div>
                 )}
@@ -500,6 +536,26 @@ const Submenu: React.FC<SubmenuProps> = ({
           <ChevronDoubleUpIcon className="h-7 w-7" />
         </button>
       )}
+
+      {/* NEW: Modals */}
+      <ConfirmActionDialog
+        isOpen={isAnswerWarningOpen}
+        onOpenChange={(open) => !open && cancelCloseAnswer()}
+        onConfirm={confirmCloseAnswer}
+        title={answerDialogContent.title}
+        description={answerDialogContent.description}
+        confirmButtonText={answerDialogContent.confirmText}
+        isDestructiveAction={true}
+      />
+      <ConfirmActionDialog
+        isOpen={isCommentWarningOpen}
+        onOpenChange={(open) => !open && cancelCloseComment()}
+        onConfirm={confirmCloseComment}
+        title={commentDialogContent.title}
+        description={commentDialogContent.description}
+        confirmButtonText={commentDialogContent.confirmText}
+        isDestructiveAction={true}
+      />
     </div>
   );
 };

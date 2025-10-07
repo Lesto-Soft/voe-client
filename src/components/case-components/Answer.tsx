@@ -10,6 +10,8 @@ import AnswerHistoryModal from "../modals/AnswerHistoryModal";
 import FinanceApproveBtn from "./FinanceApproveBtn";
 import { createFileUrl } from "../../utils/fileUtils";
 import ImagePreviewModal, { GalleryItem } from "../modals/ImagePreviewModal";
+import { useUnsavedChangesWarning } from "../../hooks/useUnsavedWarning";
+import ConfirmActionDialog from "../modals/ConfirmActionDialog";
 import AddComment from "./AddComment";
 import EditAnswerButton from "../global/EditAnswerButton";
 import { useDeleteAnswer } from "../../graphql/hooks/answer";
@@ -53,6 +55,7 @@ const Answer: React.FC<{
   const approved = !!answer.approved;
   const financialApproved = !!answer.financial_approved;
 
+  const [commentContent, setCommentContent] = useState("");
   const [showCommentBox, setShowCommentBox] = useState(false);
   const isCreator = me._id === answer.creator._id;
   const isAdmin = me.role?._id === ROLES.ADMIN;
@@ -65,6 +68,14 @@ const Answer: React.FC<{
   const [isPositionOverflowing, setIsPositionOverflowing] = useState(false);
   const [scrollDuration, setScrollDuration] = useState(0);
   const [isHovering, setIsHovering] = useState(false);
+
+  const {
+    isDialogOpen: isCommentWarningOpen,
+    handleConfirm: confirmCloseComment,
+    handleCancel: cancelCloseComment,
+    withWarning: withCommentWarning,
+    dialogContent: commentDialogContent,
+  } = useUnsavedChangesWarning(commentContent, showCommentBox);
 
   const [isCommentScrolled, setIsCommentScrolled] = useState(false);
   const commentsContainerRef = useRef<HTMLDivElement>(null);
@@ -213,7 +224,20 @@ const Answer: React.FC<{
   };
 
   const handleCommentSubmitted = () => {
-    setShowCommentBox(false); // This will close the AddComment form
+    setShowCommentBox(false);
+    setCommentContent("");
+  };
+
+  const handleToggleCommentBox = () => {
+    if (!showCommentBox) {
+      setShowCommentBox(true);
+      focusOnAnswer();
+    } else {
+      withCommentWarning(() => {
+        setShowCommentBox(false);
+        setCommentContent("");
+      });
+    }
   };
 
   const galleryItems: GalleryItem[] = useMemo(() => {
@@ -291,10 +315,7 @@ const Answer: React.FC<{
         {/* Left Side: Add Comment Button */}
         <button
           className="cursor-pointer text-gray-800 bg-gray-100 hover:bg-gray-200 absolute left-2 top-1/2 -translate-y-1/2 w-42 px-2 py-1 rounded text-sm font-semibold transition-colors duration-200"
-          onClick={() => {
-            setShowCommentBox((v) => !v);
-            focusOnAnswer(); // Call scroll function directly
-          }}
+          onClick={handleToggleCommentBox}
         >
           <div className="flex w-full items-center gap-2">
             <ChatBubbleOvalLeftEllipsisIcon className="h-5 w-5 flex-shrink-0 text-gray-500" />
@@ -353,6 +374,8 @@ const Answer: React.FC<{
             inputId={`file-upload-comment-answer-${answer._id}`}
             mentions={mentions}
             onCommentSubmitted={handleCommentSubmitted}
+            content={commentContent}
+            setContent={setCommentContent}
           />
         </div>
       )}
@@ -404,7 +427,7 @@ const Answer: React.FC<{
   );
 
   return (
-    <div className="mt-3 mb-3 min-w-full px-5 transition-all duration-500">
+    <div className="mt-3 mb-3 min-w-full px-5 transition-all duration-500 relative">
       <div
         className={`bg-white shadow-md rounded-lg p-4 transition-colors ${
           approved
@@ -520,6 +543,15 @@ const Answer: React.FC<{
         {/* --- COMMENTS SECTION --- */}
         {commentsSection}
       </div>
+      <ConfirmActionDialog
+        isOpen={isCommentWarningOpen}
+        onOpenChange={(open) => !open && cancelCloseComment()}
+        onConfirm={confirmCloseComment}
+        title={commentDialogContent.title}
+        description={commentDialogContent.description}
+        confirmButtonText={commentDialogContent.confirmText}
+        isDestructiveAction={true}
+      />
     </div>
   );
 };

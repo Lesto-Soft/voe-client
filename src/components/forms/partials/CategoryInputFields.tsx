@@ -175,7 +175,6 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
         userCache={userCache}
         loading={usersLoading}
         error={usersError}
-        t={t}
       />
        {" "}
       <UserMultiSelector
@@ -187,7 +186,6 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
         userCache={userCache}
         loading={usersLoading}
         error={usersError}
-        t={t}
       />
       {/* Color Picker (spanning both columns) */}
       <div className="md:col-span-2">

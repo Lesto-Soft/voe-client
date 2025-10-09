@@ -46,6 +46,7 @@ import { ROLES } from "../utils/GLOBAL_PARAMETERS";
 
 // import { PREDEFINED_CATEGORY_COLORS } from "../utils/colors";
 import { useGetAllPaletteColors } from "../graphql/hooks/colorPalette";
+import ClearFiltersButton from "../components/global/ClearFiltersButton";
 
 // Define a lean user type that includes the role ID, matching GET_LEAN_USERS
 interface ILeanUserForForm {
@@ -94,24 +95,20 @@ const CategoryManagement: React.FC = () => {
     error: paletteColorsError,
   } = useGetAllPaletteColors();
 
-  // State to hold colors for optimistic updates
   const [paletteColors, setPaletteColors] = useState<IPaletteColor[]>([]);
 
   useEffect(() => {
     if (fetchedPaletteColors) {
-      // Use a functional update to access the previous state
       setPaletteColors((prevColors) => {
-        // Only update state if the content has actually changed
         if (
           JSON.stringify(prevColors) !== JSON.stringify(fetchedPaletteColors)
         ) {
           return fetchedPaletteColors;
         }
-        // Otherwise, return the old state to prevent a re-render
         return prevColors;
       });
     }
-  }, [fetchedPaletteColors]); // Corrected: Only depend on fetchedPaletteColors
+  }, [fetchedPaletteColors]);
 
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<ICategory | null>(
@@ -129,19 +126,16 @@ const CategoryManagement: React.FC = () => {
   const [successModalMessage, setSuccessModalMessage] = useState("");
   const [isBannerVisible, setIsBannerVisible] = useState(true);
 
-  // ADDED: State to trigger refetch of users in CategorySearchBar
   const [userFilterRefreshKey, setUserFilterRefreshKey] = useState(0);
 
-  // Fetch all lean users for the CreateCategoryForm dropdowns
-  // This list will be filtered by role within CreateCategoryForm/CategoryInputFields
   const {
     data: allUsersDataForForm,
     loading: allUsersForFormLoading,
     error: allUsersForFormError,
-    refetch: refetchAllUsersForForm, // Expose refetch in case it's needed, though primary refresh is for filters
+    refetch: refetchAllUsersForForm,
   } = useQuery<{ getLeanUsers: ILeanUserForForm[] }>(GET_LEAN_USERS, {
-    variables: { input: "" }, // Fetch all users
-    fetchPolicy: "cache-and-network", // Good for ensuring form has up-to-date users
+    variables: { input: "" },
+    fetchPolicy: "cache-and-network",
   });
 
   const categoryFiltersWithoutPagination = useMemo((): Omit<
@@ -525,6 +519,22 @@ const CategoryManagement: React.FC = () => {
     }
   };
 
+  const isAnyFilterActive = useMemo(() => {
+    return (
+      filterName !== "" ||
+      filterExpertIds.length > 0 ||
+      filterManagerIds.length > 0 ||
+      filterArchived !== undefined ||
+      filterCaseStatus !== null
+    );
+  }, [
+    filterName,
+    filterExpertIds,
+    filterManagerIds,
+    filterArchived,
+    filterCaseStatus,
+  ]);
+
   const openCreateCategoryModal = () => {
     setEditingCategory(null);
     setFormHasUnsavedChanges(false);
@@ -680,15 +690,10 @@ const CategoryManagement: React.FC = () => {
               )}
               Филтри
             </button>
-            <button
-              type="button"
-              onClick={handleClearAllFilters}
-              className="w-full sm:w-auto flex justify-center items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-btnRed text-white hover:bg-btnRedHover hover:cursor-pointer"
-              title="Изчисти всички филтри"
-            >
-              <XMarkIcon className="h-5 w-5 mr-1" />
-              Изчисти
-            </button>
+            <ClearFiltersButton
+              isActive={isAnyFilterActive}
+              onClear={handleClearAllFilters}
+            />
           </div>
           {isAdmin && (
             <button

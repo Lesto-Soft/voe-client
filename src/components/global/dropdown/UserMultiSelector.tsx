@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { XMarkIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
+import { useTranslation } from "react-i18next";
 
 // We'll define a lean user interface here. This can be moved to a shared types file.
 interface ILeanUser {
@@ -19,7 +20,6 @@ interface UserMultiSelectorProps {
   userCache: Record<string, ILeanUser | undefined>;
   loading: boolean;
   error: any;
-  t: (key: string) => string;
 }
 
 const UserMultiSelector: React.FC<UserMultiSelectorProps> = ({
@@ -31,12 +31,12 @@ const UserMultiSelector: React.FC<UserMultiSelectorProps> = ({
   userCache,
   loading,
   error,
-  t,
 }) => {
   const [isDropdownVisible, setIsDropdownVisible] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const displayRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { t } = useTranslation("dashboard");
 
   useEffect(() => {
     if (!isDropdownVisible) return;
@@ -72,7 +72,7 @@ const UserMultiSelector: React.FC<UserMultiSelectorProps> = ({
         )
       : availableUsers;
 
-    return filtered.sort((a, b) => {
+    return [...filtered].sort((a, b) => {
       const aIsSelected = selectedUserIds.includes(a._id);
       const bIsSelected = selectedUserIds.includes(b._id);
       if (aIsSelected && !bIsSelected) return -1;

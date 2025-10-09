@@ -26,6 +26,7 @@ import { useTranslation } from "react-i18next";
 import { useCurrentUser } from "../context/UserContext";
 import { ROLES } from "../utils/GLOBAL_PARAMETERS";
 import { ICase } from "../db/interfaces";
+import ClearFiltersButton from "../components/global/ClearFiltersButton";
 
 // Type for the filters prop
 type CaseFilters = {
@@ -159,6 +160,24 @@ const DashboardPage: React.FC<DashboardContentProps> = ({
     currentUser?.managed_categories?.length,
   ]);
 
+  const isAnyFilterActive = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    const filterKeys = [
+      "caseNumber",
+      "priority",
+      "type",
+      "creatorId",
+      "categoryIds",
+      "content",
+      "status",
+      "readStatus",
+      "startDate",
+      "endDate",
+    ];
+    // If any of the known filter keys exist in the URL, a filter is active.
+    return filterKeys.some((key) => params.has(key));
+  }, [location.search]);
+
   const searchParams = new URLSearchParams(location.search);
   const screenKey = searchParams.get("screen") || "all";
   const selectedHookIdx =
@@ -279,13 +298,10 @@ const DashboardPage: React.FC<DashboardContentProps> = ({
               )}
               {t("filter")}
             </button>
-            <button
-              className="w-32 flex items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-btnRed text-white hover:bg-btnRedHover hover:cursor-pointer"
-              title={t("clear_filters")}
-              onClick={handleClearFilters}
-            >
-              <XMarkIcon className="h-5 w-5 mr-1" /> {t("clear")}
-            </button>
+            <ClearFiltersButton
+              isActive={isAnyFilterActive}
+              onClear={handleClearFilters}
+            />
           </div>
         </div>
       )}

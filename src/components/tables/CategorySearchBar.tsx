@@ -143,7 +143,6 @@ const CategorySearchBar: React.FC<CategorySearchBarProps> = ({
           userCache={userCache}
           loading={loadingUsers && !initialLoadComplete}
           error={usersError}
-          t={t_hardcoded}
         />
         <UserMultiSelector
           label={t_hardcoded("Мениджъри")}
@@ -154,7 +153,6 @@ const CategorySearchBar: React.FC<CategorySearchBarProps> = ({
           userCache={userCache}
           loading={loadingUsers && !initialLoadComplete}
           error={usersError}
-          t={t_hardcoded}
         />
         {/* Status Filter */}
         <CustomDropdown

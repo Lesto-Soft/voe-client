@@ -35,6 +35,7 @@ import UserFilters from "../components/features/userManagement/UserFilters";
 import UserTable from "../components/features/userManagement/UserTable";
 import { useUserManagement } from "../hooks/useUserManagement"; // Adjust path
 import { ROLES } from "../utils/GLOBAL_PARAMETERS";
+import ClearFiltersButton from "../components/global/ClearFiltersButton";
 
 const UserManagement: React.FC = () => {
   const {
@@ -151,7 +152,25 @@ const UserManagement: React.FC = () => {
 
   const [isDynamicRoleDataStale, setIsDynamicRoleDataStale] = useState(false);
   const prevTextAttributeFiltersRef = useRef(textAttributeFiltersOnlyInput);
-
+  const isAnyFilterActive = useMemo(() => {
+    return (
+      filterName !== "" ||
+      filterUsername !== "" ||
+      filterPosition !== "" ||
+      filterEmail !== "" ||
+      filterRoleIds.length > 0 ||
+      filterFinancial === true ||
+      filterManager === true
+    );
+  }, [
+    filterName,
+    filterUsername,
+    filterPosition,
+    filterEmail,
+    filterRoleIds,
+    filterFinancial,
+    filterManager,
+  ]);
   useEffect(() => {
     if (
       JSON.stringify(prevTextAttributeFiltersRef.current) !==
@@ -398,15 +417,10 @@ const UserManagement: React.FC = () => {
               )}
               Филтри
             </button>
-            <button
-              type="button"
-              onClick={handleClearAllFilters}
-              className="hover:cursor-pointer w-full sm:w-auto flex justify-center items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-btnRed text-white hover:bg-btnRedHover"
-              title="Изчисти всички филтри"
-            >
-              <XMarkIcon className="h-5 w-5 mr-1" />
-              Изчисти
-            </button>
+            <ClearFiltersButton
+              isActive={isAnyFilterActive}
+              onClear={handleClearAllFilters}
+            />
           </div>
 
           {isAdmin && (

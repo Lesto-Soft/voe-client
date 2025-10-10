@@ -13,7 +13,7 @@ const ClearFiltersButton: React.FC<ClearFiltersButtonProps> = ({
       type="button"
       onClick={onClear}
       disabled={!isActive}
-      className={`w-full md:w-auto flex justify-center items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-red-500 text-white hover:bg-red-600 ${
+      className={`w-full md:w-auto flex justify-center items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-red-400 text-white hover:bg-red-500 ${
         !isActive ? "opacity-50 cursor-not-allowed" : "hover:cursor-pointer"
       }`}
       title="Изчисти всички филтри"

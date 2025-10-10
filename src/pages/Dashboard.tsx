@@ -19,6 +19,7 @@ import {
   ChevronUpIcon,
   ChevronDownIcon,
   Cog6ToothIcon,
+  XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { useLocation, useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
@@ -284,11 +285,21 @@ const DashboardPage: React.FC<DashboardContentProps> = ({
               </button>
             ))}
           </div>
-          <div className="flex items-center gap-2">
+          {/* New responsive button group on the right */}
+          <div className="flex w-full md:w-auto md:gap-0 gap-2">
             <button
-              className="w-32 flex items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-gray-500 text-white hover:bg-gray-600 hover:cursor-pointer"
-              title={fitler ? t("hide_filters") : t("show_filters")}
+              type="button"
+              className={`
+        justify-center cursor-pointer group flex items-center px-4 py-2 font-semibold transition-colors duration-150 w-full
+        bg-gray-500 text-white hover:bg-gray-600
+        ${
+          isAnyFilterActive
+            ? "md:rounded-r-none rounded-l-lg rounded-r-lg"
+            : "rounded-lg"
+        }
+      `}
               onClick={() => setFilter(!fitler)}
+              title={fitler ? t("hide_filters") : t("show_filters")}
             >
               {fitler ? (
                 <ChevronUpIcon className="h-5 w-5 mr-1" />
@@ -297,10 +308,26 @@ const DashboardPage: React.FC<DashboardContentProps> = ({
               )}
               {t("filter")}
             </button>
-            <ClearFiltersButton
-              isActive={isAnyFilterActive}
-              onClear={handleClearFilters}
-            />
+
+            {/* Desktop Clear Button (attached) */}
+            {isAnyFilterActive && (
+              <button
+                type="button"
+                className="hidden cursor-pointer md:flex items-center pl-2 pr-3 py-2 rounded-r-lg bg-red-400 text-white hover:bg-red-500 transition-colors duration-150"
+                title={t("clear_filters_button", "Изчисти всички филтри")}
+                onClick={handleClearFilters}
+              >
+                <XMarkIcon className="h-5 w-5 text-white" />
+              </button>
+            )}
+
+            {/* Mobile Clear Button (separate component) */}
+            <div className="w-full md:w-auto md:hidden">
+              <ClearFiltersButton
+                isActive={isAnyFilterActive}
+                onClear={handleClearFilters}
+              />
+            </div>
           </div>
         </div>
       )}

@@ -676,39 +676,40 @@ const CategoryManagement: React.FC = () => {
           isLoadingStatusSpecificCounts={isLoadingStatusSpecificCaseCounts}
         />
         <div className="flex flex-col md:flex-row gap-2 items-center md:items-start flex-shrink-0 mt-4 md:mt-0">
-          <div className="flex gap-2 w-full md:w-auto">
+          <div className="flex w-full md:w-auto md:gap-0 gap-2">
             <button
               type="button"
-              className="group w-full md:w-auto flex justify-center items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-gray-500 text-white hover:bg-gray-600 hover:cursor-pointer"
+              className={`
+   justify-center cursor-pointer group flex items-center px-4 py-2 font-semibold transition-colors duration-150  w-full
+      bg-gray-500 text-white hover:bg-gray-600
+      ${
+        isAnyFilterActive
+          ? "md:rounded-r-none rounded-l-lg rounded-r-lg "
+          : "rounded-lg"
+      } 
+    `}
               onClick={() => setShowFilters(!showFilters)}
+              title={showFilters ? "Скрий филтри" : "Покажи филтри"}
             >
-              <div
-                className="flex items-center"
-                title={showFilters ? "Скрий филтри" : "Покажи филтри"}
-              >
-                {showFilters ? (
-                  <ChevronUpIcon className="h-5 w-5 mr-1" />
-                ) : (
-                  <ChevronDownIcon className="h-5 w-5 mr-1" />
-                )}
-                <span>Филтри</span>
-              </div>
-              {isAnyFilterActive && (
-                <div className="hidden md:flex md:items-center">
-                  <span className="border-l border-gray-400 group-hover:border-gray-500 h-4 mx-2"></span>
-                  <div
-                    className="p-1 rounded-sm hover:bg-gray-400"
-                    title="Изчисти всички филтри"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleClearAllFilters();
-                    }}
-                  >
-                    <XMarkIcon className="h-4 w-4 text-white" />
-                  </div>
-                </div>
+              {showFilters ? (
+                <ChevronUpIcon className="h-5 w-5 mr-1" />
+              ) : (
+                <ChevronDownIcon className="h-5 w-5 mr-1" />
               )}
+              Филтри
             </button>
+
+            {/* Button to clear all filters (only shows when a filter is active) */}
+            {isAnyFilterActive && (
+              <button
+                type="button"
+                className="hidden cursor-pointer md:flex items-center pl-2 pr-3 py-2 rounded-r-lg bg-red-400 text-white hover:bg-red-500 transition-colors duration-150"
+                title="Изчисти всички филтри"
+                onClick={handleClearAllFilters} // No need for e.stopPropagation() anymore!
+              >
+                <XMarkIcon className="h-5 w-5 text-white" />
+              </button>
+            )}
             <div className="w-full md:w-auto md:hidden">
               <ClearFiltersButton
                 isActive={isAnyFilterActive}

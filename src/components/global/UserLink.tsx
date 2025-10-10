@@ -19,9 +19,13 @@ const getCreatorBadgeClasses = () =>
 // 2. Remove currentUser from the props interface
 interface UserLinkProps {
   user: IUser;
+  initialsOnlyMobile?: boolean;
 }
 
-const UserLink: React.FC<UserLinkProps> = ({ user }) => {
+const UserLink: React.FC<UserLinkProps> = ({
+  user,
+  initialsOnlyMobile = false,
+}) => {
   // 3. Get the current user directly from the context
   const currentUser = useCurrentUser();
 
@@ -33,13 +37,19 @@ const UserLink: React.FC<UserLinkProps> = ({ user }) => {
   const disabledClasses = "opacity-60 cursor-not-allowed";
   const title = isAllowed ? user.name : "Нямате права за достъп до този профил";
 
-  const linkContent = (
-    // MODIFIED: Combined spans for cleaner responsive display and truncation
+  const linkInitials = (
     <span className="truncate">
       <span className="sm:hidden">{getInitials(user.name)}</span>
       <span className="hidden sm:inline lg:hidden">
         {getFirstName(user.name)}
       </span>
+      <span className="hidden lg:inline">{user.name}</span>
+    </span>
+  );
+
+  const linkSimpleContent = (
+    <span className="truncate">
+      <span className="lg:hidden">{getFirstName(user.name)}</span>
       <span className="hidden lg:inline">{user.name}</span>
     </span>
   );
@@ -51,14 +61,14 @@ const UserLink: React.FC<UserLinkProps> = ({ user }) => {
         className={`${baseClasses} hover:bg-purple-200 hover:cursor-pointer`}
         title={title}
       >
-        {linkContent}
+        {initialsOnlyMobile ? linkInitials : linkSimpleContent}
       </Link>
     );
   }
 
   return (
     <span className={`${baseClasses} ${disabledClasses}`} title={title}>
-      {linkContent}
+      {initialsOnlyMobile ? linkInitials : linkSimpleContent}
     </span>
   );
 };

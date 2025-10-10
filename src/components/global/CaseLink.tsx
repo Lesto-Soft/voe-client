@@ -64,7 +64,7 @@ const CaseLink: React.FC<ICaseLinkProps> = ({ my_case, t, targetId }) => {
 
     // 3. Construct the path with the optional hash
     const path = `/case/${my_case.case_number}${
-      targetId ? `#${targetId}` : ""
+      targetId ? `#${targetId}` : "#answers"
     }`;
 
     return (

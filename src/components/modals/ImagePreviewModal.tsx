@@ -1,4 +1,11 @@
-import React, { useMemo, useState, useEffect, useRef } from "react";
+// src/components/modals/ImagePreviewModal.tsx
+import React, {
+  useMemo,
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+} from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import {
   ArrowDownTrayIcon,
@@ -6,17 +13,25 @@ import {
   MagnifyingGlassPlusIcon,
   MagnifyingGlassMinusIcon,
   ArrowPathIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
 } from "@heroicons/react/24/solid";
 import { DocumentIcon, PhotoIcon } from "@heroicons/react/24/outline";
 import { Document, Page, pdfjs } from "react-pdf";
+import { getIconForFile } from "../../utils/fileUtils";
 
-// Setting up the PDF worker
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   "pdfjs-dist/build/pdf.worker.min.mjs",
   import.meta.url
 ).toString();
 
+export interface GalleryItem {
+  url: string;
+  name: string;
+}
+
 interface ImagePreviewProps {
+  galleryItems?: GalleryItem[];
   imageUrl: string;
   fileName?: string;
   displayName?: string;
@@ -26,6 +41,7 @@ interface ImagePreviewProps {
 }
 
 const ImagePreviewModal: React.FC<ImagePreviewProps> = ({
+  galleryItems = [],
   imageUrl,
   fileName,
   displayName,
@@ -33,166 +49,161 @@ const ImagePreviewModal: React.FC<ImagePreviewProps> = ({
   triggerElement,
   children,
 }) => {
-  // State for file loading and errors
+  const [isOpen, setIsOpen] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0);
+
   const [imageError, setImageError] = useState(false);
   const [numPages, setNumPages] = useState<number | null>(null);
   const [pageNumber, setPageNumber] = useState(1);
-
-  // State for zoom and pan functionality
   const [zoomLevel, setZoomLevel] = useState(1);
   const [panPosition, setPanPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
 
-  // Refs for the image and its container to calculate panning boundaries
   const imageContainerRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
 
-  // --- Adjustable setting for mouse wheel zoom sensitivity ---
-  const mouseWheelZoomStrength = 0.2; // Increase for faster zoom, decrease for slower
+  const mouseWheelZoomStrength = 0.2;
 
-  // Determine file type based on extension
-  const isImageFile = useMemo(() => {
-    if (isAvatar) return true;
-    if (fileName) {
-      const extension = fileName.split(".").pop()?.toLowerCase();
-      if (extension) {
-        const imageExtensions = ["jpg", "jpeg", "png", "gif", "webp", "svg"];
-        return imageExtensions.includes(extension);
-      }
+  const effectiveGallery = useMemo(() => {
+    if (galleryItems && galleryItems.length > 0) return galleryItems;
+    return [{ url: imageUrl, name: fileName || "" }];
+  }, [galleryItems, imageUrl, fileName]);
+
+  const currentItem = effectiveGallery[currentIndex] || {
+    url: imageUrl,
+    name: fileName || "",
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      const startIndex = effectiveGallery.findIndex(
+        (item) => item.url === imageUrl
+      );
+      setCurrentIndex(startIndex >= 0 ? startIndex : 0);
     }
-    return false;
-  }, [fileName, isAvatar]);
+  }, [isOpen, imageUrl, effectiveGallery]);
 
-  const isPdfFile = useMemo(() => {
-    if (fileName) {
-      const extension = fileName.split(".").pop()?.toLowerCase();
-      return extension === "pdf";
-    }
-    return false;
-  }, [fileName]);
-
-  const isPreviewable = isImageFile || isPdfFile;
-
-  // Reset state when the modal is opened with a new file
   useEffect(() => {
     setImageError(false);
     setPageNumber(1);
-    // Reset zoom and pan state for the new image
+    setNumPages(null);
     setZoomLevel(1);
     setPanPosition({ x: 0, y: 0 });
     setIsDragging(false);
-  }, [imageUrl]);
+  }, [currentItem.url]);
 
-  // Handlers for file download
+  const goToNext = useCallback(() => {
+    if (effectiveGallery.length <= 1) return;
+    setCurrentIndex((prev) => (prev + 1) % effectiveGallery.length);
+  }, [effectiveGallery.length]);
+
+  const goToPrevious = useCallback(() => {
+    if (effectiveGallery.length <= 1) return;
+    setCurrentIndex(
+      (prev) => (prev - 1 + effectiveGallery.length) % effectiveGallery.length
+    );
+  }, [effectiveGallery.length]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "ArrowRight") goToNext();
+      else if (event.key === "ArrowLeft") goToPrevious();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, goToNext, goToPrevious]);
+
   const handleDownload = () => {
     const link = document.createElement("a");
-    link.href = imageUrl;
-    link.download = fileName || displayName || "download";
+    link.href = currentItem.url;
+    link.download = currentItem.name || displayName || "download";
     link.target = "_blank";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
-  // Handlers for PDF loading
-  const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
+  const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) =>
     setNumPages(numPages);
-  };
-
-  const onDocumentLoadError = (error: Error) => {
+  const onDocumentLoadError = (error: Error) =>
     console.error("Error loading PDF:", error);
-  };
 
-  // Handlers for image zoom controls
-  const handleZoomIn = () => {
-    setZoomLevel((prev) => Math.min(prev + 0.2, 5)); // Cap zoom at 500%
-  };
-
-  const handleZoomOut = () => {
-    const newZoomLevel = Math.max(1, zoomLevel - 0.2);
-    if (newZoomLevel <= 1) {
-      setPanPosition({ x: 0, y: 0 });
-    }
-    setZoomLevel(newZoomLevel);
-  };
-
+  const handleZoomIn = () => setZoomLevel((prev) => Math.min(prev + 0.2, 5));
   const handleZoomReset = () => {
     setZoomLevel(1);
     setPanPosition({ x: 0, y: 0 });
   };
+  const handleZoomOut = () => {
+    const newZoom = Math.max(1, zoomLevel - 0.2);
+    if (newZoom <= 1) setPanPosition({ x: 0, y: 0 });
+    setZoomLevel(newZoom);
+  };
 
-  // Handler for mouse wheel zoom
+  // Legend for short constant names used in calculations:
+  /*
+   * cRect: container Rectangle - The dimensions and position of the image's container.
+   * iAR:   image Aspect Ratio - The width-to-height ratio of the original image file.
+   * cAR:   container Aspect Ratio - The width-to-height ratio of the visible container.
+   * rW/rH: rendered Width/Height - The actual size of the image as it's displayed (respecting 'object-contain').
+   *
+   * --- Mouse Position & Pan Logic ---
+   * mX/mY: mouse X/Y - The mouse cursor's position relative to the container's center.
+   * cX/cY: (in handleWheel) content X/Y - The specific coordinate on the *un-zoomed* image that is directly under the mouse cursor.
+   * nPx/nPy: new Pan X/Y - The calculated pan position required to keep the content point (cX/cY) under the mouse after zooming.
+   * nX/nY: (in handleMouseMove) new X/Y - The calculated raw new pan position based on how far the mouse has been dragged.
+   *
+   * --- Clamping Logic (to prevent panning outside image bounds) ---
+   * oX/oY: overflow X/Y - How many pixels the zoomed image extends beyond the container's edges.
+   * mPx/mPy: max Pan X/Y - The maximum distance (positive or negative) the image can be panned from the center.
+   * cX_/cY_ or cX/cY (at the end): clamped X/Y - The final, bounded pan position that ensures the image edges don't come into view.
+   */
+
   const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
     if (isAvatar) return;
     e.preventDefault();
-
     const direction = e.deltaY < 0 ? 1 : -1;
-    const oldZoomLevel = zoomLevel;
-    const newZoomLevel = Math.max(
+    const oldZoom = zoomLevel;
+    const newZoom = Math.max(
       1,
-      Math.min(oldZoomLevel + direction * mouseWheelZoomStrength, 5)
+      Math.min(oldZoom + direction * mouseWheelZoomStrength, 5)
     );
-
-    if (newZoomLevel === oldZoomLevel) return;
-
-    if (!imageContainerRef.current || !imageRef.current) return;
-
+    if (newZoom === oldZoom || !imageContainerRef.current || !imageRef.current)
+      return;
     const container = imageContainerRef.current;
     const image = imageRef.current;
-    const containerRect = container.getBoundingClientRect();
-
-    // Mouse position relative to container center
-    const mouseX = e.clientX - containerRect.left - containerRect.width / 2;
-    const mouseY = e.clientY - containerRect.top - containerRect.height / 2;
-
-    // The point on the content (image) that is under the mouse, relative to content center
-    const contentX = (mouseX - panPosition.x) / oldZoomLevel;
-    const contentY = (mouseY - panPosition.y) / oldZoomLevel;
-
-    // The new pan should be `mouse_pos - content_pos * new_zoom`
-    const newPanX = mouseX - contentX * newZoomLevel;
-    const newPanY = mouseY - contentY * newZoomLevel;
-
-    // Get image's rendered dimensions to calculate clamping bounds
+    const cRect = container.getBoundingClientRect();
+    const mX = e.clientX - cRect.left - cRect.width / 2;
+    const mY = e.clientY - cRect.top - cRect.height / 2;
+    const cX = (mX - panPosition.x) / oldZoom;
+    const cY = (mY - panPosition.y) / oldZoom;
+    const nPx = mX - cX * newZoom;
+    const nPy = mY - cY * newZoom;
     const { naturalWidth, naturalHeight } = image;
-    const imageAspectRatio = naturalWidth / naturalHeight;
-    const containerAspectRatio = containerRect.width / containerRect.height;
-    let renderedWidth, renderedHeight;
-    if (imageAspectRatio > containerAspectRatio) {
-      renderedWidth = containerRect.width;
-      renderedHeight = renderedWidth / imageAspectRatio;
+    const iAR = naturalWidth / naturalHeight;
+    const cAR = cRect.width / cRect.height;
+    let rW, rH;
+    if (iAR > cAR) {
+      rW = cRect.width;
+      rH = rW / iAR;
     } else {
-      renderedHeight = containerRect.height;
-      renderedWidth = renderedHeight * imageAspectRatio;
+      rH = cRect.height;
+      rW = rH * iAR;
     }
-
-    // Clamp the new pan position
-    const overflowX = Math.max(
-      0,
-      renderedWidth * newZoomLevel - containerRect.width
-    );
-    const overflowY = Math.max(
-      0,
-      renderedHeight * newZoomLevel - containerRect.height
-    );
-    const maxPanX = overflowX / (2 * newZoomLevel);
-    const maxPanY = overflowY / (2 * newZoomLevel);
-
-    const clampedX = Math.max(-maxPanX, Math.min(newPanX, maxPanX));
-    const clampedY = Math.max(-maxPanY, Math.min(newPanY, maxPanY));
-
-    setZoomLevel(newZoomLevel);
-    if (newZoomLevel <= 1) {
-      setPanPosition({ x: 0, y: 0 });
-    } else {
-      setPanPosition({ x: clampedX, y: clampedY });
-    }
+    const oX = Math.max(0, rW * newZoom - cRect.width);
+    const oY = Math.max(0, rH * newZoom - cRect.height);
+    const mPx = oX / (2 * newZoom);
+    const mPy = oY / (2 * newZoom);
+    const cX_ = Math.max(-mPx, Math.min(nPx, mPx));
+    const cY_ = Math.max(-mPy, Math.min(nPy, mPy));
+    setZoomLevel(newZoom);
+    if (newZoom <= 1) setPanPosition({ x: 0, y: 0 });
+    else setPanPosition({ x: cX_, y: cY_ });
   };
 
-  // Handlers for mouse events to pan the image
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (zoomLevel <= 1) return; // Panning is only enabled when zoomed
+    if (zoomLevel <= 1) return;
     e.preventDefault();
     setIsDragging(true);
     setDragStart({
@@ -210,64 +221,63 @@ const ImagePreviewModal: React.FC<ImagePreviewProps> = ({
     )
       return;
     e.preventDefault();
-
     const container = imageContainerRef.current;
     const image = imageRef.current;
-
-    const containerRect = container.getBoundingClientRect();
+    const cRect = container.getBoundingClientRect();
     const { naturalWidth, naturalHeight } = image;
-    const imageAspectRatio = naturalWidth / naturalHeight;
-    const containerAspectRatio = containerRect.width / containerRect.height;
-
-    let renderedWidth, renderedHeight;
-    if (imageAspectRatio > containerAspectRatio) {
-      renderedWidth = containerRect.width;
-      renderedHeight = renderedWidth / imageAspectRatio;
+    const iAR = naturalWidth / naturalHeight;
+    const cAR = cRect.width / cRect.height;
+    let rW, rH;
+    if (iAR > cAR) {
+      rW = cRect.width;
+      rH = rW / iAR;
     } else {
-      renderedHeight = containerRect.height;
-      renderedWidth = renderedHeight * imageAspectRatio;
+      rH = cRect.height;
+      rW = rH * iAR;
     }
-
-    const overflowX = Math.max(
-      0,
-      renderedWidth * zoomLevel - containerRect.width
-    );
-    const overflowY = Math.max(
-      0,
-      renderedHeight * zoomLevel - containerRect.height
-    );
-
-    const maxPanX = overflowX / (2 * zoomLevel);
-    const maxPanY = overflowY / (2 * zoomLevel);
-
-    const newX = e.clientX - dragStart.x;
-    const newY = e.clientY - dragStart.y;
-
-    const clampedX = Math.max(-maxPanX, Math.min(newX, maxPanX));
-    const clampedY = Math.max(-maxPanY, Math.min(newY, maxPanY));
-
-    setPanPosition({ x: clampedX, y: clampedY });
+    const oX = Math.max(0, rW * zoomLevel - cRect.width);
+    const oY = Math.max(0, rH * zoomLevel - cRect.height);
+    const mPx = oX / (2 * zoomLevel);
+    const mPy = oY / (2 * zoomLevel);
+    const nX = e.clientX - dragStart.x;
+    const nY = e.clientY - dragStart.y;
+    const cX = Math.max(-mPx, Math.min(nX, mPx));
+    const cY = Math.max(-mPy, Math.min(nY, mPy));
+    setPanPosition({ x: cX, y: cY });
   };
 
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
+  const handleMouseUp = () => setIsDragging(false);
+  const handleMouseLeave = () => setIsDragging(false);
 
-  const handleMouseLeave = () => {
-    setIsDragging(false);
-  };
+  const isImageFile = useMemo(() => {
+    if (isAvatar) return true;
+    const name = currentItem.name || "";
+    const ext = name.split(".").pop()?.toLowerCase();
+    return ext
+      ? ["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(ext)
+      : false;
+  }, [currentItem.name, isAvatar]);
 
-  const displayTitle = isAvatar ? displayName : fileName;
+  const isPdfFile = useMemo(() => {
+    const name = currentItem.name || "";
+    return name.split(".").pop()?.toLowerCase() === "pdf";
+  }, [currentItem.name]);
 
-  // Default trigger button for non-avatar files
+  // const isPreviewable = isImageFile || isPdfFile;
+
+  const TriggerIconComponent = getIconForFile(fileName || "");
+  const CurrentItemIconComponent = getIconForFile(currentItem.name || "");
+  const displayTitle = isAvatar ? displayName : currentItem.name;
+
   const defaultTrigger =
     !isAvatar && fileName ? (
       <button
-        className="hover:cursor-pointer flex items-center gap-2 px-3 py-1 text-sm bg-gray-200 rounded-full hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400"
+        className="w-38 hover:cursor-pointer flex items-center gap-2 px-3 py-1 text-sm bg-gray-200 rounded-full hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400"
         type="button"
         title={fileName}
       >
-        <span className="truncate max-w-32 overflow-hidden whitespace-nowrap">
+        <TriggerIconComponent className="h-4 w-4 text-gray-600 flex-shrink-0" />
+        <span className="truncate overflow-hidden whitespace-nowrap">
           {fileName}
         </span>
       </button>
@@ -276,49 +286,46 @@ const ImagePreviewModal: React.FC<ImagePreviewProps> = ({
   const trigger = triggerElement || children || defaultTrigger;
 
   return (
-    <Dialog.Root>
+    <Dialog.Root open={isOpen} onOpenChange={setIsOpen}>
       <Dialog.Trigger asChild>{trigger}</Dialog.Trigger>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/50 z-[9999]" />
         <Dialog.Content
-          className={`
-            fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 
-            bg-white rounded-lg shadow-xl z-[10000] overflow-hidden 
-            flex flex-col focus:outline-none
-            ${
-              isAvatar
-                ? "w-auto h-auto max-w-[90vw] max-h-[90vh]"
-                : isPreviewable
-                ? "w-[95%] max-w-5xl h-[90vh]"
-                : "w-auto max-w-lg"
-            }
-          `}
+          className={`fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-xl z-[10000] overflow-hidden flex flex-col focus:outline-none ${
+            isAvatar
+              ? "w-auto h-auto max-w-[90vw] max-h-[90vh]"
+              : // : isPreviewable
+                // ? "w-[95%] max-w-5xl h-[90vh]"
+                // : "w-auto max-w-lg"
+                "w-[95%] max-w-5xl h-[90vh]"
+          }`}
         >
-          <header className="flex justify-between items-center p-4 border-b border-gray-200 flex-shrink-0 ">
+          <header className="flex justify-between items-center p-4 border-b border-gray-200 flex-shrink-0">
             <ArrowDownTrayIcon
               className="h-6 w-6 text-gray-500 hover:text-gray-700 cursor-pointer"
               onClick={handleDownload}
               title="Свали файла"
             />
-            <Dialog.Title className="text-lg font-medium text-gray-900 w-full text-center truncate px-4">
-              <span
-                className="w-[90%] truncate inline-block align-bottom"
-                title={displayTitle}
-              >
+            <Dialog.Title className="flex items-center gap-2 text-lg font-medium text-gray-900 w-full justify-center truncate px-4">
+              <CurrentItemIconComponent className="h-5 w-5 text-gray-500 flex-shrink-0" />
+              <span className="truncate" title={displayTitle}>
                 {displayTitle}
               </span>
             </Dialog.Title>
             <Dialog.Close asChild>
               <button
-                className="text-gray-500 hover:text-gray-700 cursor-pointer"
+                className="text-gray-500 hover:text-gray-700 cursor-pointer focus:outline-none"
                 aria-label="Затвори"
               >
                 <XMarkIcon className="h-6 w-6" />
               </button>
             </Dialog.Close>
           </header>
-
-          <div className="flex justify-center items-center flex-1 p-4 overflow-auto bg-gray-50">
+          <div
+            className="relative flex justify-center items-center flex-1 p-4 overflow-hidden bg-gray-50"
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseLeave}
+          >
             {isImageFile ? (
               imageError ? (
                 <div className="text-center text-gray-500 flex flex-col items-center gap-3">
@@ -338,31 +345,24 @@ const ImagePreviewModal: React.FC<ImagePreviewProps> = ({
                   className="relative w-full h-full flex items-center justify-center overflow-hidden"
                   onMouseDown={!isAvatar ? handleMouseDown : undefined}
                   onMouseMove={!isAvatar ? handleMouseMove : undefined}
-                  onMouseUp={!isAvatar ? handleMouseUp : undefined}
-                  onMouseLeave={!isAvatar ? handleMouseLeave : undefined}
                   onWheel={!isAvatar ? handleWheel : undefined}
                 >
-                  {/* Container for panning and zooming */}
                   <div
-                    className={`
-                      w-full h-full flex items-center justify-center
-                      ${
-                        !isAvatar && zoomLevel > 1
-                          ? isDragging
-                            ? "cursor-grabbing"
-                            : "cursor-grab"
-                          : ""
-                      }
-                    `}
+                    className={`w-full h-full flex items-center justify-center ${
+                      !isAvatar && zoomLevel > 1
+                        ? isDragging
+                          ? "cursor-grabbing"
+                          : "cursor-grab"
+                        : ""
+                    }`}
                   >
                     <img
                       ref={imageRef}
-                      src={imageUrl}
+                      src={currentItem.url}
                       alt={isAvatar ? `${displayName}'s avatar` : "Preview"}
-                      className={`
-                        object-contain rounded-md transition-transform duration-100 ease-out
-                        ${isAvatar ? "w-80 h-80" : "max-w-full max-h-full"}
-                      `}
+                      className={`object-contain rounded-md transition-transform duration-100 ease-out ${
+                        isAvatar ? "w-80 h-80" : "max-w-full max-h-full"
+                      }`}
                       style={
                         !isAvatar
                           ? {
@@ -376,8 +376,6 @@ const ImagePreviewModal: React.FC<ImagePreviewProps> = ({
                       onDragStart={(e) => e.preventDefault()}
                     />
                   </div>
-
-                  {/* Zoom Controls - only shown for non-avatar images */}
                   {!isAvatar && (
                     <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-sm p-1.5 rounded-lg flex items-center gap-2 shadow-lg">
                       <button
@@ -409,11 +407,10 @@ const ImagePreviewModal: React.FC<ImagePreviewProps> = ({
                 </div>
               )
             ) : isPdfFile ? (
-              // PDF Viewer Logic - Corrected for proper scrolling
               <div className="flex flex-col items-center w-full h-full">
                 <div className="flex-1 w-full overflow-y-auto flex justify-center pt-4">
                   <Document
-                    file={imageUrl}
+                    file={currentItem.url}
                     onLoadSuccess={onDocumentLoadSuccess}
                     onLoadError={onDocumentLoadError}
                     loading={
@@ -426,7 +423,7 @@ const ImagePreviewModal: React.FC<ImagePreviewProps> = ({
                       pageNumber={pageNumber}
                       renderTextLayer={false}
                       renderAnnotationLayer={false}
-                      className="max-w-full" // Removed max-h-full to allow scrolling
+                      className="max-w-full"
                       scale={1.5}
                     />
                   </Document>
@@ -458,7 +455,6 @@ const ImagePreviewModal: React.FC<ImagePreviewProps> = ({
                 )}
               </div>
             ) : (
-              // Fallback for non-previewable files
               <div className="text-center text-gray-600 flex flex-col items-center justify-center gap-6 p-8 sm:p-12">
                 <DocumentIcon className="h-24 w-24 text-gray-300" />
                 <div className="flex flex-col gap-2">
@@ -477,6 +473,24 @@ const ImagePreviewModal: React.FC<ImagePreviewProps> = ({
                   Сваляне на файл
                 </button>
               </div>
+            )}
+            {effectiveGallery.length > 1 && !isAvatar && (
+              <>
+                <button
+                  onClick={goToPrevious}
+                  className="cursor-pointer absolute left-2 top-1/2 -translate-y-1/2 p-2 bg-black/40 text-white rounded-full hover:bg-black/60 focus:outline-none transition-opacity"
+                  title="Предишен"
+                >
+                  <ChevronLeftIcon className="h-7 w-7" />
+                </button>
+                <button
+                  onClick={goToNext}
+                  className="cursor-pointer absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-black/40 text-white rounded-full hover:bg-black/60 focus:outline-none transition-opacity"
+                  title="Следващ"
+                >
+                  <ChevronRightIcon className="h-7 w-7" />
+                </button>
+              </>
             )}
           </div>
         </Dialog.Content>

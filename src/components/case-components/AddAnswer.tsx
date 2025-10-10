@@ -6,8 +6,9 @@ import { useCreateAnswer } from "../../graphql/hooks/answer";
 import { ANSWER_CONTENT } from "../../utils/GLOBAL_PARAMETERS";
 import SimpleTextEditor from "../forms/partials/TextEditor/SimplifiedTextEditor";
 import { getTextLength } from "../../utils/contentRenderer";
-import ImagePreviewModal from "../modals/ImagePreviewModal";
+import ImagePreviewModal, { GalleryItem } from "../modals/ImagePreviewModal";
 import { toast } from "react-toastify";
+import { getIconForFile } from "../../utils/fileUtils";
 
 // Interface for the props of the AddAnswer component
 interface AddAnswerProps {
@@ -16,6 +17,11 @@ interface AddAnswerProps {
   me: any; // User object, assuming it has an _id property
   caseNumber: number;
   mentions?: { name: string; username: string; _id: string }[];
+  onAnswerSubmitted?: () => void;
+  content: string; // From parent
+  setContent: (content: string) => void; // To parent
+  attachments: File[]; // ADD THIS
+  setAttachments: (attachments: File[] | ((prev: File[]) => File[])) => void; // ADD THIS
 }
 
 // The AddAnswer component
@@ -25,11 +31,14 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
   me,
   caseNumber,
   mentions,
+  onAnswerSubmitted,
+  content, // Use prop
+  setContent, // Use prop
+  attachments, // ADD THIS
+  setAttachments, // ADD THIS
 }) => {
-  // State for attachments, file errors, content input, and submission errors
-  const [attachments, setAttachments] = useState<File[]>([]);
+  // State for file errors, content input, and submission errors
   const [fileError, setFileError] = useState<string | null>(null);
-  const [content, setContent] = useState<string>("");
   const [submissionError, setSubmissionError] = useState<string | null>(null); // Using the actual useCreateAnswer hook
 
   const {
@@ -80,15 +89,33 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
 
     try {
       // Call the createAnswer mutation
-      await createAnswer({
+      // Capture the response from the mutation
+      const newAnswer = await createAnswer({
         case: caseId,
         attachments,
         content,
         creator: me._id,
-      }); // Reset form fields on successful submission
+      });
 
+      // Reset form fields on successful submission
       setContent("");
-      setAttachments([]); // Optionally, you can clear submissionError here or rely on API success to imply no error // setSubmissionError(null); // Or show a success message
+      setAttachments([]);
+
+      if (onAnswerSubmitted) {
+        onAnswerSubmitted();
+      }
+
+      // Set the URL hash to focus the new answer
+      if (newAnswer && newAnswer._id) {
+        // A brief timeout allows the UI to re-render from the refetch
+        // before the hash change triggers the scroll effect.
+        setTimeout(() => {
+          window.location.hash = `answers-${newAnswer._id}`;
+        }, 100);
+      }
+
+      // Optionally, you can clear submissionError here or rely on API success to imply no error
+      // setSubmissionError(null); // Or show a success message
       toast.success(t("answerSubmitted"), {
         position: "top-right",
         autoClose: 5000,
@@ -138,6 +165,17 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
     return map;
   }, [attachments]); // Cleanup object URLs on unmount or when attachments change
 
+  // 1. ADD THIS useMemo TO CREATE THE GALLERY ITEMS
+  const galleryItems: GalleryItem[] = useMemo(() => {
+    return attachments.map((file) => {
+      const fileKey = file.name + "-" + file.lastModified;
+      return {
+        url: fileObjectUrls.get(fileKey) || "",
+        name: file.name,
+      };
+    });
+  }, [attachments, fileObjectUrls]);
+
   useEffect(() => {
     return () => {
       fileObjectUrls.forEach((url) => URL.revokeObjectURL(url));
@@ -146,13 +184,11 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
 
   return (
     <div>
-      {/* Main container for the input area */}{" "}
+      {/* Main container for the input area */}
       <div className="flex flex-col gap-2 mx-5">
-        {" "}
-        <div className="flex items-stretch gap-2">
-          {/* Container for the TextEditor and character counter */}{" "}
+        <div className="flex flex-col md:flex-row md:items-stretch gap-2">
+          {/* Container for the TextEditor and character counter */}
           <div className="flex-grow relative min-w-0 max-w-full">
-            {" "}
             <SimpleTextEditor
               content={content}
               onUpdate={handleContentChange}
@@ -166,54 +202,56 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
               onPasteFiles={(files) => {
                 setAttachments((prev) => [...prev, ...files]);
               }}
-            />{" "}
+              autoFocus={true} // Auto-focus the editor on mount
+            />
           </div>
-          {/* File attachment component */}{" "}
-          <FileAttachmentAnswer
-            inputId="file-upload-answer"
-            attachments={attachments}
-            setAttachments={setAttachments}
-            setFileError={setFileError}
-            height={36}
-          />
-          {/* Submit button */}{" "}
-          <button
-            onClick={submitAnswer}
-            disabled={isSubmitDisabled}
-            aria-label={t("submitAnswer") || "Submit Answer"}
-            className={`flex items-center justify-center h-36 w-24 min-w-24 rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-btnRedHover disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150`}
-            title="Изпрати"
-          >
-            {" "}
-            {loading ? (
-              // Loading spinner
-              <svg
-                className="animate-spin h-6 w-6 text-blue-600"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                {" "}
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                ></circle>{" "}
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                ></path>{" "}
-              </svg>
-            ) : (
-              // Paper airplane icon
-              <PaperAirplaneIcon className="h-8 w-8 text-blue-600" /> // Matched spinner color
-            )}{" "}
-          </button>{" "}
-        </div>{" "}
+          <div className="flex justify-between gap-4 md:contents">
+            {/* File attachment component */}
+            <FileAttachmentAnswer
+              inputId="file-upload-answer"
+              attachments={attachments}
+              setAttachments={setAttachments}
+              setFileError={setFileError}
+              wrapperClassName="flex-1 md:flex-none"
+              heightClass="h-14 md:h-36"
+            />
+            {/* Submit button */}{" "}
+            <button
+              onClick={submitAnswer}
+              disabled={isSubmitDisabled}
+              aria-label={t("submitAnswer") || "Submit Answer"}
+              className={`flex-1 md:flex-none cursor-pointer flex items-center justify-center h-14 md:h-36 md:w-24 md:min-w-24 rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-btnRedHover disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150`}
+              title="Изпрати"
+            >
+              {loading ? (
+                // Loading spinner
+                <svg
+                  className="animate-spin h-6 w-6 text-blue-600"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+              ) : (
+                // Paper airplane icon
+                <PaperAirplaneIcon className="h-8 w-8 text-blue-600" />
+              )}
+            </button>
+          </div>
+        </div>
       </div>
       {/* Display file errors */}{" "}
       {fileError && (
@@ -234,6 +272,7 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
             {attachments.map((file) => {
               const fileKey = file.name + "-" + file.lastModified;
               const fileUrl = fileObjectUrls.get(fileKey) || "";
+              const Icon = getIconForFile(file.name);
 
               return (
                 <div
@@ -241,20 +280,21 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
                   className="flex items-center gap-2 px-3 py-1.5 text-sm bg-gray-200 rounded-full hover:bg-gray-300"
                   title={file.name}
                 >
-                  {" "}
                   <ImagePreviewModal
-                    imageUrl={fileUrl}
-                    fileName={file.name}
+                    galleryItems={galleryItems} // Pass the full gallery
+                    imageUrl={fileUrl} // The URL for this specific trigger
+                    fileName={file.name} // The name for this specific trigger
                     triggerElement={
                       <button
                         type="button"
-                        className="truncate max-w-[150px] sm:max-w-xs cursor-pointer"
+                        className="w-30 flex items-center gap-1.5 truncate cursor-pointer"
                         title={file.name}
                       >
-                        {file.name}{" "}
+                        <Icon className="h-4 w-4 text-gray-600 flex-shrink-0" />
+                        {file.name}
                       </button>
                     }
-                  />{" "}
+                  />
                   <button
                     type="button"
                     onClick={() => handleRemoveAttachment(file.name)}
@@ -263,35 +303,33 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
                       file.name
                     }`}
                   >
-                    {" "}
-                    <XMarkIcon className="h-4 w-4 text-btnRed hover:text-red-700" />{" "}
-                  </button>{" "}
+                    <XMarkIcon className="h-4 w-4 text-btnRed hover:text-red-700" />
+                  </button>
                 </div>
               );
-            })}{" "}
-          </div>{" "}
+            })}
+          </div>
         </div>
       )}
-      {/* Submission Error Display */}{" "}
-      {/* This uses conditional rendering for the error message for clarity and accessibility */}{" "}
+      {/* Submission Error Display */}
+      {/* This uses conditional rendering for the error message for clarity and accessibility */}
       {
         <div
           id="submission-error-display" // Ensure this ID is unique if multiple instances on one page or use aria-describedby on textarea
-          className={`mx-5 mt-3 col-span-1 md:col-span-2 p-3 rounded-md border
+          className={`mx-5 col-span-1 md:col-span-2 pb-2 rounded-md border
          transition-opacity duration-300
          ${
            submissionError
-             ? "bg-red-100 border-red-400 text-red-700 opacity-100" // Visible styles
+             ? "my-2 p-2 bg-red-100 border-red-400 text-red-700 opacity-100" // Visible styles
              : "border-transparent text-transparent opacity-0 h-0 p-0 overflow-hidden" // Hidden and collapse space
          }`}
           aria-live="polite"
           role="alert"
         >
-          {" "}
           {/* Display error or non-breaking space to maintain height when not fully collapsed */}
-          {submissionError}{" "}
+          {submissionError}
         </div>
-      }{" "}
+      }
     </div>
   );
 };

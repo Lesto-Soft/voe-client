@@ -1,6 +1,6 @@
 // src/components/case-components/CaseInfo.tsx (Corrected)
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import { ApolloError } from "@apollo/client";
 import { ICategory, IMe, IMetricScore } from "../../db/interfaces";
 import CategoryLink from "../global/CategoryLink";
@@ -14,7 +14,7 @@ import { labelTextClass, caseBoxClasses } from "../../ui/reusable-styles";
 import { useTranslation } from "react-i18next";
 import Creator from "./Creator";
 import ShowDate from "../global/ShowDate";
-import ImagePreviewModal from "../modals/ImagePreviewModal";
+import ImagePreviewModal, { GalleryItem } from "../modals/ImagePreviewModal";
 import { createFileUrl } from "../../utils/fileUtils";
 import FullScreenContentDialog from "../modals/ContentDialog";
 import { CASE_STATUS, USER_RIGHTS } from "../../utils/GLOBAL_PARAMETERS";
@@ -69,9 +69,47 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
   readBy = [],
 }) => {
   const { t } = useTranslation("dashboard");
+
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [isScrolled, setIsScrolled] = useState(false);
+
   const [isRatingModalOpen, setRatingModalOpen] = useState(false);
   // 2. ADD STATE FOR THE NEW MODAL
   const [isReadByModalOpen, setReadByModalOpen] = useState(false);
+
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      // Check if the content height is greater than the container's visible height
+      const isOverflowing = container.scrollHeight > container.clientHeight;
+
+      // Check if the user has scrolled to the very bottom (with a 1px tolerance)
+      const isAtBottom =
+        container.scrollTop + container.clientHeight >=
+        container.scrollHeight - 1;
+
+      // Show the shadow only if the content is overflowing AND we are not at the bottom
+      setIsScrolled(isOverflowing && !isAtBottom);
+    };
+
+    // Use a ResizeObserver to re-check when the container size or content changes
+    const observer = new ResizeObserver(handleScroll);
+    observer.observe(container);
+
+    // Add the scroll event listener
+    container.addEventListener("scroll", handleScroll);
+
+    // Run once on mount to set the initial state correctly
+    handleScroll();
+
+    // Clean up listeners when the component unmounts
+    return () => {
+      container.removeEventListener("scroll", handleScroll);
+      observer.unobserve(container);
+    };
+  }, []); // Empty array ensures this setup runs only once
 
   // --- THIS LINE IS NOW CORRECT ---
   const { categories: categoriesDataFromHook } = useGetActiveCategories();
@@ -85,7 +123,14 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
     [metricScores, me._id]
   );
 
-  // 3. ADD AUTHORIZATION LOGIC
+  // 1. ADD THIS useMemo TO CREATE THE GALLERY ITEMS
+  const galleryItems: GalleryItem[] = useMemo(() => {
+    return attachments.map((file) => ({
+      url: createFileUrl("cases", caseId, file),
+      name: file,
+    }));
+  }, [attachments, caseId]);
+
   const canViewReadBy =
     rights.includes("admin") ||
     rights.includes("manager") ||
@@ -110,7 +155,10 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
     <>
       {/* MODIFIED: The entire panel is now one scrollable container.
           Flexbox classes have been removed. */}
-      <div className="w-full h-full bg-white shadow-md overflow-y-auto custom-scrollbar-xs">
+      <div
+        ref={scrollContainerRef}
+        className="w-full h-full bg-white shadow-md overflow-y-auto custom-scrollbar-xs"
+      >
         {/* --- Top and Middle sections are in a simple content wrapper --- */}
         <div className="p-4 flex flex-col gap-3">
           {/* Top Section */}
@@ -198,6 +246,7 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
               {attachments.map((file) => (
                 <ImagePreviewModal
                   key={file}
+                  galleryItems={galleryItems}
                   imageUrl={createFileUrl("cases", caseId, file)}
                   fileName={file}
                 />
@@ -210,7 +259,13 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
         {/* MODIFIED: This wrapper is now sticky. It scrolls with the content until
             it hits the bottom of the container, where it will "stick".
             The background color is important so content doesn't show through. */}
-        <div className="sticky bottom-0 bg-white p-4 pt-2">
+        <div
+          className={`sticky bottom-0 bg-white p-4 pt-2 transition-shadow duration-200 ${
+            isScrolled
+              ? "shadow-[0_-5px_10px_-5px_rgba(0,0,0,0.1)] border-t border-gray-200"
+              : ""
+          }`}
+        >
           <div className="flex flex-col gap-3">
             {/* Info Grid (Priority, Type, etc.) */}
             <div className="flex flex-wrap gap-x-4 gap-y-3">

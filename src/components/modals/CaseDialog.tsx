@@ -524,6 +524,7 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
                         maxLength={CASE_CONTENT.MAX}
                         minLength={CASE_CONTENT.MIN}
                         wrapperClassName="w-full rounded-md shadow-sm overflow-hidden bg-white"
+                        autoFocus={true}
                       />
                     </div>
                     {/* ... form fields remain the same */}

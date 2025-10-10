@@ -4,9 +4,10 @@ import { useCreateComment } from "../../graphql/hooks/comment";
 import FileAttachmentAnswer from "../global/FileAttachmentAnswer";
 import { PaperAirplaneIcon, XMarkIcon } from "@heroicons/react/24/solid";
 import { COMMENT_CONTENT } from "../../utils/GLOBAL_PARAMETERS";
-import ImagePreviewModal from "../modals/ImagePreviewModal";
+import ImagePreviewModal, { GalleryItem } from "../modals/ImagePreviewModal";
 import SimpleTextEditor from "../forms/partials/TextEditor/SimplifiedTextEditor";
 import { getTextLength } from "../../utils/contentRenderer";
+import { getIconForFile } from "../../utils/fileUtils";
 
 // Interface for the props of the AddComment component
 interface AddCommentProps {
@@ -17,6 +18,11 @@ interface AddCommentProps {
   answerId?: string;
   inputId?: string; // Optional input ID for file attachment
   mentions?: { name: string; username: string; _id: string }[];
+  onCommentSubmitted?: () => void;
+  content: string; // REQUIRED
+  setContent: (content: string) => void; // REQUIRED
+  attachments: File[]; // ADD THIS
+  setAttachments: (attachments: File[] | ((prev: File[]) => File[])) => void; // ADD THIS
 }
 
 // The AddComment component
@@ -28,11 +34,14 @@ const AddComment: React.FC<AddCommentProps> = ({
   answerId,
   inputId,
   mentions = [],
+  onCommentSubmitted,
+  content, // Use prop
+  setContent, // Use prop
+  attachments, // ADD THIS
+  setAttachments, // ADD THIS
 }) => {
-  // State for attachments, file errors, content input, and submission errors
-  const [attachments, setAttachments] = useState<File[]>([]);
+  // State for file errors, content input, and submission errors
   const [fileError, setFileError] = useState<string | null>(null);
-  const [content, setContent] = useState<string>("");
   const [submissionError, setSubmissionError] = useState<string | null>(null);
 
   const {
@@ -40,18 +49,6 @@ const AddComment: React.FC<AddCommentProps> = ({
     loading,
     error: apiError,
   } = useCreateComment(caseNumber);
-
-  const charCount = useMemo(() => content.length, [content]); // ADDED: validation for both min and max length
-
-  const isContentTooLong = useMemo(
-    () => charCount > COMMENT_CONTENT.MAX,
-    [charCount]
-  );
-  const isContentTooShort = useMemo(
-    () => charCount > 0 && charCount < COMMENT_CONTENT.MIN,
-    [charCount]
-  );
-  const isInvalid = isContentTooLong || isContentTooShort; // Effect to handle API errors from the useCreateComment hook
 
   useEffect(() => {
     if (apiError) {
@@ -71,6 +68,17 @@ const AddComment: React.FC<AddCommentProps> = ({
     return map;
   }, [attachments]); // Cleanup object URLs on unmount or when attachments change
 
+  // 1. ADD THIS useMemo TO CREATE THE GALLERY ITEMS
+  const galleryItems: GalleryItem[] = useMemo(() => {
+    return attachments.map((file) => {
+      const fileKey = file.name + "-" + file.lastModified;
+      return {
+        url: fileObjectUrls.get(fileKey) || "",
+        name: file.name,
+      };
+    });
+  }, [attachments, fileObjectUrls]);
+
   useEffect(() => {
     return () => {
       fileObjectUrls.forEach((url) => URL.revokeObjectURL(url));
@@ -81,25 +89,21 @@ const AddComment: React.FC<AddCommentProps> = ({
     event.preventDefault(); // Prevent default form submission behavior
     setSubmissionError(null); // Clear previous errors // UPDATED: Validate content length
 
-    if (isContentTooLong) {
+    // REPLACE the old validation block with this one
+    const textLength = getTextLength(content);
+    if (textLength < COMMENT_CONTENT.MIN) {
+      setSubmissionError(
+        `Коментарът трябва да е поне ${COMMENT_CONTENT.MIN} символа.`
+      );
+      return;
+    }
+    if (textLength > COMMENT_CONTENT.MAX) {
       setSubmissionError(
         `Коментарът не може да надвишава ${COMMENT_CONTENT.MAX} символа.`
       );
       return;
     }
-    if (content.length > 0 && content.length < COMMENT_CONTENT.MIN) {
-      setSubmissionError(
-        `Коментарът трябва да е поне ${COMMENT_CONTENT.MIN} символа.`
-      );
-      return;
-    } // Validate if content or attachments are present
-    if (!content.trim() && attachments.length === 0) {
-      setSubmissionError(
-        t("caseSubmission.errors.submission.emptyComment") || // Specific key for comment
-          "Cannot submit an empty comment."
-      );
-      return;
-    }
+    // The old check for empty content is no longer needed.
 
     try {
       const commentPayload: any = {
@@ -121,10 +125,30 @@ const AddComment: React.FC<AddCommentProps> = ({
         return;
       }
 
-      await createComment(commentPayload); // Reset form fields on successful submission
+      const newComment = await createComment(commentPayload);
 
+      // Reset form fields on successful submission
       setContent("");
-      setAttachments([]); // No 'data' returned from hook, so success message is harder to implement here // Could set a temporary success message state if needed.
+      setAttachments([]);
+      // No 'data' returned from hook, so success message is harder to implement here
+      // Could set a temporary success message state if needed.
+
+      // If the callback prop is provided, call it.
+      if (onCommentSubmitted) {
+        onCommentSubmitted();
+      }
+
+      // Set the URL hash to focus the new comment
+      // We only do this if it's a comment on an answer (`answerId` is present)
+      //if (newComment && newComment._id && answerId) {
+      if (newComment && newComment._id) {
+        const commentHighlightHash = answerId
+          ? `answers-${newComment._id}?comment=true`
+          : `comments-${newComment._id}`;
+        setTimeout(() => {
+          window.location.hash = commentHighlightHash;
+        }, 100);
+      }
     } catch (error: any) {
       // Catch errors from the createComment promise itself
       console.error("Error creating comment:", error);
@@ -150,26 +174,28 @@ const AddComment: React.FC<AddCommentProps> = ({
     }
   }; // Determine if the submit button should be disabled
 
-  const isSubmitDisabled =
-    isInvalid || // UPDATED
-    loading ||
-    (!content.trim() && attachments.length === 0);
+  // ADD this new textLength calculation
+  const textLength = useMemo(() => getTextLength(content), [content]);
+
+  // REPLACE the old isSubmitDisabled with this new one
+  const isSubmitDisabled = loading || textLength < COMMENT_CONTENT.MIN;
 
   return (
     <div>
-      {/* Main container for the input area */}{" "}
+      {/* Main container for the input area */}
       <div className="flex flex-col gap-2 mx-5">
-        {" "}
-        {/* Flex container for textarea, attachment button, and submit button */}{" "}
-        {/* UPDATED: Container now stretches children to be equal height */}{" "}
-        <div className="flex items-stretch gap-2">
-          {/* Container for the textarea and character counter */}{" "}
+        {/* Flex container for textarea, attachment button, and submit button */}
+        <div className="flex flex-col md:flex-row md:items-stretch gap-2">
+          {/* Container for the textarea and character counter */}
           <div className="flex-grow relative">
-            {" "}
             <SimpleTextEditor
               content={content}
               onUpdate={handleContentChange}
-              placeholder={"Напишете решение..."}
+              placeholder={
+                answerId
+                  ? "Напишете коментар към решението..."
+                  : "Напишете коментар..."
+              }
               maxLength={COMMENT_CONTENT.MAX}
               minLength={COMMENT_CONTENT.MIN}
               wrapperClassName="transition-colors duration-150 h-36"
@@ -179,65 +205,67 @@ const AddComment: React.FC<AddCommentProps> = ({
               onPasteFiles={(files) => {
                 setAttachments((prev) => [...prev, ...files]);
               }}
-            />{" "}
+              autoFocus={true} // Auto-focus the editor on mount
+            />
           </div>
-          {/* File attachment component */}{" "}
-          <FileAttachmentAnswer
-            inputId={inputId ?? "default"}
-            attachments={attachments}
-            setAttachments={setAttachments}
-            setFileError={setFileError}
-            height={36}
-          />
-          {/* Submit button */}{" "}
-          <button
-            onClick={submitComment}
-            disabled={isSubmitDisabled}
-            aria-label={t("submitComment") || "Submit Comment"}
-            className={`flex items-center justify-center h-auto w-24 rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-btnRedHover disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150`}
-            title="Изпрати"
-          >
-            {" "}
-            {loading ? (
-              // Loading spinner
-              <svg
-                className="animate-spin h-5 w-5 text-blue-600"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                {" "}
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                ></circle>{" "}
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                ></path>{" "}
-              </svg>
-            ) : (
-              // Paper airplane icon (h-6 w-6 is a bit smaller for h-24 button)
-              <PaperAirplaneIcon className="h-6 w-6 text-blue-600" />
-            )}{" "}
-          </button>{" "}
-        </div>{" "}
+          <div className="flex justify-between gap-4 md:contents">
+            {/* File attachment component */}
+            <FileAttachmentAnswer
+              inputId={inputId ?? "default"}
+              attachments={attachments}
+              setAttachments={setAttachments}
+              setFileError={setFileError}
+              wrapperClassName="flex-1 md:flex-none"
+              heightClass="h-14 md:h-36"
+            />
+            {/* Submit button */}
+            <button
+              onClick={submitComment}
+              disabled={isSubmitDisabled}
+              aria-label={t("submitComment") || "Submit Comment"}
+              className={`flex-1 md:flex-none cursor-pointer flex items-center justify-center h-14 md:h-36 md:w-24 md:min-w-24 rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-btnRedHover disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150`}
+              title="Изпрати"
+            >
+              {loading ? (
+                // Loading spinner
+                <svg
+                  className="animate-spin h-5 w-5 text-blue-600"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+              ) : (
+                // Paper airplane icon (h-6 w-6 is a bit smaller for h-24 button)
+                <PaperAirplaneIcon className="h-6 w-6 text-blue-600" />
+              )}
+            </button>
+          </div>
+        </div>
       </div>
-      {/* Display file errors */}{" "}
+      {/* Display file errors */}
       {fileError && (
         <div className="mx-5 mt-2 px-2">
-          {/* Consistent margin with mx-5 */}{" "}
+          {/* Consistent margin with mx-5 */}
           <p className="text-sm text-red-500 transition-opacity duration-200 opacity-100">
-            {fileError || "\u00A0"}{" "}
-          </p>{" "}
+            {fileError || "\u00A0"}
+          </p>
         </div>
       )}
-      {/* Display list of attached files */}{" "}
+      {/* Display list of attached files */}
       {attachments.length > 0 && (
         <div className="mx-5 mt-2 text-sm text-gray-600 space-y-1 overflow-y-auto rounded p-2 bg-gray-100 border border-gray-200 max-h-28">
           {" "}
@@ -246,6 +274,7 @@ const AddComment: React.FC<AddCommentProps> = ({
             {attachments.map((file) => {
               const fileKey = file.name + "-" + file.lastModified;
               const fileUrl = fileObjectUrls.get(fileKey) || "";
+              const Icon = getIconForFile(file.name);
 
               return (
                 <div
@@ -253,20 +282,21 @@ const AddComment: React.FC<AddCommentProps> = ({
                   className="flex items-center gap-2 px-3 py-1.5 text-sm bg-gray-200 rounded-full hover:bg-gray-300"
                   title={file.name}
                 >
-                  {" "}
                   <ImagePreviewModal
-                    imageUrl={fileUrl}
-                    fileName={file.name}
+                    galleryItems={galleryItems} // Pass the full gallery
+                    imageUrl={fileUrl} // The URL for this specific trigger
+                    fileName={file.name} // The name for this specific trigger
                     triggerElement={
                       <button
                         type="button"
-                        className="truncate max-w-[150px] sm:max-w-xs cursor-pointer"
+                        className="w-38 flex items-center gap-1.5 truncate cursor-pointer"
                         title={file.name}
                       >
-                        {file.name}{" "}
+                        <Icon className="h-4 w-4 text-gray-600 flex-shrink-0" />
+                        {file.name}
                       </button>
                     }
-                  />{" "}
+                  />
                   <button
                     type="button"
                     onClick={() => handleRemoveAttachment(file.name)}
@@ -275,32 +305,30 @@ const AddComment: React.FC<AddCommentProps> = ({
                       file.name
                     }`}
                   >
-                    {" "}
-                    <XMarkIcon className="h-4 w-4 text-btnRed hover:text-red-700" />{" "}
-                  </button>{" "}
+                    <XMarkIcon className="h-4 w-4 text-btnRed hover:text-red-700" />
+                  </button>
                 </div>
               );
-            })}{" "}
-          </div>{" "}
+            })}
+          </div>
         </div>
-      )}{" "}
-      {/* Submission Error Display - Always rendered, uses opacity for transition */}{" "}
+      )}
+      {/* Submission Error Display - Always rendered, uses opacity for transition */}
       <div
         id="submission-error-display" // Ensure this ID is unique if multiple instances on one page or use aria-describedby on textarea
-        className={`mx-5 mt-3 col-span-1 md:col-span-2 p-3 rounded-md border
+        className={`mx-5 col-span-1 md:col-span-2 pb-2 rounded-md border
           transition-opacity duration-300
           ${
             submissionError
-              ? "bg-red-100 border-red-400 text-red-700 opacity-100" // Visible styles
+              ? "my-2 p-2 bg-red-100 border-red-400 text-red-700 opacity-100" // Visible styles
               : "border-transparent text-transparent opacity-0 h-0 p-0 overflow-hidden" // Hidden and collapse space
           }`}
         aria-live="polite"
         role="alert"
       >
-        {" "}
         {/* Display error or non-breaking space to maintain height when not fully collapsed */}
-        {submissionError}{" "}
-      </div>{" "}
+        {submissionError}
+      </div>
     </div>
   );
 };

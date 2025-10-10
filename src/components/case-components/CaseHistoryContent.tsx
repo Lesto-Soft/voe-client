@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { ICaseHistory, ICategory } from "../../db/interfaces";
 import ShowDate from "../global/ShowDate";
-import UserLink from "../global/UserLink";
+import UserLink from "../global/links/UserLink";
 import { getPriorityStyle, getTypeBadgeStyle } from "../../utils/style-helpers";
 import { useTranslation } from "react-i18next";
 import {
@@ -13,7 +13,7 @@ import {
   CodeBracketIcon,
   DocumentTextIcon,
 } from "@heroicons/react/24/solid";
-import CategoryLink from "../global/CategoryLink";
+import CategoryLink from "../global/links/CategoryLink";
 import { isHtmlContent, stripHtmlTags } from "../../utils/contentRenderer";
 
 type ViewMode = "content" | "formatting";

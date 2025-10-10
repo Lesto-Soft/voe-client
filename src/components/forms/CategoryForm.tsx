@@ -46,6 +46,7 @@ interface CategoryFormProps {
   allCategories: ICategory[]; // To check color usage
   paletteColorsLoading: boolean;
   canManageColors: boolean;
+  allUsersForFormError: any;
 }
 
 // Component name updated
@@ -63,6 +64,7 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
   allCategories,
   paletteColorsLoading,
   canManageColors,
+  allUsersForFormError,
 }) => {
   const {
     name,
@@ -81,8 +83,6 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
     setColor,
     nameError,
     setNameError,
-    initialExpertObjects,
-    initialManagerObjects,
   } = useCategoryFormState({
     initialData,
     onDirtyChange,
@@ -241,14 +241,13 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
               colorError={colorError}
               usedColors={usedColors}
               errorPlaceholderClass={errorPlaceholderClass}
-              initialExperts={initialExpertObjects as ILeanUserForForm[]}
-              initialManagers={initialManagerObjects as ILeanUserForForm[]}
               allUsersForAssigning={allUsersForForm}
               usersLoading={allUsersForFormLoading}
               paletteColors={paletteColors}
               paletteColorsLoading={paletteColorsLoading}
               canManageColors={canManageColors}
               onOpenColorManager={() => setIsColorManagerOpen(true)}
+              usersError={allUsersForFormError}
             />
           </div>
         </div>

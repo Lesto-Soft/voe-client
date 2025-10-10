@@ -108,7 +108,7 @@ export function useCategoryManagement(): UseCategoryManagementReturn {
     params.set("page", String(currentPage));
     params.set("itemsPerPage", String(itemsPerPage));
 
-    if (debouncedFilterName) params.set("name", debouncedFilterName);
+    if (filterName) params.set("name", filterName);
     else params.delete("name"); // Explicitly remove if empty
 
     if (filterExpertIds.length > 0)
@@ -136,7 +136,7 @@ export function useCategoryManagement(): UseCategoryManagementReturn {
     }
   }, [
     // --- MODIFICATION: REMOVED location.search from dependencies ---
-    debouncedFilterName,
+    filterName,
     filterExpertIds,
     filterManagerIds,
     filterArchived,

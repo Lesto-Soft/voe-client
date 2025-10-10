@@ -1,7 +1,7 @@
 import React from "react";
 import { TrophyIcon } from "@heroicons/react/24/outline"; // <-- NEW: Import from Heroicons
 import UserAvatar from "../../../cards/UserAvatar";
-import UserLink from "../../../global/UserLink";
+import UserLink from "../../../global/links/UserLink";
 import { RankedUser } from "../types";
 
 // The local TrophyIcon SVG component has been removed.

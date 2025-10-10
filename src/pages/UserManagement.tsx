@@ -35,6 +35,7 @@ import UserFilters from "../components/features/userManagement/UserFilters";
 import UserTable from "../components/features/userManagement/UserTable";
 import { useUserManagement } from "../hooks/useUserManagement"; // Adjust path
 import { ROLES } from "../utils/GLOBAL_PARAMETERS";
+import ClearFiltersButton from "../components/global/ClearFiltersButton";
 
 const UserManagement: React.FC = () => {
   const {
@@ -59,6 +60,17 @@ const UserManagement: React.FC = () => {
     handleRoleFilterToggle,
     currentQueryInput,
   } = useUserManagement();
+
+  const handleClearAllFilters = () => {
+    setFilterName("");
+    setFilterUsername("");
+    setFilterPosition("");
+    setFilterEmail("");
+    setFilterRoleIds([]);
+    setFilterFinancial(false);
+    setFilterManager(false);
+    handlePageChange(1);
+  };
 
   // --- NEW: Get current user and determine if they are an admin ---
   const currentUser = useCurrentUser() as IMe | undefined;
@@ -140,7 +152,25 @@ const UserManagement: React.FC = () => {
 
   const [isDynamicRoleDataStale, setIsDynamicRoleDataStale] = useState(false);
   const prevTextAttributeFiltersRef = useRef(textAttributeFiltersOnlyInput);
-
+  const isAnyFilterActive = useMemo(() => {
+    return (
+      filterName !== "" ||
+      filterUsername !== "" ||
+      filterPosition !== "" ||
+      filterEmail !== "" ||
+      filterRoleIds.length > 0 ||
+      filterFinancial === true ||
+      filterManager === true
+    );
+  }, [
+    filterName,
+    filterUsername,
+    filterPosition,
+    filterEmail,
+    filterRoleIds,
+    filterFinancial,
+    filterManager,
+  ]);
   useEffect(() => {
     if (
       JSON.stringify(prevTextAttributeFiltersRef.current) !==
@@ -373,23 +403,52 @@ const UserManagement: React.FC = () => {
           isLoadingRoleDefinitions={isLoadingUserStatsRoleDefinitionsAndCounts}
           dynamicRoleCounts={dynamicRoleCounts}
         />
-        <div className="flex flex-col sm:flex-row gap-2 items-center md:items-start flex-shrink-0 mt-4 md:mt-0">
-          <button
-            className="w-full sm:w-auto flex justify-center items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-gray-500 text-white hover:bg-gray-600 hover:cursor-pointer"
-            title={showFilters ? "Скрий филтри" : "Покажи филтри"}
-            onClick={() => setShowFilters(!showFilters)}
-          >
-            {showFilters ? (
-              <ChevronUpIcon className="h-5 w-5 mr-1" />
-            ) : (
-              <ChevronDownIcon className="h-5 w-5 mr-1" />
+        <div className="flex flex-col md:flex-row gap-2 items-center md:items-start flex-shrink-0 mt-4 md:mt-0">
+          <div className="flex w-full md:w-auto md:gap-0 gap-2">
+            <button
+              type="button"
+              className={`
+   justify-center cursor-pointer group flex items-center px-4 py-2 font-semibold transition-colors duration-150  w-full
+      bg-gray-500 text-white hover:bg-gray-600
+      ${
+        isAnyFilterActive
+          ? "md:rounded-r-none rounded-l-lg rounded-r-lg "
+          : "rounded-lg"
+      } 
+    `}
+              onClick={() => setShowFilters(!showFilters)}
+              title={showFilters ? "Скрий филтри" : "Покажи филтри"}
+            >
+              {showFilters ? (
+                <ChevronUpIcon className="h-5 w-5 mr-1" />
+              ) : (
+                <ChevronDownIcon className="h-5 w-5 mr-1" />
+              )}
+              Филтри
+            </button>
+
+            {/* Button to clear all filters (only shows when a filter is active) */}
+            {isAnyFilterActive && (
+              <button
+                type="button"
+                className="hidden cursor-pointer md:flex items-center pl-2 pr-3 py-2 rounded-r-lg bg-red-400 text-white hover:bg-red-500 transition-colors duration-150"
+                title="Изчисти всички филтри"
+                onClick={handleClearAllFilters} // No need for e.stopPropagation() anymore!
+              >
+                <XMarkIcon className="h-5 w-5 text-white" />
+              </button>
             )}
-            Филтри
-          </button>
+            <div className="w-full md:w-auto md:hidden">
+              <ClearFiltersButton
+                isActive={isAnyFilterActive}
+                onClear={handleClearAllFilters}
+              />
+            </div>
+          </div>
           {isAdmin && (
             <button
               onClick={openCreateModal}
-              className="w-full sm:w-[280px] flex flex-shrink-0 justify-center items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-green-500 text-white hover:bg-green-600 hover:cursor-pointer active:bg-green-700 active:shadow-inner disabled:cursor-not-allowed"
+              className="md:w-54 w-full flex flex-shrink-0 justify-center items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-green-500 text-white hover:bg-green-600 hover:cursor-pointer active:bg-green-700 active:shadow-inner disabled:cursor-not-allowed"
               disabled={createLoading || updateLoading}
             >
               <PlusIconSolid className="h-5 w-5 mr-1" />
@@ -482,7 +541,7 @@ const UserManagement: React.FC = () => {
         )}
         {(createError || updateError) && !(createLoading || updateLoading) && (
           <div className="p-4 mb-4 text-center text-red-600 bg-red-100 rounded-md">
-            Грешка при запис:{" "}
+            Грешка при запис:
             {createError?.message ||
               updateError?.message ||
               "Неизвестна грешка"}

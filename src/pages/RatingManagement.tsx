@@ -1,7 +1,11 @@
 // src/pages/RatingManagement.tsx
 import React, { useMemo, useState, useEffect } from "react";
 import { PlusIcon as PlusIconSolid } from "@heroicons/react/20/solid";
-import { ChevronUpIcon, ChevronDownIcon } from "@heroicons/react/24/outline"; // <-- Import chevrons
+import {
+  ChevronUpIcon,
+  ChevronDownIcon,
+  XMarkIcon,
+} from "@heroicons/react/24/outline";
 import {
   useGetAllRatingMetrics,
   useCreateRatingMetric,
@@ -23,6 +27,7 @@ import SuccessConfirmationModal from "../components/modals/SuccessConfirmationMo
 import ConfirmActionDialog from "../components/modals/ConfirmActionDialog";
 import { useCurrentUser } from "../context/UserContext";
 import { ROLES, TIERS } from "../utils/GLOBAL_PARAMETERS";
+import ClearFiltersButton from "../components/global/ClearFiltersButton";
 
 const RatingManagement: React.FC = () => {
   const {
@@ -70,48 +75,28 @@ const RatingManagement: React.FC = () => {
   const { reorderRatingMetrics, loading: reorderLoading } =
     useReorderRatingMetrics();
 
+  const handleClearAllFilters = () => {
+    setFilterName("");
+    setFilterDescription("");
+    setArchivedStatus("all");
+    setTierFilter("all");
+  };
+
   const currentUser = useCurrentUser() as IMe | undefined;
   const isAdmin = currentUser?.role?._id === ROLES.ADMIN;
 
-  // Determine if any filter is currently active.
-  const isAnyFilterActive =
-    debouncedFilterName !== "" ||
-    debouncedFilterDescription !== "" ||
-    archivedStatus !== "all" ||
-    tierFilter !== "all";
+  const isAnyFilterActive = useMemo(() => {
+    return (
+      filterName !== "" ||
+      filterDescription !== "" ||
+      archivedStatus !== "all" ||
+      tierFilter !== "all"
+    );
+  }, [filterName, filterDescription, archivedStatus, tierFilter]);
 
   const isMutating =
     createLoading || updateLoading || deleteLoading || reorderLoading;
 
-  // const filteredMetrics = useMemo(() => {
-  //   if (!fetchedMetrics) return [];
-  //   return fetchedMetrics
-  //     .filter((metric: IRatingMetric) => {
-  //       if (archivedStatus === "active") return !metric.archived;
-  //       if (archivedStatus === "archived") return metric.archived;
-  //       return true;
-  //     })
-  //     .filter((metric: IRatingMetric) => {
-  //       const nameMatch = debouncedFilterName
-  //         ? metric.name
-  //             .toLowerCase()
-  //             .includes(debouncedFilterName.toLowerCase())
-  //         : true;
-  //       const descriptionMatch = debouncedFilterDescription
-  //         ? metric.description
-  //             .toLowerCase()
-  //             .includes(debouncedFilterDescription.toLowerCase())
-  //         : true;
-  //       return nameMatch && descriptionMatch;
-  //     });
-  // }, [
-  //   fetchedMetrics,
-  //   debouncedFilterName,
-  //   debouncedFilterDescription,
-  //   archivedStatus,
-  // ]);
-
-  // This memo filters by text/archived status FIRST
   const primaryFilteredMetrics = useMemo(() => {
     if (!fetchedMetrics) return [];
     return fetchedMetrics
@@ -267,23 +252,52 @@ const RatingManagement: React.FC = () => {
         />
 
         {/* --- ACTION BUTTONS ON THE RIGHT --- */}
-        <div className="flex flex-col sm:flex-row gap-2 items-center md:items-start flex-shrink-0 mt-4 md:mt-0">
-          <button
-            className="w-full sm:w-auto flex justify-center items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-gray-500 text-white hover:bg-gray-600 hover:cursor-pointer"
-            title={showFilters ? "Скрий филтри" : "Покажи филтри"}
-            onClick={() => setShowFilters(!showFilters)}
-          >
-            {showFilters ? (
-              <ChevronUpIcon className="h-5 w-5 mr-1" />
-            ) : (
-              <ChevronDownIcon className="h-5 w-5 mr-1" />
+        <div className="flex flex-col md:flex-row gap-2 items-center md:items-start flex-shrink-0 mt-4 md:mt-0">
+          <div className="flex w-full md:w-auto md:gap-0 gap-2">
+            <button
+              type="button"
+              className={`
+   justify-center cursor-pointer group flex items-center px-4 py-2 font-semibold transition-colors duration-150  w-full
+      bg-gray-500 text-white hover:bg-gray-600
+      ${
+        isAnyFilterActive
+          ? "md:rounded-r-none rounded-l-lg rounded-r-lg "
+          : "rounded-lg"
+      } 
+    `}
+              onClick={() => setShowFilters(!showFilters)}
+              title={showFilters ? "Скрий филтри" : "Покажи филтри"}
+            >
+              {showFilters ? (
+                <ChevronUpIcon className="h-5 w-5 mr-1" />
+              ) : (
+                <ChevronDownIcon className="h-5 w-5 mr-1" />
+              )}
+              Филтри
+            </button>
+
+            {/* Button to clear all filters (only shows when a filter is active) */}
+            {isAnyFilterActive && (
+              <button
+                type="button"
+                className="hidden cursor-pointer md:flex items-center pl-2 pr-3 py-2 rounded-r-lg bg-red-400 text-white hover:bg-red-500 transition-colors duration-150"
+                title="Изчисти всички филтри"
+                onClick={handleClearAllFilters} // No need for e.stopPropagation() anymore!
+              >
+                <XMarkIcon className="h-5 w-5 text-white" />
+              </button>
             )}
-            Филтри
-          </button>
+            <div className="w-full md:w-auto md:hidden">
+              <ClearFiltersButton
+                isActive={isAnyFilterActive}
+                onClear={handleClearAllFilters}
+              />
+            </div>
+          </div>
           {isAdmin && (
             <button
               onClick={handleOpenCreateModal}
-              className="hover:cursor-pointer w-full sm:w-[280px] flex flex-shrink-0 justify-center items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-green-500 text-white hover:bg-green-600 active:bg-green-700 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="hover:cursor-pointer md:w-54 w-full flex flex-shrink-0 justify-center items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-green-500 text-white hover:bg-green-600 active:bg-green-700 disabled:opacity-60 disabled:cursor-not-allowed"
               disabled={isMutating}
             >
               <PlusIconSolid className="h-5 w-5 mr-1" />

@@ -23,6 +23,7 @@ import ServerErrorPage from "../pages/ErrorPages/ServerErrorPage";
 import NavbarSkeleton from "../components/skeletons/NavbarSkeleton";
 import { useAuthModal } from "../context/AuthModalContext"; // NEW IMPORT
 import ResetPassword from "../pages/ResetPassword";
+import DashboardPage from "../pages/Dashboard";
 
 const AppLayout = () => {
   const { me, error, loading } = useGetMe();
@@ -82,7 +83,7 @@ export const mainRouter = createBrowserRouter([
   {
     element: <AppLayout />,
     children: [
-      { path: "/dashboard", element: <Dashboard /> },
+      { path: "/dashboard", element: <DashboardPage /> },
       {
         path: "/user-management",
         element: (

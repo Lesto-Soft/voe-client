@@ -51,23 +51,35 @@ export function useRatingMetricManagement(): UseRatingMetricManagementReturn {
   const debouncedFilterDescription = useDebounce(filterDescription, 500);
 
   useEffect(() => {
-    const params = new URLSearchParams();
-    if (debouncedFilterName) {
-      params.set("name", debouncedFilterName);
+    const params = new URLSearchParams(location.search);
+    if (filterName) {
+      params.set("name", filterName);
+    } else {
+      params.delete("name");
     }
-    if (debouncedFilterDescription) {
-      params.set("description", debouncedFilterDescription);
+
+    if (filterDescription) {
+      params.set("description", filterDescription);
+    } else {
+      params.delete("description");
     }
-    // Only add the status to the URL if it's not the default "all"
+
     if (archivedStatus && archivedStatus !== "all") {
       params.set("status", archivedStatus);
+    } else {
+      params.delete("status");
     }
-    navigate(`${location.pathname}?${params.toString()}`, { replace: true });
+
+    const newSearchString = params.toString();
+    if (newSearchString !== location.search.substring(1)) {
+      navigate(`${location.pathname}?${newSearchString}`, { replace: true });
+    }
   }, [
-    debouncedFilterName,
-    debouncedFilterDescription,
+    filterName,
+    filterDescription,
     archivedStatus,
     location.pathname,
+    location.search,
     navigate,
   ]);
 

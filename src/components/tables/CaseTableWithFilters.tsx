@@ -112,18 +112,6 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
   const navigate = useNavigate();
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  const clearAllFilters = useCallback(() => {
-    setCaseNumber("");
-    setPriority("");
-    setType("");
-    setCreatorId("");
-    setCategoryIds([]);
-    setContent("");
-    setStatus([]);
-    setReadStatus("ALL");
-    setDateRange({ startDate: null, endDate: null });
-  }, []);
-
   // Determine initial filters based on prop or URL
   const initialFilters = useMemo(() => {
     if (initialFiltersOverride) {
@@ -256,8 +244,6 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
     location.pathname,
     dateRange,
     initialFiltersOverride,
-    caseNumber,
-    content,
   ]);
 
   const handlePageChange = (page: number) => {

@@ -252,29 +252,51 @@ const RatingManagement: React.FC = () => {
         />
 
         {/* --- ACTION BUTTONS ON THE RIGHT --- */}
-        <div className="flex flex-col sm:flex-row gap-2 items-center md:items-start flex-shrink-0 mt-4 md:mt-0">
-          <div className="flex gap-2 w-full sm:w-auto">
+        <div className="flex flex-col md:flex-row gap-2 items-center md:items-start flex-shrink-0 mt-4 md:mt-0">
+          <div className="flex gap-2 w-full md:w-auto">
             <button
-              className="w-full sm:w-auto flex justify-center items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-gray-500 text-white hover:bg-gray-600 hover:cursor-pointer"
-              title={showFilters ? "Скрий филтри" : "Покажи филтри"}
+              type="button"
+              className="group w-full md:w-auto flex justify-center items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-gray-500 text-white hover:bg-gray-600 hover:cursor-pointer"
               onClick={() => setShowFilters(!showFilters)}
             >
-              {showFilters ? (
-                <ChevronUpIcon className="h-5 w-5 mr-1" />
-              ) : (
-                <ChevronDownIcon className="h-5 w-5 mr-1" />
+              <div
+                className="flex items-center"
+                title={showFilters ? "Скрий филтри" : "Покажи филтри"}
+              >
+                {showFilters ? (
+                  <ChevronUpIcon className="h-5 w-5 mr-1" />
+                ) : (
+                  <ChevronDownIcon className="h-5 w-5 mr-1" />
+                )}
+                <span>Филтри</span>
+              </div>
+              {isAnyFilterActive && (
+                <div className="hidden md:flex md:items-center">
+                  <span className="border-l border-gray-400 group-hover:border-gray-500 h-4 mx-2"></span>
+                  <div
+                    className="p-1 rounded-sm hover:bg-gray-400"
+                    title="Изчисти всички филтри"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleClearAllFilters();
+                    }}
+                  >
+                    <XMarkIcon className="h-4 w-4 text-white" />
+                  </div>
+                </div>
               )}
-              Филтри
             </button>
-            <ClearFiltersButton
-              isActive={isAnyFilterActive}
-              onClear={handleClearAllFilters}
-            />
+            <div className="w-full md:w-auto md:hidden">
+              <ClearFiltersButton
+                isActive={isAnyFilterActive}
+                onClear={handleClearAllFilters}
+              />
+            </div>
           </div>
           {isAdmin && (
             <button
               onClick={handleOpenCreateModal}
-              className="hover:cursor-pointer sm:w-54 w-full flex flex-shrink-0 justify-center items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-green-500 text-white hover:bg-green-600 active:bg-green-700 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="hover:cursor-pointer md:w-54 w-full flex flex-shrink-0 justify-center items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-green-500 text-white hover:bg-green-600 active:bg-green-700 disabled:opacity-60 disabled:cursor-not-allowed"
               disabled={isMutating}
             >
               <PlusIconSolid className="h-5 w-5 mr-1" />

@@ -7,12 +7,14 @@ type DeleteModalProps = {
   title: string;
   content: string;
   onDelete: () => void;
+  showText?: boolean;
 };
 
 const DeleteModal: React.FC<DeleteModalProps> = ({
   title,
   content,
   onDelete,
+  showText = false,
 }) => {
   const { t } = useTranslation("modals");
   const [open, setOpen] = React.useState(false);
@@ -20,8 +22,17 @@ const DeleteModal: React.FC<DeleteModalProps> = ({
   return (
     <Dialog.Root open={open} onOpenChange={setOpen}>
       <Dialog.Trigger asChild>
-        <button className="hover:cursor-pointer ml-2 flex items-center px-2 py-1 rounded text-xs font-medium border border-red-200 bg-blue-50 text-red-700 hover:bg-red-100 transition">
+        <button
+          className={`cursor-pointer
+            ${
+              showText
+                ? "flex items-center gap-2 w-full p-2 text-sm text-red-600 rounded-md hover:bg-red-50 transition-colors"
+                : "p-1.5 rounded-md text-red-700 hover:bg-red-100 transition-colors"
+            }`}
+          title={t(title, "Изтриване")}
+        >
           <TrashIcon className="h-4 w-4" />
+          {showText && <span>Изтрий</span>}
         </button>
       </Dialog.Trigger>
       <Dialog.Portal>

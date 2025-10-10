@@ -76,8 +76,13 @@ const UserAvatar: React.FC<UserAvatarProps> = ({
 
   // If preview is enabled and there's a valid image, wrap with ImagePreviewModal
   if (shouldShowPreview) {
+    // PREPARE GALLERY DATA
+    const galleryItems = [{ url: imageUrl, name: name }];
+
     return (
       <ImagePreviewModal
+        // PASS THE GALLERY DATA
+        galleryItems={galleryItems}
         imageUrl={imageUrl}
         displayName={name}
         isAvatar={true}

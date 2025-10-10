@@ -1,6 +1,7 @@
 // src/components/modals/ContentDialog.tsx (Updated)
 
 import * as Dialog from "@radix-ui/react-dialog";
+import { useMemo } from "react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { useTranslation } from "react-i18next";
 import { ArrowTopRightOnSquareIcon, FlagIcon } from "@heroicons/react/24/solid";
@@ -9,7 +10,7 @@ import { ICategory, IMe, IMetricScore, IUser } from "../../db/interfaces"; // UP
 import Creator from "../case-components/Creator";
 import ShowDate from "../global/ShowDate";
 import CategoryLink from "../global/links/CategoryLink";
-import ImagePreviewModal from "./ImagePreviewModal";
+import ImagePreviewModal, { GalleryItem } from "./ImagePreviewModal";
 import { createFileUrl } from "../../utils/fileUtils";
 import { getPriorityStyle, getTypeBadgeStyle } from "../../utils/style-helpers";
 import { labelTextClass, caseBoxClasses } from "../../ui/reusable-styles";
@@ -46,6 +47,13 @@ const ContentDialog: React.FC<ContentDialogProps> = ({
   const { t } = useTranslation(["modals", "dashboard"]);
   const priorityStyle = getPriorityStyle(priority);
   const typeBadgeStyle = getTypeBadgeStyle(type);
+
+  const galleryItems: GalleryItem[] = useMemo(() => {
+    return attachments.map((file) => ({
+      url: createFileUrl("cases", caseId, file),
+      name: file,
+    }));
+  }, [attachments, caseId]);
 
   return (
     <Dialog.Root>
@@ -153,6 +161,7 @@ const ContentDialog: React.FC<ContentDialogProps> = ({
                     {attachments.map((file) => (
                       <ImagePreviewModal
                         key={file}
+                        galleryItems={galleryItems}
                         imageUrl={createFileUrl("cases", caseId, file)}
                         fileName={file}
                       />

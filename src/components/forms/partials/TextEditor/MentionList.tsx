@@ -1,3 +1,4 @@
+// src/components/forms/partials/TextEditor/MentionList.tsx
 import {
   forwardRef,
   useEffect,
@@ -57,6 +58,7 @@ const MentionList = forwardRef<MentionListRef, MentionListProps>(
           return true;
         }
         if (event.key === "Enter") {
+          event.preventDefault(); // MODIFICATION: Prevent default behavior for Enter key
           selectItem(selectedIndex);
           return true;
         }
@@ -80,6 +82,7 @@ const MentionList = forwardRef<MentionListRef, MentionListProps>(
               index === selectedIndex ? "bg-indigo-100" : "hover:bg-gray-100"
             }`}
             onClick={() => selectItem(index)}
+            onMouseDown={(e) => e.preventDefault()} // MODIFICATION: Prevent focus shift on click
           >
             <div className="font-semibold text-gray-800">{item.name}</div>
             <div className="ml-2 text-gray-500">@{item.username}</div>

@@ -11,7 +11,8 @@ import { ICase, ICategory, IReadBy, IUser } from "../db/interfaces";
 import { useCurrentUser } from "../context/UserContext";
 import { determineUserRightsForCase } from "../utils/rightUtils";
 import { ROLES } from "../utils/GLOBAL_PARAMETERS";
-import { useEffect } from "react"; // ADDED
+import { useEffect } from "react";
+import { UnsavedChangesProvider } from "../context/UnsavedChangesContext";
 
 // Authorization
 import { useAuthorization } from "../hooks/useAuthorization";
@@ -146,45 +147,47 @@ const Case = () => {
 
   const expert_managers = getUniqueMentionableUsers(c.categories, c.creator);
   return (
-    <div className="flex flex-col lg:flex-row bg-gray-50 lg:h-[calc(100vh-6rem)] w-full">
-      <div
-        className={
-          "max-w-full lg:w-96 lg:shrink-0 lg:sticky lg:top-[6rem] order-1 lg:order-none lg:h-full lg:mb-0 z-2"
-        }
-      >
-        <CaseInfo
-          content={c.content}
-          caseId={c._id}
-          type={c.type}
-          priority={c.priority}
-          status={c.status as string}
-          categories={c.categories}
-          creator={c.creator}
-          metricScores={c.metricScores}
-          calculatedRating={c.calculatedRating}
-          date={c.date}
-          me={currentUser}
-          refetch={refetch}
-          attachments={c.attachments}
-          caseNumber={c.case_number}
-          isLoading={loadingCase}
-          error={errorCase}
-          rights={userRights}
-          readBy={c.readBy}
-        />
-      </div>
+    <UnsavedChangesProvider>
+      <div className="flex flex-col lg:flex-row bg-gray-50 lg:h-[calc(100vh-6rem)] w-full">
+        <div
+          className={
+            "max-w-full lg:w-96 lg:shrink-0 lg:sticky lg:top-[6rem] order-1 lg:order-none lg:h-full lg:mb-0 z-2"
+          }
+        >
+          <CaseInfo
+            content={c.content}
+            caseId={c._id}
+            type={c.type}
+            priority={c.priority}
+            status={c.status as string}
+            categories={c.categories}
+            creator={c.creator}
+            metricScores={c.metricScores}
+            calculatedRating={c.calculatedRating}
+            date={c.date}
+            me={currentUser}
+            refetch={refetch}
+            attachments={c.attachments}
+            caseNumber={c.case_number}
+            isLoading={loadingCase}
+            error={errorCase}
+            rights={userRights}
+            readBy={c.readBy}
+          />
+        </div>
 
-      <div className="flex-1 w-full lg:w-auto order-2 lg:order-none lg:h-full">
-        <Submenu
-          caseData={c}
-          t={t}
-          me={currentUser}
-          refetch={refetch}
-          userRights={userRights}
-          mentions={expert_managers}
-        />
+        <div className="w-full lg:flex-1 lg:w-auto order-2 lg:order-none lg:h-full">
+          <Submenu
+            caseData={c}
+            t={t}
+            me={currentUser}
+            refetch={refetch}
+            userRights={userRights}
+            mentions={expert_managers}
+          />
+        </div>
       </div>
-    </div>
+    </UnsavedChangesProvider>
   );
 };
 

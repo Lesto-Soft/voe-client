@@ -644,6 +644,7 @@ const Category: React.FC = () => {
             allCategories={allCategoriesForPicker || []}
             paletteColorsLoading={paletteColorsLoading}
             canManageColors={isAdmin}
+            allUsersForFormError={allUsersForFormError}
           />
         )}
       </CategoryModal>

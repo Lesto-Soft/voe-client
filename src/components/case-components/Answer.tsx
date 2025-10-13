@@ -127,55 +127,52 @@ const Answer: React.FC<{
 
   useEffect(() => {
     const selfId = `answers-${answer._id}`;
-    // This component is not involved at all, so do nothing.
     if (targetId !== selfId) {
       return;
     }
 
-    // Action 1: Scroll this parent Answer into view.
-    if (answerRef.current) {
-      answerRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
-    }
-    // Action 2: Check if there is a child comment to highlight.
-    if (childTargetId) {
-      if (!areCommentsVisible) {
-        onToggleComments(answer._id);
-      }
-      const timer = setTimeout(() => {
-        const commentId = childTargetId.split("-")[1];
-        const childWrapperRef = commentRefs.current.get(commentId);
+    // --- Highlighting & Scrolling Logic ---
+    let initialDelayTimerId: number | undefined;
+    let removalTimerId: number | undefined;
+    let highlightedElement: HTMLElement | null = null;
 
+    if (childTargetId) {
+      // If a child comment is targeted, scroll its wrapper into view.
+      // The Comment component itself will handle the final scroll and highlight.
+      initialDelayTimerId = setTimeout(() => {
+        const idParts = childTargetId.split("-");
+        const commentId = idParts[idParts.length - 1];
+        const childWrapperRef = commentRefs.current.get(commentId);
         if (childWrapperRef) {
-          // SCROLL TO THE CHILD'S WRAPPER
           childWrapperRef.scrollIntoView({
             behavior: "smooth",
-            block: "center",
+            block: "nearest",
           });
-
-          // HIGHLIGHT THE CHILD'S WRAPPER
-          childWrapperRef.classList.add("highlight");
-          setTimeout(() => {
-            childWrapperRef.classList.remove("highlight");
-          }, 5000);
-        } else {
-          console.error(
-            `ANSWER (${answer._id}): FAILED to find ref for child with ID:`,
-            commentId
-          );
         }
-      }, 100); // 100ms delay for React to render the comment.
+      }, 100);
+    } else if (answerRef.current) {
+      // Otherwise, if the answer itself is the target, highlight it.
+      const element = answerRef.current;
+      highlightedElement = element;
 
-      return () => clearTimeout(timer);
-    } else {
-      // NO. The target is me.
-      // Highlight myself.
-      if (answerRef.current) {
-        answerRef.current.classList.add("highlight");
-        setTimeout(() => {
-          answerRef.current?.classList.remove("highlight");
-        }, 5000);
-      }
+      element.scrollIntoView({ behavior: "smooth", block: "center" });
+      element.classList.add("highlight");
+
+      removalTimerId = setTimeout(() => {
+        element.classList.remove("highlight");
+      }, 5000);
     }
+
+    // Return a cleanup function to clear any active timers and highlights
+    // This runs when dependencies change (e.g., navigating to a new comment)
+    // or when the component unmounts.
+    return () => {
+      if (initialDelayTimerId) clearTimeout(initialDelayTimerId);
+      if (removalTimerId) clearTimeout(removalTimerId);
+      if (highlightedElement) {
+        highlightedElement.classList.remove("highlight");
+      }
+    };
   }, [targetId, childTargetId, answer._id]);
 
   // A reusable function to handle the scroll action

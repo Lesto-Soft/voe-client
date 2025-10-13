@@ -146,7 +146,12 @@ const Submenu: React.FC<SubmenuProps> = ({
           if (parentAnswer) {
             setView("answers");
             setTargetId(`answers-${parentAnswer._id}`);
-            setChildTargetId(`comments-${commentId}`);
+            setChildTargetId(`answers-comment-${commentId}`); // Set correct child ID format
+            // Programmatically open the comments for the parent answer
+            setAnswerCommentsVisibility((prev) => ({
+              ...prev,
+              [parentAnswer._id]: true,
+            }));
           }
           return;
         }
@@ -341,11 +346,11 @@ const Submenu: React.FC<SubmenuProps> = ({
             <button
               key={item.key}
               className={`flex items-center px-4 py-2 rounded-lg font-semibold text-sm transition-colors duration-150 border
-              ${
-                view === item.key
-                  ? "border-btnRedHover text-btnRedHover shadow"
-                  : "border-gray-300 shadow-sm bg-gray-100 text-gray-700 hover:bg-red-100 hover:text-btnRedHover hover:cursor-pointer"
-              }`}
+       ${
+         view === item.key
+           ? "border-btnRedHover text-btnRedHover shadow"
+           : "border-gray-300 shadow-sm bg-gray-100 text-gray-700 hover:bg-red-100 hover:text-btnRedHover hover:cursor-pointer"
+       }`}
               type="button"
               onClick={() => (window.location.hash = item.key)}
             >

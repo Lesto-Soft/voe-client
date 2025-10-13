@@ -7,7 +7,7 @@ import UserTableSkeleton from "../../skeletons/UserTableSkeleton"; // Adjust pat
 import Pagination from "../../tables/Pagination"; // Adjust path
 import { capitalizeFirstLetter } from "../../../utils/stringUtils"; // Adjust path
 import { isNullOrEmptyArray } from "../../../utils/arrayUtils"; // Ensure this path is correct
-import UserLink from "../../global/UserLink";
+import UserLink from "../../global/links/UserLink";
 import { IMe, IUser } from "../../../db/interfaces";
 import { useCurrentUser } from "../../../context/UserContext";
 import { ROLES } from "../../../utils/GLOBAL_PARAMETERS";

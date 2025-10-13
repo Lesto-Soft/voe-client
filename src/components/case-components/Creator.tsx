@@ -1,7 +1,7 @@
 import React from "react";
 import { IUser } from "../../db/interfaces";
 import UserAvatar from "../cards/UserAvatar";
-import UserLink from "../global/UserLink";
+import UserLink from "../global/links/UserLink";
 import { labelTextClass } from "../../ui/reusable-styles";
 
 interface CreatorProps {

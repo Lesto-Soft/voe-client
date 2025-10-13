@@ -1,8 +1,8 @@
-// src/components/global/UserLink.tsx
+// src/components/global/links/UserLink.tsx
 import { Link } from "react-router";
-import { IUser } from "../../db/interfaces";
-import { canViewUserProfile } from "../../utils/rightUtils";
-import { useCurrentUser } from "../../context/UserContext"; // 1. Import the hook
+import { IUser } from "../../../db/interfaces";
+import { canViewUserProfile } from "../../../utils/rightUtils";
+import { useCurrentUser } from "../../../context/UserContext"; // 1. Import the hook
 
 // Helper functions remain the same
 const getInitials = (name: string = ""): string =>

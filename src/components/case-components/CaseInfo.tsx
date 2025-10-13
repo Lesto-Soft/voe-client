@@ -3,7 +3,7 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
 import { ApolloError } from "@apollo/client";
 import { ICategory, IMe, IMetricScore } from "../../db/interfaces";
-import CategoryLink from "../global/CategoryLink";
+import CategoryLink from "../global/links/CategoryLink";
 import { FlagIcon, PencilSquareIcon } from "@heroicons/react/24/solid";
 import {
   getPriorityStyle,

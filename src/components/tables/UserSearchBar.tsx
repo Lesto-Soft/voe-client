@@ -1,5 +1,5 @@
-// src/components/search/UserSearchBar.tsx
 import React from "react";
+import ClearableInput from "../global/inputs/ClearableInput";
 
 interface UserSearchBarProps {
   filterUsername: string;
@@ -30,84 +30,46 @@ const UserSearchBar: React.FC<UserSearchBarProps> = ({
   filterManager,
   setFilterManager,
 }) => {
-  // Generate unique IDs for the toggle buttons for accessibility
   const financialToggleId = "financial-approver-toggle";
   const managerToggleId = "manager-toggle";
 
   return (
     <div className="pt-2.5">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-x-4 gap-y-3 items-start">
-        {/* Filter by Name */}
-        <div>
-          <label
-            htmlFor="filterName"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Име на потребител
-          </label>
-          <input
-            type="text"
-            id="filterName"
-            value={filterName}
-            onChange={(e) => setFilterName(e.target.value)}
-            className="bg-white w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition duration-150 ease-in-out"
-            placeholder="Търси по име..."
-          />
-        </div>
+        <ClearableInput
+          id="filterName"
+          label="Име на потребител"
+          value={filterName}
+          onChange={setFilterName}
+          placeholder="Търси по име..."
+        />
 
         {/* Filter by Username */}
-        <div>
-          <label
-            htmlFor="filterUsername"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Потребителско име
-          </label>
-          <input
-            type="text"
-            id="filterUsername"
-            value={filterUsername}
-            onChange={(e) => setFilterUsername(e.target.value)}
-            className="bg-white w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition duration-150 ease-in-out"
-            placeholder="Търси по потр. име..."
-          />
-        </div>
+        <ClearableInput
+          id="filterUsername"
+          label="Потребителско име"
+          value={filterUsername}
+          onChange={setFilterUsername}
+          placeholder="Търси по потр. име..."
+        />
 
         {/* Filter by Position */}
-        <div>
-          <label
-            htmlFor="filterPosition"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Позиция
-          </label>
-          <input
-            type="text"
-            id="filterPosition"
-            value={filterPosition}
-            onChange={(e) => setFilterPosition(e.target.value)}
-            className="bg-white w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition duration-150 ease-in-out"
-            placeholder="Търси по позиция..."
-          />
-        </div>
+        <ClearableInput
+          id="filterPosition"
+          label="Позиция"
+          value={filterPosition}
+          onChange={setFilterPosition}
+          placeholder="Търси по позиция..."
+        />
 
         {/* Filter by Email */}
-        <div>
-          <label
-            htmlFor="filterEmail"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Имейл
-          </label>
-          <input
-            type="text"
-            id="filterEmail"
-            value={filterEmail}
-            onChange={(e) => setFilterEmail(e.target.value)}
-            className="bg-white w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition duration-150 ease-in-out"
-            placeholder="Търси по имейл..."
-          />
-        </div>
+        <ClearableInput
+          id="filterEmail"
+          label="Имейл"
+          value={filterEmail}
+          onChange={setFilterEmail}
+          placeholder="Търси по имейл..."
+        />
 
         {/* Toggle Button for Financial Approver Filter */}
         <div>

@@ -1,5 +1,5 @@
 import { IComment } from "../../db/interfaces";
-import UserLink from "../global/UserLink";
+import UserLink from "../global/links/UserLink";
 import ShowDate from "../global/ShowDate";
 import EditButton from "../global/EditCommentButton";
 import { admin_check } from "../../utils/rowStringCheckers";

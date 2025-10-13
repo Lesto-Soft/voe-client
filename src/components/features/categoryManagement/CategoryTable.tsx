@@ -16,7 +16,7 @@ import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import * as Tooltip from "@radix-ui/react-tooltip";
 
 // Import your custom Link components (ensure paths are correct)
-import CategoryLink from "../../global/CategoryLink";
+import CategoryLink from "../../global/links/CategoryLink";
 // UserLink is used within TruncatedListWithDialog, so direct import here might not be needed unless used elsewhere
 
 // If other general Links are still needed (e.g., for dashboard links)

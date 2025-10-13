@@ -5,9 +5,9 @@ import {
   XMarkIcon,
   ArrowTopRightOnSquareIcon,
 } from "@heroicons/react/24/outline";
-import DashboardContent from "../../pages/DashboardContent";
 import { ICase } from "../../db/interfaces"; // Import ICase for filter types
 import moment from "moment";
+import DashboardPage from "../../pages/Dashboard";
 
 // Define the shape of the filters object we expect
 type CaseFilters = {
@@ -93,7 +93,7 @@ const CaseViewerModal: React.FC<CaseViewerModalProps> = ({
           {/* END: MODIFIED HEADER SECTION */}
 
           <div className="flex-1 overflow-y-auto">
-            <DashboardContent initialFiltersOverride={initialFilters} />
+            <DashboardPage initialFiltersOverride={initialFilters} />
           </div>
         </Dialog.Content>
       </Dialog.Portal>

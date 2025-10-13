@@ -3,7 +3,7 @@ import { CodeBracketIcon, DocumentTextIcon } from "@heroicons/react/24/solid";
 import { ClockIcon } from "@heroicons/react/24/outline";
 import * as Dialog from "@radix-ui/react-dialog";
 import { useTranslation } from "react-i18next";
-import UserLink from "../global/UserLink";
+import UserLink from "../global/links/UserLink";
 import { getDifferences } from "../../utils/contentDifferences";
 import ShowDate from "../global/ShowDate";
 import { IAnswerHistory } from "../../db/interfaces";

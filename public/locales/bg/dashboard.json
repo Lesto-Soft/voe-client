@@ -30,6 +30,7 @@
   "search_by_description": "Търси в описание...",
   "fiter_by_date": "Филтрирай по дата...",
   "search": "Търси...",
+  "no_users_found": "Не са намерени потребители",
   "choose_categories": "Избери категории...",
   "choose_creator": "Избери подател...",
   "clear_creator": "Изчисти подател",
@@ -58,5 +59,6 @@
   "writeAnswer": "Напиши решение...",
   "delete_case": "Изтрий сигнал",
   "answerSubmitted": "Решението е изпратено",
-  "waiting_approval": "Все още няма одобрено решение"
+  "waiting_approval": "Все още няма одобрено решение",
+  "clear": "Изчисти"
 }

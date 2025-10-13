@@ -1,4 +1,3 @@
-// src/pages/CategoryManagement.tsx
 import React, { useState, useEffect, useMemo } from "react";
 import {
   ChevronUpIcon,
@@ -47,6 +46,7 @@ import { ROLES } from "../utils/GLOBAL_PARAMETERS";
 
 // import { PREDEFINED_CATEGORY_COLORS } from "../utils/colors";
 import { useGetAllPaletteColors } from "../graphql/hooks/colorPalette";
+import ClearFiltersButton from "../components/global/ClearFiltersButton";
 
 // Define a lean user type that includes the role ID, matching GET_LEAN_USERS
 interface ILeanUserForForm {
@@ -77,7 +77,15 @@ const CategoryManagement: React.FC = () => {
     currentQueryInput,
   } = useCategoryManagement();
 
-  // --- NEW: Get current user and determine if they are an admin ---
+  const handleClearAllFilters = () => {
+    setFilterName("");
+    setFilterExpertIds([]);
+    setFilterManagerIds([]);
+    setFilterArchived(undefined);
+    setFilterCaseStatus(null);
+    handlePageChange(1);
+  };
+
   const currentUser = useCurrentUser() as IMe | undefined;
   const isAdmin = currentUser?.role?._id === ROLES.ADMIN;
 
@@ -87,24 +95,20 @@ const CategoryManagement: React.FC = () => {
     error: paletteColorsError,
   } = useGetAllPaletteColors();
 
-  // State to hold colors for optimistic updates
   const [paletteColors, setPaletteColors] = useState<IPaletteColor[]>([]);
 
   useEffect(() => {
     if (fetchedPaletteColors) {
-      // Use a functional update to access the previous state
       setPaletteColors((prevColors) => {
-        // Only update state if the content has actually changed
         if (
           JSON.stringify(prevColors) !== JSON.stringify(fetchedPaletteColors)
         ) {
           return fetchedPaletteColors;
         }
-        // Otherwise, return the old state to prevent a re-render
         return prevColors;
       });
     }
-  }, [fetchedPaletteColors]); // Corrected: Only depend on fetchedPaletteColors
+  }, [fetchedPaletteColors]);
 
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<ICategory | null>(
@@ -122,19 +126,16 @@ const CategoryManagement: React.FC = () => {
   const [successModalMessage, setSuccessModalMessage] = useState("");
   const [isBannerVisible, setIsBannerVisible] = useState(true);
 
-  // ADDED: State to trigger refetch of users in CategorySearchBar
   const [userFilterRefreshKey, setUserFilterRefreshKey] = useState(0);
 
-  // Fetch all lean users for the CreateCategoryForm dropdowns
-  // This list will be filtered by role within CreateCategoryForm/CategoryInputFields
   const {
     data: allUsersDataForForm,
     loading: allUsersForFormLoading,
     error: allUsersForFormError,
-    refetch: refetchAllUsersForForm, // Expose refetch in case it's needed, though primary refresh is for filters
+    refetch: refetchAllUsersForForm,
   } = useQuery<{ getLeanUsers: ILeanUserForForm[] }>(GET_LEAN_USERS, {
-    variables: { input: "" }, // Fetch all users
-    fetchPolicy: "cache-and-network", // Good for ensuring form has up-to-date users
+    variables: { input: "" },
+    fetchPolicy: "cache-and-network",
   });
 
   const categoryFiltersWithoutPagination = useMemo((): Omit<
@@ -518,6 +519,22 @@ const CategoryManagement: React.FC = () => {
     }
   };
 
+  const isAnyFilterActive = useMemo(() => {
+    return (
+      filterName !== "" ||
+      filterExpertIds.length > 0 ||
+      filterManagerIds.length > 0 ||
+      filterArchived !== undefined ||
+      filterCaseStatus !== null
+    );
+  }, [
+    filterName,
+    filterExpertIds,
+    filterManagerIds,
+    filterArchived,
+    filterCaseStatus,
+  ]);
+
   const openCreateCategoryModal = () => {
     setEditingCategory(null);
     setFormHasUnsavedChanges(false);
@@ -658,25 +675,53 @@ const CategoryManagement: React.FC = () => {
           isLoadingOverallCounts={isLoadingOverallCaseCounts}
           isLoadingStatusSpecificCounts={isLoadingStatusSpecificCaseCounts}
         />
-        <div className="flex flex-col sm:flex-row gap-2 items-center md:items-start flex-shrink-0 mt-4 md:mt-0">
-          <button
-            type="button"
-            className="w-full sm:w-auto flex justify-center items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-gray-500 text-white hover:bg-gray-600 hover:cursor-pointer"
-            title={showFilters ? "Скрий филтри" : "Покажи филтри"}
-            onClick={() => setShowFilters(!showFilters)}
-          >
-            {showFilters ? (
-              <ChevronUpIcon className="h-5 w-5 mr-1" />
-            ) : (
-              <ChevronDownIcon className="h-5 w-5 mr-1" />
+        <div className="flex flex-col md:flex-row gap-2 items-center md:items-start flex-shrink-0 mt-4 md:mt-0">
+          <div className="flex w-full md:w-auto md:gap-0 gap-2">
+            <button
+              type="button"
+              className={`
+   justify-center cursor-pointer group flex items-center px-4 py-2 font-semibold transition-colors duration-150  w-full
+      bg-gray-500 text-white hover:bg-gray-600
+      ${
+        isAnyFilterActive
+          ? "md:rounded-r-none rounded-l-lg rounded-r-lg "
+          : "rounded-lg"
+      } 
+    `}
+              onClick={() => setShowFilters(!showFilters)}
+              title={showFilters ? "Скрий филтри" : "Покажи филтри"}
+            >
+              {showFilters ? (
+                <ChevronUpIcon className="h-5 w-5 mr-1" />
+              ) : (
+                <ChevronDownIcon className="h-5 w-5 mr-1" />
+              )}
+              Филтри
+            </button>
+
+            {/* Button to clear all filters (only shows when a filter is active) */}
+            {isAnyFilterActive && (
+              <button
+                type="button"
+                className="hidden cursor-pointer md:flex items-center pl-2 pr-3 py-2 rounded-r-lg bg-red-400 text-white hover:bg-red-500 transition-colors duration-150"
+                title="Изчисти всички филтри"
+                onClick={handleClearAllFilters} // No need for e.stopPropagation() anymore!
+              >
+                <XMarkIcon className="h-5 w-5 text-white" />
+              </button>
             )}
-            Филтри
-          </button>
+            <div className="w-full md:w-auto md:hidden">
+              <ClearFiltersButton
+                isActive={isAnyFilterActive}
+                onClear={handleClearAllFilters}
+              />
+            </div>
+          </div>
           {isAdmin && (
             <button
               type="button"
               onClick={openCreateCategoryModal}
-              className="w-full sm:w-[280px] flex justify-center items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-green-500 text-white hover:bg-green-600 hover:cursor-pointer active:bg-green-700 active:shadow-inner disabled:cursor-not-allowed"
+              className="md:w-54 w-full flex justify-center items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 bg-green-500 text-white hover:bg-green-600 hover:cursor-pointer active:bg-green-700 active:shadow-inner disabled:cursor-not-allowed"
               disabled={mutationInProgress || isCurrentlyLoadingPageData}
             >
               <PlusIconSolid className="h-5 w-5 mr-1" />
@@ -794,6 +839,7 @@ const CategoryManagement: React.FC = () => {
             usedColors={usedColors}
             allUsersForForm={allUsersDataForForm?.getLeanUsers || []}
             allUsersForFormLoading={allUsersForFormLoading}
+            allUsersForFormError={allUsersForFormError}
             paletteColors={paletteColors}
             setPaletteColors={setPaletteColors}
             allCategories={allCategoriesForPicker || []}

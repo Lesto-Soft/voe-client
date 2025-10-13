@@ -1,7 +1,7 @@
 // src/components/features/categoryAnalytics/PersonnelInfoPanel.tsx
 import React, { useState, useEffect, useMemo } from "react";
 import { ICategory, IUser } from "../../../db/interfaces"; // Adjust path as needed
-import UserLink from "../../../components/global/UserLink"; // Adjust path as needed
+import UserLink from "../../../components/global/links/UserLink"; // Adjust path as needed
 import {
   UserGroupIcon,
   LightBulbIcon,

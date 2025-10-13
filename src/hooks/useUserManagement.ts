@@ -53,7 +53,7 @@ export function useUserManagement(): UseUserManagementReturn {
     [location.search]
   );
   const initialStateFromUrl = useMemo(
-    () => getUrlParams(searchParams), // Ensure getUrlParams parses 'financial' and 'manager' strings to boolean
+    () => getUrlParams(searchParams),
     [searchParams]
   );
 
@@ -89,14 +89,14 @@ export function useUserManagement(): UseUserManagementReturn {
   const currentQueryInput = useMemo(() => {
     const input: any = {
       itemsPerPage: itemsPerPage,
-      currentPage: currentPage - 1, // Usually 0-indexed for backend
+      currentPage: currentPage - 1,
       name: debouncedFilterName,
       username: debouncedFilterUsername,
       position: debouncedFilterPosition,
       email: debouncedFilterEmail,
       roleIds: filterRoleIds,
       ...(filterFinancial && { financial_approver: true }),
-      ...(filterManager && { is_manager: true }), // <-- ADDED: manager filter to GraphQL query input
+      ...(filterManager && { is_manager: true }),
     };
 
     Object.keys(input).forEach((key) => {
@@ -127,24 +127,24 @@ export function useUserManagement(): UseUserManagementReturn {
     return {
       currentPage,
       itemsPerPage,
-      filterName: debouncedFilterName,
-      filterUsername: debouncedFilterUsername,
-      filterPosition: debouncedFilterPosition,
-      filterEmail: debouncedFilterEmail,
+      filterName,
+      filterUsername,
+      filterPosition,
+      filterEmail,
       filterRoleIds,
       financial_approver: filterFinancial ? "true" : undefined,
-      is_manager: filterManager ? "true" : undefined, // <-- ADDED: manager filter to URL state
+      is_manager: filterManager ? "true" : undefined,
     };
   }, [
     currentPage,
     itemsPerPage,
-    debouncedFilterName,
-    debouncedFilterUsername,
-    debouncedFilterPosition,
-    debouncedFilterEmail,
+    filterName,
+    filterUsername,
+    filterPosition,
+    filterEmail,
     filterRoleIds,
     filterFinancial,
-    filterManager, // <-- ADDED dependency
+    filterManager,
   ]);
 
   const handlePageChange = useCallback(
@@ -190,15 +190,14 @@ export function useUserManagement(): UseUserManagementReturn {
 
   useEffect(() => {
     const currentEffectiveFilters: UserFiltersState = {
-      name: debouncedFilterName,
-      username: debouncedFilterUsername,
-      position: debouncedFilterPosition,
-      email: debouncedFilterEmail,
+      name: filterName,
+      username: filterUsername,
+      position: filterPosition,
+      email: filterEmail,
       roleIds: filterRoleIds,
       financial: filterFinancial,
-      manager: filterManager, // <-- ADDED
+      manager: filterManager,
     };
-
     const previousEffectiveFilters = prevFiltersRef.current ?? {
       name: initialStateFromUrl.name,
       username: initialStateFromUrl.username,
@@ -247,15 +246,15 @@ export function useUserManagement(): UseUserManagementReturn {
       prevFiltersRef.current = currentEffectiveFilters;
     }
   }, [
-    debouncedFilterName,
-    debouncedFilterUsername,
-    debouncedFilterPosition,
-    debouncedFilterEmail,
+    filterName,
+    filterUsername,
+    filterPosition,
+    filterEmail,
     filterRoleIds,
     filterFinancial,
-    filterManager, // <-- ADDED dependency
+    filterManager,
     currentPage,
-    itemsPerPage, // Added itemsPerPage as it's part of URL state via createStateForUrl
+    itemsPerPage,
     initialStateFromUrl,
     createStateForUrl,
     location.pathname,

@@ -30,6 +30,7 @@
   "search_by_description": "Search by description",
   "fiter_by_date": "Search by date",
   "search": "Search...",
+  "no_users_found": "No users found",
   "choose_categories": "Choose categories",
   "choose_creator": "Choose creator",
   "clear_creator": "Clear creator",
@@ -58,5 +59,6 @@
   "writeAnswer": "Write an answer...",
   "delete_case": "Delete case",
   "answerSubmitted": "The answer has been sent",
-  "waiting_approval": "Still does not have an approved answer"
+  "waiting_approval": "Still does not have an approved answer",
+  "clear": "Clear"
 }

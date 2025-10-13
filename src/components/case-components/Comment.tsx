@@ -36,21 +36,34 @@ const Comment: React.FC<CommentProps> = ({
     const elementId = `${
       parentType === "answer" ? "answers-comment" : "comments"
     }-${comment._id}`;
+    const element = commentRef.current;
 
-    if (targetId === elementId && commentRef.current) {
-      requestAnimationFrame(() => {
-        if (commentRef.current) {
-          commentRef.current.scrollIntoView({
-            behavior: "smooth",
-            block: "center",
-          });
-          commentRef.current.classList.add("highlight");
-          setTimeout(() => {
-            commentRef.current?.classList.remove("highlight");
-          }, 5000);
-        }
+    if (!element) return;
+
+    let removalTimerId: number;
+    let animationFrameId: number;
+
+    if (targetId === elementId) {
+      animationFrameId = requestAnimationFrame(() => {
+        element.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+        element.classList.add("highlight");
+        removalTimerId = setTimeout(() => {
+          element.classList.remove("highlight");
+        }, 5000);
       });
     }
+
+    // Cleanup function to run when dependencies change or component unmounts
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+      clearTimeout(removalTimerId);
+      if (element.classList.contains("highlight")) {
+        element.classList.remove("highlight");
+      }
+    };
   }, [targetId, comment._id, parentType]);
 
   const galleryItems: GalleryItem[] = useMemo(() => {
@@ -72,10 +85,10 @@ const Comment: React.FC<CommentProps> = ({
     >
       {/* --- NEW: COMPACT HEADER --- */}
       <div className="flex items-center justify-between gap-4 mb-2">
-        {/* Left Side: User Info 
-    - `min-w-0` is the key here. It allows the child elements inside 
-      this flex container to truncate properly.
-  */}
+        {/* Left Side: User Info
+  - `min-w-0` is the key here. It allows the child elements inside
+   this flex container to truncate properly.
+ */}
         <div className="flex min-w-0 flex-row items-center gap-2">
           {/* `flex-shrink-0` prevents the UserLink from being squished */}
           <div className="flex-shrink-0">
@@ -90,8 +103,8 @@ const Comment: React.FC<CommentProps> = ({
         </div>
 
         {/* Right Side: Actions
-    - `flex-shrink-0` ensures this section is never squished and keeps its position.
-  */}
+  - `flex-shrink-0` ensures this section is never squished and keeps its position.
+ */}
         <div className="flex flex-shrink-0 items-center gap-1.5">
           <ShowDate collapsible={true} date={comment.date} />
           {me &&

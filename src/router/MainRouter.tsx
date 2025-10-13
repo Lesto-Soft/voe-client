@@ -2,7 +2,6 @@
 import { createBrowserRouter, Outlet } from "react-router"; // Changed import
 import Home from "../pages/Home";
 import CaseSubmission from "../pages/CaseSubmission";
-import Dashboard from "../pages/Dashboard";
 import LoadingTestPage from "../pages/LoadingTestPage";
 import UserManagement from "../pages/UserManagement";
 import NavBar from "../components/menu/NavBar";

@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useLazyQuery } from "@apollo/client";
 import { GET_LEAN_USERS } from "../../graphql/query/user";
-import { XMarkIcon } from "@heroicons/react/24/outline";
 import CustomDropdown from "../global/dropdown/CustomDropdown";
 import UserMultiSelector from "../global/dropdown/UserMultiSelector";
 import ClearableInput from "../global/inputs/ClearableInput";

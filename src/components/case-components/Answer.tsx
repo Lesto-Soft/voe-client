@@ -1,5 +1,5 @@
 import { IAnswer, ICategory, IComment, IMe } from "../../db/interfaces";
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, memo } from "react";
 import Comment from "./Comment";
 import ShowDate from "../global/ShowDate";
 import { useTranslation } from "react-i18next";
@@ -38,6 +38,14 @@ const Answer: React.FC<{
   childTargetId?: string | null;
   areCommentsVisible: boolean;
   onToggleComments: (answerId: string) => void;
+  isCommentBoxVisible: boolean;
+  commentContent: string;
+  commentAttachments: File[];
+  onSetCommentState: (
+    newState: Partial<{ content: string; attachments: File[] }>
+  ) => void;
+  onToggleCommentBox: () => void;
+  onCommentSubmitted: () => void;
 }> = ({
   answer,
   me,
@@ -50,14 +58,17 @@ const Answer: React.FC<{
   childTargetId = null,
   areCommentsVisible,
   onToggleComments,
+  isCommentBoxVisible,
+  commentContent,
+  commentAttachments,
+  onSetCommentState,
+  onToggleCommentBox,
+  onCommentSubmitted,
 }) => {
   const { t } = useTranslation("answer");
   const approved = !!answer.approved;
   const financialApproved = !!answer.financial_approved;
 
-  const [commentContent, setCommentContent] = useState("");
-  const [commentAttachments, setCommentAttachments] = useState<File[]>([]); // ADD THIS
-  const [showCommentBox, setShowCommentBox] = useState(false);
   const isCreator = me._id === answer.creator._id;
   const isAdmin = me.role?._id === ROLES.ADMIN;
   const answerRef = useRef<HTMLDivElement>(null);
@@ -71,7 +82,7 @@ const Answer: React.FC<{
     dialogContent: commentDialogContent,
   } = useUnsavedChangesWarning(
     commentContent,
-    showCommentBox,
+    isCommentBoxVisible,
     commentAttachments.length
   );
 
@@ -187,20 +198,17 @@ const Answer: React.FC<{
   };
 
   const handleCommentSubmitted = () => {
-    setShowCommentBox(false);
-    setCommentContent("");
-    setCommentAttachments([]); // Add this
+    onCommentSubmitted();
   };
 
   const handleToggleCommentBox = () => {
-    if (!showCommentBox) {
-      setShowCommentBox(true);
+    if (!isCommentBoxVisible) {
+      onToggleCommentBox(); // Call prop to open the box
       focusOnAnswer();
     } else {
+      // The warning hook will call onToggleCommentBox on confirmation
       withCommentWarning(() => {
-        setShowCommentBox(false);
-        setCommentContent("");
-        setCommentAttachments([]); // Add this
+        onToggleCommentBox();
       });
     }
   };
@@ -272,7 +280,7 @@ const Answer: React.FC<{
       {/* --- NEW: Combined Controls Row using Absolute Positioning --- */}
       <div
         className={`relative flex items-center h-10 bg-white rounded-md z-10 transition-shadow duration-200 ${
-          isCommentScrolled && areCommentsVisible && !showCommentBox
+          isCommentScrolled && areCommentsVisible && !isCommentBoxVisible
             ? "shadow-[0_5px_10px_-5px_rgba(0,0,0,0.1)] [clip-path:inset(0_0_-10px_0)]"
             : ""
         }`}
@@ -285,7 +293,8 @@ const Answer: React.FC<{
           <div className="flex w-full items-center gap-2">
             <ChatBubbleOvalLeftEllipsisIcon className="h-5 w-5 flex-shrink-0 text-gray-500" />
             <div className="flex-1 text-center">
-              {showCommentBox ? t("cancelWriting") : t("addComment")}
+              {isCommentBoxVisible ? t("cancelWriting") : t("addComment")}{" "}
+              {/* MODIFIED */}
             </div>
           </div>
         </button>
@@ -328,7 +337,7 @@ const Answer: React.FC<{
       </div>
 
       {/* Add Comment Form (conditionally rendered) */}
-      {showCommentBox && (
+      {isCommentBoxVisible && ( // MODIFIED
         <div className="mt-1">
           <AddComment
             key={answer._id}
@@ -339,10 +348,15 @@ const Answer: React.FC<{
             inputId={`file-upload-comment-answer-${answer._id}`}
             mentions={mentions}
             onCommentSubmitted={handleCommentSubmitted}
-            content={commentContent}
-            setContent={setCommentContent}
-            attachments={commentAttachments}
-            setAttachments={setCommentAttachments}
+            content={commentContent} // MODIFIED
+            setContent={(content) => onSetCommentState({ content })} // MODIFIED
+            attachments={commentAttachments} // MODIFIED
+            setAttachments={(value) => {
+              // MODIFIED to handle function updates
+              const newAttachments =
+                typeof value === "function" ? value(commentAttachments) : value;
+              onSetCommentState({ attachments: newAttachments });
+            }}
           />
         </div>
       )}
@@ -382,7 +396,7 @@ const Answer: React.FC<{
 
           <div
             className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-b from-gray-200 to-transparent pointer-events-none transition-opacity duration-300 ${
-              isCommentScrolled && areCommentsVisible && showCommentBox
+              isCommentScrolled && areCommentsVisible && isCommentBoxVisible
                 ? "opacity-100"
                 : "opacity-0"
             }`}
@@ -516,4 +530,4 @@ const Answer: React.FC<{
   );
 };
 
-export default Answer;
+export default memo(Answer);

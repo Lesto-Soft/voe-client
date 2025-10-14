@@ -52,6 +52,7 @@ const ImagePreviewModal: React.FC<ImagePreviewProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
 
+  const [isImageLoading, setIsImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
   const [numPages, setNumPages] = useState<number | null>(null);
   const [pageNumber, setPageNumber] = useState(1);
@@ -86,6 +87,7 @@ const ImagePreviewModal: React.FC<ImagePreviewProps> = ({
 
   useEffect(() => {
     setImageError(false);
+    setIsImageLoading(true); // Start loading when the item changes
     setPageNumber(1);
     setNumPages(null);
     setZoomLevel(1);
@@ -347,35 +349,47 @@ const ImagePreviewModal: React.FC<ImagePreviewProps> = ({
                   onMouseMove={!isAvatar ? handleMouseMove : undefined}
                   onWheel={!isAvatar ? handleWheel : undefined}
                 >
-                  <div
-                    className={`w-full h-full flex items-center justify-center ${
-                      !isAvatar && zoomLevel > 1
-                        ? isDragging
-                          ? "cursor-grabbing"
-                          : "cursor-grab"
-                        : ""
-                    }`}
-                  >
-                    <img
-                      ref={imageRef}
-                      src={currentItem.url}
-                      alt={isAvatar ? `${displayName}'s avatar` : "Preview"}
-                      className={`object-contain rounded-md transition-transform duration-100 ease-out ${
-                        isAvatar ? "w-80 h-80" : "max-w-full max-h-full"
-                      }`}
-                      style={
-                        !isAvatar
-                          ? {
-                              transform: `scale(${zoomLevel}) translate(${panPosition.x}px, ${panPosition.y}px)`,
-                              transformOrigin: "center center",
-                              willChange: "transform",
-                            }
-                          : {}
-                      }
-                      onError={() => setImageError(true)}
-                      onDragStart={(e) => e.preventDefault()}
-                    />
-                  </div>
+                  {/* The image itself, hidden while loading */}
+                  <img
+                    ref={imageRef}
+                    src={currentItem.url}
+                    alt={isAvatar ? `${displayName}'s avatar` : "Preview"}
+                    className={`object-contain rounded-md transition-opacity duration-150 ease-out ${
+                      isAvatar ? "w-80 h-80" : "max-w-full max-h-full"
+                    } ${isImageLoading ? "opacity-0" : "opacity-100"}`}
+                    style={
+                      !isAvatar
+                        ? {
+                            transform: `scale(${zoomLevel}) translate(${panPosition.x}px, ${panPosition.y}px)`,
+                            transformOrigin: "center center",
+                            willChange: "transform",
+                          }
+                        : {}
+                    }
+                    onLoad={() => setIsImageLoading(false)}
+                    onError={() => {
+                      setImageError(true);
+                      setIsImageLoading(false); // Make sure to hide the loader on error
+                    }}
+                    onDragStart={(e) => e.preventDefault()}
+                  />
+
+                  {/* Adapted Loading Indicator from your LoadingModal */}
+                  {isImageLoading && (
+                    <div
+                      className="absolute inset-0 z-10 flex items-center justify-center bg-gray-50/75 backdrop-blur-sm"
+                      role="status"
+                      aria-live="polite"
+                    >
+                      <div className="flex flex-col items-center">
+                        <div className="h-12 w-12 animate-spin rounded-full border-[7px] border-gray-400 border-t-transparent"></div>
+                        <p className="mt-4 text-lg font-medium text-gray-700">
+                          Зареждане...
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
                   {!isAvatar && (
                     <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-sm p-1.5 rounded-lg flex items-center gap-2 shadow-lg">
                       <button
@@ -478,14 +492,14 @@ const ImagePreviewModal: React.FC<ImagePreviewProps> = ({
               <>
                 <button
                   onClick={goToPrevious}
-                  className="cursor-pointer absolute left-2 top-1/2 -translate-y-1/2 p-2 bg-black/40 text-white rounded-full hover:bg-black/60 focus:outline-none transition-opacity"
+                  className="z-20 cursor-pointer absolute left-2 top-1/2 -translate-y-1/2 p-2 bg-black/40 text-white rounded-full hover:bg-black/60 focus:outline-none transition-opacity"
                   title="Предишен"
                 >
                   <ChevronLeftIcon className="h-7 w-7" />
                 </button>
                 <button
                   onClick={goToNext}
-                  className="cursor-pointer absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-black/40 text-white rounded-full hover:bg-black/60 focus:outline-none transition-opacity"
+                  className="z-20 cursor-pointer absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-black/40 text-white rounded-full hover:bg-black/60 focus:outline-none transition-opacity"
                   title="Следващ"
                 >
                   <ChevronRightIcon className="h-7 w-7" />

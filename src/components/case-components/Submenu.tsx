@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import {
   ChatBubbleBottomCenterTextIcon,
   ChatBubbleOvalLeftEllipsisIcon,
@@ -51,6 +51,12 @@ const getStateFromHash = () => {
   return { view: "answers" as const, targetId: null };
 };
 
+interface AnswerCommentState {
+  content: string;
+  attachments: File[];
+  isVisible: boolean;
+}
+
 const Submenu: React.FC<SubmenuProps> = ({
   caseData,
   t,
@@ -67,6 +73,10 @@ const Submenu: React.FC<SubmenuProps> = ({
     Record<string, boolean>
   >({});
 
+  const [answerCommentStates, setAnswerCommentStates] = useState<
+    Record<string, AnswerCommentState>
+  >({});
+
   const handleToggleAnswerComments = (answerId: string) => {
     setAnswerCommentsVisibility((prev) => ({
       ...prev,
@@ -74,13 +84,63 @@ const Submenu: React.FC<SubmenuProps> = ({
     }));
   };
 
-  // NEW: State for editor content AND attachments
+  // state for editor content AND attachments
   const [answerContent, setAnswerContent] = useState("");
   const [answerAttachments, setAnswerAttachments] = useState<File[]>([]);
   const [caseCommentContent, setCaseCommentContent] = useState("");
   const [caseCommentAttachments, setCaseCommentAttachments] = useState<File[]>(
     []
   );
+
+  const handleSetAnswerCommentState = useCallback(
+    (answerId: string, newState: Partial<AnswerCommentState>) => {
+      setAnswerCommentStates((prev) => ({
+        ...prev,
+        [answerId]: {
+          ...(prev[answerId] || {
+            content: "",
+            attachments: [],
+            isVisible: false,
+          }),
+          ...newState,
+        },
+      }));
+    },
+    []
+  );
+
+  const handleAnswerCommentSubmitted = useCallback((answerId: string) => {
+    // This function resets the state for a specific answer after submission.
+    setAnswerCommentStates((prev) => ({
+      ...prev,
+      [answerId]: {
+        content: "",
+        attachments: [],
+        isVisible: false,
+      },
+    }));
+  }, []);
+
+  const handleToggleAnswerCommentBox = useCallback((answerId: string) => {
+    // This function will be called by the Answer component to open or close its comment box.
+    // The Answer component itself will handle the unsaved changes warning before calling this.
+    setAnswerCommentStates((prev) => {
+      const currentState = prev[answerId];
+      const isCurrentlyVisible = currentState?.isVisible || false;
+
+      return {
+        ...prev,
+        [answerId]: {
+          // If we are closing the box, reset its state. Otherwise, just open it.
+          content: isCurrentlyVisible ? "" : currentState?.content || "",
+          attachments: isCurrentlyVisible
+            ? []
+            : currentState?.attachments || [],
+          isVisible: !isCurrentlyVisible,
+        },
+      };
+    });
+  }, []);
 
   // State to control the visibility of the AddAnswer form.
   // It defaults to 'true' (visible) if the case status is OPEN or IN_PROGRESS.
@@ -427,24 +487,46 @@ const Submenu: React.FC<SubmenuProps> = ({
                       const dateB = new Date(b.date).getTime();
                       return dateB - dateA;
                     })
-                    .map((answer: IAnswer) => (
-                      <Answer
-                        key={answer._id}
-                        answer={answer}
-                        me={me}
-                        refetch={refetch}
-                        caseNumber={caseData.case_number}
-                        status={caseData.status}
-                        caseCategories={caseData.categories}
-                        mentions={mentions}
-                        targetId={targetId}
-                        childTargetId={childTargetId}
-                        areCommentsVisible={
-                          answerCommentsVisibility[answer._id] ?? false
-                        }
-                        onToggleComments={handleToggleAnswerComments}
-                      />
-                    ))}
+                    .map((answer: IAnswer) => {
+                      //get the correct state for this specific answer
+                      const commentState = answerCommentStates[answer._id] || {
+                        content: "",
+                        attachments: [],
+                        isVisible: false,
+                      };
+
+                      return (
+                        <Answer
+                          key={answer._id}
+                          answer={answer}
+                          me={me}
+                          refetch={refetch}
+                          caseNumber={caseData.case_number}
+                          status={caseData.status}
+                          caseCategories={caseData.categories}
+                          mentions={mentions}
+                          targetId={targetId}
+                          childTargetId={childTargetId}
+                          areCommentsVisible={
+                            answerCommentsVisibility[answer._id] ?? false
+                          }
+                          onToggleComments={handleToggleAnswerComments}
+                          // new props
+                          isCommentBoxVisible={commentState.isVisible}
+                          commentContent={commentState.content}
+                          commentAttachments={commentState.attachments}
+                          onToggleCommentBox={() =>
+                            handleToggleAnswerCommentBox(answer._id)
+                          }
+                          onCommentSubmitted={() =>
+                            handleAnswerCommentSubmitted(answer._id)
+                          }
+                          onSetCommentState={(newState) =>
+                            handleSetAnswerCommentState(answer._id, newState)
+                          }
+                        />
+                      );
+                    })}
                 </>
               ) : (
                 // If there are no visible answers, show a placeholder message,

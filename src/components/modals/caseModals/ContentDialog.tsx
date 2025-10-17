@@ -1,19 +1,22 @@
-// src/components/modals/ContentDialog.tsx (Updated)
-
 import * as Dialog from "@radix-ui/react-dialog";
 import { useMemo } from "react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { useTranslation } from "react-i18next";
 import { ArrowTopRightOnSquareIcon, FlagIcon } from "@heroicons/react/24/solid";
-import { renderContentSafely } from "../../utils/contentRenderer";
-import { ICategory, IMe, IMetricScore, IUser } from "../../db/interfaces"; // UPDATED
-import Creator from "../case-components/Creator";
-import ShowDate from "../global/ShowDate";
-import CategoryLink from "../global/links/CategoryLink";
-import ImagePreviewModal, { GalleryItem } from "./ImagePreviewModal";
-import { createFileUrl } from "../../utils/fileUtils";
-import { getPriorityStyle, getTypeBadgeStyle } from "../../utils/style-helpers";
-import { labelTextClass, caseBoxClasses } from "../../ui/reusable-styles";
+import { renderContentSafely } from "../../../utils/contentRenderer";
+import { ICategory, IMe, IMetricScore, IUser } from "../../../db/interfaces";
+import Creator from "../../case-components/Creator";
+import ShowDate from "../../global/ShowDate";
+import CategoryLink from "../../global/links/CategoryLink";
+import ImagePreviewModal, {
+  GalleryItem,
+} from "../imageModals/ImagePreviewModal";
+import { createFileUrl } from "../../../utils/fileUtils";
+import {
+  getPriorityStyle,
+  getTypeBadgeStyle,
+} from "../../../utils/style-helpers";
+import { labelTextClass, caseBoxClasses } from "../../../ui/reusable-styles";
 
 // --- UPDATED Props Interface ---
 interface ContentDialogProps {
@@ -24,8 +27,8 @@ interface ContentDialogProps {
   type: "PROBLEM" | "SUGGESTION";
   priority: "LOW" | "MEDIUM" | "HIGH";
   categories: ICategory[];
-  metricScores?: IMetricScore[]; // UPDATED
-  calculatedRating?: number | null; // UPDATED
+  metricScores?: IMetricScore[];
+  calculatedRating?: number | null;
   attachments?: string[];
   caseId: string;
   me: IMe;

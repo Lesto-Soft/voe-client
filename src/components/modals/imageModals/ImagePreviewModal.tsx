@@ -1,4 +1,3 @@
-// src/components/modals/ImagePreviewModal.tsx
 import React, {
   useMemo,
   useState,
@@ -18,7 +17,7 @@ import {
 } from "@heroicons/react/24/solid";
 import { DocumentIcon, PhotoIcon } from "@heroicons/react/24/outline";
 import { Document, Page, pdfjs } from "react-pdf";
-import { getIconForFile } from "../../utils/fileUtils";
+import { getIconForFile } from "../../../utils/fileUtils";
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   "pdfjs-dist/build/pdf.worker.min.mjs",

@@ -1,14 +1,16 @@
 // src/components/case-components/AddAnswer.tsx
 import { useState, useMemo, useEffect } from "react";
-import FileAttachmentAnswer from "../global/FileAttachmentAnswer";
+import FileAttachmentAnswer from "../../global/FileAttachmentAnswer";
 import { PaperAirplaneIcon, XMarkIcon } from "@heroicons/react/24/solid";
-import { useCreateAnswer } from "../../graphql/hooks/answer";
-import { ANSWER_CONTENT } from "../../utils/GLOBAL_PARAMETERS";
-import SimpleTextEditor from "../forms/partials/TextEditor/SimplifiedTextEditor";
-import { getTextLength } from "../../utils/contentRenderer";
-import ImagePreviewModal, { GalleryItem } from "../modals/ImagePreviewModal";
+import { useCreateAnswer } from "../../../graphql/hooks/answer";
+import { ANSWER_CONTENT } from "../../../utils/GLOBAL_PARAMETERS";
+import SimpleTextEditor from "../../forms/partials/TextEditor/SimplifiedTextEditor";
+import { getTextLength } from "../../../utils/contentRenderer";
+import ImagePreviewModal, {
+  GalleryItem,
+} from "../../modals/imageModals/ImagePreviewModal";
 import { toast } from "react-toastify";
-import { getIconForFile } from "../../utils/fileUtils";
+import { getIconForFile } from "../../../utils/fileUtils";
 
 // Interface for the props of the AddAnswer component
 interface AddAnswerProps {

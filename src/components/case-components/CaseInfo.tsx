@@ -14,18 +14,20 @@ import { labelTextClass, caseBoxClasses } from "../../ui/reusable-styles";
 import { useTranslation } from "react-i18next";
 import Creator from "./Creator";
 import ShowDate from "../global/ShowDate";
-import ImagePreviewModal, { GalleryItem } from "../modals/ImagePreviewModal";
+import ImagePreviewModal, {
+  GalleryItem,
+} from "../modals/imageModals/ImagePreviewModal";
 import { createFileUrl } from "../../utils/fileUtils";
-import FullScreenContentDialog from "../modals/ContentDialog";
+import ContentDialog from "../modals/caseModals/ContentDialog";
 import { CASE_STATUS, USER_RIGHTS } from "../../utils/GLOBAL_PARAMETERS";
-import CaseDialog from "../modals/CaseDialog";
 import { useGetActiveCategories } from "../../graphql/hooks/category";
 import { renderContentSafely } from "../../utils/contentRenderer";
-import RateCaseModal from "../modals/RateCaseModal";
+import RateCaseModal from "../modals/caseModals/RateCaseModal";
 import CaseRatingDisplay from "./CaseRatingDisplay";
 import { IReadBy } from "../../db/interfaces";
 import { EyeIcon } from "@heroicons/react/24/outline";
-import CaseReadByModal from "../modals/CaseReadByModal";
+import CaseReadByModal from "../modals/caseModals/CaseReadByModal";
+import CaseDialog from "../modals/caseModals/CaseDialog";
 
 interface ICaseInfoProps {
   content: string;
@@ -217,7 +219,7 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
                       </button>
                     </CaseDialog>
                   )}
-                <FullScreenContentDialog
+                <ContentDialog
                   content={content}
                   title={`${t("case", "Сигнал")} #${caseNumber}`}
                   creator={creator}

@@ -25,7 +25,7 @@ import { IMe } from "../../db/interfaces";
 import { ROLES } from "../../utils/GLOBAL_PARAMETERS";
 import { capitalizeFirstLetter } from "../../utils/stringUtils";
 import { useGetActiveCategories } from "../../graphql/hooks/category";
-import CaseDialog from "../modals/CaseDialog";
+import CaseDialog from "../modals/caseModals/CaseDialog";
 import UserAvatar from "../cards/UserAvatar";
 import NotificationCenter from "../notification/NotificationCenter";
 import { useNavigate } from "react-router";

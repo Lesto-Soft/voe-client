@@ -1,30 +1,31 @@
-import { IAnswer, ICategory, IComment, IMe } from "../../db/interfaces";
+import { IAnswer, ICategory, IComment, IMe } from "../../../db/interfaces";
 import { useState, useEffect, useRef, useMemo, memo } from "react";
-import Comment from "./Comment";
-import ShowDate from "../global/ShowDate";
+import Comment from "../comment/Comment";
+import ShowDate from "../../global/ShowDate";
 import { useTranslation } from "react-i18next";
-import UserLink from "../global/links/UserLink";
-// import Creator from "./Creator";
+import UserLink from "../../global/links/UserLink";
 import ApproveBtn from "./ApproveBtn";
-import AnswerHistoryModal from "../modals/AnswerHistoryModal";
+import AnswerHistoryModal from "../../modals/AnswerHistoryModal";
 import FinanceApproveBtn from "./FinanceApproveBtn";
-import { createFileUrl } from "../../utils/fileUtils";
-import ImagePreviewModal, { GalleryItem } from "../modals/ImagePreviewModal";
-import { useUnsavedChangesWarning } from "../../hooks/useUnsavedWarning";
-import ConfirmActionDialog from "../modals/ConfirmActionDialog";
-import AddComment from "./AddComment";
-import EditAnswerButton from "../global/EditAnswerButton";
-import { useDeleteAnswer } from "../../graphql/hooks/answer";
-import DeleteModal from "../modals/DeleteModal";
-import { renderContentSafely } from "../../utils/contentRenderer";
-import { ROLES } from "../../utils/GLOBAL_PARAMETERS";
-import UserAvatar from "../cards/UserAvatar";
+import { createFileUrl } from "../../../utils/fileUtils";
+import ImagePreviewModal, {
+  GalleryItem,
+} from "../../modals/imageModals/ImagePreviewModal";
+import { useUnsavedChangesWarning } from "../../../hooks/useUnsavedWarning";
+import ConfirmActionDialog from "../../modals/ConfirmActionDialog";
+import AddComment from "../comment/AddComment";
+import EditAnswerButton from "../../global/EditAnswerButton";
+import { useDeleteAnswer } from "../../../graphql/hooks/answer";
+import DeleteModal from "../../modals/DeleteModal";
+import { renderContentSafely } from "../../../utils/contentRenderer";
+import { ROLES } from "../../../utils/GLOBAL_PARAMETERS";
+import UserAvatar from "../../cards/UserAvatar";
 import {
   ChevronDownIcon,
   ChevronUpIcon,
   ChatBubbleOvalLeftEllipsisIcon,
 } from "@heroicons/react/24/solid";
-import ActionMenu from "../global/ActionMenu";
+import ActionMenu from "../../global/ActionMenu";
 
 const Answer: React.FC<{
   answer: IAnswer;

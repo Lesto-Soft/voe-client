@@ -4,10 +4,10 @@ import * as Dialog from "@radix-ui/react-dialog";
 import {
   useApproveFinanceAnswer,
   useUnapproveFinanceAnswer,
-} from "../../graphql/hooks/answer";
-import LoadingModal from "../modals/LoadingModal";
-import ErrorModal from "../modals/ErrorModal";
-import { IAnswer } from "../../db/interfaces";
+} from "../../../graphql/hooks/answer";
+import LoadingModal from "../../modals/LoadingModal";
+import ErrorModal from "../../modals/ErrorModal";
+import { IAnswer } from "../../../db/interfaces";
 
 const FinanceApproveBtn: React.FC<{
   approved: boolean;

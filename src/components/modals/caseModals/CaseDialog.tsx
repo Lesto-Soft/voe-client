@@ -1,4 +1,4 @@
-// src/components/modals/CaseDialog.tsx
+// src/components/modals/CaseDialog.tsx (Attachments moved under Text Editor)
 import React, { useState, useEffect, useRef } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import * as AlertDialog from "@radix-ui/react-alert-dialog";
@@ -8,21 +8,20 @@ import {
   XMarkIcon,
   ExclamationCircleIcon,
 } from "@heroicons/react/24/solid";
-import { ICategory, IMe } from "../../db/interfaces";
-import { CASE_CONTENT, CASE_TYPE } from "../../utils/GLOBAL_PARAMETERS";
+import { ICategory, IMe } from "../../../db/interfaces";
+import { CASE_CONTENT, CASE_TYPE } from "../../../utils/GLOBAL_PARAMETERS";
 import { useTranslation } from "react-i18next";
-import FileAttachmentBtn from "../global/FileAttachmentBtn";
 import {
   UpdateCaseInput,
   useUpdateCase,
   useCreateCase,
   CreateCaseInput,
-} from "../../graphql/hooks/case";
-import TextEditor from "../forms/partials/TextEditor/TextEditor";
-import SuccessConfirmationModal from "./SuccessConfirmationModal";
-import { getTextLength } from "../../utils/contentRenderer";
+} from "../../../graphql/hooks/case";
+import SuccessConfirmationModal from "../SuccessConfirmationModal";
+import { getTextLength } from "../../../utils/contentRenderer";
 import { toast } from "react-toastify";
-import { MAX_UPLOAD_FILES, MAX_UPLOAD_MB } from "../../db/config";
+import { MAX_UPLOAD_FILES, MAX_UPLOAD_MB } from "../../../db/config";
+import TextEditorWithAttachments from "../../forms/partials/TextEditor/TextEditorWithAttachments";
 
 interface CaseFormData {
   content: string;
@@ -499,7 +498,7 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
                 )}
               </div>
               <div className="overflow-y-auto flex-grow rounded-b-xl">
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <form onSubmit={handleSubmit}>
                   <div className="space-y-6 p-6 bg-white shadow">
                     <div>
                       <label
@@ -509,7 +508,7 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
                         {t("content")}
                         <span className="text-red-500">*</span>
                       </label>
-                      <TextEditor
+                      <TextEditorWithAttachments
                         content={formData.content}
                         onUpdate={(html) =>
                           setFormData((prev) => ({ ...prev, content: html }))
@@ -523,11 +522,18 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
                         height="150px"
                         maxLength={CASE_CONTENT.MAX}
                         minLength={CASE_CONTENT.MIN}
-                        wrapperClassName="w-full rounded-md shadow-sm overflow-hidden bg-white"
                         autoFocus={true}
+                        // --- Pass the attachment state ---
+                        newAttachments={newAttachments}
+                        setNewAttachments={setNewAttachments}
+                        existingAttachments={existingAttachments}
+                        setExistingAttachments={setExistingAttachments}
+                        caseId={
+                          props.mode === "edit" ? props.caseId : undefined
+                        }
                       />
                     </div>
-                    {/* ... form fields remain the same */}
+
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-6">
                       {props.mode === "edit" && (
                         <div>
@@ -659,16 +665,7 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
                         ))}
                       </div>
                     </div>
-                    <div>
-                      <FileAttachmentBtn
-                        attachments={newAttachments}
-                        setAttachments={setNewAttachments}
-                        existingAttachments={existingAttachments}
-                        setExistingAttachments={setExistingAttachments}
-                        type="cases"
-                        objectId={props.mode === "edit" ? props.caseId : ""}
-                      />
-                    </div>
+
                     <div className="flex justify-center gap-3 pt-4 border-t border-gray-300 mt-6">
                       <button
                         type="button"

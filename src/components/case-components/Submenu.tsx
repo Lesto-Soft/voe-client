@@ -9,10 +9,10 @@ import {
 } from "@heroicons/react/24/solid";
 import { IAnswer, ICase, IComment, IMe } from "../../db/interfaces";
 import CaseHistoryContent from "./CaseHistoryContent";
-import Comment from "./Comment";
-import Answer from "./Answer";
-import AddComment from "./AddComment";
-import AddAnswer from "./AddAnswer";
+import Comment from "./comment/Comment";
+import Answer from "./answer/Answer";
+import AddComment from "./comment/AddComment";
+import AddAnswer from "./answer/AddAnswer";
 import { USER_RIGHTS /*, CASE_STATUS */ } from "../../utils/GLOBAL_PARAMETERS";
 import { useLocation } from "react-router";
 import useMediaQuery from "../../hooks/useMediaQuery";

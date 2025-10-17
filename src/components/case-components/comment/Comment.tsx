@@ -1,16 +1,18 @@
-import { IComment } from "../../db/interfaces";
-import UserLink from "../global/links/UserLink";
-import ShowDate from "../global/ShowDate";
-import EditButton from "../global/EditCommentButton";
-import { admin_check } from "../../utils/rowStringCheckers";
-import { createFileUrl } from "../../utils/fileUtils";
-import ImagePreviewModal, { GalleryItem } from "../modals/ImagePreviewModal";
-import DeleteModal from "../modals/DeleteModal";
-import { renderContentSafely } from "../../utils/contentRenderer";
-import { useDeleteComment } from "../../graphql/hooks/comment";
+import { IComment } from "../../../db/interfaces";
+import UserLink from "../../global/links/UserLink";
+import ShowDate from "../../global/ShowDate";
+import EditButton from "../../global/EditCommentButton";
+import { admin_check } from "../../../utils/rowStringCheckers";
+import { createFileUrl } from "../../../utils/fileUtils";
+import ImagePreviewModal, {
+  GalleryItem,
+} from "../../modals/imageModals/ImagePreviewModal";
+import DeleteModal from "../../modals/DeleteModal";
+import { renderContentSafely } from "../../../utils/contentRenderer";
+import { useDeleteComment } from "../../../graphql/hooks/comment";
 import { useEffect, useRef, useMemo } from "react";
 // import UserAvatar from "../cards/UserAvatar";
-import ActionMenu from "../global/ActionMenu";
+import ActionMenu from "../../global/ActionMenu";
 
 interface CommentProps {
   comment: IComment;

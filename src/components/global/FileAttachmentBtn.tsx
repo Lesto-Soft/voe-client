@@ -1,7 +1,9 @@
 import React from "react";
 import { handleFileChange } from "../../utils/attachment-handling";
 import { useTranslation } from "react-i18next";
-import ImagePreviewModal, { GalleryItem } from "../modals/ImagePreviewModal";
+import ImagePreviewModal, {
+  GalleryItem,
+} from "../modals/imageModals/ImagePreviewModal";
 import { XMarkIcon } from "@heroicons/react/24/solid";
 import { createFileUrl } from "../../utils/fileUtils";
 import { MAX_UPLOAD_FILES, MAX_UPLOAD_MB } from "../../db/config";

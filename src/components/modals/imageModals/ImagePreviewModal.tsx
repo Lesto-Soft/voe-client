@@ -262,8 +262,6 @@ const ImagePreviewModal: React.FC<ImagePreviewProps> = ({
     return name.split(".").pop()?.toLowerCase() === "pdf";
   }, [currentItem.name]);
 
-  // const isPreviewable = isImageFile || isPdfFile;
-
   const TriggerIconComponent = getIconForFile(fileName || "");
   const CurrentItemIconComponent = getIconForFile(currentItem.name || "");
   const displayTitle = isAvatar ? displayName : currentItem.name;
@@ -293,10 +291,7 @@ const ImagePreviewModal: React.FC<ImagePreviewProps> = ({
           className={`fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-xl z-[10000] overflow-hidden flex flex-col focus:outline-none ${
             isAvatar
               ? "w-auto h-auto max-w-[90vw] max-h-[90vh]"
-              : // : isPreviewable
-                // ? "w-[95%] max-w-5xl h-[90vh]"
-                // : "w-auto max-w-lg"
-                "w-[95%] max-w-5xl h-[90vh]"
+              : "w-[95%] max-w-5xl h-[90vh]"
           }`}
         >
           <header className="flex justify-between items-center p-4 border-b border-gray-200 flex-shrink-0">

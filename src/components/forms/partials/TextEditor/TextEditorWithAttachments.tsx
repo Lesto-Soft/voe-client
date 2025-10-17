@@ -1,3 +1,5 @@
+// src/components/forms/partials/TextEditor/TextEditorWithAttachments.tsx
+
 import React, { useEffect, useState, useMemo, useRef } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
@@ -14,6 +16,7 @@ import { MAX_UPLOAD_FILES, MAX_UPLOAD_MB } from "../../../../db/config";
 // Local subcomponent imports
 import AttachmentZone from "./TextEditorWithAttachments/AttachmentZone";
 import MenuBar from "./TextEditorWithAttachments/MenuBar";
+import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 
 export interface TextEditorProps {
   content?: string;
@@ -61,6 +64,7 @@ const TextEditorWithAttachments: React.FC<TextEditorProps> = ({
   const [charCount, setCharCount] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { t } = useTranslation("caseSubmission");
+  const [attachmentError, setAttachmentError] = useState<string | null>(null);
 
   const mentionSuggestionConfig = useMemo(
     () => createMentionSuggestion(mentions),
@@ -92,6 +96,7 @@ const TextEditorWithAttachments: React.FC<TextEditorProps> = ({
     content: propContent || "",
     editable,
     onUpdate: ({ editor: currentEditor }) => {
+      setAttachmentError(null);
       setCharCount(currentEditor.getText().length);
       if (onUpdate) {
         onUpdate(currentEditor.isEmpty ? "" : currentEditor.getHTML());
@@ -108,31 +113,78 @@ const TextEditorWithAttachments: React.FC<TextEditorProps> = ({
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (!event.target.files || !setNewAttachments) return;
+    setAttachmentError(null);
     const files = Array.from(event.target.files);
-    const totalAttachments =
-      newAttachments.length + existingAttachments.length + files.length;
-    if (totalAttachments > MAX_UPLOAD_FILES) {
-      toast.warn(t("errors.maxFilesExceeded", { max: MAX_UPLOAD_FILES }));
-      return;
-    }
-    const validFiles = files.filter((file) => {
-      if (file.size > MAX_UPLOAD_MB * 1024 * 1024) {
-        toast.error(
-          t("errors.fileTooLarge", {
+
+    const currentFileNames = new Set([
+      ...newAttachments.map((file) => file.name),
+      ...existingAttachments.map((url) => url.split("/").pop() || ""),
+    ]);
+
+    const validFiles: File[] = [];
+    let oversizedFileError: string | null = null;
+    let duplicateFileError: string | null = null;
+
+    // 1. First, filter the selected files for errors
+    for (const file of files) {
+      // This is the corrected if...else if...else chain
+      // Category 1: Duplicate
+      if (currentFileNames.has(file.name)) {
+        if (!duplicateFileError) {
+          duplicateFileError = t(
+            "caseSubmission.errors.file.fileAlreadyExists",
+            {
+              fileName: file.name,
+            }
+          );
+        }
+      }
+      // Category 2: Oversized
+      else if (file.size > MAX_UPLOAD_MB * 1024 * 1024) {
+        if (!oversizedFileError) {
+          oversizedFileError = t("caseSubmission.errors.file.fileTooLarge", {
             fileName: file.name,
             maxSize: MAX_UPLOAD_MB,
-          })
-        );
-        return false;
+          });
+        }
       }
-      return true;
-    });
+      // Category 3: Valid
+      else {
+        validFiles.push(file);
+        // Add to the set *now* to catch duplicates within the *same batch*
+        currentFileNames.add(file.name);
+      }
+    }
+
+    // 2. Now, check the total count with *only* the valid files
+    const newTotal =
+      newAttachments.length + existingAttachments.length + validFiles.length;
+
+    if (newTotal > MAX_UPLOAD_FILES) {
+      setAttachmentError(
+        t("caseSubmission.errors.file.maxFilesExceeded", {
+          max: MAX_UPLOAD_FILES,
+        })
+      );
+      event.target.value = ""; // Clear input
+      return; // Stop here
+    }
+
+    // 3. If total is fine, set any errors we found during filtering
+    if (duplicateFileError) {
+      setAttachmentError(duplicateFileError);
+    } else if (oversizedFileError) {
+      setAttachmentError(oversizedFileError);
+    }
+
+    // 4. Add the valid files (if any)
     if (validFiles.length > 0) {
       setNewAttachments((prev) => [...prev, ...validFiles]);
       toast.success(
         t("caseSubmission.filesAdded", { count: validFiles.length })
       );
     }
+
     event.target.value = "";
   };
 
@@ -195,7 +247,12 @@ const TextEditorWithAttachments: React.FC<TextEditorProps> = ({
           className="hidden"
           accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt"
         />
-
+        {attachmentError && (
+          <div className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 bg-red-50 border-t border-gray-200">
+            <ExclamationCircleIcon className="w-5 h-5 flex-shrink-0" />
+            <span>{attachmentError}</span>
+          </div>
+        )}
         <AttachmentZone
           newAttachments={newAttachments}
           existingAttachments={existingAttachments}
@@ -205,7 +262,6 @@ const TextEditorWithAttachments: React.FC<TextEditorProps> = ({
           onRemoveExisting={(url) =>
             setExistingAttachments?.((prev) => prev.filter((u) => u !== url))
           }
-          onImageClick={(url) => {}}
           caseId={caseId}
         />
       </div>

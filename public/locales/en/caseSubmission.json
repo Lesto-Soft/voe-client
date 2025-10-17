@@ -56,7 +56,10 @@
         "oversizedAndMaxCount": "Additionally, the limit of {{max}} files was reached.",
         "maxCountReached": "The limit of {{max}} files was reached. {{count}} file(s) were skipped.",
         "duplicatesSkipped": "The selected files are already in the list: {{fileList}}",
-        "duplicatesSomeSkipped": "Skipped duplicate files: {{fileList}}"
+        "duplicatesSomeSkipped": "Skipped duplicate files: {{fileList}}",
+        "fileTooLarge": "The file \"{{fileName}}\" is larger than {{maxSize}}MB and was skipped.",
+        "maxFilesExceeded": "You cannot add more files. The maximum is {{max}} files.",
+        "fileAlreadyExists": "The file \"{{fileName}}\" is already added."
       }
     },
     "helpModal": {

@@ -56,7 +56,10 @@
         "oversizedAndMaxCount": "Освен това, лимитът от {{max}} файла беше достигнат.",
         "maxCountReached": "Лимитът от {{max}} файла беше достигнат. {{count}} файла бяха пропуснати.",
         "duplicatesSkipped": "Избраните файлове вече са в списъка: {{fileList}}",
-        "duplicatesSomeSkipped": "Пропуснати дублирани файлове: {{fileList}}"
+        "duplicatesSomeSkipped": "Пропуснати дублирани файлове: {{fileList}}",
+        "fileTooLarge": "Файлът \"{{fileName}}\" е по-голям от {{maxSize}}MB и беше пропуснат.",
+        "maxFilesExceeded": "Не можете да добавите повече файлове. Максимумът е {{max}} файла.",
+        "fileAlreadyExists": "Файлът \"{{fileName}}\" вече е добавен."
       }
     },
     "helpModal": {

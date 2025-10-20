@@ -30,6 +30,10 @@
     "success": "Submitted successfully!",
     "filesAdded": "File added",
     "successModalTitle": "Case submitted successfully!",
+    "content": {
+      "label": "Content",
+      "placeholder": "Describe your case..."
+    },
     "priority": {
       "low": "Low",
       "medium": "Medium",
@@ -37,7 +41,19 @@
     },
     "caseType": {
       "problem": "Problem",
-      "suggestion": "Suggestion"
+      "suggestion": "Suggestion",
+      "label": "Case Type"
+    },
+    "actions": {
+      "cancel": "Cancel",
+      "saving": "Saving...",
+      "saveChanges": "Save Changes",
+      "submit": "Submit"
+    },
+    "submissionSuccess": {
+      "edit": "Case #{{caseNumber}} was successfully edited.",
+      "createSuggestion": "Suggestion was successfully created.",
+      "createProblem": "Problem was successfully created."
     },
     "errors": {
       "submission": {
@@ -48,7 +64,11 @@
         "categoryProcessingError": "Error processing selected categories.",
         "categoryNoneFound": "No categories found.",
         "generalSubmissionError": "Failed to create case: {{message}}",
-        "unexpectedError": "An unexpected error occurred during submission."
+        "unexpectedError": "An unexpected error occurred during submission.",
+        "contentTooShort": "Content must be at least {{min}} characters.",
+        "contentTooLong": "Content cannot exceed {{max}} characters.",
+        "generalSubmissionErrorEdit": "Error editing case: {{message}}",
+        "generalSubmissionErrorCreate": "Error creating case: {{message}}"
       },
       "file": {
         "maxCountExceeded": "You cannot add more files (maximum {{max}}).",
@@ -59,7 +79,8 @@
         "duplicatesSomeSkipped": "Skipped duplicate files: {{fileList}}",
         "fileTooLarge": "The file \"{{fileName}}\" is larger than {{maxSize}}MB and was skipped.",
         "maxFilesExceeded": "You cannot add more files. The maximum is {{max}} files.",
-        "fileAlreadyExists": "The file \"{{fileName}}\" is already added."
+        "fileAlreadyExists": "The file \"{{fileName}}\" is already added.",
+        "filesSkipped": "Maximum {{max}} files. {{count}} file(s) were skipped."
       }
     },
     "helpModal": {

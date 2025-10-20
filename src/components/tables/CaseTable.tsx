@@ -5,6 +5,7 @@ import {
   TrashIcon,
   EnvelopeIcon,
   EnvelopeOpenIcon,
+  PaperClipIcon,
 } from "@heroicons/react/24/solid";
 import moment from "moment";
 // @ts-ignore
@@ -134,6 +135,8 @@ const CaseTable: React.FC<ICaseTableProps> = ({
   // return <LoadingModal message="Обработване..." />;
   // }
 
+  console.log("Rendering CaseTable with cases:", cases);
+
   return (
     <div className="flex-1 flex flex-col min-h-0 px-4 sm:px-6 lg:px-8">
       <div className="flex-1 min-h-0 overflow-y-auto shadow-md rounded-lg border border-gray-200">
@@ -231,16 +234,14 @@ const CaseTable: React.FC<ICaseTableProps> = ({
               const priorityStyle = getPriorityStyle(my_case.priority);
               const typeBadgeStyle = getTypeBadgeStyle(my_case.type);
               const isClosed = my_case.status === "CLOSED";
-
-              // Dynamic truncation based on window width
               const truncateLength = getContentTruncateLength();
-
               const displayContent = getContentPreview(
                 my_case.content,
                 truncateLength
               );
+              const hasAttachments =
+                my_case.attachments && my_case.attachments.length > 0;
 
-              // Add a check to see if it's one of the last row
               const isLastRow = index >= cases.length - 1;
 
               return (
@@ -258,14 +259,27 @@ const CaseTable: React.FC<ICaseTableProps> = ({
                   //   isClosed ? "bg-gray-100 text-gray-500" : "hover:bg-gray-100"
                   // }`}
                 >
-                  {/* Case Number Cell - Now a Button-like Link */}
                   <td
                     className={`relative w-24 px-3 py-4 whitespace-nowrap text-sm ${
-                      // ADDED 'relative'
                       isClosed ? "text-gray-500" : "font-medium"
                     }`}
                   >
-                    <CaseLink my_case={my_case} t={t} />
+                    <div className="flex items-center justify-center gap-1.5">
+                      <CaseLink my_case={my_case} t={t} />
+                      {hasAttachments ? (
+                        <PaperClipIcon
+                          className="h-4 w-4 text-gray-500 flex-shrink-0"
+                          title={
+                            t("case_has_attachments") || "Има прикачени файлове"
+                          }
+                        />
+                      ) : (
+                        <div
+                          className="h-4 w-4 flex-shrink-0"
+                          aria-hidden="true"
+                        />
+                      )}
+                    </div>
                   </td>
                   {/* Priority Cell - Text hidden on medium and below */}
                   <td className="w-28 px-3 py-4 whitespace-nowrap text-xs">

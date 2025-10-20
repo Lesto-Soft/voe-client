@@ -60,5 +60,8 @@
   "delete_case": "Изтрий сигнал",
   "answerSubmitted": "Решението е изпратено",
   "waiting_approval": "Все още няма одобрено решение",
-  "clear": "Изчисти"
+  "clear": "Изчисти",
+  "editCase": "Редактирай сигнал",
+  "createCase": "Създай сигнал",
+  "case_has_attachments": "Сигналът има прикачени файлове"
 }

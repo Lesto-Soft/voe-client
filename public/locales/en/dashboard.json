@@ -60,5 +60,8 @@
   "delete_case": "Delete case",
   "answerSubmitted": "The answer has been sent",
   "waiting_approval": "Still does not have an approved answer",
-  "clear": "Clear"
+  "clear": "Clear",
+  "editCase": "Edit case",
+  "createCase": "Create case",
+  "case_has_attachments": "The case has attachments"
 }

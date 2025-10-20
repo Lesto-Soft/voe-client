@@ -110,7 +110,6 @@ const TextEditorWithAttachments: React.FC<TextEditorProps> = ({
       },
     },
   });
-
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (!event.target.files || !setNewAttachments) return;
     setAttachmentError(null);
@@ -124,11 +123,10 @@ const TextEditorWithAttachments: React.FC<TextEditorProps> = ({
     const validFiles: File[] = [];
     let oversizedFileError: string | null = null;
     let duplicateFileError: string | null = null;
+    let localError: string | null = null; // Used to track errors before setting state
 
-    // 1. First, filter the selected files for errors
+    // 1. Filter files for duplicates and size errors
     for (const file of files) {
-      // This is the corrected if...else if...else chain
-      // Category 1: Duplicate
       if (currentFileNames.has(file.name)) {
         if (!duplicateFileError) {
           duplicateFileError = t(
@@ -138,51 +136,61 @@ const TextEditorWithAttachments: React.FC<TextEditorProps> = ({
             }
           );
         }
-      }
-      // Category 2: Oversized
-      else if (file.size > MAX_UPLOAD_MB * 1024 * 1024) {
+      } else if (file.size > MAX_UPLOAD_MB * 1024 * 1024) {
         if (!oversizedFileError) {
           oversizedFileError = t("caseSubmission.errors.file.fileTooLarge", {
             fileName: file.name,
             maxSize: MAX_UPLOAD_MB,
           });
         }
-      }
-      // Category 3: Valid
-      else {
+      } else {
         validFiles.push(file);
-        // Add to the set *now* to catch duplicates within the *same batch*
         currentFileNames.add(file.name);
       }
     }
 
-    // 2. Now, check the total count with *only* the valid files
-    const newTotal =
-      newAttachments.length + existingAttachments.length + validFiles.length;
-
-    if (newTotal > MAX_UPLOAD_FILES) {
-      setAttachmentError(
-        t("caseSubmission.errors.file.maxFilesExceeded", {
-          max: MAX_UPLOAD_FILES,
-        })
-      );
-      event.target.value = ""; // Clear input
-      return; // Stop here
-    }
-
-    // 3. If total is fine, set any errors we found during filtering
+    // Set filtering errors (will be overridden if overflow)
     if (duplicateFileError) {
-      setAttachmentError(duplicateFileError);
+      localError = duplicateFileError;
     } else if (oversizedFileError) {
-      setAttachmentError(oversizedFileError);
+      localError = oversizedFileError;
     }
 
-    // 4. Add the valid files (if any)
-    if (validFiles.length > 0) {
-      setNewAttachments((prev) => [...prev, ...validFiles]);
-      toast.success(
-        t("caseSubmission.filesAdded", { count: validFiles.length })
-      );
+    // 2. Check for overflow
+    const currentCount = newAttachments.length + existingAttachments.length;
+    const availableSlots = MAX_UPLOAD_FILES - currentCount;
+    let filesToAdd: File[] = [];
+
+    if (validFiles.length > availableSlots) {
+      // If overflowing, slice to fit and set the "skipped" error
+      filesToAdd = validFiles.slice(0, availableSlots);
+      const skippedCount = validFiles.length - availableSlots;
+
+      // This error takes priority
+      localError = t("caseSubmission.errors.file.filesSkipped", {
+        max: MAX_UPLOAD_FILES,
+        count: skippedCount,
+      });
+    } else {
+      // No overflow, add all valid files
+      filesToAdd = validFiles;
+    }
+
+    // 3. Set the final error state (if any)
+    if (localError) {
+      setAttachmentError(localError);
+    }
+
+    // 4. Add the files that fit
+    if (filesToAdd.length > 0) {
+      setNewAttachments((prev) => [...prev, ...filesToAdd]);
+
+      // Only show success if no errors were set
+      if (localError === null) {
+        toast.success(
+          t("caseSubmission.filesAdded", { count: filesToAdd.length })
+        );
+      }
     }
 
     event.target.value = "";

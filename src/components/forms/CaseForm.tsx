@@ -444,12 +444,12 @@ const CaseForm: React.FC<CaseFormProps> = (props) => {
           </div>
         </div>
       </div>
-      <div className="flex-shrink-0 p-6 bg-stone-100 border-t border-gray-300 rounded-b-xl sticky bottom-0">
+      <div className="flex-shrink-0 p-3 bg-stone-100 border-t border-gray-300 rounded-b-xl sticky bottom-0">
         <div className="flex justify-center gap-3">
           <button
             type="button"
             onClick={onCancel}
-            className="px-6 py-2 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:outline-none hover:cursor-pointer"
+            className="w-34 px-6 py-2 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:outline-none hover:cursor-pointer"
           >
             {t("cancel", "Отказ")}
           </button>
@@ -458,12 +458,12 @@ const CaseForm: React.FC<CaseFormProps> = (props) => {
             disabled={isLoading}
             className={`${getSubmitButtonClass(
               formData.type
-            )} hover:cursor-pointer`}
+            )} hover:cursor-pointer w-34 text-center`}
           >
             {isLoading
               ? t("saving", "Записване...")
               : props.mode === "edit"
-              ? t("saveChanges", "Запази промените")
+              ? t("saveChanges", "Запази")
               : t("submit", "Изпрати")}
           </button>
         </div>

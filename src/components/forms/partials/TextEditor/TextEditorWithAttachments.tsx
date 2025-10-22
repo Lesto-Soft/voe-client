@@ -184,13 +184,6 @@ const TextEditorWithAttachments: React.FC<TextEditorProps> = ({
     // 4. Add the files that fit
     if (filesToAdd.length > 0) {
       setNewAttachments((prev) => [...prev, ...filesToAdd]);
-
-      // Only show success if no errors were set
-      if (localError === null) {
-        toast.success(
-          t("caseSubmission.filesAdded", { count: filesToAdd.length })
-        );
-      }
     }
 
     event.target.value = "";
@@ -225,6 +218,10 @@ const TextEditorWithAttachments: React.FC<TextEditorProps> = ({
       : "border-gray-300 focus-within:border-indigo-500 focus-within:ring-indigo-500"
   } ${wrapperClassName || ""}`;
 
+  const totalAttachmentCount =
+    newAttachments.length + existingAttachments.length;
+  const isAttachmentDisabled = totalAttachmentCount >= MAX_UPLOAD_FILES;
+
   return (
     <>
       <div className={finalWrapperClassName.trim()}>
@@ -232,6 +229,7 @@ const TextEditorWithAttachments: React.FC<TextEditorProps> = ({
           editor={editor}
           className={menuBarClassName}
           onAttachClick={() => fileInputRef.current?.click()}
+          isAttachmentDisabled={isAttachmentDisabled}
         />
 
         <div className="relative">
@@ -264,12 +262,14 @@ const TextEditorWithAttachments: React.FC<TextEditorProps> = ({
         <AttachmentZone
           newAttachments={newAttachments}
           existingAttachments={existingAttachments}
-          onRemoveNew={(index) =>
-            setNewAttachments?.((prev) => prev.filter((_, i) => i !== index))
-          }
-          onRemoveExisting={(url) =>
-            setExistingAttachments?.((prev) => prev.filter((u) => u !== url))
-          }
+          onRemoveNew={(index) => {
+            setAttachmentError(null);
+            setNewAttachments?.((prev) => prev.filter((_, i) => i !== index));
+          }}
+          onRemoveExisting={(url) => {
+            setAttachmentError(null);
+            setExistingAttachments?.((prev) => prev.filter((u) => u !== url));
+          }}
           caseId={caseId}
         />
       </div>

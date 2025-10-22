@@ -30,6 +30,7 @@
     "success": "Submitted successfully!",
     "filesAdded": "File added",
     "successModalTitle": "Case submitted successfully!",
+    "addAttachments": "Add Attachments",
     "content": {
       "label": "Content",
       "placeholder": "Describe your case..."

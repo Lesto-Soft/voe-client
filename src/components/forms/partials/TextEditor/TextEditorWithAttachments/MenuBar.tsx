@@ -26,12 +26,14 @@ interface MenuBarProps {
   editor: Editor | null;
   className?: string;
   onAttachClick: () => void;
+  isAttachmentDisabled?: boolean;
 }
 
 const MenuBar: React.FC<MenuBarProps> = ({
   editor,
   className,
   onAttachClick,
+  isAttachmentDisabled = false,
 }) => {
   const { t } = useTranslation(["menu", "caseSubmission"]);
   if (!editor) return null;
@@ -133,8 +135,9 @@ const MenuBar: React.FC<MenuBarProps> = ({
           title={
             t("caseSubmission:caseSubmission.addAttachments") || "Add files"
           }
-          className="cursor-pointer px-2 py-1 flex items-center justify-center rounded text-gray-700 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:z-10"
+          className="cursor-pointer px-2 py-1 flex items-center justify-center rounded text-gray-700 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:z-10 disabled:opacity-40 disabled:cursor-not-allowed" // <-- ADDED DISABLED CLASSES
           style={{ minWidth: "36px", minHeight: "36px" }}
+          disabled={isAttachmentDisabled}
         >
           <PaperClipIcon className={iconSizeClass} />
         </button>

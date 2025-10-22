@@ -130,12 +130,6 @@ const CaseTable: React.FC<ICaseTableProps> = ({
   if (deleteError) {
     return <ErrorModal message="Проблем с изтриването на сигнал." />;
   }
-  // MODIFIED: Combine loading states
-  // if (deleteLoading || toggleLoading) {
-  // return <LoadingModal message="Обработване..." />;
-  // }
-
-  console.log("Rendering CaseTable with cases:", cases);
 
   return (
     <div className="flex-1 flex flex-col min-h-0 px-4 sm:px-6 lg:px-8">

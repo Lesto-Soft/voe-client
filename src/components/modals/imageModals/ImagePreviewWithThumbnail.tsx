@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { XCircleIcon } from "@heroicons/react/24/solid";
 import ImagePreviewModal, { GalleryItem } from "./ImagePreviewModal";
 import { getIconForFile } from "../../../utils/fileUtils";
+import FileThumbnail from "./FileThumbnail";
 
 export interface ThumbnailGalleryItem extends GalleryItem {
   type: "new" | "existing";
@@ -27,27 +28,6 @@ const ImagePreviewWithThumbnail: React.FC<ImagePreviewWithThumbnailProps> = ({
     return `${(size / (1024 * 1024)).toFixed(1)} MB`;
   };
 
-  const renderFilePreview = (item: GalleryItem) => {
-    const ext = item.name.split(".").pop()?.toLowerCase();
-    if (["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(ext || ""))
-      return (
-        <img
-          src={item.url}
-          alt={item.name}
-          className="w-10 h-10 object-cover rounded-md border border-gray-200"
-          onError={(e) =>
-            ((e.target as HTMLImageElement).src = "/placeholder.png")
-          }
-        />
-      );
-    const IconComponent = getIconForFile(item.name);
-    return (
-      <div className="w-10 h-10 flex items-center justify-center bg-gray-50 border border-gray-200 rounded-md">
-        <IconComponent className="w-7 h-7 text-gray-500" />
-      </div>
-    );
-  };
-
   return (
     <div className="flex flex-wrap gap-2">
       {galleryItems.map((item, index) => (
@@ -65,7 +45,7 @@ const ImagePreviewWithThumbnail: React.FC<ImagePreviewWithThumbnailProps> = ({
               title={item.name}
             >
               <div className="flex items-center flex-1 truncate">
-                {renderFilePreview(item)}
+                <FileThumbnail item={item} />
                 <div className="ml-2 truncate flex-1">
                   <p className="truncate font-medium" title={item.name}>
                     {item.name}
@@ -88,7 +68,7 @@ const ImagePreviewWithThumbnail: React.FC<ImagePreviewWithThumbnailProps> = ({
                     }}
                     className="text-gray-400 hover:text-red-500 relative cursor-pointer"
                   >
-                    <XCircleIcon className="w-5 h-5" />
+                    <XCircleIcon className="w-8 h-8" />
                   </button>
                 )}
               </div>

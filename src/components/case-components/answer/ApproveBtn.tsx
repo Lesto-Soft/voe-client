@@ -5,10 +5,10 @@ import * as Switch from "@radix-ui/react-switch";
 import {
   useApproveAnswer,
   useUnapproveAnswer,
-} from "../../graphql/hooks/answer";
-import { IAnswer } from "../../db/interfaces";
-import LoadingModal from "../modals/LoadingModal";
-import ErrorModal from "../modals/ErrorModal";
+} from "../../../graphql/hooks/answer";
+import { IAnswer } from "../../../db/interfaces";
+import LoadingModal from "../../modals/LoadingModal";
+import ErrorModal from "../../modals/ErrorModal";
 const ApproveBtn: React.FC<{
   approved: boolean;
   t: (word: string) => string;

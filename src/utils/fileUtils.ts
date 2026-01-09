@@ -1,10 +1,9 @@
-// src/utils/fileUtils.ts
 import {
-  DocumentTextIcon, // We'll use this specifically for PDFs
+  DocumentTextIcon,
   PhotoIcon,
   TableCellsIcon,
   ArchiveBoxIcon,
-  DocumentIcon, // We'll use this for other non-previewable documents
+  DocumentIcon,
 } from "@heroicons/react/24/outline";
 
 const serverBaseUrl = import.meta.env.VITE_API_URL || "";

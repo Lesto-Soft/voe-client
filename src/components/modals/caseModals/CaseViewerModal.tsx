@@ -5,9 +5,9 @@ import {
   XMarkIcon,
   ArrowTopRightOnSquareIcon,
 } from "@heroicons/react/24/outline";
-import { ICase } from "../../db/interfaces"; // Import ICase for filter types
+import { ICase } from "../../../db/interfaces"; // Import ICase for filter types
 import moment from "moment";
-import DashboardPage from "../../pages/Dashboard";
+import DashboardPage from "../../../pages/Dashboard";
 
 // Define the shape of the filters object we expect
 type CaseFilters = {

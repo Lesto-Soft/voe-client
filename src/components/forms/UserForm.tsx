@@ -7,7 +7,7 @@ import React, {
   useMemo,
 } from "react";
 import { Role } from "../../types/userManagementTypes";
-import ImageCropModal from "../modals/ImageCropModal";
+import ImageCropModal from "../modals/imageModals/ImageCropModal";
 import { useUserFormState } from "./hooks/useUserFormState";
 import UserInputFields from "./partials/UserInputFields";
 import PasswordFields from "./partials/PasswordFields";

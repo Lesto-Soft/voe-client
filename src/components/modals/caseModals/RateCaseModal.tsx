@@ -7,16 +7,21 @@ import {
   XCircleIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
-import { IMetricScore, IRatingMetric, IMe, IUser } from "../../db/interfaces";
+import {
+  IMetricScore,
+  IRatingMetric,
+  IMe,
+  IUser,
+} from "../../../db/interfaces";
 import {
   useGetAllRatingMetrics,
   useBulkCreateMetricScores,
   useDeleteMetricScore,
-} from "../../graphql/hooks/rating";
-import RatingDistributionChart from "../charts/RatingDistributionChart";
-import PageStatusDisplay from "../global/PageStatusDisplay";
+} from "../../../graphql/hooks/rating";
+import RatingDistributionChart from "../../charts/RatingDistributionChart";
+import PageStatusDisplay from "../../global/PageStatusDisplay";
 import { ApolloError } from "@apollo/client";
-import ConfirmActionDialog from "./ConfirmActionDialog";
+import ConfirmActionDialog from "../ConfirmActionDialog";
 
 type ScoreState = {
   score: number;

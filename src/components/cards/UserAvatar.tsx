@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import ImagePreviewModal from "../modals/ImagePreviewModal";
+import ImagePreviewModal from "../modals/imageModals/ImagePreviewModal";
 
 interface UserAvatarProps {
   name: string; // For initials calculation

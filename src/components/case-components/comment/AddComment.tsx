@@ -1,13 +1,15 @@
 // src/components/case-components/AddComment.tsx
 import { useState, useMemo, useEffect } from "react";
-import { useCreateComment } from "../../graphql/hooks/comment";
-import FileAttachmentAnswer from "../global/FileAttachmentAnswer";
+import { useCreateComment } from "../../../graphql/hooks/comment";
+import FileAttachmentAnswer from "../../global/FileAttachmentAnswer";
 import { PaperAirplaneIcon, XMarkIcon } from "@heroicons/react/24/solid";
-import { COMMENT_CONTENT } from "../../utils/GLOBAL_PARAMETERS";
-import ImagePreviewModal, { GalleryItem } from "../modals/ImagePreviewModal";
-import SimpleTextEditor from "../forms/partials/TextEditor/SimplifiedTextEditor";
-import { getTextLength } from "../../utils/contentRenderer";
-import { getIconForFile } from "../../utils/fileUtils";
+import { COMMENT_CONTENT } from "../../../utils/GLOBAL_PARAMETERS";
+import ImagePreviewModal, {
+  GalleryItem,
+} from "../../modals/imageModals/ImagePreviewModal";
+import SimpleTextEditor from "../../forms/partials/TextEditor/SimplifiedTextEditor";
+import { getTextLength } from "../../../utils/contentRenderer";
+import { getIconForFile } from "../../../utils/fileUtils";
 
 // Interface for the props of the AddComment component
 interface AddCommentProps {

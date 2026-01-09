@@ -357,6 +357,10 @@ export const useUpdateCase = (caseNumber: number) => {
     try {
       const response = await updateCaseMutation({
         variables: { caseId, userId, input },
+        refetchQueries: [
+          { query: GET_CASE_BY_CASE_NUMBER, variables: { caseNumber } },
+        ],
+        awaitRefetchQueries: true,
       });
       return response.data.updateCase;
     } catch (err) {

@@ -12,7 +12,7 @@ import DistributionChartCard from "../components/features/analyses/components/Di
 import SummaryCard from "../components/features/analyses/components/SummaryCard";
 import TopUserCard from "../components/features/analyses/components/TopUserCard";
 import { PodiumModal } from "../components/features/analyses/modals/PodiumModal";
-import CaseViewerModal from "../components/modals/CaseViewerModal";
+import CaseViewerModal from "../components/modals/caseModals/CaseViewerModal";
 import PageStatusDisplay from "../components/global/PageStatusDisplay";
 import { RankingType } from "../components/features/analyses/types";
 import StatCardSkeleton from "../components/skeletons/StatCardSkeleton";

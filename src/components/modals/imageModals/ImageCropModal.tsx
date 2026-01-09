@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from "react";
 import Cropper, { Point, Area } from "react-easy-crop";
-import getCroppedImg from "../../utils/cropImage"; // Adjust path
+import getCroppedImg from "../../../utils/cropImage"; // Adjust path
 
 interface ImageCropModalProps {
   isOpen: boolean;

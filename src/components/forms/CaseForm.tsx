@@ -4,7 +4,7 @@ import {
   ExclamationTriangleIcon,
 } from "@heroicons/react/24/solid";
 import { ICategory, IMe } from "../../db/interfaces";
-import { CASE_CONTENT, CASE_TYPE } from "../../utils/GLOBAL_PARAMETERS";
+import { CASE_CONTENT } from "../../utils/GLOBAL_PARAMETERS";
 import { TFunction } from "i18next";
 import {
   UpdateCaseInput,
@@ -13,8 +13,8 @@ import {
   CreateCaseInput,
 } from "../../graphql/hooks/case";
 import { getTextLength } from "../../utils/contentRenderer";
-import TextEditorWithAttachments from "../forms/partials/TextEditor/TextEditorWithAttachments";
 import { usePastedAttachments } from "./hooks/usePastedAttachments";
+import ContentWithAttachmentsField from "./partials/ContentWithAttachmentsField";
 
 const MAX_SELECTED_CATEGORIES = 3;
 
@@ -71,12 +71,13 @@ type CaseFormProps = {
   availableCategories: ICategory[];
   onCancel: () => void;
   onSubmitSuccess: (message: string) => void;
-  // Modify this line to accept null
   onFormError: (message: string | null) => void;
-  onSubmissionError: (message: string) => void; // This one stays as string
+  onSubmissionError: (message: string) => void;
   onUnsavedChangesChange: (hasChanges: boolean) => void;
   t: TFunction<("dashboard" | "caseSubmission")[], undefined>;
-  isOpen: boolean; // Need this to enable/disable paste listener
+  isOpen: boolean;
+  processFiles: (files: File[]) => Promise<File[]>;
+  isCompressing: boolean;
 } & (
   | {
       mode: "edit";
@@ -109,6 +110,8 @@ const CaseForm: React.FC<CaseFormProps> = (props) => {
     onUnsavedChangesChange,
     t,
     isOpen,
+    processFiles, // Destructure new prop
+    isCompressing, // Destructure new prop
   } = props;
 
   const getInitialFormData = (): CaseFormData => {
@@ -143,7 +146,6 @@ const CaseForm: React.FC<CaseFormProps> = (props) => {
   const { createCase, loading: isCreating } = useCreateCase();
   const isLoading = isUpdating || isCreating;
 
-  // Paste logic hook lives here
   usePastedAttachments(
     isOpen,
     newAttachments,
@@ -152,7 +154,6 @@ const CaseForm: React.FC<CaseFormProps> = (props) => {
     t
   );
 
-  // This effect tells the parent (CaseDialog) if there are unsaved changes
   useEffect(() => {
     const formChanged =
       JSON.stringify(formData) !== JSON.stringify(initialFormState);
@@ -209,6 +210,9 @@ const CaseForm: React.FC<CaseFormProps> = (props) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     onFormError(null); // Clear previous errors
+
+    // Prevent submission if compressing
+    if (isCompressing) return;
 
     // --- Client-side validation ---
     const textLength = getTextLength(formData.content);
@@ -291,36 +295,23 @@ const CaseForm: React.FC<CaseFormProps> = (props) => {
     >
       <div className="overflow-y-auto flex-grow">
         <div className="space-y-6 p-6 bg-white shadow">
-          <div>
-            <label
-              htmlFor="content"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              {t("content")}
-              <span className="text-red-500">*</span>
-            </label>
-            <TextEditorWithAttachments
-              content={formData.content}
-              onUpdate={(html) => {
-                setFormData((prev) => ({ ...prev, content: html }));
-                onFormError(null); // Clear error on change
-              }}
-              placeholder={t(
-                "caseSubmission.content.placeholder",
-                "Опишете вашия случай..."
-              )}
-              editable={true}
-              height="150px"
-              maxLength={CASE_CONTENT.MAX}
-              minLength={CASE_CONTENT.MIN}
-              autoFocus={true}
-              newAttachments={newAttachments}
-              setNewAttachments={setNewAttachments}
-              existingAttachments={existingAttachments}
-              setExistingAttachments={setExistingAttachments}
-              caseId={props.mode === "edit" ? props.caseId : undefined}
-            />
-          </div>
+          <ContentWithAttachmentsField
+            label={t("content")}
+            content={formData.content}
+            onContentChange={(html) => {
+              setFormData((prev) => ({ ...prev, content: html }));
+              onFormError(null);
+            }}
+            newAttachments={newAttachments}
+            setNewAttachments={setNewAttachments}
+            existingAttachments={existingAttachments}
+            setExistingAttachments={setExistingAttachments}
+            isCompressing={isCompressing}
+            processFiles={processFiles}
+            t={t}
+            isOpen={isOpen}
+            caseId={props.mode === "edit" ? props.caseId : undefined}
+          />
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-6">
             {props.mode === "edit" && (
@@ -358,6 +349,7 @@ const CaseForm: React.FC<CaseFormProps> = (props) => {
                         style={{ accentColor: color }}
                         className="w-5 h-5 cursor-pointer"
                         name="type"
+                        disabled={isCompressing}
                       />
                       <Icon className="h-5 w-5" style={{ color }} />
                       <span className="text-sm text-gray-700 font-semibold">
@@ -408,6 +400,7 @@ const CaseForm: React.FC<CaseFormProps> = (props) => {
                       style={{ accentColor: color }}
                       className="w-5 h-5 cursor-pointer"
                       name="priority"
+                      disabled={isCompressing}
                     />
                     <span className="text-sm text-gray-700">{bgText}</span>
                   </label>
@@ -433,8 +426,9 @@ const CaseForm: React.FC<CaseFormProps> = (props) => {
                     formData.type
                   )}
                   disabled={
-                    !formData.categoryIds.includes(cat._id) &&
-                    formData.categoryIds.length >= MAX_SELECTED_CATEGORIES
+                    (!formData.categoryIds.includes(cat._id) &&
+                      formData.categoryIds.length >= MAX_SELECTED_CATEGORIES) ||
+                    isCompressing
                   }
                 >
                   {cat.name}
@@ -449,18 +443,21 @@ const CaseForm: React.FC<CaseFormProps> = (props) => {
           <button
             type="button"
             onClick={onCancel}
-            className="w-34 px-6 py-2 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:outline-none hover:cursor-pointer"
+            disabled={isCompressing}
+            className="w-34 px-6 py-2 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:outline-none hover:cursor-pointer disabled:opacity-50"
           >
             {t("cancel", "Отказ")}
           </button>
           <button
             type="submit"
-            disabled={isLoading}
+            disabled={isLoading || isCompressing}
             className={`${getSubmitButtonClass(
               formData.type
-            )} hover:cursor-pointer w-34 text-center`}
+            )} hover:cursor-pointer w-34 text-center disabled:opacity-70 disabled:cursor-not-allowed`}
           >
-            {isLoading
+            {isCompressing
+              ? t("processingFiles", "Обработка...")
+              : isLoading
               ? t("saving", "Записване...")
               : props.mode === "edit"
               ? t("saveChanges", "Запази")

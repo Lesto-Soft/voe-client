@@ -17,5 +17,10 @@
   "noHistory": "No history of changes",
   "showFullScreen": "Show Full Screen",
   "PROBLEM": "PROBLEM",
-  "SUGGESTION": "SUGGESTION"
+  "SUGGESTION": "SUGGESTION",
+  "compressing_image": "The image is being processed...",
+  "processing_one": "Processing the file...",
+  "processing_many": "Processing the files...",
+  "file_too_large_warning": "File {{fileName}} could not be compressed under {{maxSize}} MB.",
+  "generic_process_error": "An error occurred while processing the files."
 }

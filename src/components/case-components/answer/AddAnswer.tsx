@@ -217,7 +217,7 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
               wrapperClassName="flex-1 md:flex-none"
               heightClass="h-14 md:h-36"
             />
-            {/* Submit button */}{" "}
+            {/* Submit button */}
             <button
               onClick={submitAnswer}
               disabled={isSubmitDisabled}
@@ -255,22 +255,20 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
           </div>
         </div>
       </div>
-      {/* Display file errors */}{" "}
+      {/* Display file errors */}
       {fileError && (
         <div className="mx-5 mt-2 px-2">
-          {/* Consistent margin with mx-5 */}{" "}
+          {/* Consistent margin with mx-5 */}
           <p className="text-sm text-red-500 transition-opacity duration-200 opacity-100">
-            {fileError || "\u00A0"}{" "}
-            {/* Non-breaking space for layout consistency */}{" "}
-          </p>{" "}
+            {fileError || "\u00A0"}
+            {/* Non-breaking space for layout consistency */}
+          </p>
         </div>
       )}
-      {/* Display list of attached files */}{" "}
+      {/* Display list of attached files */}
       {attachments.length > 0 && (
         <div className="mx-5 mt-2 text-sm text-gray-600 space-y-1 overflow-y-auto rounded p-2 bg-gray-100 border border-gray-200 max-h-32">
-          {" "}
           <div className="flex flex-wrap gap-2">
-            {" "}
             {attachments.map((file) => {
               const fileKey = file.name + "-" + file.lastModified;
               const fileUrl = fileObjectUrls.get(fileKey) || "";

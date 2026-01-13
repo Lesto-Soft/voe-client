@@ -55,7 +55,7 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   // 1. Initialize the compression hook
-  const { processFiles, isCompressing } = useFileHandler();
+  const { isCompressing } = useFileHandler();
 
   // Reset state when opening
   useEffect(() => {
@@ -184,7 +184,7 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
             />
             <Dialog.Content
               onMouseDown={(e) => e.stopPropagation()} // Prevent backdrop click logic when clicking inside content
-              className="fixed z-50 left-1/2 top-1/2 w-[90vw] max-w-4xl -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-stone-100 shadow-lg focus:outline-none max-h-[90vh] flex flex-col"
+              className="fixed z-50 left-1/2 top-1/2 w-[90vw] max-w-5xl -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-stone-100 shadow-lg focus:outline-none max-h-[90vh] flex flex-col"
             >
               {/* --- HEADER --- */}
               <div className="sticky top-0 bg-stone-100 z-10 border-b border-gray-300 rounded-t-xl flex-shrink-0">
@@ -237,9 +237,6 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
                 onFormError={handleFormError}
                 onSubmissionError={handleFormError}
                 onSubmitSuccess={handleFormSubmitSuccess}
-                // New props for compression:
-                processFiles={processFiles}
-                isCompressing={isCompressing}
               />
             </Dialog.Content>
 

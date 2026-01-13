@@ -144,8 +144,8 @@ const Answer: React.FC<{
     }
 
     // --- Highlighting & Scrolling Logic ---
-    let initialDelayTimerId: number | undefined;
-    let removalTimerId: number | undefined;
+    let initialDelayTimerId: ReturnType<typeof setTimeout> | undefined;
+    let removalTimerId: ReturnType<typeof setTimeout> | undefined;
     let highlightedElement: HTMLElement | null = null;
 
     if (childTargetId) {

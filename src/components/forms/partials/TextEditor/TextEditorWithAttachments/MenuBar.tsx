@@ -1,5 +1,3 @@
-// src/components/forms/partials/TextEditorWithAttachments/MenuBar.tsx
-
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { Editor } from "@tiptap/react";
@@ -27,6 +25,7 @@ interface MenuBarProps {
   className?: string;
   onAttachClick: () => void;
   isAttachmentDisabled?: boolean;
+  isPaperIcon?: boolean; // Вече не е критично за логиката, но го пазим за интерфейса
 }
 
 const MenuBar: React.FC<MenuBarProps> = ({
@@ -129,13 +128,17 @@ const MenuBar: React.FC<MenuBarProps> = ({
             </button>
           );
         })}
+
+        {/* Attachment Button - STRICTLY ICON ONLY */}
         <button
           type="button"
           onClick={onAttachClick}
           title={
             t("caseSubmission:caseSubmission.addAttachments") || "Add files"
           }
-          className="cursor-pointer px-2 py-1 flex items-center justify-center rounded text-gray-700 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:z-10 disabled:opacity-40 disabled:cursor-not-allowed" // <-- ADDED DISABLED CLASSES
+          className={`
+            cursor-pointer flex items-center justify-center rounded text-gray-700 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:z-10 disabled:opacity-40 disabled:cursor-not-allowed px-2 py-1 bg-transparent
+          `}
           style={{ minWidth: "36px", minHeight: "36px" }}
           disabled={isAttachmentDisabled}
         >

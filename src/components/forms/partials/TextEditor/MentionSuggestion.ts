@@ -64,11 +64,9 @@ export const createMentionSuggestion = (mentions: MentionUser[] = []) => ({
           trigger: "manual",
           placement: "bottom-start",
           onShow: () => {
-            // MODIFICATION: Show backdrop when tippy is shown
             showBackdrop();
           },
           onHide: () => {
-            // MODIFICATION: Hide backdrop when tippy is hidden
             hideBackdrop();
           },
         });

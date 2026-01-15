@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useEditor, EditorContent, Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-// import Underline from "@tiptap/extension-underline";
+import Underline from "@tiptap/extension-underline"; // ФИКС: Пуснат импорт
 import TextAlign from "@tiptap/extension-text-align";
 import Placeholder from "@tiptap/extension-placeholder";
 import {
@@ -30,9 +30,9 @@ export interface TextEditorProps {
   minLength?: number;
   mentions?: { name: string; username: string; _id: string }[];
   autoFocus?: boolean;
+  type?: string;
 }
 
-// MenuBar component remains the same...
 interface MenuButtonConfig {
   id: string;
   action: (editor: Editor) => void;
@@ -46,8 +46,10 @@ interface MenuBarProps {
   editor: Editor | null;
   className?: string;
   renderKey?: number;
+  type?: string;
 }
-const MenuBar: React.FC<MenuBarProps> = ({ editor, className }) => {
+
+const MenuBar: React.FC<MenuBarProps> = ({ editor, className, type }) => {
   const { t } = useTranslation("menu");
   if (!editor) return null;
 
@@ -147,15 +149,14 @@ const MenuBar: React.FC<MenuBarProps> = ({ editor, className }) => {
               onClick={() => item.action(editor)}
               title={item.title}
               disabled={item.canExecute ? !item.canExecute(editor) : false}
-              className={`cursor-pointer px-2 py-1 flex items-center justify-center rounded
-                                  text-gray-700 hover:bg-gray-200
-                                  focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:z-10
-                                  disabled:opacity-40 disabled:cursor-not-allowed
-                                  ${
-                                    isActive
-                                      ? "bg-indigo-100 text-indigo-700 hover:bg-indigo-200 ring-1 ring-indigo-500"
-                                      : "bg-transparent"
-                                  }`}
+              className={`cursor-pointer px-2 py-1 flex items-center justify-center rounded transition-all duration-200
+                          focus:outline-none focus:ring-2 focus:ring-blue-400 focus:z-10
+                          disabled:opacity-40 disabled:cursor-not-allowed
+                          ${
+                            isActive
+                              ? "bg-blue-600 text-white shadow-md ring-1 ring-blue-700"
+                              : "text-gray-700 bg-transparent hover:bg-gray-200"
+                          }`}
               aria-pressed={isActive}
               style={{ minWidth: "36px", minHeight: "36px" }}
             >
@@ -164,10 +165,11 @@ const MenuBar: React.FC<MenuBarProps> = ({ editor, className }) => {
           );
         })}
       </div>
-      <TextEditorHelper />
+      <TextEditorHelper type={type} />
     </div>
   );
 };
+
 const MemoizedMenuBar = React.memo(MenuBar);
 
 const TextEditor: React.FC<TextEditorProps> = ({
@@ -175,7 +177,7 @@ const TextEditor: React.FC<TextEditorProps> = ({
   onUpdate,
   editable = true,
   placeholder = "Напишете нещо...",
-  wrapperClassName = "w-full border border-gray-300 rounded-md shadow-sm overflow-hidden bg-white focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500",
+  wrapperClassName,
   menuBarClassName,
   editorContentClassName = "w-full text-base text-gray-900 focus:outline-none",
   height = "150px",
@@ -183,55 +185,44 @@ const TextEditor: React.FC<TextEditorProps> = ({
   minLength,
   mentions,
   autoFocus = false,
+  type,
 }) => {
   const [renderKey, setRenderKey] = useState(0);
   const [charCount, setCharCount] = useState(0);
+
   const mentionSuggestionConfig = useMemo(
     () => createMentionSuggestion(mentions),
     [mentions]
   );
-  const isContentTooLong = useMemo(
-    () => maxLength && charCount > maxLength,
-    [charCount, maxLength]
-  );
 
-  const isContentTooShort = useMemo(
-    () => minLength && charCount > 0 && charCount < minLength,
-    [charCount, minLength]
-  );
-
-  const isInvalid = isContentTooLong || isContentTooShort;
+  const isInvalid = useMemo(() => {
+    const tooLong = maxLength && charCount > maxLength;
+    const tooShort = minLength && charCount > 0 && charCount < minLength;
+    return tooLong || tooShort;
+  }, [charCount, maxLength, minLength]);
 
   const editor = useEditor({
     extensions: [
       StarterKit.configure({ heading: false }),
+      Underline, // ФИКС: Активирано разширение
       TextAlign.configure({ types: ["paragraph"], defaultAlignment: "left" }),
       Placeholder.configure({
-        placeholder: ({ editor }) => {
-          if (editor.getText().trim() === "") return placeholder || "";
-          return "";
-        },
+        placeholder: ({ editor }) =>
+          editor.getText().trim() === "" ? placeholder || "" : "",
       }),
       Mention.configure({
-        HTMLAttributes: {
-          class: "mention",
-        },
+        HTMLAttributes: { class: "mention font-bold text-blue-600" },
         suggestion: mentionSuggestionConfig,
       }),
     ],
     content: propContent || "",
     editable,
-    onTransaction: () => {
-      setRenderKey((key) => key + 1);
-    },
+    onTransaction: () => setRenderKey((key) => key + 1),
     onUpdate: ({ editor: currentEditor }) => {
-      // --- Update internal char count and call external onUpdate ---
       const characterCount = currentEditor.getText().length;
       setCharCount(characterCount);
-
       if (onUpdate) {
-        const html = currentEditor.isEmpty ? "" : currentEditor.getHTML();
-        onUpdate(html);
+        onUpdate(currentEditor.isEmpty ? "" : currentEditor.getHTML());
       }
     },
     editorProps: {
@@ -245,61 +236,55 @@ const TextEditor: React.FC<TextEditorProps> = ({
 
   useEffect(() => {
     if (editor && autoFocus) {
-      // A timeout ensures the editor is fully rendered before focusing.
-      const timer = setTimeout(() => {
-        editor.chain().focus("end").run();
-      }, 100);
-
+      const timer = setTimeout(() => editor.chain().focus("end").run(), 100);
       return () => clearTimeout(timer);
     }
   }, [editor, autoFocus]);
 
-  // Effect to initialize/update character count from prop
   useEffect(() => {
     setCharCount(getTextLength(propContent || ""));
   }, [propContent]);
 
-  // This effect syncs external content changes to the editor
   useEffect(() => {
     if (editor && propContent !== undefined) {
       const currentHTML = editor.getHTML();
-      const isEditorEmpty = editor.getText().trim() === "";
-      const isPropEmpty = !propContent || propContent === "<p></p>";
-
-      if (isEditorEmpty && isPropEmpty) return;
-
-      if (currentHTML !== propContent) {
+      if (
+        currentHTML !== propContent &&
+        !(
+          editor.getText().trim() === "" &&
+          (!propContent || propContent === "<p></p>")
+        )
+      ) {
         editor.commands.setContent(propContent, {});
       }
     }
   }, [propContent, editor]);
 
-  // --- Logic to combine default, dynamic, and prop classes ---
-  const finalWrapperClassName = `
+  const finalWrapperClass = `
     relative w-full border rounded-md shadow-sm overflow-hidden bg-white 
     focus-within:ring-1 transition-colors duration-150
     ${
       isInvalid
-        ? "border-red-200 focus-within:ring-red-100"
-        : "border-gray-300 focus-within:ring-indigo-500"
+        ? "border-red-400 focus-within:ring-red-100"
+        : "border-gray-300 focus-within:ring-blue-500"
     }
     ${wrapperClassName || ""}
-  `;
+  `.trim();
 
   return (
-    <div className={finalWrapperClassName.trim()}>
+    <div className={finalWrapperClass}>
       <MemoizedMenuBar
         editor={editor}
         className={menuBarClassName}
         renderKey={renderKey}
+        type={type}
       />
       <EditorContent editor={editor} className={editorContentClassName} />
-      {/* --- Character counter display --- */}
       {maxLength && (
         <div
           className={`absolute bottom-2 right-4 text-xs ${
-            isInvalid ? "text-red-500 font-semibold" : "text-gray-500"
-          } bg-white px-1 rounded shadow-sm`}
+            isInvalid ? "text-red-500 font-bold" : "text-gray-400"
+          } bg-white/80 px-1 rounded`}
         >
           {charCount}/{maxLength}
         </div>

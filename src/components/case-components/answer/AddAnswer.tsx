@@ -69,6 +69,7 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
       <div className="flex flex-col md:flex-row gap-2">
         <div className="flex-grow">
           <UnifiedEditor
+            editorClassName="h-[180px] min-h-[180px] max-h-[180px]"
             content={content}
             onContentChange={setContent}
             attachments={attachments}
@@ -81,6 +82,7 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
             isSending={loading}
             minLength={ANSWER_CONTENT.MIN}
             maxLength={ANSWER_CONTENT.MAX}
+            type="answer"
           />
         </div>
       </div>

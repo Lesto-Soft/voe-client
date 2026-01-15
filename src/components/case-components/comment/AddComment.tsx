@@ -117,9 +117,11 @@ const AddComment: React.FC<AddCommentProps> = ({
               ? "Напишете коментар към решението..."
               : "Напишете коментар..."
           }
+          editorClassName="h-[180px] min-h-[180px] max-h-[180px]"
           minLength={COMMENT_CONTENT.MIN}
           maxLength={COMMENT_CONTENT.MAX}
           isSending={loading}
+          type="comment"
         />
 
         {/* Специфични грешки при изпращане (API грешки) */}

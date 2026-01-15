@@ -14,15 +14,18 @@ export const useFileHandler = () => {
     try {
       const processedFiles = await Promise.all(
         files.map(async (file) => {
-          // Директна компресия без изкуствено чакане
-          return await compressFile(file, UPLOAD_MAX_SIZE_MB);
+          // Only compress images. PDFs and other docs should be passed through.
+          if (file.type.startsWith("image/")) {
+            return await compressFile(file, UPLOAD_MAX_SIZE_MB);
+          }
+          return file;
         })
       );
       return processedFiles;
     } catch (error) {
       console.error("Compression error:", error);
       toast.error("Грешка при обработка на файловете.");
-      return files; // Връщаме оригиналите при фатална грешка
+      return files;
     } finally {
       setIsCompressing(false);
     }

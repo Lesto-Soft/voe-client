@@ -222,6 +222,7 @@ const CategoryInputFields: React.FC<CategoryInputFieldsProps> = ({
           <span className="text-red-500">*</span>
         </label>
         <TextEditor
+          type="default"
           content={problem}
           onUpdate={(html) => setProblem(html)}
           placeholder={t(

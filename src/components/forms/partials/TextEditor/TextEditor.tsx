@@ -46,7 +46,7 @@ interface MenuBarProps {
   editor: Editor | null;
   className?: string;
   renderKey?: number;
-  type?: string;
+  type: "case" | "comment" | "answer";
 }
 
 const MenuBar: React.FC<MenuBarProps> = ({ editor, className, type }) => {

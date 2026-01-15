@@ -31,6 +31,7 @@
     "filesAdded": "Добавен файл",
     "successModalTitle": "Сигналът е изпратен успешно!",
     "addAttachments": "Добави прикачени файлове",
+    "processing": "Обработка...",
     "priority": {
       "low": "Нисък",
       "medium": "Среден",

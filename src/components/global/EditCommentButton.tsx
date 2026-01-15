@@ -139,7 +139,7 @@ const EditButton: React.FC<EditButtonProps> = ({
 
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 bg-black/50 z-40" />
-          <Dialog.Content className="fixed top-1/2 left-1/2 w-[90%] max-w-4xl -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg z-50 flex flex-col overflow-hidden max-h-[85vh]">
+          <Dialog.Content className="fixed top-1/2 left-1/2 w-[90%] max-w-6xl -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg z-50 flex flex-col overflow-hidden max-h-[85vh]">
             {/* Хедър: Статичен */}
             <div className="p-6 pb-2 flex-shrink-0">
               <Dialog.Title className="text-lg font-medium text-gray-900 mb-2">

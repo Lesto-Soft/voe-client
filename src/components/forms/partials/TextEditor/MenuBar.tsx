@@ -18,6 +18,7 @@ interface MenuBarProps {
   disabled: boolean;
   isMaxFilesReached: boolean;
   type: "case" | "answer" | "comment";
+  hideAttach?: boolean;
 }
 
 const MenuBar: React.FC<MenuBarProps> = ({
@@ -26,6 +27,7 @@ const MenuBar: React.FC<MenuBarProps> = ({
   disabled,
   isMaxFilesReached,
   type,
+  hideAttach,
 }) => {
   const { t } = useTranslation("menu");
   if (!editor) return null;
@@ -99,7 +101,7 @@ const MenuBar: React.FC<MenuBarProps> = ({
             disabled={disabled}
             onClick={item.action}
             title={item.title}
-            className={`p-2 rounded-md transition-all ${
+            className={`cursor-pointer p-2 rounded-md transition-all ${
               editor.isActive(item.isActive)
                 ? "bg-blue-600 text-white shadow-sm"
                 : "text-gray-600 hover:bg-gray-200"
@@ -121,25 +123,27 @@ const MenuBar: React.FC<MenuBarProps> = ({
             disabled={disabled}
             onClick={() => editor.chain().focus().insertContent(" @").run()}
             title={t("rte.mention")}
-            className="p-2 text-blue-600 hover:bg-blue-100 rounded-md"
+            className="p-2 text-blue-600 hover:bg-blue-100 rounded-md cursor-pointer"
           >
             <AtSymbolIcon className="w-5 h-5" />
           </button>
         )}
-        <button
-          type="button"
-          disabled={disabled || isMaxFilesReached}
-          onClick={onAttachClick}
-          className={`p-2 rounded-md ${
-            disabled || isMaxFilesReached
-              ? "text-gray-300"
-              : "text-gray-500 hover:bg-gray-200 cursor-pointer"
-          }`}
-        >
-          <PaperClipIcon className="w-5 h-5" />
-        </button>
+        {!hideAttach && (
+          <button
+            type="button"
+            disabled={disabled || isMaxFilesReached}
+            onClick={onAttachClick}
+            className={`p-2 rounded-md ${
+              disabled || isMaxFilesReached
+                ? "text-gray-300"
+                : "text-gray-500 hover:bg-gray-200 cursor-pointer"
+            }`}
+          >
+            <PaperClipIcon className="w-5 h-5" />
+          </button>
+        )}
       </div>
-      <TextEditorHelper type={type} />
+      <TextEditorHelper type={type} hideAttach={hideAttach} />
     </div>
   );
 };

@@ -8,9 +8,9 @@ const apiUrl = import.meta.env.VITE_API_URL;
 
 interface AttachmentZoneProps {
   newAttachments: File[];
-  existingAttachments: string[];
+  existingAttachments?: string[];
   onRemoveNew: (index: number) => void;
-  onRemoveExisting: (url: string) => void;
+  onRemoveExisting?: (url: string) => void;
   caseId?: string;
 }
 
@@ -28,7 +28,7 @@ const AttachmentZone: React.FC<AttachmentZoneProps> = ({
     const objectUrls: string[] = [];
 
     const items: ThumbnailGalleryItem[] = [
-      ...existingAttachments.map((url) => ({
+      ...(existingAttachments || []).map((url) => ({
         url: `${apiUrl}/static/cases/${caseId}/${url}`,
         name: url.split("/").pop() || "attachment",
         type: "existing" as const,
@@ -64,7 +64,7 @@ const AttachmentZone: React.FC<AttachmentZoneProps> = ({
           galleryItems={galleryItems}
           onRemove={(type, id) => {
             if (type === "new") onRemoveNew(id as number);
-            else onRemoveExisting(id as string);
+            else if (onRemoveExisting) onRemoveExisting(id as string);
           }}
         />
       </div>

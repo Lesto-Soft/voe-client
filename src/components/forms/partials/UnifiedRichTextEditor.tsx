@@ -44,6 +44,7 @@ interface UnifiedEditorProps {
   caseId?: string;
   type: "case" | "answer" | "comment";
   editorClassName?: string;
+  hideAttachments?: boolean;
 }
 
 const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
@@ -65,6 +66,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
     type,
     caseId,
     editorClassName,
+    hideAttachments = false,
   } = props;
 
   const { t } = useTranslation(["caseSubmission"]);
@@ -216,6 +218,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
             disabled={isCompressing || isSending}
             isMaxFilesReached={isMaxFilesReached}
             type={type}
+            hideAttach={hideAttachments}
           />
         </div>
 
@@ -234,56 +237,57 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
           </div>
         </div>
 
-        {(attachments.length > 0 ||
-          existingAttachments.length > 0 ||
-          isCompressing ||
-          fileError) && (
-          <div className="flex-shrink-0 border-t border-gray-100 bg-gray-50/50 p-2 max-h-[160px] overflow-y-auto">
-            {/* ЛОУДЪР ПРИ ОБРАБОТКА (ВЪЗСТАНОВЕН) */}
-            {isCompressing && (
-              <div className="flex items-center gap-2 px-3 py-1.5 mb-2 text-[11px] text-blue-600 font-bold bg-blue-50 border border-blue-100 rounded-lg animate-pulse">
-                <ArrowPathIcon className="w-3.5 h-3.5 animate-spin" />
-                <span>
-                  {t(
-                    "caseSubmission:caseSubmission.processingFiles",
-                    "Обработка..."
-                  )}
-                </span>
-              </div>
-            )}
-
-            {/* ГРЕШКИ */}
-            {fileError && (
-              <div className="flex items-start justify-between gap-2 px-3 py-1.5 mb-2 text-[11px] bg-red-50 border border-red-100 text-red-700 rounded-lg animate-in fade-in slide-in-from-top-1">
-                <div className="flex items-center gap-2">
-                  <ExclamationTriangleIcon className="w-3.5 h-3.5 flex-shrink-0" />
-                  <span className="font-bold">{fileError}</span>
+        {!hideAttachments &&
+          (attachments.length > 0 ||
+            existingAttachments.length > 0 ||
+            isCompressing ||
+            fileError) && (
+            <div className="flex-shrink-0 border-t border-gray-100 bg-gray-50/50 p-2 max-h-[160px] overflow-y-auto">
+              {/* ЛОУДЪР ПРИ ОБРАБОТКА (ВЪЗСТАНОВЕН) */}
+              {isCompressing && (
+                <div className="flex items-center gap-2 px-3 py-1.5 mb-2 text-[11px] text-blue-600 font-bold bg-blue-50 border border-blue-100 rounded-lg animate-pulse">
+                  <ArrowPathIcon className="w-3.5 h-3.5 animate-spin" />
+                  <span>
+                    {t(
+                      "caseSubmission:caseSubmission.processing",
+                      "Обработка..."
+                    )}
+                  </span>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setFileError(null)}
-                  className="p-0.5 hover:bg-red-100 rounded-full transition-colors"
-                >
-                  <XMarkIcon className="w-4 h-4" />
-                </button>
-              </div>
-            )}
+              )}
 
-            <AttachmentZone
-              newAttachments={attachments}
-              existingAttachments={existingAttachments}
-              onRemoveNew={(idx) =>
-                setAttachments((prev) => prev.filter((_, i) => i !== idx))
-              }
-              onRemoveExisting={(url) =>
-                setExistingAttachments?.((prev) =>
-                  prev.filter((u) => u !== url)
-                )
-              }
-              caseId={caseId}
-            />
-          </div>
-        )}
+              {/* ГРЕШКИ */}
+              {fileError && (
+                <div className="flex items-start justify-between gap-2 px-3 py-1.5 mb-2 text-[11px] bg-red-50 border border-red-100 text-red-700 rounded-lg animate-in fade-in slide-in-from-top-1">
+                  <div className="flex items-center gap-2">
+                    <ExclamationTriangleIcon className="w-3.5 h-3.5 flex-shrink-0" />
+                    <span className="font-bold">{fileError}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setFileError(null)}
+                    className="p-0.5 hover:bg-red-100 rounded-full transition-colors"
+                  >
+                    <XMarkIcon className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+
+              <AttachmentZone
+                newAttachments={attachments}
+                existingAttachments={existingAttachments}
+                onRemoveNew={(idx) =>
+                  setAttachments((prev) => prev.filter((_, i) => i !== idx))
+                }
+                onRemoveExisting={(url) =>
+                  setExistingAttachments?.((prev) =>
+                    prev.filter((u) => u !== url)
+                  )
+                }
+                caseId={caseId}
+              />
+            </div>
+          )}
       </div>
 
       {!hideSideButtons && (

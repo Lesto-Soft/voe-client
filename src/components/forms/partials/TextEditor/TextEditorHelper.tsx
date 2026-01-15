@@ -13,9 +13,10 @@ import {
 import { InformationCircleIcon as InfoOutline } from "@heroicons/react/24/outline";
 import * as Popover from "@radix-ui/react-popover"; // Заменяме Tooltip с Popover
 
-const TextEditorHelper: React.FC<{ type: "case" | "answer" | "comment" }> = ({
-  type,
-}) => {
+const TextEditorHelper: React.FC<{
+  type: "case" | "answer" | "comment";
+  hideAttach?: boolean;
+}> = ({ type, hideAttach = false }) => {
   const { t } = useTranslation(["menu"]);
   const configs: Record<string, { icon: React.ReactNode; onlyCase?: boolean }> =
     {
@@ -44,6 +45,7 @@ const TextEditorHelper: React.FC<{ type: "case" | "answer" | "comment" }> = ({
     };
 
   const visible = Object.keys(configs).filter((key) => {
+    if (key === "attachment" && hideAttach) return false;
     if (type === "case" && key === "mention") return false;
     if (type === "case") return true;
     return !configs[key].onlyCase;

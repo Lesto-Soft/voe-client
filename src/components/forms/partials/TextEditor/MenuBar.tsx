@@ -5,13 +5,12 @@ import {
   ListBulletIcon,
   Bars3BottomLeftIcon,
   Bars3Icon,
-  Bars3BottomRightIcon,
   NumberedListIcon,
   PaperClipIcon,
   AtSymbolIcon,
 } from "@heroicons/react/20/solid";
-import TextEditorHelper from "./TextEditorHelper";
 import { useTranslation } from "react-i18next";
+import TextEditorHelper from "./TextEditorHelper";
 
 interface MenuBarProps {
   editor: Editor | null;
@@ -31,9 +30,6 @@ const MenuBar: React.FC<MenuBarProps> = ({
   const { t } = useTranslation("menu");
   if (!editor) return null;
 
-  const iconSize = "w-5 h-5";
-
-  // Дефинираме всички възможни елементи
   const allItems = [
     {
       id: "bold",
@@ -87,24 +83,14 @@ const MenuBar: React.FC<MenuBarProps> = ({
       icon: Bars3Icon,
       title: t("rte.alignCenter"),
     },
-    {
-      id: "alignRight",
-      action: () => editor.chain().focus().setTextAlign("right").run(),
-      isActive: { textAlign: "right" },
-      icon: Bars3BottomRightIcon,
-      title: t("rte.alignRight"),
-      onlyCase: true,
-    },
   ];
 
-  // Филтрираме елементите според типа
-  const filteredItems = allItems.filter((item) => {
-    if (type === "case") return true; // Case вижда всичко
-    return !item.onlyCase; // Answer и Comment виждат само базовите
-  });
+  const filteredItems = allItems.filter(
+    (item) => type === "case" || !item.onlyCase
+  );
 
   return (
-    <div className="flex items-center justify-between p-2 border-b border-gray-200 bg-gray-50/80 backdrop-blur-sm sticky top-0 z-10">
+    <div className="flex items-center justify-between p-2 border-b border-gray-200 bg-gray-50 rounded-t-xl">
       <div className="flex flex-wrap gap-1">
         {filteredItems.map((item) => (
           <button
@@ -113,14 +99,14 @@ const MenuBar: React.FC<MenuBarProps> = ({
             disabled={disabled}
             onClick={item.action}
             title={item.title}
-            className={`p-2 rounded-md transition-all cursor-pointer disabled:cursor-not-allowed ${
+            className={`p-2 rounded-md transition-all ${
               editor.isActive(item.isActive)
-                ? "bg-blue-600 text-white shadow-md"
+                ? "bg-blue-600 text-white shadow-sm"
                 : "text-gray-600 hover:bg-gray-200"
             }`}
           >
             {item.icon ? (
-              <item.icon className={iconSize} />
+              <item.icon className="w-5 h-5" />
             ) : (
               <span className="w-5 h-5 flex items-center justify-center font-bold">
                 {item.label}
@@ -128,37 +114,33 @@ const MenuBar: React.FC<MenuBarProps> = ({
             )}
           </button>
         ))}
-
         <div className="w-[1px] h-6 bg-gray-300 mx-1 self-center" />
-
-        {/* Тези винаги присъстват (според вашето изискване за Mentions и Attachments) */}
-        <button
-          type="button"
-          disabled={disabled}
-          onClick={() => editor.chain().focus().insertContent(" @").run()}
-          title={t("rte.mention")}
-          className="p-2 rounded-md text-blue-600 hover:bg-blue-100 disabled:opacity-30"
-        >
-          <AtSymbolIcon className={iconSize} />
-        </button>
-
+        {type !== "case" && (
+          <button
+            type="button"
+            disabled={disabled}
+            onClick={() => editor.chain().focus().insertContent(" @").run()}
+            title={t("rte.mention")}
+            className="p-2 text-blue-600 hover:bg-blue-100 rounded-md"
+          >
+            <AtSymbolIcon className="w-5 h-5" />
+          </button>
+        )}
         <button
           type="button"
           disabled={disabled || isMaxFilesReached}
           onClick={onAttachClick}
-          className={`p-2 rounded-md transition-colors ${
-            isMaxFilesReached
+          className={`p-2 rounded-md ${
+            disabled || isMaxFilesReached
               ? "text-gray-300"
               : "text-gray-500 hover:bg-gray-200 cursor-pointer"
           }`}
         >
-          <PaperClipIcon className={iconSize} />
+          <PaperClipIcon className="w-5 h-5" />
         </button>
       </div>
-
       <TextEditorHelper type={type} />
     </div>
   );
 };
-
 export default MenuBar;

@@ -36,12 +36,10 @@ const EditAnswerButton: React.FC<EditButtonProps> = ({
   const { t } = useTranslation(["modals", "caseSubmission"]);
   const [isOpen, setIsOpen] = useState(false);
 
-  // States за съдържание и файлове
   const [content, setContent] = useState<string>(answer.content || "");
   const [existingAttachments, setExistingAttachments] = useState<string[]>([]);
   const [newAttachments, setNewAttachments] = useState<File[]>([]);
 
-  // Първоначални стойности за проверка на промени (Unsaved Changes)
   const [initialContent, setInitialContent] = useState<string>("");
   const [initialExistingAttachments, setInitialExistingAttachments] = useState<
     string[]
@@ -49,34 +47,27 @@ const EditAnswerButton: React.FC<EditButtonProps> = ({
 
   const [error, setError] = useState<string | null>(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false); // За компресия на файлове
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const { updateAnswer, loading } = useUpdateAnswer(caseNumber);
 
-  // Инициализация при отваряне
   useEffect(() => {
     if (isOpen) {
       const initContent = answer.content || "";
       const initFiles = answer.attachments || [];
-
       setContent(initContent);
       setInitialContent(initContent);
-
       setExistingAttachments(initFiles);
       setInitialExistingAttachments(initFiles);
-
       setNewAttachments([]);
       setError(null);
     }
   }, [isOpen, answer]);
 
-  // Проверка за промени
   const hasChanges = useMemo(() => {
     if (loading) return false;
     if (content !== initialContent) return true;
     if (newAttachments.length > 0) return true;
-
-    // Сравнение на масивите с вече качени файлове
     if (initialExistingAttachments.length !== existingAttachments.length)
       return true;
     return (
@@ -102,24 +93,24 @@ const EditAnswerButton: React.FC<EditButtonProps> = ({
 
   const handleSave = async () => {
     setError(null);
-
-    // Изчисляване на изтрити файлове
     const deletedAttachments = initialExistingAttachments.filter(
       (url) => !existingAttachments.includes(url)
     );
 
-    const input: UpdateAnswerInput = {
-      content,
-      attachments: newAttachments.length > 0 ? newAttachments : undefined,
-      deletedAttachments:
-        deletedAttachments.length > 0 ? deletedAttachments : undefined,
-    };
-
     try {
-      await updateAnswer(input, answer._id, me._id);
+      await updateAnswer(
+        {
+          content,
+          attachments: newAttachments.length > 0 ? newAttachments : undefined,
+          deletedAttachments:
+            deletedAttachments.length > 0 ? deletedAttachments : undefined,
+        },
+        answer._id,
+        me._id
+      );
       setIsOpen(false);
     } catch (err: any) {
-      setError(err.message || "Възникна грешка при записа.");
+      setError(err.message || "Грешка при запис.");
     }
   };
 
@@ -134,7 +125,6 @@ const EditAnswerButton: React.FC<EditButtonProps> = ({
                 : "p-1.5 rounded-md text-blue-700 hover:bg-blue-100 transition-colors"
             }`}
             type="button"
-            title="Редактирай"
           >
             <PencilIcon className="h-4 w-4" />
             {showText && <span>Редактирай</span>}
@@ -143,19 +133,14 @@ const EditAnswerButton: React.FC<EditButtonProps> = ({
 
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 bg-black/50 z-40" />
-          <Dialog.Content className="fixed top-1/2 left-1/2 w-[90%] max-w-4xl -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg shadow-lg z-40 max-h-[85vh] overflow-y-auto">
-            <Dialog.Title className="text-lg font-medium text-gray-900 mb-2">
-              {t("editAnswer", "Редактирай решението")}
-            </Dialog.Title>
-            <Dialog.Description className="text-sm text-gray-500 mb-4">
-              {t(
-                "editAnswerInfo",
-                "Редактирай текстовото съдържание и/или прикачените файлове."
-              )}
-            </Dialog.Description>
+          <Dialog.Content className="fixed top-1/2 left-1/2 w-[90%] max-w-4xl -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg z-50 flex flex-col overflow-hidden max-h-[85vh]">
+            <div className="p-6 pb-2 flex-shrink-0">
+              <Dialog.Title className="text-lg font-medium text-gray-900 mb-2">
+                {t("editAnswer", "Редактирай решението")}
+              </Dialog.Title>
+            </div>
 
-            {/* Unified Editor - Заменя SimpleTextEditor и FileAttachmentBtn */}
-            <div className="mb-4" id="edit-comment-popup-container">
+            <div className="flex-grow overflow-hidden flex flex-col px-6 min-h-0">
               <UnifiedEditor
                 content={content}
                 onContentChange={setContent}
@@ -164,28 +149,27 @@ const EditAnswerButton: React.FC<EditButtonProps> = ({
                 existingAttachments={existingAttachments}
                 setExistingAttachments={setExistingAttachments}
                 mentions={mentions}
-                placeholder={
-                  t("caseSubmission:caseSubmission.content.placeholder") ||
-                  "Напишете съдържание..."
-                }
-                editorClassName="flex-grow min-h-0 h-full max-h-none"
+                placeholder={t(
+                  "caseSubmission:caseSubmission.content.placeholder"
+                )}
+                editorClassName="min-h-0"
                 minLength={ANSWER_CONTENT.MIN}
                 maxLength={ANSWER_CONTENT.MAX}
-                hideSideButtons={true} // Крием страничните бутони, защото ползваме тези на модала
+                hideSideButtons={true}
                 onProcessingChange={setIsProcessing}
-                caseId={answer._id} // Важно за AttachmentZone (static URLs)
+                caseId={answer._id}
                 type="answer"
               />
             </div>
 
             {error && (
-              <div className="mb-4 flex items-start p-3 bg-red-50 border border-red-200 rounded-lg animate-in fade-in">
+              <div className="mx-6 my-2 flex items-start p-3 bg-red-50 border border-red-200 rounded-lg animate-in fade-in flex-shrink-0">
                 <ExclamationCircleIcon className="h-5 w-5 text-red-400 mr-2 mt-0.5 flex-shrink-0" />
                 <p className="text-sm text-red-800 font-bold">{error}</p>
               </div>
             )}
 
-            <div className="flex justify-end gap-2 mt-6">
+            <div className="p-6 pt-2 border-t border-gray-100 flex justify-end gap-2 flex-shrink-0">
               <Dialog.Close asChild>
                 <button
                   className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded hover:bg-gray-200 transition-colors cursor-pointer"
@@ -210,18 +194,13 @@ const EditAnswerButton: React.FC<EditButtonProps> = ({
                 }`}
                 type="button"
               >
-                {isProcessing
-                  ? t("caseSubmission:caseSubmission.actions.saving")
-                  : loading
-                  ? t("saving", "Записване...")
-                  : t("save", "Запази")}
+                {loading ? t("saving") : t("save")}
               </button>
             </div>
           </Dialog.Content>
         </Dialog.Portal>
       </Dialog.Root>
 
-      {/* Диалог за потвърждение при незапазени промени */}
       <ConfirmActionDialog
         isOpen={isConfirmOpen}
         onOpenChange={setIsConfirmOpen}

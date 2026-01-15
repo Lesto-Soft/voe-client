@@ -1,14 +1,13 @@
-import { useState, useEffect, useMemo } from "react";
+// src/components/case-components/comment/EditButton.tsx
+import React, { useState, useEffect, useMemo } from "react";
 import { PencilIcon, ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import * as Dialog from "@radix-ui/react-dialog";
 import { useTranslation } from "react-i18next";
-import FileAttachmentBtn from "./FileAttachmentBtn";
 import { IComment } from "../../db/interfaces";
 import { useUpdateComment } from "../../graphql/hooks/comment";
 import { COMMENT_CONTENT } from "../../utils/GLOBAL_PARAMETERS";
-import SimpleTextEditor from "../forms/partials/TextEditor/SimplifiedTextEditor";
-import { getTextLength } from "../../utils/contentRenderer";
 import ConfirmActionDialog from "../modals/ConfirmActionDialog";
+import UnifiedEditor from "../forms/partials/UnifiedRichTextEditor";
 
 interface EditButtonProps {
   comment: IComment;
@@ -30,61 +29,57 @@ const EditButton: React.FC<EditButtonProps> = ({
   mentions,
   showText = false,
 }) => {
-  if (!comment) {
-    return <div>Loading...</div>;
-  }
+  if (!comment) return null;
 
-  const { t } = useTranslation("modals");
+  const { t } = useTranslation(["modals", "caseSubmission"]);
   const [isOpen, setIsOpen] = useState(false);
-  const [content, setContent] = useState<string>(comment.content || "");
 
-  // State for initial values
+  // States за съдържание и файлове
+  const [content, setContent] = useState<string>(comment.content || "");
+  const [existingAttachments, setExistingAttachments] = useState<string[]>([]);
+  const [newAttachments, setNewAttachments] = useState<File[]>([]);
+
+  // Първоначални стойности за проверка на промени (Unsaved Changes)
   const [initialContent, setInitialContent] = useState<string>("");
   const [initialExistingAttachments, setInitialExistingAttachments] = useState<
     string[]
   >([]);
 
-  const [existingAttachments, setExistingAttachments] = useState<string[]>([]);
-  const [newAttachments, setNewAttachments] = useState<File[]>([]);
   const [error, setError] = useState<string | null>(null);
-
-  // State for confirmation dialog
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false); // За компресия на файлове
 
-  const {
-    updateComment,
-    loading,
-    error: apiError,
-  } = useUpdateComment(caseNumber);
+  const { updateComment, loading } = useUpdateComment(caseNumber);
 
+  // Инициализация при отваряне на модала
   useEffect(() => {
     if (isOpen) {
-      const initialContentValue = comment.content || "";
-      const initialAttachmentsValue = comment.attachments || [];
+      const initContent = comment.content || "";
+      const initFiles = comment.attachments || [];
 
-      setContent(initialContentValue);
-      setInitialContent(initialContentValue); // Set initial
+      setContent(initContent);
+      setInitialContent(initContent);
 
-      setExistingAttachments(initialAttachmentsValue);
-      setInitialExistingAttachments(initialAttachmentsValue); // Set initial
+      setExistingAttachments(initFiles);
+      setInitialExistingAttachments(initFiles);
 
       setNewAttachments([]);
       setError(null);
     }
   }, [isOpen, comment]);
 
+  // Проверка за промени (дали бутонът "Запази" да е активен и дали да показваме предупреждение при затваряне)
   const hasChanges = useMemo(() => {
     if (loading) return false;
-
     if (content !== initialContent) return true;
     if (newAttachments.length > 0) return true;
 
-    const initialSorted = [...initialExistingAttachments].sort();
-    const currentSorted = [...existingAttachments].sort();
-
-    if (initialSorted.length !== currentSorted.length) return true;
-
-    return initialSorted.join(",") !== currentSorted.join(",");
+    if (initialExistingAttachments.length !== existingAttachments.length)
+      return true;
+    return (
+      [...initialExistingAttachments].sort().join(",") !==
+      [...existingAttachments].sort().join(",")
+    );
   }, [
     content,
     newAttachments,
@@ -102,24 +97,10 @@ const EditButton: React.FC<EditButtonProps> = ({
     }
   };
 
-  const handleConfirmClose = () => {
-    setIsConfirmOpen(false);
-    setIsOpen(false);
-  };
-
   const handleSave = async () => {
     setError(null);
-    // Add this validation block
-    const textLength = getTextLength(content);
-    if (textLength < COMMENT_CONTENT.MIN || textLength > COMMENT_CONTENT.MAX) {
-      setError(
-        `Коментарът трябва да е между ${COMMENT_CONTENT.MIN} и ${COMMENT_CONTENT.MAX} символа.`
-      );
-      return;
-    }
 
-    const initialUrls = comment.attachments || [];
-    const deletedAttachments = initialUrls.filter(
+    const deletedAttachments = initialExistingAttachments.filter(
       (url) => !existingAttachments.includes(url)
     );
 
@@ -134,21 +115,16 @@ const EditButton: React.FC<EditButtonProps> = ({
       await updateComment(input, comment._id);
       setIsOpen(false);
     } catch (err: any) {
-      console.error("Error updating comment:", err);
       setError(err.message || "Грешка при запис на коментар.");
     }
   };
-
-  if (loading) return <div>Loading...</div>;
-  if (apiError && !isOpen) return <div>Error updating comment</div>;
 
   return (
     <>
       <Dialog.Root open={isOpen} onOpenChange={handleCloseRequest}>
         <Dialog.Trigger asChild>
           <button
-            className={`cursor-pointer 
-            ${
+            className={`cursor-pointer ${
               showText
                 ? "flex items-center gap-2 w-full p-2 text-sm text-blue-700 rounded-md hover:bg-blue-50 transition-colors"
                 : "p-1.5 rounded-md text-blue-700 hover:bg-blue-100 transition-colors"
@@ -160,67 +136,75 @@ const EditButton: React.FC<EditButtonProps> = ({
             {showText && <span>Редактирай</span>}
           </button>
         </Dialog.Trigger>
+
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 bg-black/50 z-40" />
-          <Dialog.Content className="fixed top-1/2 left-1/2 w-[90%] max-w-2xl -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg shadow-lg z-50 max-h-[85vh] overflow-y-auto">
-            <Dialog.Title className="text-lg font-medium text-gray-900 mb-2">
-              {t("editComment")}
-            </Dialog.Title>
-            <Dialog.Description className="text-sm text-gray-500 mb-4">
-              {t("editCommentInfo")}
-            </Dialog.Description>
-
-            <div className="relative mb-4" id="edit-comment-popup-container">
-              <SimpleTextEditor
-                content={content}
-                onUpdate={(html) => setContent(html)}
-                placeholder={t("writeHere", "Пишете тук...")}
-                minLength={COMMENT_CONTENT.MIN}
-                maxLength={COMMENT_CONTENT.MAX}
-                wrapperClassName="transition-colors duration-150 h-36"
-                height="36"
-                mentions={mentions}
-                onPasteFiles={(files) =>
-                  setNewAttachments((prev) => [...prev, ...files])
-                }
-                attachmentCount={
-                  newAttachments.length + existingAttachments.length
-                }
-                autoFocus={true} // Auto-focus the editor on mount
-              />
+          <Dialog.Content className="fixed top-1/2 left-1/2 w-[90%] max-w-4xl -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg z-50 flex flex-col overflow-hidden max-h-[85vh]">
+            {/* Хедър: Статичен */}
+            <div className="p-6 pb-2 flex-shrink-0">
+              <Dialog.Title className="text-lg font-medium text-gray-900 mb-2">
+                {t("editComment", "Редактирай коментара")}
+              </Dialog.Title>
+              <Dialog.Description className="text-sm text-gray-500">
+                {t("editCommentInfo")}
+              </Dialog.Description>
             </div>
 
-            {error && (
-              <div className="mb-4 flex items-start p-3 bg-red-50 border border-red-200 rounded-lg">
-                <ExclamationCircleIcon className="h-5 w-5 text-red-400 mr-2 mt-0.5 flex-shrink-0" />
-                <p className="text-sm text-red-800">{error}</p>
-              </div>
-            )}
-            <div className="space-y-3">
-              {/* Your FileAttachmentBtn now handles ONLY new files */}
-              <FileAttachmentBtn
+            {/* Редактор: Разтяга се до лимита на модала */}
+            <div className="flex-grow overflow-hidden flex flex-col px-6 min-h-0">
+              <UnifiedEditor
+                content={content}
+                onContentChange={setContent}
                 attachments={newAttachments}
                 setAttachments={setNewAttachments}
                 existingAttachments={existingAttachments}
                 setExistingAttachments={setExistingAttachments}
-                type="comments"
-                objectId={comment._id}
+                mentions={mentions}
+                placeholder={t("writeHere")}
+                editorClassName="min-h-0"
+                minLength={COMMENT_CONTENT.MIN}
+                maxLength={COMMENT_CONTENT.MAX}
+                hideSideButtons={true}
+                onProcessingChange={setIsProcessing}
+                caseId={comment._id}
+                type="comment"
               />
             </div>
 
-            <div className="flex justify-end gap-2 mt-6">
+            {/* Грешки */}
+            {error && (
+              <div className="mx-6 my-2 flex items-start p-3 bg-red-50 border border-red-200 rounded-lg animate-in fade-in flex-shrink-0">
+                <ExclamationCircleIcon className="h-5 w-5 text-red-400 mr-2 mt-0.5 flex-shrink-0" />
+                <p className="text-sm text-red-800 font-bold">{error}</p>
+              </div>
+            )}
+
+            {/* Футър: Винаги отдолу */}
+            <div className="p-6 pt-2 border-t border-gray-100 flex justify-end gap-2 flex-shrink-0">
               <Dialog.Close asChild>
                 <button
-                  className="hover:cursor-pointer px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded hover:bg-gray-200"
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded hover:bg-gray-200 transition-colors cursor-pointer"
                   type="button"
+                  disabled={loading || isProcessing}
                 >
-                  {t("cancel")}
+                  {t("cancel", "Отказ")}
                 </button>
               </Dialog.Close>
               <button
                 onClick={handleSave}
-                disabled={loading}
-                className={`hover:cursor-pointer px-4 py-2 text-sm font-medium text-white bg-blue-500 rounded hover:bg-blue-600 disabled:bg-blue-300`}
+                disabled={
+                  loading ||
+                  isProcessing ||
+                  !hasChanges ||
+                  (content.length > 0 &&
+                    (content.length < COMMENT_CONTENT.MIN ||
+                      content.length > COMMENT_CONTENT.MAX))
+                }
+                className={`px-6 py-2 text-sm font-medium text-white rounded transition-all shadow-md ${
+                  loading || isProcessing || !hasChanges
+                    ? "bg-blue-300 cursor-not-allowed"
+                    : "bg-blue-600 hover:bg-blue-700 cursor-pointer"
+                }`}
                 type="button"
               >
                 {loading ? t("saving") : t("save")}
@@ -233,7 +217,10 @@ const EditButton: React.FC<EditButtonProps> = ({
       <ConfirmActionDialog
         isOpen={isConfirmOpen}
         onOpenChange={setIsConfirmOpen}
-        onConfirm={handleConfirmClose}
+        onConfirm={() => {
+          setIsConfirmOpen(false);
+          setIsOpen(false);
+        }}
         title={t("unsavedChangesTitle", "Незапазени промени")}
         description={t(
           "unsavedChangesDescription",

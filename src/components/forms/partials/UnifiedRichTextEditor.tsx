@@ -8,10 +8,11 @@ import TextAlign from "@tiptap/extension-text-align";
 import CharacterCount from "@tiptap/extension-character-count";
 import { useTranslation } from "react-i18next";
 import {
-  PaperAirplaneIcon,
   ArrowPathIcon,
-  PaperClipIcon,
   ExclamationTriangleIcon,
+  PaperAirplaneIcon,
+  PaperClipIcon,
+  XMarkIcon,
 } from "@heroicons/react/20/solid";
 
 import { useFileHandler } from "../../../hooks/useFileHandler";
@@ -22,7 +23,8 @@ import AttachmentZone from "./TextEditor/TextEditorWithAttachments/AttachmentZon
 import MenuBar from "./TextEditor/MenuBar";
 
 const MAX_FILES = 5;
-const HARD_LIMIT_BYTES = 10 * 1024 * 1024; // 10MB
+const HARD_LIMIT_MB = 10;
+const HARD_LIMIT_BYTES = HARD_LIMIT_MB * 1024 * 1024;
 
 interface UnifiedEditorProps {
   content: string;
@@ -62,12 +64,15 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
     onProcessingChange,
     type,
     caseId,
+    editorClassName,
   } = props;
 
   const { t } = useTranslation(["caseSubmission"]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [fileError, setFileError] = useState<string | null>(null);
   const { processFiles, isCompressing } = useFileHandler();
+
+  const [, setSelectionUpdate] = useState(0);
 
   useEffect(() => {
     onProcessingChange?.(isCompressing);
@@ -80,22 +85,25 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
       TextAlign.configure({ types: ["paragraph"] }),
       Placeholder.configure({ placeholder }),
       CharacterCount.configure({ limit: maxLength }),
-      CustomMention.configure({
-        suggestion: useMemo(
-          () => createMentionSuggestion(mentions),
-          [mentions]
-        ),
-      }),
+      ...(type !== "case"
+        ? [
+            CustomMention.configure({
+              suggestion: useMemo(
+                () => createMentionSuggestion(mentions),
+                [mentions]
+              ),
+            }),
+          ]
+        : []),
     ],
     content,
-    onUpdate: ({ editor }) => {
-      onContentChange(editor.isEmpty ? "" : editor.getHTML());
-    },
+    onUpdate: ({ editor }) =>
+      onContentChange(editor.isEmpty ? "" : editor.getHTML()),
+    onSelectionUpdate: () => setSelectionUpdate((s) => s + 1),
+    onTransaction: () => setSelectionUpdate((s) => s + 1),
     editorProps: {
       attributes: {
-        class: `${
-          props.editorClassName || "min-h-[140px] max-h-[450px]"
-        } focus:outline-none prose prose-sm max-w-none p-4 overflow-y-auto custom-scrollbar-xs`,
+        class: "focus:outline-none prose prose-sm max-w-none p-4 min-h-[150px]",
       },
     },
   });
@@ -103,123 +111,123 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
   const charCount = editor?.storage.characterCount.characters() || 0;
   const currentTotal = attachments.length + existingAttachments.length;
   const isMaxFilesReached = currentTotal >= MAX_FILES;
+  const isInvalid = charCount > 0 && charCount < minLength;
 
   const handleFiles = async (files: File[]) => {
     setFileError(null);
     if (files.length === 0) return;
 
-    const duplicates: string[] = [];
-    const uniqueSelection: File[] = [];
+    // 1. Дубликати
+    const duplicateFiles = files.filter(
+      (file) =>
+        attachments.some((a) => a.name === file.name) ||
+        existingAttachments.some(
+          (url) =>
+            (url.split("/").pop() || "").toLowerCase() ===
+            file.name.toLowerCase()
+        )
+    );
 
-    // 1. Филтриране на дубликати
-    files.forEach((file) => {
-      const isLocalDuplicate = attachments.some((a) => a.name === file.name);
-      const isServerDuplicate = existingAttachments.some((url) => {
-        const fileName = url.split("/").pop() || "";
-        return fileName.toLowerCase() === file.name.toLowerCase();
-      });
+    if (duplicateFiles.length > 0) {
+      const fileList = duplicateFiles.map((f) => f.name).join(", ");
+      setFileError(
+        t("caseSubmission:caseSubmission.errors.file.duplicatesSkipped", {
+          fileList,
+        })
+      );
+    }
 
-      if (isLocalDuplicate || isServerDuplicate) {
-        duplicates.push(file.name);
-      } else {
-        uniqueSelection.push(file);
-      }
-    });
+    const uniqueSelection = files.filter((f) => !duplicateFiles.includes(f));
+    if (uniqueSelection.length === 0) return;
 
-    // 2. Изчисляване на свободно място
+    // 2. Размер
+    const oversizedFiles = uniqueSelection.filter(
+      (f) => f.size > HARD_LIMIT_BYTES
+    );
+    if (oversizedFiles.length > 0) {
+      const fileList = oversizedFiles.map((f) => f.name).join(", ");
+      setFileError(
+        t("caseSubmission:caseSubmission.errors.file.oversized", {
+          maxSize: HARD_LIMIT_MB,
+          fileList,
+        })
+      );
+    }
+
+    const validSizeSelection = uniqueSelection.filter(
+      (f) => f.size <= HARD_LIMIT_BYTES
+    );
+    if (validSizeSelection.length === 0) return;
+
+    // 3. Лимит
     const availableSlots = MAX_FILES - currentTotal;
-    let filesToProcess = uniqueSelection;
-    let overLimitCount = 0;
-
-    if (uniqueSelection.length > availableSlots) {
-      filesToProcess = uniqueSelection.slice(0, availableSlots);
-      overLimitCount = uniqueSelection.length - availableSlots;
-    }
-
-    // 3. Обработка на грешки (съобщения)
-    if (currentTotal >= MAX_FILES && files.length > 0) {
+    if (validSizeSelection.length > availableSlots) {
       setFileError(
-        t("caseSubmission.errors.file.maxFilesExceeded", { max: MAX_FILES })
-      );
-    } else if (overLimitCount > 0) {
-      setFileError(
-        t("caseSubmission.errors.file.maxCountReached", {
+        t("caseSubmission:caseSubmission.errors.file.maxFilesExceeded", {
           max: MAX_FILES,
-          count: overLimitCount,
-        })
-      );
-    } else if (duplicates.length > 0) {
-      setFileError(
-        t("caseSubmission.errors.file.duplicatesSkipped", {
-          fileList: duplicates.join(", "),
         })
       );
     }
 
-    // 4. Компресия и добавяне на валидните файлове
+    const filesToProcess = validSizeSelection.slice(
+      0,
+      Math.max(0, availableSlots)
+    );
+
     if (filesToProcess.length > 0) {
       try {
         const processed = await processFiles(filesToProcess);
-        const finalValid = processed.filter((f) => {
-          if (f.size > HARD_LIMIT_BYTES) {
-            setFileError(
-              t("caseSubmission.errors.file.fileTooLarge", {
-                fileName: f.name,
-                maxSize: 10,
-              })
-            );
-            return false;
-          }
-          return true;
-        });
-
-        if (finalValid.length > 0) {
-          setAttachments((prev) => [...prev, ...finalValid]);
-        }
+        setAttachments((prev) => [...prev, ...processed]);
       } catch (err) {
-        setFileError(t("caseSubmission.errors.submission.fileProcessingError"));
+        setFileError(
+          t(
+            "caseSubmission:caseSubmission.errors.submission.fileProcessingError"
+          )
+        );
       }
     }
-
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  // Интеграция с Paste логиката
   usePastedAttachments(
     true,
     attachments,
     existingAttachments,
     (val) => {
       const next = typeof val === "function" ? val(attachments) : val;
-      const justNew = next.filter((f) => !attachments.includes(f));
-      if (justNew.length > 0) handleFiles(justNew);
+      handleFiles(next.filter((f) => !attachments.includes(f)));
     },
     t
   );
 
-  const isInvalid = charCount > 0 && charCount < minLength;
-
   return (
-    <div className="flex flex-col md:flex-row gap-3 w-full animate-in fade-in duration-300">
+    <div className="flex flex-col md:flex-row gap-3 w-full h-full min-h-0 overflow-hidden">
       <div
-        className={`flex-grow flex flex-col border rounded-xl bg-white overflow-hidden transition-all duration-200 ${
+        className={`flex-grow flex flex-col border rounded-xl bg-white overflow-hidden transition-all duration-200 min-h-0 ${
           isInvalid
             ? "border-red-400 ring-2 ring-red-50"
             : "border-gray-300 focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-50"
         }`}
       >
-        <MenuBar
-          editor={editor}
-          onAttachClick={() => fileInputRef.current?.click()}
-          disabled={isCompressing || isSending}
-          isMaxFilesReached={isMaxFilesReached}
-          type={type}
-        />
-        <div className="relative flex-grow">
-          <EditorContent editor={editor} />
+        <div className="flex-shrink-0">
+          <MenuBar
+            editor={editor}
+            onAttachClick={() => fileInputRef.current?.click()}
+            disabled={isCompressing || isSending}
+            isMaxFilesReached={isMaxFilesReached}
+            type={type}
+          />
+        </div>
+
+        <div className="relative flex-grow flex flex-col min-h-0">
           <div
-            className={`absolute bottom-2 right-4 text-[11px] font-mono font-bold ${
-              isInvalid ? "text-red-600" : "text-gray-400"
+            className={`flex-grow overflow-y-auto custom-scrollbar-xs ${editorClassName}`}
+          >
+            <EditorContent editor={editor} />
+          </div>
+          <div
+            className={`absolute bottom-2 right-4 text-xs pointer-events-none z-10 bg-white px-1 rounded shadow-sm ${
+              isInvalid ? "text-red-600" : "text-gray-500"
             }`}
           >
             {charCount}/{maxLength}
@@ -230,28 +238,37 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
           existingAttachments.length > 0 ||
           isCompressing ||
           fileError) && (
-          <div className="border-t border-gray-100 bg-gray-50/50 p-2 min-h-[50px]">
+          <div className="flex-shrink-0 border-t border-gray-100 bg-gray-50/50 p-2 max-h-[160px] overflow-y-auto">
+            {/* ЛОУДЪР ПРИ ОБРАБОТКА (ВЪЗСТАНОВЕН) */}
             {isCompressing && (
-              <div className="flex items-center gap-2 px-3 py-2 mb-2 text-blue-600 bg-blue-50 rounded-lg text-sm font-bold animate-pulse border border-blue-100">
-                <ArrowPathIcon className="w-5 h-5 animate-spin" />
-                <span>Файловете се обработват...</span>
+              <div className="flex items-center gap-2 px-3 py-1.5 mb-2 text-[11px] text-blue-600 font-bold bg-blue-50 border border-blue-100 rounded-lg animate-pulse">
+                <ArrowPathIcon className="w-3.5 h-3.5 animate-spin" />
+                <span>
+                  {t(
+                    "caseSubmission:caseSubmission.processingFiles",
+                    "Обработка..."
+                  )}
+                </span>
               </div>
             )}
+
+            {/* ГРЕШКИ */}
             {fileError && (
-              <div className="flex items-center justify-between px-3 py-2 mb-2 text-red-600 bg-red-50 rounded-lg text-xs font-bold border border-red-100 animate-in slide-in-from-top-1">
+              <div className="flex items-start justify-between gap-2 px-3 py-1.5 mb-2 text-[11px] bg-red-50 border border-red-100 text-red-700 rounded-lg animate-in fade-in slide-in-from-top-1">
                 <div className="flex items-center gap-2">
-                  <ExclamationTriangleIcon className="w-4 h-4" />
-                  <span>{fileError}</span>
+                  <ExclamationTriangleIcon className="w-3.5 h-3.5 flex-shrink-0" />
+                  <span className="font-bold">{fileError}</span>
                 </div>
                 <button
                   type="button"
                   onClick={() => setFileError(null)}
-                  className="hover:opacity-70 p-1"
+                  className="p-0.5 hover:bg-red-100 rounded-full transition-colors"
                 >
-                  ✕
+                  <XMarkIcon className="w-4 h-4" />
                 </button>
               </div>
             )}
+
             <AttachmentZone
               newAttachments={attachments}
               existingAttachments={existingAttachments}
@@ -295,6 +312,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
           </button>
         </div>
       )}
+
       <input
         type="file"
         multiple

@@ -22,5 +22,9 @@
   "processing_one": "Processing the file...",
   "processing_many": "Processing the files...",
   "file_too_large_warning": "File {{fileName}} could not be compressed under {{maxSize}} MB.",
-  "generic_process_error": "An error occurred while processing the files."
+  "generic_process_error": "An error occurred while processing the files.",
+  "saving": "Saving...",
+  "unsavedChangesTitle": "Unsaved Changes",
+  "unsavedChangesDescription": "You have unsaved text or attached files that will be lost. Are you sure you want to close?",
+  "closeEditor": "Close"
 }

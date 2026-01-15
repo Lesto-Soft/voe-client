@@ -75,6 +75,7 @@
     "alignCenter": "Align Center",
     "alignRight": "Align Right",
     "mention": "Mention User (@)",
-    "help": "Help"
+    "help": "Help",
+    "attachment": "Attach file"
   }
 }

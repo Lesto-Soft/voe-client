@@ -123,7 +123,7 @@ const CaseSubmissionRightPanel: React.FC<CaseSubmissionRightPanelProps> = ({
       </div>
 
       {/* Прикачени файлове */}
-      <div className="flex-grow flex flex-col min-h-0 border-t pt-6">
+      <div className="flex-grow flex flex-col min-h-0 border-t border-gray-300 pt-6">
         <div className="flex items-center justify-between mb-3">
           <p className="text-sm font-medium text-gray-700">
             {t("caseSubmission.addAttachments")}

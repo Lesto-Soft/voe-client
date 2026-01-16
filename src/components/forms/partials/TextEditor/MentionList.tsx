@@ -58,7 +58,7 @@ const MentionList = forwardRef<MentionListRef, MentionListProps>(
           return true;
         }
         if (event.key === "Enter") {
-          event.preventDefault(); // MODIFICATION: Prevent default behavior for Enter key
+          event.preventDefault();
           selectItem(selectedIndex);
           return true;
         }
@@ -72,7 +72,7 @@ const MentionList = forwardRef<MentionListRef, MentionListProps>(
 
     return (
       <div
-        className="bg-white rounded-lg shadow-lg border border-gray-200 text-sm w-64 z-10 overflow-y-auto max-h-60"
+        className="bg-white rounded-lg shadow-lg border border-gray-200 text-sm w-64 z-[1000] overflow-y-auto max-h-60"
         ref={scrollContainerRef}
       >
         {props.items.map((item, index) => (
@@ -82,7 +82,7 @@ const MentionList = forwardRef<MentionListRef, MentionListProps>(
               index === selectedIndex ? "bg-indigo-100" : "hover:bg-gray-100"
             }`}
             onClick={() => selectItem(index)}
-            onMouseDown={(e) => e.preventDefault()} // MODIFICATION: Prevent focus shift on click
+            onMouseDown={(e) => e.preventDefault()}
           >
             <div className="font-semibold text-gray-800">{item.name}</div>
             <div className="ml-2 text-gray-500">@{item.username}</div>

@@ -22,27 +22,6 @@ export const createMentionSuggestion = (mentions: MentionUser[] = []) => ({
   render: () => {
     let component: ReactRenderer<MentionListRef>;
     let popup: Instance<Props>[];
-    let backdropElement: HTMLDivElement | null = null; // MODIFICATION: Add backdrop variable
-
-    // MODIFICATION: Function to create and show the modal backdrop
-    const showBackdrop = () => {
-      if (backdropElement) return;
-      backdropElement = document.createElement("div");
-      // This class will cover the screen and intercept mouse events.
-      // z-40 is chosen assuming the editor/tippy popup is z-50 or higher.
-      backdropElement.className = "fixed inset-0 z-40";
-      document.body.appendChild(backdropElement);
-      document.body.classList.add("overflow-hidden");
-    };
-
-    // MODIFICATION: Function to hide and remove the modal backdrop
-    const hideBackdrop = () => {
-      if (backdropElement) {
-        backdropElement.remove();
-        backdropElement = null;
-      }
-      document.body.classList.remove("overflow-hidden");
-    };
 
     return {
       onStart: (props: any) => {
@@ -55,20 +34,18 @@ export const createMentionSuggestion = (mentions: MentionUser[] = []) => ({
 
         popup = tippy("body", {
           getReferenceClientRect: props.clientRect,
-          appendTo: () =>
-            document.querySelector("#edit-comment-popup-container") ||
-            document.body,
+          appendTo: () => {
+            const modalContainer = document.querySelector(
+              '[data-mention-container="true"]'
+            );
+            return modalContainer || document.body;
+          },
           content: component.element,
           showOnCreate: true,
           interactive: true,
           trigger: "manual",
           placement: "bottom-start",
-          onShow: () => {
-            showBackdrop();
-          },
-          onHide: () => {
-            hideBackdrop();
-          },
+          zIndex: 9999,
         });
       },
 
@@ -91,8 +68,6 @@ export const createMentionSuggestion = (mentions: MentionUser[] = []) => ({
       onExit: () => {
         popup[0].destroy();
         component.destroy();
-        // MODIFICATION: Ensure backdrop is removed on final exit
-        hideBackdrop();
       },
     };
   },

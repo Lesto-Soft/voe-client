@@ -139,7 +139,15 @@ const EditButton: React.FC<EditButtonProps> = ({
 
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 bg-black/50 z-40" />
-          <Dialog.Content className="fixed top-1/2 left-1/2 w-[90%] max-w-6xl -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg z-50 flex flex-col overflow-hidden max-h-[85vh]">
+          <Dialog.Content
+            onPointerDownOutside={(e) => {
+              if ((e.target as Element)?.closest("[data-tippy-root]")) {
+                e.preventDefault();
+              }
+            }}
+            className="fixed top-1/2 left-1/2 w-[90%] max-w-6xl -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg z-50 flex flex-col overflow-hidden max-h-[85vh]"
+          >
+            <div data-mention-container="true" className="relative z-[1001]" />
             {/* Хедър: Статичен */}
             <div className="p-6 pb-2 flex-shrink-0">
               <Dialog.Title className="text-lg font-medium text-gray-900 mb-2">

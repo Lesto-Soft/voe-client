@@ -57,8 +57,8 @@ const CaseSubmissionLeftPanel: React.FC<CaseSubmissionLeftPanelProps> = ({
   ];
 
   return (
-    <div className="rounded-2xl shadow-md bg-white p-6 h-full space-y-4">
-      <div className="flex flex-col md:flex-row md:gap-x-4 space-y-4 md:space-y-0">
+    <div className="rounded-2xl shadow-md bg-white p-6 h-full flex flex-col space-y-4 overflow-hidden">
+      <div className="flex-shrink-0 flex flex-col md:flex-row md:gap-x-4 space-y-4 md:space-y-0">
         <div className="flex-1">
           <label
             htmlFor="username"
@@ -115,8 +115,7 @@ const CaseSubmissionLeftPanel: React.FC<CaseSubmissionLeftPanelProps> = ({
           />
         </div>
       </div>
-
-      <div>
+      <div className="flex-1 min-h-0 flex flex-col">
         <label
           htmlFor="description"
           className="block text-sm font-medium text-gray-700 mb-1"
@@ -137,12 +136,11 @@ const CaseSubmissionLeftPanel: React.FC<CaseSubmissionLeftPanelProps> = ({
           hideSideButtons={true}
           isSending={isSending}
           onProcessingChange={onProcessingChange}
-          editorClassName="min-h-[250px]"
+          editorClassName="flex-1 h-full min-h-0"
           hideAttachments={true}
         />
       </div>
-
-      <div>
+      <div className="flex-shrink-0 pt-2 border-t border-gray-100">
         <p className="text-sm font-medium mb-3 mt-6 text-gray-700">
           {t("caseSubmission.priorityLabel")}
           <span className="text-red-500">*</span>

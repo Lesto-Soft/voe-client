@@ -118,7 +118,7 @@ const CaseSubmissionPage: React.FC = () => {
 
   return (
     <>
-      <div className="min-h-screen p-6 grid grid-cols-1 md:grid-cols-2 gap-6 bg-stone-200 grid-rows-[auto_1fr]">
+      <div className="h-screen p-6 grid grid-cols-1 md:grid-cols-2 gap-6 bg-stone-200 grid-rows-[auto_1fr] overflow-hidden">
         <CaseSubmissionHeader
           caseTypeParam={caseTypeParam}
           t={t}
@@ -134,7 +134,6 @@ const CaseSubmissionPage: React.FC = () => {
           }
           submitText={t("caseSubmission.submitButton")}
         />
-
         <form
           id="case-form"
           className="contents"

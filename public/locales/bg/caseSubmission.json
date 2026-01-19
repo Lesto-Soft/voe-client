@@ -2,6 +2,7 @@
   "caseSubmission": {
     "title": "Подаване на {{type}}",
     "subtitle": "Моля, попълнете формуляра по-долу",
+    "placeholder": "Напиши съдържание...",
     "loadingForm": "Зареждане на формуляр за сигнализация...",
     "submittingCase": "Изпращане на сигнала...",
     "invalidType": "Невалиден или липсващ тип на случая в URL (?type=problem или ?type=suggestion).",

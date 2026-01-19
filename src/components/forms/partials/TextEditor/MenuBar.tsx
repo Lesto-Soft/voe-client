@@ -88,7 +88,7 @@ const MenuBar: React.FC<MenuBarProps> = ({
   ];
 
   const filteredItems = allItems.filter(
-    (item) => type === "case" || !item.onlyCase
+    (item) => type === "case" || !item.onlyCase,
   );
 
   return (
@@ -116,7 +116,9 @@ const MenuBar: React.FC<MenuBarProps> = ({
             )}
           </button>
         ))}
-        <div className="w-[1px] h-6 bg-gray-300 mx-1 self-center" />
+        {(type !== "case" || !hideAttach) && (
+          <div className="w-[1px] h-6 bg-gray-300 mx-1 self-center" />
+        )}
         {type !== "case" && (
           <button
             type="button"

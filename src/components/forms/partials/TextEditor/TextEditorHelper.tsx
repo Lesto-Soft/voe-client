@@ -71,7 +71,7 @@ const TextEditorHelper: React.FC<{
           className="z-[100] bg-white p-4 rounded-xl shadow-2xl border border-gray-200 max-w-[280px] animate-in fade-in zoom-in-95 focus:outline-none"
         >
           <div className="flex flex-col gap-3">
-            <div className="flex items-center gap-2 border-b pb-2">
+            <div className="flex items-center gap-2 border-b pb-2 border-gray-200">
               <InformationCircleIcon className="w-4 h-4 text-blue-500" />
               <p className="text-sm font-bold text-gray-800">{t("rte.help")}</p>
             </div>

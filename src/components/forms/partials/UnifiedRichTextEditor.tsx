@@ -84,7 +84,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
     extensions: [
       StarterKit.configure({ heading: false }),
       Underline,
-      TextAlign.configure({ types: ["paragraph"] }),
+      TextAlign.configure({ types: ["paragraph", "heading", "listItem"] }),
       Placeholder.configure({ placeholder }),
       CharacterCount.configure({ limit: maxLength }),
       ...(type !== "case"
@@ -92,7 +92,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
             CustomMention.configure({
               suggestion: useMemo(
                 () => createMentionSuggestion(mentions),
-                [mentions]
+                [mentions],
               ),
             }),
           ]
@@ -105,7 +105,8 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
     onTransaction: () => setSelectionUpdate((s) => s + 1),
     editorProps: {
       attributes: {
-        class: "focus:outline-none prose prose-sm max-w-none p-4 min-h-[150px]",
+        class:
+          "focus:outline-none prose prose-sm max-w-none p-4 min-h-[150px] custom-tiptap-editor",
       },
     },
   });
@@ -126,8 +127,8 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
         existingAttachments.some(
           (url) =>
             (url.split("/").pop() || "").toLowerCase() ===
-            file.name.toLowerCase()
-        )
+            file.name.toLowerCase(),
+        ),
     );
 
     if (duplicateFiles.length > 0) {
@@ -135,7 +136,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
       setFileError(
         t("caseSubmission:caseSubmission.errors.file.duplicatesSkipped", {
           fileList,
-        })
+        }),
       );
     }
 
@@ -144,7 +145,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
 
     // 2. Размер
     const oversizedFiles = uniqueSelection.filter(
-      (f) => f.size > HARD_LIMIT_BYTES
+      (f) => f.size > HARD_LIMIT_BYTES,
     );
     if (oversizedFiles.length > 0) {
       const fileList = oversizedFiles.map((f) => f.name).join(", ");
@@ -152,12 +153,12 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
         t("caseSubmission:caseSubmission.errors.file.oversized", {
           maxSize: HARD_LIMIT_MB,
           fileList,
-        })
+        }),
       );
     }
 
     const validSizeSelection = uniqueSelection.filter(
-      (f) => f.size <= HARD_LIMIT_BYTES
+      (f) => f.size <= HARD_LIMIT_BYTES,
     );
     if (validSizeSelection.length === 0) return;
 
@@ -167,13 +168,13 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
       setFileError(
         t("caseSubmission:caseSubmission.errors.file.maxFilesExceeded", {
           max: MAX_FILES,
-        })
+        }),
       );
     }
 
     const filesToProcess = validSizeSelection.slice(
       0,
-      Math.max(0, availableSlots)
+      Math.max(0, availableSlots),
     );
 
     if (filesToProcess.length > 0) {
@@ -183,8 +184,8 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
       } catch (err) {
         setFileError(
           t(
-            "caseSubmission:caseSubmission.errors.submission.fileProcessingError"
-          )
+            "caseSubmission:caseSubmission.errors.submission.fileProcessingError",
+          ),
         );
       }
     }
@@ -199,7 +200,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
       const next = typeof val === "function" ? val(attachments) : val;
       handleFiles(next.filter((f) => !attachments.includes(f)));
     },
-    t
+    t,
   );
 
   return (
@@ -250,7 +251,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
                   <span>
                     {t(
                       "caseSubmission:caseSubmission.processing",
-                      "Обработка..."
+                      "Обработка...",
                     )}
                   </span>
                 </div>
@@ -266,7 +267,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
                   <button
                     type="button"
                     onClick={() => setFileError(null)}
-                    className="p-0.5 hover:bg-red-100 rounded-full transition-colors"
+                    className="p-0.5 hover:bg-red-100 rounded-full transition-colors cursor-pointer"
                   >
                     <XMarkIcon className="w-4 h-4" />
                   </button>
@@ -281,7 +282,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
                 }
                 onRemoveExisting={(url) =>
                   setExistingAttachments?.((prev) =>
-                    prev.filter((u) => u !== url)
+                    prev.filter((u) => u !== url),
                   )
                 }
                 caseId={caseId}

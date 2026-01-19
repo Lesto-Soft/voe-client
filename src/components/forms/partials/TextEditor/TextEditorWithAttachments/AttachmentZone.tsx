@@ -58,7 +58,7 @@ const AttachmentZone: React.FC<AttachmentZoneProps> = ({
   if (galleryItems.length === 0) return null;
 
   return (
-    <div className="px-3 pb-3 pt-2 border-t border-gray-200 bg-gray-50/50">
+    <div className="px-3 pb-3 pt-2  border-gray-200 bg-gray-50/50">
       <div className="flex flex-wrap gap-2">
         <ImagePreviewWithThumbnail
           galleryItems={galleryItems}

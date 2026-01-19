@@ -5,12 +5,7 @@ import {
 } from "@heroicons/react/24/solid";
 import { ICategory, IMe } from "../../db/interfaces";
 import { TFunction } from "i18next";
-import {
-  UpdateCaseInput,
-  useUpdateCase,
-  useCreateCase,
-  CreateCaseInput,
-} from "../../graphql/hooks/case";
+import { useUpdateCase, useCreateCase } from "../../graphql/hooks/case";
 import { getTextLength } from "../../utils/contentRenderer";
 import UnifiedEditor from "./partials/UnifiedRichTextEditor"; // Новият компонент
 import { CASE_CONTENT } from "../../utils/GLOBAL_PARAMETERS";
@@ -20,7 +15,7 @@ const MAX_SELECTED_CATEGORIES = 3;
 const getCategoryClass = (
   categoryId: string,
   selectedCategoryIds: string[],
-  caseType: "PROBLEM" | "SUGGESTION"
+  caseType: "PROBLEM" | "SUGGESTION",
 ) => {
   const isSelected = selectedCategoryIds.includes(categoryId);
   const isMaxReached =
@@ -70,7 +65,6 @@ type CaseFormProps = {
   onSubmissionError: (message: string) => void;
   onUnsavedChangesChange: (hasChanges: boolean) => void;
   t: TFunction<("dashboard" | "caseSubmission")[], undefined>;
-  isOpen: boolean;
   mentions?: any[];
 } & (
   | {
@@ -101,7 +95,6 @@ const CaseForm: React.FC<CaseFormProps> = (props) => {
     onSubmissionError,
     onUnsavedChangesChange,
     t,
-    isOpen,
     mentions = [],
   } = props;
 
@@ -126,13 +119,13 @@ const CaseForm: React.FC<CaseFormProps> = (props) => {
   const [initialFormState] = useState<CaseFormData>(getInitialFormData());
   const [newAttachments, setNewAttachments] = useState<File[]>([]);
   const [existingAttachments, setExistingAttachments] = useState<string[]>(
-    props.mode === "edit" ? props.initialData.attachments || [] : []
+    props.mode === "edit" ? props.initialData.attachments || [] : [],
   );
 
   const [isCompressing, setIsProcessing] = useState(false);
 
   const { updateCase, loading: isUpdating } = useUpdateCase(
-    props.mode === "edit" ? props.caseNumber : 0
+    props.mode === "edit" ? props.caseNumber : 0,
   );
   const { createCase, loading: isCreating } = useCreateCase();
   const isLoading = isUpdating || isCreating;
@@ -181,7 +174,7 @@ const CaseForm: React.FC<CaseFormProps> = (props) => {
     try {
       if (props.mode === "edit") {
         const deleted = (props.initialData.attachments || []).filter(
-          (url) => !existingAttachments.includes(url)
+          (url) => !existingAttachments.includes(url),
         );
         await updateCase(props.caseId, me._id, {
           content: formData.content,
@@ -194,7 +187,7 @@ const CaseForm: React.FC<CaseFormProps> = (props) => {
         onSubmitSuccess(
           t("caseSubmission:caseSubmission.submissionSuccess.edit", {
             caseNumber: props.caseNumber,
-          })
+          }),
         );
       } else {
         await createCase({
@@ -208,9 +201,11 @@ const CaseForm: React.FC<CaseFormProps> = (props) => {
         onSubmitSuccess(
           formData.type === "SUGGESTION"
             ? t(
-                "caseSubmission:caseSubmission.submissionSuccess.createSuggestion"
+                "caseSubmission:caseSubmission.submissionSuccess.createSuggestion",
               )
-            : t("caseSubmission:caseSubmission.submissionSuccess.createProblem")
+            : t(
+                "caseSubmission:caseSubmission.submissionSuccess.createProblem",
+              ),
         );
       }
     } catch (err: any) {
@@ -241,7 +236,7 @@ const CaseForm: React.FC<CaseFormProps> = (props) => {
               setExistingAttachments={setExistingAttachments}
               mentions={mentions}
               placeholder={
-                t("caseSubmission.content.placeholder") ||
+                t("caseSubmission:caseSubmission.placeholder") ||
                 "Напишете съдържание..."
               }
               minLength={CASE_CONTENT.MIN}
@@ -378,7 +373,7 @@ const CaseForm: React.FC<CaseFormProps> = (props) => {
                         return {
                           ...prev,
                           categoryIds: prev.categoryIds.filter(
-                            (id) => id !== cat._id
+                            (id) => id !== cat._id,
                           ),
                         };
                       if (prev.categoryIds.length < MAX_SELECTED_CATEGORIES)
@@ -393,7 +388,7 @@ const CaseForm: React.FC<CaseFormProps> = (props) => {
                   className={getCategoryClass(
                     cat._id,
                     formData.categoryIds,
-                    formData.type
+                    formData.type,
                   )}
                   disabled={
                     (!formData.categoryIds.includes(cat._id) &&
@@ -426,16 +421,16 @@ const CaseForm: React.FC<CaseFormProps> = (props) => {
               isLoading || isCompressing || textLength < CASE_CONTENT.MIN
             }
             className={`${getSubmitButtonClass(
-              formData.type
+              formData.type,
             )} hover:cursor-pointer w-34 text-center disabled:opacity-70 disabled:cursor-not-allowed`}
           >
             {isCompressing
               ? t("processingFiles", "Обработка...")
               : isLoading
-              ? t("saving", "Записване...")
-              : props.mode === "edit"
-              ? t("saveChanges", "Запази")
-              : t("submit", "Изпрати")}
+                ? t("saving", "Записване...")
+                : props.mode === "edit"
+                  ? t("saveChanges", "Запази")
+                  : t("submit", "Изпрати")}
           </button>
         </div>
       </div>

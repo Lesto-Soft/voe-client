@@ -231,7 +231,6 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
               <CaseForm
                 {...props} // Pass original props down
                 t={t}
-                isOpen={isOpen}
                 onCancel={attemptClose}
                 onUnsavedChangesChange={setHasUnsavedChanges}
                 onFormError={handleFormError}

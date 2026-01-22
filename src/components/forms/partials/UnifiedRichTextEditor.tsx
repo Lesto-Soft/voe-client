@@ -281,14 +281,16 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
               <AttachmentZone
                 newAttachments={attachments}
                 existingAttachments={existingAttachments}
-                onRemoveNew={(idx) =>
-                  setAttachments((prev) => prev.filter((_, i) => i !== idx))
-                }
-                onRemoveExisting={(url) =>
+                onRemoveNew={(idx) => {
+                  setAttachments((prev) => prev.filter((_, i) => i !== idx));
+                  setFileError(null);
+                }}
+                onRemoveExisting={(url) => {
                   setExistingAttachments?.((prev) =>
                     prev.filter((u) => u !== url),
-                  )
-                }
+                  );
+                  setFileError(null);
+                }}
                 caseId={caseId}
               />
             </div>

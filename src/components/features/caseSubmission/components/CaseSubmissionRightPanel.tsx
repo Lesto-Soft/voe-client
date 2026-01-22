@@ -172,9 +172,10 @@ const CaseSubmissionRightPanel: React.FC<CaseSubmissionRightPanelProps> = ({
 
           <AttachmentZone
             newAttachments={attachments}
-            onRemoveNew={(idx) =>
-              onAttachmentsChange((prev) => prev.filter((_, i) => i !== idx))
-            }
+            onRemoveNew={(idx) => {
+              onAttachmentsChange((prev) => prev.filter((_, i) => i !== idx));
+              setFileError(null);
+            }}
           />
         </div>
       </div>

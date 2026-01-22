@@ -190,7 +190,11 @@ const Category: React.FC = () => {
   }, [currentUser, category, isAdmin]);
 
   const dateFilteredCases = useMemo(() => {
-    const allCases = category?.cases || [];
+    // Sort cases by case_number descending to ensure consistent ordering
+    // (The backend should already sort, but this guards against any inconsistencies)
+    const allCases = [...(category?.cases || [])].sort(
+      (a, b) => b.case_number - a.case_number
+    );
     const { startDate, endDate } = dateRange;
 
     if (!startDate && !endDate) {

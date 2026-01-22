@@ -52,13 +52,13 @@ const CaseSubmissionRightPanel: React.FC<CaseSubmissionRightPanelProps> = ({
 
     // 1. Дубликати
     const duplicateFiles = files.filter((f) =>
-      attachments.some((a) => a.name === f.name)
+      attachments.some((a) => a.name === f.name),
     );
     if (duplicateFiles.length > 0) {
       setFileError(
         t("caseSubmission:caseSubmission.errors.file.duplicatesSkipped", {
           fileList: duplicateFiles.map((f) => f.name).join(", "),
-        })
+        }),
       );
     }
 
@@ -70,7 +70,7 @@ const CaseSubmissionRightPanel: React.FC<CaseSubmissionRightPanelProps> = ({
       setFileError(
         t("caseSubmission:caseSubmission.errors.file.maxFilesExceeded", {
           max: MAX_FILES,
-        })
+        }),
       );
     }
 
@@ -85,8 +85,8 @@ const CaseSubmissionRightPanel: React.FC<CaseSubmissionRightPanelProps> = ({
       } catch (err) {
         setFileError(
           t(
-            "caseSubmission:caseSubmission.errors.submission.fileProcessingError"
-          )
+            "caseSubmission:caseSubmission.errors.submission.fileProcessingError",
+          ),
         );
       }
     }
@@ -155,12 +155,16 @@ const CaseSubmissionRightPanel: React.FC<CaseSubmissionRightPanelProps> = ({
         {/* Зона за Thumbnails */}
         <div className="flex-grow overflow-y-auto custom-scrollbar-xs pr-1">
           {fileError && (
-            <div className="flex items-start justify-between gap-2 px-3 py-2 mb-3 bg-red-50 border border-red-100 text-red-700 rounded-lg animate-in fade-in slide-in-from-top-1">
+            <div className="flex items-center justify-between gap-2 px-3 py-2 mb-3 bg-red-50 border border-red-100 text-red-700 rounded-lg animate-in fade-in slide-in-from-top-1">
               <div className="flex items-center gap-2 text-[11px] font-bold">
                 <ExclamationTriangleIcon className="w-3.5 h-3.5 flex-shrink-0" />
                 <span>{fileError}</span>
               </div>
-              <button type="button" onClick={() => setFileError(null)}>
+              <button
+                type="button"
+                onClick={() => setFileError(null)}
+                className="p-0.5 hover:bg-red-100 rounded-full transition-colors cursor-pointer"
+              >
                 <XMarkIcon className="w-4 h-4" />
               </button>
             </div>

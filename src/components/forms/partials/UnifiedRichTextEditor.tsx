@@ -243,7 +243,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
             existingAttachments.length > 0 ||
             isCompressing ||
             fileError) && (
-            <div className="flex-shrink-0 border-t border-gray-100 bg-gray-50/50 p-2 max-h-[160px] overflow-y-auto">
+            <div className="flex-shrink-0 border-t border-gray-100 bg-gray-50/50 p-2 max-h-[160px] overflow-y-auto custom-scrollbar-xs">
               {/* ЛОУДЪР ПРИ ОБРАБОТКА (ВЪЗСТАНОВЕН) */}
               {isCompressing && (
                 <div className="flex items-center gap-2 px-3 py-1.5 mb-2 text-[11px] text-blue-600 font-bold bg-blue-50 border border-blue-100 rounded-lg animate-pulse">
@@ -259,7 +259,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
 
               {/* ГРЕШКИ */}
               {fileError && (
-                <div className="flex items-start justify-between gap-2 px-3 py-1.5 mb-2 text-[11px] bg-red-50 border border-red-100 text-red-700 rounded-lg animate-in fade-in slide-in-from-top-1">
+                <div className="flex items-center justify-between gap-2 px-3 py-1.5 mb-2 text-[11px] bg-red-50 border border-red-100 text-red-700 rounded-lg animate-in fade-in slide-in-from-top-1">
                   <div className="flex items-center gap-2">
                     <ExclamationTriangleIcon className="w-3.5 h-3.5 flex-shrink-0" />
                     <span className="font-bold">{fileError}</span>

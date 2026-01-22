@@ -8,6 +8,7 @@ import { ANSWER_CONTENT } from "../../utils/GLOBAL_PARAMETERS";
 import ConfirmActionDialog from "../modals/ConfirmActionDialog";
 import UnifiedEditor from "../forms/partials/UnifiedRichTextEditor";
 import { IAnswer } from "../../db/interfaces";
+import { getTextLength } from "../../utils/contentRenderer";
 
 interface EditButtonProps {
   answer: IAnswer;
@@ -94,7 +95,7 @@ const EditAnswerButton: React.FC<EditButtonProps> = ({
   const handleSave = async () => {
     setError(null);
     const deletedAttachments = initialExistingAttachments.filter(
-      (url) => !existingAttachments.includes(url)
+      (url) => !existingAttachments.includes(url),
     );
 
     try {
@@ -106,7 +107,7 @@ const EditAnswerButton: React.FC<EditButtonProps> = ({
             deletedAttachments.length > 0 ? deletedAttachments : undefined,
         },
         answer._id,
-        me._id
+        me._id,
       );
       setIsOpen(false);
     } catch (err: any) {
@@ -157,9 +158,7 @@ const EditAnswerButton: React.FC<EditButtonProps> = ({
                 existingAttachments={existingAttachments}
                 setExistingAttachments={setExistingAttachments}
                 mentions={mentions}
-                placeholder={t(
-                  "caseSubmission:caseSubmission.content.placeholder"
-                )}
+                placeholder={t("writeHere")}
                 editorClassName="min-h-0"
                 minLength={ANSWER_CONTENT.MIN}
                 maxLength={ANSWER_CONTENT.MAX}
@@ -193,13 +192,10 @@ const EditAnswerButton: React.FC<EditButtonProps> = ({
                   loading ||
                   isProcessing ||
                   !hasChanges ||
-                  (content.length > 0 && content.length < ANSWER_CONTENT.MIN)
+                  getTextLength(content) < ANSWER_CONTENT.MIN ||
+                  getTextLength(content) > ANSWER_CONTENT.MAX
                 }
-                className={`px-6 py-2 text-sm font-medium text-white rounded transition-all shadow-md ${
-                  loading || isProcessing || !hasChanges
-                    ? "bg-blue-300 cursor-not-allowed"
-                    : "bg-blue-600 hover:bg-blue-700 cursor-pointer"
-                }`}
+                className={`px-6 py-2 text-sm font-medium text-white rounded transition-all shadow-md bg-blue-600 hover:bg-blue-700 cursor-pointer disabled:bg-blue-300 disabled:cursor-not-allowed `}
                 type="button"
               >
                 {loading ? t("saving") : t("save")}
@@ -219,7 +215,7 @@ const EditAnswerButton: React.FC<EditButtonProps> = ({
         title={t("unsavedChangesTitle", "Незапазени промени")}
         description={t(
           "unsavedChangesDescription",
-          "Имате незапазен текст или прикачени файлове, които ще бъдат изгубени. Сигурни ли сте, че искате да затворите?"
+          "Имате незапазен текст или прикачени файлове, които ще бъдат изгубени. Сигурни ли сте, че искате да затворите?",
         )}
         confirmButtonText={t("closeEditor", "Затвори")}
         isDestructiveAction={true}

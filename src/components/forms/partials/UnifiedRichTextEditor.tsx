@@ -17,6 +17,7 @@ import {
 
 import { useFileHandler } from "../../../hooks/useFileHandler";
 import { usePastedAttachments } from "../hooks/usePastedAttachments";
+import { getTextLength } from "../../../utils/contentRenderer";
 import { createMentionSuggestion } from "./TextEditor/MentionSuggestion";
 import { CustomMention } from "./TextEditor/CustomMention";
 import AttachmentZone from "./TextEditor/TextEditorWithAttachments/AttachmentZone";
@@ -86,7 +87,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
       Underline,
       TextAlign.configure({ types: ["paragraph", "heading", "listItem"] }),
       Placeholder.configure({ placeholder }),
-      CharacterCount.configure({ limit: maxLength }),
+      CharacterCount, // Keep extension but don't use its limit (doesn't count mentions properly)
       ...(type !== "case"
         ? [
             CustomMention.configure({
@@ -106,15 +107,18 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
     editorProps: {
       attributes: {
         class:
-          "focus:outline-none prose prose-sm max-w-none p-4 min-h-[150px] custom-tiptap-editor",
+          "focus:outline-none prose prose-sm max-w-none p-4 min-h-[150px] break-words custom-tiptap-editor",
       },
     },
   });
 
-  const charCount = editor?.storage.characterCount.characters() || 0;
+  // Calculate character count using HTML stripping (matches backend validation)
+  const charCount = useMemo(() => getTextLength(content), [content]);
   const currentTotal = attachments.length + existingAttachments.length;
   const isMaxFilesReached = currentTotal >= MAX_FILES;
-  const isInvalid = charCount > 0 && charCount < minLength;
+  const isTooShort = charCount > 0 && charCount < minLength;
+  const isTooLong = charCount > maxLength;
+  const isInvalid = isTooShort || isTooLong;
 
   const handleFiles = async (files: File[]) => {
     setFileError(null);
@@ -225,7 +229,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
 
         <div className="relative flex-grow flex flex-col min-h-0">
           <div
-            className={`flex-grow overflow-y-auto custom-scrollbar-xs ${editorClassName}`}
+            className={`flex-grow overflow-y-auto overflow-x-hidden custom-scrollbar-xs ${editorClassName}`}
           >
             <EditorContent editor={editor} />
           </div>

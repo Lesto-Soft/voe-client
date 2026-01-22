@@ -8,6 +8,7 @@ import { useUpdateComment } from "../../graphql/hooks/comment";
 import { COMMENT_CONTENT } from "../../utils/GLOBAL_PARAMETERS";
 import ConfirmActionDialog from "../modals/ConfirmActionDialog";
 import UnifiedEditor from "../forms/partials/UnifiedRichTextEditor";
+import { getTextLength } from "../../utils/contentRenderer";
 
 interface EditButtonProps {
   comment: IComment;
@@ -101,7 +102,7 @@ const EditButton: React.FC<EditButtonProps> = ({
     setError(null);
 
     const deletedAttachments = initialExistingAttachments.filter(
-      (url) => !existingAttachments.includes(url)
+      (url) => !existingAttachments.includes(url),
     );
 
     const input: UpdateCommentInput = {
@@ -179,7 +180,7 @@ const EditButton: React.FC<EditButtonProps> = ({
               />
             </div>
 
-            {/* Грешки */}
+            {/* API Errors */}
             {error && (
               <div className="mx-6 my-2 flex items-start p-3 bg-red-50 border border-red-200 rounded-lg animate-in fade-in flex-shrink-0">
                 <ExclamationCircleIcon className="h-5 w-5 text-red-400 mr-2 mt-0.5 flex-shrink-0" />
@@ -204,15 +205,10 @@ const EditButton: React.FC<EditButtonProps> = ({
                   loading ||
                   isProcessing ||
                   !hasChanges ||
-                  (content.length > 0 &&
-                    (content.length < COMMENT_CONTENT.MIN ||
-                      content.length > COMMENT_CONTENT.MAX))
+                  getTextLength(content) < COMMENT_CONTENT.MIN ||
+                  getTextLength(content) > COMMENT_CONTENT.MAX
                 }
-                className={`px-6 py-2 text-sm font-medium text-white rounded transition-all shadow-md ${
-                  loading || isProcessing || !hasChanges
-                    ? "bg-blue-300 cursor-not-allowed"
-                    : "bg-blue-600 hover:bg-blue-700 cursor-pointer"
-                }`}
+                className={`px-6 py-2 text-sm font-medium text-white rounded transition-all shadow-md bg-blue-600 hover:bg-blue-700 cursor-pointer disabled:bg-blue-300 disabled:cursor-not-allowed`}
                 type="button"
               >
                 {loading ? t("saving") : t("save")}
@@ -232,7 +228,7 @@ const EditButton: React.FC<EditButtonProps> = ({
         title={t("unsavedChangesTitle", "Незапазени промени")}
         description={t(
           "unsavedChangesDescription",
-          "Имате незапазен текст или прикачени файлове, които ще бъдат изгубени. Сигурни ли сте, че искате да затворите?"
+          "Имате незапазен текст или прикачени файлове, които ще бъдат изгубени. Сигурни ли сте, че искате да затворите?",
         )}
         confirmButtonText={t("closeEditor", "Затвори")}
         isDestructiveAction={true}

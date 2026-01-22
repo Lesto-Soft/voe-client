@@ -56,5 +56,11 @@ export const CustomMention = Mention.extend({
     ];
   },
 
+  // Ensures CharacterCount includes the full mention text (@label)
+  // This must match renderHTML output for consistent counting
+  renderText({ node }) {
+    return `@${node.attrs.label}`;
+  },
+
   atom: true,
 });

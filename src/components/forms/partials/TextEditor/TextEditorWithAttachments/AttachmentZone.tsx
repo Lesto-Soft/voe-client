@@ -1,4 +1,3 @@
-// src/components/forms/partials/TextEditor/TextEditorWithAttachments/AttachmentZone.tsx
 import React, { useEffect, useState } from "react";
 import ImagePreviewWithThumbnail, {
   ThumbnailGalleryItem,
@@ -23,10 +22,33 @@ const AttachmentZone: React.FC<AttachmentZoneProps> = ({
 }) => {
   const [galleryItems, setGalleryItems] = useState<ThumbnailGalleryItem[]>([]);
 
-  useEffect(() => {
-    // Generate URLs for new files and track them for cleanup
-    const objectUrls: string[] = [];
+  const [fileUrls, setFileUrls] = useState<Map<File, string>>(new Map());
 
+  useEffect(() => {
+    setFileUrls((prevMap) => {
+      const newMap = new Map(prevMap);
+      let hasChanged = false;
+
+      for (const [file, url] of prevMap.entries()) {
+        if (!newAttachments.includes(file)) {
+          URL.revokeObjectURL(url);
+          newMap.delete(file);
+          hasChanged = true;
+        }
+      }
+
+      newAttachments.forEach((file) => {
+        if (!newMap.has(file)) {
+          newMap.set(file, URL.createObjectURL(file));
+          hasChanged = true;
+        }
+      });
+
+      return hasChanged ? newMap : prevMap;
+    });
+  }, [newAttachments]);
+
+  useEffect(() => {
     const items: ThumbnailGalleryItem[] = [
       ...(existingAttachments || []).map((url) => ({
         url: `${apiUrl}/static/cases/${caseId}/${url}`,
@@ -34,31 +56,30 @@ const AttachmentZone: React.FC<AttachmentZoneProps> = ({
         type: "existing" as const,
         identifier: url,
       })),
-      ...newAttachments.map((file, index) => {
-        const url = URL.createObjectURL(file);
-        objectUrls.push(url);
-        return {
-          url,
+      ...newAttachments
+        .map((file, index) => ({
+          url: fileUrls.get(file) || "",
           name: file.name,
           size: file.size,
           type: "new" as const,
           identifier: index,
-        };
-      }),
+        }))
+        .filter((item) => item.url !== ""),
     ];
 
     setGalleryItems(items);
+  }, [newAttachments, existingAttachments, fileUrls, caseId]);
 
-    // CLEANUP: Revoke all created URLs when attachments change or component unmounts
+  useEffect(() => {
     return () => {
-      objectUrls.forEach((url) => URL.revokeObjectURL(url));
+      fileUrls.forEach((url) => URL.revokeObjectURL(url));
     };
-  }, [newAttachments, existingAttachments, caseId]);
+  }, []);
 
   if (galleryItems.length === 0) return null;
 
   return (
-    <div className="px-3 pb-3 pt-2  border-gray-200 bg-gray-50/50">
+    <div className="px-3 pb-3 pt-2">
       <div className="flex flex-wrap gap-2">
         <ImagePreviewWithThumbnail
           galleryItems={galleryItems}

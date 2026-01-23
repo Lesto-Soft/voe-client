@@ -1,17 +1,15 @@
 // src/components/case-components/answer/AddAnswer.tsx
 import { useState } from "react";
-import { PaperAirplaneIcon } from "@heroicons/react/24/solid";
 import { useCreateAnswer } from "../../../graphql/hooks/answer";
 import { ANSWER_CONTENT } from "../../../utils/GLOBAL_PARAMETERS";
 import { getTextLength } from "../../../utils/contentRenderer";
 import { toast } from "react-toastify";
-import { TFunction } from "i18next"; // <--- ВАЖНО: Импорт на типа
-import LoadingModal from "../../modals/LoadingModal";
+import { TFunction } from "i18next";
 import UnifiedEditor from "../../forms/partials/UnifiedRichTextEditor";
 
 interface AddAnswerProps {
   caseId?: string;
-  t: TFunction; // <--- ВАЖНО: Смяна на типа от (key: string) => string на TFunction
+  t: TFunction;
   me: any;
   caseNumber: number;
   mentions?: { name: string; username: string; _id: string }[];
@@ -42,7 +40,7 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
 
     if (textLength < ANSWER_CONTENT.MIN) {
       setSubmissionError(
-        `Решението трябва да е поне ${ANSWER_CONTENT.MIN} символа.`
+        `Решението трябва да е поне ${ANSWER_CONTENT.MIN} символа.`,
       );
       return;
     }

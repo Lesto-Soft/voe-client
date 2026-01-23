@@ -89,7 +89,7 @@ const Submenu: React.FC<SubmenuProps> = ({
   const [answerAttachments, setAnswerAttachments] = useState<File[]>([]);
   const [caseCommentContent, setCaseCommentContent] = useState("");
   const [caseCommentAttachments, setCaseCommentAttachments] = useState<File[]>(
-    []
+    [],
   );
 
   const handleSetAnswerCommentState = useCallback(
@@ -106,7 +106,7 @@ const Submenu: React.FC<SubmenuProps> = ({
         },
       }));
     },
-    []
+    [],
   );
 
   const handleAnswerCommentSubmitted = useCallback((answerId: string) => {
@@ -166,7 +166,7 @@ const Submenu: React.FC<SubmenuProps> = ({
   } = useUnsavedChangesWarning(
     answerContent,
     isAddAnswerVisible,
-    answerAttachments.length
+    answerAttachments.length,
   );
 
   const {
@@ -178,7 +178,7 @@ const Submenu: React.FC<SubmenuProps> = ({
   } = useUnsavedChangesWarning(
     caseCommentContent,
     isAddCommentVisible,
-    caseCommentAttachments.length
+    caseCommentAttachments.length,
   );
 
   const scrollableContainerRef = useRef<HTMLDivElement>(null);
@@ -201,7 +201,7 @@ const Submenu: React.FC<SubmenuProps> = ({
         if (hashPart.startsWith("answers-") && isCommentLink) {
           const commentId = hashPart.split("-")[1];
           const parentAnswer = (caseData.answers || []).find((answer) =>
-            answer.comments?.some((c) => c._id === commentId)
+            answer.comments?.some((c) => c._id === commentId),
           );
           if (parentAnswer) {
             setView("answers");
@@ -385,7 +385,7 @@ const Submenu: React.FC<SubmenuProps> = ({
       answer.content?.includes(`data-id="${me.username}"`) ?? false;
     const isMentionedInComment =
       answer.comments?.some((comment) =>
-        comment.content?.includes(`data-id="${me.username}"`)
+        comment.content?.includes(`data-id="${me.username}"`),
       ) ?? false;
 
     return (
@@ -594,7 +594,7 @@ const Submenu: React.FC<SubmenuProps> = ({
                   {[...caseData.comments]
                     .sort(
                       (a, b) =>
-                        new Date(b.date).getTime() - new Date(a.date).getTime()
+                        new Date(b.date).getTime() - new Date(a.date).getTime(),
                     )
                     .map((comment: IComment) => (
                       <Comment

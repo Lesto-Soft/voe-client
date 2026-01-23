@@ -43,11 +43,11 @@ const getInitialTabStates = () => ({
 const useUserActivityScrollPersistence = (
   userId: string | undefined,
   activeTab: ActivityTab,
-  isDataReady: boolean = false
+  isDataReady: boolean = false,
 ) => {
   // REMOVED: Internal activeTab state management
   const [tabScrollStates, setTabScrollStates] = useState<TabScrollStates>(
-    getInitialTabStates()
+    getInitialTabStates(),
   );
 
   const scrollableActivityListRef = useRef<HTMLDivElement>(null);
@@ -59,7 +59,7 @@ const useUserActivityScrollPersistence = (
       activeTab: `userActivity_activeTab_${userId}`,
       scrollStates: `userActivity_scrollStates_${userId}`,
     }),
-    []
+    [],
   );
 
   // Save current scroll position for the active tab
@@ -184,7 +184,7 @@ const useUserActivityScrollPersistence = (
     const scrollContainer = scrollableActivityListRef.current;
     if (!scrollContainer || !userId) return;
 
-    let scrollTimeout: number;
+    let scrollTimeout: ReturnType<typeof setTimeout>;
 
     const handleScroll = () => {
       // Debounce scroll saving to avoid excessive writes

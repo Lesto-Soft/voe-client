@@ -14,7 +14,7 @@ import { InformationCircleIcon as InfoOutline } from "@heroicons/react/24/outlin
 import * as Popover from "@radix-ui/react-popover"; // Заменяме Tooltip с Popover
 
 const TextEditorHelper: React.FC<{
-  type: "case" | "answer" | "comment";
+  type: "case" | "comment" | "answer" | "default";
   hideAttach?: boolean;
 }> = ({ type, hideAttach = false }) => {
   const { t } = useTranslation(["menu"]);

@@ -4,12 +4,11 @@ import { useCreateAnswer } from "../../../graphql/hooks/answer";
 import { ANSWER_CONTENT } from "../../../utils/GLOBAL_PARAMETERS";
 import { getTextLength } from "../../../utils/contentRenderer";
 import { toast } from "react-toastify";
-import { TFunction } from "i18next";
 import UnifiedEditor from "../../forms/partials/UnifiedRichTextEditor";
 
 interface AddAnswerProps {
   caseId?: string;
-  t: TFunction;
+  t: (key: string) => string;
   me: any;
   caseNumber: number;
   mentions?: { name: string; username: string; _id: string }[];

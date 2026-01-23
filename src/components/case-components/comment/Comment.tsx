@@ -42,7 +42,7 @@ const Comment: React.FC<CommentProps> = ({
 
     if (!element) return;
 
-    let removalTimerId: number;
+    let removalTimerId: ReturnType<typeof setTimeout>;
     let animationFrameId: number;
 
     if (targetId === elementId) {

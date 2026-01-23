@@ -578,7 +578,6 @@ const Submenu: React.FC<SubmenuProps> = ({
                       t={t}
                       me={me}
                       caseNumber={caseData.case_number}
-                      inputId={`file-upload-comment-case-${caseData._id}`}
                       mentions={mentions}
                       onCommentSubmitted={handleCaseCommentSubmitted}
                       content={caseCommentContent}

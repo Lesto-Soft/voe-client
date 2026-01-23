@@ -46,7 +46,7 @@ const AddComment: React.FC<AddCommentProps> = ({
       setSubmissionError(
         apiError.message ||
           t("caseSubmission.errors.submission.apiError") ||
-          "Възникна грешка."
+          "Възникна грешка.",
       );
     }
   }, [apiError, t]);

@@ -2,7 +2,7 @@
 import React, { ChangeEvent } from "react";
 import { TFunction } from "i18next";
 import { ApolloError } from "@apollo/client";
-import TextEditor from "../../../forms/partials/TextEditor/TextEditor";
+import UnifiedRichTextEditor from "../../../forms/partials/UnifiedRichTextEditor";
 import { CASE_CONTENT } from "../../../../utils/GLOBAL_PARAMETERS";
 import { CreateCaseMutationInput } from "../types";
 
@@ -18,6 +18,11 @@ interface CaseSubmissionLeftPanelProps {
   onContentChange: (value: string) => void;
   priority: CreateCaseMutationInput["priority"];
   onPriorityChange: (priority: CreateCaseMutationInput["priority"]) => void;
+  // Нови пропове за интеграция на UnifiedEditor
+  attachments: File[];
+  setAttachments: React.Dispatch<React.SetStateAction<File[]>>;
+  onProcessingChange: (processing: boolean) => void;
+  isSending: boolean;
 }
 
 const CaseSubmissionLeftPanel: React.FC<CaseSubmissionLeftPanelProps> = ({
@@ -32,6 +37,10 @@ const CaseSubmissionLeftPanel: React.FC<CaseSubmissionLeftPanelProps> = ({
   onContentChange,
   priority,
   onPriorityChange,
+  attachments,
+  setAttachments,
+  onProcessingChange,
+  isSending,
 }) => {
   const priorityOptions = [
     { labelKey: "caseSubmission.priority.low", value: "LOW", color: "#009b00" },
@@ -48,8 +57,8 @@ const CaseSubmissionLeftPanel: React.FC<CaseSubmissionLeftPanelProps> = ({
   ];
 
   return (
-    <div className="rounded-2xl shadow-md bg-white p-6 h-full space-y-4">
-      <div className="flex flex-col md:flex-row md:gap-x-4 space-y-4 md:space-y-0">
+    <div className="rounded-2xl shadow-md bg-white p-6 h-full flex flex-col space-y-4 overflow-hidden">
+      <div className="flex-shrink-0 flex flex-col md:flex-row md:gap-x-4 space-y-4 md:space-y-0">
         <div className="flex-1">
           <label
             htmlFor="username"
@@ -62,9 +71,7 @@ const CaseSubmissionLeftPanel: React.FC<CaseSubmissionLeftPanelProps> = ({
             type="text"
             id="username"
             placeholder={t("caseSubmission.usernamePlaceholder")}
-            className="w-full border border-gray-300 p-3 rounded-md focus:outline-none focus:border-indigo-500 "
-            name="username"
-            aria-label={t("caseSubmission.usernameLabel")}
+            className="w-full border border-gray-300 p-3 rounded-md focus:outline-none focus:border-indigo-500"
             value={usernameInput}
             onChange={handleUsernameChange}
           />
@@ -81,17 +88,13 @@ const CaseSubmissionLeftPanel: React.FC<CaseSubmissionLeftPanelProps> = ({
                 })}
               </p>
             )}
-            <p
-              className={`text-sm text-red-500 transition-opacity duration-200 ${
-                notFoundUsername ? "opacity-100" : "opacity-0"
-              }`}
-            >
-              {notFoundUsername
-                ? t("caseSubmission.userNotFoundError", {
-                    username: notFoundUsername,
-                  })
-                : "\u00A0"}
-            </p>
+            {notFoundUsername && (
+              <p className="text-sm text-red-500">
+                {t("caseSubmission.userNotFoundError", {
+                  username: notFoundUsername,
+                })}
+              </p>
+            )}
           </div>
         </div>
         <div className="flex-1">
@@ -105,18 +108,14 @@ const CaseSubmissionLeftPanel: React.FC<CaseSubmissionLeftPanelProps> = ({
           <input
             type="text"
             id="fullname"
-            placeholder={t("caseSubmission.fullNamePlaceholder")}
-            className="w-full border border-gray-300 p-3 rounded-md bg-gray-100 cursor-not-allowed focus:outline-none focus:ring-0"
-            name="fullname"
-            aria-label={t("caseSubmission.fullNameLabel")}
+            className="w-full border border-gray-300 p-3 rounded-md bg-gray-100 cursor-not-allowed focus:outline-none"
             value={fetchedName}
             disabled
             readOnly
           />
-          <div className="h-5 mt-1"></div>
         </div>
       </div>
-      <div>
+      <div className="flex-1 min-h-0 flex flex-col">
         <label
           htmlFor="description"
           className="block text-sm font-medium text-gray-700 mb-1"
@@ -124,19 +123,24 @@ const CaseSubmissionLeftPanel: React.FC<CaseSubmissionLeftPanelProps> = ({
           {t("caseSubmission.descriptionLabel")}
           <span className="text-red-500">*</span>
         </label>
-        <TextEditor
+        {/* НОВИЯТ УНИВЕРСАЛЕН РЕДАКТОР */}
+        <UnifiedRichTextEditor
           content={content}
-          onUpdate={onContentChange}
+          onContentChange={onContentChange}
+          attachments={attachments}
+          setAttachments={setAttachments}
           placeholder={t("caseSubmission.descriptionPlaceholder")}
-          editable={true}
-          height="15rem"
-          maxLength={CASE_CONTENT.MAX}
           minLength={CASE_CONTENT.MIN}
-          wrapperClassName="w-full rounded-md shadow-sm overflow-hidden bg-white"
-          autoFocus={true}
+          maxLength={CASE_CONTENT.MAX}
+          type="case"
+          hideSideButtons={true}
+          isSending={isSending}
+          onProcessingChange={onProcessingChange}
+          editorClassName="flex-1 h-full min-h-0"
+          hideAttachments={true}
         />
       </div>
-      <div>
+      <div className="flex-shrink-0 pt-2 border-t border-gray-100">
         <p className="text-sm font-medium mb-3 mt-6 text-gray-700">
           {t("caseSubmission.priorityLabel")}
           <span className="text-red-500">*</span>
@@ -151,11 +155,7 @@ const CaseSubmissionLeftPanel: React.FC<CaseSubmissionLeftPanelProps> = ({
                 type="radio"
                 value={value}
                 checked={priority === value}
-                onChange={(e) =>
-                  onPriorityChange(
-                    e.target.value as CreateCaseMutationInput["priority"]
-                  )
-                }
+                onChange={(e) => onPriorityChange(e.target.value as any)}
                 style={{ accentColor: color }}
                 className="w-5 h-5 cursor-pointer"
                 name="priority"

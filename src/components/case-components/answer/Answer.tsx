@@ -144,8 +144,8 @@ const Answer: React.FC<{
     }
 
     // --- Highlighting & Scrolling Logic ---
-    let initialDelayTimerId: number | undefined;
-    let removalTimerId: number | undefined;
+    let initialDelayTimerId: ReturnType<typeof setTimeout> | undefined;
+    let removalTimerId: ReturnType<typeof setTimeout> | undefined;
     let highlightedElement: HTMLElement | null = null;
 
     if (childTargetId) {
@@ -337,8 +337,7 @@ const Answer: React.FC<{
         )}
       </div>
 
-      {/* Add Comment Form (conditionally rendered) */}
-      {isCommentBoxVisible && ( // MODIFIED
+      {isCommentBoxVisible && (
         <div className="mt-1">
           <AddComment
             key={answer._id}
@@ -346,14 +345,12 @@ const Answer: React.FC<{
             answerId={answer._id}
             caseNumber={caseNumber}
             me={me}
-            inputId={`file-upload-comment-answer-${answer._id}`}
             mentions={mentions}
             onCommentSubmitted={handleCommentSubmitted}
-            content={commentContent} // MODIFIED
-            setContent={(content) => onSetCommentState({ content })} // MODIFIED
-            attachments={commentAttachments} // MODIFIED
+            content={commentContent}
+            setContent={(content) => onSetCommentState({ content })}
+            attachments={commentAttachments}
             setAttachments={(value) => {
-              // MODIFIED to handle function updates
               const newAttachments =
                 typeof value === "function" ? value(commentAttachments) : value;
               onSetCommentState({ attachments: newAttachments });
@@ -364,7 +361,6 @@ const Answer: React.FC<{
 
       {/* Comments List (conditionally rendered) */}
       {answer.comments && answer.comments.length > 0 && areCommentsVisible && (
-        // 1. Add a new parent div with `relative` positioning.
         <div className="relative">
           <div
             ref={commentsContainerRef}

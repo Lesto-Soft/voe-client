@@ -1,6 +1,4 @@
-// src/components/forms/partials/TextEditor/TextEditorWithAttachments/AttachmentZone.tsx
-
-import React from "react";
+import React, { useEffect, useState } from "react";
 import ImagePreviewWithThumbnail, {
   ThumbnailGalleryItem,
 } from "../../../../modals/imageModals/ImagePreviewWithThumbnail";
@@ -9,9 +7,9 @@ const apiUrl = import.meta.env.VITE_API_URL;
 
 interface AttachmentZoneProps {
   newAttachments: File[];
-  existingAttachments: string[];
+  existingAttachments?: string[];
   onRemoveNew: (index: number) => void;
-  onRemoveExisting: (url: string) => void;
+  onRemoveExisting?: (url: string) => void;
   caseId?: string;
 }
 
@@ -22,48 +20,74 @@ const AttachmentZone: React.FC<AttachmentZoneProps> = ({
   onRemoveExisting,
   caseId,
 }) => {
-  if (newAttachments.length === 0 && existingAttachments.length === 0)
-    return null;
+  const [galleryItems, setGalleryItems] = useState<ThumbnailGalleryItem[]>([]);
 
-  // This galleryItems array now correctly includes ALL files.
-  const galleryItems: ThumbnailGalleryItem[] = [
-    // All existing attachments
-    ...existingAttachments.map((url) => ({
-      url: `${apiUrl}/static/cases/${caseId}/${url}`,
-      name: url.split("/").pop() || "attachment",
-      type: "existing" as const,
-      identifier: url,
-    })),
-    // All new attachments
-    ...newAttachments.map((file, index) => ({
-      url: URL.createObjectURL(file),
-      name: file.name,
-      size: file.size,
-      type: "new" as const,
-      identifier: index,
-    })),
-  ];
+  const [fileUrls, setFileUrls] = useState<Map<File, string>>(new Map());
 
-  const handleRemoveImage = (
-    type: "new" | "existing",
-    identifier: number | string
-  ) => {
-    if (type === "new") {
-      onRemoveNew(identifier as number);
-    } else {
-      onRemoveExisting(identifier as string);
-    }
-  };
+  useEffect(() => {
+    setFileUrls((prevMap) => {
+      const newMap = new Map(prevMap);
+      let hasChanged = false;
+
+      for (const [file, url] of prevMap.entries()) {
+        if (!newAttachments.includes(file)) {
+          URL.revokeObjectURL(url);
+          newMap.delete(file);
+          hasChanged = true;
+        }
+      }
+
+      newAttachments.forEach((file) => {
+        if (!newMap.has(file)) {
+          newMap.set(file, URL.createObjectURL(file));
+          hasChanged = true;
+        }
+      });
+
+      return hasChanged ? newMap : prevMap;
+    });
+  }, [newAttachments]);
+
+  useEffect(() => {
+    const items: ThumbnailGalleryItem[] = [
+      ...(existingAttachments || []).map((url) => ({
+        url: `${apiUrl}/static/cases/${caseId}/${url}`,
+        name: url.split("/").pop() || "attachment",
+        type: "existing" as const,
+        identifier: url,
+      })),
+      ...newAttachments
+        .map((file, index) => ({
+          url: fileUrls.get(file) || "",
+          name: file.name,
+          size: file.size,
+          type: "new" as const,
+          identifier: index,
+        }))
+        .filter((item) => item.url !== ""),
+    ];
+
+    setGalleryItems(items);
+  }, [newAttachments, existingAttachments, fileUrls, caseId]);
+
+  useEffect(() => {
+    return () => {
+      fileUrls.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, []);
+
+  if (galleryItems.length === 0) return null;
 
   return (
-    <div className="px-3 pb-3 pt-2 border-t border-gray-200 bg-gray-50/50">
+    <div className="px-3 pb-3 pt-2">
       <div className="flex flex-wrap gap-2">
-        {galleryItems.length > 0 && (
-          <ImagePreviewWithThumbnail
-            galleryItems={galleryItems}
-            onRemove={handleRemoveImage}
-          />
-        )}
+        <ImagePreviewWithThumbnail
+          galleryItems={galleryItems}
+          onRemove={(type, id) => {
+            if (type === "new") onRemoveNew(id as number);
+            else if (onRemoveExisting) onRemoveExisting(id as string);
+          }}
+        />
       </div>
     </div>
   );

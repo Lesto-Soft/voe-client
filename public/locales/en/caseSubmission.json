@@ -2,6 +2,7 @@
   "caseSubmission": {
     "title": "Submit {{type}}",
     "subtitle": "Please fill out the form below",
+    "placeholder": "Describe your case...",
     "loadingForm": "Loading form for signalization...",
     "submittingCase": "Submitting case...",
     "invalidType": "Invalid or missing case type in URL (?type=problem or ?type=suggestion).",
@@ -11,7 +12,7 @@
     "submittingButton": "Submitting...",
     "backButton": "← Back",
     "helpButton": "❓ Help",
-    "selectFilesButton": "📎 Select Files",
+    "selectFilesButton": "Select Files",
     "usernameLabel": "Username",
     "usernamePlaceholder": "emp___",
     "fullNameLabel": "Full Name",
@@ -31,6 +32,7 @@
     "filesAdded": "File added",
     "successModalTitle": "Case submitted successfully!",
     "addAttachments": "Add Attachments",
+    "processing": "Processing...",
     "content": {
       "label": "Content",
       "placeholder": "Describe your case..."

@@ -1,107 +1,95 @@
 // src/components/forms/partials/TextEditor/TextEditorHelper.tsx
 import React from "react";
-import * as Popover from "@radix-ui/react-popover";
 import { useTranslation } from "react-i18next";
 import {
-  QuestionMarkCircleIcon,
-  XMarkIcon,
+  InformationCircleIcon,
   ListBulletIcon,
+  NumberedListIcon,
   Bars3BottomLeftIcon,
-  Bars3BottomRightIcon,
   Bars3Icon,
-} from "@heroicons/react/24/solid";
-import { NumberedListIcon } from "@heroicons/react/20/solid";
+  AtSymbolIcon,
+  PaperClipIcon,
+} from "@heroicons/react/20/solid";
+import { InformationCircleIcon as InfoOutline } from "@heroicons/react/24/outline";
+import * as Popover from "@radix-ui/react-popover"; // Заменяме Tooltip с Popover
 
-const TextEditorHelper: React.FC = () => {
-  const { t } = useTranslation(["menu", "answer"]);
+const TextEditorHelper: React.FC<{
+  type: "case" | "answer" | "comment";
+  hideAttach?: boolean;
+}> = ({ type, hideAttach = false }) => {
+  const { t } = useTranslation(["menu"]);
+  const configs: Record<string, { icon: React.ReactNode; onlyCase?: boolean }> =
+    {
+      bold: {
+        icon: <span className="font-bold text-xs w-4 text-center">B</span>,
+      },
+      italic: {
+        icon: <span className="italic text-xs w-4 text-center">I</span>,
+      },
+      underline: {
+        icon: <span className="underline text-xs w-4 text-center">U</span>,
+        onlyCase: true,
+      },
+      bulletList: {
+        icon: <ListBulletIcon className="w-4 h-4" />,
+        onlyCase: true,
+      },
+      orderedList: {
+        icon: <NumberedListIcon className="w-4 h-4" />,
+        onlyCase: true,
+      },
+      alignLeft: { icon: <Bars3BottomLeftIcon className="w-4 h-4" /> },
+      alignCenter: { icon: <Bars3Icon className="w-4 h-4" /> },
+      mention: { icon: <AtSymbolIcon className="w-4 h-4" /> },
+      attachment: { icon: <PaperClipIcon className="w-4 h-4" /> },
+    };
 
-  const features = [
-    {
-      id: "bold",
-      icon: <strong className="font-mono">B</strong>,
-      description: t("menu:rte.bold"),
-    },
-    {
-      id: "italic",
-      icon: <em className="font-mono">I</em>,
-      description: t("menu:rte.italic"),
-    },
-    {
-      id: "underline",
-      icon: <u className="font-mono">U</u>,
-      description: t("menu:rte.underline"),
-    },
-    {
-      id: "strike",
-      icon: <s className="font-mono">S</s>,
-      description: t("menu:rte.strikethrough"),
-    },
-    {
-      id: "bulletList",
-      icon: <ListBulletIcon className="h-5 w-5" />,
-      description: t("menu:rte.bulletList"),
-    },
-    {
-      id: "orderedList",
-      icon: <NumberedListIcon className="h-5 w-5" />,
-      description: t("menu:rte.orderedList"),
-    },
-    {
-      id: "alignLeft",
-      icon: <Bars3BottomLeftIcon className="h-5 w-5" />,
-      description: t("menu:rte.alignLeft"),
-    },
-    {
-      id: "alignCenter",
-      icon: <Bars3Icon className="h-5 w-5" />,
-      description: t("menu:rte.alignCenter"),
-    },
-    {
-      id: "alignRight",
-      icon: <Bars3BottomRightIcon className="h-5 w-5" />,
-      description: t("menu:rte.alignRight"),
-    },
-  ];
+  const visible = Object.keys(configs).filter((key) => {
+    if (key === "attachment" && hideAttach) return false;
+    if (type === "case" && key === "mention") return false;
+    if (type === "case") return true;
+    return !configs[key].onlyCase;
+  });
 
   return (
-    <Popover.Root modal={true}>
+    <Popover.Root>
       <Popover.Trigger asChild>
         <button
           type="button"
-          className="cursor-pointer p-1 rounded text-gray-500 hover:bg-gray-200 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500"
-          title={t("menu:rte.help") || "Help"}
+          className="p-2 text-gray-400 hover:text-blue-500 transition-colors focus:outline-none cursor-pointer"
+          title={t("rte.help")}
         >
-          <QuestionMarkCircleIcon className="w-5 h-5" />
+          <InfoOutline className="w-6 h-6" />
         </button>
       </Popover.Trigger>
+
       <Popover.Portal>
         <Popover.Content
-          sideOffset={5}
+          side="bottom"
           align="end"
-          className="w-[400px] bg-white rounded-lg shadow-xl border border-gray-200 p-4 z-50 data-[state=open]:animate-contentShow"
+          sideOffset={5}
+          className="z-[100] bg-white p-4 rounded-xl shadow-2xl border border-gray-200 max-w-[280px] animate-in fade-in zoom-in-95 focus:outline-none"
         >
-          <h3 className="text-md font-medium text-gray-900">
-            {t("answer:rte.title")}
-          </h3>
-          <p className="mt-1 text-sm text-gray-600 mb-4">
-            {t("answer:rte.description")}
-          </p>
-          <ul className="space-y-2 text-sm max-h-74 overflow-y-auto pr-2">
-            {features.map((feature) => (
-              <li key={feature.id} className="flex items-center gap-3">
-                <div className="flex-shrink-0 w-8 h-6 flex items-center justify-center rounded bg-gray-200">
-                  {feature.icon}
-                </div>
-                <span>- {feature.description}</span>
-              </li>
-            ))}
-          </ul>
-          <Popover.Close
-            className="absolute top-2 right-2 p-1 rounded-full text-gray-500 hover:bg-gray-100 cursor-pointer"
-            aria-label="Close"
-          >
-            <XMarkIcon className="w-5 h-5" />
-          </Popover.Close>
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-2 border-b pb-2 border-gray-200">
+              <InformationCircleIcon className="w-4 h-4 text-blue-500" />
+              <p className="text-sm font-bold text-gray-800">{t("rte.help")}</p>
+            </div>
+
+            <ul className="space-y-2.5">
+              {visible.map((key) => (
+                <li
+                  key={key}
+                  className="flex items-center gap-3 text-[13px] text-gray-600 group"
+                >
+                  <div className="flex items-center justify-center w-6 h-6 bg-gray-100 rounded text-gray-500 transition-colors">
+                    {configs[key].icon}
+                  </div>
+                  <span className="leading-tight">{t(`rte.${key}`)}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
           <Popover.Arrow className="fill-white" />
         </Popover.Content>
       </Popover.Portal>

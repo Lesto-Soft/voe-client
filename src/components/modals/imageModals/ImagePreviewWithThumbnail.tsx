@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { XCircleIcon } from "@heroicons/react/24/solid";
 import ImagePreviewModal, { GalleryItem } from "./ImagePreviewModal";
-import { getIconForFile } from "../../../utils/fileUtils";
 import FileThumbnail from "./FileThumbnail";
 
 export interface ThumbnailGalleryItem extends GalleryItem {

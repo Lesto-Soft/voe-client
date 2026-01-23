@@ -1,337 +1,92 @@
-// src/components/case-components/AddAnswer.tsx
-import { useState, useMemo, useEffect } from "react";
-import FileAttachmentAnswer from "../../global/FileAttachmentAnswer";
-import { PaperAirplaneIcon, XMarkIcon } from "@heroicons/react/24/solid";
+// src/components/case-components/answer/AddAnswer.tsx
+import { useState } from "react";
 import { useCreateAnswer } from "../../../graphql/hooks/answer";
 import { ANSWER_CONTENT } from "../../../utils/GLOBAL_PARAMETERS";
-import SimpleTextEditor from "../../forms/partials/TextEditor/SimplifiedTextEditor";
 import { getTextLength } from "../../../utils/contentRenderer";
-import ImagePreviewModal, {
-  GalleryItem,
-} from "../../modals/imageModals/ImagePreviewModal";
 import { toast } from "react-toastify";
-import { getIconForFile } from "../../../utils/fileUtils";
+import { TFunction } from "i18next";
+import UnifiedEditor from "../../forms/partials/UnifiedRichTextEditor";
 
-// Interface for the props of the AddAnswer component
 interface AddAnswerProps {
   caseId?: string;
-  t: (key: string) => string; // Translation function
-  me: any; // User object, assuming it has an _id property
+  t: TFunction;
+  me: any;
   caseNumber: number;
   mentions?: { name: string; username: string; _id: string }[];
   onAnswerSubmitted?: () => void;
-  content: string; // From parent
-  setContent: (content: string) => void; // To parent
-  attachments: File[]; // ADD THIS
-  setAttachments: (attachments: File[] | ((prev: File[]) => File[])) => void; // ADD THIS
+  content: string;
+  setContent: (content: string) => void;
+  attachments: File[];
+  setAttachments: React.Dispatch<React.SetStateAction<File[]>>;
 }
-
-// The AddAnswer component
 const AddAnswer: React.FC<AddAnswerProps> = ({
   caseId,
-  t = (key: string) => key, // Default t function for standalone or testing
+  t,
   me,
   caseNumber,
   mentions,
   onAnswerSubmitted,
-  content, // Use prop
-  setContent, // Use prop
-  attachments, // ADD THIS
-  setAttachments, // ADD THIS
+  content,
+  setContent,
+  attachments,
+  setAttachments,
 }) => {
-  // State for file errors, content input, and submission errors
-  const [fileError, setFileError] = useState<string | null>(null);
-  const [submissionError, setSubmissionError] = useState<string | null>(null); // Using the actual useCreateAnswer hook
-
-  const {
-    createAnswer,
-    loading,
-    error: apiError,
-  } = useCreateAnswer(caseNumber); // Effect to handle API errors from the useCreateAnswer hook
-
-  useEffect(() => {
-    if (apiError) {
-      setSubmissionError(
-        apiError.message ||
-          t("caseSubmission.errors.submission.apiError") ||
-          "An API error occurred."
-      );
-    }
-  }, [apiError, t]); // Function to handle form submission
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
+  const { createAnswer, loading } = useCreateAnswer(caseNumber);
 
   const submitAnswer = async (event: React.FormEvent) => {
     event.preventDefault();
-    setSubmissionError(null); // Clear previous errors // Validate content length using plain text length
-
     const textLength = getTextLength(content);
-    if (textLength > ANSWER_CONTENT.MAX) {
-      setSubmissionError(
-        // t("caseSubmission.errors.submission.contentTooLong") ||
-        "Решението е прекалено дълъг."
-      );
-      return;
-    }
 
     if (textLength < ANSWER_CONTENT.MIN) {
       setSubmissionError(
-        // t("caseSubmission.errors.submission.contentTooShort") ||
-        `Решението трябва да е поне ${ANSWER_CONTENT.MIN} символа.`
-      );
-      return;
-    } // Validate if content or attachments are present
-
-    const hasContent = content.trim() && textLength > 0;
-    if (!hasContent && attachments.length === 0) {
-      setSubmissionError(
-        t("caseSubmission.errors.submission.emptyContent") ||
-          "Cannot submit empty answer."
+        `Решението трябва да е поне ${ANSWER_CONTENT.MIN} символа.`,
       );
       return;
     }
 
     try {
-      // Call the createAnswer mutation
-      // Capture the response from the mutation
-      const newAnswer = await createAnswer({
+      await createAnswer({
         case: caseId,
-        attachments,
+        attachments, // Вече са компресирани от UnifiedRichTextEditor
         content,
         creator: me._id,
       });
 
-      // Reset form fields on successful submission
       setContent("");
       setAttachments([]);
-
-      if (onAnswerSubmitted) {
-        onAnswerSubmitted();
-      }
-
-      // Set the URL hash to focus the new answer
-      if (newAnswer && newAnswer._id) {
-        // A brief timeout allows the UI to re-render from the refetch
-        // before the hash change triggers the scroll effect.
-        setTimeout(() => {
-          window.location.hash = `answers-${newAnswer._id}`;
-        }, 100);
-      }
-
-      // Optionally, you can clear submissionError here or rely on API success to imply no error
-      // setSubmissionError(null); // Or show a success message
-      toast.success(t("answerSubmitted"), {
-        position: "top-right",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        style: {
-          marginTop: "90px",
-        },
-        className: "answer-toast",
-      });
+      if (onAnswerSubmitted) onAnswerSubmitted();
+      toast.success(t("answerSubmitted"));
     } catch (error: any) {
-      // Catch errors from the createAnswer promise itself (e.g., network issues if not handled by hook)
-      console.error("Error creating answer:", error);
-      setSubmissionError(
-        error?.message ||
-          t("caseSubmission.errors.submission.genericError") ||
-          "Failed to submit answer."
-      );
+      setSubmissionError(error?.message || "Грешка при изпращане.");
     }
-  }; // Function to remove an attachment
-
-  const handleRemoveAttachment = (fileNameToRemove: string) => {
-    setFileError(null); // Clear any existing file error
-    setAttachments((prevAttachments) =>
-      prevAttachments.filter((file) => file.name !== fileNameToRemove)
-    );
-  }; // Updated to handle TextEditor content changes
-
-  const handleContentChange = (html: string) => {
-    setContent(html); // Clear submission error related to length if user corrects it
-    if (submissionError && getTextLength(html) <= ANSWER_CONTENT.MAX) {
-      setSubmissionError(null);
-    }
-  }; // Updated submit button disabled condition
-
-  const isSubmitDisabled =
-    loading || getTextLength(content) < ANSWER_CONTENT.MIN; // Memoize object URLs for each file
-
-  const fileObjectUrls = useMemo(() => {
-    const map = new Map<string, string>();
-    attachments.forEach((file) => {
-      map.set(file.name + "-" + file.lastModified, URL.createObjectURL(file));
-    });
-    return map;
-  }, [attachments]); // Cleanup object URLs on unmount or when attachments change
-
-  // 1. ADD THIS useMemo TO CREATE THE GALLERY ITEMS
-  const galleryItems: GalleryItem[] = useMemo(() => {
-    return attachments.map((file) => {
-      const fileKey = file.name + "-" + file.lastModified;
-      return {
-        url: fileObjectUrls.get(fileKey) || "",
-        name: file.name,
-      };
-    });
-  }, [attachments, fileObjectUrls]);
-
-  useEffect(() => {
-    return () => {
-      fileObjectUrls.forEach((url) => URL.revokeObjectURL(url));
-    };
-  }, [fileObjectUrls]);
+  };
 
   return (
-    <div>
-      {/* Main container for the input area */}
-      <div className="flex flex-col gap-2 mx-5">
-        <div className="flex flex-col md:flex-row md:items-stretch gap-2">
-          {/* Container for the TextEditor and character counter */}
-          <div className="flex-grow relative min-w-0 max-w-full">
-            <SimpleTextEditor
-              content={content}
-              onUpdate={handleContentChange}
-              placeholder={"Напишете решение..."}
-              maxLength={ANSWER_CONTENT.MAX}
-              minLength={ANSWER_CONTENT.MIN}
-              wrapperClassName="transition-colors duration-150 h-36"
-              height="36"
-              mentions={mentions} // --- PASTE LOGIC: PASSING PROPS TO EDITOR ---
-              attachmentCount={attachments.length}
-              onPasteFiles={(files) => {
-                setAttachments((prev) => [...prev, ...files]);
-              }}
-              autoFocus={true} // Auto-focus the editor on mount
-            />
-          </div>
-          <div className="flex justify-between gap-4 md:contents">
-            {/* File attachment component */}
-            <FileAttachmentAnswer
-              inputId="file-upload-answer"
-              attachments={attachments}
-              setAttachments={setAttachments}
-              setFileError={setFileError}
-              wrapperClassName="flex-1 md:flex-none"
-              heightClass="h-14 md:h-36"
-            />
-            {/* Submit button */}{" "}
-            <button
-              onClick={submitAnswer}
-              disabled={isSubmitDisabled}
-              aria-label={t("submitAnswer") || "Submit Answer"}
-              className={`flex-1 md:flex-none cursor-pointer flex items-center justify-center h-14 md:h-36 md:w-24 md:min-w-24 rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-btnRedHover disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150`}
-              title="Изпрати"
-            >
-              {loading ? (
-                // Loading spinner
-                <svg
-                  className="animate-spin h-6 w-6 text-blue-600"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  ></circle>
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  ></path>
-                </svg>
-              ) : (
-                // Paper airplane icon
-                <PaperAirplaneIcon className="h-8 w-8 text-blue-600" />
-              )}
-            </button>
-          </div>
+    <div className="flex flex-col gap-2 mx-5">
+      <div className="flex flex-col md:flex-row gap-2">
+        <div className="flex-grow">
+          <UnifiedEditor
+            editorClassName="h-[180px] min-h-[180px] max-h-[180px]"
+            content={content}
+            onContentChange={setContent}
+            attachments={attachments}
+            setAttachments={setAttachments}
+            onSend={() =>
+              submitAnswer({ preventDefault: () => {} } as React.FormEvent)
+            }
+            mentions={mentions}
+            placeholder="Напишете решение..."
+            isSending={loading}
+            minLength={ANSWER_CONTENT.MIN}
+            maxLength={ANSWER_CONTENT.MAX}
+            type="answer"
+          />
         </div>
       </div>
-      {/* Display file errors */}{" "}
-      {fileError && (
-        <div className="mx-5 mt-2 px-2">
-          {/* Consistent margin with mx-5 */}{" "}
-          <p className="text-sm text-red-500 transition-opacity duration-200 opacity-100">
-            {fileError || "\u00A0"}{" "}
-            {/* Non-breaking space for layout consistency */}{" "}
-          </p>{" "}
-        </div>
+      {submissionError && (
+        <div className="text-red-600 text-sm mt-1">{submissionError}</div>
       )}
-      {/* Display list of attached files */}{" "}
-      {attachments.length > 0 && (
-        <div className="mx-5 mt-2 text-sm text-gray-600 space-y-1 overflow-y-auto rounded p-2 bg-gray-100 border border-gray-200 max-h-32">
-          {" "}
-          <div className="flex flex-wrap gap-2">
-            {" "}
-            {attachments.map((file) => {
-              const fileKey = file.name + "-" + file.lastModified;
-              const fileUrl = fileObjectUrls.get(fileKey) || "";
-              const Icon = getIconForFile(file.name);
-
-              return (
-                <div
-                  key={file.name + "-" + file.lastModified + "-" + file.size}
-                  className="flex items-center gap-2 px-3 py-1.5 text-sm bg-gray-200 rounded-full hover:bg-gray-300"
-                  title={file.name}
-                >
-                  <ImagePreviewModal
-                    galleryItems={galleryItems} // Pass the full gallery
-                    imageUrl={fileUrl} // The URL for this specific trigger
-                    fileName={file.name} // The name for this specific trigger
-                    triggerElement={
-                      <button
-                        type="button"
-                        className="w-30 flex items-center gap-1.5 truncate cursor-pointer"
-                        title={file.name}
-                      >
-                        <Icon className="h-4 w-4 text-gray-600 flex-shrink-0" />
-                        {file.name}
-                      </button>
-                    }
-                  />
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveAttachment(file.name)}
-                    className="p-0.5 rounded-full hover:bg-red-100 focus:outline-none focus:ring-1 focus:ring-red-500 cursor-pointer"
-                    aria-label={`${t("removeFile") || "Remove file"} ${
-                      file.name
-                    }`}
-                  >
-                    <XMarkIcon className="h-4 w-4 text-btnRed hover:text-red-700" />
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-      {/* Submission Error Display */}
-      {/* This uses conditional rendering for the error message for clarity and accessibility */}
-      {
-        <div
-          id="submission-error-display" // Ensure this ID is unique if multiple instances on one page or use aria-describedby on textarea
-          className={`mx-5 col-span-1 md:col-span-2 pb-2 rounded-md border
-         transition-opacity duration-300
-         ${
-           submissionError
-             ? "my-2 p-2 bg-red-100 border-red-400 text-red-700 opacity-100" // Visible styles
-             : "border-transparent text-transparent opacity-0 h-0 p-0 overflow-hidden" // Hidden and collapse space
-         }`}
-          aria-live="polite"
-          role="alert"
-        >
-          {/* Display error or non-breaking space to maintain height when not fully collapsed */}
-          {submissionError}
-        </div>
-      }
     </div>
   );
 };

@@ -17,5 +17,14 @@
   "noHistory": "Няма история на промените",
   "showFullScreen": "Покажи на цял екран",
   "PROBLEM": "ПРОБЛЕМ",
-  "SUGGESTION": "ПОДОБРЕНИЕ"
+  "SUGGESTION": "ПОДОБРЕНИЕ",
+  "compressing_image": "Изображението се обработва...",
+  "processing_one": "Файлът се обработва...",
+  "processing_many": "Файловете се обработват...",
+  "file_too_large_warning": "Файлът {{fileName}} не можа да бъде компресиран под {{maxSize}} MB.",
+  "generic_process_error": "Възникна грешка при обработката на файловете.",
+  "saving": "Запазване...",
+  "unsavedChangesTitle": "Незапазени промени",
+  "unsavedChangesDescription": "Имате незапазен текст или прикачени файлове, които ще бъдат изгубени. Сигурни ли сте, че искате да затворите?",
+  "closeEditor": "Затвори"
 }

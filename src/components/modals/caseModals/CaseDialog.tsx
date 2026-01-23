@@ -13,8 +13,9 @@ import { ICategory, IMe } from "../../../db/interfaces";
 import { CASE_TYPE } from "../../../utils/GLOBAL_PARAMETERS";
 import { useTranslation } from "react-i18next";
 import SuccessConfirmationModal from "../SuccessConfirmationModal";
-// Import the new CaseForm component
 import CaseForm from "../../forms/CaseForm";
+// Import the hook
+import { useFileHandler } from "../../../hooks/useFileHandler";
 
 // Props definition
 type CaseDialogProps = {
@@ -41,12 +42,6 @@ type CaseDialogProps = {
     }
 );
 
-// Helper for Bulgarian text (can be moved to utils)
-const getBulgarianText = (key: string, t: any, fallback: string) => {
-  const translated = t(key);
-  return translated === key ? fallback : translated;
-};
-
 const CaseDialog: React.FC<CaseDialogProps> = (props) => {
   const { t } = useTranslation(["dashboard", "caseSubmission"]);
 
@@ -59,6 +54,9 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
   const isMouseDownOnBackdrop = useRef(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
+  // 1. Initialize the compression hook
+  const { isCompressing } = useFileHandler();
+
   // Reset state when opening
   useEffect(() => {
     if (isOpen) {
@@ -70,6 +68,9 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
 
   // Modal Control Logic
   const handleOpenChange = (open: boolean) => {
+    // Prevent closing via ESC or outside click if compressing
+    if (!open && isCompressing) return;
+
     if (!open) {
       attemptClose();
     } else {
@@ -78,6 +79,9 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
   };
 
   const attemptClose = () => {
+    // 2. Prevent closing if compression is in progress
+    if (isCompressing) return;
+
     if (hasUnsavedChanges) {
       setShowConfirmDialog(true);
     } else {
@@ -132,7 +136,6 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
 
   // Render logic for the modal title
   const renderTitle = () => {
-    // Determine type based on mode and props
     const isSuggestion =
       (props.mode === "edit" ? props.initialData.type : props.caseType) ===
       "SUGGESTION";
@@ -181,17 +184,24 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
             />
             <Dialog.Content
               onMouseDown={(e) => e.stopPropagation()} // Prevent backdrop click logic when clicking inside content
-              className="fixed z-50 left-1/2 top-1/2 w-[90vw] max-w-4xl -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-stone-100 shadow-lg focus:outline-none max-h-[90vh] flex flex-col"
+              className="fixed z-50 left-1/2 top-1/2 w-[90vw] max-w-6xl -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-stone-100 shadow-lg focus:outline-none max-h-[90vh] flex flex-col"
             >
               {/* --- HEADER --- */}
               <div className="sticky top-0 bg-stone-100 z-10 border-b border-gray-300 rounded-t-xl flex-shrink-0">
-                <div className="p-6">
+                <div className="p-6 relative">
                   <Dialog.Title className="text-2xl font-bold text-gray-800">
                     {renderTitle()}
                   </Dialog.Title>
+
+                  {/* Close button - disabled if compressing */}
                   <button
                     onClick={attemptClose}
-                    className="absolute hover:cursor-pointer top-4 right-4 text-gray-500 hover:text-gray-800 focus:outline-none rounded-full p-1 transition-colors"
+                    disabled={isCompressing}
+                    className={`absolute top-4 right-4 rounded-full p-1 transition-colors ${
+                      isCompressing
+                        ? "text-gray-300 cursor-not-allowed"
+                        : "text-gray-500 hover:text-gray-800 hover:cursor-pointer focus:outline-none"
+                    }`}
                     aria-label="Close"
                   >
                     <XMarkIcon className="h-6 w-6" />
@@ -217,15 +227,15 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
               </div>
 
               {/* --- RENDER THE FORM COMPONENT --- */}
+              {/* 3. Pass the compression props down to the form */}
               <CaseForm
                 {...props} // Pass original props down
                 t={t}
-                isOpen={isOpen} // Pass isOpen for the paste listener
-                onCancel={attemptClose} // Use attemptClose to check for unsaved changes
-                onUnsavedChangesChange={setHasUnsavedChanges} // Allow form to report changes
-                onFormError={handleFormError} // Allow form to report validation errors
-                onSubmissionError={handleFormError} // Allow form to report API errors
-                onSubmitSuccess={handleFormSubmitSuccess} // Handle successful submission
+                onCancel={attemptClose}
+                onUnsavedChangesChange={setHasUnsavedChanges}
+                onFormError={handleFormError}
+                onSubmissionError={handleFormError}
+                onSubmitSuccess={handleFormSubmitSuccess}
               />
             </Dialog.Content>
 

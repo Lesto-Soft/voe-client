@@ -1,59 +1,52 @@
-// src/components/global/FileAttachmentAnswer.tsx
-
 import React from "react";
-import { handleFileChange } from "../../utils/attachment-handling";
-import { useTranslation } from "react-i18next";
-import { PaperClipIcon } from "@heroicons/react/24/solid";
-import { MAX_UPLOAD_FILES } from "../../db/config";
-interface FileAttachmentBtnProps {
+import { PaperClipIcon } from "@heroicons/react/24/outline";
+
+export interface FileAttachmentBtnProps {
   inputId: string;
   attachments: File[];
-  setAttachments: React.Dispatch<React.SetStateAction<File[]>>;
-  setFileError: React.Dispatch<React.SetStateAction<string | null>>;
-  heightClass?: string;
+  setAttachments: (files: File[] | ((prev: File[]) => File[])) => void;
+  setFileError: (error: string | null) => void;
   wrapperClassName?: string;
+  heightClass?: string;
 }
 
 const FileAttachmentAnswer: React.FC<FileAttachmentBtnProps> = ({
+  inputId,
   attachments,
   setAttachments,
   setFileError,
-  inputId,
-  heightClass = "h-24",
   wrapperClassName = "",
+  heightClass = "h-36",
 }) => {
-  const { t } = useTranslation("caseSubmission"); // Assuming you have a translation function available
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const newFiles = Array.from(e.target.files);
+      setAttachments((prev: any) => [...prev, ...newFiles]);
+      setFileError(null);
+      e.target.value = "";
+    }
+  };
+
   return (
-    <div className={wrapperClassName} title="Прикачи файл(ове)">
-      {/* Styled Label acting as Button - Disable visually if max files reached */}
+    <div
+      className={`${wrapperClassName} flex flex-col items-center justify-center`}
+    >
       <label
         htmlFor={inputId}
-        className={`${heightClass} flex items-center justify-center w-full text-center rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm ${
-          attachments.length >= MAX_UPLOAD_FILES
-            ? "opacity-75 cursor-not-allowed" // Disabled style
-            : "cursor-pointer hover:bg-gray-200 active:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2" // Enabled style
-        }`}
-        // Prevent triggering input if disabled (CSS should suffice, but JS backup)
-        onClick={(e) => {
-          if (attachments.length >= MAX_UPLOAD_FILES) e.preventDefault();
-        }}
+        className={`flex flex-col items-center justify-center w-full ${heightClass} rounded-md border border-gray-300 bg-white shadow-sm cursor-pointer hover:bg-gray-50 hover:border-indigo-400 transition-all duration-150`}
       >
-        <PaperClipIcon className="h-8 w-8 inline-block " />
+        <div className="flex flex-col items-center justify-center pt-5 pb-6 w-16">
+          <PaperClipIcon className="h-8 w-8 mb-1 text-indigo-500" />
+        </div>
+        <input
+          id={inputId}
+          type="file"
+          className="hidden"
+          multiple
+          onChange={handleFileChange}
+          accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt"
+        />
       </label>
-      {/* Hidden Actual File Input - Disable if max files reached */}
-      <input
-        id={inputId}
-        name="attachments"
-        type="file"
-        multiple
-        onChange={(event) => {
-          handleFileChange(t, event, setAttachments, setFileError);
-        }}
-        className="sr-only"
-        disabled={attachments.length >= MAX_UPLOAD_FILES} // HTML disabled attribute
-        // Optional: Add accept attribute for client-side hint (doesn't enforce size)
-        // accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt"
-      />
     </div>
   );
 };

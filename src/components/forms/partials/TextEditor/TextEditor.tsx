@@ -30,7 +30,7 @@ export interface TextEditorProps {
   minLength?: number;
   mentions?: { name: string; username: string; _id: string }[];
   autoFocus?: boolean;
-  type?: string;
+  type?: "case" | "comment" | "answer" | "default";
 }
 
 interface MenuButtonConfig {
@@ -46,7 +46,7 @@ interface MenuBarProps {
   editor: Editor | null;
   className?: string;
   renderKey?: number;
-  type: "case" | "comment" | "answer";
+  type: "case" | "comment" | "answer" | "default";
 }
 
 const MenuBar: React.FC<MenuBarProps> = ({ editor, className, type }) => {
@@ -185,14 +185,14 @@ const TextEditor: React.FC<TextEditorProps> = ({
   minLength,
   mentions,
   autoFocus = false,
-  type,
+  type = "default",
 }) => {
   const [renderKey, setRenderKey] = useState(0);
   const [charCount, setCharCount] = useState(0);
 
   const mentionSuggestionConfig = useMemo(
     () => createMentionSuggestion(mentions),
-    [mentions]
+    [mentions],
   );
 
   const isInvalid = useMemo(() => {

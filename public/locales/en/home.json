@@ -1,0 +1,45 @@
+{
+  "home": {
+    "title": "Voice of Employees",
+    "subtitle": "Submit a case",
+    "problem": "Problem",
+    "suggestion": "Suggestion",
+    "enterYourProfile": "Enter your profile",
+    "enterUsernamePassword": "Enter your username and password",
+    "submitCase": "Submit Case",
+    "login": "Log in",
+    "loggingIn": "Logging in..."
+  },
+  "errors": {
+    "wrong_credentials": "Wrong username or password.",
+    "user_left": "This user has left. Please use another account or contact the administrator.",
+    "network_error": "Network error. Please try again later."
+  },
+  "forgotPassword": {
+    "title": "Forgot password?",
+    "close": "Close",
+    "email": {
+      "description": "Enter your email to receive a password reset link.",
+      "placeholder": "email@domain.com",
+      "submitButton": "Send link",
+      "switchToNoEmail": "I don't have access to email"
+    },
+    "noEmail": {
+      "title": "Manual password request",
+      "description": "Enter your username. An administrator will be notified and will provide you with a new password.",
+      "placeholder": "Username",
+      "submitButton": "Notify administrator",
+      "switchToEmail": "Recover with email"
+    },
+    "success": {
+      "email": {
+        "title": "Request sent",
+        "description": "If an account exists with this email, you will receive a recovery link."
+      },
+      "noEmail": {
+        "title": "Administrator notified",
+        "description": "An administrator will contact you with a new password."
+      }
+    }
+  }
+}

@@ -1,0 +1,400 @@
+// components/features/analyses/hooks/useProcessedAnalyticsData.ts
+import { useMemo } from "react";
+import { ICase, ICategory } from "../../../../db/interfaces";
+import {
+  getDaysInMonth,
+  getStartAndEndOfWeek,
+} from "../../../../utils/dateUtils";
+import { BarChartDisplayMode, ViewMode } from "../types";
+import { BarSeriesConfig } from "../../../charts/BarChart";
+import {
+  DAY_NAMES_FULL,
+  MONTH_NAMES,
+  PRIORITY_COLORS,
+  PRIORITY_TRANSLATIONS,
+  TYPE_COLORS,
+  TypeColorKey,
+} from "../constants";
+
+// --- TYPE DEFINITIONS ---
+interface AnalyticsFilters {
+  viewMode: ViewMode;
+  barChartMode: BarChartDisplayMode;
+  currentYear: number;
+  currentMonth: number;
+  currentWeek: number;
+  startDateForPies: Date | null;
+  endDateForPies: Date | null;
+  isAllTimePies: boolean;
+}
+
+// --- THE HOOK ---
+export const useProcessedAnalyticsData = (
+  allCases: ICase[] | undefined,
+  filters: AnalyticsFilters
+) => {
+  const {
+    viewMode,
+    barChartMode,
+    currentYear,
+    currentMonth,
+    currentWeek,
+    startDateForPies,
+    endDateForPies,
+    isAllTimePies,
+  } = filters;
+
+  const filteredCasesForPieCharts = useMemo(() => {
+    if (!allCases) return [];
+    // This handles the main "Всички" (All) tab
+    if (isAllTimePies) return allCases;
+
+    // ✅ REVISED: Simplified and corrected filtering logic.
+    // It now correctly handles a single start date, a single end date, or both.
+    // If both dates are null (e.g., "Entire Period" in custom view), it includes all cases.
+    return allCases.filter((c: ICase) => {
+      const caseDate = new Date(parseInt(c.date));
+      if (startDateForPies && caseDate < startDateForPies) {
+        return false;
+      }
+      if (endDateForPies && caseDate > endDateForPies) {
+        return false;
+      }
+      return true;
+    });
+  }, [allCases, startDateForPies, endDateForPies, isAllTimePies]);
+
+  const barChartDisplayData = useMemo(() => {
+    if (!allCases || allCases.length === 0) {
+      return {
+        data: [],
+        dataKeyX: "periodLabel",
+        title: "Няма данни",
+        seriesConfig: [],
+      };
+    }
+
+    let chartTitle = "";
+    let dataForChart: Array<any> = [];
+    let seriesConfig: BarSeriesConfig[] = [];
+
+    const typeSeries: BarSeriesConfig[] = [
+      { dataKey: "problems", label: "Проблеми", color: TYPE_COLORS.PROBLEM },
+      {
+        dataKey: "suggestions",
+        label: "Предложения",
+        color: TYPE_COLORS.SUGGESTION,
+      },
+    ];
+    const prioritySeries: BarSeriesConfig[] = [
+      {
+        dataKey: "highPriority",
+        label: PRIORITY_TRANSLATIONS.HIGH,
+        color: PRIORITY_COLORS.HIGH,
+      },
+      {
+        dataKey: "mediumPriority",
+        label: PRIORITY_TRANSLATIONS.MEDIUM,
+        color: PRIORITY_COLORS.MEDIUM,
+      },
+      {
+        dataKey: "lowPriority",
+        label: PRIORITY_TRANSLATIONS.LOW,
+        color: PRIORITY_COLORS.LOW,
+      },
+    ];
+
+    seriesConfig = barChartMode === "type" ? typeSeries : prioritySeries;
+
+    const aggregateCases = (casesToAggregate: ICase[]) => {
+      if (barChartMode === "type") {
+        return {
+          problems: casesToAggregate.filter(
+            (c) => c.type.toUpperCase() === "PROBLEM"
+          ).length,
+          suggestions: casesToAggregate.filter(
+            (c) => c.type.toUpperCase() === "SUGGESTION"
+          ).length,
+        };
+      } else {
+        return {
+          highPriority: casesToAggregate.filter(
+            (c) => c.priority.toUpperCase() === "HIGH"
+          ).length,
+          mediumPriority: casesToAggregate.filter(
+            (c) => c.priority.toUpperCase() === "MEDIUM"
+          ).length,
+          lowPriority: casesToAggregate.filter(
+            (c) => c.priority.toUpperCase() === "LOW"
+          ).length,
+        };
+      }
+    };
+
+    if (viewMode === "all") {
+      chartTitle = `Общо случаи по години (${
+        barChartMode === "type" ? "по тип" : "по приоритет"
+      })`;
+      const yearlyDataAggregated: { [year: string]: any } = {};
+      allCases.forEach((c: ICase) => {
+        const year = new Date(parseInt(c.date)).getFullYear().toString();
+        if (!yearlyDataAggregated[year]) {
+          yearlyDataAggregated[year] = aggregateCases(
+            allCases.filter(
+              (cs: ICase) =>
+                new Date(parseInt(cs.date)).getFullYear().toString() === year
+            )
+          );
+        }
+      });
+      dataForChart = Object.keys(yearlyDataAggregated)
+        .map((year) => ({ periodLabel: year, ...yearlyDataAggregated[year] }))
+        .sort((a, b) => parseInt(a.periodLabel) - parseInt(b.periodLabel));
+    } else if (viewMode === "yearly") {
+      chartTitle = `Сравнение по месеци (${currentYear}) (${
+        barChartMode === "type" ? "по тип" : "по приоритет"
+      })`;
+      const yearCases = allCases.filter(
+        (c: ICase) => new Date(parseInt(c.date)).getFullYear() === currentYear
+      );
+      dataForChart = MONTH_NAMES.map((monthName, index) => {
+        const monthCases = yearCases.filter(
+          (c: ICase) => new Date(parseInt(c.date)).getMonth() === index
+        );
+        return { periodLabel: monthName, ...aggregateCases(monthCases) };
+      });
+    } else if (viewMode === "monthly") {
+      chartTitle = `Сравнение по дни (${
+        MONTH_NAMES[currentMonth - 1]
+      } ${currentYear}) (${
+        barChartMode === "type" ? "по тип" : "по приоритет"
+      })`;
+      const monthCasesFiltered = allCases.filter((c: ICase) => {
+        const caseDate = new Date(parseInt(c.date));
+        return (
+          caseDate.getFullYear() === currentYear &&
+          caseDate.getMonth() === currentMonth - 1
+        );
+      });
+      const daysInSelectedMonth = getDaysInMonth(currentYear, currentMonth);
+      dataForChart = Array.from({ length: daysInSelectedMonth }, (_, i) => {
+        const dayNumber = i + 1;
+        const dayCases = monthCasesFiltered.filter(
+          (c: ICase) => new Date(parseInt(c.date)).getDate() === dayNumber
+        );
+        return {
+          periodLabel: dayNumber.toString(),
+          ...aggregateCases(dayCases),
+        };
+      });
+    } else if (viewMode === "weekly") {
+      chartTitle = `Сравнение по дни (Седмица ${currentWeek}, ${currentYear}) (${
+        barChartMode === "type" ? "по тип" : "по приоритет"
+      })`;
+      const { start, end } = getStartAndEndOfWeek(currentWeek, currentYear);
+      const weekCasesFiltered = allCases.filter((c: ICase) => {
+        const d = new Date(parseInt(c.date));
+        return d >= start && d <= end;
+      });
+      dataForChart = DAY_NAMES_FULL.map((dayName, index) => {
+        const dayCases = weekCasesFiltered.filter(
+          (c: ICase) =>
+            (new Date(parseInt(c.date)).getUTCDay() + 6) % 7 === index
+        );
+        return { periodLabel: dayName, ...aggregateCases(dayCases) };
+      });
+    } else if (viewMode === "custom") {
+      let periodString = "Цял период"; // Default for custom view with no dates
+      const startStr = startDateForPies?.toLocaleDateString("bg-BG");
+      const endStr = endDateForPies?.toLocaleDateString("bg-BG");
+
+      if (startStr && endStr) {
+        periodString = `${startStr} - ${endStr}`;
+      } else if (startStr) {
+        periodString = `От ${startStr}`;
+      } else if (endStr) {
+        periodString = `До ${endStr}`;
+      }
+
+      chartTitle = `Общо по ден от седмицата (${periodString}) (${
+        barChartMode === "type" ? "по тип" : "по приоритет"
+      })`;
+
+      // ✅ REVISED: Simplified and corrected filtering logic for the bar chart.
+      const rangeCasesFiltered = allCases.filter((c: ICase) => {
+        const d = new Date(parseInt(c.date));
+        if (startDateForPies && d < startDateForPies) {
+          return false;
+        }
+        if (endDateForPies && d > endDateForPies) {
+          return false;
+        }
+        return true;
+      });
+      dataForChart = DAY_NAMES_FULL.map((name) => {
+        const dayCases = rangeCasesFiltered.filter(
+          (c: ICase) =>
+            DAY_NAMES_FULL[(new Date(parseInt(c.date)).getUTCDay() + 6) % 7] ===
+            name
+        );
+        return { periodLabel: name, ...aggregateCases(dayCases) };
+      });
+    }
+
+    return {
+      data: dataForChart,
+      dataKeyX: "periodLabel",
+      title: chartTitle,
+      seriesConfig,
+    };
+  }, [
+    allCases,
+    viewMode,
+    barChartMode,
+    currentYear,
+    currentMonth,
+    currentWeek,
+    startDateForPies,
+    endDateForPies,
+  ]);
+
+  // The rest of the hook is omitted as it remains unchanged...
+  // categoryPieData, priorityPieData, etc., will now correctly use the
+  // properly filtered `filteredCasesForPieCharts`.
+
+  const categoryPieData = useMemo(() => {
+    if (!filteredCasesForPieCharts || filteredCasesForPieCharts.length === 0)
+      return [];
+
+    // 2. UPDATE THE `counts` OBJECT TYPE TO STORE COLOR
+    const counts: {
+      [key: string]: { value: number; id: string; color: string };
+    } = {};
+
+    filteredCasesForPieCharts.forEach((c: ICase) => {
+      (c.categories || []).forEach((cat: ICategory) => {
+        if (cat && cat.name) {
+          // Add a check for cat object
+          if (!counts[cat.name]) {
+            // 3. STORE THE COLOR FROM THE CATEGORY OBJECT
+            counts[cat.name] = {
+              value: 0,
+              id: cat._id,
+              color: cat.color || "#A9A9A9", // Use the color with a fallback
+            };
+          }
+          counts[cat.name].value++;
+        }
+      });
+    });
+
+    return Object.entries(counts)
+      .sort(([, aData], [, bData]) => bData.value - aData.value)
+      .map(([label, data]) => ({
+        label,
+        value: data.value,
+        id: data.id,
+        // 4. USE THE STORED COLOR
+        color: data.color,
+      }));
+  }, [filteredCasesForPieCharts]);
+
+  const priorityPieData = useMemo(() => {
+    if (!filteredCasesForPieCharts || filteredCasesForPieCharts.length === 0)
+      return [];
+    const counts: { [key: string]: number } = { HIGH: 0, MEDIUM: 0, LOW: 0 };
+    filteredCasesForPieCharts.forEach((c: ICase) => {
+      const priorityKey = c.priority.toUpperCase();
+      if (counts.hasOwnProperty(priorityKey)) {
+        counts[priorityKey]++;
+      }
+    });
+    return (Object.keys(counts) as Array<string>)
+      .filter((pKey) => counts[pKey] > 0)
+      .map((pKey) => ({
+        label: PRIORITY_TRANSLATIONS[pKey] || pKey,
+        value: counts[pKey],
+        color: PRIORITY_COLORS[pKey] || "#CCCCCC",
+      }));
+  }, [filteredCasesForPieCharts]);
+
+  const typePieData = useMemo(() => {
+    if (!filteredCasesForPieCharts || filteredCasesForPieCharts.length === 0)
+      return [];
+    const counts: Record<TypeColorKey, number> = { PROBLEM: 0, SUGGESTION: 0 };
+    filteredCasesForPieCharts.forEach((c: ICase) => {
+      const caseTypeUpper = c.type.toUpperCase();
+      if (caseTypeUpper === "PROBLEM" || caseTypeUpper === "SUGGESTION") {
+        counts[caseTypeUpper]++;
+      }
+    });
+    return (Object.keys(counts) as TypeColorKey[])
+      .filter((tKey) => counts[tKey] > 0)
+      .map((tKey: TypeColorKey) => ({
+        label: tKey === "PROBLEM" ? "Проблеми" : "Предложения",
+        value: counts[tKey],
+        color: TYPE_COLORS[tKey] || "#CCCCCC",
+      }));
+  }, [filteredCasesForPieCharts]);
+
+  const averageRatingData = useMemo(() => {
+    if (!filteredCasesForPieCharts || filteredCasesForPieCharts.length === 0) {
+      return { average: null, count: 0 };
+    }
+    let totalSumOfAverageRatings = 0;
+    let countOfCasesWithRatings = 0;
+    filteredCasesForPieCharts.forEach((caseItem: ICase) => {
+      if (
+        caseItem.calculatedRating !== null &&
+        caseItem.calculatedRating !== undefined
+      ) {
+        totalSumOfAverageRatings += caseItem.calculatedRating;
+        countOfCasesWithRatings++;
+      }
+    });
+    if (countOfCasesWithRatings === 0) return { average: null, count: 0 };
+    return {
+      average: totalSumOfAverageRatings / countOfCasesWithRatings,
+      count: countOfCasesWithRatings,
+    };
+  }, [filteredCasesForPieCharts]);
+
+  const periodCaseSummary = useMemo(() => {
+    const totalCases = filteredCasesForPieCharts.length;
+    if (barChartMode === "type") {
+      const problemCount = filteredCasesForPieCharts.filter(
+        (c) => c.type.toUpperCase() === "PROBLEM"
+      ).length;
+      return {
+        totalCases,
+        problems: problemCount,
+        suggestions: totalCases - problemCount,
+      };
+    } else {
+      const highCount = filteredCasesForPieCharts.filter(
+        (c) => c.priority.toUpperCase() === "HIGH"
+      ).length;
+      const mediumCount = filteredCasesForPieCharts.filter(
+        (c) => c.priority.toUpperCase() === "MEDIUM"
+      ).length;
+      const lowCount = filteredCasesForPieCharts.filter(
+        (c) => c.priority.toUpperCase() === "LOW"
+      ).length;
+      return {
+        totalCases,
+        high: highCount,
+        medium: mediumCount,
+        low: lowCount,
+      };
+    }
+  }, [filteredCasesForPieCharts, barChartMode]);
+
+  return {
+    barChartDisplayData,
+    categoryPieData,
+    priorityPieData,
+    typePieData,
+    averageRatingData,
+    periodCaseSummary,
+  };
+};

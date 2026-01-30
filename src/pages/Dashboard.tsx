@@ -1,0 +1,348 @@
+// src/pages/DashboardContent.tsx
+import { useState, useEffect, useMemo, useCallback } from "react";
+import {
+  useGetAllCases,
+  useGetCasesByUserCategories,
+  useGetCasesByUserManagedCategories,
+  useGetRelevantCases,
+  useUserAnsweredCases,
+  useUserCases,
+  useUserCommentedCases,
+} from "../graphql/hooks/case";
+import CaseTableWithFilters from "../components/tables/CaseTableWithFilters";
+import {
+  ListBulletIcon,
+  UserCircleIcon,
+  AcademicCapIcon,
+  ChatBubbleBottomCenterTextIcon,
+  ChatBubbleOvalLeftEllipsisIcon,
+  ChevronUpIcon,
+  ChevronDownIcon,
+  Cog6ToothIcon,
+  XMarkIcon,
+} from "@heroicons/react/24/outline";
+import { useLocation, useNavigate } from "react-router";
+import { useTranslation } from "react-i18next";
+import { useCurrentUser } from "../context/UserContext";
+import { ROLES } from "../utils/GLOBAL_PARAMETERS";
+import { ICase } from "../db/interfaces";
+import ClearFiltersButton from "../components/global/ClearFiltersButton";
+
+// Type for the filters prop
+type CaseFilters = {
+  caseNumber?: string;
+  priority?: ICase["priority"] | "";
+  type?: ICase["type"] | "";
+  creatorId?: string;
+  categoryIds?: string[];
+  content?: string;
+  status?: (ICase["status"] | "")[];
+  readStatus?: string;
+  startDate?: Date | null;
+  endDate?: Date | null;
+};
+
+// Props interface for the component
+interface DashboardContentProps {
+  initialFiltersOverride?: CaseFilters;
+}
+
+function withUserIdHook(
+  hook: (userId: string, input: any) => any,
+  userId: string | undefined
+) {
+  return (input: any) => {
+    if (!userId) {
+      return {
+        cases: [],
+        count: 0,
+        loading: true,
+        error: null,
+        refetch: () => {},
+      };
+    }
+    return hook(userId, input);
+  };
+}
+
+const DashboardPage: React.FC<DashboardContentProps> = ({
+  initialFiltersOverride,
+}) => {
+  const { t } = useTranslation("dashboard");
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [fitler, setFilter] = useState(!initialFiltersOverride);
+  const currentUser = useCurrentUser();
+
+  const handleClearFilters = () => {
+    const params = new URLSearchParams(location.search);
+    const screen = params.get("screen");
+    const perPage = params.get("perPage");
+
+    const newParams = new URLSearchParams();
+    if (screen) newParams.set("screen", screen);
+    if (perPage) newParams.set("perPage", perPage);
+    newParams.set("page", "1");
+
+    navigate(`${location.pathname}?${newParams.toString()}`, { replace: true });
+  };
+
+  const useAllRelevantCasesHook = useCallback(
+    (input: any) => {
+      return useGetRelevantCases(currentUser._id, input);
+    },
+    [currentUser._id]
+  );
+
+  const allSubmenus = useMemo(
+    () => [
+      {
+        label: t("all"),
+        hookKey: "all",
+        hook:
+          currentUser.role?._id === ROLES.ADMIN
+            ? useGetAllCases
+            : useAllRelevantCasesHook,
+        icon: <ListBulletIcon className="h-5 w-5 mr-2" />,
+      },
+      {
+        label: t("mine"),
+        hookKey: "mine",
+        hook: null,
+        icon: <UserCircleIcon className="h-5 w-5 mr-2" />,
+      },
+      {
+        label: "Управлявани",
+        hookKey: "managed",
+        hook: null,
+        icon: <Cog6ToothIcon className="h-5 w-5 mr-2" />,
+      },
+      {
+        label: t("expert"),
+        hookKey: "expert",
+        hook: null,
+        icon: <AcademicCapIcon className="h-5 w-5 mr-2" />,
+      },
+      {
+        label: t("answered"),
+        hookKey: "answered",
+        hook: null,
+        icon: <ChatBubbleBottomCenterTextIcon className="h-5 w-5 mr-2" />,
+      },
+      {
+        label: t("commented"),
+        hookKey: "commented",
+        hook: null,
+        icon: <ChatBubbleOvalLeftEllipsisIcon className="h-5 w-5 mr-2" />,
+      },
+    ],
+    [t, currentUser.role?._id, useAllRelevantCasesHook]
+  );
+
+  const submenu = useMemo(() => {
+    const userRole = currentUser?.role?._id;
+    const hasManagedCategories = currentUser?.managed_categories?.length > 0;
+
+    if (userRole === ROLES.NORMAL) {
+      return [allSubmenus[0]];
+    } else if (userRole === ROLES.EXPERT && !hasManagedCategories) {
+      return allSubmenus.filter((item) => item.hookKey !== "managed");
+    } else if (userRole === ROLES.EXPERT && hasManagedCategories) {
+      return allSubmenus;
+    } else if (userRole === ROLES.ADMIN) {
+      return allSubmenus;
+    }
+
+    return [allSubmenus[0]];
+  }, [
+    allSubmenus,
+    currentUser?.role?._id,
+    currentUser?.managed_categories?.length,
+  ]);
+
+  const isAnyFilterActive = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    const filterKeys = [
+      "caseNumber",
+      "priority",
+      "type",
+      "creatorId",
+      "categoryIds",
+      "content",
+      "status",
+      "readStatus",
+      "startDate",
+      "endDate",
+    ];
+    // If any of the known filter keys exist in the URL, a filter is active.
+    return filterKeys.some((key) => params.has(key));
+  }, [location.search]);
+
+  const searchParams = new URLSearchParams(location.search);
+  const screenKey = searchParams.get("screen") || "all";
+  const selectedHookIdx =
+    submenu.findIndex((item) => item.hookKey === screenKey) !== -1
+      ? submenu.findIndex((item) => item.hookKey === screenKey)
+      : 0;
+
+  const getExpertCases = withUserIdHook(
+    useGetCasesByUserCategories,
+    currentUser._id
+  );
+  const getManagedCases = withUserIdHook(
+    useGetCasesByUserManagedCategories,
+    currentUser._id
+  );
+  const getCreatedCases = withUserIdHook(useUserCases, currentUser._id);
+  const getAnsweredCases = withUserIdHook(
+    useUserAnsweredCases,
+    currentUser._id
+  );
+  const getCommentedCases = withUserIdHook(
+    useUserCommentedCases,
+    currentUser._id
+  );
+
+  const submenuWithHooks = useMemo(() => {
+    const updatedSubmenu = [...submenu];
+    updatedSubmenu.forEach((item, index) => {
+      switch (item.hookKey) {
+        case "mine":
+          updatedSubmenu[index].hook = getCreatedCases;
+          break;
+        case "managed":
+          updatedSubmenu[index].hook = getManagedCases;
+          break;
+        case "expert":
+          updatedSubmenu[index].hook = getExpertCases;
+          break;
+        case "answered":
+          updatedSubmenu[index].hook = getAnsweredCases;
+          break;
+        case "commented":
+          updatedSubmenu[index].hook = getCommentedCases;
+          break;
+        default:
+          break;
+      }
+    });
+    return updatedSubmenu;
+  }, [
+    submenu,
+    getCreatedCases,
+    getManagedCases,
+    getExpertCases,
+    getAnsweredCases,
+    getCommentedCases,
+  ]);
+
+  useEffect(() => {
+    if (initialFiltersOverride) return;
+    const isValidScreen = submenu.some((item) => item.hookKey === screenKey);
+    if (!isValidScreen) {
+      const params = new URLSearchParams(location.search);
+      params.set("screen", "all");
+      params.set("page", "1");
+      navigate(`${location.pathname}?${params.toString()}`, {
+        replace: true,
+      });
+    }
+  }, [
+    submenu,
+    screenKey,
+    location.pathname,
+    location.search,
+    navigate,
+    initialFiltersOverride,
+  ]);
+
+  return (
+    <div className="flex flex-col flex-1 min-h-0 h-full">
+      {!initialFiltersOverride && (
+        <div className="flex items-center justify-between gap-2 mb-6 px-8 mt-6">
+          <div className="flex flex-wrap gap-2">
+            {submenuWithHooks.map((item, idx) => (
+              <button
+                key={item.label}
+                onClick={() => {
+                  const params = new URLSearchParams(location.search);
+                  params.set("screen", item.hookKey);
+                  params.set("page", "1");
+                  navigate(`${location.pathname}?${params.toString()}`, {
+                    replace: true,
+                  });
+                }}
+                className={`flex items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 w-42  
+                  ${
+                    selectedHookIdx === idx
+                      ? "border border-btnRedHover text-btnRedHover shadow"
+                      : "border border-gray-300 shadow-sm bg-gray-100 text-gray-700 hover:bg-red-100 hover:text-btnRedHover hover:cursor-pointer"
+                  }`}
+                type="button"
+              >
+                {item.icon}
+                {item.label}
+              </button>
+            ))}
+          </div>
+          {/* New responsive button group on the right */}
+          <div className="flex w-full md:w-auto md:gap-0 gap-2">
+            <button
+              type="button"
+              className={`
+        justify-center cursor-pointer group flex items-center px-4 py-2 font-semibold transition-colors duration-150 w-full
+        bg-gray-500 text-white hover:bg-gray-600
+        ${
+          isAnyFilterActive
+            ? "md:rounded-r-none rounded-l-lg rounded-r-lg"
+            : "rounded-lg"
+        }
+      `}
+              onClick={() => setFilter(!fitler)}
+              title={fitler ? t("hide_filters") : t("show_filters")}
+            >
+              {fitler ? (
+                <ChevronUpIcon className="h-5 w-5 mr-1" />
+              ) : (
+                <ChevronDownIcon className="h-5 w-5 mr-1" />
+              )}
+              {t("filter")}
+            </button>
+
+            {/* Desktop Clear Button (attached) */}
+            {isAnyFilterActive && (
+              <button
+                type="button"
+                className="hidden cursor-pointer md:flex items-center pl-2 pr-3 py-2 rounded-r-lg bg-red-400 text-white hover:bg-red-500 transition-colors duration-150"
+                title={t("clear_filters_button", "Изчисти всички филтри")}
+                onClick={handleClearFilters}
+              >
+                <XMarkIcon className="h-5 w-5 text-white" />
+              </button>
+            )}
+
+            {/* Mobile Clear Button (separate component) */}
+            <div className="w-full md:w-auto md:hidden">
+              <ClearFiltersButton
+                isActive={isAnyFilterActive}
+                onClear={handleClearFilters}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+      <CaseTableWithFilters
+        fetchHook={
+          initialFiltersOverride
+            ? allSubmenus[0].hook!
+            : submenuWithHooks[selectedHookIdx].hook!
+        }
+        filter={fitler}
+        t={t}
+        initialFiltersOverride={initialFiltersOverride}
+      />
+    </div>
+  );
+};
+
+export default DashboardPage;

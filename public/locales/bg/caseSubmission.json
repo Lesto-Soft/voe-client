@@ -1,0 +1,94 @@
+{
+  "caseSubmission": {
+    "title": "Подаване на {{type}}",
+    "subtitle": "Моля, попълнете формуляра по-долу",
+    "placeholder": "Напиши съдържание...",
+    "loadingForm": "Зареждане на формуляр за сигнализация...",
+    "submittingCase": "Изпращане на сигнала...",
+    "invalidType": "Невалиден или липсващ тип на случая в URL (?type=problem или ?type=suggestion).",
+    "loadingCategoriesError": "Грешка при зареждане на категории: {{message}}",
+    "submissionSuccessAlert": "Сигналът е изпратен успешно!",
+    "submitButton": "Изпрати",
+    "submittingButton": "Изпращане...",
+    "backButton": "← Назад",
+    "helpButton": "❓ Помощ",
+    "selectFilesButton": "Избери файлове",
+    "usernameLabel": "Потребителско име",
+    "usernamePlaceholder": "emp___",
+    "fullNameLabel": "Име и фамилия",
+    "fullNamePlaceholder": "(автоматично)",
+    "descriptionLabel": "Описание",
+    "descriptionPlaceholder": "Описание...",
+    "attachmentsLabel": "Прикачени файлове ({{count}} / {{max}}) (макс. {{maxSize}} MB всеки)",
+    "priorityLabel": "Приоритет",
+    "categoriesLabel": "Категории",
+    "categoriesLabelMax": "(макс. {{maxSelect}})",
+    "userSearchLoading": "Търсене...",
+    "userSearchError": "Грешка: {{message}}",
+    "userNotFoundError": "Потребител \"{{username}}\" не е намерен.",
+    "noMoreAttachmentsAllowed": "Максимум {{max}} прикачени файла е достигнат.",
+    "currentFiles": "Текущи файлове ({{count}} от {{max}} макс.):",
+    "success": "Успешно изпратено!",
+    "filesAdded": "Добавен файл",
+    "successModalTitle": "Сигналът е изпратен успешно!",
+    "addAttachments": "Добави прикачени файлове",
+    "processing": "Обработка...",
+    "priority": {
+      "low": "Нисък",
+      "medium": "Среден",
+      "high": "Висок"
+    },
+    "caseType": {
+      "problem": "проблем",
+      "label": "Тип на случая"
+    },
+    "actions": {
+      "cancel": "Отказ",
+      "saving": "Запазване...",
+      "saveChanges": "Запази промените",
+      "submit": "Изпрати"
+    },
+    "submissionSuccess": {
+      "edit": "Случай #{{caseNumber}} беше успешно редактиран.",
+      "createSuggestion": "Предложението беше успешно създадено.",
+      "createProblem": "Проблемът беше успешно създаден."
+    },
+    "errors": {
+      "submission": {
+        "missingUsername": "Моля, въведете валидно потребителско име.",
+        "missingDescription": "Описанието е задължително.",
+        "missingCategory": "Моля, изберете поне една категория.",
+        "fileProcessingError": "Грешка при обработка на прикачени файлове.",
+        "categoryProcessingError": "Грешка при обработката на избраните категории.",
+        "categoryNoneFound": "Няма налични категории.",
+        "generalSubmissionError": "Неуспешно създаване на сигнал: {{message}}",
+        "unexpectedError": "Възникна неочаквана грешка при изпращането.",
+        "contentTooShort": "Съдържанието трябва да бъде поне {{min}} символа.",
+        "contentTooLong": "Съдържанието не може да надвишава {{max}} символа.",
+        "generalSubmissionErrorEdit": "Грешка при редактиране на случая: {{message}}",
+        "generalSubmissionErrorCreate": "Грешка при създаване на случая: {{message}}"
+      },
+      "file": {
+        "maxCountExceeded": "Не можете да добавите повече файлове (максимум {{max}}).",
+        "oversized": "Следните файлове са по-големи от {{maxSize}}MB и бяха пропуснати: {{fileList}}",
+        "oversizedAndMaxCount": "Освен това, лимитът от {{max}} файла беше достигнат.",
+        "maxCountReached": "Лимитът от {{max}} файла беше достигнат. {{count}} файла бяха пропуснати.",
+        "duplicatesSkipped": "Избраните файлове вече са в списъка: {{fileList}}",
+        "duplicatesSomeSkipped": "Пропуснати дублирани файлове: {{fileList}}",
+        "fileTooLarge": "Файлът \"{{fileName}}\" е по-голям от {{maxSize}}MB и беше пропуснат.",
+        "maxFilesExceeded": "Не можете да добавите повече файлове. Максимумът е {{max}} файла.",
+        "fileAlreadyExists": "Файлът \"{{fileName}}\" вече е добавен.",
+        "filesSkipped": "Максимум {{max}} файла. {{count}} файла бяха пропуснати."
+      }
+    },
+    "helpModal": {
+      "title": "Помощна информация",
+      "closeButton": "Затвори",
+      "categoryProcessingError": "Грешка при обработка на категориите.",
+      "selectCategoriesPrompt": "Моля, изберете категории, за да видите подходяща помощна информация.",
+      "noInfoFound": "Не е намерена помощна информация за избраните категории.",
+      "invalidCaseType": "Невалиден тип на случая за показване на помощ.",
+      "noDescriptionAvailable": "Няма налично описание за тази категория."
+    }
+  }
+}

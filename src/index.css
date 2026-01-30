@@ -1,15 +1,714 @@
+/* --- Mulish Font Faces --- */
+
+/* Extra-Light */
+@font-face {
+  font-family: "Mulish";
+  src: url("/fonts/Mulish-ExtraLight.ttf") format("truetype");
+  font-weight: 200;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Mulish";
+  src: url("/fonts/Mulish-ExtraLightItalic.ttf") format("truetype");
+  font-weight: 200;
+  font-style: italic;
+}
+
+/* Light */
+@font-face {
+  font-family: "Mulish";
+  src: url("/fonts/Mulish-Light.ttf") format("truetype");
+  font-weight: 300;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Mulish";
+  src: url("/fonts/Mulish-LightItalic.ttf") format("truetype");
+  font-weight: 300;
+  font-style: italic;
+}
+
+/* Regular */
+@font-face {
+  font-family: "Mulish";
+  src: url("/fonts/Mulish-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+}
+
+/* Italic (Regular Italic) */
+@font-face {
+  font-family: "Mulish";
+  src: url("/fonts/Mulish-Italic.ttf") format("truetype");
+  font-weight: 400;
+  font-style: italic;
+}
+
+/* Medium */
+@font-face {
+  font-family: "Mulish";
+  src: url("/fonts/Mulish-Medium.ttf") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Mulish";
+  src: url("/fonts/Mulish-MediumItalic.ttf") format("truetype");
+  font-weight: 500;
+  font-style: italic;
+}
+
+/* Semi-Bold */
+@font-face {
+  font-family: "Mulish";
+  src: url("/fonts/Mulish-SemiBold.ttf") format("truetype");
+  font-weight: 600;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Mulish";
+  src: url("/fonts/Mulish-SemiBoldItalic.ttf") format("truetype");
+  font-weight: 600;
+  font-style: italic;
+}
+
+/* Bold */
+@font-face {
+  font-family: "Mulish";
+  src: url("/fonts/Mulish-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Mulish";
+  src: url("/fonts/Mulish-BoldItalic.ttf") format("truetype");
+  font-weight: 700;
+  font-style: italic;
+}
+
+/* Extra-Bold */
+@font-face {
+  font-family: "Mulish";
+  src: url("/fonts/Mulish-ExtraBold.ttf") format("truetype");
+  font-weight: 800;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Mulish";
+  src: url("/fonts/Mulish-ExtraBoldItalic.ttf") format("truetype");
+  font-weight: 800;
+  font-style: italic;
+}
+
+/* Black */
+@font-face {
+  font-family: "Mulish";
+  src: url("/fonts/Mulish-Black.ttf") format("truetype");
+  font-weight: 900;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Mulish";
+  src: url("/fonts/Mulish-BlackItalic.ttf") format("truetype");
+  font-weight: 900;
+  font-style: italic;
+}
+
 @import "tailwindcss";
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@layer utilities {
+  .font-mulish * {
+    font-family: "Mulish", sans-serif;
+  }
+  .animate-fadeIn {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+}
 
 @theme {
   --color-btnGreen: #62df90;
+  --color-btnGreenHover: #449c64;
   --color-btnOrange: #f6c274;
-  --color-btnRed: #eb1c24;
+  --color-btnRed: #da131b;
+  --color-btnRedHover: #a41319;
+  --color-btnBlue: #1384da;
+  --color-btnBlueHover: #1359a4;
   --font-main: "Mulish", sans-serif;
 }
-html {
+
+html,
+body,
+#root {
+  min-height: 100vh;
+  width: 100vw;
+  min-width: 0;
+  max-width: 100vw;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
   background-color: #f4f4f4;
+  overflow-x: hidden;
+  font-family: "Mulish", sans-serif;
+  font-weight: 500;
+}
+
+/* TextEditorSpecific.css */
+.custom-tiptap-editor,
+.custom-tiptap-editor .ProseMirror {
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.custom-tiptap-editor p.is-editor-empty:first-child::before,
+.custom-simple-editor p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #adb5bd; /* A standard placeholder color, feel free to change */
+  pointer-events: none;
+  height: 0;
+}
+
+.custom-tiptap-editor ul {
+  list-style-type: disc;
+  padding-left: 2rem; /* Adjust to match prose or your preference */
+  margin-top: 0.75em; /* Example, adjust as needed */
+  margin-bottom: 0.75em;
+}
+
+.custom-tiptap-editor ol {
+  list-style-type: decimal;
+  padding-left: 2rem; /* Adjust to match prose or your preference */
+  margin-top: 0.75em;
+  margin-bottom: 0.75em;
+}
+
+.custom-tiptap-editor li {
+  margin-top: 0.25em;
+  margin-bottom: 0.25em;
+}
+
+/* Rich content styles - ensures proper display of HTML content */
+.rich-content {
+  /* Ensure rich content styles don't conflict with existing styles */
+  line-height: 1.6;
+}
+
+.rich-content ul {
+  list-style-type: disc;
+  padding-left: 1.5rem;
+  margin: 0.5rem 0;
+}
+
+.rich-content ol {
+  list-style-type: decimal;
+  padding-left: 1.5rem;
+  margin: 0.5rem 0;
+}
+
+.rich-content li {
+  margin: 0.25rem 0;
+}
+
+.rich-content p {
+  margin: 0.5rem 0;
+}
+
+.rich-content p:first-child {
+  margin-top: 0;
+}
+
+.rich-content p:last-child {
+  margin-bottom: 0;
+}
+
+.rich-content strong {
+  font-weight: 700;
+}
+
+.rich-content em {
+  font-style: italic;
+}
+
+.rich-content u {
+  text-decoration: underline;
+}
+
+.rich-content s {
+  text-decoration: line-through;
+}
+
+/* Plain content styles - for backward compatibility */
+.plain-content {
+  white-space: pre-line;
+  word-wrap: break-word;
+  line-height: 1.6;
+}
+
+/* Ensure text alignment works in rich content */
+.rich-content [style*="text-align: left"] {
+  text-align: left;
+}
+
+.rich-content [style*="text-align: center"] {
+  text-align: center;
+}
+
+.rich-content [style*="text-align: right"] {
+  text-align: right;
+}
+
+/* Override prose styles that might be too large for our use cases */
+.rich-content.prose-sm p {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.rich-content.prose-sm ul,
+.rich-content.prose-sm ol {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.rich-content.prose-sm li {
+  margin-top: 0.125rem;
+  margin-bottom: 0.125rem;
+}
+
+/* Simple Text Editor specific styles */
+.custom-simple-editor {
+  /* Styles specific to the simple text editor */
+  word-break: break-word;
+}
+
+.custom-simple-editor p {
+  margin: 0.25rem 0;
+}
+
+.custom-simple-editor p:first-child {
+  margin-top: 0;
+}
+
+.custom-simple-editor p:last-child {
+  margin-bottom: 0;
+}
+
+.custom-simple-editor strong {
+  font-weight: 700;
+}
+
+.custom-simple-editor em {
+  font-style: italic;
+}
+
+.custom-simple-editor u {
+  text-decoration: underline;
+}
+
+/* History content styling */
+.history-content {
+  /* Custom scrollbar for history sections */
+}
+
+.history-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.history-content::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+.history-content::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.history-content::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.custom-scrollbar-xs {
+  /* Custom scrollbar for horizontal scrolling */
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: #cbd5e1 #f1f5f9; /* Firefox */
+}
+
+.custom-scrollbar-xs::-webkit-scrollbar {
+  height: 4px; /* Height for horizontal scrollbar */
+}
+
+.custom-scrollbar-xs::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 2px;
+}
+
+.custom-scrollbar-xs::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 2px;
+}
+
+.custom-scrollbar-xs::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Hide scrollbar arrows for cleaner look */
+.custom-scrollbar-xs::-webkit-scrollbar-button {
+  display: none;
+}
+
+/* Diff highlighting animations */
+.diff-added {
+  animation: fadeInGreen 0.3s ease-in-out;
+}
+
+.diff-removed {
+  animation: fadeInRed 0.3s ease-in-out;
+}
+
+@keyframes fadeInGreen {
+  from {
+    background-color: transparent;
+    color: inherit;
+  }
+  to {
+    background-color: #dcfce7;
+    color: #166534;
+  }
+}
+
+@keyframes fadeInRed {
+  from {
+    background-color: transparent;
+    color: inherit;
+  }
+  to {
+    background-color: #fecaca;
+    color: #dc2626;
+  }
+}
+
+/* History timeline effect */
+.history-timeline {
+  position: relative;
+}
+
+.history-timeline::before {
+  content: "";
+  position: absolute;
+  left: 8px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(to bottom, #e2e8f0, #cbd5e1);
+}
+
+.history-timeline-item {
+  position: relative;
+  padding-left: 24px;
+}
+
+.history-timeline-item::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 8px;
+  width: 12px;
+  height: 12px;
+  background: #3b82f6;
+  border: 2px solid white;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px #e2e8f0;
+}
+
+/* Enhanced change indicators */
+.change-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.change-indicator--added {
+  background-color: #dcfce7;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.change-indicator--removed {
+  background-color: #fecaca;
+  color: #dc2626;
+  border: 1px solid #fca5a5;
+}
+
+.change-indicator--modified {
+  background-color: #dbeafe;
+  color: #1d4ed8;
+  border: 1px solid #93c5fd;
+}
+
+/* Smooth transitions for history items */
+.history-item {
+  transition: all 0.2s ease-in-out;
+}
+
+.history-item:hover {
+  background-color: #f8fafc;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  margin: -0.25rem;
+}
+
+/* Content preview styling */
+.content-preview {
+  max-height: 150px;
+  overflow: hidden;
+  position: relative;
+}
+
+.content-preview--expandable::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 20px;
+  background: linear-gradient(transparent, white);
+}
+
+/* Category change styling */
+.category-change {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  align-items: center;
+}
+
+.category-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.category-tag--removed {
+  background-color: #fef2f2;
+  color: #dc2626;
+  text-decoration: line-through;
+}
+
+.category-tag--added {
+  background-color: #f0fdf4;
+  color: #16a34a;
+}
+
+/* Priority change styling */
+.priority-change {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.priority-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.priority-badge--high {
+  background-color: #fef2f2;
+  color: #dc2626;
+}
+
+.priority-badge--medium {
+  background-color: #fefbf2;
+  color: #d97706;
+}
+
+.priority-badge--low {
+  background-color: #f0fdf4;
+  color: #16a34a;
+}
+
+/* Responsive history display */
+@media (max-width: 640px) {
+  .history-timeline::before {
+    display: none;
+  }
+
+  .history-timeline-item {
+    padding-left: 0;
+  }
+
+  .history-timeline-item::before {
+    display: none;
+  }
+
+  .category-change,
+  .priority-change {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+}
+
+/* Custom styles for react-datepicker */
+.react-datepicker {
+  /* font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif; */
+  font-family: "Mulish", sans-serif;
+  border: 1px solid #d1d5db !important; /* gray-300 */
+  border-radius: 0.375rem; /* rounded-md */
+  box-shadow:
+    0 4px 6px -1px rgb(0 0 0 / 0.1),
+    0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+.react-datepicker__header {
+  background-color: #f3f4f6 !important; /* gray-100 */
+  border-bottom: 1px solid #e5e7eb !important; /* gray-200 */
+}
+.react-datepicker__header button,
+.react-datepicker__header option {
+  cursor: pointer;
+}
+.react-datepicker__current-month,
+.react-datepicker-time__header,
+.react-datepicker-year-header {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+/* .react-datepicker__day--selected,
+.react-datepicker__day--in-selecting-range,
+.react-datepicker__day--in-range {
+  background-color: #4f46e5 !important; indogo-600
+  color: white !important;
+} */
+.react-datepicker__day--selected:hover,
+.react-datepicker__day--in-selecting-range:hover,
+.react-datepicker__day--in-range:hover {
+  background-color: #4a3ed1 !important; /* indigo-700 */
+}
+.react-datepicker__day--keyboard-selected {
+  background-color: #7c7dca00 !important; /* indigo-500 but transparent since it has a weird behavior highlighting the current date for each month */
+}
+.react-datepicker__day:hover {
+  background-color: #3b65ee !important; /* indigo-100 */
+}
+.react-datepicker__navigation-icon::before {
+  border-color: #4b5563 !important; /* gray-600 */
+}
+
+/* Custom styles for toasts on the Case Submission page */
+.submission-toast {
+  font-family: "Mulish", sans-serif !important;
+  width: 100% !important; /* Let's give it a specific width */
+  top: 7.5rem;
+}
+
+@media (min-width: 768px) {
+  .submission-toast {
+    /* Desktop-specific dimensions */
+    width: 100% !important;
+    font-size: 1rem; /* Restore default font size */
+    top: 5rem;
+  }
+}
+
+.answer-toast {
+  font-family: "Mulish", sans-serif !important;
+}
+
+/* Custom styles for notification toasts */
+.notification-toast {
+  font-family: "Mulish", sans-serif !important;
+  /* Apply offset by default when at the top */
+  top: 5rem;
+  /* Add a transition for a smooth position change */
+  transition: top 0.3s ease-in-out;
+}
+
+/* When the body has the 'scrolled' class, move the toast up */
+body.scrolled .notification-toast {
+  top: 1rem;
+}
+
+@media (min-width: 768px) {
+  .notification-toast {
+    font-size: 1rem;
+    top: 5rem; /* Desktop default offset */
+  }
+
+  body.scrolled .notification-toast {
+    top: 0.5rem; /* Desktop scrolled offset */
+  }
+}
+
+/*
+  This is the container that holds all toasts in a specific position
+  (e.g., top-right). We make it "invisible" to mouse clicks so that
+  you can click on header buttons or other elements that are behind it.
+*/
+.Toastify__toast-container {
+  pointer-events: none;
+}
+
+/*
+  This is the individual toast message. We must re-enable pointer
+  events on it so that you can interact with the toast itself
+  (e.g., click it, dismiss it, or select text).
+*/
+.Toastify__toast {
+  pointer-events: auto;
+}
+
+/* For action button reminders */
+@keyframes pulse-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.5); /* blue-500 */
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(59, 130, 246, 0);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s infinite;
+  border-radius: 9999px;
+  border: 2px solid rgba(59, 130, 246, 0.5); /* blue-500 */
+  background-color: rgba(59, 130, 246, 0.05); /* blue-100 */
+}
+
+.highlight {
+  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.7); /* A blue glow, for example */
+  background-color: rgba(219, 234, 254, 0.7);
+  border-radius: 8px; /* Optional: adds a nice rounded corner to the highlight */
+  transition:
+    box-shadow 0.3s ease-in-out,
+    background-color 0.3s ease-in-out;
+  animation: pulse-glow 2s infinite;
 }

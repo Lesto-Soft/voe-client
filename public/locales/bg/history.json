@@ -1,0 +1,20 @@
+{
+  "history": "История",
+  "old_content": "Старо описание",
+  "new_content": "Ново описание",
+  "old_type": "Стар тип",
+  "new_type": "Нов тип",
+  "old_priority": "Стар приоритет",
+  "new_priority": "Нов приоритет",
+  "old_categories": "Стари категории",
+  "new_categories": "Нови категории",
+  "close": "Затвори",
+  "LOW": "НИСЪК",
+  "MEDIUM": "СРЕДЕН",
+  "HIGH": "ВИСОК",
+  "priority": "Приоритет",
+  "categories": "Категории",
+  "PROBLEM": "ПРОБЛЕМ",
+  "SUGGESTION": "ПРЕДЛОЖЕНИЕ",
+  "type": "Тип"
+}

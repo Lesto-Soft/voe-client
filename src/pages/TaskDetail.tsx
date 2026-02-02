@@ -9,6 +9,8 @@ import TaskPriorityBadge from "../components/task/TaskPriorityBadge";
 import TaskStatusChanger from "../components/task/TaskStatusChanger";
 import TaskActivities from "../components/task/TaskActivities";
 import TaskFormModal from "../components/task/TaskFormModal";
+import { FiveWhyList } from "../components/task/five-why";
+import { RiskAssessmentList } from "../components/task/risk-assessment";
 import CaseLink from "../components/global/links/CaseLink";
 import UserLink from "../components/global/links/UserLink";
 import ConfirmActionDialog from "../components/modals/ConfirmActionDialog";
@@ -191,6 +193,25 @@ const TaskDetail: React.FC = () => {
               currentUser={currentUser}
               refetch={refetch}
             />
+
+            {/* Analysis Section */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Five Why Analysis */}
+              <FiveWhyList
+                taskId={taskData._id}
+                fiveWhys={taskData.fiveWhys || []}
+                currentUser={currentUser}
+                refetch={refetch}
+              />
+
+              {/* Risk Assessments */}
+              <RiskAssessmentList
+                taskId={taskData._id}
+                riskAssessments={taskData.riskAssessments || []}
+                currentUser={currentUser}
+                refetch={refetch}
+              />
+            </div>
           </div>
 
           {/* Right column - Metadata sidebar */}

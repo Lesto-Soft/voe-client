@@ -8,3 +8,9 @@ export { default as TaskStatusChanger } from "./TaskStatusChanger";
 export { default as TaskActivities } from "./TaskActivities";
 export { default as TaskFormModal } from "./TaskFormModal";
 export type { TaskFilterMode } from "./TaskFilters";
+
+// Five Why components
+export * from "./five-why";
+
+// Risk Assessment components
+export * from "./risk-assessment";

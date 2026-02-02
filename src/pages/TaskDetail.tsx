@@ -1,15 +1,17 @@
-import React from "react";
-import { useParams, Link } from "react-router";
-import { useGetTaskByNumber } from "../graphql/hooks/task";
+import React, { useState } from "react";
+import { useParams, Link, useNavigate } from "react-router";
+import { useGetTaskByNumber, useDeleteTask } from "../graphql/hooks/task";
 import { useCurrentUser } from "../context/UserContext";
 import { ITask } from "../db/interfaces";
 import PageStatusDisplay from "../components/global/PageStatusDisplay";
 import TaskStatusBadge from "../components/task/TaskStatusBadge";
 import TaskPriorityBadge from "../components/task/TaskPriorityBadge";
-import CaseLink from "../components/global/links/CaseLink";
-import UserLink from "../components/global/links/UserLink";
 import TaskStatusChanger from "../components/task/TaskStatusChanger";
 import TaskActivities from "../components/task/TaskActivities";
+import TaskFormModal from "../components/task/TaskFormModal";
+import CaseLink from "../components/global/links/CaseLink";
+import UserLink from "../components/global/links/UserLink";
+import ConfirmActionDialog from "../components/modals/ConfirmActionDialog";
 import { useTranslation } from "react-i18next";
 import {
   ArrowLeftIcon,
@@ -18,19 +20,34 @@ import {
   UserIcon,
   DocumentTextIcon,
   LinkIcon,
+  PencilIcon,
+  TrashIcon,
 } from "@heroicons/react/24/outline";
 
 const TaskDetail: React.FC = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { taskNumber: taskNumberParam } = useParams<{ taskNumber: string }>();
   const currentUser = useCurrentUser();
 
-  // Validate task number
-  if (
-    !taskNumberParam ||
-    isNaN(parseInt(taskNumberParam, 10)) ||
-    parseInt(taskNumberParam, 10) <= 0
-  ) {
+  // Modal state
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
+  // Parse task number (0 if invalid - hook will skip)
+  const numericTaskNumber =
+    taskNumberParam && !isNaN(parseInt(taskNumberParam, 10))
+      ? parseInt(taskNumberParam, 10)
+      : 0;
+
+  // All hooks must be called before any early returns
+  const { task, loading, error, refetch } = useGetTaskByNumber(numericTaskNumber);
+  const { deleteTask, loading: deleteLoading } = useDeleteTask({
+    onCompleted: () => navigate("/tasks"),
+  });
+
+  // Now we can have early returns
+  if (numericTaskNumber <= 0) {
     return (
       <PageStatusDisplay
         notFound
@@ -38,10 +55,6 @@ const TaskDetail: React.FC = () => {
       />
     );
   }
-
-  const numericTaskNumber = parseInt(taskNumberParam, 10);
-
-  const { task, loading, error, refetch } = useGetTaskByNumber(numericTaskNumber);
 
   if (error) {
     return <PageStatusDisplay error={error} />;
@@ -61,6 +74,14 @@ const TaskDetail: React.FC = () => {
   }
 
   const taskData = task as ITask;
+
+  const handleDelete = async () => {
+    try {
+      await deleteTask(taskData._id);
+    } catch (err) {
+      console.error("Failed to delete task:", err);
+    }
+  };
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return "Не е зададен";
@@ -115,11 +136,27 @@ const TaskDetail: React.FC = () => {
             <div className="flex items-center gap-3">
               <TaskStatusBadge status={taskData.status} size="md" />
               {canEdit && (
-                <TaskStatusChanger
-                  taskId={taskData._id}
-                  currentStatus={taskData.status}
-                  onStatusChanged={refetch}
-                />
+                <>
+                  <TaskStatusChanger
+                    taskId={taskData._id}
+                    currentStatus={taskData.status}
+                    onStatusChanged={refetch}
+                  />
+                  <button
+                    onClick={() => setIsEditModalOpen(true)}
+                    className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors cursor-pointer"
+                  >
+                    <PencilIcon className="h-4 w-4" />
+                    Редактирай
+                  </button>
+                  <button
+                    onClick={() => setIsDeleteDialogOpen(true)}
+                    className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-red-600 bg-white border border-red-300 rounded-md hover:bg-red-50 transition-colors cursor-pointer"
+                  >
+                    <TrashIcon className="h-4 w-4" />
+                    Изтрий
+                  </button>
+                </>
               )}
             </div>
           </div>
@@ -248,6 +285,34 @@ const TaskDetail: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Edit Task Modal */}
+      <TaskFormModal
+        isOpen={isEditModalOpen}
+        onOpenChange={setIsEditModalOpen}
+        mode="edit"
+        task={taskData}
+        onSuccess={refetch}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmActionDialog
+        isOpen={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        onConfirm={handleDelete}
+        title="Изтриване на задача"
+        description={
+          <>
+            Сигурни ли сте, че искате да изтриете задача{" "}
+            <strong>#{taskData.taskNumber}: {taskData.title}</strong>?
+            <br />
+            <span className="text-red-600">Това действие е необратимо.</span>
+          </>
+        }
+        confirmButtonText={deleteLoading ? "Изтриване..." : "Изтрий"}
+        cancelButtonText="Отмени"
+        isDestructiveAction
+      />
     </div>
   );
 };

@@ -2,13 +2,16 @@ import React, { useState, useMemo } from "react";
 import { useCurrentUser } from "../context/UserContext";
 import { useGetAllTasks } from "../graphql/hooks/task";
 import { TaskStatus, CasePriority } from "../db/interfaces";
-import { TaskList, TaskFilters, TaskFilterMode } from "../components/task";
+import { TaskList, TaskFilters, TaskFilterMode, TaskFormModal } from "../components/task";
 import { PlusIcon } from "@heroicons/react/24/outline";
 
 const ITEMS_PER_PAGE = 12;
 
 const TasksPage: React.FC = () => {
   const currentUser = useCurrentUser();
+
+  // Modal state
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   // Filter state
   const [filterMode, setFilterMode] = useState<TaskFilterMode>("assignedToMe");
@@ -44,7 +47,7 @@ const TasksPage: React.FC = () => {
   }, [statusFilter, priorityFilter, searchQuery, currentPage, filterMode, currentUser?._id]);
 
   // Fetch tasks
-  const { tasks, count, loading, error } = useGetAllTasks(queryInput);
+  const { tasks, count, loading, error, refetch } = useGetAllTasks(queryInput);
 
   // Pagination
   const totalPages = Math.ceil(count / ITEMS_PER_PAGE);
@@ -91,11 +94,8 @@ const TasksPage: React.FC = () => {
           </p>
         </div>
         <button
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-md"
-          onClick={() => {
-            // TODO: Open create task modal
-            console.log("Create task clicked");
-          }}
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-md cursor-pointer"
+          onClick={() => setIsCreateModalOpen(true)}
         >
           <PlusIcon className="h-5 w-5" />
           Нова задача
@@ -150,6 +150,14 @@ const TasksPage: React.FC = () => {
           Показани {tasks.length} от {count} задачи
         </div>
       )}
+
+      {/* Create Task Modal */}
+      <TaskFormModal
+        isOpen={isCreateModalOpen}
+        onOpenChange={setIsCreateModalOpen}
+        mode="create"
+        onSuccess={refetch}
+      />
     </div>
   );
 };

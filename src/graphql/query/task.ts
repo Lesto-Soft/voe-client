@@ -165,6 +165,18 @@ export const GET_TASK_BY_ID = gql`
 `;
 
 /**
+ * Fetch a single task by its sequential task number with full details.
+ */
+export const GET_TASK_BY_NUMBER = gql`
+  query GetTaskByNumber($taskNumber: Int!) {
+    getTaskByNumber(taskNumber: $taskNumber) {
+      ...TaskDetailFragment
+    }
+  }
+  ${taskDetailFragment}
+`;
+
+/**
  * Fetch all tasks with optional filtering and pagination.
  */
 export const GET_ALL_TASKS = gql`

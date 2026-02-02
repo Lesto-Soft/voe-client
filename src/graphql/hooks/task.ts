@@ -1,6 +1,7 @@
 import { useMutation, useQuery } from "@apollo/client";
 import {
   GET_TASK_BY_ID,
+  GET_TASK_BY_NUMBER,
   GET_ALL_TASKS,
   GET_USER_TASKS,
 } from "../query/task";
@@ -152,6 +153,26 @@ export const useGetTaskById = (taskId?: string) => {
   });
 
   const task = data?.getTaskById || null;
+
+  return {
+    task,
+    loading,
+    error,
+    refetch,
+  };
+};
+
+/**
+ * Fetches a single task by its sequential task number with full details.
+ * Skips the query if no taskNumber is provided or is invalid.
+ */
+export const useGetTaskByNumber = (taskNumber?: number) => {
+  const { loading, error, data, refetch } = useQuery(GET_TASK_BY_NUMBER, {
+    variables: { taskNumber },
+    skip: !taskNumber || taskNumber <= 0,
+  });
+
+  const task = data?.getTaskByNumber || null;
 
   return {
     task,

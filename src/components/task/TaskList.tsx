@@ -1,8 +1,10 @@
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { ITask } from "../../db/interfaces";
 import TaskCard from "./TaskCard";
 import TaskTable from "./TaskTable";
 import { ClipboardDocumentCheckIcon } from "@heroicons/react/24/outline";
+
+const MIN_SKELETON_TIME = 350; // minimum ms to show skeleton
 
 interface TaskListProps {
   tasks: ITask[];
@@ -65,7 +67,30 @@ const TaskListSkeleton: React.FC<{ viewMode: "grid" | "table" }> = ({ viewMode }
 };
 
 const TaskList: React.FC<TaskListProps> = ({ tasks, viewMode, loading }) => {
-  if (loading) {
+  const [showSkeleton, setShowSkeleton] = useState(loading);
+  const loadingStartRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (loading) {
+      // Loading started - record start time and show skeleton
+      loadingStartRef.current = Date.now();
+      setShowSkeleton(true);
+    } else if (loadingStartRef.current !== null) {
+      // Loading finished - ensure minimum display time
+      const elapsed = Date.now() - loadingStartRef.current;
+      const remaining = MIN_SKELETON_TIME - elapsed;
+
+      if (remaining > 0) {
+        const timer = setTimeout(() => setShowSkeleton(false), remaining);
+        return () => clearTimeout(timer);
+      } else {
+        setShowSkeleton(false);
+      }
+      loadingStartRef.current = null;
+    }
+  }, [loading]);
+
+  if (showSkeleton) {
     return <TaskListSkeleton viewMode={viewMode} />;
   }
 

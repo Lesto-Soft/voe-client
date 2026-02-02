@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Link } from "react-router";
 import { ICase, ITask } from "../../db/interfaces";
 import { useGetAllTasks } from "../../graphql/hooks/task";
-import { TaskFormModal } from "../task";
+import { TaskFormModal, TaskDueDateIndicator } from "../task";
 import TaskStatusBadge from "../task/TaskStatusBadge";
 import TaskPriorityBadge, { getPriorityBorderColor } from "../task/TaskPriorityBadge";
 import UserLink from "../global/links/UserLink";
@@ -10,7 +10,6 @@ import TaskLink from "../global/links/TaskLink";
 import {
   ClipboardDocumentCheckIcon,
   PlusIcon,
-  CalendarIcon,
 } from "@heroicons/react/24/outline";
 
 interface TaskCardProps {
@@ -18,15 +17,6 @@ interface TaskCardProps {
 }
 
 const TaskCard: React.FC<TaskCardProps> = ({ task }) => {
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return "Няма";
-    return new Date(dateString).toLocaleDateString("bg-BG", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    });
-  };
-
   return (
     <Link to={`/tasks/${task.taskNumber}`} className="block">
       <div
@@ -53,10 +43,11 @@ const TaskCard: React.FC<TaskCardProps> = ({ task }) => {
 
         {/* Bottom Section */}
         <div className="flex-shrink-0 pt-2 border-t border-gray-100 text-xs text-gray-500 space-y-1.5">
-          <div className="flex items-center gap-2">
-            <CalendarIcon className="h-4 w-4" />
-            <span>Краен срок: {formatDate(task.dueDate)}</span>
-          </div>
+          <TaskDueDateIndicator
+            dueDate={task.dueDate}
+            status={task.status}
+            size="sm"
+          />
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1">
               <span>Възложена на:</span>
@@ -86,6 +77,15 @@ const CaseTasksTab: React.FC<CaseTasksTabProps> = ({ caseData }) => {
     itemsPerPage: 100, // Show all tasks for this case
     currentPage: 0,
   });
+
+  // Get the approved answer or the latest answer to use as initial description
+  const getInitialDescription = (): string | undefined => {
+    if (!caseData.answers || caseData.answers.length === 0) return undefined;
+    // Prefer approved answer, otherwise use the first answer
+    const approvedAnswer = caseData.answers.find((a) => a.approved);
+    const answer = approvedAnswer || caseData.answers[0];
+    return answer?.content || undefined;
+  };
 
   return (
     <div className="px-4 py-2">
@@ -147,6 +147,7 @@ const CaseTasksTab: React.FC<CaseTasksTabProps> = ({ caseData }) => {
         onOpenChange={setIsCreateModalOpen}
         mode="create"
         relatedCaseId={caseData._id}
+        initialDescription={getInitialDescription()}
         onSuccess={refetch}
       />
     </div>

@@ -7,6 +7,8 @@ export { default as TaskFilters } from "./TaskFilters";
 export { default as TaskStatusChanger } from "./TaskStatusChanger";
 export { default as TaskActivities } from "./TaskActivities";
 export { default as TaskFormModal } from "./TaskFormModal";
+export { default as TaskAssigneeChanger } from "./TaskAssigneeChanger";
+export { default as TaskDueDateIndicator, getDueDateStatus } from "./TaskDueDateIndicator";
 export type { TaskFilterMode } from "./TaskFilters";
 
 // Five Why components

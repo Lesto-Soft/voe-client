@@ -1,11 +1,85 @@
 import React, { useState } from "react";
 import { ITaskActivity, IMe, TaskActivityType } from "../../db/interfaces";
-import { useCreateTaskActivity } from "../../graphql/hooks/task";
+import {
+  useCreateTaskActivity,
+  useUpdateTaskActivity,
+  useDeleteTaskActivity,
+} from "../../graphql/hooks/task";
 import UserLink from "../global/links/UserLink";
 import {
   ChatBubbleLeftIcon,
   PaperAirplaneIcon,
+  QuestionMarkCircleIcon,
+  CheckCircleIcon,
+  ArrowPathIcon,
+  UserGroupIcon,
+  ExclamationTriangleIcon,
+  PencilIcon,
+  TrashIcon,
+  XMarkIcon,
 } from "@heroicons/react/24/outline";
+
+// Activity type configuration with icons and colors
+const activityTypeConfig: Record<
+  TaskActivityType,
+  {
+    label: string;
+    icon: React.ComponentType<{ className?: string }>;
+    bgColor: string;
+    textColor: string;
+    borderColor: string;
+  }
+> = {
+  [TaskActivityType.Comment]: {
+    label: "Коментар",
+    icon: ChatBubbleLeftIcon,
+    bgColor: "bg-gray-50",
+    textColor: "text-gray-700",
+    borderColor: "border-gray-200",
+  },
+  [TaskActivityType.HelpRequest]: {
+    label: "Искане за помощ",
+    icon: QuestionMarkCircleIcon,
+    bgColor: "bg-red-50",
+    textColor: "text-red-700",
+    borderColor: "border-red-200",
+  },
+  [TaskActivityType.ApprovalRequest]: {
+    label: "Искане за одобрение",
+    icon: CheckCircleIcon,
+    bgColor: "bg-green-50",
+    textColor: "text-green-700",
+    borderColor: "border-green-200",
+  },
+  [TaskActivityType.StatusChange]: {
+    label: "Промяна на статус",
+    icon: ArrowPathIcon,
+    bgColor: "bg-purple-50",
+    textColor: "text-purple-700",
+    borderColor: "border-purple-200",
+  },
+  [TaskActivityType.PriorityChange]: {
+    label: "Промяна на приоритет",
+    icon: ExclamationTriangleIcon,
+    bgColor: "bg-yellow-50",
+    textColor: "text-yellow-700",
+    borderColor: "border-yellow-200",
+  },
+  [TaskActivityType.AssigneeChange]: {
+    label: "Промяна на възложен",
+    icon: UserGroupIcon,
+    bgColor: "bg-blue-50",
+    textColor: "text-blue-700",
+    borderColor: "border-blue-200",
+  },
+};
+
+// User-selectable activity types (exclude system-generated types)
+const selectableActivityTypes: TaskActivityType[] = [
+  TaskActivityType.Comment,
+  TaskActivityType.HelpRequest,
+  TaskActivityType.ApprovalRequest,
+];
 
 interface TaskActivitiesProps {
   taskId: string;
@@ -20,25 +94,75 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
   currentUser,
   refetch,
 }) => {
-  const [newComment, setNewComment] = useState("");
-  const { createTaskActivity, loading } = useCreateTaskActivity(taskId);
+  const [newContent, setNewContent] = useState("");
+  const [activityType, setActivityType] = useState<TaskActivityType>(
+    TaskActivityType.Comment
+  );
+  const [editingActivityId, setEditingActivityId] = useState<string | null>(null);
+  const [editContent, setEditContent] = useState("");
+  const [deletingActivityId, setDeletingActivityId] = useState<string | null>(null);
 
-  const handleSubmitComment = async (e: React.FormEvent) => {
+  const { createTaskActivity, loading: createLoading } = useCreateTaskActivity(taskId);
+  const { updateTaskActivity, loading: updateLoading } = useUpdateTaskActivity(taskId);
+  const { deleteTaskActivity, loading: deleteLoading } = useDeleteTaskActivity(taskId);
+
+  const handleSubmitActivity = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newComment.trim() || loading) return;
+    if (!newContent.trim() || createLoading) return;
 
     try {
       await createTaskActivity({
         task: taskId,
         createdBy: currentUser._id,
-        type: TaskActivityType.Comment,
-        content: newComment.trim(),
+        type: activityType,
+        content: newContent.trim(),
       });
-      setNewComment("");
+      setNewContent("");
+      setActivityType(TaskActivityType.Comment);
       refetch();
     } catch (error) {
-      console.error("Failed to add comment:", error);
+      console.error("Failed to add activity:", error);
     }
+  };
+
+  const handleStartEdit = (activity: ITaskActivity) => {
+    setEditingActivityId(activity._id);
+    setEditContent(activity.content || "");
+  };
+
+  const handleCancelEdit = () => {
+    setEditingActivityId(null);
+    setEditContent("");
+  };
+
+  const handleSaveEdit = async (activityId: string) => {
+    if (!editContent.trim() || updateLoading) return;
+
+    try {
+      await updateTaskActivity(activityId, { content: editContent.trim() });
+      setEditingActivityId(null);
+      setEditContent("");
+      refetch();
+    } catch (error) {
+      console.error("Failed to update activity:", error);
+    }
+  };
+
+  const handleDelete = async (activityId: string) => {
+    if (deleteLoading) return;
+
+    try {
+      await deleteTaskActivity(activityId);
+      setDeletingActivityId(null);
+      refetch();
+    } catch (error) {
+      console.error("Failed to delete activity:", error);
+    }
+  };
+
+  // Check if user can edit/delete an activity
+  const canModifyActivity = (activity: ITaskActivity) => {
+    return activity.createdBy._id === currentUser._id;
   };
 
   const formatDateTime = (dateString?: string) => {
@@ -52,70 +176,200 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
     });
   };
 
-  // Filter to only show comments
-  const comments = activities.filter(
-    (activity) => activity.type === TaskActivityType.Comment
+  // Sort activities by creation date (newest first)
+  const sortedActivities = [...activities].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
+
+  // Get config for current selected type
+  const selectedTypeConfig = activityTypeConfig[activityType];
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-6">
       <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
         <ChatBubbleLeftIcon className="h-5 w-5 text-gray-400" />
-        Коментари ({comments.length})
+        Активност ({activities.length})
       </h2>
 
-      {/* Comment input */}
-      <form onSubmit={handleSubmitComment} className="mb-6">
+      {/* Activity input form */}
+      <form onSubmit={handleSubmitActivity} className="mb-6">
+        {/* Activity type selector */}
+        <div className="flex gap-2 mb-3">
+          {selectableActivityTypes.map((type) => {
+            const config = activityTypeConfig[type];
+            const Icon = config.icon;
+            const isSelected = activityType === type;
+            return (
+              <button
+                key={type}
+                type="button"
+                onClick={() => setActivityType(type)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                  isSelected
+                    ? `${config.bgColor} ${config.textColor} ${config.borderColor}`
+                    : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"
+                }`}
+              >
+                <Icon className="h-4 w-4" />
+                {config.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Content textarea */}
         <div className="flex gap-3">
           <div className="flex-1">
             <textarea
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              placeholder="Добавете коментар..."
+              value={newContent}
+              onChange={(e) => setNewContent(e.target.value)}
+              placeholder={
+                activityType === TaskActivityType.Comment
+                  ? "Добавете коментар..."
+                  : activityType === TaskActivityType.HelpRequest
+                  ? "Опишете от каква помощ се нуждаете..."
+                  : "Опишете какво трябва да бъде одобрено..."
+              }
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent resize-none"
+              className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent resize-none ${selectedTypeConfig.borderColor}`}
             />
           </div>
         </div>
         <div className="flex justify-end mt-2">
           <button
             type="submit"
-            disabled={!newComment.trim() || loading}
+            disabled={!newContent.trim() || createLoading}
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <PaperAirplaneIcon className="h-4 w-4" />
-            {loading ? "Изпращане..." : "Изпрати"}
+            {createLoading ? "Изпращане..." : "Изпрати"}
           </button>
         </div>
       </form>
 
-      {/* Comments list */}
+      {/* Activities list */}
       <div className="space-y-4">
-        {comments.length === 0 ? (
+        {sortedActivities.length === 0 ? (
           <p className="text-center text-gray-500 py-8">
-            Няма коментари все още. Бъдете първият!
+            Няма активност все още. Бъдете първият!
           </p>
         ) : (
-          comments.map((activity) => (
-            <div
-              key={activity._id}
-              className="border-b border-gray-100 pb-4 last:border-b-0 last:pb-0"
-            >
-              <div className="flex items-start gap-3">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <UserLink user={activity.createdBy} />
-                    <span className="text-xs text-gray-500">
-                      {formatDateTime(activity.createdAt)}
-                    </span>
+          sortedActivities.map((activity) => {
+            const config = activityTypeConfig[activity.type];
+            const Icon = config.icon;
+            const isEditing = editingActivityId === activity._id;
+            const isDeleting = deletingActivityId === activity._id;
+            const canModify = canModifyActivity(activity);
+
+            return (
+              <div
+                key={activity._id}
+                className={`border rounded-lg p-4 ${config.bgColor} ${config.borderColor}`}
+              >
+                <div className="flex items-start gap-3">
+                  <div className={`mt-0.5 ${config.textColor}`}>
+                    <Icon className="h-5 w-5" />
                   </div>
-                  <p className="text-sm text-gray-700 whitespace-pre-wrap">
-                    {activity.content}
-                  </p>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span
+                          className={`text-xs font-medium px-2 py-0.5 rounded-full ${config.bgColor} ${config.textColor} border ${config.borderColor}`}
+                        >
+                          {config.label}
+                        </span>
+                        <UserLink user={activity.createdBy} />
+                        <span className="text-xs text-gray-500">
+                          {formatDateTime(activity.createdAt)}
+                        </span>
+                      </div>
+                      {/* Edit/Delete buttons */}
+                      {canModify && !isEditing && !isDeleting && (
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => handleStartEdit(activity)}
+                            className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                            title="Редактирай"
+                          >
+                            <PencilIcon className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => setDeletingActivityId(activity._id)}
+                            className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                            title="Изтрий"
+                          >
+                            <TrashIcon className="h-4 w-4" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Edit mode */}
+                    {isEditing ? (
+                      <div className="mt-2">
+                        <textarea
+                          value={editContent}
+                          onChange={(e) => setEditContent(e.target.value)}
+                          rows={3}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent resize-none bg-white"
+                        />
+                        <div className="flex justify-end gap-2 mt-2">
+                          <button
+                            type="button"
+                            onClick={handleCancelEdit}
+                            disabled={updateLoading}
+                            className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                          >
+                            <XMarkIcon className="h-4 w-4" />
+                            Отмени
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleSaveEdit(activity._id)}
+                            disabled={!editContent.trim() || updateLoading}
+                            className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          >
+                            <CheckCircleIcon className="h-4 w-4" />
+                            {updateLoading ? "Запазване..." : "Запази"}
+                          </button>
+                        </div>
+                      </div>
+                    ) : isDeleting ? (
+                      /* Delete confirmation */
+                      <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+                        <p className="text-sm text-red-700 mb-3">
+                          Сигурни ли сте, че искате да изтриете това?
+                        </p>
+                        <div className="flex justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setDeletingActivityId(null)}
+                            disabled={deleteLoading}
+                            className="px-3 py-1.5 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                          >
+                            Отмени
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(activity._id)}
+                            disabled={deleteLoading}
+                            className="px-3 py-1.5 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          >
+                            {deleteLoading ? "Изтриване..." : "Изтрий"}
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      /* Normal content display */
+                      <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                        {activity.content}
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>

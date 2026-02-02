@@ -12,6 +12,7 @@ interface TaskFormModalProps {
   mode: "create" | "edit";
   task?: ITask;
   relatedCaseId?: string;
+  initialDescription?: string;
   onSuccess?: () => void;
 }
 
@@ -27,6 +28,7 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
   mode,
   task,
   relatedCaseId,
+  initialDescription,
   onSuccess,
 }) => {
   const currentUser = useCurrentUser();
@@ -54,16 +56,16 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
         setDueDate(task.dueDate ? task.dueDate.split("T")[0] : "");
         setAssigneeId(task.assignee?._id || "");
       } else {
-        // Reset form for create mode
+        // Reset form for create mode, use initialDescription if provided
         setTitle("");
-        setDescription("");
+        setDescription(initialDescription || "");
         setPriority(CasePriority.Medium);
         setDueDate("");
         setAssigneeId("");
       }
       setError(null);
     }
-  }, [isOpen, mode, task]);
+  }, [isOpen, mode, task, initialDescription]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

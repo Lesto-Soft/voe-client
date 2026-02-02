@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import { ITask } from "../../db/interfaces";
 import { getPriorityBorderColor } from "./TaskPriorityBadge";
 import TaskStatusBadge from "./TaskStatusBadge";
+import TaskDueDateIndicator from "./TaskDueDateIndicator";
 import TaskLink from "../global/links/TaskLink";
 import CaseLink from "../global/links/CaseLink";
 import UserLink from "../global/links/UserLink";
@@ -15,11 +16,6 @@ interface TaskCardProps {
 const TaskCard: React.FC<TaskCardProps> = ({ task }) => {
   const { t } = useTranslation();
   const borderColor = getPriorityBorderColor(task.priority);
-
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return "Няма";
-    return new Date(dateString).toLocaleDateString("bg-BG");
-  };
 
   return (
     <Link to={`/tasks/${task.taskNumber}`} className="block">
@@ -68,10 +64,11 @@ const TaskCard: React.FC<TaskCardProps> = ({ task }) => {
           {/* Lower metadata */}
           <div className="pt-3 text-sm">
             <div className="flex justify-between items-end">
-              <div className="text-gray-600">
-                <strong className="text-gray-500 text-xs">Краен срок:</strong>
-                <p className="text-sm font-medium">{formatDate(task.dueDate)}</p>
-              </div>
+              <TaskDueDateIndicator
+                dueDate={task.dueDate}
+                status={task.status}
+                size="sm"
+              />
               {task.assignee && (
                 <div onClick={(e) => e.stopPropagation()}>
                   <UserLink user={task.assignee} />

@@ -386,7 +386,7 @@ const Submenu: React.FC<SubmenuProps> = ({
       key: "tasks",
       label: (
         <>
-          {t("tasks", "Задачи")}
+          {t("tasks")}
           <sup>{taskCount}</sup>
         </>
       ),

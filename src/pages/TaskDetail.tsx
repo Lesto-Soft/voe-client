@@ -9,6 +9,8 @@ import TaskPriorityBadge from "../components/task/TaskPriorityBadge";
 import TaskStatusChanger from "../components/task/TaskStatusChanger";
 import TaskActivities from "../components/task/TaskActivities";
 import TaskFormModal from "../components/task/TaskFormModal";
+import TaskAssigneeChanger from "../components/task/TaskAssigneeChanger";
+import TaskDueDateIndicator from "../components/task/TaskDueDateIndicator";
 import { FiveWhyList } from "../components/task/five-why";
 import { RiskAssessmentList } from "../components/task/risk-assessment";
 import CaseLink from "../components/global/links/CaseLink";
@@ -83,15 +85,6 @@ const TaskDetail: React.FC = () => {
     } catch (err) {
       console.error("Failed to delete task:", err);
     }
-  };
-
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return "Не е зададен";
-    return new Date(dateString).toLocaleDateString("bg-BG", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
   };
 
   const formatDateTime = (dateString?: string) => {
@@ -241,8 +234,12 @@ const TaskDetail: React.FC = () => {
                     <CalendarIcon className="h-4 w-4" />
                     Краен срок
                   </dt>
-                  <dd className="text-sm text-gray-900 font-medium">
-                    {formatDate(taskData.dueDate)}
+                  <dd>
+                    <TaskDueDateIndicator
+                      dueDate={taskData.dueDate}
+                      status={taskData.status}
+                      size="md"
+                    />
                   </dd>
                 </div>
 
@@ -294,7 +291,13 @@ const TaskDetail: React.FC = () => {
                     Възложена на
                   </dt>
                   <dd>
-                    {taskData.assignee ? (
+                    {canEdit ? (
+                      <TaskAssigneeChanger
+                        taskId={taskData._id}
+                        currentAssignee={taskData.assignee}
+                        onAssigneeChanged={refetch}
+                      />
+                    ) : taskData.assignee ? (
                       <UserLink user={taskData.assignee} />
                     ) : (
                       <span className="text-sm text-gray-500 italic">Невъзложена</span>

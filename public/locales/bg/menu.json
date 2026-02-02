@@ -63,6 +63,7 @@
     "answers": "Решения",
     "cases": "Сигнали",
     "comments": "Коментари",
+    "tasks": "Задачи",
     "mark_all_read_title": "Маркирай всички като прочетени",
     "add_experts_to_category": "Експерти <1>{{username}}</1> са добавени към: <1>{{categoryName}}</1>",
     "add_managers_to_category": "Мениджъри <1>{{username}}</1> са добавени към: <1>{{categoryName}}</1>"

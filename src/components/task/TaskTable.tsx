@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import { ITask } from "../../db/interfaces";
 import TaskStatusBadge from "./TaskStatusBadge";
 import TaskPriorityBadge from "./TaskPriorityBadge";
+import TaskDueDateIndicator from "./TaskDueDateIndicator";
 import TaskLink from "../global/links/TaskLink";
 import CaseLink from "../global/links/CaseLink";
 import UserLink from "../global/links/UserLink";
@@ -14,11 +15,6 @@ interface TaskTableProps {
 
 const TaskTable: React.FC<TaskTableProps> = ({ tasks }) => {
   const { t } = useTranslation();
-
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return "Няма";
-    return new Date(dateString).toLocaleDateString("bg-BG");
-  };
 
   return (
     <div className="bg-white shadow-md rounded-lg overflow-x-auto">
@@ -78,8 +74,13 @@ const TaskTable: React.FC<TaskTableProps> = ({ tasks }) => {
               <td className="px-6 py-4 whitespace-nowrap">
                 <TaskPriorityBadge priority={task.priority} />
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                {formatDate(task.dueDate)}
+              <td className="px-6 py-4 whitespace-nowrap">
+                <TaskDueDateIndicator
+                  dueDate={task.dueDate}
+                  status={task.status}
+                  size="sm"
+                  showIcon={false}
+                />
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
                 <UserLink user={task.creator} />

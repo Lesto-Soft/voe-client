@@ -23,6 +23,7 @@ import NavbarSkeleton from "../components/skeletons/NavbarSkeleton";
 import { useAuthModal } from "../context/AuthModalContext"; // NEW IMPORT
 import ResetPassword from "../pages/ResetPassword";
 import DashboardPage from "../pages/Dashboard";
+import TasksPage from "../pages/Tasks";
 
 const AppLayout = () => {
   const { me, error, loading } = useGetMe();
@@ -83,6 +84,8 @@ export const mainRouter = createBrowserRouter([
     element: <AppLayout />,
     children: [
       { path: "/dashboard", element: <DashboardPage /> },
+      { path: "/tasks", element: <TasksPage /> },
+      { path: "/tasks/:taskNumber", element: <TasksPage /> },
       {
         path: "/user-management",
         element: (

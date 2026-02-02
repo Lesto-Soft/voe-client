@@ -3,6 +3,7 @@ import { useLocation } from "react-router";
 import { Link } from "react-router";
 import {
   ClipboardDocumentListIcon,
+  ClipboardDocumentCheckIcon,
   ChartPieIcon,
   UsersIcon,
   TagIcon,
@@ -121,6 +122,7 @@ const NavBar: React.FC<{ me: IMe }> = ({ me }) => {
 
   const pageNames: { [key: string]: string } = {
     "/dashboard": t("dashboard_desc"),
+    "/tasks": t("tasks_desc", "Табло за задачи"),
     "/profile": t("profile_desc"),
     "/users": t("accounts_desc"),
     "/submit-case": t("submit_case_desc"),
@@ -157,6 +159,9 @@ const NavBar: React.FC<{ me: IMe }> = ({ me }) => {
     } else {
       currentPage = "Проблем с оценката";
     }
+  } else if (/^\/tasks\/\d+$/.test(location.pathname)) {
+    const taskNumber = location.pathname.split("/").pop();
+    currentPage = t("task_desc", { taskNumber, defaultValue: `Задача #${taskNumber}` });
   } else {
     currentPage = pageNames[location.pathname] || "Страницата не е намерена";
   }
@@ -286,6 +291,13 @@ const NavBar: React.FC<{ me: IMe }> = ({ me }) => {
               to="/dashboard"
               icon={<ClipboardDocumentListIcon className="h-6 w-6" />}
               label={t("dashboard")}
+              theme="red"
+            />
+
+            <NavLink
+              to="/tasks"
+              icon={<ClipboardDocumentCheckIcon className="h-6 w-6" />}
+              label={t("tasks", "Задачи")}
               theme="red"
             />
 

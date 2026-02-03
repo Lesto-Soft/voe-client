@@ -335,6 +335,7 @@ export const useDeleteTask = (
 
 /**
  * Changes the status of a task.
+ * Creates an activity entry if the user is the task creator.
  */
 export const useChangeTaskStatus = (taskId?: string) => {
   const [changeStatusMutation, { data, loading, error }] = useMutation(
@@ -347,10 +348,10 @@ export const useChangeTaskStatus = (taskId?: string) => {
     }
   );
 
-  const changeTaskStatus = async (_id: string, status: TaskStatus) => {
+  const changeTaskStatus = async (_id: string, status: TaskStatus, userId: string) => {
     try {
       const response = await changeStatusMutation({
-        variables: { _id, status },
+        variables: { _id, status, userId },
         refetchQueries: [{ query: GET_TASK_BY_ID, variables: { _id } }],
         awaitRefetchQueries: true,
       });

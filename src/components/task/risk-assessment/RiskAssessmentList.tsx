@@ -20,6 +20,7 @@ interface RiskAssessmentListProps {
   riskAssessments: IRiskAssessment[];
   currentUser: IUser;
   refetch: () => void;
+  compact?: boolean;
 }
 
 const RiskAssessmentList: React.FC<RiskAssessmentListProps> = ({
@@ -27,6 +28,7 @@ const RiskAssessmentList: React.FC<RiskAssessmentListProps> = ({
   riskAssessments,
   currentUser,
   refetch,
+  compact = false,
 }) => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingAssessment, setEditingAssessment] =
@@ -106,24 +108,26 @@ const RiskAssessmentList: React.FC<RiskAssessmentListProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm">
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
-        <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-          <ShieldCheckIcon className="h-5 w-5 text-blue-500" />
-          Оценки на риска ({riskAssessments.length})
-        </h3>
-        <button
-          onClick={() => setIsCreateModalOpen(true)}
-          className="p-1 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
-          title="Добави нова оценка"
-        >
-          <PlusIcon className="h-4 w-4 text-gray-600" />
-        </button>
-      </div>
+    <div className={compact ? "" : "bg-white rounded-lg shadow-sm"}>
+      {/* Header - only show when not in compact mode */}
+      {!compact && (
+        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
+          <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+            <ShieldCheckIcon className="h-5 w-5 text-blue-500" />
+            Оценки на риска ({riskAssessments.length})
+          </h3>
+          <button
+            onClick={() => setIsCreateModalOpen(true)}
+            className="p-1 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors cursor-pointer"
+            title="Добави нова оценка"
+          >
+            <PlusIcon className="h-4 w-4 text-gray-600" />
+          </button>
+        </div>
+      )}
 
       {/* Content */}
-      <div className="p-4">
+      <div className={compact ? "" : "p-4"}>
         {riskAssessments.length > 0 ? (
           <>
             {/* Matrix Button */}
@@ -149,14 +153,14 @@ const RiskAssessmentList: React.FC<RiskAssessmentListProps> = ({
             </div>
           </>
         ) : (
-          <div className="text-center py-6">
-            <ShieldCheckIcon className="h-12 w-12 text-gray-300 mx-auto mb-2" />
+          <div className={compact ? "text-center py-4" : "text-center py-6"}>
+            <ShieldCheckIcon className={compact ? "h-8 w-8 text-gray-300 mx-auto mb-2" : "h-12 w-12 text-gray-300 mx-auto mb-2"} />
             <p className="text-sm text-gray-500">
               Няма добавени оценки на риска.
             </p>
             <button
               onClick={() => setIsCreateModalOpen(true)}
-              className="mt-3 inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100 transition-colors"
+              className="mt-3 inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100 transition-colors cursor-pointer"
             >
               <PlusIcon className="h-4 w-4" />
               Добави оценка

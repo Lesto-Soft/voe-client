@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { TaskStatus } from "../../db/interfaces";
 import { useChangeTaskStatus } from "../../graphql/hooks/task";
+import { useCurrentUser } from "../../context/UserContext";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
 
 interface TaskStatusChangerProps {
@@ -22,15 +23,16 @@ const TaskStatusChanger: React.FC<TaskStatusChangerProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const { changeTaskStatus, loading } = useChangeTaskStatus(taskId);
+  const currentUser = useCurrentUser();
 
   const handleStatusChange = async (newStatus: TaskStatus) => {
-    if (newStatus === currentStatus) {
+    if (newStatus === currentStatus || !currentUser) {
       setIsOpen(false);
       return;
     }
 
     try {
-      await changeTaskStatus(taskId, newStatus);
+      await changeTaskStatus(taskId, newStatus, currentUser._id);
       onStatusChanged?.();
     } catch (error) {
       console.error("Failed to change status:", error);

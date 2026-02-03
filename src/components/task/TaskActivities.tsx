@@ -6,6 +6,8 @@ import {
   useDeleteTaskActivity,
 } from "../../graphql/hooks/task";
 import UserLink from "../global/links/UserLink";
+import UnifiedRichTextEditor from "../forms/partials/UnifiedRichTextEditor";
+import { renderContentSafely } from "../../utils/contentRenderer";
 import {
   ChatBubbleLeftIcon,
   PaperAirplaneIcon,
@@ -28,6 +30,7 @@ const activityTypeConfig: Record<
     bgColor: string;
     textColor: string;
     borderColor: string;
+    leftBorderColor: string;
   }
 > = {
   [TaskActivityType.Comment]: {
@@ -36,6 +39,7 @@ const activityTypeConfig: Record<
     bgColor: "bg-gray-50",
     textColor: "text-gray-700",
     borderColor: "border-gray-200",
+    leftBorderColor: "border-l-gray-400",
   },
   [TaskActivityType.HelpRequest]: {
     label: "Искане за помощ",
@@ -43,6 +47,7 @@ const activityTypeConfig: Record<
     bgColor: "bg-red-50",
     textColor: "text-red-700",
     borderColor: "border-red-200",
+    leftBorderColor: "border-l-red-500",
   },
   [TaskActivityType.ApprovalRequest]: {
     label: "Искане за одобрение",
@@ -50,6 +55,7 @@ const activityTypeConfig: Record<
     bgColor: "bg-green-50",
     textColor: "text-green-700",
     borderColor: "border-green-200",
+    leftBorderColor: "border-l-green-500",
   },
   [TaskActivityType.StatusChange]: {
     label: "Промяна на статус",
@@ -57,6 +63,7 @@ const activityTypeConfig: Record<
     bgColor: "bg-purple-50",
     textColor: "text-purple-700",
     borderColor: "border-purple-200",
+    leftBorderColor: "border-l-purple-500",
   },
   [TaskActivityType.PriorityChange]: {
     label: "Промяна на приоритет",
@@ -64,6 +71,7 @@ const activityTypeConfig: Record<
     bgColor: "bg-yellow-50",
     textColor: "text-yellow-700",
     borderColor: "border-yellow-200",
+    leftBorderColor: "border-l-yellow-500",
   },
   [TaskActivityType.AssigneeChange]: {
     label: "Промяна на възложен",
@@ -71,6 +79,7 @@ const activityTypeConfig: Record<
     bgColor: "bg-blue-50",
     textColor: "text-blue-700",
     borderColor: "border-blue-200",
+    leftBorderColor: "border-l-blue-500",
   },
 };
 
@@ -95,20 +104,21 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
   refetch,
 }) => {
   const [newContent, setNewContent] = useState("");
+  const [attachments, setAttachments] = useState<File[]>([]);
   const [activityType, setActivityType] = useState<TaskActivityType>(
     TaskActivityType.Comment
   );
   const [editingActivityId, setEditingActivityId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState("");
   const [deletingActivityId, setDeletingActivityId] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const { createTaskActivity, loading: createLoading } = useCreateTaskActivity(taskId);
   const { updateTaskActivity, loading: updateLoading } = useUpdateTaskActivity(taskId);
   const { deleteTaskActivity, loading: deleteLoading } = useDeleteTaskActivity(taskId);
 
-  const handleSubmitActivity = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newContent.trim() || createLoading) return;
+  const handleSubmitActivity = async () => {
+    if (!newContent.trim() || createLoading || isProcessing) return;
 
     try {
       await createTaskActivity({
@@ -116,8 +126,10 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
         createdBy: currentUser._id,
         type: activityType,
         content: newContent.trim(),
+        attachments: [],
       });
       setNewContent("");
+      setAttachments([]);
       setActivityType(TaskActivityType.Comment);
       refetch();
     } catch (error) {
@@ -160,7 +172,6 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
     }
   };
 
-  // Check if user can edit/delete an activity
   const canModifyActivity = (activity: ITaskActivity) => {
     return activity.createdBy._id === currentUser._id;
   };
@@ -181,74 +192,10 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
 
-  // Get config for current selected type
-  const selectedTypeConfig = activityTypeConfig[activityType];
-
   return (
-    <div className="bg-white rounded-lg shadow-sm p-6">
-      <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-        <ChatBubbleLeftIcon className="h-5 w-5 text-gray-400" />
-        Активност ({activities.length})
-      </h2>
-
-      {/* Activity input form */}
-      <form onSubmit={handleSubmitActivity} className="mb-6">
-        {/* Activity type selector */}
-        <div className="flex gap-2 mb-3">
-          {selectableActivityTypes.map((type) => {
-            const config = activityTypeConfig[type];
-            const Icon = config.icon;
-            const isSelected = activityType === type;
-            return (
-              <button
-                key={type}
-                type="button"
-                onClick={() => setActivityType(type)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
-                  isSelected
-                    ? `${config.bgColor} ${config.textColor} ${config.borderColor}`
-                    : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"
-                }`}
-              >
-                <Icon className="h-4 w-4" />
-                {config.label}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Content textarea */}
-        <div className="flex gap-3">
-          <div className="flex-1">
-            <textarea
-              value={newContent}
-              onChange={(e) => setNewContent(e.target.value)}
-              placeholder={
-                activityType === TaskActivityType.Comment
-                  ? "Добавете коментар..."
-                  : activityType === TaskActivityType.HelpRequest
-                  ? "Опишете от каква помощ се нуждаете..."
-                  : "Опишете какво трябва да бъде одобрено..."
-              }
-              rows={3}
-              className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent resize-none ${selectedTypeConfig.borderColor}`}
-            />
-          </div>
-        </div>
-        <div className="flex justify-end mt-2">
-          <button
-            type="submit"
-            disabled={!newContent.trim() || createLoading}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            <PaperAirplaneIcon className="h-4 w-4" />
-            {createLoading ? "Изпращане..." : "Изпрати"}
-          </button>
-        </div>
-      </form>
-
-      {/* Activities list */}
-      <div className="space-y-4">
+    <div>
+      {/* Activities list (timeline at top) */}
+      <div className="space-y-3 mb-6">
         {sortedActivities.length === 0 ? (
           <p className="text-center text-gray-500 py-8">
             Няма активност все още. Бъдете първият!
@@ -264,7 +211,7 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
             return (
               <div
                 key={activity._id}
-                className={`border rounded-lg p-4 ${config.bgColor} ${config.borderColor}`}
+                className={`border-l-4 ${config.leftBorderColor} rounded-lg p-4 bg-gray-50/50 border border-gray-100`}
               >
                 <div className="flex items-start gap-3">
                   <div className={`mt-0.5 ${config.textColor}`}>
@@ -288,14 +235,14 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
                         <div className="flex items-center gap-1">
                           <button
                             onClick={() => handleStartEdit(activity)}
-                            className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                            className="p-1 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
                             title="Редактирай"
                           >
                             <PencilIcon className="h-4 w-4" />
                           </button>
                           <button
                             onClick={() => setDeletingActivityId(activity._id)}
-                            className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                            className="p-1 text-gray-400 hover:text-red-600 transition-colors cursor-pointer"
                             title="Изтрий"
                           >
                             <TrashIcon className="h-4 w-4" />
@@ -318,7 +265,7 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
                             type="button"
                             onClick={handleCancelEdit}
                             disabled={updateLoading}
-                            className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                            className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors cursor-pointer"
                           >
                             <XMarkIcon className="h-4 w-4" />
                             Отмени
@@ -327,7 +274,7 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
                             type="button"
                             onClick={() => handleSaveEdit(activity._id)}
                             disabled={!editContent.trim() || updateLoading}
-                            className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
                           >
                             <CheckCircleIcon className="h-4 w-4" />
                             {updateLoading ? "Запазване..." : "Запази"}
@@ -345,7 +292,7 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
                             type="button"
                             onClick={() => setDeletingActivityId(null)}
                             disabled={deleteLoading}
-                            className="px-3 py-1.5 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                            className="px-3 py-1.5 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors cursor-pointer"
                           >
                             Отмени
                           </button>
@@ -353,7 +300,7 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
                             type="button"
                             onClick={() => handleDelete(activity._id)}
                             disabled={deleteLoading}
-                            className="px-3 py-1.5 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            className="px-3 py-1.5 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
                           >
                             {deleteLoading ? "Изтриване..." : "Изтрий"}
                           </button>
@@ -361,9 +308,9 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
                       </div>
                     ) : (
                       /* Normal content display */
-                      <p className="text-sm text-gray-700 whitespace-pre-wrap">
-                        {activity.content}
-                      </p>
+                      <div className="text-sm text-gray-700">
+                        {renderContentSafely(activity.content || "")}
+                      </div>
                     )}
                   </div>
                 </div>
@@ -371,6 +318,68 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
             );
           })
         )}
+      </div>
+
+      {/* Add activity section at bottom */}
+      <div className="border-t border-gray-200 pt-4">
+        <h3 className="text-sm font-semibold text-gray-700 mb-3">Добави запис</h3>
+
+        {/* Activity type selector as horizontal chips */}
+        <div className="flex flex-wrap gap-2 mb-3">
+          {selectableActivityTypes.map((type) => {
+            const config = activityTypeConfig[type];
+            const Icon = config.icon;
+            const isSelected = activityType === type;
+            return (
+              <button
+                key={type}
+                type="button"
+                onClick={() => setActivityType(type)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors cursor-pointer ${
+                  isSelected
+                    ? `${config.bgColor} ${config.textColor} ${config.borderColor}`
+                    : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"
+                }`}
+              >
+                <Icon className="h-4 w-4" />
+                {config.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Rich text editor */}
+        <UnifiedRichTextEditor
+          content={newContent}
+          onContentChange={setNewContent}
+          attachments={attachments}
+          setAttachments={setAttachments}
+          type="taskActivity"
+          placeholder={
+            activityType === TaskActivityType.Comment
+              ? "Добавете коментар..."
+              : activityType === TaskActivityType.HelpRequest
+              ? "Опишете от каква помощ се нуждаете..."
+              : "Опишете какво трябва да бъде одобрено..."
+          }
+          minLength={1}
+          maxLength={1500}
+          hideAttachments={true}
+          hideSideButtons={true}
+          onProcessingChange={setIsProcessing}
+          editorClassName="min-h-[80px]"
+        />
+        <div className="flex justify-end mt-2">
+          <button
+            type="button"
+            onClick={handleSubmitActivity}
+            disabled={!newContent.trim() || createLoading || isProcessing}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
+          >
+            <PaperAirplaneIcon className="h-4 w-4" />
+            {createLoading ? "Изпращане..." : "Публикувай"}
+          </button>
+        </div>
       </div>
     </div>
   );

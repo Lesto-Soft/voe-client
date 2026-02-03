@@ -5,6 +5,7 @@ import { ITask, IUser, CasePriority } from "../../db/interfaces";
 import { useCreateTask, useUpdateTask } from "../../graphql/hooks/task";
 import { useGetAllUsers } from "../../graphql/hooks/user";
 import { useCurrentUser } from "../../context/UserContext";
+import CaseAnswerSelector from "./CaseAnswerSelector";
 
 interface TaskFormModalProps {
   isOpen: boolean;
@@ -162,6 +163,15 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
               >
                 Описание
               </label>
+
+              {/* Case Answer Selector - only show in create mode when relatedCaseId is provided */}
+              {mode === "create" && relatedCaseId && (
+                <CaseAnswerSelector
+                  caseId={relatedCaseId}
+                  onSelect={(content) => setDescription(content)}
+                />
+              )}
+
               <textarea
                 id="task-description"
                 value={description}

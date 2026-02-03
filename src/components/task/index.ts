@@ -9,6 +9,9 @@ export { default as TaskActivities } from "./TaskActivities";
 export { default as TaskFormModal } from "./TaskFormModal";
 export { default as TaskAssigneeChanger } from "./TaskAssigneeChanger";
 export { default as TaskDueDateIndicator, getDueDateStatus } from "./TaskDueDateIndicator";
+export { default as CaseAnswerSelector } from "./CaseAnswerSelector";
+export { default as TaskDescriptionCard } from "./TaskDescriptionCard";
+export { default as AnalysisTabsSection } from "./AnalysisTabsSection";
 export type { TaskFilterMode } from "./TaskFilters";
 
 // Five Why components

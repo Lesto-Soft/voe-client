@@ -107,7 +107,9 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
         {/* Status filter */}
         <select
           value={statusFilter}
-          onChange={(e) => onStatusFilterChange(e.target.value as TaskStatus | "all")}
+          onChange={(e) =>
+            onStatusFilterChange(e.target.value as TaskStatus | "all")
+          }
           className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white"
         >
           <option value="all">Всички статуси</option>
@@ -119,7 +121,9 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
         {/* Priority filter */}
         <select
           value={priorityFilter}
-          onChange={(e) => onPriorityFilterChange(e.target.value as CasePriority | "all")}
+          onChange={(e) =>
+            onPriorityFilterChange(e.target.value as CasePriority | "all")
+          }
           className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white"
         >
           <option value="all">Всички приоритети</option>

@@ -421,3 +421,25 @@ export const COUNT_FILTERED_CASES = gql`
     countFilteredCases(input: $input)
   }
 `;
+
+export const GET_CASE_ANSWERS = gql`
+  query GetCaseAnswers($caseId: ID!) {
+    getCaseAnswers(caseId: $caseId) {
+      _id
+      content
+      date
+      creator {
+        _id
+        name
+        username
+        avatar
+      }
+      approved {
+        _id
+        name
+        username
+      }
+      approved_date
+    }
+  }
+`;

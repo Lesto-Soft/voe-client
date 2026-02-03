@@ -2,10 +2,45 @@ import React, { useState, useMemo } from "react";
 import { useCurrentUser } from "../context/UserContext";
 import { useGetAllTasks } from "../graphql/hooks/task";
 import { TaskStatus, CasePriority } from "../db/interfaces";
-import { TaskList, TaskFilters, TaskFilterMode, TaskFormModal } from "../components/task";
+import {
+  TaskList,
+  TaskFilters,
+  TaskFilterMode,
+  TaskFormModal,
+} from "../components/task";
 import { PlusIcon } from "@heroicons/react/24/outline";
 
 const ITEMS_PER_PAGE = 12;
+const TASK_VIEW_PREFS_KEY = "taskDashboard_viewPrefs";
+
+interface TaskViewPrefs {
+  filterMode: TaskFilterMode;
+  viewMode: "grid" | "table";
+}
+
+const getStoredPrefs = (): Partial<TaskViewPrefs> => {
+  try {
+    const saved = sessionStorage.getItem(TASK_VIEW_PREFS_KEY);
+    return saved ? JSON.parse(saved) : {};
+  } catch {
+    return {};
+  }
+};
+
+const savePrefs = (prefs: Partial<TaskViewPrefs>) => {
+  try {
+    const current = getStoredPrefs();
+    sessionStorage.setItem(
+      TASK_VIEW_PREFS_KEY,
+      JSON.stringify({ ...current, ...prefs }),
+    );
+  } catch (error) {
+    console.warn(
+      "Failed to save task view preferences to sessionStorage:",
+      error,
+    );
+  }
+};
 
 const TasksPage: React.FC = () => {
   const currentUser = useCurrentUser();
@@ -13,12 +48,20 @@ const TasksPage: React.FC = () => {
   // Modal state
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-  // Filter state
-  const [filterMode, setFilterMode] = useState<TaskFilterMode>("assignedToMe");
+  // Filter state - initialize from sessionStorage
+  const [filterMode, setFilterMode] = useState<TaskFilterMode>(() => {
+    const stored = getStoredPrefs();
+    return stored.filterMode || "assignedToMe";
+  });
   const [statusFilter, setStatusFilter] = useState<TaskStatus | "all">("all");
-  const [priorityFilter, setPriorityFilter] = useState<CasePriority | "all">("all");
+  const [priorityFilter, setPriorityFilter] = useState<CasePriority | "all">(
+    "all",
+  );
   const [searchQuery, setSearchQuery] = useState("");
-  const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
+  const [viewMode, setViewMode] = useState<"grid" | "table">(() => {
+    const stored = getStoredPrefs();
+    return stored.viewMode || "grid";
+  });
   const [currentPage, setCurrentPage] = useState(0);
 
   // Build query input
@@ -44,7 +87,14 @@ const TasksPage: React.FC = () => {
     }
 
     return input;
-  }, [statusFilter, priorityFilter, searchQuery, currentPage, filterMode, currentUser?._id]);
+  }, [
+    statusFilter,
+    priorityFilter,
+    searchQuery,
+    currentPage,
+    filterMode,
+    currentUser?._id,
+  ]);
 
   // Fetch tasks
   const { tasks, count, loading, error, refetch } = useGetAllTasks(queryInput);
@@ -55,6 +105,7 @@ const TasksPage: React.FC = () => {
   const handleFilterModeChange = (mode: TaskFilterMode) => {
     setFilterMode(mode);
     setCurrentPage(0);
+    savePrefs({ filterMode: mode });
   };
 
   const handleStatusFilterChange = (status: TaskStatus | "all") => {
@@ -76,7 +127,9 @@ const TasksPage: React.FC = () => {
     return (
       <div className="min-h-full bg-gray-100 p-6">
         <div className="text-center py-16 text-red-500">
-          <p className="text-lg font-semibold">Грешка при зареждане на задачите</p>
+          <p className="text-lg font-semibold">
+            Грешка при зареждане на задачите
+          </p>
           <p className="text-sm">{error.message}</p>
         </div>
       </div>
@@ -113,7 +166,10 @@ const TasksPage: React.FC = () => {
         searchQuery={searchQuery}
         onSearchQueryChange={handleSearchQueryChange}
         viewMode={viewMode}
-        onViewModeChange={setViewMode}
+        onViewModeChange={(mode) => {
+          setViewMode(mode);
+          savePrefs({ viewMode: mode });
+        }}
       />
 
       {/* Task List */}
@@ -135,7 +191,9 @@ const TasksPage: React.FC = () => {
             Страница {currentPage + 1} от {totalPages}
           </span>
           <button
-            onClick={() => setCurrentPage((p) => Math.min(totalPages - 1, p + 1))}
+            onClick={() =>
+              setCurrentPage((p) => Math.min(totalPages - 1, p + 1))
+            }
             disabled={currentPage >= totalPages - 1}
             className="px-4 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
           >

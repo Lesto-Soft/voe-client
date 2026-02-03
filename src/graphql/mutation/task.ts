@@ -56,12 +56,24 @@ export const DELETE_TASK = gql`
 `;
 
 export const CHANGE_TASK_STATUS = gql`
-  mutation ChangeTaskStatus($_id: ID!, $status: TaskStatus!) {
-    changeTaskStatus(_id: $_id, status: $status) {
+  mutation ChangeTaskStatus($_id: ID!, $status: TaskStatus!, $userId: ID!) {
+    changeTaskStatus(_id: $_id, status: $status, userId: $userId) {
       _id
       status
       updatedAt
       completedAt
+      activities {
+        _id
+        type
+        content
+        createdAt
+        createdBy {
+          _id
+          name
+          username
+          avatar
+        }
+      }
     }
   }
 `;

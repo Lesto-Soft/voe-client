@@ -11,8 +11,8 @@ import TaskActivities from "../components/task/TaskActivities";
 import TaskFormModal from "../components/task/TaskFormModal";
 import TaskAssigneeChanger from "../components/task/TaskAssigneeChanger";
 import TaskDueDateIndicator from "../components/task/TaskDueDateIndicator";
-import { FiveWhyList } from "../components/task/five-why";
-import { RiskAssessmentList } from "../components/task/risk-assessment";
+import TaskDescriptionCard from "../components/task/TaskDescriptionCard";
+import AnalysisTabsSection from "../components/task/AnalysisTabsSection";
 import CaseLink from "../components/global/links/CaseLink";
 import UserLink from "../components/global/links/UserLink";
 import ConfirmActionDialog from "../components/modals/ConfirmActionDialog";
@@ -22,10 +22,10 @@ import {
   CalendarIcon,
   ClockIcon,
   UserIcon,
-  DocumentTextIcon,
   LinkIcon,
   PencilIcon,
   TrashIcon,
+  ChatBubbleLeftRightIcon,
 } from "@heroicons/react/24/outline";
 
 const TaskDetail: React.FC = () => {
@@ -159,75 +159,64 @@ const TaskDetail: React.FC = () => {
       </div>
 
       {/* Main content */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left column - Main content */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Description */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <DocumentTextIcon className="h-5 w-5 text-gray-400" />
-                Описание
-              </h2>
-              {taskData.description ? (
-                <div
-                  className="prose prose-sm max-w-none text-gray-700"
-                  dangerouslySetInnerHTML={{ __html: taskData.description }}
-                />
-              ) : (
-                <p className="text-gray-500 italic">Няма описание.</p>
-              )}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Left column - Sidebar (lg:col-span-4) */}
+          <div className="lg:col-span-4 space-y-4">
+            {/* Task Description - Collapsible */}
+            <TaskDescriptionCard description={taskData.description} />
+
+            {/* Origin - Related Case */}
+            {taskData.relatedCase && (
+              <div className="bg-white rounded-lg shadow-sm p-4">
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+                  <LinkIcon className="h-4 w-4" />
+                  Произход
+                </h3>
+                <div className="w-24">
+                  <CaseLink my_case={taskData.relatedCase} t={t} />
+                </div>
+              </div>
+            )}
+
+            {/* People - Creator & Assignees */}
+            <div className="bg-white rounded-lg shadow-sm p-4">
+              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+                <UserIcon className="h-4 w-4" />
+                Възложена от/на
+              </h3>
+              <dl className="space-y-3">
+                {/* Creator */}
+                <div>
+                  <dt className="text-xs text-gray-400 mb-1">Създател</dt>
+                  <dd>
+                    <UserLink user={taskData.creator} />
+                  </dd>
+                </div>
+
+                {/* Assignee */}
+                <div>
+                  <dt className="text-xs text-gray-400 mb-1">Възложена на</dt>
+                  <dd>
+                    {canEdit ? (
+                      <TaskAssigneeChanger
+                        taskId={taskData._id}
+                        currentAssignee={taskData.assignee}
+                        onAssigneeChanged={refetch}
+                      />
+                    ) : taskData.assignee ? (
+                      <UserLink user={taskData.assignee} />
+                    ) : (
+                      <span className="text-sm text-gray-500 italic">Невъзложена</span>
+                    )}
+                  </dd>
+                </div>
+              </dl>
             </div>
 
-            {/* Activities / Comments section */}
-            <TaskActivities
-              taskId={taskData._id}
-              activities={taskData.activities || []}
-              currentUser={currentUser}
-              refetch={refetch}
-            />
-
-            {/* Analysis Section */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Five Why Analysis */}
-              <FiveWhyList
-                taskId={taskData._id}
-                fiveWhys={taskData.fiveWhys || []}
-                currentUser={currentUser}
-                refetch={refetch}
-              />
-
-              {/* Risk Assessments */}
-              <RiskAssessmentList
-                taskId={taskData._id}
-                riskAssessments={taskData.riskAssessments || []}
-                currentUser={currentUser}
-                refetch={refetch}
-              />
-            </div>
-          </div>
-
-          {/* Right column - Metadata sidebar */}
-          <div className="space-y-6">
-            {/* Details card */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h3 className="text-sm font-semibold text-gray-900 mb-4">Детайли</h3>
-              <dl className="space-y-4">
-                {/* Related Case */}
-                {taskData.relatedCase && (
-                  <div>
-                    <dt className="text-xs font-medium text-gray-500 flex items-center gap-1 mb-1">
-                      <LinkIcon className="h-4 w-4" />
-                      Свързан сигнал
-                    </dt>
-                    <dd>
-                      <div className="w-24">
-                        <CaseLink my_case={taskData.relatedCase} t={t} />
-                      </div>
-                    </dd>
-                  </div>
-                )}
-
+            {/* Dates Card */}
+            <div className="bg-white rounded-lg shadow-sm p-4">
+              <dl className="space-y-3">
                 {/* Due Date */}
                 <div>
                   <dt className="text-xs font-medium text-gray-500 flex items-center gap-1 mb-1">
@@ -269,42 +258,31 @@ const TaskDetail: React.FC = () => {
               </dl>
             </div>
 
-            {/* People card */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h3 className="text-sm font-semibold text-gray-900 mb-4">Хора</h3>
-              <dl className="space-y-4">
-                {/* Creator */}
-                <div>
-                  <dt className="text-xs font-medium text-gray-500 flex items-center gap-1 mb-2">
-                    <UserIcon className="h-4 w-4" />
-                    Създател
-                  </dt>
-                  <dd>
-                    <UserLink user={taskData.creator} />
-                  </dd>
-                </div>
+            {/* Analysis Tabs Section */}
+            <AnalysisTabsSection
+              taskId={taskData._id}
+              fiveWhys={taskData.fiveWhys || []}
+              riskAssessments={taskData.riskAssessments || []}
+              currentUser={currentUser}
+              refetch={refetch}
+            />
+          </div>
 
-                {/* Assignee */}
-                <div>
-                  <dt className="text-xs font-medium text-gray-500 flex items-center gap-1 mb-2">
-                    <UserIcon className="h-4 w-4" />
-                    Възложена на
-                  </dt>
-                  <dd>
-                    {canEdit ? (
-                      <TaskAssigneeChanger
-                        taskId={taskData._id}
-                        currentAssignee={taskData.assignee}
-                        onAssigneeChanged={refetch}
-                      />
-                    ) : taskData.assignee ? (
-                      <UserLink user={taskData.assignee} />
-                    ) : (
-                      <span className="text-sm text-gray-500 italic">Невъзложена</span>
-                    )}
-                  </dd>
-                </div>
-              </dl>
+          {/* Right column - Activity (lg:col-span-8) */}
+          <div className="lg:col-span-8">
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <ChatBubbleLeftRightIcon className="h-5 w-5 text-gray-400" />
+                Работен Процес
+              </h2>
+
+              {/* Activities / Comments section */}
+              <TaskActivities
+                taskId={taskData._id}
+                activities={taskData.activities || []}
+                currentUser={currentUser}
+                refetch={refetch}
+              />
             </div>
           </div>
         </div>

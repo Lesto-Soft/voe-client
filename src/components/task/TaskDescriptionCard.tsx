@@ -29,38 +29,38 @@ const TaskDescriptionCard: React.FC<TaskDescriptionCardProps> = ({
 
   if (!description) {
     return (
-      <div className="bg-white rounded-lg shadow-sm p-4">
-        <div className="flex items-center gap-2 text-gray-500">
-          <DocumentTextIcon className="h-5 w-5" />
-          <span className="text-sm font-medium">Описание</span>
+      <div>
+        <div className="flex items-center justify-between mb-1.5">
+          <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+            <DocumentTextIcon className="h-3.5 w-3.5" />
+            Описание
+          </h3>
         </div>
-        <p className="text-gray-400 italic text-sm mt-2">Няма описание.</p>
+        <p className="text-gray-400 italic text-sm">Няма описание.</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+    <div>
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors cursor-pointer"
+        className="w-full flex items-center justify-between mb-1.5 hover:opacity-70 transition-opacity cursor-pointer"
       >
-        <div className="flex items-center gap-2 text-gray-700">
-          <DocumentTextIcon className="h-5 w-5 text-gray-400" />
-          <span className="text-sm font-semibold">Описание</span>
-        </div>
+        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+          <DocumentTextIcon className="h-3.5 w-3.5" />
+          Описание
+        </h3>
         {isExpanded ? (
-          <ChevronUpIcon className="h-5 w-5 text-gray-400" />
+          <ChevronUpIcon className="h-4 w-4 text-gray-400" />
         ) : (
-          <ChevronDownIcon className="h-5 w-5 text-gray-400" />
+          <ChevronDownIcon className="h-4 w-4 text-gray-400" />
         )}
       </button>
 
       {isExpanded && (
-        <div className="px-4 pb-4 border-t border-gray-100">
-          <div className="text-gray-700 pt-3">
-            {renderContentSafely(description)}
-          </div>
+        <div className="bg-gray-50 rounded-md p-3 text-gray-900 text-sm break-words">
+          {renderContentSafely(description)}
         </div>
       )}
     </div>

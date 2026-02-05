@@ -196,10 +196,9 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
   );
 
   return (
-    <div className="flex flex-col flex-1 min-h-0">
-      {/* Activities list - scrollable, fills available space */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar-xs pr-1 min-h-0">
-        <div className="space-y-2">
+    <div className="flex flex-col gap-4">
+      {/* Activities list */}
+      <div className="space-y-2">
           {sortedActivities.length === 0 ? (
             <p className="text-center text-gray-500 py-4">
               Няма активност все още. Бъдете първият!
@@ -324,11 +323,10 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
               );
             })
           )}
-        </div>
       </div>
 
-      {/* Add activity section - fixed at bottom */}
-      <div className="flex-shrink-0 border-t border-gray-200 pt-3 mt-3">
+      {/* Add activity section */}
+      <div className="border-t border-gray-200 pt-3">
         {/* Title and activity type selector on same line */}
         <div className="flex items-center gap-3 mb-2">
           <h3 className="text-sm font-semibold text-gray-700 whitespace-nowrap">

@@ -112,103 +112,70 @@ const TaskDetail: React.FC = () => {
     currentUser.role?._id === "ADMIN";
 
   return (
-    <div className="h-[calc(100vh-6rem)] overflow-hidden bg-gray-100 flex flex-col">
-      {/* Main content */}
-      <div className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 overflow-hidden">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full">
-          {/* Left column - Sidebar (lg:col-span-4) */}
-          <div className="lg:col-span-4 overflow-y-auto space-y-4 pr-2 custom-scrollbar-xs">
-            {/* Task Header Card */}
-            <div className="bg-white rounded-lg shadow-sm p-4">
-              {/* Back link */}
-              <Link
-                to="/tasks"
-                className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors mb-3"
-              >
-                <ArrowLeftIcon className="h-4 w-4" />
-                <span>Към задачите</span>
-              </Link>
+    <div className="flex flex-col lg:flex-row bg-gray-50 lg:h-[calc(100vh-6rem)] w-full">
+      {/* Left Panel - Task Info Sidebar (like CaseInfo) */}
+      <div className="max-w-full lg:w-96 lg:shrink-0 order-1 lg:order-none lg:h-full">
+        <div className="w-full h-full bg-white shadow-md overflow-y-auto custom-scrollbar-xs">
+          <div className="p-4 flex flex-col gap-3">
+            {/* Back link */}
+            <Link
+              to="/tasks"
+              className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+            >
+              <ArrowLeftIcon className="h-4 w-4" />
+              <span>Към задачите</span>
+            </Link>
 
-              {/* Task number & priority */}
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-sm font-medium text-gray-500">
-                  Задача #{taskData.taskNumber}
-                </span>
-                <TaskPriorityBadge priority={taskData.priority} />
-              </div>
-
-              {/* Title */}
-              <h1 className="text-xl font-bold text-gray-900 mb-3">
-                {taskData.title}
-              </h1>
-
-              {/* Status row */}
-              <div className="flex items-center gap-2 mb-3">
-                <TaskStatusBadge status={taskData.status} size="md" />
-                {canEdit && (
-                  <TaskStatusChanger
-                    taskId={taskData._id}
-                    currentStatus={taskData.status}
-                    onStatusChanged={refetch}
-                  />
-                )}
-              </div>
-
-              {/* Action buttons */}
+            {/* Task number, priority & status */}
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-sm font-medium text-gray-500">
+                Задача #{taskData.taskNumber}
+              </span>
+              <TaskPriorityBadge priority={taskData.priority} />
+              <TaskStatusBadge status={taskData.status} size="md" />
               {canEdit && (
-                <div className="flex items-center gap-2 pt-3 border-t border-gray-100">
-                  <button
-                    onClick={() => setIsEditModalOpen(true)}
-                    className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-50 border border-gray-200 rounded-md hover:bg-gray-100 transition-colors cursor-pointer"
-                  >
-                    <PencilIcon className="h-4 w-4" />
-                    Редактирай
-                  </button>
-                  <button
-                    onClick={() => setIsDeleteDialogOpen(true)}
-                    className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-red-600 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 transition-colors cursor-pointer"
-                  >
-                    <TrashIcon className="h-4 w-4" />
-                    Изтрий
-                  </button>
-                </div>
+                <TaskStatusChanger
+                  taskId={taskData._id}
+                  currentStatus={taskData.status}
+                  onStatusChanged={refetch}
+                />
               )}
             </div>
+
+            {/* Title */}
+            <h1 className="text-xl font-bold text-gray-900">
+              {taskData.title}
+            </h1>
 
             {/* Task Description - Collapsible */}
             <TaskDescriptionCard description={taskData.description} />
 
             {/* Origin - Related Case */}
             {taskData.relatedCase && (
-              <div className="bg-white rounded-lg shadow-sm p-4">
-                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
-                  <LinkIcon className="h-4 w-4" />
+              <div className="pt-2 border-t border-gray-100">
+                <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                  <LinkIcon className="h-3.5 w-3.5" />
                   Произход
                 </h3>
-                <div className="w-24">
-                  <CaseLink my_case={taskData.relatedCase} t={t} />
-                </div>
+                <CaseLink my_case={taskData.relatedCase} t={t} />
               </div>
             )}
 
-            {/* People - Creator & Assignees */}
-            <div className="bg-white rounded-lg shadow-sm p-4">
-              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
-                <UserIcon className="h-4 w-4" />
+            {/* People - Creator & Assignee */}
+            <div className="pt-2 border-t border-gray-100">
+              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                <UserIcon className="h-3.5 w-3.5" />
                 Възложена от/на
               </h3>
-              <dl className="space-y-3">
-                {/* Creator */}
+              <dl className="grid grid-cols-2 gap-3">
                 <div>
-                  <dt className="text-xs text-gray-400 mb-1">Създател</dt>
+                  <dt className="text-xs text-gray-400 mb-0.5">Създател</dt>
                   <dd>
                     <UserLink user={taskData.creator} />
                   </dd>
                 </div>
-
-                {/* Assignee */}
                 <div>
-                  <dt className="text-xs text-gray-400 mb-1">Възложена на</dt>
+                  <dt className="text-xs text-gray-400 mb-0.5">Възложена на</dt>
                   <dd>
                     {canEdit ? (
                       <TaskAssigneeChanger
@@ -228,40 +195,35 @@ const TaskDetail: React.FC = () => {
               </dl>
             </div>
 
-            {/* Dates Card */}
-            <div className="bg-white rounded-lg shadow-sm p-4">
-              <dl className="space-y-3">
-                {/* Due Date */}
+            {/* Dates */}
+            <div className="pt-2 border-t border-gray-100">
+              <dl className="grid grid-cols-2 gap-3">
                 <div>
-                  <dt className="text-xs font-medium text-gray-500 flex items-center gap-1 mb-1">
-                    <CalendarIcon className="h-4 w-4" />
+                  <dt className="text-xs text-gray-400 flex items-center gap-1 mb-0.5">
+                    <CalendarIcon className="h-3.5 w-3.5" />
                     Краен срок
                   </dt>
                   <dd>
                     <TaskDueDateIndicator
                       dueDate={taskData.dueDate}
                       status={taskData.status}
-                      size="md"
+                      size="sm"
                     />
                   </dd>
                 </div>
-
-                {/* Created At */}
                 <div>
-                  <dt className="text-xs font-medium text-gray-500 flex items-center gap-1 mb-1">
-                    <ClockIcon className="h-4 w-4" />
-                    Създадена на
+                  <dt className="text-xs text-gray-400 flex items-center gap-1 mb-0.5">
+                    <ClockIcon className="h-3.5 w-3.5" />
+                    Създадена
                   </dt>
                   <dd className="text-sm text-gray-700">
                     {formatDateTime(taskData.createdAt)}
                   </dd>
                 </div>
-
-                {/* Completed At */}
                 {taskData.completedAt && (
-                  <div>
-                    <dt className="text-xs font-medium text-gray-500 flex items-center gap-1 mb-1">
-                      <ClockIcon className="h-4 w-4" />
+                  <div className="col-span-2">
+                    <dt className="text-xs text-gray-400 flex items-center gap-1 mb-0.5">
+                      <ClockIcon className="h-3.5 w-3.5" />
                       Завършена на
                     </dt>
                     <dd className="text-sm text-gray-700">
@@ -271,62 +233,85 @@ const TaskDetail: React.FC = () => {
                 )}
               </dl>
             </div>
+
+            {/* Action buttons */}
+            {canEdit && (
+              <div className="flex items-center gap-2 pt-2 border-t border-gray-100">
+                <button
+                  onClick={() => setIsEditModalOpen(true)}
+                  className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-50 border border-gray-200 rounded-md hover:bg-gray-100 transition-colors cursor-pointer"
+                >
+                  <PencilIcon className="h-4 w-4" />
+                  Редактирай
+                </button>
+                <button
+                  onClick={() => setIsDeleteDialogOpen(true)}
+                  className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-red-600 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 transition-colors cursor-pointer"
+                >
+                  <TrashIcon className="h-4 w-4" />
+                  Изтрий
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Right Panel - Activity/Analysis (like Submenu) */}
+      <div className="w-full lg:flex-1 lg:w-auto order-2 lg:order-none lg:h-full">
+        <div className="flex flex-col lg:h-full">
+          {/* Sticky Tab Bar */}
+          <div className="flex-shrink-0 sticky top-0 z-1 bg-white border-b border-gray-200">
+            <div className="flex justify-center gap-2 py-3">
+              <button
+                onClick={() => setRightPanelView("activities")}
+                className={`flex items-center px-4 py-2 rounded-lg font-semibold text-sm transition-colors duration-150 border cursor-pointer ${
+                  rightPanelView === "activities"
+                    ? "border-blue-500 text-blue-600 shadow bg-blue-50"
+                    : "border-gray-300 shadow-sm bg-gray-100 text-gray-700 hover:bg-blue-50 hover:text-blue-600"
+                }`}
+              >
+                <ChatBubbleLeftRightIcon className="h-5 w-5 mr-2" />
+                Работен Процес
+                <sup className="ml-1">{taskData.activities?.length || 0}</sup>
+              </button>
+              <button
+                onClick={() => setRightPanelView("analysis")}
+                className={`flex items-center px-4 py-2 rounded-lg font-semibold text-sm transition-colors duration-150 border cursor-pointer ${
+                  rightPanelView === "analysis"
+                    ? "border-blue-500 text-blue-600 shadow bg-blue-50"
+                    : "border-gray-300 shadow-sm bg-gray-100 text-gray-700 hover:bg-blue-50 hover:text-blue-600"
+                }`}
+              >
+                <ChartBarIcon className="h-5 w-5 mr-2" />
+                Анализи
+                <sup className="ml-1">
+                  {(taskData.fiveWhys?.length || 0) +
+                    (taskData.riskAssessments?.length || 0)}
+                </sup>
+              </button>
+            </div>
           </div>
 
-          {/* Right column - Activity/Analysis (lg:col-span-8) */}
-          <div className="lg:col-span-8 overflow-hidden flex flex-col">
-            <div className="bg-white rounded-lg shadow-sm p-6 flex-1 flex flex-col overflow-hidden">
-              {/* View Toggle */}
-              <div className="flex items-center gap-1 mb-4 border-b border-gray-200 pb-3 flex-shrink-0">
-                <button
-                  onClick={() => setRightPanelView("activities")}
-                  className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-colors cursor-pointer ${
-                    rightPanelView === "activities"
-                      ? "bg-blue-100 text-blue-700"
-                      : "text-gray-600 hover:bg-gray-100"
-                  }`}
-                >
-                  <ChatBubbleLeftRightIcon className="h-4 w-4" />
-                  Работен Процес
-                </button>
-                <button
-                  onClick={() => setRightPanelView("analysis")}
-                  className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-colors cursor-pointer ${
-                    rightPanelView === "analysis"
-                      ? "bg-blue-100 text-blue-700"
-                      : "text-gray-600 hover:bg-gray-100"
-                  }`}
-                >
-                  <ChartBarIcon className="h-4 w-4" />
-                  Анализи
-                </button>
-              </div>
-
-              {/* Content based on selected view */}
-              <div
-                className={
-                  rightPanelView === "activities"
-                    ? "flex-1 flex flex-col min-h-0"
-                    : "flex-1 overflow-y-auto custom-scrollbar-xs"
-                }
-              >
-                {rightPanelView === "activities" ? (
-                  <TaskActivities
-                    taskId={taskData._id}
-                    activities={taskData.activities || []}
-                    currentUser={currentUser}
-                    refetch={refetch}
-                  />
-                ) : (
-                  <AnalysisTabsSection
-                    taskId={taskData._id}
-                    fiveWhys={taskData.fiveWhys || []}
-                    riskAssessments={taskData.riskAssessments || []}
-                    currentUser={currentUser}
-                    refetch={refetch}
-                  />
-                )}
-              </div>
+          {/* Scrollable Content Area */}
+          <div className="lg:flex-grow lg:min-h-0 lg:relative">
+            <div className="p-4 lg:absolute lg:inset-0 lg:overflow-y-auto custom-scrollbar-xs">
+              {rightPanelView === "activities" ? (
+                <TaskActivities
+                  taskId={taskData._id}
+                  activities={taskData.activities || []}
+                  currentUser={currentUser}
+                  refetch={refetch}
+                />
+              ) : (
+                <AnalysisTabsSection
+                  taskId={taskData._id}
+                  fiveWhys={taskData.fiveWhys || []}
+                  riskAssessments={taskData.riskAssessments || []}
+                  currentUser={currentUser}
+                  refetch={refetch}
+                />
+              )}
             </div>
           </div>
         </div>

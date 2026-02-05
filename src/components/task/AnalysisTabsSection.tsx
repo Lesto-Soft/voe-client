@@ -26,7 +26,12 @@ const AnalysisTabsSection: React.FC<AnalysisTabsSectionProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<TabType>("fiveWhy");
 
-  const tabs: { id: TabType; label: string; icon: React.ComponentType<{ className?: string }>; count: number }[] = [
+  const tabs: {
+    id: TabType;
+    label: string;
+    icon: React.ComponentType<{ className?: string }>;
+    count: number;
+  }[] = [
     {
       id: "fiveWhy",
       label: "5 Защо",
@@ -44,9 +49,6 @@ const AnalysisTabsSection: React.FC<AnalysisTabsSectionProps> = ({
   return (
     <div className="bg-white rounded-lg shadow-sm overflow-hidden">
       <div className="border-b border-gray-200">
-        <h3 className="text-sm font-semibold text-gray-900 px-4 pt-4 pb-2">
-          Анализи
-        </h3>
         <div className="flex">
           {tabs.map((tab) => {
             const Icon = tab.icon;

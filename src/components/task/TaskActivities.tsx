@@ -6,7 +6,6 @@ import {
   useDeleteTaskActivity,
 } from "../../graphql/hooks/task";
 import UserLink from "../global/links/UserLink";
-import UnifiedRichTextEditor from "../forms/partials/UnifiedRichTextEditor";
 import { renderContentSafely } from "../../utils/contentRenderer";
 import {
   ChatBubbleLeftIcon,
@@ -104,21 +103,26 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
   refetch,
 }) => {
   const [newContent, setNewContent] = useState("");
-  const [attachments, setAttachments] = useState<File[]>([]);
   const [activityType, setActivityType] = useState<TaskActivityType>(
-    TaskActivityType.Comment
+    TaskActivityType.Comment,
   );
-  const [editingActivityId, setEditingActivityId] = useState<string | null>(null);
+  const [editingActivityId, setEditingActivityId] = useState<string | null>(
+    null,
+  );
   const [editContent, setEditContent] = useState("");
-  const [deletingActivityId, setDeletingActivityId] = useState<string | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [deletingActivityId, setDeletingActivityId] = useState<string | null>(
+    null,
+  );
 
-  const { createTaskActivity, loading: createLoading } = useCreateTaskActivity(taskId);
-  const { updateTaskActivity, loading: updateLoading } = useUpdateTaskActivity(taskId);
-  const { deleteTaskActivity, loading: deleteLoading } = useDeleteTaskActivity(taskId);
+  const { createTaskActivity, loading: createLoading } =
+    useCreateTaskActivity(taskId);
+  const { updateTaskActivity, loading: updateLoading } =
+    useUpdateTaskActivity(taskId);
+  const { deleteTaskActivity, loading: deleteLoading } =
+    useDeleteTaskActivity(taskId);
 
   const handleSubmitActivity = async () => {
-    if (!newContent.trim() || createLoading || isProcessing) return;
+    if (!newContent.trim() || createLoading) return;
 
     try {
       await createTaskActivity({
@@ -129,7 +133,6 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
         attachments: [],
       });
       setNewContent("");
-      setAttachments([]);
       setActivityType(TaskActivityType.Comment);
       refetch();
     } catch (error) {
@@ -189,196 +192,197 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
 
   // Sort activities by creation date (newest first)
   const sortedActivities = [...activities].sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
   );
 
   return (
-    <div>
-      {/* Activities list (timeline at top) */}
-      <div className="space-y-3 mb-6">
-        {sortedActivities.length === 0 ? (
-          <p className="text-center text-gray-500 py-8">
-            Няма активност все още. Бъдете първият!
-          </p>
-        ) : (
-          sortedActivities.map((activity) => {
-            const config = activityTypeConfig[activity.type];
-            const Icon = config.icon;
-            const isEditing = editingActivityId === activity._id;
-            const isDeleting = deletingActivityId === activity._id;
-            const canModify = canModifyActivity(activity);
+    <div className="flex flex-col flex-1 min-h-0">
+      {/* Activities list - scrollable, fills available space */}
+      <div className="flex-1 overflow-y-auto custom-scrollbar-xs pr-1 min-h-0">
+        <div className="space-y-2">
+          {sortedActivities.length === 0 ? (
+            <p className="text-center text-gray-500 py-4">
+              Няма активност все още. Бъдете първият!
+            </p>
+          ) : (
+            sortedActivities.map((activity) => {
+              const config = activityTypeConfig[activity.type];
+              const Icon = config.icon;
+              const isEditing = editingActivityId === activity._id;
+              const isDeleting = deletingActivityId === activity._id;
+              const canModify = canModifyActivity(activity);
 
-            return (
-              <div
-                key={activity._id}
-                className={`border-l-4 ${config.leftBorderColor} rounded-lg p-4 bg-gray-50/50 border border-gray-100`}
-              >
-                <div className="flex items-start gap-3">
-                  <div className={`mt-0.5 ${config.textColor}`}>
-                    <Icon className="h-5 w-5" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2 mb-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span
-                          className={`text-xs font-medium px-2 py-0.5 rounded-full ${config.bgColor} ${config.textColor} border ${config.borderColor}`}
-                        >
-                          {config.label}
-                        </span>
-                        <UserLink user={activity.createdBy} />
-                        <span className="text-xs text-gray-500">
-                          {formatDateTime(activity.createdAt)}
-                        </span>
+              return (
+                <div
+                  key={activity._id}
+                  className={`border-l-4 ${config.leftBorderColor} rounded-lg py-2 px-3 bg-gray-50/50 border border-gray-100`}
+                >
+                  <div className="flex items-start gap-2">
+                    <div className={`mt-0.5 ${config.textColor}`}>
+                      <Icon className="h-4 w-4" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2 mb-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span
+                            className={`text-xs font-medium px-2 py-0.5 rounded-full ${config.bgColor} ${config.textColor} border ${config.borderColor}`}
+                          >
+                            {config.label}
+                          </span>
+                          <UserLink user={activity.createdBy} />
+                          <span className="text-xs text-gray-500">
+                            {formatDateTime(activity.createdAt)}
+                          </span>
+                        </div>
+                        {/* Edit/Delete buttons */}
+                        {canModify && !isEditing && !isDeleting && (
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => handleStartEdit(activity)}
+                              className="p-1 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+                              title="Редактирай"
+                            >
+                              <PencilIcon className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() =>
+                                setDeletingActivityId(activity._id)
+                              }
+                              className="p-1 text-gray-400 hover:text-red-600 transition-colors cursor-pointer"
+                              title="Изтрий"
+                            >
+                              <TrashIcon className="h-4 w-4" />
+                            </button>
+                          </div>
+                        )}
                       </div>
-                      {/* Edit/Delete buttons */}
-                      {canModify && !isEditing && !isDeleting && (
-                        <div className="flex items-center gap-1">
-                          <button
-                            onClick={() => handleStartEdit(activity)}
-                            className="p-1 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
-                            title="Редактирай"
-                          >
-                            <PencilIcon className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={() => setDeletingActivityId(activity._id)}
-                            className="p-1 text-gray-400 hover:text-red-600 transition-colors cursor-pointer"
-                            title="Изтрий"
-                          >
-                            <TrashIcon className="h-4 w-4" />
-                          </button>
+
+                      {/* Edit mode */}
+                      {isEditing ? (
+                        <div className="mt-2">
+                          <textarea
+                            value={editContent}
+                            onChange={(e) => setEditContent(e.target.value)}
+                            rows={3}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent resize-none bg-white"
+                          />
+                          <div className="flex justify-end gap-2 mt-2">
+                            <button
+                              type="button"
+                              onClick={handleCancelEdit}
+                              disabled={updateLoading}
+                              className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors cursor-pointer"
+                            >
+                              <XMarkIcon className="h-4 w-4" />
+                              Отмени
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleSaveEdit(activity._id)}
+                              disabled={!editContent.trim() || updateLoading}
+                              className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                            >
+                              <CheckCircleIcon className="h-4 w-4" />
+                              {updateLoading ? "Запазване..." : "Запази"}
+                            </button>
+                          </div>
+                        </div>
+                      ) : isDeleting ? (
+                        /* Delete confirmation */
+                        <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+                          <p className="text-sm text-red-700 mb-3">
+                            Сигурни ли сте, че искате да изтриете това?
+                          </p>
+                          <div className="flex justify-end gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setDeletingActivityId(null)}
+                              disabled={deleteLoading}
+                              className="px-3 py-1.5 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors cursor-pointer"
+                            >
+                              Отмени
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDelete(activity._id)}
+                              disabled={deleteLoading}
+                              className="px-3 py-1.5 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                            >
+                              {deleteLoading ? "Изтриване..." : "Изтрий"}
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        /* Normal content display */
+                        <div className="text-sm text-gray-700">
+                          {renderContentSafely(activity.content || "")}
                         </div>
                       )}
                     </div>
-
-                    {/* Edit mode */}
-                    {isEditing ? (
-                      <div className="mt-2">
-                        <textarea
-                          value={editContent}
-                          onChange={(e) => setEditContent(e.target.value)}
-                          rows={3}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent resize-none bg-white"
-                        />
-                        <div className="flex justify-end gap-2 mt-2">
-                          <button
-                            type="button"
-                            onClick={handleCancelEdit}
-                            disabled={updateLoading}
-                            className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors cursor-pointer"
-                          >
-                            <XMarkIcon className="h-4 w-4" />
-                            Отмени
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleSaveEdit(activity._id)}
-                            disabled={!editContent.trim() || updateLoading}
-                            className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
-                          >
-                            <CheckCircleIcon className="h-4 w-4" />
-                            {updateLoading ? "Запазване..." : "Запази"}
-                          </button>
-                        </div>
-                      </div>
-                    ) : isDeleting ? (
-                      /* Delete confirmation */
-                      <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-                        <p className="text-sm text-red-700 mb-3">
-                          Сигурни ли сте, че искате да изтриете това?
-                        </p>
-                        <div className="flex justify-end gap-2">
-                          <button
-                            type="button"
-                            onClick={() => setDeletingActivityId(null)}
-                            disabled={deleteLoading}
-                            className="px-3 py-1.5 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors cursor-pointer"
-                          >
-                            Отмени
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleDelete(activity._id)}
-                            disabled={deleteLoading}
-                            className="px-3 py-1.5 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
-                          >
-                            {deleteLoading ? "Изтриване..." : "Изтрий"}
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      /* Normal content display */
-                      <div className="text-sm text-gray-700">
-                        {renderContentSafely(activity.content || "")}
-                      </div>
-                    )}
                   </div>
                 </div>
-              </div>
-            );
-          })
-        )}
+              );
+            })
+          )}
+        </div>
       </div>
 
-      {/* Add activity section at bottom */}
-      <div className="border-t border-gray-200 pt-4">
-        <h3 className="text-sm font-semibold text-gray-700 mb-3">Добави запис</h3>
-
-        {/* Activity type selector as horizontal chips */}
-        <div className="flex flex-wrap gap-2 mb-3">
-          {selectableActivityTypes.map((type) => {
-            const config = activityTypeConfig[type];
-            const Icon = config.icon;
-            const isSelected = activityType === type;
-            return (
-              <button
-                key={type}
-                type="button"
-                onClick={() => setActivityType(type)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors cursor-pointer ${
-                  isSelected
-                    ? `${config.bgColor} ${config.textColor} ${config.borderColor}`
-                    : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"
-                }`}
-              >
-                <Icon className="h-4 w-4" />
-                {config.label}
-              </button>
-            );
-          })}
+      {/* Add activity section - fixed at bottom */}
+      <div className="flex-shrink-0 border-t border-gray-200 pt-3 mt-3">
+        {/* Title and activity type selector on same line */}
+        <div className="flex items-center gap-3 mb-2">
+          <h3 className="text-sm font-semibold text-gray-700 whitespace-nowrap">
+            Добави запис
+          </h3>
+          <div className="flex flex-wrap gap-1.5">
+            {selectableActivityTypes.map((type) => {
+              const config = activityTypeConfig[type];
+              const Icon = config.icon;
+              const isSelected = activityType === type;
+              return (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => setActivityType(type)}
+                  className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border transition-colors cursor-pointer ${
+                    isSelected
+                      ? `${config.bgColor} ${config.textColor} ${config.borderColor}`
+                      : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"
+                  }`}
+                >
+                  <Icon className="h-3.5 w-3.5" />
+                  {config.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
-        {/* Rich text editor */}
-        <UnifiedRichTextEditor
-          content={newContent}
-          onContentChange={setNewContent}
-          attachments={attachments}
-          setAttachments={setAttachments}
-          type="taskActivity"
-          placeholder={
-            activityType === TaskActivityType.Comment
-              ? "Добавете коментар..."
-              : activityType === TaskActivityType.HelpRequest
-              ? "Опишете от каква помощ се нуждаете..."
-              : "Опишете какво трябва да бъде одобрено..."
-          }
-          minLength={1}
-          maxLength={1500}
-          hideAttachments={true}
-          hideSideButtons={true}
-          onProcessingChange={setIsProcessing}
-          editorClassName="min-h-[80px]"
-        />
-        <div className="flex justify-end mt-2">
+        {/* Text input with submit button on left */}
+        <div className="flex gap-2">
           <button
             type="button"
             onClick={handleSubmitActivity}
-            disabled={!newContent.trim() || createLoading || isProcessing}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
+            disabled={!newContent.trim() || createLoading}
+            title={createLoading ? "Изпращане..." : "Публикувай"}
+            className="flex-shrink-0 w-10 flex items-center justify-center bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
           >
             <PaperAirplaneIcon className="h-4 w-4" />
-            {createLoading ? "Изпращане..." : "Публикувай"}
           </button>
+          <textarea
+            value={newContent}
+            onChange={(e) => setNewContent(e.target.value)}
+            placeholder={
+              activityType === TaskActivityType.Comment
+                ? "Добавете коментар..."
+                : activityType === TaskActivityType.HelpRequest
+                  ? "Опишете от каква помощ се нуждаете..."
+                  : "Опишете какво трябва да бъде одобрено..."
+            }
+            rows={2}
+            maxLength={1500}
+            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent resize-none"
+          />
         </div>
       </div>
     </div>

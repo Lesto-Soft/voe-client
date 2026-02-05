@@ -40,7 +40,9 @@ const TaskDetail: React.FC = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   // Right panel view toggle
-  const [rightPanelView, setRightPanelView] = useState<"activities" | "analysis">("activities");
+  const [rightPanelView, setRightPanelView] = useState<
+    "activities" | "analysis"
+  >("activities");
 
   // Parse task number (0 if invalid - hook will skip)
   const numericTaskNumber =
@@ -49,7 +51,8 @@ const TaskDetail: React.FC = () => {
       : 0;
 
   // All hooks must be called before any early returns
-  const { task, loading, error, refetch } = useGetTaskByNumber(numericTaskNumber);
+  const { task, loading, error, refetch } =
+    useGetTaskByNumber(numericTaskNumber);
   const { deleteTask, loading: deleteLoading } = useDeleteTask({
     onCompleted: () => navigate("/tasks"),
   });
@@ -109,12 +112,12 @@ const TaskDetail: React.FC = () => {
     currentUser.role?._id === "ADMIN";
 
   return (
-    <div className="min-h-full bg-gray-100">
+    <div className="h-[calc(100vh-6rem)] overflow-hidden bg-gray-100 flex flex-col">
       {/* Main content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 overflow-hidden">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full">
           {/* Left column - Sidebar (lg:col-span-4) */}
-          <div className="lg:col-span-4 space-y-4">
+          <div className="lg:col-span-4 overflow-y-auto space-y-4 pr-2 custom-scrollbar-xs">
             {/* Task Header Card */}
             <div className="bg-white rounded-lg shadow-sm p-4">
               {/* Back link */}
@@ -216,7 +219,9 @@ const TaskDetail: React.FC = () => {
                     ) : taskData.assignee ? (
                       <UserLink user={taskData.assignee} />
                     ) : (
-                      <span className="text-sm text-gray-500 italic">Невъзложена</span>
+                      <span className="text-sm text-gray-500 italic">
+                        Невъзложена
+                      </span>
                     )}
                   </dd>
                 </div>
@@ -269,10 +274,10 @@ const TaskDetail: React.FC = () => {
           </div>
 
           {/* Right column - Activity/Analysis (lg:col-span-8) */}
-          <div className="lg:col-span-8">
-            <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="lg:col-span-8 overflow-hidden flex flex-col">
+            <div className="bg-white rounded-lg shadow-sm p-6 flex-1 flex flex-col overflow-hidden">
               {/* View Toggle */}
-              <div className="flex items-center gap-1 mb-4 border-b border-gray-200 pb-3">
+              <div className="flex items-center gap-1 mb-4 border-b border-gray-200 pb-3 flex-shrink-0">
                 <button
                   onClick={() => setRightPanelView("activities")}
                   className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-colors cursor-pointer ${
@@ -293,27 +298,35 @@ const TaskDetail: React.FC = () => {
                   }`}
                 >
                   <ChartBarIcon className="h-4 w-4" />
-                  Анализ
+                  Анализи
                 </button>
               </div>
 
               {/* Content based on selected view */}
-              {rightPanelView === "activities" ? (
-                <TaskActivities
-                  taskId={taskData._id}
-                  activities={taskData.activities || []}
-                  currentUser={currentUser}
-                  refetch={refetch}
-                />
-              ) : (
-                <AnalysisTabsSection
-                  taskId={taskData._id}
-                  fiveWhys={taskData.fiveWhys || []}
-                  riskAssessments={taskData.riskAssessments || []}
-                  currentUser={currentUser}
-                  refetch={refetch}
-                />
-              )}
+              <div
+                className={
+                  rightPanelView === "activities"
+                    ? "flex-1 flex flex-col min-h-0"
+                    : "flex-1 overflow-y-auto custom-scrollbar-xs"
+                }
+              >
+                {rightPanelView === "activities" ? (
+                  <TaskActivities
+                    taskId={taskData._id}
+                    activities={taskData.activities || []}
+                    currentUser={currentUser}
+                    refetch={refetch}
+                  />
+                ) : (
+                  <AnalysisTabsSection
+                    taskId={taskData._id}
+                    fiveWhys={taskData.fiveWhys || []}
+                    riskAssessments={taskData.riskAssessments || []}
+                    currentUser={currentUser}
+                    refetch={refetch}
+                  />
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -337,7 +350,10 @@ const TaskDetail: React.FC = () => {
         description={
           <>
             Сигурни ли сте, че искате да изтриете задача{" "}
-            <strong>#{taskData.taskNumber}: {taskData.title}</strong>?
+            <strong>
+              #{taskData.taskNumber}: {taskData.title}
+            </strong>
+            ?
             <br />
             <span className="text-red-600">Това действие е необратимо.</span>
           </>

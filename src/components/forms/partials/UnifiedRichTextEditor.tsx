@@ -43,7 +43,7 @@ interface UnifiedEditorProps {
   hideSideButtons?: boolean;
   onProcessingChange?: (processing: boolean) => void;
   caseId?: string;
-  type: "case" | "answer" | "comment" | "taskActivity";
+  type: "case" | "answer" | "comment";
   editorClassName?: string;
   hideAttachments?: boolean;
 }
@@ -88,7 +88,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
       TextAlign.configure({ types: ["paragraph", "heading", "listItem"] }),
       Placeholder.configure({ placeholder }),
       CharacterCount, // Keep extension but don't use its limit (doesn't count mentions properly)
-      ...(type !== "case" && type !== "taskActivity"
+      ...(type !== "case"
         ? [
             CustomMention.configure({
               suggestion: useMemo(

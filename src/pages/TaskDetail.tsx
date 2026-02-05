@@ -26,6 +26,7 @@ import {
   PencilIcon,
   TrashIcon,
   ChatBubbleLeftRightIcon,
+  ChartBarIcon,
 } from "@heroicons/react/24/outline";
 
 const TaskDetail: React.FC = () => {
@@ -37,6 +38,9 @@ const TaskDetail: React.FC = () => {
   // Modal state
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
+  // Right panel view toggle
+  const [rightPanelView, setRightPanelView] = useState<"activities" | "analysis">("activities");
 
   // Parse task number (0 if invalid - hook will skip)
   const numericTaskNumber =
@@ -262,32 +266,54 @@ const TaskDetail: React.FC = () => {
                 )}
               </dl>
             </div>
-
-            {/* Analysis Tabs Section */}
-            <AnalysisTabsSection
-              taskId={taskData._id}
-              fiveWhys={taskData.fiveWhys || []}
-              riskAssessments={taskData.riskAssessments || []}
-              currentUser={currentUser}
-              refetch={refetch}
-            />
           </div>
 
-          {/* Right column - Activity (lg:col-span-8) */}
+          {/* Right column - Activity/Analysis (lg:col-span-8) */}
           <div className="lg:col-span-8">
             <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <ChatBubbleLeftRightIcon className="h-5 w-5 text-gray-400" />
-                Работен Процес
-              </h2>
+              {/* View Toggle */}
+              <div className="flex items-center gap-1 mb-4 border-b border-gray-200 pb-3">
+                <button
+                  onClick={() => setRightPanelView("activities")}
+                  className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-colors cursor-pointer ${
+                    rightPanelView === "activities"
+                      ? "bg-blue-100 text-blue-700"
+                      : "text-gray-600 hover:bg-gray-100"
+                  }`}
+                >
+                  <ChatBubbleLeftRightIcon className="h-4 w-4" />
+                  Работен Процес
+                </button>
+                <button
+                  onClick={() => setRightPanelView("analysis")}
+                  className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-colors cursor-pointer ${
+                    rightPanelView === "analysis"
+                      ? "bg-blue-100 text-blue-700"
+                      : "text-gray-600 hover:bg-gray-100"
+                  }`}
+                >
+                  <ChartBarIcon className="h-4 w-4" />
+                  Анализ
+                </button>
+              </div>
 
-              {/* Activities / Comments section */}
-              <TaskActivities
-                taskId={taskData._id}
-                activities={taskData.activities || []}
-                currentUser={currentUser}
-                refetch={refetch}
-              />
+              {/* Content based on selected view */}
+              {rightPanelView === "activities" ? (
+                <TaskActivities
+                  taskId={taskData._id}
+                  activities={taskData.activities || []}
+                  currentUser={currentUser}
+                  refetch={refetch}
+                />
+              ) : (
+                <AnalysisTabsSection
+                  taskId={taskData._id}
+                  fiveWhys={taskData.fiveWhys || []}
+                  riskAssessments={taskData.riskAssessments || []}
+                  currentUser={currentUser}
+                  refetch={refetch}
+                />
+              )}
             </div>
           </div>
         </div>

@@ -106,63 +106,68 @@ const TaskDetail: React.FC = () => {
 
   return (
     <div className="min-h-full bg-gray-100">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center gap-4 mb-4">
-            <Link
-              to="/tasks"
-              className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
-            >
-              <ArrowLeftIcon className="h-5 w-5" />
-              <span>Обратно към задачите</span>
-            </Link>
-          </div>
-          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
+      {/* Main content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Left column - Sidebar (lg:col-span-4) */}
+          <div className="lg:col-span-4 space-y-4">
+            {/* Task Header Card */}
+            <div className="bg-white rounded-lg shadow-sm p-4">
+              {/* Back link */}
+              <Link
+                to="/tasks"
+                className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors mb-3"
+              >
+                <ArrowLeftIcon className="h-4 w-4" />
+                <span>Към задачите</span>
+              </Link>
+
+              {/* Task number & priority */}
+              <div className="flex items-center gap-2 mb-2">
                 <span className="text-sm font-medium text-gray-500">
                   Задача #{taskData.taskNumber}
                 </span>
                 <TaskPriorityBadge priority={taskData.priority} />
               </div>
-              <h1 className="text-2xl font-bold text-gray-900">{taskData.title}</h1>
-            </div>
-            <div className="flex items-center gap-3">
-              <TaskStatusBadge status={taskData.status} size="md" />
-              {canEdit && (
-                <>
+
+              {/* Title */}
+              <h1 className="text-xl font-bold text-gray-900 mb-3">
+                {taskData.title}
+              </h1>
+
+              {/* Status row */}
+              <div className="flex items-center gap-2 mb-3">
+                <TaskStatusBadge status={taskData.status} size="md" />
+                {canEdit && (
                   <TaskStatusChanger
                     taskId={taskData._id}
                     currentStatus={taskData.status}
                     onStatusChanged={refetch}
                   />
+                )}
+              </div>
+
+              {/* Action buttons */}
+              {canEdit && (
+                <div className="flex items-center gap-2 pt-3 border-t border-gray-100">
                   <button
                     onClick={() => setIsEditModalOpen(true)}
-                    className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors cursor-pointer"
+                    className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-50 border border-gray-200 rounded-md hover:bg-gray-100 transition-colors cursor-pointer"
                   >
                     <PencilIcon className="h-4 w-4" />
                     Редактирай
                   </button>
                   <button
                     onClick={() => setIsDeleteDialogOpen(true)}
-                    className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-red-600 bg-white border border-red-300 rounded-md hover:bg-red-50 transition-colors cursor-pointer"
+                    className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-red-600 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 transition-colors cursor-pointer"
                   >
                     <TrashIcon className="h-4 w-4" />
                     Изтрий
                   </button>
-                </>
+                </div>
               )}
             </div>
-          </div>
-        </div>
-      </div>
 
-      {/* Main content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Left column - Sidebar (lg:col-span-4) */}
-          <div className="lg:col-span-4 space-y-4">
             {/* Task Description - Collapsible */}
             <TaskDescriptionCard description={taskData.description} />
 

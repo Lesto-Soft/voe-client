@@ -1,12 +1,11 @@
 import React, { useState } from "react";
-import { useParams, Link, useNavigate } from "react-router";
+import { useParams, useNavigate } from "react-router";
 import { useGetTaskByNumber, useDeleteTask } from "../graphql/hooks/task";
 import { useCurrentUser } from "../context/UserContext";
 import { ITask } from "../db/interfaces";
 import PageStatusDisplay from "../components/global/PageStatusDisplay";
-import TaskStatusBadge from "../components/task/TaskStatusBadge";
 import TaskPriorityBadge from "../components/task/TaskPriorityBadge";
-import TaskStatusChanger from "../components/task/TaskStatusChanger";
+import TaskStatusPill from "../components/task/TaskStatusPill";
 import TaskActivities from "../components/task/TaskActivities";
 import TaskFormModal from "../components/task/TaskFormModal";
 import TaskAssigneeChanger from "../components/task/TaskAssigneeChanger";
@@ -15,18 +14,19 @@ import TaskDescriptionCard from "../components/task/TaskDescriptionCard";
 import AnalysisTabsSection from "../components/task/AnalysisTabsSection";
 import CaseLink from "../components/global/links/CaseLink";
 import UserLink from "../components/global/links/UserLink";
+import UserAvatar from "../components/cards/UserAvatar";
 import ConfirmActionDialog from "../components/modals/ConfirmActionDialog";
+import { endpoint } from "../db/config";
 import { useTranslation } from "react-i18next";
 import {
-  ArrowLeftIcon,
   CalendarIcon,
   ClockIcon,
-  UserIcon,
   LinkIcon,
   PencilIcon,
   TrashIcon,
   ChatBubbleLeftRightIcon,
   ChartBarIcon,
+  FlagIcon,
 } from "@heroicons/react/24/outline";
 
 const TaskDetail: React.FC = () => {
@@ -111,41 +111,42 @@ const TaskDetail: React.FC = () => {
     currentUser._id === taskData.assignee?._id ||
     currentUser.role?._id === "ADMIN";
 
+  // Check if current user can change status directly (only creator and admin)
+  // Assignee changes status through activities (auto-transition)
+  const canChangeStatus =
+    currentUser._id === taskData.creator._id ||
+    currentUser.role?._id === "ADMIN";
+
   return (
     <div className="flex flex-col lg:flex-row bg-gray-50 lg:h-[calc(100vh-6rem)] w-full">
       {/* Left Panel - Task Info Sidebar (like CaseInfo) */}
       <div className="max-w-full lg:w-96 lg:shrink-0 order-1 lg:order-none lg:h-full">
         <div className="w-full h-full bg-white shadow-md overflow-y-auto custom-scrollbar-xs">
           <div className="p-4 flex flex-col gap-3">
-            {/* Back link */}
-            <Link
-              to="/tasks"
-              className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors"
-            >
-              <ArrowLeftIcon className="h-4 w-4" />
-              <span>Към задачите</span>
-            </Link>
-
-            {/* Task number, priority & status */}
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-sm font-medium text-gray-500">
-                Задача #{taskData.taskNumber}
-              </span>
-              <TaskPriorityBadge priority={taskData.priority} />
-              <TaskStatusBadge status={taskData.status} size="md" />
+            {/* Top row: Title + Action buttons */}
+            <div className="flex items-start justify-between gap-2">
+              <h1 className="text-xl font-bold text-gray-900 flex-1">
+                {taskData.title}
+              </h1>
               {canEdit && (
-                <TaskStatusChanger
-                  taskId={taskData._id}
-                  currentStatus={taskData.status}
-                  onStatusChanged={refetch}
-                />
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  <button
+                    onClick={() => setIsEditModalOpen(true)}
+                    title="Редактирай"
+                    className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors cursor-pointer"
+                  >
+                    <PencilIcon className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => setIsDeleteDialogOpen(true)}
+                    title="Изтрий"
+                    className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors cursor-pointer"
+                  >
+                    <TrashIcon className="h-4 w-4" />
+                  </button>
+                </div>
               )}
             </div>
-
-            {/* Title */}
-            <h1 className="text-xl font-bold text-gray-900">
-              {taskData.title}
-            </h1>
 
             {/* Task Description - Collapsible */}
             <TaskDescriptionCard description={taskData.description} />
@@ -161,21 +162,29 @@ const TaskDetail: React.FC = () => {
               </div>
             )}
 
-            {/* People - Creator & Assignee */}
+            {/* People - Creator & Assignee (stacked with avatars) */}
             <div className="pt-2 border-t border-gray-100">
-              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                <UserIcon className="h-3.5 w-3.5" />
-                Възложена от/на
-              </h3>
-              <dl className="grid grid-cols-2 gap-3">
+              <div className="space-y-3">
+                {/* Creator */}
                 <div>
-                  <dt className="text-xs text-gray-400 mb-0.5">Създател</dt>
-                  <dd>
+                  <dt className="text-xs text-gray-400 mb-1">Възложена от</dt>
+                  <dd className="flex items-center gap-2">
+                    <UserAvatar
+                      name={taskData.creator.name}
+                      imageUrl={
+                        taskData.creator.avatar
+                          ? `${endpoint}/static/avatars/${taskData.creator._id}/${taskData.creator.avatar}`
+                          : null
+                      }
+                      size={32}
+                    />
                     <UserLink user={taskData.creator} />
                   </dd>
                 </div>
+
+                {/* Assignee */}
                 <div>
-                  <dt className="text-xs text-gray-400 mb-0.5">Възложена на</dt>
+                  <dt className="text-xs text-gray-400 mb-1">Възложена на</dt>
                   <dd>
                     {canEdit ? (
                       <TaskAssigneeChanger
@@ -184,7 +193,18 @@ const TaskDetail: React.FC = () => {
                         onAssigneeChanged={refetch}
                       />
                     ) : taskData.assignee ? (
-                      <UserLink user={taskData.assignee} />
+                      <div className="flex items-center gap-2">
+                        <UserAvatar
+                          name={taskData.assignee.name}
+                          imageUrl={
+                            taskData.assignee.avatar
+                              ? `${endpoint}/static/avatars/${taskData.assignee._id}/${taskData.assignee.avatar}`
+                              : null
+                          }
+                          size={32}
+                        />
+                        <UserLink user={taskData.assignee} />
+                      </div>
                     ) : (
                       <span className="text-sm text-gray-500 italic">
                         Невъзложена
@@ -192,10 +212,10 @@ const TaskDetail: React.FC = () => {
                     )}
                   </dd>
                 </div>
-              </dl>
+              </div>
             </div>
 
-            {/* Dates */}
+            {/* Dates (due date first, then created) */}
             <div className="pt-2 border-t border-gray-100">
               <dl className="grid grid-cols-2 gap-3">
                 <div>
@@ -220,39 +240,34 @@ const TaskDetail: React.FC = () => {
                     {formatDateTime(taskData.createdAt)}
                   </dd>
                 </div>
-                {taskData.completedAt && (
-                  <div className="col-span-2">
-                    <dt className="text-xs text-gray-400 flex items-center gap-1 mb-0.5">
-                      <ClockIcon className="h-3.5 w-3.5" />
-                      Завършена на
-                    </dt>
-                    <dd className="text-sm text-gray-700">
-                      {formatDateTime(taskData.completedAt)}
-                    </dd>
-                  </div>
-                )}
               </dl>
             </div>
 
-            {/* Action buttons */}
-            {canEdit && (
-              <div className="flex items-center gap-2 pt-2 border-t border-gray-100">
-                <button
-                  onClick={() => setIsEditModalOpen(true)}
-                  className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-50 border border-gray-200 rounded-md hover:bg-gray-100 transition-colors cursor-pointer"
-                >
-                  <PencilIcon className="h-4 w-4" />
-                  Редактирай
-                </button>
-                <button
-                  onClick={() => setIsDeleteDialogOpen(true)}
-                  className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-red-600 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 transition-colors cursor-pointer"
-                >
-                  <TrashIcon className="h-4 w-4" />
-                  Изтрий
-                </button>
+            {/* Priority & Status (at bottom with labels, like CaseInfo) */}
+            <div className="pt-2 border-t border-gray-100">
+              <div className="flex flex-wrap gap-3">
+                <div className="flex-1 min-w-[120px]">
+                  <dt className="text-xs text-gray-400 flex items-center gap-1 mb-1">
+                    <FlagIcon className="h-3.5 w-3.5" />
+                    Приоритет
+                  </dt>
+                  <dd>
+                    <TaskPriorityBadge priority={taskData.priority} />
+                  </dd>
+                </div>
+                <div className="flex-1 min-w-[120px]">
+                  <dt className="text-xs text-gray-400 mb-1">Статус</dt>
+                  <dd>
+                    <TaskStatusPill
+                      taskId={taskData._id}
+                      currentStatus={taskData.status}
+                      canChange={canChangeStatus}
+                      onStatusChanged={refetch}
+                    />
+                  </dd>
+                </div>
               </div>
-            )}
+            </div>
           </div>
         </div>
       </div>

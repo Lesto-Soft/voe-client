@@ -4,7 +4,7 @@ export { default as TaskCard } from "./TaskCard";
 export { default as TaskTable } from "./TaskTable";
 export { default as TaskList } from "./TaskList";
 export { default as TaskFilters } from "./TaskFilters";
-export { default as TaskStatusChanger } from "./TaskStatusChanger";
+export { default as TaskStatusPill } from "./TaskStatusPill";
 export { default as TaskActivities } from "./TaskActivities";
 export { default as TaskFormModal } from "./TaskFormModal";
 export { default as TaskAssigneeChanger } from "./TaskAssigneeChanger";

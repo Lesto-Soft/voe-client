@@ -89,6 +89,13 @@ const selectableActivityTypes: TaskActivityType[] = [
   TaskActivityType.ApprovalRequest,
 ];
 
+// System-generated activity types (rendered as compact notifications)
+const systemActivityTypes: TaskActivityType[] = [
+  TaskActivityType.StatusChange,
+  TaskActivityType.PriorityChange,
+  TaskActivityType.AssigneeChange,
+];
+
 interface TaskActivitiesProps {
   taskId: string;
   activities: ITaskActivity[];
@@ -207,10 +214,30 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
             sortedActivities.map((activity) => {
               const config = activityTypeConfig[activity.type];
               const Icon = config.icon;
+              const isSystemActivity = systemActivityTypes.includes(activity.type);
               const isEditing = editingActivityId === activity._id;
               const isDeleting = deletingActivityId === activity._id;
-              const canModify = canModifyActivity(activity);
+              const canModify = canModifyActivity(activity) && !isSystemActivity;
 
+              // Compact rendering for system activities
+              if (isSystemActivity) {
+                return (
+                  <div
+                    key={activity._id}
+                    className={`flex items-center gap-2 py-1.5 px-3 text-xs rounded-md border-l-2 ${config.leftBorderColor} ${config.bgColor}`}
+                  >
+                    <Icon className={`h-3.5 w-3.5 flex-shrink-0 ${config.textColor}`} />
+                    <span className={`font-medium ${config.textColor}`}>
+                      {activity.content}
+                    </span>
+                    <span className="text-gray-400 ml-auto whitespace-nowrap">
+                      {formatDateTime(activity.createdAt)}
+                    </span>
+                  </div>
+                );
+              }
+
+              // Full rendering for user activities
               return (
                 <div
                   key={activity._id}

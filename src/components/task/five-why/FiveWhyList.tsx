@@ -43,6 +43,11 @@ const FiveWhyList: React.FC<FiveWhyListProps> = ({
 
   const activeFiveWhy = fiveWhys.find((fw) => fw._id === activeTab);
 
+  // Check if current user already has a Five Why analysis
+  const userHasFiveWhy = fiveWhys.some(
+    (fw) => fw.creator._id === currentUser._id
+  );
+
   const canEditFiveWhy = (fiveWhy: IFiveWhy) => {
     return (
       currentUser._id === fiveWhy.creator._id ||
@@ -150,6 +155,17 @@ const FiveWhyList: React.FC<FiveWhyListProps> = ({
                 {fiveWhy.creator.name.split(" ")[0]}
               </button>
             ))}
+            {/* Add button - only show if current user doesn't have one */}
+            {!userHasFiveWhy && (
+              <button
+                onClick={() => setIsCreateModalOpen(true)}
+                className="px-2 py-2 text-xs font-medium border-b-2 -mb-px border-transparent text-amber-500 hover:text-amber-600 hover:bg-amber-50 transition-colors cursor-pointer flex items-center gap-1"
+                title="Добави твоя анализ"
+              >
+                <PlusIcon className="h-3.5 w-3.5" />
+                Добави
+              </button>
+            )}
           </div>
 
           {/* Content */}

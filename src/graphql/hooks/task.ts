@@ -372,6 +372,7 @@ export const useChangeTaskStatus = (taskId?: string) => {
 
 /**
  * Assigns or changes the assignee of a task.
+ * Creates an ASSIGNEE_CHANGE activity entry.
  */
 export const useAssignTask = (taskId?: string) => {
   const [assignTaskMutation, { data, loading, error }] = useMutation(
@@ -384,10 +385,10 @@ export const useAssignTask = (taskId?: string) => {
     }
   );
 
-  const assignTask = async (taskIdParam: string, assigneeId?: string) => {
+  const assignTask = async (taskIdParam: string, assigneeId?: string, userId?: string) => {
     try {
       const response = await assignTaskMutation({
-        variables: { taskId: taskIdParam, assigneeId },
+        variables: { taskId: taskIdParam, assigneeId, userId },
         refetchQueries: [
           { query: GET_TASK_BY_ID, variables: { _id: taskIdParam } },
         ],

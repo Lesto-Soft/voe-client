@@ -31,7 +31,7 @@ const TaskDescriptionCard: React.FC<TaskDescriptionCardProps> = ({
     return (
       <div>
         <div className="flex items-center justify-between mb-1.5">
-          <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+          <h3 className="text-xs font-semibold text-gray-500 flex items-center gap-1.5">
             <DocumentTextIcon className="h-3.5 w-3.5" />
             Описание
           </h3>
@@ -47,7 +47,7 @@ const TaskDescriptionCard: React.FC<TaskDescriptionCardProps> = ({
         onClick={() => setIsExpanded(!isExpanded)}
         className="w-full flex items-center justify-between mb-1.5 hover:opacity-70 transition-opacity cursor-pointer"
       >
-        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+        <h3 className="text-xs font-semibold text-gray-500 flex items-center gap-1.5">
           <DocumentTextIcon className="h-3.5 w-3.5" />
           Описание
         </h3>

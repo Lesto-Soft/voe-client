@@ -44,6 +44,11 @@ const RiskAssessmentList: React.FC<RiskAssessmentListProps> = ({
   const { deleteRiskAssessment, loading: deleteLoading } =
     useDeleteRiskAssessment(taskId);
 
+  // Check if current user already has a Risk Assessment
+  const userHasAssessment = riskAssessments.some(
+    (ra) => ra.creator._id === currentUser._id
+  );
+
   const canEditAssessment = (assessment: IRiskAssessment) => {
     return (
       currentUser._id === assessment.creator._id ||
@@ -130,14 +135,27 @@ const RiskAssessmentList: React.FC<RiskAssessmentListProps> = ({
       <div className={compact ? "" : "p-4"}>
         {riskAssessments.length > 0 ? (
           <>
-            {/* Matrix Button */}
-            <button
-              onClick={() => setIsMatrixOpen(true)}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-blue-700 bg-blue-100 rounded-md hover:bg-blue-200 transition-colors mb-4"
-            >
-              <TableCellsIcon className="h-5 w-5" />
-              Покажи Матрица на Риска
-            </button>
+            {/* Matrix Button and Add Button */}
+            <div className="flex gap-2 mb-4">
+              <button
+                onClick={() => setIsMatrixOpen(true)}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-blue-700 bg-blue-100 rounded-md hover:bg-blue-200 transition-colors"
+              >
+                <TableCellsIcon className="h-5 w-5" />
+                Покажи Матрица на Риска
+              </button>
+              {/* Add button - only show if current user doesn't have one */}
+              {!userHasAssessment && (
+                <button
+                  onClick={() => setIsCreateModalOpen(true)}
+                  className="flex items-center gap-1 px-3 py-2 text-sm font-semibold text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100 transition-colors cursor-pointer"
+                  title="Добави твоя оценка"
+                >
+                  <PlusIcon className="h-4 w-4" />
+                  Добави
+                </button>
+              )}
+            </div>
 
             {/* Assessment Cards */}
             <div className="space-y-3">

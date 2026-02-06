@@ -79,8 +79,8 @@ export const CHANGE_TASK_STATUS = gql`
 `;
 
 export const ASSIGN_TASK = gql`
-  mutation AssignTask($taskId: ID!, $assigneeId: ID) {
-    assignTask(taskId: $taskId, assigneeId: $assigneeId) {
+  mutation AssignTask($taskId: ID!, $assigneeId: ID, $userId: ID!) {
+    assignTask(taskId: $taskId, assigneeId: $assigneeId, userId: $userId) {
       _id
       assignee {
         _id
@@ -89,6 +89,18 @@ export const ASSIGN_TASK = gql`
         avatar
       }
       updatedAt
+      activities {
+        _id
+        type
+        content
+        createdAt
+        createdBy {
+          _id
+          name
+          username
+          avatar
+        }
+      }
     }
   }
 `;

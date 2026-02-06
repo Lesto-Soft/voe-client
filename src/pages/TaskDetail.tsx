@@ -15,6 +15,7 @@ import AnalysisTabsSection from "../components/task/AnalysisTabsSection";
 import CaseLink from "../components/global/links/CaseLink";
 import UserLink from "../components/global/links/UserLink";
 import UserAvatar from "../components/cards/UserAvatar";
+import ShowDate from "../components/global/ShowDate";
 import ConfirmActionDialog from "../components/modals/ConfirmActionDialog";
 import { endpoint } from "../db/config";
 import { useTranslation } from "react-i18next";
@@ -25,7 +26,7 @@ import {
   PencilIcon,
   TrashIcon,
   ChatBubbleLeftRightIcon,
-  ChartBarIcon,
+  PuzzlePieceIcon,
   FlagIcon,
 } from "@heroicons/react/24/outline";
 
@@ -94,17 +95,6 @@ const TaskDetail: React.FC = () => {
     }
   };
 
-  const formatDateTime = (dateString?: string) => {
-    if (!dateString) return "—";
-    return new Date(dateString).toLocaleString("bg-BG", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
   // Check if current user can edit the task
   const canEdit =
     currentUser._id === taskData.creator._id ||
@@ -154,7 +144,7 @@ const TaskDetail: React.FC = () => {
             {/* Origin - Related Case */}
             {taskData.relatedCase && (
               <div className="pt-2 border-t border-gray-100">
-                <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                <h3 className="text-xs font-semibold text-gray-500 mb-2 flex items-center gap-1.5">
                   <LinkIcon className="h-3.5 w-3.5" />
                   Произход
                 </h3>
@@ -236,8 +226,10 @@ const TaskDetail: React.FC = () => {
                     <ClockIcon className="h-3.5 w-3.5" />
                     Създадена
                   </dt>
-                  <dd className="text-sm text-gray-700">
-                    {formatDateTime(taskData.createdAt)}
+                  <dd>
+                    {taskData.createdAt && (
+                      <ShowDate date={taskData.createdAt} />
+                    )}
                   </dd>
                 </div>
               </dl>
@@ -298,7 +290,7 @@ const TaskDetail: React.FC = () => {
                     : "border-gray-300 shadow-sm bg-gray-100 text-gray-700 hover:bg-blue-50 hover:text-blue-600"
                 }`}
               >
-                <ChartBarIcon className="h-5 w-5 mr-2" />
+                <PuzzlePieceIcon className="h-5 w-5 mr-2" />
                 Анализи
                 <sup className="ml-1">
                   {(taskData.fiveWhys?.length || 0) +

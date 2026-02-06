@@ -182,46 +182,51 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
               />
             </div>
 
-            {/* Priority and Due Date row */}
-            <div className="grid grid-cols-2 gap-4">
-              {/* Priority */}
-              <div>
-                <label
-                  htmlFor="task-priority"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Приоритет
-                </label>
-                <select
-                  id="task-priority"
-                  value={priority}
-                  onChange={(e) => setPriority(e.target.value as CasePriority)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent bg-white"
-                >
-                  {priorityOptions.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
+            {/* Priority */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Приоритет
+              </label>
+              <div className="flex flex-wrap gap-x-6 gap-y-2 items-center">
+                {[
+                  { value: CasePriority.Low, color: "#009b00", label: "Нисък" },
+                  { value: CasePriority.Medium, color: "#ad8600", label: "Среден" },
+                  { value: CasePriority.High, color: "#c30505", label: "Висок" },
+                ].map(({ value, color, label }) => (
+                  <label
+                    key={value}
+                    className="flex items-center gap-2 cursor-pointer hover:opacity-80"
+                  >
+                    <input
+                      type="radio"
+                      value={value}
+                      checked={priority === value}
+                      onChange={() => setPriority(value)}
+                      style={{ accentColor: color }}
+                      className="w-5 h-5 cursor-pointer"
+                      name="task-priority"
+                    />
+                    <span className="text-sm text-gray-700">{label}</span>
+                  </label>
+                ))}
               </div>
+            </div>
 
-              {/* Due Date */}
-              <div>
-                <label
-                  htmlFor="task-duedate"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Краен срок
-                </label>
-                <input
-                  id="task-duedate"
-                  type="date"
-                  value={dueDate}
-                  onChange={(e) => setDueDate(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                />
-              </div>
+            {/* Due Date */}
+            <div>
+              <label
+                htmlFor="task-duedate"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Краен срок
+              </label>
+              <input
+                id="task-duedate"
+                type="date"
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+              />
             </div>
 
             {/* Assignee - only show in create mode */}

@@ -6,6 +6,7 @@ import {
   useDeleteTaskActivity,
 } from "../../graphql/hooks/task";
 import UserLink from "../global/links/UserLink";
+import ActionMenu from "../global/ActionMenu";
 import { renderContentSafely } from "../../utils/contentRenderer";
 import {
   ChatBubbleLeftIcon,
@@ -35,10 +36,10 @@ const activityTypeConfig: Record<
   [TaskActivityType.Comment]: {
     label: "Коментар",
     icon: ChatBubbleLeftIcon,
-    bgColor: "bg-gray-50",
-    textColor: "text-gray-700",
-    borderColor: "border-gray-200",
-    leftBorderColor: "border-l-gray-400",
+    bgColor: "bg-slate-100",
+    textColor: "text-slate-700",
+    borderColor: "border-slate-300",
+    leftBorderColor: "border-l-slate-500",
   },
   [TaskActivityType.HelpRequest]: {
     label: "Искане за помощ",
@@ -183,7 +184,11 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
   };
 
   const canModifyActivity = (activity: ITaskActivity) => {
-    return activity.createdBy._id === currentUser._id;
+    // Allow modification if user is the creator OR is an admin
+    return (
+      activity.createdBy._id === currentUser._id ||
+      currentUser.role?._id === "ADMIN"
+    );
   };
 
   const formatDateTime = (dateString?: string) => {
@@ -203,9 +208,68 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
   );
 
   return (
-    <div className="flex flex-col gap-4">
-      {/* Activities list */}
-      <div className="space-y-2">
+    <div className="flex flex-col h-full">
+      {/* Add activity section - FIXED AT TOP */}
+      <div className="flex-shrink-0 bg-white rounded-lg p-3 border border-gray-200 mb-4">
+        {/* Title and activity type selector on same line */}
+        <div className="flex items-center gap-3 mb-2">
+          <h3 className="text-sm font-semibold text-gray-700 whitespace-nowrap">
+            Добави запис
+          </h3>
+          <div className="flex flex-wrap gap-1.5">
+            {selectableActivityTypes.map((type) => {
+              const config = activityTypeConfig[type];
+              const Icon = config.icon;
+              const isSelected = activityType === type;
+              return (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => setActivityType(type)}
+                  className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border transition-colors cursor-pointer ${
+                    isSelected
+                      ? `${config.bgColor} ${config.textColor} ${config.borderColor}`
+                      : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"
+                  }`}
+                >
+                  <Icon className="h-3.5 w-3.5" />
+                  {config.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Text input with submit button on RIGHT */}
+        <div className="flex gap-2">
+          <textarea
+            value={newContent}
+            onChange={(e) => setNewContent(e.target.value)}
+            placeholder={
+              activityType === TaskActivityType.Comment
+                ? "Добавете коментар..."
+                : activityType === TaskActivityType.HelpRequest
+                  ? "Опишете от каква помощ се нуждаете..."
+                  : "Опишете какво трябва да бъде одобрено..."
+            }
+            rows={2}
+            maxLength={1500}
+            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent resize-none"
+          />
+          <button
+            type="button"
+            onClick={handleSubmitActivity}
+            disabled={!newContent.trim() || createLoading}
+            title={createLoading ? "Изпращане..." : "Публикувай"}
+            className="flex-shrink-0 w-10 flex items-center justify-center bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
+          >
+            <PaperAirplaneIcon className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* Activities list - SCROLLABLE */}
+      <div className="flex-grow overflow-y-auto space-y-2 custom-scrollbar-xs">
           {sortedActivities.length === 0 ? (
             <p className="text-center text-gray-500 py-4">
               Няма активност все още. Бъдете първият!
@@ -241,7 +305,7 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
               return (
                 <div
                   key={activity._id}
-                  className={`border-l-4 ${config.leftBorderColor} rounded-lg py-2 px-3 bg-gray-50/50 border border-gray-100`}
+                  className={`border-l-4 ${config.leftBorderColor} rounded-lg py-2 px-3 bg-white shadow-sm border border-gray-200`}
                 >
                   <div className="flex items-start gap-2">
                     <div className={`mt-0.5 ${config.textColor}`}>
@@ -256,31 +320,33 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
                             {config.label}
                           </span>
                           <UserLink user={activity.createdBy} />
+                        </div>
+                        <div className="flex items-center gap-2">
                           <span className="text-xs text-gray-500">
                             {formatDateTime(activity.createdAt)}
                           </span>
+                          {/* ActionMenu with Edit/Delete */}
+                          {canModify && !isEditing && !isDeleting && (
+                            <ActionMenu>
+                              <button
+                                onClick={() => handleStartEdit(activity)}
+                                className="flex items-center gap-2 w-full p-2 text-sm text-blue-700 hover:bg-blue-50 rounded-md"
+                              >
+                                <PencilIcon className="h-4 w-4" />
+                                Редактирай
+                              </button>
+                              <button
+                                onClick={() =>
+                                  setDeletingActivityId(activity._id)
+                                }
+                                className="flex items-center gap-2 w-full p-2 text-sm text-red-600 hover:bg-red-50 rounded-md"
+                              >
+                                <TrashIcon className="h-4 w-4" />
+                                Изтрий
+                              </button>
+                            </ActionMenu>
+                          )}
                         </div>
-                        {/* Edit/Delete buttons */}
-                        {canModify && !isEditing && !isDeleting && (
-                          <div className="flex items-center gap-1">
-                            <button
-                              onClick={() => handleStartEdit(activity)}
-                              className="p-1 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
-                              title="Редактирай"
-                            >
-                              <PencilIcon className="h-4 w-4" />
-                            </button>
-                            <button
-                              onClick={() =>
-                                setDeletingActivityId(activity._id)
-                              }
-                              className="p-1 text-gray-400 hover:text-red-600 transition-colors cursor-pointer"
-                              title="Изтрий"
-                            >
-                              <TrashIcon className="h-4 w-4" />
-                            </button>
-                          </div>
-                        )}
                       </div>
 
                       {/* Edit mode */}
@@ -350,65 +416,6 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
               );
             })
           )}
-      </div>
-
-      {/* Add activity section */}
-      <div className="border-t border-gray-200 pt-3">
-        {/* Title and activity type selector on same line */}
-        <div className="flex items-center gap-3 mb-2">
-          <h3 className="text-sm font-semibold text-gray-700 whitespace-nowrap">
-            Добави запис
-          </h3>
-          <div className="flex flex-wrap gap-1.5">
-            {selectableActivityTypes.map((type) => {
-              const config = activityTypeConfig[type];
-              const Icon = config.icon;
-              const isSelected = activityType === type;
-              return (
-                <button
-                  key={type}
-                  type="button"
-                  onClick={() => setActivityType(type)}
-                  className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border transition-colors cursor-pointer ${
-                    isSelected
-                      ? `${config.bgColor} ${config.textColor} ${config.borderColor}`
-                      : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"
-                  }`}
-                >
-                  <Icon className="h-3.5 w-3.5" />
-                  {config.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Text input with submit button on left */}
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={handleSubmitActivity}
-            disabled={!newContent.trim() || createLoading}
-            title={createLoading ? "Изпращане..." : "Публикувай"}
-            className="flex-shrink-0 w-10 flex items-center justify-center bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
-          >
-            <PaperAirplaneIcon className="h-4 w-4" />
-          </button>
-          <textarea
-            value={newContent}
-            onChange={(e) => setNewContent(e.target.value)}
-            placeholder={
-              activityType === TaskActivityType.Comment
-                ? "Добавете коментар..."
-                : activityType === TaskActivityType.HelpRequest
-                  ? "Опишете от каква помощ се нуждаете..."
-                  : "Опишете какво трябва да бъде одобрено..."
-            }
-            rows={2}
-            maxLength={1500}
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent resize-none"
-          />
-        </div>
       </div>
     </div>
   );

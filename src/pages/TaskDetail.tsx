@@ -9,7 +9,7 @@ import TaskStatusPill from "../components/task/TaskStatusPill";
 import TaskActivities from "../components/task/TaskActivities";
 import TaskFormModal from "../components/task/TaskFormModal";
 import TaskAssigneeChanger from "../components/task/TaskAssigneeChanger";
-import TaskDueDateIndicator from "../components/task/TaskDueDateIndicator";
+import { getDueDateStatus } from "../components/task/TaskDueDateIndicator";
 import TaskDescriptionCard from "../components/task/TaskDescriptionCard";
 import AnalysisTabsSection from "../components/task/AnalysisTabsSection";
 import CaseLink from "../components/global/links/CaseLink";
@@ -28,6 +28,7 @@ import {
   ChatBubbleLeftRightIcon,
   PuzzlePieceIcon,
   FlagIcon,
+  ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
 
 const TaskDetail: React.FC = () => {
@@ -214,11 +215,23 @@ const TaskDetail: React.FC = () => {
                     Краен срок
                   </dt>
                   <dd>
-                    <TaskDueDateIndicator
-                      dueDate={taskData.dueDate}
-                      status={taskData.status}
-                      size="sm"
-                    />
+                    {taskData.dueDate ? (
+                      <div className="flex items-center gap-1.5">
+                        <ShowDate date={taskData.dueDate} />
+                        {getDueDateStatus(taskData.dueDate, taskData.status) === "overdue" && (
+                          <span title="Просрочена задача">
+                            <ExclamationTriangleIcon className="h-4 w-4 text-red-500" />
+                          </span>
+                        )}
+                        {getDueDateStatus(taskData.dueDate, taskData.status) === "warning" && (
+                          <span title="Краен срок наближава">
+                            <ClockIcon className="h-4 w-4 text-amber-500" />
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-sm text-gray-400">Няма краен срок</span>
+                    )}
                   </dd>
                 </div>
                 <div>

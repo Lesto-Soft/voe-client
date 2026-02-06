@@ -3,10 +3,12 @@ import { Link } from "react-router";
 import { ITask } from "../../db/interfaces";
 import { getPriorityBorderColor } from "./TaskPriorityBadge";
 import TaskStatusBadge from "./TaskStatusBadge";
-import TaskDueDateIndicator from "./TaskDueDateIndicator";
+import { getDueDateStatus } from "./TaskDueDateIndicator";
 import TaskLink from "../global/links/TaskLink";
 import CaseLink from "../global/links/CaseLink";
 import UserLink from "../global/links/UserLink";
+import ShowDate from "../global/ShowDate";
+import { ExclamationTriangleIcon, ClockIcon } from "@heroicons/react/24/outline";
 import { useTranslation } from "react-i18next";
 
 interface TaskCardProps {
@@ -64,11 +66,23 @@ const TaskCard: React.FC<TaskCardProps> = ({ task }) => {
           {/* Lower metadata */}
           <div className="pt-3 text-sm">
             <div className="flex justify-between items-end">
-              <TaskDueDateIndicator
-                dueDate={task.dueDate}
-                status={task.status}
-                size="sm"
-              />
+              {task.dueDate ? (
+                <div className="flex items-center gap-1.5">
+                  <ShowDate date={task.dueDate} />
+                  {getDueDateStatus(task.dueDate, task.status) === "overdue" && (
+                    <span title="Просрочена задача">
+                      <ExclamationTriangleIcon className="h-4 w-4 text-red-500" />
+                    </span>
+                  )}
+                  {getDueDateStatus(task.dueDate, task.status) === "warning" && (
+                    <span title="Краен срок наближава">
+                      <ClockIcon className="h-4 w-4 text-amber-500" />
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <span className="text-xs text-gray-400">Няма краен срок</span>
+              )}
               {task.assignee && (
                 <div onClick={(e) => e.stopPropagation()}>
                   <UserLink user={task.assignee} />

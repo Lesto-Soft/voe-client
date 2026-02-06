@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { toast } from "react-toastify";
 import { IFiveWhy, IWhyStep, IUser } from "../../../db/interfaces";
 import {
   useCreateFiveWhy,
@@ -61,7 +62,7 @@ const FiveWhyList: React.FC<FiveWhyListProps> = ({
     counterMeasures: string;
   }) => {
     try {
-      await createFiveWhy({
+      const result = await createFiveWhy({
         task: taskId,
         creator: currentUser._id,
         whys: data.whys,
@@ -70,6 +71,15 @@ const FiveWhyList: React.FC<FiveWhyListProps> = ({
       });
       refetch();
       setIsCreateModalOpen(false);
+      // Auto-select the newly created Five Why
+      if (result?._id) {
+        setActiveTab(result._id);
+      }
+      // Show success toast
+      toast.success("5 Защо анализът беше добавен успешно!", {
+        position: "top-right",
+        autoClose: 3000,
+      });
     } catch (err) {
       console.error("Failed to create Five Why:", err);
       throw err;

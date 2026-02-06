@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { toast } from "react-toastify";
 import { IRiskAssessment, IUser } from "../../../db/interfaces";
 import {
   useCreateRiskAssessment,
@@ -73,6 +74,11 @@ const RiskAssessmentList: React.FC<RiskAssessmentListProps> = ({
       });
       refetch();
       setIsCreateModalOpen(false);
+      // Show success toast
+      toast.success("Оценката на риска беше добавена успешно!", {
+        position: "top-right",
+        autoClose: 3000,
+      });
     } catch (err) {
       console.error("Failed to create risk assessment:", err);
       throw err;

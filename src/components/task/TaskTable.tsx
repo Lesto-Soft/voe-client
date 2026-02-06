@@ -3,10 +3,12 @@ import { Link } from "react-router";
 import { ITask } from "../../db/interfaces";
 import TaskStatusBadge from "./TaskStatusBadge";
 import TaskPriorityBadge from "./TaskPriorityBadge";
-import TaskDueDateIndicator from "./TaskDueDateIndicator";
+import { getDueDateStatus } from "./TaskDueDateIndicator";
 import TaskLink from "../global/links/TaskLink";
 import CaseLink from "../global/links/CaseLink";
 import UserLink from "../global/links/UserLink";
+import ShowDate from "../global/ShowDate";
+import { ExclamationTriangleIcon, ClockIcon } from "@heroicons/react/24/outline";
 import { useTranslation } from "react-i18next";
 
 interface TaskTableProps {
@@ -75,12 +77,23 @@ const TaskTable: React.FC<TaskTableProps> = ({ tasks }) => {
                 <TaskPriorityBadge priority={task.priority} />
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
-                <TaskDueDateIndicator
-                  dueDate={task.dueDate}
-                  status={task.status}
-                  size="sm"
-                  showIcon={false}
-                />
+                {task.dueDate ? (
+                  <div className="flex items-center gap-1.5">
+                    <ShowDate date={task.dueDate} />
+                    {getDueDateStatus(task.dueDate, task.status) === "overdue" && (
+                      <span title="Просрочена задача">
+                        <ExclamationTriangleIcon className="h-4 w-4 text-red-500" />
+                      </span>
+                    )}
+                    {getDueDateStatus(task.dueDate, task.status) === "warning" && (
+                      <span title="Краен срок наближава">
+                        <ClockIcon className="h-4 w-4 text-amber-500" />
+                      </span>
+                    )}
+                  </div>
+                ) : (
+                  <span className="text-gray-400 text-sm">—</span>
+                )}
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
                 <UserLink user={task.creator} />

@@ -1,11 +1,79 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { XMarkIcon, ClipboardDocumentCheckIcon } from "@heroicons/react/24/outline";
+import DatePicker, { registerLocale } from "react-datepicker";
+import { bg } from "date-fns/locale/bg";
+import { XMarkIcon, ClipboardDocumentCheckIcon, XCircleIcon, ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 import { ITask, IUser, CasePriority } from "../../db/interfaces";
 import { useCreateTask, useUpdateTask } from "../../graphql/hooks/task";
 import { useGetAllUsers } from "../../graphql/hooks/user";
 import { useCurrentUser } from "../../context/UserContext";
+import UserAvatar from "../cards/UserAvatar";
+import { endpoint } from "../../db/config";
 import CaseAnswerSelector from "./CaseAnswerSelector";
+
+import "react-datepicker/dist/react-datepicker.css";
+
+registerLocale("bg", bg);
+
+// Custom Header Component for the DatePicker
+const CustomDatePickerHeader = ({
+  date,
+  changeYear,
+  decreaseMonth,
+  increaseMonth,
+  prevMonthButtonDisabled,
+  nextMonthButtonDisabled,
+}: {
+  date: Date;
+  changeYear: (year: number) => void;
+  decreaseMonth: () => void;
+  increaseMonth: () => void;
+  prevMonthButtonDisabled: boolean;
+  nextMonthButtonDisabled: boolean;
+}) => {
+  const currentYear = new Date().getFullYear();
+  const years = [];
+  for (let i = currentYear + 5; i >= currentYear - 5; i--) {
+    years.push(i);
+  }
+
+  return (
+    <div className="flex items-center justify-between px-2 py-1 bg-gray-50 border-b border-gray-200">
+      <button
+        type="button"
+        onClick={decreaseMonth}
+        disabled={prevMonthButtonDisabled}
+        className="p-1 rounded-full hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        <ChevronLeftIcon className="h-5 w-5 text-gray-600" />
+      </button>
+      <div className="flex items-baseline gap-x-2">
+        <span className="text-sm font-semibold text-gray-800 capitalize">
+          {date.toLocaleString("bg-BG", { month: "long" })}
+        </span>
+        <select
+          value={date.getFullYear()}
+          onChange={({ target: { value } }) => changeYear(parseInt(value))}
+          className="text-sm font-semibold text-gray-700 bg-transparent border-0 cursor-pointer focus:ring-0 p-0"
+        >
+          {years.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
+      </div>
+      <button
+        type="button"
+        onClick={increaseMonth}
+        disabled={nextMonthButtonDisabled}
+        className="p-1 rounded-full hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        <ChevronRightIcon className="h-5 w-5 text-gray-600" />
+      </button>
+    </div>
+  );
+};
 
 interface TaskFormModalProps {
   isOpen: boolean;
@@ -16,12 +84,6 @@ interface TaskFormModalProps {
   initialDescription?: string;
   onSuccess?: () => void;
 }
-
-const priorityOptions: { value: CasePriority; label: string }[] = [
-  { value: CasePriority.Low, label: "Нисък" },
-  { value: CasePriority.Medium, label: "Среден" },
-  { value: CasePriority.High, label: "Висок" },
-];
 
 const TaskFormModal: React.FC<TaskFormModalProps> = ({
   isOpen,
@@ -40,12 +102,23 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<CasePriority>(CasePriority.Medium);
-  const [dueDate, setDueDate] = useState("");
+  const [dueDate, setDueDate] = useState<Date | null>(null);
   const [assigneeId, setAssigneeId] = useState<string>("");
+  const [assigneeSearchQuery, setAssigneeSearchQuery] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   // Fetch users for assignee dropdown
   const { users } = useGetAllUsers({ itemsPerPage: 1000, currentPage: 0 });
+
+  // Filter users based on search query
+  const filteredUsers = useMemo(() => {
+    if (!assigneeSearchQuery.trim()) return users || [];
+    const query = assigneeSearchQuery.toLowerCase();
+    return (users || []).filter((user: IUser) =>
+      user.name.toLowerCase().includes(query) ||
+      user.username.toLowerCase().includes(query)
+    );
+  }, [users, assigneeSearchQuery]);
 
   // Initialize form when opening in edit mode
   useEffect(() => {
@@ -54,16 +127,17 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
         setTitle(task.title);
         setDescription(task.description || "");
         setPriority(task.priority);
-        setDueDate(task.dueDate ? task.dueDate.split("T")[0] : "");
+        setDueDate(task.dueDate ? new Date(task.dueDate) : null);
         setAssigneeId(task.assignee?._id || "");
       } else {
         // Reset form for create mode, use initialDescription if provided
         setTitle("");
         setDescription(initialDescription || "");
         setPriority(CasePriority.Medium);
-        setDueDate("");
+        setDueDate(null);
         setAssigneeId("");
       }
+      setAssigneeSearchQuery("");
       setError(null);
     }
   }, [isOpen, mode, task, initialDescription]);
@@ -83,7 +157,7 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
           title: title.trim(),
           description: description.trim() || undefined,
           priority,
-          dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
+          dueDate: dueDate ? dueDate.toISOString() : undefined,
           assignee: assigneeId || undefined,
           creator: currentUser._id,
           relatedCase: relatedCaseId,
@@ -93,7 +167,7 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
           title: title.trim(),
           description: description.trim() || undefined,
           priority,
-          dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
+          dueDate: dueDate ? dueDate.toISOString() : undefined,
         });
       }
 
@@ -106,11 +180,14 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
 
   const isLoading = createLoading || updateLoading;
 
+  // Get selected user for display
+  const selectedUser = users?.find((u: IUser) => u._id === assigneeId);
+
   return (
     <Dialog.Root open={isOpen} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm" />
-        <Dialog.Content className="fixed top-1/2 left-1/2 z-50 w-[95vw] max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-lg bg-white shadow-xl focus:outline-none">
+        <Dialog.Content className="fixed top-1/2 left-1/2 z-50 w-[95vw] max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-lg bg-white shadow-xl focus:outline-none max-h-[90vh] overflow-y-auto">
           {/* Header */}
           <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
             <Dialog.Title className="flex items-center gap-2 text-lg font-semibold text-gray-900">
@@ -212,45 +289,98 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
               </div>
             </div>
 
-            {/* Due Date */}
+            {/* Due Date with DatePicker */}
             <div>
-              <label
-                htmlFor="task-duedate"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Краен срок
               </label>
-              <input
-                id="task-duedate"
-                type="date"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-              />
+              <div className="relative">
+                <DatePicker
+                  selected={dueDate}
+                  onChange={(date) => setDueDate(date)}
+                  dateFormat="dd/MM/yyyy"
+                  locale="bg"
+                  minDate={new Date()}
+                  placeholderText="Изберете дата"
+                  isClearable
+                  showYearDropdown
+                  scrollableYearDropdown
+                  yearDropdownItemNumber={10}
+                  renderCustomHeader={(props) => <CustomDatePickerHeader {...props} />}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent cursor-pointer"
+                  calendarClassName="font-mulish"
+                  popperPlacement="bottom-start"
+                />
+              </div>
             </div>
 
-            {/* Assignee - only show in create mode */}
+            {/* Assignee - only show in create mode with smart search */}
             {mode === "create" && (
               <div>
-                <label
-                  htmlFor="task-assignee"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Възложи на
                 </label>
-                <select
-                  id="task-assignee"
-                  value={assigneeId}
-                  onChange={(e) => setAssigneeId(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent bg-white"
-                >
-                  <option value="">-- Без възложен --</option>
-                  {users?.map((user: IUser) => (
-                    <option key={user._id} value={user._id}>
-                      {user.name} ({user.username})
-                    </option>
+
+                {/* Search input */}
+                <input
+                  type="text"
+                  value={assigneeSearchQuery}
+                  onChange={(e) => setAssigneeSearchQuery(e.target.value)}
+                  placeholder="Търси потребител..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 mb-2"
+                />
+
+                {/* Scrollable user list */}
+                <div className="max-h-40 overflow-y-auto border border-gray-200 rounded-md bg-white">
+                  <button
+                    type="button"
+                    onClick={() => setAssigneeId("")}
+                    className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-50 ${!assigneeId ? "bg-blue-50" : ""}`}
+                  >
+                    -- Без възложен --
+                  </button>
+                  {filteredUsers.map((user: IUser) => (
+                    <button
+                      type="button"
+                      key={user._id}
+                      onClick={() => setAssigneeId(user._id)}
+                      className={`w-full px-3 py-2 text-left text-sm hover:bg-blue-50 flex items-center gap-2 ${
+                        assigneeId === user._id ? "bg-blue-100" : ""
+                      }`}
+                    >
+                      <UserAvatar
+                        name={user.name}
+                        imageUrl={user.avatar
+                          ? `${endpoint}/static/avatars/${user._id}/${user.avatar}`
+                          : null}
+                        size={24}
+                      />
+                      <span className="flex-1">{user.name}</span>
+                      <span className="text-gray-500 text-xs">({user.username})</span>
+                    </button>
                   ))}
-                </select>
+                </div>
+
+                {/* Show selected user */}
+                {selectedUser && (
+                  <div className="mt-2 flex items-center gap-2 p-2 bg-blue-50 rounded-md">
+                    <UserAvatar
+                      name={selectedUser.name}
+                      imageUrl={selectedUser.avatar
+                        ? `${endpoint}/static/avatars/${selectedUser._id}/${selectedUser.avatar}`
+                        : null}
+                      size={24}
+                    />
+                    <span className="text-sm text-gray-700">{selectedUser.name}</span>
+                    <button
+                      type="button"
+                      onClick={() => setAssigneeId("")}
+                      className="ml-auto text-gray-400 hover:text-gray-600"
+                    >
+                      <XCircleIcon className="h-4 w-4" />
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 

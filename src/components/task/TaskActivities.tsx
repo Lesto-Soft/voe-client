@@ -7,6 +7,7 @@ import {
 } from "../../graphql/hooks/task";
 import UserLink from "../global/links/UserLink";
 import ActionMenu from "../global/ActionMenu";
+import ShowDate from "../global/ShowDate";
 import { renderContentSafely } from "../../utils/contentRenderer";
 import {
   ChatBubbleLeftIcon,
@@ -191,17 +192,6 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
     );
   };
 
-  const formatDateTime = (dateString?: string) => {
-    if (!dateString) return "—";
-    return new Date(dateString).toLocaleString("bg-BG", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
   // Sort activities by creation date (newest first)
   const sortedActivities = [...activities].sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
@@ -294,9 +284,9 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
                     <span className={`font-medium ${config.textColor}`}>
                       {activity.content}
                     </span>
-                    <span className="text-gray-400 ml-auto whitespace-nowrap">
-                      {formatDateTime(activity.createdAt)}
-                    </span>
+                    <div className="ml-auto">
+                      <ShowDate date={activity.createdAt} />
+                    </div>
                   </div>
                 );
               }
@@ -322,9 +312,7 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
                           <UserLink user={activity.createdBy} />
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="text-xs text-gray-500">
-                            {formatDateTime(activity.createdAt)}
-                          </span>
+                          <ShowDate date={activity.createdAt} />
                           {/* ActionMenu with Edit/Delete */}
                           {canModify && !isEditing && !isDeleting && (
                             <ActionMenu>

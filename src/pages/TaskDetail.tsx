@@ -20,16 +20,13 @@ import ConfirmActionDialog from "../components/modals/ConfirmActionDialog";
 import { endpoint } from "../db/config";
 import { useTranslation } from "react-i18next";
 import {
-  CalendarIcon,
-  ClockIcon,
-  LinkIcon,
   PencilIcon,
   TrashIcon,
   ChatBubbleLeftRightIcon,
   PuzzlePieceIcon,
-  FlagIcon,
   ExclamationTriangleIcon,
-} from "@heroicons/react/24/outline";
+} from "@heroicons/react/24/solid";
+import { ClockIcon } from "@heroicons/react/24/outline";
 
 const TaskDetail: React.FC = () => {
   const { t } = useTranslation();
@@ -146,7 +143,6 @@ const TaskDetail: React.FC = () => {
             {taskData.relatedCase && (
               <div className="pt-2 border-t border-gray-100">
                 <h3 className="text-xs font-semibold text-gray-500 mb-2 flex items-center gap-1.5">
-                  <LinkIcon className="h-3.5 w-3.5" />
                   Произход
                 </h3>
                 <CaseLink my_case={taskData.relatedCase} t={t} />
@@ -211,32 +207,34 @@ const TaskDetail: React.FC = () => {
               <dl className="grid grid-cols-2 gap-3">
                 <div>
                   <dt className="text-xs text-gray-400 flex items-center gap-1 mb-0.5">
-                    <CalendarIcon className="h-3.5 w-3.5" />
                     Краен срок
                   </dt>
                   <dd>
                     {taskData.dueDate ? (
                       <div className="flex items-center gap-1.5">
                         <ShowDate date={taskData.dueDate} />
-                        {getDueDateStatus(taskData.dueDate, taskData.status) === "overdue" && (
+                        {getDueDateStatus(taskData.dueDate, taskData.status) ===
+                          "overdue" && (
                           <span title="Просрочена задача">
                             <ExclamationTriangleIcon className="h-4 w-4 text-red-500" />
                           </span>
                         )}
-                        {getDueDateStatus(taskData.dueDate, taskData.status) === "warning" && (
+                        {getDueDateStatus(taskData.dueDate, taskData.status) ===
+                          "warning" && (
                           <span title="Краен срок наближава">
                             <ClockIcon className="h-4 w-4 text-amber-500" />
                           </span>
                         )}
                       </div>
                     ) : (
-                      <span className="text-sm text-gray-400">Няма краен срок</span>
+                      <span className="text-sm text-gray-400">
+                        Няма краен срок
+                      </span>
                     )}
                   </dd>
                 </div>
                 <div>
                   <dt className="text-xs text-gray-400 flex items-center gap-1 mb-0.5">
-                    <ClockIcon className="h-3.5 w-3.5" />
                     Създадена
                   </dt>
                   <dd>
@@ -253,11 +251,10 @@ const TaskDetail: React.FC = () => {
               <div className="flex flex-wrap gap-3">
                 <div className="flex-1 min-w-[120px]">
                   <dt className="text-xs text-gray-400 flex items-center gap-1 mb-1">
-                    <FlagIcon className="h-3.5 w-3.5" />
                     Приоритет
                   </dt>
                   <dd>
-                    <TaskPriorityBadge priority={taskData.priority} />
+                    <TaskPriorityBadge size="md" priority={taskData.priority} />
                   </dd>
                 </div>
                 <div className="flex-1 min-w-[120px]">
@@ -315,7 +312,7 @@ const TaskDetail: React.FC = () => {
 
           {/* Scrollable Content Area */}
           <div className="lg:flex-grow lg:min-h-0 lg:relative">
-            <div className="p-4 lg:absolute lg:inset-0 lg:overflow-y-auto custom-scrollbar-xs">
+            <div className="lg:absolute lg:inset-0 lg:overflow-y-auto custom-scrollbar-xs">
               {rightPanelView === "activities" ? (
                 <TaskActivities
                   taskId={taskData._id}

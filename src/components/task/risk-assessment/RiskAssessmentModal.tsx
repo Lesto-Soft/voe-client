@@ -47,7 +47,7 @@ const RiskAssessmentModal: React.FC<RiskAssessmentModalProps> = ({
             </Dialog.Title>
             <Dialog.Close asChild>
               <button
-                className="rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+                className="rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors cursor-pointer"
                 aria-label="Затвори"
               >
                 <XMarkIcon className="h-5 w-5" />

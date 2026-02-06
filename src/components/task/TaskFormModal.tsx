@@ -2,7 +2,13 @@ import React, { useState, useEffect, useMemo } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import DatePicker, { registerLocale } from "react-datepicker";
 import { bg } from "date-fns/locale/bg";
-import { XMarkIcon, ClipboardDocumentCheckIcon, XCircleIcon, ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
+import {
+  XMarkIcon,
+  ClipboardDocumentCheckIcon,
+  XCircleIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+} from "@heroicons/react/24/outline";
 import { ITask, IUser, CasePriority } from "../../db/interfaces";
 import { useCreateTask, useUpdateTask } from "../../graphql/hooks/task";
 import { useGetAllUsers } from "../../graphql/hooks/user";
@@ -114,9 +120,10 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
   const filteredUsers = useMemo(() => {
     if (!assigneeSearchQuery.trim()) return users || [];
     const query = assigneeSearchQuery.toLowerCase();
-    return (users || []).filter((user: IUser) =>
-      user.name.toLowerCase().includes(query) ||
-      user.username.toLowerCase().includes(query)
+    return (users || []).filter(
+      (user: IUser) =>
+        user.name.toLowerCase().includes(query) ||
+        user.username.toLowerCase().includes(query),
     );
   }, [users, assigneeSearchQuery]);
 
@@ -196,7 +203,7 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
             </Dialog.Title>
             <Dialog.Close asChild>
               <button
-                className="rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+                className="rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors cursor-pointer"
                 aria-label="Затвори"
               >
                 <XMarkIcon className="h-5 w-5" />
@@ -267,8 +274,16 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
               <div className="flex flex-wrap gap-x-6 gap-y-2 items-center">
                 {[
                   { value: CasePriority.Low, color: "#009b00", label: "Нисък" },
-                  { value: CasePriority.Medium, color: "#ad8600", label: "Среден" },
-                  { value: CasePriority.High, color: "#c30505", label: "Висок" },
+                  {
+                    value: CasePriority.Medium,
+                    color: "#ad8600",
+                    label: "Среден",
+                  },
+                  {
+                    value: CasePriority.High,
+                    color: "#c30505",
+                    label: "Висок",
+                  },
                 ].map(({ value, color, label }) => (
                   <label
                     key={value}
@@ -306,7 +321,9 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
                   showYearDropdown
                   scrollableYearDropdown
                   yearDropdownItemNumber={10}
-                  renderCustomHeader={(props) => <CustomDatePickerHeader {...props} />}
+                  renderCustomHeader={(props) => (
+                    <CustomDatePickerHeader {...props} />
+                  )}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent cursor-pointer"
                   calendarClassName="font-mulish"
                   popperPlacement="bottom-start"
@@ -350,13 +367,17 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
                     >
                       <UserAvatar
                         name={user.name}
-                        imageUrl={user.avatar
-                          ? `${endpoint}/static/avatars/${user._id}/${user.avatar}`
-                          : null}
+                        imageUrl={
+                          user.avatar
+                            ? `${endpoint}/static/avatars/${user._id}/${user.avatar}`
+                            : null
+                        }
                         size={24}
                       />
                       <span className="flex-1">{user.name}</span>
-                      <span className="text-gray-500 text-xs">({user.username})</span>
+                      <span className="text-gray-500 text-xs">
+                        ({user.username})
+                      </span>
                     </button>
                   ))}
                 </div>
@@ -366,12 +387,16 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
                   <div className="mt-2 flex items-center gap-2 p-2 bg-blue-50 rounded-md">
                     <UserAvatar
                       name={selectedUser.name}
-                      imageUrl={selectedUser.avatar
-                        ? `${endpoint}/static/avatars/${selectedUser._id}/${selectedUser.avatar}`
-                        : null}
+                      imageUrl={
+                        selectedUser.avatar
+                          ? `${endpoint}/static/avatars/${selectedUser._id}/${selectedUser.avatar}`
+                          : null
+                      }
                       size={24}
                     />
-                    <span className="text-sm text-gray-700">{selectedUser.name}</span>
+                    <span className="text-sm text-gray-700">
+                      {selectedUser.name}
+                    </span>
                     <button
                       type="button"
                       onClick={() => setAssigneeId("")}
@@ -389,7 +414,7 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
               <Dialog.Close asChild>
                 <button
                   type="button"
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors cursor-pointer"
                   disabled={isLoading}
                 >
                   Отмени
@@ -398,13 +423,13 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
               <button
                 type="submit"
                 disabled={isLoading}
-                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 {isLoading
                   ? "Запазване..."
                   : mode === "create"
-                  ? "Създай"
-                  : "Запази"}
+                    ? "Създай"
+                    : "Запази"}
               </button>
             </div>
           </form>

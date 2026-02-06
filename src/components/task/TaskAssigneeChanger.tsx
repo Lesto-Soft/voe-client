@@ -6,7 +6,7 @@ import { useCurrentUser } from "../../context/UserContext";
 import UserLink from "../global/links/UserLink";
 import UserAvatar from "../cards/UserAvatar";
 import { endpoint } from "../../db/config";
-import { UserPlusIcon, XMarkIcon, CheckIcon } from "@heroicons/react/24/outline";
+import { UserPlusIcon, XMarkIcon, CheckIcon } from "@heroicons/react/24/solid";
 
 interface TaskAssigneeChangerProps {
   taskId: string;
@@ -21,7 +21,7 @@ const TaskAssigneeChanger: React.FC<TaskAssigneeChangerProps> = ({
 }) => {
   const [isChanging, setIsChanging] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string>(
-    currentAssignee?._id || ""
+    currentAssignee?._id || "",
   );
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -33,9 +33,10 @@ const TaskAssigneeChanger: React.FC<TaskAssigneeChangerProps> = ({
   const filteredUsers = useMemo(() => {
     if (!searchQuery.trim()) return users || [];
     const query = searchQuery.toLowerCase();
-    return (users || []).filter((user: IUser) =>
-      user.name.toLowerCase().includes(query) ||
-      user.username.toLowerCase().includes(query)
+    return (users || []).filter(
+      (user: IUser) =>
+        user.name.toLowerCase().includes(query) ||
+        user.username.toLowerCase().includes(query),
     );
   }, [users, searchQuery]);
 
@@ -63,9 +64,11 @@ const TaskAssigneeChanger: React.FC<TaskAssigneeChangerProps> = ({
           {currentAssignee && (
             <UserAvatar
               name={currentAssignee.name}
-              imageUrl={currentAssignee.avatar
-                ? `${endpoint}/static/avatars/${currentAssignee._id}/${currentAssignee.avatar}`
-                : null}
+              imageUrl={
+                currentAssignee.avatar
+                  ? `${endpoint}/static/avatars/${currentAssignee._id}/${currentAssignee.avatar}`
+                  : null
+              }
               size={32}
             />
           )}
@@ -77,7 +80,7 @@ const TaskAssigneeChanger: React.FC<TaskAssigneeChangerProps> = ({
         </div>
         <button
           onClick={() => setIsChanging(true)}
-          className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+          className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors cursor-pointer"
           title="Промени възложен"
         >
           <UserPlusIcon className="h-4 w-4" />
@@ -102,7 +105,7 @@ const TaskAssigneeChanger: React.FC<TaskAssigneeChangerProps> = ({
         <button
           type="button"
           onClick={() => setSelectedUserId("")}
-          className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-50 ${!selectedUserId ? "bg-blue-50" : ""}`}
+          className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-50 cursor-pointer ${!selectedUserId ? "bg-blue-50" : ""}`}
         >
           -- Без възложен --
         </button>
@@ -111,15 +114,17 @@ const TaskAssigneeChanger: React.FC<TaskAssigneeChangerProps> = ({
             type="button"
             key={user._id}
             onClick={() => setSelectedUserId(user._id)}
-            className={`w-full px-3 py-2 text-left text-sm hover:bg-blue-50 flex items-center gap-2 ${
+            className={`w-full px-3 py-2 text-left text-sm hover:bg-blue-50 flex items-center gap-2 cursor-pointer ${
               selectedUserId === user._id ? "bg-blue-100" : ""
             }`}
           >
             <UserAvatar
               name={user.name}
-              imageUrl={user.avatar
-                ? `${endpoint}/static/avatars/${user._id}/${user.avatar}`
-                : null}
+              imageUrl={
+                user.avatar
+                  ? `${endpoint}/static/avatars/${user._id}/${user.avatar}`
+                  : null
+              }
               size={24}
             />
             <span className="flex-1">{user.name}</span>
@@ -133,7 +138,7 @@ const TaskAssigneeChanger: React.FC<TaskAssigneeChangerProps> = ({
         <button
           onClick={handleCancel}
           disabled={loading}
-          className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+          className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors cursor-pointer"
         >
           <XMarkIcon className="h-3.5 w-3.5" />
           Отмени
@@ -141,7 +146,7 @@ const TaskAssigneeChanger: React.FC<TaskAssigneeChangerProps> = ({
         <button
           onClick={handleSave}
           disabled={loading}
-          className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
         >
           <CheckIcon className="h-3.5 w-3.5" />
           {loading ? "Запазване..." : "Запази"}

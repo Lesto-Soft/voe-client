@@ -25,7 +25,7 @@ const statusOptions: {
 }[] = [
   {
     value: TaskStatus.Todo,
-    label: "За изпълнение",
+    label: "Незапочната",
     icon: <ClockIcon className="h-4 w-4" />,
   },
   {
@@ -73,10 +73,14 @@ const TaskStatusPill: React.FC<TaskStatusPillProps> = ({
       <DropdownMenu.Trigger asChild>
         <button
           disabled={loading}
-          className="inline-flex items-center gap-1 cursor-pointer rounded-full transition-all duration-150 hover:ring-2 hover:ring-gray-300 hover:ring-offset-1 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="inline-flex bg-blue-100 items-center gap-1 cursor-pointer rounded-full transition-all duration-150 hover:ring-2 hover:ring-gray-300 hover:ring-offset-1 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <TaskStatusBadge status={currentStatus} size="md" />
-          <ChevronDownIcon className="h-3.5 w-3.5 -ml-1.5 mr-1 text-current opacity-60" />
+          <TaskStatusBadge
+            fullRounded={false}
+            status={currentStatus}
+            size="md"
+          />
+          <ChevronDownIcon className="h-3.5 w-3.5 -ml-0 mr-1.5 text-current opacity-60" />
         </button>
       </DropdownMenu.Trigger>
 

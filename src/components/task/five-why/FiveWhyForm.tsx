@@ -50,10 +50,10 @@ const FiveWhyForm: React.FC<FiveWhyFormProps> = ({
   const handleWhyChange = (
     index: number,
     field: "question" | "answer",
-    value: string
+    value: string,
   ) => {
     const newWhys = whys.map((item, i) =>
-      i === index ? { ...item, [field]: value } : item
+      i === index ? { ...item, [field]: value } : item,
     );
     setWhys(newWhys);
   };
@@ -80,9 +80,7 @@ const FiveWhyForm: React.FC<FiveWhyFormProps> = ({
     }
 
     // Filter out empty pairs but keep filled ones
-    const filledWhys = whys.filter(
-      (w) => w.question.trim() || w.answer.trim()
-    );
+    const filledWhys = whys.filter((w) => w.question.trim() || w.answer.trim());
 
     onSubmit({
       whys: filledWhys,
@@ -101,14 +99,15 @@ const FiveWhyForm: React.FC<FiveWhyFormProps> = ({
       )}
 
       {/* Why pairs */}
-      <div className="space-y-4 max-h-[40vh] overflow-y-auto pr-2">
+      <div className="space-y-4 max-h-[40vh] overflow-y-auto custom-scrollbar-xs">
         {whys.map((pair, i) => (
           <div
             key={i}
             className="p-3 border border-gray-300 rounded-md bg-gray-50/50 space-y-2"
           >
             <h4 className="font-semibold text-gray-500 text-sm">
-              Двойка #{i + 1} {i === 0 && <span className="text-red-500">*</span>}
+              Двойка #{i + 1}{" "}
+              {i === 0 && <span className="text-red-500">*</span>}
             </h4>
             <div>
               <label
@@ -147,7 +146,7 @@ const FiveWhyForm: React.FC<FiveWhyFormProps> = ({
       </div>
 
       {/* Root Cause */}
-      <div>
+      <div className="pt-2 border border-0 border-t-2 border-gray-300">
         <label
           htmlFor="root-cause"
           className="block text-sm font-medium text-gray-700 mb-1"
@@ -197,7 +196,11 @@ const FiveWhyForm: React.FC<FiveWhyFormProps> = ({
           disabled={isLoading}
           className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isLoading ? "Запазване..." : fiveWhy ? "Запази промените" : "Създай анализ"}
+          {isLoading
+            ? "Запазване..."
+            : fiveWhy
+              ? "Запази промените"
+              : "Създай анализ"}
         </button>
       </div>
     </form>

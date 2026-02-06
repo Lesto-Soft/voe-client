@@ -54,7 +54,7 @@ const RiskMatrix: React.FC<RiskMatrixProps> = ({
       };
     }
     const maxScore = Math.max(
-      ...assessments.map((a) => a.probability * a.impact)
+      ...assessments.map((a) => a.probability * a.impact),
     );
     const style = getRiskStyle(maxScore);
     return {
@@ -62,10 +62,10 @@ const RiskMatrix: React.FC<RiskMatrixProps> = ({
         maxScore <= 4
           ? "НИСЪК"
           : maxScore <= 9
-          ? "СРЕДЕН"
-          : maxScore <= 15
-          ? "ВИСОК"
-          : "КРИТИЧЕН",
+            ? "СРЕДЕН"
+            : maxScore <= 15
+              ? "ВИСОК"
+              : "КРИТИЧЕН",
       style: `${style.text} ${style.bg}`,
       score: maxScore,
     };
@@ -73,9 +73,8 @@ const RiskMatrix: React.FC<RiskMatrixProps> = ({
 
   const overallRisk = getOverallRiskInfo();
   const maxRiskAssessment =
-    assessments.find(
-      (a) => a.probability * a.impact === overallRisk.score
-    ) || null;
+    assessments.find((a) => a.probability * a.impact === overallRisk.score) ||
+    null;
 
   const matrixGridItems: React.ReactNode[] = [];
 
@@ -87,13 +86,13 @@ const RiskMatrix: React.FC<RiskMatrixProps> = ({
         className="font-semibold text-[9px] sm:text-xs text-center p-1 sm:p-2 flex items-center justify-end"
       >
         {probabilityLabels[probability]} ({probability})
-      </div>
+      </div>,
     );
 
     // Cells for this row
     impactAxisValues.forEach((impact) => {
       const cellAssessments = assessments.filter(
-        (a) => a.probability === probability && a.impact === impact
+        (a) => a.probability === probability && a.impact === impact,
       );
 
       matrixGridItems.push(
@@ -101,7 +100,7 @@ const RiskMatrix: React.FC<RiskMatrixProps> = ({
           key={`cell-${probability}-${impact}`}
           className={`relative w-full min-h-[48px] sm:min-h-[60px] sm:aspect-square rounded flex items-center justify-center ${getRiskCellColor(
             impact,
-            probability
+            probability,
           )}`}
         >
           {cellAssessments.length > 0 && (
@@ -132,7 +131,7 @@ const RiskMatrix: React.FC<RiskMatrixProps> = ({
               ))}
             </div>
           )}
-        </div>
+        </div>,
       );
     });
   });
@@ -146,7 +145,7 @@ const RiskMatrix: React.FC<RiskMatrixProps> = ({
         className="font-semibold text-[9px] sm:text-xs text-center pt-1 sm:pt-2 flex items-center justify-center"
       >
         {impactLabels[impact]} ({impact})
-      </div>
+      </div>,
     );
   });
 
@@ -193,7 +192,7 @@ const RiskMatrix: React.FC<RiskMatrixProps> = ({
 
               <Dialog.Close asChild>
                 <button
-                  className="rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+                  className="rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors cursor-pointer"
                   aria-label="Затвори"
                 >
                   <XMarkIcon className="h-5 w-5" />

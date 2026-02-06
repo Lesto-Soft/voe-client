@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from "react";
+import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline";
 import {
-  DocumentTextIcon,
-  ChevronDownIcon,
-  ChevronUpIcon,
-} from "@heroicons/react/24/outline";
-import { getTextLength, renderContentSafely } from "../../utils/contentRenderer";
+  getTextLength,
+  renderContentSafely,
+} from "../../utils/contentRenderer";
 
 interface TaskDescriptionCardProps {
   description?: string;
@@ -32,7 +31,6 @@ const TaskDescriptionCard: React.FC<TaskDescriptionCardProps> = ({
       <div>
         <div className="flex items-center justify-between mb-1.5">
           <h3 className="text-xs font-semibold text-gray-500 flex items-center gap-1.5">
-            <DocumentTextIcon className="h-3.5 w-3.5" />
             Описание
           </h3>
         </div>
@@ -48,7 +46,6 @@ const TaskDescriptionCard: React.FC<TaskDescriptionCardProps> = ({
         className="w-full flex items-center justify-between mb-1.5 hover:opacity-70 transition-opacity cursor-pointer"
       >
         <h3 className="text-xs font-semibold text-gray-500 flex items-center gap-1.5">
-          <DocumentTextIcon className="h-3.5 w-3.5" />
           Описание
         </h3>
         {isExpanded ? (

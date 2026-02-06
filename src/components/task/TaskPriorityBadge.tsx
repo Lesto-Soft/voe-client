@@ -1,6 +1,6 @@
 import React from "react";
 import { CasePriority } from "../../db/interfaces";
-import { FlagIcon } from "@heroicons/react/24/outline";
+import { FlagIcon } from "@heroicons/react/24/solid";
 
 interface TaskPriorityBadgeProps {
   priority: CasePriority;
@@ -45,7 +45,8 @@ const TaskPriorityBadge: React.FC<TaskPriorityBadgeProps> = ({
     return null;
   }
 
-  const sizeClasses = size === "sm" ? "px-2 py-0.5 text-xs" : "px-3 py-1 text-sm";
+  const sizeClasses =
+    size === "sm" ? "px-2 py-0.5 text-xs" : "px-3 py-1 text-sm";
 
   return (
     <span

@@ -6,7 +6,7 @@ import {
   Bars3Icon,
   Squares2X2Icon,
   MagnifyingGlassIcon,
-} from "@heroicons/react/24/outline";
+} from "@heroicons/react/24/solid";
 
 export type TaskFilterMode = "assignedToMe" | "createdByMe" | "all";
 
@@ -113,7 +113,7 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
           className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white"
         >
           <option value="all">Всички статуси</option>
-          <option value={TaskStatus.Todo}>За изпълнение</option>
+          <option value={TaskStatus.Todo}>Незапочната</option>
           <option value={TaskStatus.InProgress}>В процес</option>
           <option value={TaskStatus.Done}>Завършена</option>
         </select>

@@ -41,11 +41,11 @@ const FiveWhyModal: React.FC<FiveWhyModalProps> = ({
           <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
             <Dialog.Title className="flex items-center gap-2 text-lg font-semibold text-gray-900">
               <QuestionMarkCircleIcon className="h-6 w-6 text-amber-500" />
-              {fiveWhy ? "Редактиране на анализ" : "Нов \"5 Защо\" Анализ"}
+              {fiveWhy ? "Редактиране на анализ" : 'Нов "5 Защо" Анализ'}
             </Dialog.Title>
             <Dialog.Close asChild>
               <button
-                className="rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+                className="rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors cursor-pointer"
                 aria-label="Затвори"
               >
                 <XMarkIcon className="h-5 w-5" />

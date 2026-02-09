@@ -8,6 +8,7 @@ import {
   ICase,
   IAnswer,
   IComment,
+  ITask,
   CasePriority,
   CaseType,
   ICaseStatus,
@@ -66,14 +67,17 @@ interface RatedCaseActivity {
 interface CombinedActivity {
   id: string;
   date: string;
-  item: ICase | IAnswer | IComment | RatedCaseActivity;
+  item: ICase | IAnswer | IComment | RatedCaseActivity | ITask;
   activityType:
     | "case"
     | "answer"
     | "comment"
     | "rating"
     | "base_approval"
-    | "finance_approval";
+    | "finance_approval"
+    | "task_created"
+    | "task_assigned"
+    | "task_completed";
 }
 const getTierForScore = (score: number): RatingTierLabel => {
   if (score >= TIERS.GOLD) return "Отлични";
@@ -147,6 +151,7 @@ const User: React.FC = () => {
         "ratings",
         "approvals",
         "finances",
+        "tasks",
       ].includes(savedTab)
     ) {
       setActiveActivityTab(savedTab);
@@ -302,6 +307,60 @@ const User: React.FC = () => {
         activityType: "rating",
       });
     });
+
+    // Task activities - deduplicate across created/assigned/completed
+    const seenTaskIds = new Set<string>();
+    if (user.createdTasks) {
+      user.createdTasks
+        .filter((t) => t.createdAt && isInDateRange(t.createdAt))
+        .forEach((task) => {
+          const key = `task-created-${task._id}`;
+          if (!seenTaskIds.has(key)) {
+            seenTaskIds.add(key);
+            activities.push({
+              id: key,
+              date: task.createdAt!,
+              item: task,
+              activityType: "task_created",
+            });
+          }
+        });
+    }
+    if (user.assignedTasks) {
+      user.assignedTasks
+        .filter((t) => t.createdAt && isInDateRange(t.createdAt))
+        .forEach((task) => {
+          const key = `task-assigned-${task._id}`;
+          if (!seenTaskIds.has(key)) {
+            seenTaskIds.add(key);
+            activities.push({
+              id: key,
+              date: task.createdAt!,
+              item: task,
+              activityType: "task_assigned",
+            });
+          }
+        });
+    }
+    // Completed tasks (from both lists)
+    const allTasks = [
+      ...(user.createdTasks || []),
+      ...(user.assignedTasks || []),
+    ];
+    allTasks
+      .filter((t) => t.status === "DONE" && t.completedAt && isInDateRange(t.completedAt))
+      .forEach((task) => {
+        const key = `task-completed-${task._id}`;
+        if (!seenTaskIds.has(key)) {
+          seenTaskIds.add(key);
+          activities.push({
+            id: key,
+            date: task.completedAt!,
+            item: task,
+            activityType: "task_completed",
+          });
+        }
+      });
 
     if (activeCategoryName) {
       const activeCategoryId = pieChartStats?.signalsByCategoryChartData.find(
@@ -505,6 +564,7 @@ const User: React.FC = () => {
       ratings: 0,
       approvals: 0,
       finances: 0,
+      tasks: 0,
     };
     filteredActivities.forEach((activity) => {
       counts.all++;
@@ -514,6 +574,7 @@ const User: React.FC = () => {
       else if (activity.activityType === "rating") counts.ratings++;
       else if (activity.activityType === "base_approval") counts.approvals++;
       else if (activity.activityType === "finance_approval") counts.finances++;
+      else if (activity.activityType.startsWith("task_")) counts.tasks++;
     });
     return counts;
   }, [filteredActivities]);

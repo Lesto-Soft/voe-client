@@ -300,6 +300,32 @@ fragment FullUserFragment on User {
           }
         }
       }
+      assignedTasks {
+        _id
+        taskNumber
+        title
+        status
+        priority
+        dueDate
+        createdAt
+        completedAt
+        creator { _id name username avatar }
+        assignee { _id name username avatar }
+        relatedCase { _id case_number }
+      }
+      createdTasks {
+        _id
+        taskNumber
+        title
+        status
+        priority
+        dueDate
+        createdAt
+        completedAt
+        creator { _id name username avatar }
+        assignee { _id name username avatar }
+        relatedCase { _id case_number }
+      }
 }`;
 
 export const COUNT_USERS = gql`

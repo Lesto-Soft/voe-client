@@ -45,7 +45,8 @@ export type StatsActivityType =
   | "comments"
   | "ratings"
   | "approvals"
-  | "finances";
+  | "finances"
+  | "tasks";
 
 interface UserStatisticsPanelProps {
   textStats: UserTextStats | undefined | null;

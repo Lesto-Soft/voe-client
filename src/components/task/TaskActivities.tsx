@@ -300,13 +300,7 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
           attachments={newAttachments}
           setAttachments={setNewAttachments}
           onSend={handleSubmitActivity}
-          placeholder={
-            activityType === TaskActivityType.Comment
-              ? "Добавете коментар..."
-              : activityType === TaskActivityType.HelpRequest
-                ? "Опишете от каква помощ се нуждаете..."
-                : "Опишете какво трябва да бъде одобрено..."
-          }
+          placeholder="Добавете запис..."
           minLength={0}
           maxLength={1500}
           isSending={createLoading}
@@ -466,7 +460,7 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
                     ) : (
                       /* Normal content display */
                       <>
-                        <div className="text-sm text-gray-700">
+                        <div className="text-sm text-gray-700 max-h-40 overflow-y-auto custom-scrollbar-xs">
                           {renderContentSafely(activity.content || "")}
                         </div>
                         {activity.attachments &&

@@ -14,7 +14,7 @@ import { InformationCircleIcon as InfoOutline } from "@heroicons/react/24/outlin
 import * as Popover from "@radix-ui/react-popover"; // Заменяме Tooltip с Popover
 
 const TextEditorHelper: React.FC<{
-  type: "case" | "comment" | "answer" | "taskActivity" | "default";
+  type: "case" | "comment" | "answer" | "task" | "taskActivity" | "default";
   hideAttach?: boolean;
 }> = ({ type, hideAttach = false }) => {
   const { t } = useTranslation(["menu"]);
@@ -46,8 +46,8 @@ const TextEditorHelper: React.FC<{
 
   const visible = Object.keys(configs).filter((key) => {
     if (key === "attachment" && hideAttach) return false;
-    if ((type === "case" || type === "taskActivity") && key === "mention") return false;
-    if (type === "case") return true;
+    if ((type === "case" || type === "task" || type === "taskActivity") && key === "mention") return false;
+    if (type === "case" || type === "task") return true;
     return !configs[key].onlyCase;
   });
 

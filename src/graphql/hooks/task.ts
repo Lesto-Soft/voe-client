@@ -45,6 +45,7 @@ export interface CreateTaskInput {
   description?: string;
   priority: CasePriority;
   dueDate?: string;
+  attachments?: File[];
   assignee?: string;
   creator: string;
   relatedCase?: string;
@@ -56,6 +57,8 @@ export interface UpdateTaskInput {
   priority?: CasePriority;
   status?: TaskStatus;
   dueDate?: string;
+  attachments?: File[];
+  deletedAttachments?: string[];
 }
 
 export interface CreateTaskActivityInput {

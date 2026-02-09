@@ -42,6 +42,7 @@ export const UPDATE_TASK = gql`
       status
       priority
       dueDate
+      attachments
       updatedAt
     }
   }

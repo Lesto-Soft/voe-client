@@ -77,7 +77,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
   const [fileError, setFileError] = useState<string | null>(null);
   const { processFiles, isCompressing } = useFileHandler();
 
-  const [, setSelectionUpdate] = useState(0);
+  const isInternalChange = useRef(false);
 
   useEffect(() => {
     onProcessingChange?.(isCompressing);
@@ -102,10 +102,10 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
         : []),
     ],
     content,
-    onUpdate: ({ editor }) =>
-      onContentChange(editor.isEmpty ? "" : editor.getHTML()),
-    onSelectionUpdate: () => setSelectionUpdate((s) => s + 1),
-    onTransaction: () => setSelectionUpdate((s) => s + 1),
+    onUpdate: ({ editor }) => {
+      isInternalChange.current = true;
+      onContentChange(editor.isEmpty ? "" : editor.getHTML());
+    },
     editorProps: {
       attributes: {
         class:
@@ -117,10 +117,11 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
   // Sync external content changes (e.g. CaseAnswerSelector) into the editor
   useEffect(() => {
     if (!editor) return;
-    const editorHtml = editor.isEmpty ? "" : editor.getHTML();
-    if (content !== editorHtml) {
-      editor.commands.setContent(content);
+    if (isInternalChange.current) {
+      isInternalChange.current = false;
+      return;
     }
+    editor.commands.setContent(content);
   }, [content, editor]);
 
   // Calculate character count using HTML stripping (matches backend validation)

@@ -1,4 +1,4 @@
-import { useMutation } from "@apollo/client";
+import { useMutation, useQuery } from "@apollo/client";
 import {
   APPROVE_ANSWER,
   APPROVE_ANSWER_FINANCE,
@@ -8,7 +8,27 @@ import {
   UNAPPROVE_ANSWER_FINANCE,
   UPDATE_ANSWER,
 } from "../mutation/answer";
-import { GET_CASE_BY_CASE_NUMBER } from "../query/case";
+import { GET_CASE_BY_CASE_NUMBER, GET_CASE_ANSWERS } from "../query/case";
+
+/**
+ * Fetches all answers for a given case.
+ * Useful for populating task descriptions from case answers.
+ */
+export const useGetCaseAnswers = (caseId?: string) => {
+  const { loading, error, data, refetch } = useQuery(GET_CASE_ANSWERS, {
+    variables: { caseId },
+    skip: !caseId,
+  });
+
+  const answers = data?.getCaseAnswers || [];
+
+  return {
+    answers,
+    loading,
+    error,
+    refetch,
+  };
+};
 
 export const useApproveAnswer = () => {
   const [approveAnswerMutation, { data, loading, error }] =

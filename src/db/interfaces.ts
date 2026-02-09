@@ -207,3 +207,85 @@ export enum CasePriority {
   Medium = "MEDIUM",
   High = "HIGH",
 }
+
+// Task-related enums
+export enum TaskStatus {
+  Todo = "TODO",
+  InProgress = "IN_PROGRESS",
+  Done = "DONE",
+}
+
+export enum TaskActivityType {
+  Comment = "COMMENT",
+  StatusChange = "STATUS_CHANGE",
+  PriorityChange = "PRIORITY_CHANGE",
+  AssigneeChange = "ASSIGNEE_CHANGE",
+  HelpRequest = "HELP_REQUEST",
+  ApprovalRequest = "APPROVAL_REQUEST",
+}
+
+// Task-related interfaces
+export interface IWhyStep {
+  question: string;
+  answer: string;
+}
+
+export interface ITask {
+  _id: string;
+  taskNumber: number;
+  title: string;
+  description?: string;
+  status: TaskStatus;
+  priority: CasePriority;
+  dueDate?: string;
+  attachments?: string[];
+  assignee?: IUser;
+  creator: IUser;
+  relatedCase?: ICase;
+  activities?: ITaskActivity[];
+  fiveWhys?: IFiveWhy[];
+  riskAssessments?: IRiskAssessment[];
+  createdAt?: string;
+  updatedAt?: string;
+  completedAt?: string;
+}
+
+export interface ITaskActivity {
+  _id: string;
+  task: ITask;
+  createdBy: IUser;
+  type: TaskActivityType;
+  content?: string;
+  attachments?: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface IFiveWhy {
+  _id: string;
+  task: ITask;
+  whys: IWhyStep[];
+  rootCause: string;
+  counterMeasures: string;
+  creator: IUser;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface IRiskAssessment {
+  _id: string;
+  task: ITask;
+  riskDescription: string;
+  probability: number;
+  impact: number;
+  riskLevel: number;
+  plan: string;
+  creator: IUser;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export interface ITasksAndCount {
+  tasks: ITask[];
+  count: number;
+}

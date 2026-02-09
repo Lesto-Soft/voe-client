@@ -6,14 +6,17 @@ import {
   PlusCircleIcon,
   MinusCircleIcon,
   ChevronDoubleUpIcon,
+  ClipboardDocumentCheckIcon,
 } from "@heroicons/react/24/solid";
 import { IAnswer, ICase, IComment, IMe } from "../../db/interfaces";
 import CaseHistoryContent from "./CaseHistoryContent";
+import CaseTasksTab from "./CaseTasksTab";
 import Comment from "./comment/Comment";
 import Answer from "./answer/Answer";
 import AddComment from "./comment/AddComment";
 import AddAnswer from "./answer/AddAnswer";
 import { USER_RIGHTS /*, CASE_STATUS */ } from "../../utils/GLOBAL_PARAMETERS";
+import { useGetAllTasks } from "../../graphql/hooks/task";
 import { useLocation } from "react-router";
 import useMediaQuery from "../../hooks/useMediaQuery";
 import { useUnsavedChangesWarning } from "../../hooks/useUnsavedWarning";
@@ -46,6 +49,9 @@ const getStateFromHash = () => {
   if (hash === "history") {
     return { view: "history" as const, targetId: null };
   }
+  if (hash === "tasks") {
+    return { view: "tasks" as const, targetId: null };
+  }
 
   // Default state if hash is empty or unrecognized
   return { view: "answers" as const, targetId: null };
@@ -69,6 +75,14 @@ const Submenu: React.FC<SubmenuProps> = ({
   const [targetId, setTargetId] = useState<string | null>(null);
   const [childTargetId, setChildTargetId] = useState<string | null>(null);
   const location = useLocation();
+
+  // Fetch task count for this case
+  const { count: taskCount } = useGetAllTasks({
+    caseId: caseData._id,
+    itemsPerPage: 1,
+    currentPage: 0,
+  });
+
   const [answerCommentsVisibility, setAnswerCommentsVisibility] = useState<
     Record<string, boolean>
   >({});
@@ -223,8 +237,12 @@ const Submenu: React.FC<SubmenuProps> = ({
         } else if (hashPart.startsWith("answers-")) {
           setView("answers");
           setTargetId(hashPart);
-        } else if (hashPart === "history" || hashPart === "comments") {
-          setView(hashPart as "history" | "comments");
+        } else if (
+          hashPart === "history" ||
+          hashPart === "comments" ||
+          hashPart === "tasks"
+        ) {
+          setView(hashPart as "history" | "comments" | "tasks");
           setTargetId(null);
         } else {
           setView("answers");
@@ -365,6 +383,16 @@ const Submenu: React.FC<SubmenuProps> = ({
       icon: <ChatBubbleOvalLeftEllipsisIcon className="h-5 w-5 mr-2" />,
     },
     {
+      key: "tasks",
+      label: (
+        <>
+          {t("tasks")}
+          <sup>{taskCount}</sup>
+        </>
+      ),
+      icon: <ClipboardDocumentCheckIcon className="h-5 w-5 mr-2" />,
+    },
+    {
       key: "history",
       label: (
         <>
@@ -377,7 +405,8 @@ const Submenu: React.FC<SubmenuProps> = ({
   ];
 
   if (isCreatorAndNothingElse) {
-    submenu.splice(2, 2);
+    // Remove history tab (index 3) for creators who have no other rights
+    submenu.splice(3, 1);
   }
 
   const visibleAnswers = (caseData.answers || []).filter((answer) => {
@@ -616,6 +645,8 @@ const Submenu: React.FC<SubmenuProps> = ({
               )}
             </>
           )}
+
+          {view === "tasks" && <CaseTasksTab caseData={caseData} />}
 
           {view === "history" &&
             (caseData.history && caseData.history.length > 0 ? (

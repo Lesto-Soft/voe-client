@@ -40,6 +40,7 @@
     },
     "caseType": {
       "problem": "проблем",
+      "suggestion": "подобрение",
       "label": "Тип на случая"
     },
     "actions": {

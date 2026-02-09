@@ -2,6 +2,7 @@ import React from "react";
 import { Link, useLocation } from "react-router";
 import {
   ClipboardDocumentListIcon,
+  ClipboardDocumentCheckIcon,
   ChartPieIcon,
   UsersIcon,
   TagIcon,
@@ -101,6 +102,12 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
             />
           </>
         )}
+        <MobileNavLink
+          to="/tasks"
+          icon={<ClipboardDocumentCheckIcon className="h-6 w-6" />}
+          label={t("tasks", "Задачи")}
+          onClick={onLinkClick}
+        />
         <MobileNavLink
           to="/dashboard"
           icon={<ClipboardDocumentListIcon className="h-6 w-6" />}

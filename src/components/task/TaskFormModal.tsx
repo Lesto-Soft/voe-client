@@ -291,6 +291,7 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
                 hideSideButtons
                 editorClassName="h-[150px] min-h-[150px] max-h-[150px]"
                 caseId={task?._id}
+                attachmentFolder="tasks"
               />
             </div>
 

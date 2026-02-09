@@ -43,7 +43,8 @@ interface UnifiedEditorProps {
   hideSideButtons?: boolean;
   onProcessingChange?: (processing: boolean) => void;
   caseId?: string;
-  type: "case" | "answer" | "comment" | "task";
+  attachmentFolder?: string;
+  type: "case" | "answer" | "comment" | "task" | "taskActivity";
   editorClassName?: string;
   hideAttachments?: boolean;
 }
@@ -66,6 +67,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
     onProcessingChange,
     type,
     caseId,
+    attachmentFolder,
     editorClassName,
     hideAttachments = false,
   } = props;
@@ -88,7 +90,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
       TextAlign.configure({ types: ["paragraph", "heading", "listItem"] }),
       Placeholder.configure({ placeholder }),
       CharacterCount, // Keep extension but don't use its limit (doesn't count mentions properly)
-      ...(type !== "case" && type !== "task"
+      ...(type !== "case" && type !== "task" && type !== "taskActivity"
         ? [
             CustomMention.configure({
               suggestion: useMemo(
@@ -292,6 +294,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
                   setFileError(null);
                 }}
                 caseId={caseId}
+                folder={attachmentFolder}
               />
             </div>
           )}

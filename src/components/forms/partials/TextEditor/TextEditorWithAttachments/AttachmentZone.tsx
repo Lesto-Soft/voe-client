@@ -11,6 +11,7 @@ interface AttachmentZoneProps {
   onRemoveNew: (index: number) => void;
   onRemoveExisting?: (url: string) => void;
   caseId?: string;
+  folder?: string;
 }
 
 const AttachmentZone: React.FC<AttachmentZoneProps> = ({
@@ -19,6 +20,7 @@ const AttachmentZone: React.FC<AttachmentZoneProps> = ({
   onRemoveNew,
   onRemoveExisting,
   caseId,
+  folder = "cases",
 }) => {
   const [galleryItems, setGalleryItems] = useState<ThumbnailGalleryItem[]>([]);
 
@@ -51,7 +53,7 @@ const AttachmentZone: React.FC<AttachmentZoneProps> = ({
   useEffect(() => {
     const items: ThumbnailGalleryItem[] = [
       ...(existingAttachments || []).map((url) => ({
-        url: `${apiUrl}/static/cases/${caseId}/${url}`,
+        url: `${apiUrl}/static/${folder}/${caseId}/${url}`,
         name: url.split("/").pop() || "attachment",
         type: "existing" as const,
         identifier: url,

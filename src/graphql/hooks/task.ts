@@ -66,12 +66,13 @@ export interface CreateTaskActivityInput {
   createdBy: string;
   type: TaskActivityType;
   content?: string;
-  attachments?: string[];
+  attachments?: File[];
 }
 
 export interface UpdateTaskActivityInput {
   content?: string;
-  attachments?: string[];
+  attachments?: File[];
+  deletedAttachments?: string[];
 }
 
 export interface WhyStepInput {

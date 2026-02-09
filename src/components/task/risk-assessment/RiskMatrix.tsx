@@ -98,17 +98,17 @@ const RiskMatrix: React.FC<RiskMatrixProps> = ({
       matrixGridItems.push(
         <div
           key={`cell-${probability}-${impact}`}
-          className={`relative w-full min-h-[48px] sm:min-h-[60px] sm:aspect-square rounded flex items-center justify-center ${getRiskCellColor(
+          className={`relative w-full min-h-[96px] sm:min-h-[114px] rounded flex items-center justify-center ${getRiskCellColor(
             impact,
             probability,
           )}`}
         >
           {cellAssessments.length > 0 && (
-            <div className="absolute flex flex-col items-center justify-center gap-y-1">
+            <div className="absolute inset-0 flex flex-col items-center justify-center pt-1 gap-y-1 z-10">
               {cellAssessments.map((a) => (
                 <div
                   key={a._id}
-                  className="flex items-center gap-1 bg-white/60 backdrop-blur-sm rounded-full p-0.5 pr-1.5"
+                  className="relative z-10 flex items-center gap-1 bg-white/60 backdrop-blur-sm rounded-full p-0.5 pr-1.5"
                 >
                   <UserLink user={a.creator} />
                   <Tooltip.Root delayDuration={100}>
@@ -154,7 +154,7 @@ const RiskMatrix: React.FC<RiskMatrixProps> = ({
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm" />
         <Tooltip.Provider>
-          <Dialog.Content className="fixed top-1/2 left-1/2 z-50 w-[98vw] max-w-3xl lg:max-w-4xl -translate-x-1/2 -translate-y-1/2 rounded-lg bg-white shadow-xl focus:outline-none">
+          <Dialog.Content className="fixed top-1/2 left-1/2 z-50 w-[95vw] max-w-[52rem] -translate-x-1/2 -translate-y-1/2 rounded-lg bg-white shadow-xl focus:outline-none max-h-[90vh] flex flex-col">
             {/* Header */}
             <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
               <Dialog.Title className="flex items-center gap-2 text-lg font-semibold text-gray-900">
@@ -201,8 +201,8 @@ const RiskMatrix: React.FC<RiskMatrixProps> = ({
             </div>
 
             {/* Matrix */}
-            <div className="p-4 sm:p-6 overflow-x-auto">
-              <div className="flex items-stretch min-w-[400px]">
+            <div className="p-2 sm:p-3 overflow-auto custom-scrollbar-xs flex-1 min-h-0">
+              <div className="flex items-stretch min-w-[360px]">
                 {/* Y-axis label */}
                 <div
                   className="flex items-center justify-center -rotate-180 p-2"

@@ -262,7 +262,7 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Въведете описание на задачата"
                 rows={4}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent resize-none"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent resize-none custom-scrollbar-xs"
               />
             </div>
 
@@ -315,7 +315,6 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
                   onChange={(date) => setDueDate(date)}
                   dateFormat="dd/MM/yyyy"
                   locale="bg"
-                  minDate={new Date()}
                   placeholderText="Изберете дата"
                   isClearable
                   showYearDropdown
@@ -348,7 +347,7 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
                 />
 
                 {/* Scrollable user list */}
-                <div className="max-h-40 overflow-y-auto border border-gray-200 rounded-md bg-white">
+                <div className="max-h-40 overflow-y-auto border border-gray-200 rounded-md bg-white custom-scrollbar-xs">
                   <button
                     type="button"
                     onClick={() => setAssigneeId("")}
@@ -361,7 +360,7 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
                       type="button"
                       key={user._id}
                       onClick={() => setAssigneeId(user._id)}
-                      className={`w-full px-3 py-2 text-left text-sm hover:bg-blue-50 flex items-center gap-2 ${
+                      className={`w-full px-3 py-2 text-left text-sm hover:bg-blue-50 flex items-center gap-2 cursor-pointer ${
                         assigneeId === user._id ? "bg-blue-100" : ""
                       }`}
                     >
@@ -400,7 +399,7 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
                     <button
                       type="button"
                       onClick={() => setAssigneeId("")}
-                      className="ml-auto text-gray-400 hover:text-gray-600"
+                      className="ml-auto text-gray-400 hover:text-gray-600 cursor-pointer"
                     >
                       <XCircleIcon className="h-4 w-4" />
                     </button>

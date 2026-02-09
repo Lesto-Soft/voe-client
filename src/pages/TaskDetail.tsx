@@ -136,14 +136,16 @@ const TaskDetail: React.FC = () => {
               )}
             </div>
 
-            {/* Task Description - Collapsible */}
-            <TaskDescriptionCard description={taskData.description} />
+            {/* Task Description - always expanded, fixed-height container */}
+            <div className="h-48">
+              <TaskDescriptionCard description={taskData.description} />
+            </div>
 
             {/* Origin - Related Case */}
             {taskData.relatedCase && (
               <div className="pt-2 border-t border-gray-100">
                 <h3 className="text-xs font-semibold text-gray-500 mb-2 flex items-center gap-1.5">
-                  Произход
+                  Произход:
                 </h3>
                 <CaseLink my_case={taskData.relatedCase} t={t} />
               </div>
@@ -154,7 +156,7 @@ const TaskDetail: React.FC = () => {
               <div className="space-y-3">
                 {/* Creator */}
                 <div>
-                  <dt className="text-xs text-gray-400 mb-1">Възложена от</dt>
+                  <dt className="text-xs text-gray-400 mb-1">Възложена от:</dt>
                   <dd className="flex items-center gap-2">
                     <UserAvatar
                       name={taskData.creator.name}
@@ -171,7 +173,7 @@ const TaskDetail: React.FC = () => {
 
                 {/* Assignee */}
                 <div>
-                  <dt className="text-xs text-gray-400 mb-1">Възложена на</dt>
+                  <dt className="text-xs text-gray-400 mb-1">Възложена на:</dt>
                   <dd>
                     {canEdit ? (
                       <TaskAssigneeChanger
@@ -202,12 +204,37 @@ const TaskDetail: React.FC = () => {
               </div>
             </div>
 
+            {/* Priority & Status */}
+            <div className="pt-2 border-t border-gray-100">
+              <div className="flex flex-wrap gap-3">
+                <div className="flex-1 min-w-[120px]">
+                  <dt className="text-xs text-gray-400 flex items-center gap-1 mb-1">
+                    Приоритет:
+                  </dt>
+                  <dd>
+                    <TaskPriorityBadge size="md" priority={taskData.priority} />
+                  </dd>
+                </div>
+                <div className="flex-1 min-w-[120px]">
+                  <dt className="text-xs text-gray-400 mb-1">Статус:</dt>
+                  <dd>
+                    <TaskStatusPill
+                      taskId={taskData._id}
+                      currentStatus={taskData.status}
+                      canChange={canChangeStatus}
+                      onStatusChanged={refetch}
+                    />
+                  </dd>
+                </div>
+              </div>
+            </div>
+
             {/* Dates (due date first, then created) */}
             <div className="pt-2 border-t border-gray-100">
               <dl className="grid grid-cols-2 gap-3">
                 <div>
                   <dt className="text-xs text-gray-400 flex items-center gap-1 mb-0.5">
-                    Краен срок
+                    Краен срок:
                   </dt>
                   <dd>
                     {taskData.dueDate ? (
@@ -235,7 +262,7 @@ const TaskDetail: React.FC = () => {
                 </div>
                 <div>
                   <dt className="text-xs text-gray-400 flex items-center gap-1 mb-0.5">
-                    Създадена
+                    Създадена на:
                   </dt>
                   <dd>
                     {taskData.createdAt && (
@@ -245,38 +272,13 @@ const TaskDetail: React.FC = () => {
                 </div>
               </dl>
             </div>
-
-            {/* Priority & Status (at bottom with labels, like CaseInfo) */}
-            <div className="pt-2 border-t border-gray-100">
-              <div className="flex flex-wrap gap-3">
-                <div className="flex-1 min-w-[120px]">
-                  <dt className="text-xs text-gray-400 flex items-center gap-1 mb-1">
-                    Приоритет
-                  </dt>
-                  <dd>
-                    <TaskPriorityBadge size="md" priority={taskData.priority} />
-                  </dd>
-                </div>
-                <div className="flex-1 min-w-[120px]">
-                  <dt className="text-xs text-gray-400 mb-1">Статус</dt>
-                  <dd>
-                    <TaskStatusPill
-                      taskId={taskData._id}
-                      currentStatus={taskData.status}
-                      canChange={canChangeStatus}
-                      onStatusChanged={refetch}
-                    />
-                  </dd>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>
 
       {/* Right Panel - Activity/Analysis (like Submenu) */}
       <div className="w-full lg:flex-1 lg:w-auto order-2 lg:order-none lg:h-full">
-        <div className="flex flex-col lg:h-full">
+        <div className="flex flex-col lg:h-full bg-white shadow-md">
           {/* Sticky Tab Bar */}
           <div className="flex-shrink-0 sticky top-0 z-1 bg-white border-b border-gray-200">
             <div className="flex justify-center gap-2 py-3">

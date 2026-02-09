@@ -102,7 +102,7 @@ const RiskAssessmentForm: React.FC<RiskAssessmentFormProps> = ({
   return (
     <>
       <style>{sliderStyles}</style>
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-3">
         {/* Error message */}
         {error && (
           <div className="p-3 bg-red-50 border border-red-200 rounded-md text-sm text-red-700">
@@ -145,7 +145,7 @@ const RiskAssessmentForm: React.FC<RiskAssessmentFormProps> = ({
             value={probability}
             onChange={(e) => setProbability(Number(e.target.value))}
             className={`risk-slider w-full h-2 rounded-lg appearance-none cursor-pointer ${getSliderColor(
-              probability
+              probability,
             )} bg-[linear-gradient(to_right,_#22c55e50_0%,_#facc1550_50%,_#ef444450_100%)]`}
           />
           <div className="flex justify-between text-xs text-gray-500 mt-1">
@@ -171,7 +171,7 @@ const RiskAssessmentForm: React.FC<RiskAssessmentFormProps> = ({
             value={impact}
             onChange={(e) => setImpact(Number(e.target.value))}
             className={`risk-slider w-full h-2 rounded-lg appearance-none cursor-pointer ${getSliderColor(
-              impact
+              impact,
             )} bg-[linear-gradient(to_right,_#22c55e50_0%,_#facc1550_50%,_#ef444450_100%)]`}
           />
           <div className="flex justify-between text-xs text-gray-500 mt-1">
@@ -205,11 +205,11 @@ const RiskAssessmentForm: React.FC<RiskAssessmentFormProps> = ({
         </div>
 
         {/* Actions */}
-        <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+        <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 sticky bottom-0 bg-white pb-1">
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors cursor-pointer"
             disabled={isLoading}
           >
             Отмени
@@ -217,13 +217,13 @@ const RiskAssessmentForm: React.FC<RiskAssessmentFormProps> = ({
           <button
             type="submit"
             disabled={isLoading}
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
             {isLoading
               ? "Запазване..."
               : assessment
-              ? "Запази промените"
-              : "Създай оценка"}
+                ? "Запази промените"
+                : "Създай оценка"}
           </button>
         </div>
       </form>

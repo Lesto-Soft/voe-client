@@ -56,7 +56,7 @@ const RiskAssessmentModal: React.FC<RiskAssessmentModalProps> = ({
           </div>
 
           {/* Form */}
-          <div className="p-6 overflow-y-auto">
+          <div className="p-6 overflow-y-auto custom-scrollbar-xs">
             <RiskAssessmentForm
               assessment={assessment}
               onSubmit={handleSubmit}

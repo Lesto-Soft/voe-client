@@ -99,7 +99,7 @@ const FiveWhyForm: React.FC<FiveWhyFormProps> = ({
       )}
 
       {/* Why pairs */}
-      <div className="space-y-4 max-h-[40vh] overflow-y-auto custom-scrollbar-xs">
+      <div className="space-y-4 max-h-[30vh] overflow-y-auto custom-scrollbar-xs">
         {whys.map((pair, i) => (
           <div
             key={i}
@@ -182,11 +182,11 @@ const FiveWhyForm: React.FC<FiveWhyFormProps> = ({
       </div>
 
       {/* Actions */}
-      <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+      <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 sticky bottom-0 bg-white pb-1">
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+          className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors cursor-pointer"
           disabled={isLoading}
         >
           Отмени
@@ -194,7 +194,7 @@ const FiveWhyForm: React.FC<FiveWhyFormProps> = ({
         <button
           type="submit"
           disabled={isLoading}
-          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
         >
           {isLoading
             ? "Запазване..."

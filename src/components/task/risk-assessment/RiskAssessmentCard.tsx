@@ -46,7 +46,7 @@ const RiskAssessmentCard: React.FC<RiskAssessmentCardProps> = ({
             {onEdit && (
               <button
                 onClick={onEdit}
-                className="text-xs text-gray-500 hover:text-gray-700 transition-colors"
+                className="text-xs text-gray-500 hover:text-gray-700 transition-colors cursor-pointer"
               >
                 Редактирай
               </button>
@@ -54,7 +54,7 @@ const RiskAssessmentCard: React.FC<RiskAssessmentCardProps> = ({
             {onDelete && (
               <button
                 onClick={onDelete}
-                className="text-xs text-red-500 hover:text-red-700 transition-colors"
+                className="text-xs text-red-500 hover:text-red-700 transition-colors cursor-pointer"
               >
                 Изтрий
               </button>

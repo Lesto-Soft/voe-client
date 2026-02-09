@@ -32,7 +32,7 @@ const FiveWhyList: React.FC<FiveWhyListProps> = ({
   compact = false,
 }) => {
   const [activeTab, setActiveTab] = useState<string | null>(
-    fiveWhys.length > 0 ? fiveWhys[0]._id : null
+    fiveWhys.length > 0 ? fiveWhys[0]._id : null,
   );
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingFiveWhy, setEditingFiveWhy] = useState<IFiveWhy | null>(null);
@@ -46,7 +46,7 @@ const FiveWhyList: React.FC<FiveWhyListProps> = ({
 
   // Check if current user already has a Five Why analysis
   const userHasFiveWhy = fiveWhys.some(
-    (fw) => fw.creator._id === currentUser._id
+    (fw) => fw.creator._id === currentUser._id,
   );
 
   const canEditFiveWhy = (fiveWhy: IFiveWhy) => {
@@ -77,6 +77,7 @@ const FiveWhyList: React.FC<FiveWhyListProps> = ({
       }
       // Show success toast
       toast.success("5 Защо анализът беше добавен успешно!", {
+        className: "notification-toast",
         position: "top-right",
         autoClose: 3000,
       });
@@ -135,8 +136,8 @@ const FiveWhyList: React.FC<FiveWhyListProps> = ({
       {!compact && (
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
           <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-            <QuestionMarkCircleIcon className="h-5 w-5 text-amber-500" />
-            5 Защо Анализи ({fiveWhys.length})
+            <QuestionMarkCircleIcon className="h-5 w-5 text-amber-500" />5 Защо
+            Анализи ({fiveWhys.length})
           </h3>
           <button
             onClick={() => setIsCreateModalOpen(true)}
@@ -151,7 +152,7 @@ const FiveWhyList: React.FC<FiveWhyListProps> = ({
       {fiveWhys.length > 0 ? (
         <>
           {/* Tabs */}
-          <div className="flex border-b border-gray-200 px-4 overflow-x-auto">
+          <div className="flex border-b border-gray-200 px-4 overflow-x-auto overflow-y-hidden pb-px">
             {fiveWhys.map((fiveWhy) => (
               <button
                 key={fiveWhy._id}
@@ -188,14 +189,14 @@ const FiveWhyList: React.FC<FiveWhyListProps> = ({
                 <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-gray-200">
                   <button
                     onClick={() => setEditingFiveWhy(activeFiveWhy)}
-                    className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+                    className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors cursor-pointer"
                   >
                     <PencilIcon className="h-3.5 w-3.5" />
                     Редактирай
                   </button>
                   <button
                     onClick={() => setDeletingFiveWhy(activeFiveWhy)}
-                    className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-md hover:bg-red-100 transition-colors"
+                    className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-md hover:bg-red-100 transition-colors cursor-pointer"
                   >
                     <TrashIcon className="h-3.5 w-3.5" />
                     Изтрий
@@ -207,7 +208,13 @@ const FiveWhyList: React.FC<FiveWhyListProps> = ({
         </>
       ) : (
         <div className={compact ? "py-4 text-center" : "p-6 text-center"}>
-          <QuestionMarkCircleIcon className={compact ? "h-8 w-8 text-gray-300 mx-auto mb-2" : "h-12 w-12 text-gray-300 mx-auto mb-2"} />
+          <QuestionMarkCircleIcon
+            className={
+              compact
+                ? "h-8 w-8 text-gray-300 mx-auto mb-2"
+                : "h-12 w-12 text-gray-300 mx-auto mb-2"
+            }
+          />
           <p className="text-sm text-gray-500">Няма добавени анализи.</p>
           <button
             onClick={() => setIsCreateModalOpen(true)}

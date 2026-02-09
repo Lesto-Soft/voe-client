@@ -47,7 +47,7 @@ const RiskAssessmentList: React.FC<RiskAssessmentListProps> = ({
 
   // Check if current user already has a Risk Assessment
   const userHasAssessment = riskAssessments.some(
-    (ra) => ra.creator._id === currentUser._id
+    (ra) => ra.creator._id === currentUser._id,
   );
 
   const canEditAssessment = (assessment: IRiskAssessment) => {
@@ -76,6 +76,7 @@ const RiskAssessmentList: React.FC<RiskAssessmentListProps> = ({
       setIsCreateModalOpen(false);
       // Show success toast
       toast.success("Оценката на риска беше добавена успешно!", {
+        className: "notification-toast",
         position: "top-right",
         autoClose: 3000,
       });
@@ -145,7 +146,7 @@ const RiskAssessmentList: React.FC<RiskAssessmentListProps> = ({
             <div className="flex gap-2 mb-4">
               <button
                 onClick={() => setIsMatrixOpen(true)}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-blue-700 bg-blue-100 rounded-md hover:bg-blue-200 transition-colors"
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-blue-700 bg-blue-100 rounded-md hover:bg-blue-200 transition-colors cursor-pointer"
               >
                 <TableCellsIcon className="h-5 w-5" />
                 Покажи Матрица на Риска
@@ -178,7 +179,13 @@ const RiskAssessmentList: React.FC<RiskAssessmentListProps> = ({
           </>
         ) : (
           <div className={compact ? "text-center py-4" : "text-center py-6"}>
-            <ShieldCheckIcon className={compact ? "h-8 w-8 text-gray-300 mx-auto mb-2" : "h-12 w-12 text-gray-300 mx-auto mb-2"} />
+            <ShieldCheckIcon
+              className={
+                compact
+                  ? "h-8 w-8 text-gray-300 mx-auto mb-2"
+                  : "h-12 w-12 text-gray-300 mx-auto mb-2"
+              }
+            />
             <p className="text-sm text-gray-500">
               Няма добавени оценки на риска.
             </p>

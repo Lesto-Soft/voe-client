@@ -1,65 +1,32 @@
-import React, { useState, useEffect } from "react";
-import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline";
-import {
-  getTextLength,
-  renderContentSafely,
-} from "../../utils/contentRenderer";
+import React from "react";
+import { renderContentSafely } from "../../utils/contentRenderer";
 
 interface TaskDescriptionCardProps {
   description?: string;
 }
 
-const COLLAPSE_THRESHOLD = 200;
-
 const TaskDescriptionCard: React.FC<TaskDescriptionCardProps> = ({
   description,
 }) => {
-  // Auto-expand if description is short, collapse if long
-  const textLength = description ? getTextLength(description) : 0;
-  const shouldDefaultExpand = textLength > 0 && textLength < COLLAPSE_THRESHOLD;
-
-  const [isExpanded, setIsExpanded] = useState(shouldDefaultExpand);
-
-  useEffect(() => {
-    // Update expanded state when description changes
-    const newTextLength = description ? getTextLength(description) : 0;
-    setIsExpanded(newTextLength > 0 && newTextLength < COLLAPSE_THRESHOLD);
-  }, [description]);
-
   if (!description) {
     return (
       <div>
-        <div className="flex items-center justify-between mb-1.5">
-          <h3 className="text-xs font-semibold text-gray-500 flex items-center gap-1.5">
-            Описание
-          </h3>
-        </div>
+        <h3 className="text-xs font-semibold text-gray-500 flex items-center gap-1.5 mb-1.5">
+          Описание:
+        </h3>
         <p className="text-gray-400 italic text-sm">Няма описание.</p>
       </div>
     );
   }
 
   return (
-    <div>
-      <button
-        onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-between mb-1.5 hover:opacity-70 transition-opacity cursor-pointer"
-      >
-        <h3 className="text-xs font-semibold text-gray-500 flex items-center gap-1.5">
-          Описание
-        </h3>
-        {isExpanded ? (
-          <ChevronUpIcon className="h-4 w-4 text-gray-400" />
-        ) : (
-          <ChevronDownIcon className="h-4 w-4 text-gray-400" />
-        )}
-      </button>
-
-      {isExpanded && (
-        <div className="bg-gray-50 rounded-md p-3 text-gray-900 text-sm break-words">
-          {renderContentSafely(description)}
-        </div>
-      )}
+    <div className="flex flex-col h-full min-h-0">
+      <h3 className="text-xs font-semibold text-gray-500 flex items-center gap-1.5 mb-1.5 flex-shrink-0">
+        Описание:
+      </h3>
+      <div className="bg-gray-50 rounded-md p-3 text-gray-900 text-sm break-words overflow-y-auto custom-scrollbar-xs flex-1 min-h-0">
+        {renderContentSafely(description)}
+      </div>
     </div>
   );
 };

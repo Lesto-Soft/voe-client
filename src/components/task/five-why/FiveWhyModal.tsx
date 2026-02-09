@@ -54,7 +54,7 @@ const FiveWhyModal: React.FC<FiveWhyModalProps> = ({
           </div>
 
           {/* Form */}
-          <div className="p-6 overflow-y-auto">
+          <div className="p-6 overflow-y-auto custom-scrollbar-xs">
             <FiveWhyForm
               fiveWhy={fiveWhy}
               onSubmit={handleSubmit}

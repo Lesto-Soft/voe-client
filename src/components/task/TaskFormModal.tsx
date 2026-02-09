@@ -215,9 +215,9 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
     <Dialog.Root open={isOpen} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm" />
-        <Dialog.Content className="fixed top-1/2 left-1/2 z-50 w-[95vw] max-w-2xl -translate-x-1/2 -translate-y-1/2 rounded-lg bg-white shadow-xl focus:outline-none max-h-[90vh] overflow-y-auto">
+        <Dialog.Content className="fixed top-1/2 left-1/2 z-50 w-[95vw] max-w-2xl -translate-x-1/2 -translate-y-1/2 rounded-lg bg-white shadow-xl focus:outline-none max-h-[90vh] flex flex-col">
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
+          <div className="flex-shrink-0 flex items-center justify-between border-b border-gray-200 px-6 py-4">
             <Dialog.Title className="flex items-center gap-2 text-lg font-semibold text-gray-900">
               <ClipboardDocumentCheckIcon className="h-6 w-6 text-rose-500" />
               {mode === "create" ? "Нова задача" : "Редактиране на задача"}
@@ -233,7 +233,8 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          <form onSubmit={handleSubmit} className="flex flex-col min-h-0 flex-1">
+          <div className="flex-1 overflow-y-auto custom-scrollbar-xs p-6 space-y-4">
             {/* Error message */}
             {error && (
               <div className="p-3 bg-red-50 border border-red-200 rounded-md text-sm text-red-700">
@@ -437,8 +438,10 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
               </div>
             )}
 
-            {/* Actions */}
-            <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+          </div>
+
+            {/* Actions - sticky footer */}
+            <div className="flex-shrink-0 flex justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-white rounded-b-lg">
               <Dialog.Close asChild>
                 <button
                   type="button"

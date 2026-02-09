@@ -114,6 +114,15 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
     },
   });
 
+  // Sync external content changes (e.g. CaseAnswerSelector) into the editor
+  useEffect(() => {
+    if (!editor) return;
+    const editorHtml = editor.isEmpty ? "" : editor.getHTML();
+    if (content !== editorHtml) {
+      editor.commands.setContent(content);
+    }
+  }, [content, editor]);
+
   // Calculate character count using HTML stripping (matches backend validation)
   const charCount = useMemo(() => getTextLength(content), [content]);
   const currentTotal = attachments.length + existingAttachments.length;

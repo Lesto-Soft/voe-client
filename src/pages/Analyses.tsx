@@ -15,6 +15,7 @@ import { PodiumModal } from "../components/features/analyses/modals/PodiumModal"
 import CaseViewerModal from "../components/modals/caseModals/CaseViewerModal";
 import PageStatusDisplay from "../components/global/PageStatusDisplay";
 import { RankingType } from "../components/features/analyses/types";
+import TaskAnalyticsTab from "../components/features/analyses/components/TaskAnalyticsTab";
 import StatCardSkeleton from "../components/skeletons/StatCardSkeleton";
 import BarChartSkeleton from "../components/skeletons/BarChartSkeleton";
 import ControlsSkeleton from "../components/skeletons/ControlsSkeleton";
@@ -85,6 +86,7 @@ const Analyses: React.FC = () => {
     filters.isAllTimePies
   );
 
+  const [activeTopTab, setActiveTopTab] = useState<"cases" | "tasks">("cases");
   const [barChartStyle, setBarChartStyle] = useState<"grouped" | "stacked">(
     "grouped"
   );
@@ -301,32 +303,52 @@ const Analyses: React.FC = () => {
     }
   };
 
-  if (analyticsDataError) {
-    return (
-      <div className="p-2 md:p-5 bg-gray-100 min-h-full">
-        <PageStatusDisplay
-          error={analyticsDataError}
-          height="h-[calc(100vh-12rem)]"
-        />
-      </div>
-    );
-  }
-
-  if (!analyticsDataLoading && (!allCases || allCases.length === 0)) {
-    return (
-      <div className="p-2 md:p-5 bg-gray-100 min-h-full">
-        <PageStatusDisplay
-          notFound
-          message="Няма налични данни за анализ."
-          height="h-[calc(100vh-12rem)]"
-        />
-      </div>
-    );
-  }
-
   return (
     <>
       <div className="p-2 md:p-5 bg-gray-100 min-h-full space-y-5">
+        {/* Top-level tab toggle: Сигнали / Задачи */}
+        <div className="flex items-center justify-center sm:justify-start">
+          <div className="inline-flex rounded-md shadow-sm" role="group">
+            <button
+              type="button"
+              onClick={() => setActiveTopTab("cases")}
+              className={`hover:cursor-pointer px-5 py-2.5 text-sm font-medium ${
+                activeTopTab === "cases"
+                  ? "bg-sky-600 text-white z-10 ring-1 ring-sky-500"
+                  : "bg-white text-gray-900 hover:bg-gray-100"
+              } rounded-l-lg border border-gray-200 focus:z-10 focus:ring-1 focus:ring-sky-500`}
+            >
+              Сигнали
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTopTab("tasks")}
+              className={`hover:cursor-pointer px-5 py-2.5 text-sm font-medium ${
+                activeTopTab === "tasks"
+                  ? "bg-sky-600 text-white z-10 ring-1 ring-sky-500"
+                  : "bg-white text-gray-900 hover:bg-gray-100"
+              } rounded-r-md border border-gray-200 focus:z-10 focus:ring-1 focus:ring-sky-500`}
+            >
+              Задачи
+            </button>
+          </div>
+        </div>
+
+        {activeTopTab === "tasks" ? (
+          <TaskAnalyticsTab />
+        ) : analyticsDataError ? (
+          <PageStatusDisplay
+            error={analyticsDataError}
+            height="h-[calc(100vh-12rem)]"
+          />
+        ) : !analyticsDataLoading && (!allCases || allCases.length === 0) ? (
+          <PageStatusDisplay
+            notFound
+            message="Няма налични данни за анализ."
+            height="h-[calc(100vh-12rem)]"
+          />
+        ) : (
+        <>
         <div className="bg-white rounded-md shadow-md">
           {analyticsDataLoading ? (
             <ControlsSkeleton />
@@ -588,6 +610,8 @@ const Analyses: React.FC = () => {
             )}
           </div>
         </div>
+        </>
+        )}
       </div>
 
       <PodiumModal

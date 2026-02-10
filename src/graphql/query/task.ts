@@ -205,3 +205,30 @@ export const GET_USER_TASKS = gql`
   }
   ${taskFragment}
 `;
+
+/**
+ * Fetch aggregated task analytics data (status/priority distribution, trends, avg completion).
+ */
+export const GET_TASK_ANALYTICS = gql`
+  query GetTaskAnalytics {
+    getTaskAnalytics {
+      totalTasks
+      statusDistribution {
+        TODO
+        IN_PROGRESS
+        DONE
+      }
+      priorityDistribution {
+        LOW
+        MEDIUM
+        HIGH
+      }
+      tasksByPeriod {
+        period
+        created
+        completed
+      }
+      averageCompletionDays
+    }
+  }
+`;

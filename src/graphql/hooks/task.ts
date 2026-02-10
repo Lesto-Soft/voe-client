@@ -4,6 +4,7 @@ import {
   GET_TASK_BY_NUMBER,
   GET_ALL_TASKS,
   GET_USER_TASKS,
+  GET_TASK_ANALYTICS,
 } from "../query/task";
 import {
   CREATE_TASK,
@@ -228,6 +229,50 @@ export const useGetUserTasks = (userId: string, input?: TaskFiltersInput) => {
   return {
     tasks,
     count,
+    loading,
+    error,
+    refetch,
+  };
+};
+
+// --- Task Analytics Types ---
+
+export interface TaskStatusDistribution {
+  TODO: number;
+  IN_PROGRESS: number;
+  DONE: number;
+}
+
+export interface TaskPriorityDistribution {
+  LOW: number;
+  MEDIUM: number;
+  HIGH: number;
+}
+
+export interface TaskPeriodData {
+  period: string;
+  created: number;
+  completed: number;
+}
+
+export interface TaskAnalytics {
+  totalTasks: number;
+  statusDistribution: TaskStatusDistribution;
+  priorityDistribution: TaskPriorityDistribution;
+  tasksByPeriod: TaskPeriodData[];
+  averageCompletionDays: number | null;
+}
+
+/**
+ * Fetches aggregated task analytics data.
+ */
+export const useGetTaskAnalytics = () => {
+  const { loading, error, data, refetch } = useQuery(GET_TASK_ANALYTICS);
+
+  const analytics: TaskAnalytics | null = data?.getTaskAnalytics || null;
+
+  return {
+    analytics,
     loading,
     error,
     refetch,

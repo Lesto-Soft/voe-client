@@ -135,6 +135,7 @@ interface TaskActivitiesProps {
   activities: ITaskActivity[];
   currentUser: IMe;
   refetch: () => void;
+  mentions?: { _id: string; name: string; username: string }[];
 }
 
 const TaskActivities: React.FC<TaskActivitiesProps> = ({
@@ -142,6 +143,7 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
   activities,
   currentUser,
   refetch,
+  mentions = [],
 }) => {
   const [newContent, setNewContent] = useState("");
   const [activityType, setActivityType] = useState<TaskActivityType>(
@@ -300,6 +302,7 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
           attachments={newAttachments}
           setAttachments={setNewAttachments}
           onSend={handleSubmitActivity}
+          mentions={mentions}
           placeholder="Добавете запис..."
           minLength={0}
           maxLength={1500}
@@ -402,6 +405,7 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
                           setAttachments={setEditAttachments}
                           existingAttachments={editExistingAttachments}
                           setExistingAttachments={setEditExistingAttachments}
+                          mentions={mentions}
                           placeholder="Редактирайте съдържанието..."
                           minLength={0}
                           maxLength={1500}

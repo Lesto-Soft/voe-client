@@ -19,7 +19,7 @@ export const CustomMention = Mention.extend({
       "a",
       {
         ...HTMLAttributes,
-        href: `/user/${node.attrs.id}`,
+        href: `/user/${node.attrs.username || node.attrs.id}`,
         "data-type": "mention",
         "data-id": node.attrs.id,
         "data-label": node.attrs.label,

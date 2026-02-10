@@ -1,5 +1,6 @@
 // src/router/MainRouter.tsx
-import { createBrowserRouter, Outlet } from "react-router"; // Changed import
+import { useEffect, useRef } from "react";
+import { createBrowserRouter, Outlet } from "react-router";
 import Home from "../pages/Home";
 import CaseSubmission from "../pages/CaseSubmission";
 import LoadingTestPage from "../pages/LoadingTestPage";
@@ -20,7 +21,8 @@ import ProtectedRoute from "../components/auth/ProtectedRoute";
 import { ROLES } from "../utils/GLOBAL_PARAMETERS";
 import ServerErrorPage from "../pages/ErrorPages/ServerErrorPage";
 import NavbarSkeleton from "../components/skeletons/NavbarSkeleton";
-import { useAuthModal } from "../context/AuthModalContext"; // NEW IMPORT
+import { useAuthModal } from "../context/AuthModalContext";
+import { apolloClient } from "../graphql/client";
 import ResetPassword from "../pages/ResetPassword";
 import DashboardPage from "../pages/Dashboard";
 import TasksPage from "../pages/Tasks";
@@ -28,7 +30,23 @@ import TaskDetailPage from "../pages/TaskDetail";
 
 const AppLayout = () => {
   const { me, error, loading } = useGetMe();
-  const { isAuthModalOpen } = useAuthModal(); // NEW HOOK
+  const { isAuthModalOpen, openAuthModal } = useAuthModal();
+  const authModalTriggered = useRef(false);
+
+  // Open auth modal when the me query fails (user not authenticated).
+  // The ref prevents re-opening the modal after a successful login
+  // (when error is briefly stale before resetStore refetch completes).
+  useEffect(() => {
+    if (error && !isAuthModalOpen && !loading && !authModalTriggered.current) {
+      authModalTriggered.current = true;
+      openAuthModal(() => {
+        apolloClient.resetStore();
+      });
+    }
+    if (!error && !loading) {
+      authModalTriggered.current = false;
+    }
+  }, [error, loading, isAuthModalOpen, openAuthModal]);
 
   // If loading user, or if an auth error occurred (modal is open), show a skeleton.
   // This prevents the redirect and keeps the user on the intended page.

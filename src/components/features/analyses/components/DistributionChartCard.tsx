@@ -12,6 +12,7 @@ interface DistributionChartCardProps {
     segment: PieSegmentData,
     event: React.MouseEvent
   ) => void;
+  middleClickLabel?: string;
 }
 
 // Helper to create a safe ID, must match the one in PieLegend
@@ -23,6 +24,7 @@ const DistributionChartCard: React.FC<DistributionChartCardProps> = ({
   title,
   pieData,
   onSegmentMiddleClick,
+  middleClickLabel = "сигнали",
 }) => {
   const [hoveredLabel, setHoveredLabel] = useState<string | null>(null);
   const debouncedHoveredLabel = useDebounce(hoveredLabel, 200); // Debounce the hover state
@@ -61,7 +63,7 @@ const DistributionChartCard: React.FC<DistributionChartCardProps> = ({
             <ul className="space-y-1 text-left">
               <li>
                 <strong className="font-semibold">Среден клик:</strong> Преглед
-                на конкретните сигнали
+                на конкретните {middleClickLabel}
               </li>
             </ul>
             <div className="absolute top-full right-2 w-0 h-0 border-x-4 border-x-transparent border-t-4 border-t-gray-800"></div>

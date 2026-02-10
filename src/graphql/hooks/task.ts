@@ -5,6 +5,8 @@ import {
   GET_ALL_TASKS,
   GET_USER_TASKS,
   GET_TASK_ANALYTICS,
+  GET_ANALYTICS_DATA_TASKS,
+  GET_RANKED_TASK_USERS,
 } from "../query/task";
 import {
   CREATE_TASK,
@@ -37,6 +39,8 @@ export interface TaskFiltersInput {
   creatorId?: string;
   caseId?: string;
   searchQuery?: string;
+  startDate?: string;
+  endDate?: string;
   itemsPerPage?: number;
   currentPage?: number;
 }
@@ -126,6 +130,8 @@ export function buildTaskQueryVariables(input?: TaskFiltersInput) {
     creatorId,
     caseId,
     searchQuery,
+    startDate,
+    endDate,
   } = input || {};
 
   const variables: { input: Record<string, unknown> } = {
@@ -141,6 +147,8 @@ export function buildTaskQueryVariables(input?: TaskFiltersInput) {
   if (creatorId) variables.input.creatorId = creatorId;
   if (caseId) variables.input.caseId = caseId;
   if (searchQuery) variables.input.searchQuery = searchQuery;
+  if (startDate) variables.input.startDate = startDate;
+  if (endDate) variables.input.endDate = endDate;
 
   return variables;
 }
@@ -276,6 +284,62 @@ export const useGetTaskAnalytics = () => {
     loading,
     error,
     refetch,
+  };
+};
+
+// --- Task Analytics Data (Client-side Processing) ---
+
+import { ITask } from "../../db/interfaces";
+
+export enum TaskRankingType {
+  TASK_CREATORS = "TASK_CREATORS",
+  TASK_COMPLETERS = "TASK_COMPLETERS",
+  TASK_COMMENTERS = "TASK_COMMENTERS",
+  TASK_FASTEST_COMPLETERS = "TASK_FASTEST_COMPLETERS",
+}
+
+/**
+ * Fetches all tasks with lightweight population for client-side analytics processing.
+ */
+export const useGetAnalyticsDataTasks = () => {
+  const { loading, error, data } = useQuery<{
+    getAnalyticsDataTasks: ITask[];
+  }>(GET_ANALYTICS_DATA_TASKS);
+
+  return {
+    tasks: data?.getAnalyticsDataTasks || [],
+    loading,
+    error,
+  };
+};
+
+/**
+ * Fetches ranked users for task-related metrics.
+ * Follows useGetRankedUsers pattern.
+ */
+export const useGetRankedTaskUsers = (
+  startDate: Date | null,
+  endDate: Date | null,
+  type: TaskRankingType,
+  isAllTime: boolean
+) => {
+  const { data, loading, error } = useQuery<{
+    getRankedTaskUsers: { user: ITask["creator"]; count: number; stat?: number }[];
+  }>(GET_RANKED_TASK_USERS, {
+    variables: {
+      input: {
+        startDate: isAllTime ? null : startDate?.toISOString(),
+        endDate: isAllTime ? null : endDate?.toISOString(),
+        type,
+      },
+    },
+    skip: !isAllTime && (!startDate || !endDate),
+  });
+
+  return {
+    rankedUsers: data?.getRankedTaskUsers || [],
+    loading,
+    error,
   };
 };
 

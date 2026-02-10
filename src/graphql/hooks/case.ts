@@ -136,7 +136,7 @@ export const useGetRelevantCases = (userId: string, input: any) => {
 
 export const useGetAnalyticsDataCases = () => {
   const { loading, error, data } = useQuery(GET_ANALYTITCS_DATA_CASES);
-  const cases = data?.getAnalyticsDataCases || 0;
+  const cases = data?.getAnalyticsDataCases || [];
 
   return {
     cases,

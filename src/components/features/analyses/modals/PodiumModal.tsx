@@ -1,13 +1,7 @@
 import React from "react";
-import { IUser } from "../../../../db/interfaces";
 import UserAvatar from "../../../cards/UserAvatar";
 import UserLink from "../../../global/links/UserLink";
-
-// We define this type here for now. We can move it to a shared types file later.
-type RankedUser = {
-  user: IUser;
-  count: number;
-};
+import { RankedUser } from "../types";
 
 interface PodiumModalProps {
   isOpen: boolean;
@@ -128,7 +122,9 @@ export const PodiumModal: React.FC<PodiumModalProps> = ({
                         <div className="text-center">
                           <UserLink user={userStat.user} />
                           <p className="text-lg font-bold text-gray-800">
-                            {userStat.count}
+                            {userStat.stat != null
+                              ? userStat.stat.toFixed(1)
+                              : userStat.count}
                           </p>
                         </div>
                       </div>
@@ -166,7 +162,9 @@ export const PodiumModal: React.FC<PodiumModalProps> = ({
                           <UserLink user={userStat.user} />
                         </div>
                         <span className="font-bold text-gray-800">
-                          {userStat.count}
+                          {userStat.stat != null
+                            ? userStat.stat.toFixed(1)
+                            : userStat.count}
                         </span>
                       </li>
                     ))}

@@ -53,7 +53,10 @@ const TopUserCard: React.FC<TopUserCardProps> = ({
               <UserLink user={stat.user} />
             </div>
             <p className="text-sm text-gray-600 mt-1">
-              <span className="font-bold">{stat.count}</span> {actionText}
+              <span className="font-bold">
+                {stat.stat != null ? stat.stat.toFixed(1) : stat.count}
+              </span>{" "}
+              {actionText}
             </p>
           </>
         ) : (

@@ -1,40 +1,49 @@
 // src/components/features/analyses/hooks/useAnalysesFilters.ts
-import { useState, useMemo, useEffect } from "react";
-import { ICase } from "../../../../db/interfaces";
+import { useState, useMemo, useEffect, useRef } from "react";
 import {
   getWeekOfYear,
   getStartAndEndOfWeek,
 } from "../../../../utils/dateUtils";
 import { ViewMode, BarChartDisplayMode } from "../types";
 
-export const useAnalysesFilters = (allCases: ICase[] | undefined) => {
+export const useAnalysesFilters = (
+  dates: Date[],
+  initialBarChartMode: BarChartDisplayMode = "type"
+) => {
   // --- State Management ---
   const [viewMode, setViewMode] = useState<ViewMode>("all");
-  const [barChartMode, setBarChartMode] = useState<BarChartDisplayMode>("type");
+  const [barChartMode, setBarChartMode] =
+    useState<BarChartDisplayMode>(initialBarChartMode);
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth() + 1); // 1-12
   const [currentWeek, setCurrentWeek] = useState(getWeekOfYear(new Date()));
   const [customStartDate, setCustomStartDate] = useState<Date | null>(null);
   const [customEndDate, setCustomEndDate] = useState<Date | null>(null);
 
+  // Reset barChartMode when initialBarChartMode changes (tab switch)
+  const prevInitialMode = useRef(initialBarChartMode);
+  useEffect(() => {
+    if (prevInitialMode.current !== initialBarChartMode) {
+      setBarChartMode(initialBarChartMode);
+      prevInitialMode.current = initialBarChartMode;
+    }
+  }, [initialBarChartMode]);
+
   // --- Memoized Calculations for Unique Years ---
   const uniqueYears = useMemo(() => {
-    if (!allCases || allCases.length === 0) {
+    if (dates.length === 0) {
       return [new Date().getFullYear()];
     }
     const yearsSet = new Set<number>();
-    allCases.forEach((c: ICase) => {
-      if (c.date) {
-        const dateObj = new Date(parseInt(c.date));
-        if (!isNaN(dateObj.getTime())) {
-          yearsSet.add(dateObj.getFullYear());
-        }
+    dates.forEach((d) => {
+      if (!isNaN(d.getTime())) {
+        yearsSet.add(d.getFullYear());
       }
     });
     // Ensure the current year is included if there's no data for it yet
     yearsSet.add(new Date().getFullYear());
     return Array.from(yearsSet).sort((a, b) => b - a);
-  }, [allCases]);
+  }, [dates]);
 
   // --- Effect to Reset Year if it Becomes Invalid ---
   useEffect(() => {

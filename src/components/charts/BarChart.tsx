@@ -25,6 +25,7 @@ interface BarChartProps {
     event: React.MouseEvent,
     seriesKey?: string
   ) => void;
+  middleClickLabel?: string;
 }
 
 interface TooltipData {
@@ -43,6 +44,7 @@ const BarChart: React.FC<BarChartProps> = ({
   onBarClick,
   onChartAreaRightClick,
   onBarMiddleClick,
+  middleClickLabel = "сигнали",
 }) => {
   const [tooltipData, setTooltipData] = useState<TooltipData>({
     visible: false,
@@ -212,7 +214,7 @@ const BarChart: React.FC<BarChartProps> = ({
             {onBarMiddleClick && (
               <li>
                 <strong className="font-semibold">Среден клик:</strong> Преглед
-                на конкретните сигнали
+                на конкретните {middleClickLabel}
               </li>
             )}
           </ul>

@@ -4,9 +4,11 @@ import {
   IUser,
   ICase,
   ICategory,
+  ITask,
   CasePriority,
   CaseType,
   ICaseStatus,
+  TaskStatus,
 } from "../db/interfaces";
 import { PieSegmentData } from "../components/charts/PieChart";
 import { TIERS } from "../utils/GLOBAL_PARAMETERS";
@@ -17,6 +19,7 @@ import {
   translateCaseType,
   translatePriority,
   translateStatus,
+  translateTaskStatus,
 } from "../utils/categoryDisplayUtils";
 
 export interface UserActivityStats {
@@ -31,6 +34,8 @@ export interface UserActivityStats {
   typeDistributionData: PieSegmentData[];
   statusDistributionData: PieSegmentData[];
   resolutionTimeDistributionData: PieSegmentData[];
+  taskStatusDistributionData: PieSegmentData[];
+  taskPriorityDistributionData: PieSegmentData[];
 }
 
 const useUserActivityStats = (
@@ -52,6 +57,8 @@ const useUserActivityStats = (
       typeDistributionData: [],
       statusDistributionData: [],
       resolutionTimeDistributionData: [],
+      taskStatusDistributionData: [],
+      taskPriorityDistributionData: [],
     };
 
     if (!user) {
@@ -303,6 +310,81 @@ const useUserActivityStats = (
       }, // green-400
     ].filter((segment) => segment.value > 0);
 
+    // Task-specific pie chart data
+    const tasksToAnalyze = ((): ITask[] => {
+      const taskMap = new Map<string, ITask>();
+      const addTask = (task: ITask) => {
+        if (task && task._id) taskMap.set(task._id, task);
+      };
+      if (activityType === "all" || activityType === "tasks") {
+        user.assignedTasks
+          ?.filter((t) => t.createdAt && isInDateRange(t.createdAt))
+          .forEach(addTask);
+        user.createdTasks
+          ?.filter((t) => t.createdAt && isInDateRange(t.createdAt))
+          .forEach(addTask);
+      }
+      return Array.from(taskMap.values());
+    })();
+
+    const taskStatusCounts: Record<string, number> = {
+      [TaskStatus.Todo]: 0,
+      [TaskStatus.InProgress]: 0,
+      [TaskStatus.Done]: 0,
+    };
+    const taskPriorityCounts: Record<string, number> = {
+      [CasePriority.High]: 0,
+      [CasePriority.Medium]: 0,
+      [CasePriority.Low]: 0,
+    };
+
+    tasksToAnalyze.forEach((t) => {
+      if (t.status) taskStatusCounts[t.status]++;
+      if (t.priority) taskPriorityCounts[t.priority]++;
+    });
+
+    const taskStatusDistributionData: PieSegmentData[] = [
+      {
+        id: TaskStatus.Todo,
+        label: translateTaskStatus(TaskStatus.Todo),
+        value: taskStatusCounts[TaskStatus.Todo],
+        color: "#3B82F6",
+      }, // blue-500
+      {
+        id: TaskStatus.InProgress,
+        label: translateTaskStatus(TaskStatus.InProgress),
+        value: taskStatusCounts[TaskStatus.InProgress],
+        color: "#EAB308",
+      }, // yellow-500
+      {
+        id: TaskStatus.Done,
+        label: translateTaskStatus(TaskStatus.Done),
+        value: taskStatusCounts[TaskStatus.Done],
+        color: "#22C55E",
+      }, // green-500
+    ].filter((segment) => segment.value > 0);
+
+    const taskPriorityDistributionData: PieSegmentData[] = [
+      {
+        id: CasePriority.High,
+        label: translatePriority(CasePriority.High),
+        value: taskPriorityCounts[CasePriority.High],
+        color: "#EF4444",
+      }, // red-500
+      {
+        id: CasePriority.Medium,
+        label: translatePriority(CasePriority.Medium),
+        value: taskPriorityCounts[CasePriority.Medium],
+        color: "#EAB308",
+      }, // yellow-500
+      {
+        id: CasePriority.Low,
+        label: translatePriority(CasePriority.Low),
+        value: taskPriorityCounts[CasePriority.Low],
+        color: "#22C55E",
+      }, // green-500
+    ].filter((segment) => segment.value > 0);
+
     return {
       totalSignals,
       totalAnswers,
@@ -315,6 +397,8 @@ const useUserActivityStats = (
       priorityDistributionData,
       typeDistributionData,
       statusDistributionData,
+      taskStatusDistributionData,
+      taskPriorityDistributionData,
     };
   }, [user, startDate, endDate, activityType]);
 

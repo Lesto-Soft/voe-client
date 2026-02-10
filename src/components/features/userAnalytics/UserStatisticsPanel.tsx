@@ -11,6 +11,7 @@ import {
   BanknotesIcon,
   GlobeAltIcon,
   CalendarDaysIcon,
+  ClipboardDocumentCheckIcon,
   // CheckCircleIcon,
   // ClockIcon,
 } from "@heroicons/react/24/outline";
@@ -79,6 +80,7 @@ interface UserStatisticsPanelProps {
     ratings: number;
     approvals: number;
     finances: number;
+    tasks: number;
   };
   // Add new props to receive date range state and handler
   dateRange?: { startDate: Date | null; endDate: Date | null };
@@ -107,7 +109,9 @@ type PieTab =
   | "priority"
   | "resolution"
   | "type"
-  | "status";
+  | "status"
+  | "taskStatus"
+  | "taskPriority";
 
 export type { PieTab };
 
@@ -233,6 +237,7 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
     { key: "ratings", label: "Оценки", icon: StarIcon },
     { key: "approvals", label: "Одобрени", icon: HandThumbUpIcon },
     { key: "finances", label: "Финанси", icon: BanknotesIcon },
+    { key: "tasks", label: "Задачи", icon: ClipboardDocumentCheckIcon },
   ];
 
   if (isLoading) {
@@ -310,7 +315,9 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
     </div>
   );
 
-  const pieTabsConfig = [
+  const isTasksTab = activeStatsTab === "tasks";
+
+  const casePieTabsConfig = [
     {
       key: "categories",
       label: "По Категории",
@@ -348,6 +355,23 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
       clearFilter: onClearTypeFilter,
     },
   ];
+
+  const taskPieTabsConfig = [
+    {
+      key: "taskStatus",
+      label: "По Статус",
+      filterActive: false,
+      clearFilter: undefined,
+    },
+    {
+      key: "taskPriority",
+      label: "По Приоритет",
+      filterActive: false,
+      clearFilter: undefined,
+    },
+  ];
+
+  const pieTabsConfig = isTasksTab ? taskPieTabsConfig : casePieTabsConfig;
 
   const PieChartSection = (
     <>
@@ -481,6 +505,20 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
                 (d) => d.id === activeStatusFilter
               )?.label
             }
+            layout={viewMode === "center" ? "horizontal" : "vertical"}
+          />
+        )}
+        {activePieTab === "taskStatus" && (
+          <StatisticPieChart
+            title="Задачи по Статус"
+            pieData={pieChartStats.taskStatusDistributionData}
+            layout={viewMode === "center" ? "horizontal" : "vertical"}
+          />
+        )}
+        {activePieTab === "taskPriority" && (
+          <StatisticPieChart
+            title="Задачи по Приоритет"
+            pieData={pieChartStats.taskPriorityDistributionData}
             layout={viewMode === "center" ? "horizontal" : "vertical"}
           />
         )}

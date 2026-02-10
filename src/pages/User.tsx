@@ -191,6 +191,13 @@ const User: React.FC = () => {
   // MODIFIED: Centralized handler for changing the active tab
   const handleActivityTabChange = (newTab: StatsActivityType) => {
     setActiveActivityTab(newTab);
+    // Auto-switch pie tab when entering/leaving tasks tab
+    if (newTab === "tasks") {
+      setActivePieTab("taskStatus");
+    } else if (activeActivityTab === "tasks") {
+      // Leaving tasks tab — revert to case pie tab
+      setActivePieTab("categories");
+    }
     if (userUsernameFromParams) {
       try {
         sessionStorage.setItem(

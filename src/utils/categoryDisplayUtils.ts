@@ -126,6 +126,16 @@ export const translatePriority = (priority: string): string => {
   return map[priorityUpper] || priorityUpper;
 };
 
+export const translateTaskStatus = (status: string): string => {
+  const statusUpper = String(status).toUpperCase();
+  const map: Record<string, string> = {
+    TODO: "Незапочната",
+    IN_PROGRESS: "В процес",
+    DONE: "Завършена",
+  };
+  return map[statusUpper] || statusUpper;
+};
+
 export const translateResolutionCategory = (categoryLabel: string): string => {
   // Assuming labels are already in the desired language as per RESOLUTION_CATEGORY_CONFIG
   return categoryLabel;

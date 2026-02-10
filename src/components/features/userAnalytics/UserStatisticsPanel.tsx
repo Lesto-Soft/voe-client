@@ -21,11 +21,12 @@ import { PieSegmentData } from "../../charts/PieChart";
 import { RatingTierLabel } from "../../../pages/User";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import DateRangeSelector from "./DateRangeSelector";
-import { CasePriority, CaseType, ICaseStatus } from "../../../db/interfaces";
+import { CasePriority, CaseType, ICaseStatus, TaskStatus } from "../../../db/interfaces";
 import {
   translateCaseType,
   translatePriority,
   translateStatus,
+  translateTaskStatus,
 } from "../../../utils/categoryDisplayUtils";
 import FilterTag from "../../global/FilterTag";
 import StatItem from "../../global/StatItem";
@@ -98,6 +99,12 @@ interface UserStatisticsPanelProps {
   onClearTypeFilter?: () => void;
   onClearResolutionFilter?: () => void;
   onClearStatusFilter?: () => void;
+  onTaskStatusClick?: (segment: PieSegmentData) => void;
+  onTaskPriorityClick?: (segment: PieSegmentData) => void;
+  activeTaskStatusFilter: TaskStatus | "all";
+  activeTaskPriorityFilter: CasePriority | "all";
+  onClearTaskStatusFilter?: () => void;
+  onClearTaskPriorityFilter?: () => void;
   activePieTab: PieTab;
   onPieTabChange: (tab: PieTab) => void;
 }
@@ -149,6 +156,12 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
   onClearTypeFilter,
   onClearStatusFilter,
   onClearResolutionFilter,
+  onTaskStatusClick,
+  onTaskPriorityClick,
+  activeTaskStatusFilter,
+  activeTaskPriorityFilter,
+  onClearTaskStatusFilter,
+  onClearTaskPriorityFilter,
   activePieTab,
   onPieTabChange,
 }) => {
@@ -360,14 +373,14 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
     {
       key: "taskStatus",
       label: "По Статус",
-      filterActive: false,
-      clearFilter: undefined,
+      filterActive: activeTaskStatusFilter !== "all",
+      clearFilter: onClearTaskStatusFilter,
     },
     {
       key: "taskPriority",
       label: "По Приоритет",
-      filterActive: false,
-      clearFilter: undefined,
+      filterActive: activeTaskPriorityFilter !== "all",
+      clearFilter: onClearTaskPriorityFilter,
     },
   ];
 
@@ -512,6 +525,12 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
           <StatisticPieChart
             title="Задачи по Статус"
             pieData={pieChartStats.taskStatusDistributionData}
+            onSegmentClick={onTaskStatusClick}
+            activeLabel={
+              pieChartStats.taskStatusDistributionData.find(
+                (d) => d.id === activeTaskStatusFilter
+              )?.label
+            }
             layout={viewMode === "center" ? "horizontal" : "vertical"}
           />
         )}
@@ -519,6 +538,12 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
           <StatisticPieChart
             title="Задачи по Приоритет"
             pieData={pieChartStats.taskPriorityDistributionData}
+            onSegmentClick={onTaskPriorityClick}
+            activeLabel={
+              pieChartStats.taskPriorityDistributionData.find(
+                (d) => d.id === activeTaskPriorityFilter
+              )?.label
+            }
             layout={viewMode === "center" ? "horizontal" : "vertical"}
           />
         )}
@@ -640,6 +665,20 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
                       label={`Статус: ${translateStatus(activeStatusFilter)}`}
                       onRemove={onClearStatusFilter}
                       onClick={() => onPieTabChange("status")}
+                    />
+                  )}
+                  {activeTaskStatusFilter !== "all" && onClearTaskStatusFilter && (
+                    <FilterTag
+                      label={`Задача статус: ${translateTaskStatus(activeTaskStatusFilter)}`}
+                      onRemove={onClearTaskStatusFilter}
+                      onClick={() => onPieTabChange("taskStatus")}
+                    />
+                  )}
+                  {activeTaskPriorityFilter !== "all" && onClearTaskPriorityFilter && (
+                    <FilterTag
+                      label={`Задача приоритет: ${translatePriority(activeTaskPriorityFilter)}`}
+                      onRemove={onClearTaskPriorityFilter}
+                      onClick={() => onPieTabChange("taskPriority")}
                     />
                   )}
                   {isDateFilterActive && onDateRangeChange && (

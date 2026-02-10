@@ -13,6 +13,7 @@ import {
   CasePriority,
   CaseType,
   ICaseStatus,
+  TaskStatus,
 } from "../db/interfaces";
 import { UpdateUserInput } from "../graphql/mutation/user";
 import { parseActivityDate } from "../utils/dateUtils";
@@ -124,6 +125,12 @@ const User: React.FC = () => {
     ResolutionCategoryLabel | "all"
   >("all");
   const [activeStatus, setActiveStatus] = useState<ICaseStatus | "all">("all");
+  const [activeTaskStatus, setActiveTaskStatus] = useState<TaskStatus | "all">(
+    "all"
+  );
+  const [activeTaskPriority, setActiveTaskPriority] = useState<
+    CasePriority | "all"
+  >("all");
   // LIFTED STATE: The active pie tab state now lives here
   const [activePieTab, setActivePieTab] = useState<PieTab>("categories");
   // MODIFIED: Renamed state for clarity and made it the single source of truth
@@ -571,6 +578,32 @@ const User: React.FC = () => {
       }
     }
 
+    if (activeTaskStatus !== "all") {
+      activities = activities.filter((activity) => {
+        if (!activity.activityType.startsWith("task_")) return true;
+        if ("status" in (activity.item as any)) {
+          return (activity.item as ITask).status === activeTaskStatus;
+        }
+        if ("task" in (activity.item as any)) {
+          return (activity.item as ITaskActivity).task?.status === activeTaskStatus;
+        }
+        return true;
+      });
+    }
+
+    if (activeTaskPriority !== "all") {
+      activities = activities.filter((activity) => {
+        if (!activity.activityType.startsWith("task_")) return true;
+        if ("priority" in (activity.item as any)) {
+          return (activity.item as ITask).priority === activeTaskPriority;
+        }
+        if ("task" in (activity.item as any)) {
+          return (activity.item as ITaskActivity).task?.priority === activeTaskPriority;
+        }
+        return true;
+      });
+    }
+
     return activities.sort(
       (a, b) =>
         parseActivityDate(b.date).getTime() -
@@ -585,6 +618,8 @@ const User: React.FC = () => {
     activeStatus,
     activeType,
     activeResolution,
+    activeTaskStatus,
+    activeTaskPriority,
     pieChartStats,
   ]);
 
@@ -746,6 +781,20 @@ const User: React.FC = () => {
     setActiveStatus((current) => (current === statusKey ? "all" : statusKey));
   };
 
+  const handleTaskStatusClick = (segment: PieSegmentData) => {
+    const statusKey = segment.id as TaskStatus;
+    setActiveTaskStatus((current) =>
+      current === statusKey ? "all" : statusKey
+    );
+  };
+
+  const handleTaskPriorityClick = (segment: PieSegmentData) => {
+    const priorityKey = segment.id as CasePriority;
+    setActiveTaskPriority((current) =>
+      current === priorityKey ? "all" : priorityKey
+    );
+  };
+
   const isAnyFilterActive = useMemo(() => {
     return (
       dateRange.startDate !== null ||
@@ -755,7 +804,9 @@ const User: React.FC = () => {
       activePriority !== "all" ||
       activeStatus !== "all" ||
       activeType !== "all" ||
-      activeResolution !== "all"
+      activeResolution !== "all" ||
+      activeTaskStatus !== "all" ||
+      activeTaskPriority !== "all"
     );
   }, [
     dateRange,
@@ -765,6 +816,8 @@ const User: React.FC = () => {
     activeType,
     activeResolution,
     activeStatus,
+    activeTaskStatus,
+    activeTaskPriority,
   ]);
 
   const handleClearAllFilters = () => {
@@ -775,6 +828,8 @@ const User: React.FC = () => {
     setActiveType("all");
     setActiveResolution("all");
     setActiveStatus("all");
+    setActiveTaskStatus("all");
+    setActiveTaskPriority("all");
   };
 
   if (userLoading || authLoading) {
@@ -925,6 +980,12 @@ const User: React.FC = () => {
                     onClearRatingTierFilter={() => setActiveRatingTier("all")}
                     onClearPriorityFilter={() => setActivePriority("all")}
                     onClearTypeFilter={() => setActiveType("all")}
+                    onTaskStatusClick={handleTaskStatusClick}
+                    onTaskPriorityClick={handleTaskPriorityClick}
+                    activeTaskStatusFilter={activeTaskStatus}
+                    activeTaskPriorityFilter={activeTaskPriority}
+                    onClearTaskStatusFilter={() => setActiveTaskStatus("all")}
+                    onClearTaskPriorityFilter={() => setActiveTaskPriority("all")}
                   />
                 </div>
               )}
@@ -978,6 +1039,12 @@ const User: React.FC = () => {
                   onClearStatusFilter={() => setActiveStatus("all")}
                   activePieTab={activePieTab}
                   onPieTabChange={setActivePieTab}
+                  onTaskStatusClick={handleTaskStatusClick}
+                  onTaskPriorityClick={handleTaskPriorityClick}
+                  activeTaskStatusFilter={activeTaskStatus}
+                  activeTaskPriorityFilter={activeTaskPriority}
+                  onClearTaskStatusFilter={() => setActiveTaskStatus("all")}
+                  onClearTaskPriorityFilter={() => setActiveTaskPriority("all")}
                 />
               </div>
               {/* Activity List (Right) */}

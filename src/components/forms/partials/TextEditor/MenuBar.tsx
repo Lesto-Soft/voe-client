@@ -17,7 +17,7 @@ interface MenuBarProps {
   onAttachClick: () => void;
   disabled: boolean;
   isMaxFilesReached: boolean;
-  type: "case" | "answer" | "comment" | "taskActivity";
+  type: "case" | "answer" | "comment" | "task" | "taskActivity";
   hideAttach?: boolean;
 }
 
@@ -88,7 +88,7 @@ const MenuBar: React.FC<MenuBarProps> = ({
   ];
 
   const filteredItems = allItems.filter(
-    (item) => type === "case" || !item.onlyCase,
+    (item) => type === "case" || type === "task" || !item.onlyCase,
   );
 
   return (
@@ -119,7 +119,7 @@ const MenuBar: React.FC<MenuBarProps> = ({
         {(type !== "case" || !hideAttach) && (
           <div className="w-[1px] h-6 bg-gray-300 mx-1 self-center" />
         )}
-        {type !== "case" && type !== "taskActivity" && (
+        {type !== "case" && type !== "task" && type !== "taskActivity" && (
           <button
             type="button"
             disabled={disabled}

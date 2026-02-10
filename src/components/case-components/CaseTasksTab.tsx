@@ -78,15 +78,6 @@ const CaseTasksTab: React.FC<CaseTasksTabProps> = ({ caseData }) => {
     currentPage: 0,
   });
 
-  // Get the approved answer or the latest answer to use as initial description
-  const getInitialDescription = (): string | undefined => {
-    if (!caseData.answers || caseData.answers.length === 0) return undefined;
-    // Prefer approved answer, otherwise use the first answer
-    const approvedAnswer = caseData.answers.find((a) => a.approved);
-    const answer = approvedAnswer || caseData.answers[0];
-    return answer?.content || undefined;
-  };
-
   return (
     <div className="px-4 py-2">
       {/* Header with Create Button */}
@@ -147,7 +138,6 @@ const CaseTasksTab: React.FC<CaseTasksTabProps> = ({ caseData }) => {
         onOpenChange={setIsCreateModalOpen}
         mode="create"
         relatedCaseId={caseData._id}
-        initialDescription={getInitialDescription()}
         onSuccess={refetch}
       />
     </div>

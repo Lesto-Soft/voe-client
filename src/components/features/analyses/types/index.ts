@@ -3,7 +3,7 @@ import { IUser } from "../../../../db/interfaces";
 
 export type ViewMode = "all" | "yearly" | "monthly" | "weekly" | "custom";
 
-export type BarChartDisplayMode = "type" | "priority";
+export type BarChartDisplayMode = "type" | "priority" | "status";
 
 /**
  * Defines the types of leaderboards we can request from the server.
@@ -23,4 +23,5 @@ export enum RankingType {
 export interface RankedUser {
   user: IUser;
   count: number;
+  stat?: number;
 }

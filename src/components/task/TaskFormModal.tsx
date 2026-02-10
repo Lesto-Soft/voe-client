@@ -16,6 +16,7 @@ import { useCurrentUser } from "../../context/UserContext";
 import UserAvatar from "../cards/UserAvatar";
 import { endpoint } from "../../db/config";
 import CaseAnswerSelector from "./CaseAnswerSelector";
+import UnifiedEditor from "../forms/partials/UnifiedRichTextEditor";
 
 import "react-datepicker/dist/react-datepicker.css";
 
@@ -112,6 +113,8 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
   const [assigneeId, setAssigneeId] = useState<string>("");
   const [assigneeSearchQuery, setAssigneeSearchQuery] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [attachments, setAttachments] = useState<File[]>([]);
+  const [existingAttachments, setExistingAttachments] = useState<string[]>([]);
 
   // Fetch users for assignee dropdown
   const { users } = useGetAllUsers({ itemsPerPage: 1000, currentPage: 0 });
@@ -127,6 +130,12 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
     );
   }, [users, assigneeSearchQuery]);
 
+  // Track removed existing attachments
+  const originalExistingAttachments = useMemo(
+    () => (mode === "edit" && task?.attachments ? [...task.attachments] : []),
+    [mode, task],
+  );
+
   // Initialize form when opening in edit mode
   useEffect(() => {
     if (isOpen) {
@@ -136,6 +145,7 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
         setPriority(task.priority);
         setDueDate(task.dueDate ? new Date(task.dueDate) : null);
         setAssigneeId(task.assignee?._id || "");
+        setExistingAttachments(task.attachments || []);
       } else {
         // Reset form for create mode, use initialDescription if provided
         setTitle("");
@@ -143,7 +153,9 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
         setPriority(CasePriority.Medium);
         setDueDate(null);
         setAssigneeId("");
+        setExistingAttachments([]);
       }
+      setAttachments([]);
       setAssigneeSearchQuery("");
       setError(null);
     }
@@ -158,13 +170,19 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
       return;
     }
 
+    // Compute which existing attachments were removed
+    const removedAttachments = originalExistingAttachments.filter(
+      (a) => !existingAttachments.includes(a),
+    );
+
     try {
       if (mode === "create") {
         await createTask({
           title: title.trim(),
-          description: description.trim() || undefined,
+          description: description || undefined,
           priority,
           dueDate: dueDate ? dueDate.toISOString() : undefined,
+          attachments: attachments.length > 0 ? attachments : undefined,
           assignee: assigneeId || undefined,
           creator: currentUser._id,
           relatedCase: relatedCaseId,
@@ -172,9 +190,12 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
       } else if (task) {
         await updateTask(task._id, {
           title: title.trim(),
-          description: description.trim() || undefined,
+          description: description || undefined,
           priority,
           dueDate: dueDate ? dueDate.toISOString() : undefined,
+          attachments: attachments.length > 0 ? attachments : undefined,
+          deletedAttachments:
+            removedAttachments.length > 0 ? removedAttachments : undefined,
         });
       }
 
@@ -194,9 +215,9 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
     <Dialog.Root open={isOpen} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm" />
-        <Dialog.Content className="fixed top-1/2 left-1/2 z-50 w-[95vw] max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-lg bg-white shadow-xl focus:outline-none max-h-[90vh] overflow-y-auto">
+        <Dialog.Content className="fixed top-1/2 left-1/2 z-50 w-[95vw] max-w-2xl -translate-x-1/2 -translate-y-1/2 rounded-lg bg-white shadow-xl focus:outline-none max-h-[90vh] flex flex-col">
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
+          <div className="flex-shrink-0 flex items-center justify-between border-b border-gray-200 px-6 py-4">
             <Dialog.Title className="flex items-center gap-2 text-lg font-semibold text-gray-900">
               <ClipboardDocumentCheckIcon className="h-6 w-6 text-rose-500" />
               {mode === "create" ? "Нова задача" : "Редактиране на задача"}
@@ -212,7 +233,8 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          <form onSubmit={handleSubmit} className="flex flex-col min-h-0 flex-1">
+          <div className="flex-1 overflow-y-auto custom-scrollbar-xs p-6 space-y-4">
             {/* Error message */}
             {error && (
               <div className="p-3 bg-red-50 border border-red-200 rounded-md text-sm text-red-700">
@@ -256,13 +278,21 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
                 />
               )}
 
-              <textarea
-                id="task-description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
+              <UnifiedEditor
+                content={description}
+                onContentChange={setDescription}
+                attachments={attachments}
+                setAttachments={setAttachments}
+                existingAttachments={existingAttachments}
+                setExistingAttachments={setExistingAttachments}
                 placeholder="Въведете описание на задачата"
-                rows={4}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent resize-none custom-scrollbar-xs"
+                minLength={0}
+                maxLength={1500}
+                type="task"
+                hideSideButtons
+                editorClassName="h-[150px] min-h-[150px] max-h-[150px]"
+                caseId={task?._id}
+                attachmentFolder="tasks"
               />
             </div>
 
@@ -408,8 +438,10 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
               </div>
             )}
 
-            {/* Actions */}
-            <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+          </div>
+
+            {/* Actions - sticky footer */}
+            <div className="flex-shrink-0 flex justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-white rounded-b-lg">
               <Dialog.Close asChild>
                 <button
                   type="button"

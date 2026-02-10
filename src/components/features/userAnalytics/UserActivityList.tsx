@@ -1,8 +1,10 @@
 // src/components/features/userAnalytics/UserActivityList.tsx
 import React, { useMemo, useEffect, useState, useRef } from "react";
-import { IUser, ICase, IAnswer, IComment } from "../../../db/interfaces";
+import { IUser, ICase, IAnswer, IComment, ITask, ITaskActivity } from "../../../db/interfaces";
 import UserActivityItemCard from "./UserActivityItemCard";
 import UserRatingActivityCard from "./UserRatingActivityCard";
+import UserTaskActivityCard from "./UserTaskActivityCard";
+import UserTaskActivityActivityCard from "./UserTaskActivityActivityCard";
 import {
   InboxIcon,
   ArrowDownCircleIcon,
@@ -30,14 +32,20 @@ interface RatedCaseActivity {
 interface CombinedActivity {
   id: string;
   date: string;
-  item: ICase | IAnswer | IComment | RatedCaseActivity;
+  item: ICase | IAnswer | IComment | RatedCaseActivity | ITask | ITaskActivity;
   activityType:
     | "case"
     | "answer"
     | "comment"
     | "rating"
     | "base_approval"
-    | "finance_approval";
+    | "finance_approval"
+    | "task_created"
+    | "task_assigned"
+    | "task_completed"
+    | "task_comment"
+    | "task_help_request"
+    | "task_approval_request";
 }
 
 interface UserActivityListProps {
@@ -52,6 +60,7 @@ interface UserActivityListProps {
     ratings: number;
     approvals: number;
     finances: number;
+    tasks: number;
   };
   userId?: string;
   dateRange: { startDate: Date | null; endDate: Date | null };
@@ -227,6 +236,11 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
           (a) => a.activityType === "finance_approval"
         );
         break;
+      case "tasks":
+        baseActivities = activities.filter((a) =>
+          a.activityType.startsWith("task_")
+        );
+        break;
       case "all":
       default:
         baseActivities = activities;
@@ -243,6 +257,7 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
     { key: "ratings", label: "Оценки", count: counts.ratings },
     { key: "approvals", label: "Одобрени", count: counts.approvals },
     { key: "finances", label: "Финансирани", count: counts.finances },
+    { key: "tasks", label: "Задачи", count: counts.tasks },
   ];
 
   const getCurrentTabTotalCount = (): number => {
@@ -260,6 +275,9 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
           .length;
       case "finances":
         return activities.filter((a) => a.activityType === "finance_approval")
+          .length;
+      case "tasks":
+        return activities.filter((a) => a.activityType.startsWith("task_"))
           .length;
       case "all":
       default:
@@ -436,6 +454,29 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
                     }
                     date={activity.date}
                     actor={user!}
+                    view={cardView}
+                  />
+                ) : activity.activityType === "task_comment" ||
+                  activity.activityType === "task_help_request" ||
+                  activity.activityType === "task_approval_request" ? (
+                  <UserTaskActivityActivityCard
+                    key={activity.id}
+                    taskActivity={activity.item as ITaskActivity}
+                    activityType={activity.activityType}
+                    date={activity.date}
+                    view={cardView}
+                  />
+                ) : activity.activityType.startsWith("task_") ? (
+                  <UserTaskActivityCard
+                    key={activity.id}
+                    task={activity.item as ITask}
+                    activityType={
+                      activity.activityType as
+                        | "task_created"
+                        | "task_assigned"
+                        | "task_completed"
+                    }
+                    date={activity.date}
                     view={cardView}
                   />
                 ) : (

@@ -8,9 +8,12 @@ import {
   ICase,
   IAnswer,
   IComment,
+  ITask,
+  ITaskActivity,
   CasePriority,
   CaseType,
   ICaseStatus,
+  TaskStatus,
 } from "../db/interfaces";
 import { UpdateUserInput } from "../graphql/mutation/user";
 import { parseActivityDate } from "../utils/dateUtils";
@@ -66,14 +69,20 @@ interface RatedCaseActivity {
 interface CombinedActivity {
   id: string;
   date: string;
-  item: ICase | IAnswer | IComment | RatedCaseActivity;
+  item: ICase | IAnswer | IComment | RatedCaseActivity | ITask | ITaskActivity;
   activityType:
     | "case"
     | "answer"
     | "comment"
     | "rating"
     | "base_approval"
-    | "finance_approval";
+    | "finance_approval"
+    | "task_created"
+    | "task_assigned"
+    | "task_completed"
+    | "task_comment"
+    | "task_help_request"
+    | "task_approval_request";
 }
 const getTierForScore = (score: number): RatingTierLabel => {
   if (score >= TIERS.GOLD) return "Отлични";
@@ -116,6 +125,12 @@ const User: React.FC = () => {
     ResolutionCategoryLabel | "all"
   >("all");
   const [activeStatus, setActiveStatus] = useState<ICaseStatus | "all">("all");
+  const [activeTaskStatus, setActiveTaskStatus] = useState<TaskStatus | "all">(
+    "all"
+  );
+  const [activeTaskPriority, setActiveTaskPriority] = useState<
+    CasePriority | "all"
+  >("all");
   // LIFTED STATE: The active pie tab state now lives here
   const [activePieTab, setActivePieTab] = useState<PieTab>("categories");
   // MODIFIED: Renamed state for clarity and made it the single source of truth
@@ -147,6 +162,7 @@ const User: React.FC = () => {
         "ratings",
         "approvals",
         "finances",
+        "tasks",
       ].includes(savedTab)
     ) {
       setActiveActivityTab(savedTab);
@@ -182,6 +198,13 @@ const User: React.FC = () => {
   // MODIFIED: Centralized handler for changing the active tab
   const handleActivityTabChange = (newTab: StatsActivityType) => {
     setActiveActivityTab(newTab);
+    // Auto-switch pie tab when entering/leaving tasks tab
+    if (newTab === "tasks") {
+      setActivePieTab("taskStatus");
+    } else if (activeActivityTab === "tasks") {
+      // Leaving tasks tab — revert to case pie tab
+      setActivePieTab("categories");
+    }
     if (userUsernameFromParams) {
       try {
         sessionStorage.setItem(
@@ -302,6 +325,82 @@ const User: React.FC = () => {
         activityType: "rating",
       });
     });
+
+    // Task activities - deduplicate across created/assigned/completed
+    const seenTaskIds = new Set<string>();
+    if (user.createdTasks) {
+      user.createdTasks
+        .filter((t) => t.createdAt && isInDateRange(t.createdAt))
+        .forEach((task) => {
+          const key = `task-created-${task._id}`;
+          if (!seenTaskIds.has(key)) {
+            seenTaskIds.add(key);
+            activities.push({
+              id: key,
+              date: task.createdAt!,
+              item: task,
+              activityType: "task_created",
+            });
+          }
+        });
+    }
+    if (user.assignedTasks) {
+      user.assignedTasks
+        .filter((t) => t.createdAt && isInDateRange(t.createdAt))
+        .forEach((task) => {
+          const key = `task-assigned-${task._id}`;
+          if (!seenTaskIds.has(key)) {
+            seenTaskIds.add(key);
+            activities.push({
+              id: key,
+              date: task.createdAt!,
+              item: task,
+              activityType: "task_assigned",
+            });
+          }
+        });
+    }
+    // Completed tasks (from both lists)
+    const allTasks = [
+      ...(user.createdTasks || []),
+      ...(user.assignedTasks || []),
+    ];
+    allTasks
+      .filter((t) => t.status === "DONE" && t.completedAt && isInDateRange(t.completedAt))
+      .forEach((task) => {
+        const key = `task-completed-${task._id}`;
+        if (!seenTaskIds.has(key)) {
+          seenTaskIds.add(key);
+          activities.push({
+            id: key,
+            date: task.completedAt!,
+            item: task,
+            activityType: "task_completed",
+          });
+        }
+      });
+
+    // TaskActivity entries (comments, help requests, approval requests)
+    if (user.createdTaskActivities) {
+      const activityTypeMap: Record<string, CombinedActivity["activityType"]> = {
+        COMMENT: "task_comment",
+        HELP_REQUEST: "task_help_request",
+        APPROVAL_REQUEST: "task_approval_request",
+      };
+      user.createdTaskActivities
+        .filter((ta) => ta.createdAt && isInDateRange(ta.createdAt))
+        .forEach((ta) => {
+          const actType = activityTypeMap[ta.type];
+          if (actType) {
+            activities.push({
+              id: `task-activity-${ta._id}`,
+              date: ta.createdAt,
+              item: ta,
+              activityType: actType,
+            });
+          }
+        });
+    }
 
     if (activeCategoryName) {
       const activeCategoryId = pieChartStats?.signalsByCategoryChartData.find(
@@ -479,6 +578,32 @@ const User: React.FC = () => {
       }
     }
 
+    if (activeTaskStatus !== "all") {
+      activities = activities.filter((activity) => {
+        if (!activity.activityType.startsWith("task_")) return true;
+        if ("status" in (activity.item as any)) {
+          return (activity.item as ITask).status === activeTaskStatus;
+        }
+        if ("task" in (activity.item as any)) {
+          return (activity.item as ITaskActivity).task?.status === activeTaskStatus;
+        }
+        return true;
+      });
+    }
+
+    if (activeTaskPriority !== "all") {
+      activities = activities.filter((activity) => {
+        if (!activity.activityType.startsWith("task_")) return true;
+        if ("priority" in (activity.item as any)) {
+          return (activity.item as ITask).priority === activeTaskPriority;
+        }
+        if ("task" in (activity.item as any)) {
+          return (activity.item as ITaskActivity).task?.priority === activeTaskPriority;
+        }
+        return true;
+      });
+    }
+
     return activities.sort(
       (a, b) =>
         parseActivityDate(b.date).getTime() -
@@ -493,6 +618,8 @@ const User: React.FC = () => {
     activeStatus,
     activeType,
     activeResolution,
+    activeTaskStatus,
+    activeTaskPriority,
     pieChartStats,
   ]);
 
@@ -505,6 +632,7 @@ const User: React.FC = () => {
       ratings: 0,
       approvals: 0,
       finances: 0,
+      tasks: 0,
     };
     filteredActivities.forEach((activity) => {
       counts.all++;
@@ -514,6 +642,7 @@ const User: React.FC = () => {
       else if (activity.activityType === "rating") counts.ratings++;
       else if (activity.activityType === "base_approval") counts.approvals++;
       else if (activity.activityType === "finance_approval") counts.finances++;
+      else if (activity.activityType.startsWith("task_")) counts.tasks++;
     });
     return counts;
   }, [filteredActivities]);
@@ -652,6 +781,20 @@ const User: React.FC = () => {
     setActiveStatus((current) => (current === statusKey ? "all" : statusKey));
   };
 
+  const handleTaskStatusClick = (segment: PieSegmentData) => {
+    const statusKey = segment.id as TaskStatus;
+    setActiveTaskStatus((current) =>
+      current === statusKey ? "all" : statusKey
+    );
+  };
+
+  const handleTaskPriorityClick = (segment: PieSegmentData) => {
+    const priorityKey = segment.id as CasePriority;
+    setActiveTaskPriority((current) =>
+      current === priorityKey ? "all" : priorityKey
+    );
+  };
+
   const isAnyFilterActive = useMemo(() => {
     return (
       dateRange.startDate !== null ||
@@ -661,7 +804,9 @@ const User: React.FC = () => {
       activePriority !== "all" ||
       activeStatus !== "all" ||
       activeType !== "all" ||
-      activeResolution !== "all"
+      activeResolution !== "all" ||
+      activeTaskStatus !== "all" ||
+      activeTaskPriority !== "all"
     );
   }, [
     dateRange,
@@ -671,6 +816,8 @@ const User: React.FC = () => {
     activeType,
     activeResolution,
     activeStatus,
+    activeTaskStatus,
+    activeTaskPriority,
   ]);
 
   const handleClearAllFilters = () => {
@@ -681,6 +828,8 @@ const User: React.FC = () => {
     setActiveType("all");
     setActiveResolution("all");
     setActiveStatus("all");
+    setActiveTaskStatus("all");
+    setActiveTaskPriority("all");
   };
 
   if (userLoading || authLoading) {
@@ -831,6 +980,12 @@ const User: React.FC = () => {
                     onClearRatingTierFilter={() => setActiveRatingTier("all")}
                     onClearPriorityFilter={() => setActivePriority("all")}
                     onClearTypeFilter={() => setActiveType("all")}
+                    onTaskStatusClick={handleTaskStatusClick}
+                    onTaskPriorityClick={handleTaskPriorityClick}
+                    activeTaskStatusFilter={activeTaskStatus}
+                    activeTaskPriorityFilter={activeTaskPriority}
+                    onClearTaskStatusFilter={() => setActiveTaskStatus("all")}
+                    onClearTaskPriorityFilter={() => setActiveTaskPriority("all")}
                   />
                 </div>
               )}
@@ -884,6 +1039,12 @@ const User: React.FC = () => {
                   onClearStatusFilter={() => setActiveStatus("all")}
                   activePieTab={activePieTab}
                   onPieTabChange={setActivePieTab}
+                  onTaskStatusClick={handleTaskStatusClick}
+                  onTaskPriorityClick={handleTaskPriorityClick}
+                  activeTaskStatusFilter={activeTaskStatus}
+                  activeTaskPriorityFilter={activeTaskPriority}
+                  onClearTaskStatusFilter={() => setActiveTaskStatus("all")}
+                  onClearTaskPriorityFilter={() => setActiveTaskPriority("all")}
                 />
               </div>
               {/* Activity List (Right) */}

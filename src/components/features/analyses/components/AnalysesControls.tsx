@@ -32,6 +32,8 @@ interface AnalysesControlsProps {
   }) => void;
   startDateForPies: Date | null;
   endDateForPies: Date | null;
+  activeTopTab?: "cases" | "tasks";
+  setActiveTopTab?: (tab: "cases" | "tasks") => void;
 }
 
 const AnalysesControls: React.FC<AnalysesControlsProps> = (props) => {
@@ -54,7 +56,11 @@ const AnalysesControls: React.FC<AnalysesControlsProps> = (props) => {
     handleCustomDateRangeChange,
     startDateForPies,
     // endDateForPies,
+    activeTopTab,
+    setActiveTopTab,
   } = props;
+
+  const isTasksTab = activeTopTab === "tasks";
 
   const renderToggles = () => (
     <div className="flex items-center space-x-4 ml-auto">
@@ -91,14 +97,14 @@ const AnalysesControls: React.FC<AnalysesControlsProps> = (props) => {
       <div className="flex items-center space-x-2">
         <span className="text-sm font-medium text-gray-600">Покажи по:</span>
         <button
-          onClick={() => setBarChartMode("type")}
+          onClick={() => setBarChartMode(isTasksTab ? "status" : "type")}
           className={`hover:cursor-pointer px-3 py-1.5 text-xs sm:text-sm rounded-md focus:outline-none ${
-            barChartMode === "type"
+            barChartMode === (isTasksTab ? "status" : "type")
               ? "bg-sky-600 text-white shadow-sm"
               : "bg-gray-200 text-gray-700 hover:bg-gray-300"
           }`}
         >
-          Тип
+          {isTasksTab ? "Статус" : "Тип"}
         </button>
         <button
           onClick={() => setBarChartMode("priority")}
@@ -246,7 +252,36 @@ const AnalysesControls: React.FC<AnalysesControlsProps> = (props) => {
   return (
     <>
       <style>{customInputStyles}</style>
-      <div className="flex space-x-0 border-b border-gray-200">
+      <div className="flex items-center border-b border-gray-200">
+        {/* Tab toggle: Сигнали / Задачи */}
+        {setActiveTopTab && (
+          <div className="flex items-center mr-4 pl-3">
+            <div className="inline-flex rounded-md shadow-sm" role="group">
+              <button
+                type="button"
+                onClick={() => setActiveTopTab("cases")}
+                className={`hover:cursor-pointer px-3 py-1.5 text-xs font-medium ${
+                  activeTopTab === "cases"
+                    ? "bg-sky-600 text-white z-10 ring-1 ring-sky-500"
+                    : "bg-white text-gray-900 hover:bg-gray-100"
+                } rounded-l-lg border border-gray-200 focus:z-10 focus:ring-1 focus:ring-sky-500`}
+              >
+                Сигнали
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTopTab("tasks")}
+                className={`hover:cursor-pointer px-3 py-1.5 text-xs font-medium ${
+                  activeTopTab === "tasks"
+                    ? "bg-sky-600 text-white z-10 ring-1 ring-sky-500"
+                    : "bg-white text-gray-900 hover:bg-gray-100"
+                } rounded-r-md border border-gray-200 focus:z-10 focus:ring-1 focus:ring-sky-500`}
+              >
+                Задачи
+              </button>
+            </div>
+          </div>
+        )}
         {(["all", "yearly", "monthly", "weekly", "custom"] as ViewMode[]).map(
           (mode) => (
             <button

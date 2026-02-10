@@ -43,7 +43,8 @@ interface UnifiedEditorProps {
   hideSideButtons?: boolean;
   onProcessingChange?: (processing: boolean) => void;
   caseId?: string;
-  type: "case" | "answer" | "comment";
+  attachmentFolder?: string;
+  type: "case" | "answer" | "comment" | "task" | "taskActivity";
   editorClassName?: string;
   hideAttachments?: boolean;
 }
@@ -66,6 +67,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
     onProcessingChange,
     type,
     caseId,
+    attachmentFolder,
     editorClassName,
     hideAttachments = false,
   } = props;
@@ -75,7 +77,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
   const [fileError, setFileError] = useState<string | null>(null);
   const { processFiles, isCompressing } = useFileHandler();
 
-  const [, setSelectionUpdate] = useState(0);
+  const isInternalChange = useRef(false);
 
   useEffect(() => {
     onProcessingChange?.(isCompressing);
@@ -88,7 +90,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
       TextAlign.configure({ types: ["paragraph", "heading", "listItem"] }),
       Placeholder.configure({ placeholder }),
       CharacterCount, // Keep extension but don't use its limit (doesn't count mentions properly)
-      ...(type !== "case"
+      ...(type !== "case" && type !== "task" && type !== "taskActivity"
         ? [
             CustomMention.configure({
               suggestion: useMemo(
@@ -100,10 +102,10 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
         : []),
     ],
     content,
-    onUpdate: ({ editor }) =>
-      onContentChange(editor.isEmpty ? "" : editor.getHTML()),
-    onSelectionUpdate: () => setSelectionUpdate((s) => s + 1),
-    onTransaction: () => setSelectionUpdate((s) => s + 1),
+    onUpdate: ({ editor }) => {
+      isInternalChange.current = true;
+      onContentChange(editor.isEmpty ? "" : editor.getHTML());
+    },
     editorProps: {
       attributes: {
         class:
@@ -111,6 +113,16 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
       },
     },
   });
+
+  // Sync external content changes (e.g. CaseAnswerSelector) into the editor
+  useEffect(() => {
+    if (!editor) return;
+    if (isInternalChange.current) {
+      isInternalChange.current = false;
+      return;
+    }
+    editor.commands.setContent(content);
+  }, [content, editor]);
 
   // Calculate character count using HTML stripping (matches backend validation)
   const charCount = useMemo(() => getTextLength(content), [content]);
@@ -292,6 +304,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
                   setFileError(null);
                 }}
                 caseId={caseId}
+                folder={attachmentFolder}
               />
             </div>
           )}

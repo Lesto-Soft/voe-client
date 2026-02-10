@@ -205,3 +205,82 @@ export const GET_USER_TASKS = gql`
   }
   ${taskFragment}
 `;
+
+/**
+ * Fetch aggregated task analytics data (status/priority distribution, trends, avg completion).
+ */
+export const GET_TASK_ANALYTICS = gql`
+  query GetTaskAnalytics {
+    getTaskAnalytics {
+      totalTasks
+      statusDistribution {
+        TODO
+        IN_PROGRESS
+        DONE
+      }
+      priorityDistribution {
+        LOW
+        MEDIUM
+        HIGH
+      }
+      tasksByPeriod {
+        period
+        created
+        completed
+      }
+      averageCompletionDays
+    }
+  }
+`;
+
+/**
+ * Fetch all tasks with lightweight population for client-side analytics processing.
+ */
+export const GET_ANALYTICS_DATA_TASKS = gql`
+  query GetAnalyticsDataTasks {
+    getAnalyticsDataTasks {
+      _id
+      status
+      priority
+      createdAt
+      completedAt
+      dueDate
+      assignee {
+        _id
+        name
+        username
+        avatar
+      }
+      creator {
+        _id
+        name
+        username
+        avatar
+      }
+    }
+  }
+`;
+
+/**
+ * Fetch ranked users for task-related metrics.
+ */
+export const GET_RANKED_TASK_USERS = gql`
+  query GetRankedTaskUsers($input: RankedTaskUsersInput!) {
+    getRankedTaskUsers(input: $input) {
+      user {
+        _id
+        name
+        username
+        avatar
+        expert_categories {
+          _id
+        }
+        managed_categories {
+          _id
+        }
+      }
+      count
+      stat
+    }
+  }
+`;

@@ -11,6 +11,7 @@ import {
   BanknotesIcon,
   GlobeAltIcon,
   CalendarDaysIcon,
+  ClipboardDocumentCheckIcon,
   // CheckCircleIcon,
   // ClockIcon,
 } from "@heroicons/react/24/outline";
@@ -20,11 +21,12 @@ import { PieSegmentData } from "../../charts/PieChart";
 import { RatingTierLabel } from "../../../pages/User";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import DateRangeSelector from "./DateRangeSelector";
-import { CasePriority, CaseType, ICaseStatus } from "../../../db/interfaces";
+import { CasePriority, CaseType, ICaseStatus, TaskStatus } from "../../../db/interfaces";
 import {
   translateCaseType,
   translatePriority,
   translateStatus,
+  translateTaskStatus,
 } from "../../../utils/categoryDisplayUtils";
 import FilterTag from "../../global/FilterTag";
 import StatItem from "../../global/StatItem";
@@ -45,7 +47,8 @@ export type StatsActivityType =
   | "comments"
   | "ratings"
   | "approvals"
-  | "finances";
+  | "finances"
+  | "tasks";
 
 interface UserStatisticsPanelProps {
   textStats: UserTextStats | undefined | null;
@@ -78,6 +81,7 @@ interface UserStatisticsPanelProps {
     ratings: number;
     approvals: number;
     finances: number;
+    tasks: number;
   };
   // Add new props to receive date range state and handler
   dateRange?: { startDate: Date | null; endDate: Date | null };
@@ -95,6 +99,12 @@ interface UserStatisticsPanelProps {
   onClearTypeFilter?: () => void;
   onClearResolutionFilter?: () => void;
   onClearStatusFilter?: () => void;
+  onTaskStatusClick?: (segment: PieSegmentData) => void;
+  onTaskPriorityClick?: (segment: PieSegmentData) => void;
+  activeTaskStatusFilter: TaskStatus | "all";
+  activeTaskPriorityFilter: CasePriority | "all";
+  onClearTaskStatusFilter?: () => void;
+  onClearTaskPriorityFilter?: () => void;
   activePieTab: PieTab;
   onPieTabChange: (tab: PieTab) => void;
 }
@@ -106,7 +116,9 @@ type PieTab =
   | "priority"
   | "resolution"
   | "type"
-  | "status";
+  | "status"
+  | "taskStatus"
+  | "taskPriority";
 
 export type { PieTab };
 
@@ -144,6 +156,12 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
   onClearTypeFilter,
   onClearStatusFilter,
   onClearResolutionFilter,
+  onTaskStatusClick,
+  onTaskPriorityClick,
+  activeTaskStatusFilter,
+  activeTaskPriorityFilter,
+  onClearTaskStatusFilter,
+  onClearTaskPriorityFilter,
   activePieTab,
   onPieTabChange,
 }) => {
@@ -232,6 +250,7 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
     { key: "ratings", label: "Оценки", icon: StarIcon },
     { key: "approvals", label: "Одобрени", icon: HandThumbUpIcon },
     { key: "finances", label: "Финанси", icon: BanknotesIcon },
+    { key: "tasks", label: "Задачи", icon: ClipboardDocumentCheckIcon },
   ];
 
   if (isLoading) {
@@ -309,7 +328,9 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
     </div>
   );
 
-  const pieTabsConfig = [
+  const isTasksTab = activeStatsTab === "tasks";
+
+  const casePieTabsConfig = [
     {
       key: "categories",
       label: "По Категории",
@@ -347,6 +368,23 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
       clearFilter: onClearTypeFilter,
     },
   ];
+
+  const taskPieTabsConfig = [
+    {
+      key: "taskStatus",
+      label: "По Статус",
+      filterActive: activeTaskStatusFilter !== "all",
+      clearFilter: onClearTaskStatusFilter,
+    },
+    {
+      key: "taskPriority",
+      label: "По Приоритет",
+      filterActive: activeTaskPriorityFilter !== "all",
+      clearFilter: onClearTaskPriorityFilter,
+    },
+  ];
+
+  const pieTabsConfig = isTasksTab ? taskPieTabsConfig : casePieTabsConfig;
 
   const PieChartSection = (
     <>
@@ -483,6 +521,32 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
             layout={viewMode === "center" ? "horizontal" : "vertical"}
           />
         )}
+        {activePieTab === "taskStatus" && (
+          <StatisticPieChart
+            title="Задачи по Статус"
+            pieData={pieChartStats.taskStatusDistributionData}
+            onSegmentClick={onTaskStatusClick}
+            activeLabel={
+              pieChartStats.taskStatusDistributionData.find(
+                (d) => d.id === activeTaskStatusFilter
+              )?.label
+            }
+            layout={viewMode === "center" ? "horizontal" : "vertical"}
+          />
+        )}
+        {activePieTab === "taskPriority" && (
+          <StatisticPieChart
+            title="Задачи по Приоритет"
+            pieData={pieChartStats.taskPriorityDistributionData}
+            onSegmentClick={onTaskPriorityClick}
+            activeLabel={
+              pieChartStats.taskPriorityDistributionData.find(
+                (d) => d.id === activeTaskPriorityFilter
+              )?.label
+            }
+            layout={viewMode === "center" ? "horizontal" : "vertical"}
+          />
+        )}
       </div>
     </>
   );
@@ -601,6 +665,20 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
                       label={`Статус: ${translateStatus(activeStatusFilter)}`}
                       onRemove={onClearStatusFilter}
                       onClick={() => onPieTabChange("status")}
+                    />
+                  )}
+                  {activeTaskStatusFilter !== "all" && onClearTaskStatusFilter && (
+                    <FilterTag
+                      label={`Задача статус: ${translateTaskStatus(activeTaskStatusFilter)}`}
+                      onRemove={onClearTaskStatusFilter}
+                      onClick={() => onPieTabChange("taskStatus")}
+                    />
+                  )}
+                  {activeTaskPriorityFilter !== "all" && onClearTaskPriorityFilter && (
+                    <FilterTag
+                      label={`Задача приоритет: ${translatePriority(activeTaskPriorityFilter)}`}
+                      onRemove={onClearTaskPriorityFilter}
+                      onClick={() => onPieTabChange("taskPriority")}
                     />
                   )}
                   {isDateFilterActive && onDateRangeChange && (

@@ -58,3 +58,15 @@ export const DAY_NAMES_FULL = [
   "Събота",
   "Неделя",
 ];
+
+export const STATUS_COLORS: Record<string, string> = {
+  TODO: "#94A3B8", // slate-400
+  IN_PROGRESS: "#3B82F6", // blue-500
+  DONE: "#22C55E", // green-500
+};
+
+export const STATUS_TRANSLATIONS: Record<string, string> = {
+  TODO: "Незапочнати",
+  IN_PROGRESS: "В процес",
+  DONE: "Завършени",
+};

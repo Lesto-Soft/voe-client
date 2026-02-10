@@ -8,7 +8,8 @@ type ActivityTab =
   | "comments"
   | "ratings"
   | "approvals"
-  | "finances";
+  | "finances"
+  | "tasks";
 
 interface ScrollState {
   scrollTop: number;
@@ -23,6 +24,7 @@ interface TabScrollStates {
   ratings: ScrollState;
   approvals: ScrollState;
   finances: ScrollState;
+  tasks: ScrollState;
 }
 
 const INITIAL_VISIBLE_COUNT = 10;
@@ -37,6 +39,7 @@ const getInitialTabStates = () => ({
   ratings: { scrollTop: 0, visibleCount: INITIAL_VISIBLE_COUNT },
   approvals: { scrollTop: 0, visibleCount: INITIAL_VISIBLE_COUNT },
   finances: { scrollTop: 0, visibleCount: INITIAL_VISIBLE_COUNT },
+  tasks: { scrollTop: 0, visibleCount: INITIAL_VISIBLE_COUNT },
 });
 
 // Fix 1: Reorder parameters so required ones come before optional/default ones.
@@ -159,6 +162,11 @@ const useUserActivityScrollPersistence = (
             visibleCount:
               parsedStates.finances?.visibleCount || INITIAL_VISIBLE_COUNT,
           },
+          tasks: {
+            scrollTop: parsedStates.tasks?.scrollTop || 0,
+            visibleCount:
+              parsedStates.tasks?.visibleCount || INITIAL_VISIBLE_COUNT,
+          },
         };
 
         setTabScrollStates(validatedStates);
@@ -251,6 +259,7 @@ const useUserActivityScrollPersistence = (
     ratings: tabScrollStates.ratings.visibleCount,
     approvals: tabScrollStates.approvals.visibleCount,
     finances: tabScrollStates.finances.visibleCount,
+    tasks: tabScrollStates.tasks.visibleCount,
   };
 
   // 2. EXPORT THE NEW FUNCTION

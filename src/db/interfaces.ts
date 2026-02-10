@@ -56,6 +56,9 @@ export interface IUser {
   metricScores?: IMetricScore[];
   financial_approver?: boolean;
   last_login?: Date;
+  assignedTasks?: ITask[];
+  createdTasks?: ITask[];
+  createdTaskActivities?: ITaskActivity[];
 }
 
 /**

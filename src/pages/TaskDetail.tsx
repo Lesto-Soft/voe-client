@@ -138,7 +138,11 @@ const TaskDetail: React.FC = () => {
 
             {/* Task Description - always expanded, fixed-height container */}
             <div className="h-48">
-              <TaskDescriptionCard description={taskData.description} />
+              <TaskDescriptionCard
+                description={taskData.description}
+                attachments={taskData.attachments}
+                taskId={taskData._id}
+              />
             </div>
 
             {/* Origin - Related Case */}

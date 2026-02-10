@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { ITaskActivity, IMe, TaskActivityType } from "../../db/interfaces";
 import {
   useCreateTaskActivity,
@@ -9,9 +9,13 @@ import UserLink from "../global/links/UserLink";
 import ActionMenu from "../global/ActionMenu";
 import ShowDate from "../global/ShowDate";
 import { renderContentSafely } from "../../utils/contentRenderer";
+import { createFileUrl } from "../../utils/fileUtils";
+import ImagePreviewModal, {
+  GalleryItem,
+} from "../modals/imageModals/ImagePreviewModal";
+import UnifiedEditor from "../forms/partials/UnifiedRichTextEditor";
 import {
   ChatBubbleLeftIcon,
-  PaperAirplaneIcon,
   QuestionMarkCircleIcon,
   CheckCircleIcon,
   ArrowPathIcon,
@@ -98,6 +102,34 @@ const systemActivityTypes: TaskActivityType[] = [
   TaskActivityType.AssigneeChange,
 ];
 
+// Helper component to display activity attachments in read-only mode
+const ActivityAttachments: React.FC<{
+  attachments: string[];
+  activityId: string;
+}> = ({ attachments, activityId }) => {
+  const galleryItems: GalleryItem[] = useMemo(
+    () =>
+      attachments.map((file) => ({
+        url: createFileUrl("taskActivities", activityId, file),
+        name: file,
+      })),
+    [attachments, activityId],
+  );
+
+  return (
+    <div className="flex flex-wrap gap-2 mt-2">
+      {attachments.map((file) => (
+        <ImagePreviewModal
+          key={file}
+          galleryItems={galleryItems}
+          imageUrl={createFileUrl("taskActivities", activityId, file)}
+          fileName={file}
+        />
+      ))}
+    </div>
+  );
+};
+
 interface TaskActivitiesProps {
   taskId: string;
   activities: ITaskActivity[];
@@ -123,6 +155,18 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
     null,
   );
 
+  // Attachment state for new activity
+  const [newAttachments, setNewAttachments] = useState<File[]>([]);
+
+  // Attachment state for editing activity
+  const [editAttachments, setEditAttachments] = useState<File[]>([]);
+  const [editExistingAttachments, setEditExistingAttachments] = useState<
+    string[]
+  >([]);
+  const [editOriginalAttachments, setEditOriginalAttachments] = useState<
+    string[]
+  >([]);
+
   const { createTaskActivity, loading: createLoading } =
     useCreateTaskActivity(taskId);
   const { updateTaskActivity, loading: updateLoading } =
@@ -138,10 +182,11 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
         task: taskId,
         createdBy: currentUser._id,
         type: activityType,
-        content: newContent.trim(),
-        attachments: [],
+        content: newContent,
+        attachments: newAttachments.length > 0 ? newAttachments : undefined,
       });
       setNewContent("");
+      setNewAttachments([]);
       setActivityType(TaskActivityType.Comment);
       refetch();
     } catch (error) {
@@ -152,20 +197,38 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
   const handleStartEdit = (activity: ITaskActivity) => {
     setEditingActivityId(activity._id);
     setEditContent(activity.content || "");
+    setEditAttachments([]);
+    setEditExistingAttachments(activity.attachments || []);
+    setEditOriginalAttachments(activity.attachments || []);
   };
 
   const handleCancelEdit = () => {
     setEditingActivityId(null);
     setEditContent("");
+    setEditAttachments([]);
+    setEditExistingAttachments([]);
+    setEditOriginalAttachments([]);
   };
 
   const handleSaveEdit = async (activityId: string) => {
     if (!editContent.trim() || updateLoading) return;
 
+    const removedAttachments = editOriginalAttachments.filter(
+      (a) => !editExistingAttachments.includes(a),
+    );
+
     try {
-      await updateTaskActivity(activityId, { content: editContent.trim() });
+      await updateTaskActivity(activityId, {
+        content: editContent,
+        attachments: editAttachments.length > 0 ? editAttachments : undefined,
+        deletedAttachments:
+          removedAttachments.length > 0 ? removedAttachments : undefined,
+      });
       setEditingActivityId(null);
       setEditContent("");
+      setEditAttachments([]);
+      setEditExistingAttachments([]);
+      setEditOriginalAttachments([]);
       refetch();
     } catch (error) {
       console.error("Failed to update activity:", error);
@@ -200,7 +263,7 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
   return (
     <div className="flex flex-col h-full">
       {/* Add activity section - FIXED AT TOP */}
-      <div className="flex-shrink-0 mb-4 border border-0 border-b-3 border-gray-300 p-3 bg-gray-50 shadow-md">
+      <div className="flex-shrink-0 mb-4 border border-0 border-b-3 border-gray-300 p-3 pb-12 bg-gray-50 shadow-md">
         {/* Title and activity type selector on same line */}
         <div className="flex items-center gap-3 mb-2">
           <h3 className="text-sm font-semibold text-gray-700 whitespace-nowrap">
@@ -230,32 +293,20 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
           </div>
         </div>
 
-        {/* Text input with submit button on RIGHT */}
-        <div className="flex gap-2">
-          <textarea
-            value={newContent}
-            onChange={(e) => setNewContent(e.target.value)}
-            placeholder={
-              activityType === TaskActivityType.Comment
-                ? "Добавете коментар..."
-                : activityType === TaskActivityType.HelpRequest
-                  ? "Опишете от каква помощ се нуждаете..."
-                  : "Опишете какво трябва да бъде одобрено..."
-            }
-            rows={2}
-            maxLength={1500}
-            className="flex-1 px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent resize-none"
-          />
-          <button
-            type="button"
-            onClick={handleSubmitActivity}
-            disabled={!newContent.trim() || createLoading}
-            title={createLoading ? "Изпращане..." : "Публикувай"}
-            className="flex-shrink-0 w-10 flex items-center justify-center bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
-          >
-            <PaperAirplaneIcon className="h-4 w-4" />
-          </button>
-        </div>
+        {/* Rich text input with send button */}
+        <UnifiedEditor
+          content={newContent}
+          onContentChange={setNewContent}
+          attachments={newAttachments}
+          setAttachments={setNewAttachments}
+          onSend={handleSubmitActivity}
+          placeholder="Добавете запис..."
+          minLength={0}
+          maxLength={1500}
+          isSending={createLoading}
+          type="taskActivity"
+          editorClassName="h-[80px] min-h-[80px] max-h-[80px]"
+        />
       </div>
 
       {/* Activities list - SCROLLABLE */}
@@ -344,11 +395,21 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
                     {/* Edit mode */}
                     {isEditing ? (
                       <div className="mt-2">
-                        <textarea
-                          value={editContent}
-                          onChange={(e) => setEditContent(e.target.value)}
-                          rows={3}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent resize-none bg-white"
+                        <UnifiedEditor
+                          content={editContent}
+                          onContentChange={setEditContent}
+                          attachments={editAttachments}
+                          setAttachments={setEditAttachments}
+                          existingAttachments={editExistingAttachments}
+                          setExistingAttachments={setEditExistingAttachments}
+                          placeholder="Редактирайте съдържанието..."
+                          minLength={0}
+                          maxLength={1500}
+                          type="taskActivity"
+                          hideSideButtons
+                          editorClassName="h-[100px] min-h-[100px] max-h-[100px]"
+                          caseId={activity._id}
+                          attachmentFolder="taskActivities"
                         />
                         <div className="flex justify-end gap-2 mt-2">
                           <button
@@ -398,9 +459,18 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
                       </div>
                     ) : (
                       /* Normal content display */
-                      <div className="text-sm text-gray-700">
-                        {renderContentSafely(activity.content || "")}
-                      </div>
+                      <>
+                        <div className="text-sm text-gray-700 max-h-40 overflow-y-auto custom-scrollbar-xs">
+                          {renderContentSafely(activity.content || "")}
+                        </div>
+                        {activity.attachments &&
+                          activity.attachments.length > 0 && (
+                            <ActivityAttachments
+                              attachments={activity.attachments}
+                              activityId={activity._id}
+                            />
+                          )}
+                      </>
                     )}
                   </div>
                 </div>

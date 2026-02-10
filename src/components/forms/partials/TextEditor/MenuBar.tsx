@@ -119,7 +119,7 @@ const MenuBar: React.FC<MenuBarProps> = ({
         {(type !== "case" || !hideAttach) && (
           <div className="w-[1px] h-6 bg-gray-300 mx-1 self-center" />
         )}
-        {type !== "case" && type !== "task" && type !== "taskActivity" && (
+        {type !== "case" && type !== "task" && (
           <button
             type="button"
             disabled={disabled}

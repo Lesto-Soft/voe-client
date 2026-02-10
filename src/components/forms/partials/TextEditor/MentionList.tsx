@@ -10,7 +10,7 @@ import type { MentionUser } from "./MentionSuggestion";
 
 interface MentionListProps {
   items: MentionUser[];
-  command: (user: { id: string; label: string }) => void;
+  command: (user: { id: string; label: string; username: string }) => void;
 }
 
 export interface MentionListRef {
@@ -25,8 +25,9 @@ const MentionList = forwardRef<MentionListRef, MentionListProps>(
       const item = props.items[index];
       if (item) {
         props.command({
-          id: item.username,
+          id: item._id,
           label: item.name,
+          username: item.username,
         });
       }
     };

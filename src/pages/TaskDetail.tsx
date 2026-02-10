@@ -1,6 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router";
 import { useGetTaskByNumber, useDeleteTask } from "../graphql/hooks/task";
+import { useQuery } from "@apollo/client";
+import { GET_LEAN_USERS } from "../graphql/query/user";
 import { useCurrentUser } from "../context/UserContext";
 import { ITask } from "../db/interfaces";
 import PageStatusDisplay from "../components/global/PageStatusDisplay";
@@ -55,6 +57,21 @@ const TaskDetail: React.FC = () => {
   const { deleteTask, loading: deleteLoading } = useDeleteTask({
     onCompleted: () => navigate("/tasks"),
   });
+
+  // Fetch all users for mention suggestions in task activities
+  const { data: leanUsersData } = useQuery(GET_LEAN_USERS);
+
+  const mentions = useMemo(
+    () =>
+      (leanUsersData?.getLeanUsers || []).map(
+        (u: { _id: string; name: string; username: string }) => ({
+          _id: u._id,
+          name: u.name,
+          username: u.username,
+        }),
+      ),
+    [leanUsersData],
+  );
 
   // Now we can have early returns
   if (numericTaskNumber <= 0) {
@@ -325,6 +342,7 @@ const TaskDetail: React.FC = () => {
                   activities={taskData.activities || []}
                   currentUser={currentUser}
                   refetch={refetch}
+                  mentions={mentions}
                 />
               ) : (
                 <AnalysisTabsSection

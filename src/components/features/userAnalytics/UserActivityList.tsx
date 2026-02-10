@@ -1,9 +1,10 @@
 // src/components/features/userAnalytics/UserActivityList.tsx
 import React, { useMemo, useEffect, useState, useRef } from "react";
-import { IUser, ICase, IAnswer, IComment, ITask } from "../../../db/interfaces";
+import { IUser, ICase, IAnswer, IComment, ITask, ITaskActivity } from "../../../db/interfaces";
 import UserActivityItemCard from "./UserActivityItemCard";
 import UserRatingActivityCard from "./UserRatingActivityCard";
 import UserTaskActivityCard from "./UserTaskActivityCard";
+import UserTaskActivityActivityCard from "./UserTaskActivityActivityCard";
 import {
   InboxIcon,
   ArrowDownCircleIcon,
@@ -31,7 +32,7 @@ interface RatedCaseActivity {
 interface CombinedActivity {
   id: string;
   date: string;
-  item: ICase | IAnswer | IComment | RatedCaseActivity | ITask;
+  item: ICase | IAnswer | IComment | RatedCaseActivity | ITask | ITaskActivity;
   activityType:
     | "case"
     | "answer"
@@ -41,7 +42,10 @@ interface CombinedActivity {
     | "finance_approval"
     | "task_created"
     | "task_assigned"
-    | "task_completed";
+    | "task_completed"
+    | "task_comment"
+    | "task_help_request"
+    | "task_approval_request";
 }
 
 interface UserActivityListProps {
@@ -450,6 +454,16 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
                     }
                     date={activity.date}
                     actor={user!}
+                    view={cardView}
+                  />
+                ) : activity.activityType === "task_comment" ||
+                  activity.activityType === "task_help_request" ||
+                  activity.activityType === "task_approval_request" ? (
+                  <UserTaskActivityActivityCard
+                    key={activity.id}
+                    taskActivity={activity.item as ITaskActivity}
+                    activityType={activity.activityType}
+                    date={activity.date}
                     view={cardView}
                   />
                 ) : activity.activityType.startsWith("task_") ? (

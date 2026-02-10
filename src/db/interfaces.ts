@@ -58,6 +58,7 @@ export interface IUser {
   last_login?: Date;
   assignedTasks?: ITask[];
   createdTasks?: ITask[];
+  createdTaskActivities?: ITaskActivity[];
 }
 
 /**

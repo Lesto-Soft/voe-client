@@ -326,6 +326,22 @@ fragment FullUserFragment on User {
         assignee { _id name username avatar }
         relatedCase { _id case_number }
       }
+      createdTaskActivities {
+        _id
+        type
+        content
+        attachments
+        createdAt
+        updatedAt
+        task {
+          _id
+          taskNumber
+          title
+          status
+          priority
+          relatedCase { _id case_number }
+        }
+      }
 }`;
 
 export const COUNT_USERS = gql`

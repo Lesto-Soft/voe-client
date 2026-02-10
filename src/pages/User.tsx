@@ -9,6 +9,7 @@ import {
   IAnswer,
   IComment,
   ITask,
+  ITaskActivity,
   CasePriority,
   CaseType,
   ICaseStatus,
@@ -67,7 +68,7 @@ interface RatedCaseActivity {
 interface CombinedActivity {
   id: string;
   date: string;
-  item: ICase | IAnswer | IComment | RatedCaseActivity | ITask;
+  item: ICase | IAnswer | IComment | RatedCaseActivity | ITask | ITaskActivity;
   activityType:
     | "case"
     | "answer"
@@ -77,7 +78,10 @@ interface CombinedActivity {
     | "finance_approval"
     | "task_created"
     | "task_assigned"
-    | "task_completed";
+    | "task_completed"
+    | "task_comment"
+    | "task_help_request"
+    | "task_approval_request";
 }
 const getTierForScore = (score: number): RatingTierLabel => {
   if (score >= TIERS.GOLD) return "Отлични";
@@ -361,6 +365,28 @@ const User: React.FC = () => {
           });
         }
       });
+
+    // TaskActivity entries (comments, help requests, approval requests)
+    if (user.createdTaskActivities) {
+      const activityTypeMap: Record<string, CombinedActivity["activityType"]> = {
+        COMMENT: "task_comment",
+        HELP_REQUEST: "task_help_request",
+        APPROVAL_REQUEST: "task_approval_request",
+      };
+      user.createdTaskActivities
+        .filter((ta) => ta.createdAt && isInDateRange(ta.createdAt))
+        .forEach((ta) => {
+          const actType = activityTypeMap[ta.type];
+          if (actType) {
+            activities.push({
+              id: `task-activity-${ta._id}`,
+              date: ta.createdAt,
+              item: ta,
+              activityType: actType,
+            });
+          }
+        });
+    }
 
     if (activeCategoryName) {
       const activeCategoryId = pieChartStats?.signalsByCategoryChartData.find(

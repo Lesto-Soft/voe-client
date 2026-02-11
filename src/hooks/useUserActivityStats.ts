@@ -326,7 +326,29 @@ const useUserActivityStats = (
         ?.filter((t) => t.createdAt && isInDateRange(t.createdAt))
         .forEach(addTask);
 
-      return Array.from(taskMap.values());
+      const allTasks = Array.from(taskMap.values());
+      const taskSubTab = subTab as TaskSubTab;
+
+      // "all" and "tasks" (lifecycle) include all tasks
+      if (taskSubTab === "all" || taskSubTab === "tasks") {
+        return allTasks;
+      }
+
+      // For "entries" and "analyses", narrow to tasks that have matching activities
+      const ENTRY_TYPES = new Set(["COMMENT", "HELP_REQUEST", "APPROVAL_REQUEST"]);
+      const ANALYSIS_TYPES = new Set(["ANALYSIS_SUBMITTED"]);
+      const targetTypes = taskSubTab === "entries" ? ENTRY_TYPES : ANALYSIS_TYPES;
+
+      const relevantTaskIds = new Set<string>();
+      user.createdTaskActivities
+        ?.filter((ta) => ta.createdAt && isInDateRange(ta.createdAt))
+        .forEach((ta) => {
+          if (targetTypes.has(ta.type) && ta.task?._id) {
+            relevantTaskIds.add(ta.task._id);
+          }
+        });
+
+      return allTasks.filter((t) => relevantTaskIds.has(t._id));
     })();
 
     const taskStatusCounts: Record<string, number> = {

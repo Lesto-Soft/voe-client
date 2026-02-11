@@ -9,12 +9,20 @@ import {
   ChatBubbleLeftIcon,
   QuestionMarkCircleIcon,
   CheckCircleIcon,
+  ArrowPathIcon,
+  ExclamationTriangleIcon,
+  UserIcon,
+  BeakerIcon,
 } from "@heroicons/react/24/outline";
 
 type TaskActivityActivityType =
   | "task_comment"
   | "task_help_request"
-  | "task_approval_request";
+  | "task_approval_request"
+  | "task_status_change"
+  | "task_priority_change"
+  | "task_assignee_change"
+  | "task_analysis_submitted";
 
 interface UserTaskActivityActivityCardProps {
   taskActivity: ITaskActivity;
@@ -38,6 +46,22 @@ const ACTIVITY_CONFIG: Record<
   task_approval_request: {
     icon: <CheckCircleIcon className="h-5 w-5 text-green-500" />,
     label: "Поиска одобрение за задача",
+  },
+  task_status_change: {
+    icon: <ArrowPathIcon className="h-5 w-5 text-blue-500" />,
+    label: "Промени статус на задача",
+  },
+  task_priority_change: {
+    icon: <ExclamationTriangleIcon className="h-5 w-5 text-amber-500" />,
+    label: "Промени приоритет на задача",
+  },
+  task_assignee_change: {
+    icon: <UserIcon className="h-5 w-5 text-indigo-500" />,
+    label: "Промени изпълнител на задача",
+  },
+  task_analysis_submitted: {
+    icon: <BeakerIcon className="h-5 w-5 text-teal-500" />,
+    label: "Подаде анализ за задача",
   },
 };
 

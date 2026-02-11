@@ -145,11 +145,24 @@ export const canViewCategory = (
 };
 
 export const canViewCase = (currentUser: IMe, caseData: ICase): boolean => {
-  if (!currentUser || !caseData || !caseData.creator) return false;
+  if (!currentUser || !caseData) return false;
 
-  // Use the existing rights determination function. If the user has *any* right, they can view.
-  const rights = determineUserRightsForCase(currentUser, caseData);
-  return rights.length > 0;
+  // Standard rights check (requires creator to be populated)
+  if (caseData.creator) {
+    const rights = determineUserRightsForCase(currentUser, caseData);
+    if (rights.length > 0) return true;
+  }
+
+  // Extended access: user can view a case if they have access to any task linked to it
+  if (
+    caseData.tasks?.some((task) =>
+      currentUser.accessibleTasks?.some((at) => at._id === task._id)
+    )
+  ) {
+    return true;
+  }
+
+  return false;
 };
 
 export const canViewRatingMetric = (currentUser: IMe): boolean => {

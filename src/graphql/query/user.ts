@@ -71,6 +71,7 @@ fragment FullUserFragment on User {
             _id
           }
         }
+        tasks { _id }
       }
       answers {
         _id
@@ -109,6 +110,7 @@ fragment FullUserFragment on User {
               _id
             }
           }
+          tasks { _id }
         }
       }
       approvedAnswers {
@@ -143,6 +145,7 @@ fragment FullUserFragment on User {
               _id
             }
           }
+          tasks { _id }
         }
       }
       financialApprovedAnswers {
@@ -178,6 +181,7 @@ fragment FullUserFragment on User {
               _id
             }
           }
+          tasks { _id }
         }
       }
       comments {
@@ -210,6 +214,7 @@ fragment FullUserFragment on User {
               _id
             }
           }
+          tasks { _id }
         }
         answer {
           _id
@@ -241,6 +246,7 @@ fragment FullUserFragment on User {
                 _id
               }
             }
+            tasks { _id }
           }
         }
       }
@@ -298,6 +304,7 @@ fragment FullUserFragment on User {
               _id
             }
           }
+          tasks { _id }
         }
       }
       assignedTasks {
@@ -311,7 +318,8 @@ fragment FullUserFragment on User {
         completedAt
         creator { _id name username avatar }
         assignee { _id name username avatar }
-        relatedCase { _id case_number }
+        relatedCase { _id case_number tasks { _id } }
+        canAccessUsers { _id }
       }
       createdTasks {
         _id
@@ -324,7 +332,8 @@ fragment FullUserFragment on User {
         completedAt
         creator { _id name username avatar }
         assignee { _id name username avatar }
-        relatedCase { _id case_number }
+        relatedCase { _id case_number tasks { _id } }
+        canAccessUsers { _id }
       }
       createdTaskActivities {
         _id
@@ -339,7 +348,7 @@ fragment FullUserFragment on User {
           title
           status
           priority
-          relatedCase { _id case_number }
+          relatedCase { _id case_number tasks { _id } }
         }
       }
 }`;
@@ -433,6 +442,9 @@ export const GET_ME = gql`
         _id
       }
       comments {
+        _id
+      }
+      accessibleTasks {
         _id
       }
     }

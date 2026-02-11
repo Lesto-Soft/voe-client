@@ -9,11 +9,11 @@ import {
   InformationCircleIcon,
   HandThumbUpIcon,
   BanknotesIcon,
-  GlobeAltIcon,
-  CalendarDaysIcon,
   ClipboardDocumentCheckIcon,
-  // CheckCircleIcon,
-  // ClockIcon,
+  ClipboardDocumentListIcon,
+  PencilSquareIcon,
+  BeakerIcon,
+  CalendarDaysIcon,
 } from "@heroicons/react/24/outline";
 import { UserActivityStats } from "../../../hooks/useUserActivityStats";
 import StatisticPieChart from "../../charts/StatisticPieChart";
@@ -39,16 +39,10 @@ export interface UserTextStats {
   averageCaseRating: number | null;
 }
 
-// MODIFIED: Added 'ratings' to the activity selector type
-export type StatsActivityType =
-  | "all"
-  | "cases"
-  | "answers"
-  | "comments"
-  | "ratings"
-  | "approvals"
-  | "finances"
-  | "tasks";
+// New 2-level tab types
+export type ParentTab = "cases" | "tasks";
+export type CaseSubTab = "all" | "cases" | "answers" | "comments" | "ratings" | "approvals" | "finances";
+export type TaskSubTab = "all" | "tasks" | "entries" | "analyses";
 
 interface UserStatisticsPanelProps {
   textStats: UserTextStats | undefined | null;
@@ -69,12 +63,15 @@ interface UserStatisticsPanelProps {
   onStatusClick?: (segment: PieSegmentData) => void;
   activeCategoryFilter: string | null;
   activeRatingTierFilter: RatingTierLabel;
-  activeStatsTab: StatsActivityType;
-  onStatsTabChange: (tab: StatsActivityType) => void;
+  // New 2-level tab props
+  parentTab: ParentTab;
+  subTab: CaseSubTab | TaskSubTab;
+  onParentTabChange: (tab: ParentTab) => void;
+  onSubTabChange: (tab: CaseSubTab | TaskSubTab) => void;
   viewMode?: "side" | "center";
-  // Add the new prop for receiving activity counts
   activityCounts: {
-    all: number;
+    casesTotal: number;
+    tasksTotal: number;
     cases: number;
     answers: number;
     comments: number;
@@ -82,8 +79,9 @@ interface UserStatisticsPanelProps {
     approvals: number;
     finances: number;
     tasks: number;
+    entries: number;
+    analyses: number;
   };
-  // Add new props to receive date range state and handler
   dateRange?: { startDate: Date | null; endDate: Date | null };
   onDateRangeChange?: (range: {
     startDate: Date | null;
@@ -105,6 +103,9 @@ interface UserStatisticsPanelProps {
   activeTaskPriorityFilter: CasePriority | "all";
   onClearTaskStatusFilter?: () => void;
   onClearTaskPriorityFilter?: () => void;
+  onTaskTimelinessClick?: (segment: PieSegmentData) => void;
+  activeTaskTimelinessFilter: string;
+  onClearTaskTimelinessFilter?: () => void;
   activePieTab: PieTab;
   onPieTabChange: (tab: PieTab) => void;
 }
@@ -118,7 +119,8 @@ type PieTab =
   | "type"
   | "status"
   | "taskStatus"
-  | "taskPriority";
+  | "taskPriority"
+  | "taskTimeliness";
 
 export type { PieTab };
 
@@ -140,11 +142,13 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
   activeResolutionFilter,
   activeCategoryFilter,
   activeRatingTierFilter,
-  activeStatsTab,
-  onStatsTabChange,
+  parentTab,
+  subTab,
+  onParentTabChange,
+  onSubTabChange,
   viewMode = "side",
   activityCounts,
-  dateRange, // Destructure new props
+  dateRange,
   onDateRangeChange,
   isAnyFilterActive,
   onClearAllFilters,
@@ -162,12 +166,15 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
   activeTaskPriorityFilter,
   onClearTaskStatusFilter,
   onClearTaskPriorityFilter,
+  onTaskTimelinessClick,
+  activeTaskTimelinessFilter,
+  onClearTaskTimelinessFilter,
   activePieTab,
   onPieTabChange,
 }) => {
   const pieTabsContainerRef = useRef<HTMLDivElement>(null);
   const filtersContainerRef = useRef<HTMLDivElement>(null);
-  // State to manage the date filter's visibility
+  const subTabsContainerRef = useRef<HTMLDivElement>(null);
   const [isDateFilterVisible, setIsDateFilterVisible] = useState(
     viewMode === "center"
   );
@@ -194,15 +201,12 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
     };
   }, [isAnyFilterActive]);
 
-  // This effect runs whenever the active pie tab changes
   useEffect(() => {
-    // Construct the ID of the active tab button
     const activeTabElement = document.getElementById(`pie-tab-${activePieTab}`);
-    // If the element is found, scroll it into the visible area of its container
     if (activeTabElement) {
       activeTabElement.scrollIntoView({
         behavior: "smooth",
-        inline: "nearest", // Crucial for horizontal scrolling
+        inline: "nearest",
         block: "nearest",
       });
     }
@@ -230,28 +234,51 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
     };
   }, [isAnyFilterActive]);
 
-  // Check if a date range is active to style the button accordingly
+  useEffect(() => {
+    const scrollContainer = subTabsContainerRef.current;
+    if (!scrollContainer) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      if (e.deltaX !== 0) return;
+      if (
+        e.deltaY !== 0 &&
+        scrollContainer.scrollWidth > scrollContainer.clientWidth
+      ) {
+        e.preventDefault();
+        scrollContainer.scrollLeft += e.deltaY;
+      }
+    };
+
+    scrollContainer.addEventListener("wheel", handleWheel, { passive: false });
+    return () => {
+      scrollContainer.removeEventListener("wheel", handleWheel);
+    };
+  }, [parentTab]);
+
   const isDateFilterActive =
     dateRange?.startDate !== null || dateRange?.endDate !== null;
 
-  const activityTabsConfig: {
-    key: StatsActivityType;
-    label: string;
-    icon: React.ElementType;
-  }[] = [
-    { key: "all", label: "Всички", icon: GlobeAltIcon },
-    { key: "cases", label: "Сигнали", icon: DocumentTextIcon },
-    { key: "answers", label: "Решения", icon: ChatBubbleBottomCenterTextIcon },
-    {
-      key: "comments",
-      label: "Коментари",
-      icon: ChatBubbleOvalLeftEllipsisIcon,
-    },
-    { key: "ratings", label: "Оценки", icon: StarIcon },
-    { key: "approvals", label: "Одобрени", icon: HandThumbUpIcon },
-    { key: "finances", label: "Финанси", icon: BanknotesIcon },
-    { key: "tasks", label: "Задачи", icon: ClipboardDocumentCheckIcon },
+  const isTasksParent = parentTab === "tasks";
+
+  // Sub-tab configs for each parent
+  const caseSubTabsConfig: { key: CaseSubTab; label: string; icon: React.ElementType; countKey: keyof typeof activityCounts }[] = [
+    { key: "all", label: "Всички", icon: DocumentTextIcon, countKey: "casesTotal" },
+    { key: "cases", label: "Сигнали", icon: DocumentTextIcon, countKey: "cases" },
+    { key: "answers", label: "Решения", icon: ChatBubbleBottomCenterTextIcon, countKey: "answers" },
+    { key: "comments", label: "Коментари", icon: ChatBubbleOvalLeftEllipsisIcon, countKey: "comments" },
+    { key: "ratings", label: "Оценки", icon: StarIcon, countKey: "ratings" },
+    { key: "approvals", label: "Одобрени", icon: HandThumbUpIcon, countKey: "approvals" },
+    { key: "finances", label: "Финанси", icon: BanknotesIcon, countKey: "finances" },
   ];
+
+  const taskSubTabsConfig: { key: TaskSubTab; label: string; icon: React.ElementType; countKey: keyof typeof activityCounts }[] = [
+    { key: "all", label: "Всички", icon: ClipboardDocumentCheckIcon, countKey: "tasksTotal" },
+    { key: "tasks", label: "Задачи", icon: ClipboardDocumentListIcon, countKey: "tasks" },
+    { key: "entries", label: "Записи", icon: PencilSquareIcon, countKey: "entries" },
+    { key: "analyses", label: "Анализи", icon: BeakerIcon, countKey: "analyses" },
+  ];
+
+  const activeSubTabsConfig = isTasksParent ? taskSubTabsConfig : caseSubTabsConfig;
 
   if (isLoading) {
     return (
@@ -288,8 +315,40 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
     );
   }
 
-  // 👇 Simplified TextStatsSection as requested
-  const TextStatsSection = (
+  const TextStatsSection = isTasksParent ? (
+    <div
+      className={
+        viewMode === "center"
+          ? "flex items-center justify-around text-center"
+          : "space-y-1"
+      }
+    >
+      <StatItem
+        icon={ClipboardDocumentCheckIcon}
+        label="Общо задачи"
+        value={activityCounts.tasksTotal}
+        iconColorClass="text-blue-500"
+      />
+      <StatItem
+        icon={ClipboardDocumentListIcon}
+        label="Жизнен цикъл"
+        value={activityCounts.tasks}
+        iconColorClass="text-green-500"
+      />
+      <StatItem
+        icon={PencilSquareIcon}
+        label="Записи"
+        value={activityCounts.entries}
+        iconColorClass="text-purple-500"
+      />
+      <StatItem
+        icon={BeakerIcon}
+        label="Анализи"
+        value={activityCounts.analyses}
+        iconColorClass="text-teal-500"
+      />
+    </div>
+  ) : (
     <div
       className={
         viewMode === "center"
@@ -327,8 +386,6 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
       />
     </div>
   );
-
-  const isTasksTab = activeStatsTab === "tasks";
 
   const casePieTabsConfig = [
     {
@@ -382,47 +439,78 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
       filterActive: activeTaskPriorityFilter !== "all",
       clearFilter: onClearTaskPriorityFilter,
     },
+    {
+      key: "taskTimeliness",
+      label: "По Срок",
+      filterActive: activeTaskTimelinessFilter !== "all",
+      clearFilter: onClearTaskTimelinessFilter,
+    },
   ];
 
-  const pieTabsConfig = isTasksTab ? taskPieTabsConfig : casePieTabsConfig;
+  const pieTabsConfig = isTasksParent ? taskPieTabsConfig : casePieTabsConfig;
 
   const PieChartSection = (
     <>
+      {/* Parent tabs row */}
       <div>
         <label className="text-xs font-semibold text-gray-500">
           Вижте изолирана диаграма за:
         </label>
-        {/* changed to a grid layout for consistent button widths */}
-        <div
-          className={`mt-1.5 grid ${
-            viewMode === "center" ? "grid-cols-4" : "grid-cols-3"
-          } gap-1.5`}
-        >
-          {activityTabsConfig.map((tab) => {
-            // Get the specific count for the current tab
-            const count =
-              activityCounts[tab.key as keyof typeof activityCounts] ?? 0;
-            return (
-              <button
-                key={tab.key}
-                onClick={() => onStatsTabChange(tab.key)}
-                // Disable the button if its count is 0
-                disabled={count === 0}
-                className={`cursor-pointer flex-grow basis-auto flex items-center justify-center gap-x-1.5 rounded-md px-2 py-1 text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed ${
-                  activeStatsTab === tab.key
-                    ? "bg-indigo-600 text-white shadow-sm"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                }`}
-              >
-                <tab.icon className="h-4 w-4" />
-                {/* Display the count in the tab label */}
-                <span>
-                  {tab.label} ({count})
-                </span>
-              </button>
-            );
-          })}
+        <div className="mt-1.5 grid grid-cols-2 gap-1.5">
+          <button
+            onClick={() => onParentTabChange("cases")}
+            className={`cursor-pointer flex items-center justify-center gap-x-1.5 rounded-md px-2 py-1.5 text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-500 ${
+              parentTab === "cases"
+                ? "bg-indigo-600 text-white shadow-sm"
+                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+            }`}
+          >
+            <DocumentTextIcon className="h-4 w-4" />
+            <span>Сигнали ({activityCounts.casesTotal})</span>
+          </button>
+          <button
+            onClick={() => onParentTabChange("tasks")}
+            className={`cursor-pointer flex items-center justify-center gap-x-1.5 rounded-md px-2 py-1.5 text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-500 ${
+              parentTab === "tasks"
+                ? "bg-indigo-600 text-white shadow-sm"
+                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+            }`}
+          >
+            <ClipboardDocumentCheckIcon className="h-4 w-4" />
+            <span>Задачи ({activityCounts.tasksTotal})</span>
+          </button>
         </div>
+      </div>
+
+      {/* Sub-tabs row */}
+      <div
+        ref={subTabsContainerRef}
+        className={`grid ${
+          viewMode === "center"
+            ? isTasksParent ? "grid-cols-4" : "grid-cols-4"
+            : isTasksParent ? "grid-cols-2" : "grid-cols-3"
+        } gap-1.5`}
+      >
+        {activeSubTabsConfig.map((tab) => {
+          const count = activityCounts[tab.countKey] ?? 0;
+          return (
+            <button
+              key={tab.key}
+              onClick={() => onSubTabChange(tab.key)}
+              disabled={count === 0}
+              className={`cursor-pointer flex-grow basis-auto flex items-center justify-center gap-x-1 rounded-md px-2 py-1 text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed ${
+                subTab === tab.key
+                  ? "bg-indigo-100 text-indigo-700 ring-1 ring-indigo-300"
+                  : "bg-gray-50 text-gray-500 hover:bg-gray-100"
+              }`}
+            >
+              <tab.icon className="h-3.5 w-3.5" />
+              <span>
+                {tab.label} ({count})
+              </span>
+            </button>
+          );
+        })}
       </div>
 
       <div
@@ -547,6 +635,19 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
             layout={viewMode === "center" ? "horizontal" : "vertical"}
           />
         )}
+        {activePieTab === "taskTimeliness" && (
+          <StatisticPieChart
+            title="Задачи по Срок"
+            pieData={pieChartStats.taskTimelinessDistributionData}
+            onSegmentClick={onTaskTimelinessClick}
+            activeLabel={
+              pieChartStats.taskTimelinessDistributionData.find(
+                (d) => d.id === activeTaskTimelinessFilter
+              )?.label
+            }
+            layout={viewMode === "center" ? "horizontal" : "vertical"}
+          />
+        )}
       </div>
     </>
   );
@@ -555,7 +656,6 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
     <Tooltip.Provider>
       <aside className="bg-white rounded-lg shadow-lg flex flex-col overflow-hidden h-full">
         <div className="p-4 sm:p-4 space-y-3 overflow-y-auto flex-1 custom-scrollbar-xs">
-          {/* 👇 Wrap heading in a flex container to align with the button */}
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-x-2">
               <ChartPieIcon className="h-6 w-6 mr-2 text-teal-600" />
@@ -579,7 +679,6 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
                 </Tooltip.Root>
               )}
             </h3>
-            {/* 👇 Render the toggle button only in the center view mode */}
             {viewMode === "center" && (
               <button
                 onClick={() => setIsDateFilterVisible((prev) => !prev)}
@@ -597,7 +696,6 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
             )}
           </div>
 
-          {/* 👇 Update the conditional render to use the new state */}
           {viewMode === "center" &&
             isDateFilterVisible &&
             dateRange &&
@@ -610,10 +708,9 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
               </div>
             )}
 
-          {/* 👇 Conditionally render the Active Filters section */}
           {viewMode === "center" &&
             isAnyFilterActive &&
-            onClearAllFilters && ( // Ensure handlers are present
+            onClearAllFilters && (
               <div className="px-3 py-1.5 rounded-md border border-gray-200 bg-gray-50 flex items-center justify-between gap-x-4">
                 <div
                   ref={filtersContainerRef}
@@ -681,6 +778,13 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
                       onClick={() => onPieTabChange("taskPriority")}
                     />
                   )}
+                  {activeTaskTimelinessFilter !== "all" && onClearTaskTimelinessFilter && (
+                    <FilterTag
+                      label={`Срок: ${activeTaskTimelinessFilter}`}
+                      onRemove={onClearTaskTimelinessFilter}
+                      onClick={() => onPieTabChange("taskTimeliness")}
+                    />
+                  )}
                   {isDateFilterActive && onDateRangeChange && (
                     <FilterTag
                       label="Период"
@@ -701,7 +805,6 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
           {viewMode === "center" ? (
             <>
               {PieChartSection}
-              {/* {TextStatsSection} */}
             </>
           ) : (
             <>

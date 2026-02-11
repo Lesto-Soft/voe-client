@@ -111,6 +111,9 @@ const taskFragment = gql`
     creator {
       ...UserBasicFragment
     }
+    canAccessUsers {
+      _id
+    }
     relatedCase {
       _id
       case_number

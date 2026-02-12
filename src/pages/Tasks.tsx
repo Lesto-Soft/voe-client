@@ -9,6 +9,7 @@ import {
   TaskFormModal,
 } from "../components/task";
 import { PlusIcon } from "@heroicons/react/24/outline";
+import { ROLES } from "../utils/GLOBAL_PARAMETERS";
 
 const ITEMS_PER_PAGE = 12;
 const TASK_VIEW_PREFS_KEY = "taskDashboard_viewPrefs";
@@ -44,6 +45,9 @@ const savePrefs = (prefs: Partial<TaskViewPrefs>) => {
 
 const TasksPage: React.FC = () => {
   const currentUser = useCurrentUser();
+  const canCreateTask =
+    currentUser?.role?._id === ROLES.ADMIN ||
+    currentUser?.role?._id === ROLES.EXPERT;
 
   // Modal state
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -146,13 +150,15 @@ const TasksPage: React.FC = () => {
             Преглеждайте и управлявайте вашите задачи.
           </p>
         </div>
-        <button
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-md cursor-pointer"
-          onClick={() => setIsCreateModalOpen(true)}
-        >
-          <PlusIcon className="h-5 w-5" />
-          Нова задача
-        </button>
+        {canCreateTask && (
+          <button
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-md cursor-pointer"
+            onClick={() => setIsCreateModalOpen(true)}
+          >
+            <PlusIcon className="h-5 w-5" />
+            Нова задача
+          </button>
+        )}
       </header>
 
       {/* Filters */}

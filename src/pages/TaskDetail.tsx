@@ -5,6 +5,7 @@ import { useQuery } from "@apollo/client";
 import { GET_LEAN_USERS } from "../graphql/query/user";
 import { useCurrentUser } from "../context/UserContext";
 import { ITask } from "../db/interfaces";
+import { ROLES } from "../utils/GLOBAL_PARAMETERS";
 import PageStatusDisplay from "../components/global/PageStatusDisplay";
 import TaskPriorityBadge from "../components/task/TaskPriorityBadge";
 import TaskStatusPill from "../components/task/TaskStatusPill";
@@ -108,17 +109,15 @@ const TaskDetail: React.FC = () => {
     }
   };
 
-  // Check if current user can edit the task
-  const canEdit =
-    currentUser._id === taskData.creator._id ||
-    currentUser._id === taskData.assignee?._id ||
-    currentUser.role?._id === "ADMIN";
+  const isAdmin = currentUser.role?._id === ROLES.ADMIN;
+  const isCreator = currentUser._id === taskData.creator._id;
 
-  // Check if current user can change status directly (only creator and admin)
-  // Assignee changes status through activities (auto-transition)
-  const canChangeStatus =
-    currentUser._id === taskData.creator._id ||
-    currentUser.role?._id === "ADMIN";
+  // Only admins and task creators can edit/delete and change assignee
+  const canEdit = isAdmin || isCreator;
+
+  // Only admins and task creators can manually change status
+  // Assignee changes status indirectly through activities (auto-transition)
+  const canChangeStatus = isAdmin || isCreator;
 
   return (
     <div className="flex flex-col lg:flex-row bg-gray-50 lg:h-[calc(100vh-6rem)] w-full">

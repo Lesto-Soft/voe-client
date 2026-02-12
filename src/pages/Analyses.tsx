@@ -37,6 +37,8 @@ import {
 import { getStartAndEndOfWeek } from "../utils/dateUtils";
 import { ICase, ITask, CasePriority, CaseType, TaskStatus } from "../db/interfaces";
 import { PieSegmentData } from "../components/charts/PieChart";
+import { useCurrentUser } from "../context/UserContext";
+import { ROLES } from "../utils/GLOBAL_PARAMETERS";
 
 // Define the shape of the filters object for clarity
 type CaseFilters = {
@@ -48,6 +50,9 @@ type CaseFilters = {
 };
 
 const Analyses: React.FC = () => {
+  const currentUser = useCurrentUser();
+  const isAdmin = currentUser?.role?._id === ROLES.ADMIN;
+
   const [activeTopTab, setActiveTopTab] = useState<"cases" | "tasks">("cases");
   const [barChartStyle, setBarChartStyle] = useState<"grouped" | "stacked">(
     "grouped"
@@ -506,9 +511,9 @@ const Analyses: React.FC = () => {
             rankedFastest={rankedTaskFastest as RankedUser[]}
             onBarClick={handleBarChartClick}
             onChartAreaRightClick={handleChartAreaRightClick}
-            onBarMiddleClick={handleTaskBarMiddleClick}
-            onStatusPieMiddleClick={handleTaskStatusPieMiddleClick}
-            onPriorityPieMiddleClick={handleTaskPriorityPieMiddleClick}
+            onBarMiddleClick={isAdmin ? handleTaskBarMiddleClick : undefined}
+            onStatusPieMiddleClick={isAdmin ? handleTaskStatusPieMiddleClick : undefined}
+            onPriorityPieMiddleClick={isAdmin ? handleTaskPriorityPieMiddleClick : undefined}
             onPodiumClick={(title, users) =>
               setPodiumState({ title, users })
             }
@@ -528,7 +533,7 @@ const Analyses: React.FC = () => {
                   barStyle={barChartStyle}
                   onBarClick={handleBarChartClick}
                   onChartAreaRightClick={handleChartAreaRightClick}
-                  onBarMiddleClick={handleCaseBarMiddleClick}
+                  onBarMiddleClick={isAdmin ? handleCaseBarMiddleClick : undefined}
                 />
               )}
             </div>
@@ -681,15 +686,17 @@ const Analyses: React.FC = () => {
                           : caseAnalytics.typePieData
                       }
                       onSegmentMiddleClick={
-                        filters.barChartMode === "type"
-                          ? (segment) => handlePriorityPieMiddleClick(segment)
-                          : (segment) => handleTypePieMiddleClick(segment)
+                        isAdmin
+                          ? filters.barChartMode === "type"
+                            ? (segment) => handlePriorityPieMiddleClick(segment)
+                            : (segment) => handleTypePieMiddleClick(segment)
+                          : undefined
                       }
                     />
                     <DistributionChartCard
                       title="Разпределение по категории"
                       pieData={caseAnalytics.categoryPieData}
-                      onSegmentMiddleClick={(segment) => handleCategoryPieMiddleClick(segment)}
+                      onSegmentMiddleClick={isAdmin ? (segment) => handleCategoryPieMiddleClick(segment) : undefined}
                     />
                     <SummaryCard
                       title="Среден рейтинг на сигнал"

@@ -349,6 +349,7 @@ fragment FullUserFragment on User {
           status
           priority
           relatedCase { _id case_number tasks { _id } readBy { user { _id } } }
+          canAccessUsers { _id }
         }
       }
 }`;

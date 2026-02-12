@@ -214,7 +214,13 @@ const TasksPage: React.FC = () => {
         isOpen={isCreateModalOpen}
         onOpenChange={setIsCreateModalOpen}
         mode="create"
-        onSuccess={refetch}
+        onSuccess={() => {
+          if (filterMode !== "createdByMe") {
+            handleFilterModeChange("createdByMe");
+          } else {
+            refetch();
+          }
+        }}
       />
     </div>
   );

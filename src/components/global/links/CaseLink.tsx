@@ -6,11 +6,18 @@ import { canViewCase } from "../../../utils/rightUtils";
 
 interface ICaseLinkProps {
   my_case: ICase;
-  t: (key: string) => string;
+  t?: (key: string) => string;
   targetId?: string; // 1. Add optional targetId prop
 }
 
-const CaseLink: React.FC<ICaseLinkProps> = ({ my_case, t, targetId }) => {
+const defaultT = (key: string): string =>
+  key === "details_for" ? "Детайли за" : key;
+
+const CaseLink: React.FC<ICaseLinkProps> = ({
+  my_case,
+  t = defaultT,
+  targetId,
+}) => {
   // 2. Destructure prop
   const currentUser = useCurrentUser();
 
@@ -18,9 +25,10 @@ const CaseLink: React.FC<ICaseLinkProps> = ({ my_case, t, targetId }) => {
     return null;
   }
 
-  const isUnread = !my_case.readBy?.some(
-    (entry) => entry.user._id === currentUser._id
-  );
+  // without fallback:  const isUnread = !my_case.readBy?.some(
+  const isUnread =
+    Array.isArray(my_case.readBy) &&
+    !my_case.readBy.some((entry) => entry.user._id === currentUser._id);
 
   const isAllowed = canViewCase(currentUser, my_case);
   const isClosed = my_case.status === "CLOSED";
@@ -59,8 +67,8 @@ const CaseLink: React.FC<ICaseLinkProps> = ({ my_case, t, targetId }) => {
     const activeClasses = isClosed
       ? "bg-blue-50 text-blue-400 border-blue-200"
       : isUnread
-      ? "bg-blue-100 text-blue-800 font-bold hover:bg-blue-200 border-blue-300"
-      : "bg-blue-100 text-blue-700 hover:bg-blue-200 hover:text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 cursor-pointer border-blue-200";
+        ? "bg-blue-100 text-blue-800 font-bold hover:bg-blue-200 border-blue-300"
+        : "bg-blue-100 text-blue-700 hover:bg-blue-200 hover:text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 cursor-pointer border-blue-200";
 
     // 3. Construct the path with the optional hash
     const path = `/case/${my_case.case_number}${

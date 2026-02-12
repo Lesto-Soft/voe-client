@@ -126,6 +126,11 @@ const taskFragment = gql`
         name
         color
       }
+      readBy {
+        user {
+          _id
+        }
+      }
     }
   }
   ${userBasicFragment}

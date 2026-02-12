@@ -20,7 +20,6 @@ import UserAvatar from "../components/cards/UserAvatar";
 import ShowDate from "../components/global/ShowDate";
 import ConfirmActionDialog from "../components/modals/ConfirmActionDialog";
 import { endpoint } from "../db/config";
-import { useTranslation } from "react-i18next";
 import {
   PencilIcon,
   TrashIcon,
@@ -31,7 +30,6 @@ import {
 import { ClockIcon } from "@heroicons/react/24/outline";
 
 const TaskDetail: React.FC = () => {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const { taskNumber: taskNumberParam } = useParams<{ taskNumber: string }>();
   const currentUser = useCurrentUser();
@@ -168,7 +166,7 @@ const TaskDetail: React.FC = () => {
                 <h3 className="text-xs font-semibold text-gray-500 mb-2 flex items-center gap-1.5">
                   Произход:
                 </h3>
-                <CaseLink my_case={taskData.relatedCase} t={t} />
+                <CaseLink my_case={taskData.relatedCase} />
               </div>
             )}
 

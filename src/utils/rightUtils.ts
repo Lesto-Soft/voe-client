@@ -147,6 +147,9 @@ export const canViewCategory = (
 export const canViewCase = (currentUser: IMe, caseData: ICase): boolean => {
   if (!currentUser || !caseData) return false;
 
+  // Admins can always view any case regardless of populated fields
+  if (currentUser.role?._id === ROLES.ADMIN) return true;
+
   // Standard rights check (requires creator to be populated)
   if (caseData.creator) {
     const rights = determineUserRightsForCase(currentUser, caseData);

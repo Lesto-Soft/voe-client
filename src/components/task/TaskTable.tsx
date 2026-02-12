@@ -8,15 +8,15 @@ import TaskLink from "../global/links/TaskLink";
 import CaseLink from "../global/links/CaseLink";
 import UserLink from "../global/links/UserLink";
 import ShowDate from "../global/ShowDate";
-import { ExclamationTriangleIcon, ClockIcon } from "@heroicons/react/24/outline";
-import { useTranslation } from "react-i18next";
-
+import {
+  ExclamationTriangleIcon,
+  ClockIcon,
+} from "@heroicons/react/24/outline";
 interface TaskTableProps {
   tasks: ITask[];
 }
 
 const TaskTable: React.FC<TaskTableProps> = ({ tasks }) => {
-  const { t } = useTranslation();
 
   return (
     <div className="bg-white shadow-md rounded-lg overflow-x-auto">
@@ -67,7 +67,7 @@ const TaskTable: React.FC<TaskTableProps> = ({ tasks }) => {
               <td className="px-6 py-4 whitespace-nowrap">
                 {task.relatedCase ? (
                   <div className="w-20">
-                    <CaseLink my_case={task.relatedCase} t={t} />
+                    <CaseLink my_case={task.relatedCase} />
                   </div>
                 ) : (
                   <span className="text-gray-400 text-sm">—</span>
@@ -80,12 +80,14 @@ const TaskTable: React.FC<TaskTableProps> = ({ tasks }) => {
                 {task.dueDate ? (
                   <div className="flex items-center gap-1.5">
                     <ShowDate date={task.dueDate} />
-                    {getDueDateStatus(task.dueDate, task.status) === "overdue" && (
+                    {getDueDateStatus(task.dueDate, task.status) ===
+                      "overdue" && (
                       <span title="Просрочена задача">
                         <ExclamationTriangleIcon className="h-4 w-4 text-red-500" />
                       </span>
                     )}
-                    {getDueDateStatus(task.dueDate, task.status) === "warning" && (
+                    {getDueDateStatus(task.dueDate, task.status) ===
+                      "warning" && (
                       <span title="Краен срок наближава">
                         <ClockIcon className="h-4 w-4 text-amber-500" />
                       </span>

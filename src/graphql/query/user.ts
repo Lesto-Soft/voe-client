@@ -318,7 +318,7 @@ fragment FullUserFragment on User {
         completedAt
         creator { _id name username avatar }
         assignee { _id name username avatar }
-        relatedCase { _id case_number tasks { _id } }
+        relatedCase { _id case_number tasks { _id } readBy { user { _id } } }
         canAccessUsers { _id }
       }
       createdTasks {
@@ -332,7 +332,7 @@ fragment FullUserFragment on User {
         completedAt
         creator { _id name username avatar }
         assignee { _id name username avatar }
-        relatedCase { _id case_number tasks { _id } }
+        relatedCase { _id case_number tasks { _id } readBy { user { _id } } }
         canAccessUsers { _id }
       }
       createdTaskActivities {
@@ -348,7 +348,7 @@ fragment FullUserFragment on User {
           title
           status
           priority
-          relatedCase { _id case_number tasks { _id } }
+          relatedCase { _id case_number tasks { _id } readBy { user { _id } } }
         }
       }
 }`;

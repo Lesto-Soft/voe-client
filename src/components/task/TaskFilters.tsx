@@ -9,16 +9,54 @@ import {
   MagnifyingGlassIcon,
   QueueListIcon,
 } from "@heroicons/react/24/solid";
+import CustomMultiSelectDropdown from "../global/dropdown/CustomMultiSelectDropdown";
+import type {
+  DueDateFilter,
+  CaseRelationFilter,
+} from "../../graphql/hooks/task";
 
-export type TaskFilterMode = "assignedToMe" | "createdByMe" | "accessible" | "all";
+export type TaskFilterMode =
+  | "assignedToMe"
+  | "createdByMe"
+  | "accessible"
+  | "all";
+
+const TASK_STATUS_OPTIONS = [
+  { value: TaskStatus.Todo, label: "Незапочната" },
+  { value: TaskStatus.InProgress, label: "В процес" },
+  { value: TaskStatus.Done, label: "Завършена" },
+];
+
+const TASK_PRIORITY_OPTIONS = [
+  { value: CasePriority.High, label: "Висок" },
+  { value: CasePriority.Medium, label: "Среден" },
+  { value: CasePriority.Low, label: "Нисък" },
+];
+
+const DUE_DATE_OPTIONS = [
+  { value: "OVERDUE", label: "Просрочена" },
+  { value: "CLOSE_TO_OVERDUE", label: "Наближава срок" },
+  { value: "ON_TIME", label: "В срок" },
+  { value: "FINISHED_ON_TIME", label: "Завършена навреме" },
+  { value: "NO_DUE_DATE", label: "Без краен срок" },
+];
+
+const CASE_RELATION_OPTIONS = [
+  { value: "WITH_CASE", label: "Свързана със сигнал" },
+  { value: "WITHOUT_CASE", label: "Без свързан сигнал" },
+];
 
 interface TaskFiltersProps {
   filterMode: TaskFilterMode;
   onFilterModeChange: (mode: TaskFilterMode) => void;
-  statusFilter: TaskStatus | "all";
-  onStatusFilterChange: (status: TaskStatus | "all") => void;
-  priorityFilter: CasePriority | "all";
-  onPriorityFilterChange: (priority: CasePriority | "all") => void;
+  statusFilter: TaskStatus[];
+  onStatusFilterChange: (statuses: TaskStatus[]) => void;
+  priorityFilter: CasePriority[];
+  onPriorityFilterChange: (priorities: CasePriority[]) => void;
+  dueDateFilter: DueDateFilter[];
+  onDueDateFilterChange: (filters: DueDateFilter[]) => void;
+  caseRelationFilter: CaseRelationFilter | null;
+  onCaseRelationFilterChange: (filter: CaseRelationFilter | null) => void;
   searchQuery: string;
   onSearchQueryChange: (query: string) => void;
   viewMode: "grid" | "table";
@@ -32,6 +70,10 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
   onStatusFilterChange,
   priorityFilter,
   onPriorityFilterChange,
+  dueDateFilter,
+  onDueDateFilterChange,
+  caseRelationFilter,
+  onCaseRelationFilterChange,
   searchQuery,
   onSearchQueryChange,
   viewMode,
@@ -113,46 +155,77 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
       </div>
 
       {/* Bottom row: Search and dropdown filters */}
-      <div className="flex flex-col sm:flex-row gap-4">
+      <div className="flex flex-col sm:flex-row gap-4 items-end flex-wrap">
         {/* Search input */}
-        <div className="relative flex-1">
-          <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Търсене по заглавие..."
-            value={searchQuery}
-            onChange={(e) => onSearchQueryChange(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-          />
+        <div className="relative flex-1 min-w-[200px]">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Търсене
+          </label>
+          <div className="relative">
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Търсене по заглавие..."
+              value={searchQuery}
+              onChange={(e) => onSearchQueryChange(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+            />
+          </div>
         </div>
 
-        {/* Status filter */}
-        <select
-          value={statusFilter}
-          onChange={(e) =>
-            onStatusFilterChange(e.target.value as TaskStatus | "all")
-          }
-          className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white"
-        >
-          <option value="all">Всички статуси</option>
-          <option value={TaskStatus.Todo}>Незапочната</option>
-          <option value={TaskStatus.InProgress}>В процес</option>
-          <option value={TaskStatus.Done}>Завършена</option>
-        </select>
+        {/* Status multiselect */}
+        <CustomMultiSelectDropdown
+          label="Статус"
+          options={TASK_STATUS_OPTIONS}
+          selectedValues={statusFilter}
+          onChange={(values) => onStatusFilterChange(values as TaskStatus[])}
+          placeholder="Всички статуси"
+        />
 
-        {/* Priority filter */}
-        <select
-          value={priorityFilter}
-          onChange={(e) =>
-            onPriorityFilterChange(e.target.value as CasePriority | "all")
+        {/* Priority multiselect */}
+        <CustomMultiSelectDropdown
+          label="Приоритет"
+          options={TASK_PRIORITY_OPTIONS}
+          selectedValues={priorityFilter}
+          onChange={(values) =>
+            onPriorityFilterChange(values as CasePriority[])
           }
-          className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white"
-        >
-          <option value="all">Всички приоритети</option>
-          <option value={CasePriority.High}>Висок</option>
-          <option value={CasePriority.Medium}>Среден</option>
-          <option value={CasePriority.Low}>Нисък</option>
-        </select>
+          placeholder="Всички приоритети"
+        />
+
+        {/* Due date multiselect */}
+        <CustomMultiSelectDropdown
+          label="Краен срок"
+          options={DUE_DATE_OPTIONS}
+          selectedValues={dueDateFilter}
+          onChange={(values) =>
+            onDueDateFilterChange(values as DueDateFilter[])
+          }
+          placeholder="Всички"
+        />
+
+        {/* Case relation filter */}
+        <div className="w-48">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Сигнал
+          </label>
+          <select
+            value={caseRelationFilter || ""}
+            onChange={(e) =>
+              onCaseRelationFilterChange(
+                (e.target.value as CaseRelationFilter) || null,
+              )
+            }
+            className="w-full bg-white px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm focus:outline-none focus:border-indigo-500"
+          >
+            <option value="">Всички</option>
+            {CASE_RELATION_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
     </div>
   );

@@ -70,7 +70,7 @@ const AddComment: React.FC<AddCommentProps> = ({
       } else if (answerId) {
         commentPayload.answer = answerId;
       } else {
-        setSubmissionError("Липсва идентификатор на случай или решение.");
+        setSubmissionError("Липсва идентификатор на сигнал или решение.");
         return;
       }
 

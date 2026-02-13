@@ -6,12 +6,12 @@ import {
   EyeIcon,
   Bars3Icon,
   Squares2X2Icon,
-  MagnifyingGlassIcon,
   QueueListIcon,
   ChevronUpIcon,
   ChevronDownIcon,
   XMarkIcon,
 } from "@heroicons/react/24/solid";
+import ClearableInput from "../global/inputs/ClearableInput";
 import CustomMultiSelectDropdown from "../global/dropdown/CustomMultiSelectDropdown";
 import type {
   DueDateFilter,
@@ -168,36 +168,37 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
             </button>
           </div>
 
-          {/* Filter toggle button */}
-          <button
-            type="button"
-            className={`justify-center cursor-pointer group flex items-center px-4 py-2 font-semibold transition-colors duration-150 bg-gray-500 text-white hover:bg-gray-600 ${
-              isAnyFilterActive
-                ? "md:rounded-r-none rounded-l-lg rounded-r-lg"
-                : "rounded-lg"
-            }`}
-            onClick={onToggleFilters}
-            title={showFilters ? "Скрий филтри" : "Покажи филтри"}
-          >
-            {showFilters ? (
-              <ChevronUpIcon className="h-5 w-5 mr-1" />
-            ) : (
-              <ChevronDownIcon className="h-5 w-5 mr-1" />
-            )}
-            Филтри
-          </button>
-
-          {/* Clear filters button (desktop) */}
-          {isAnyFilterActive && (
+          {/* Filter toggle + Clear button group */}
+          <div className="flex md:gap-0 gap-2">
             <button
               type="button"
-              className="hidden cursor-pointer md:flex items-center pl-2 pr-3 py-2 rounded-r-lg -ml-2 bg-red-400 text-white hover:bg-red-500 transition-colors duration-150"
-              title="Изчисти всички филтри"
-              onClick={onClearFilters}
+              className={`justify-center cursor-pointer group flex items-center px-4 py-2 font-semibold transition-colors duration-150 bg-gray-500 text-white hover:bg-gray-600 ${
+                isAnyFilterActive
+                  ? "md:rounded-r-none rounded-l-lg rounded-r-lg"
+                  : "rounded-lg"
+              }`}
+              onClick={onToggleFilters}
+              title={showFilters ? "Скрий филтри" : "Покажи филтри"}
             >
-              <XMarkIcon className="h-5 w-5 text-white" />
+              {showFilters ? (
+                <ChevronUpIcon className="h-5 w-5 mr-1" />
+              ) : (
+                <ChevronDownIcon className="h-5 w-5 mr-1" />
+              )}
+              Филтри
             </button>
-          )}
+
+            {isAnyFilterActive && (
+              <button
+                type="button"
+                className="hidden cursor-pointer md:flex items-center pl-2 pr-3 py-2 rounded-r-lg bg-red-400 text-white hover:bg-red-500 transition-colors duration-150"
+                title="Изчисти всички филтри"
+                onClick={onClearFilters}
+              >
+                <XMarkIcon className="h-5 w-5 text-white" />
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -209,23 +210,17 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
             : "max-h-0 opacity-0 pointer-events-none"
         }`}
       >
-        <div className="px-4 sm:px-6 lg:px-8 py-5 bg-white rounded-lg shadow-sm">
+        <div className="py-5">
           <div className="flex flex-wrap gap-x-4 gap-y-3 items-end">
             {/* Search input */}
-            <div className="relative flex-1 min-w-[200px]">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Търсене
-              </label>
-              <div className="relative">
-                <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Търсене по заглавие..."
-                  value={searchQuery}
-                  onChange={(e) => onSearchQueryChange(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                />
-              </div>
+            <div className="flex-1 min-w-[200px]">
+              <ClearableInput
+                id="taskSearch"
+                label="Търсене"
+                value={searchQuery}
+                onChange={onSearchQueryChange}
+                placeholder="Търсене по заглавие..."
+              />
             </div>
 
             {/* Status multiselect */}

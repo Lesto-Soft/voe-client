@@ -23,6 +23,7 @@ import {
   CREATE_RISK_ASSESSMENT,
   UPDATE_RISK_ASSESSMENT,
   DELETE_RISK_ASSESSMENT,
+  REVOKE_TASK_ACCESS,
 } from "../mutation/task";
 import {
   TaskStatus,
@@ -547,6 +548,33 @@ export const useAssignTask = (taskId?: string) => {
     loading,
     error,
   };
+};
+
+/**
+ * Revokes a user's access to view a task.
+ */
+export const useRevokeTaskAccess = (taskId: string) => {
+  const [revokeAccessMutation, { loading, error }] = useMutation(
+    REVOKE_TASK_ACCESS,
+    {
+      refetchQueries: [{ query: GET_TASK_BY_ID, variables: { _id: taskId } }],
+      awaitRefetchQueries: true,
+    }
+  );
+
+  const revokeTaskAccess = async (userId: string) => {
+    try {
+      const response = await revokeAccessMutation({
+        variables: { taskId, userId },
+      });
+      return response.data.revokeTaskAccess;
+    } catch (err) {
+      console.error("Failed to revoke task access:", err);
+      throw err;
+    }
+  };
+
+  return { revokeTaskAccess, loading, error };
 };
 
 // --- useTaskActivity Hooks ---

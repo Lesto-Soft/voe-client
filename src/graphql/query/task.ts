@@ -113,6 +113,9 @@ const taskFragment = gql`
     }
     canAccessUsers {
       _id
+      name
+      username
+      avatar
     }
     relatedCase {
       _id

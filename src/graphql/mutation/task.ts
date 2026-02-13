@@ -106,6 +106,22 @@ export const ASSIGN_TASK = gql`
   }
 `;
 
+// --- Task Access Mutations ---
+
+export const REVOKE_TASK_ACCESS = gql`
+  mutation RevokeTaskAccess($taskId: ID!, $userId: ID!) {
+    revokeTaskAccess(taskId: $taskId, userId: $userId) {
+      _id
+      canAccessUsers {
+        _id
+        name
+        username
+        avatar
+      }
+    }
+  }
+`;
+
 // --- TaskActivity Mutations ---
 
 export const CREATE_TASK_ACTIVITY = gql`

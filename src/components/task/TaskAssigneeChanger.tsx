@@ -1,12 +1,11 @@
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import { IUser } from "../../db/interfaces";
 import { useAssignTask } from "../../graphql/hooks/task";
 import { useCurrentUser } from "../../context/UserContext";
-import { useQuery } from "@apollo/client";
-import { GET_LEAN_USERS } from "../../graphql/query/user";
 import UserLink from "../global/links/UserLink";
 import UserAvatar from "../cards/UserAvatar";
 import { endpoint } from "../../db/config";
+import UserCombobox from "../global/dropdown/UserCombobox";
 import { UserPlusIcon, XMarkIcon, CheckIcon } from "@heroicons/react/24/solid";
 
 interface TaskAssigneeChangerProps {
@@ -24,29 +23,14 @@ const TaskAssigneeChanger: React.FC<TaskAssigneeChangerProps> = ({
   const [selectedUserId, setSelectedUserId] = useState<string>(
     currentAssignee?._id || "",
   );
-  const [searchQuery, setSearchQuery] = useState("");
 
   const currentUser = useCurrentUser();
   const { assignTask, loading } = useAssignTask(taskId);
-  const { data: leanUsersData } = useQuery(GET_LEAN_USERS);
-  const users = leanUsersData?.getLeanUsers || [];
-
-  // Filter users based on search query
-  const filteredUsers = useMemo(() => {
-    if (!searchQuery.trim()) return users;
-    const query = searchQuery.toLowerCase();
-    return users.filter(
-      (user: { _id: string; name: string; username: string }) =>
-        user.name.toLowerCase().includes(query) ||
-        user.username.toLowerCase().includes(query),
-    );
-  }, [users, searchQuery]);
 
   const handleSave = async () => {
     try {
       await assignTask(taskId, selectedUserId || undefined, currentUser._id);
       setIsChanging(false);
-      setSearchQuery("");
       onAssigneeChanged();
     } catch (error) {
       console.error("Failed to assign task:", error);
@@ -55,7 +39,6 @@ const TaskAssigneeChanger: React.FC<TaskAssigneeChangerProps> = ({
 
   const handleCancel = () => {
     setSelectedUserId(currentAssignee?._id || "");
-    setSearchQuery("");
     setIsChanging(false);
   };
 
@@ -93,38 +76,12 @@ const TaskAssigneeChanger: React.FC<TaskAssigneeChangerProps> = ({
 
   return (
     <div className="space-y-2">
-      {/* Search input */}
-      <input
-        type="text"
-        value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
+      <UserCombobox
+        selectedUserId={selectedUserId}
+        onSelect={setSelectedUserId}
         placeholder="Търси потребител..."
-        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+        allowUnassign
       />
-
-      {/* Scrollable user list */}
-      <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-md bg-white">
-        <button
-          type="button"
-          onClick={() => setSelectedUserId("")}
-          className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-50 cursor-pointer ${!selectedUserId ? "bg-blue-50" : ""}`}
-        >
-          -- Без възложен --
-        </button>
-        {filteredUsers.map((user: { _id: string; name: string; username: string }) => (
-          <button
-            type="button"
-            key={user._id}
-            onClick={() => setSelectedUserId(user._id)}
-            className={`w-full px-3 py-2 text-left text-sm hover:bg-blue-50 flex items-center gap-2 cursor-pointer ${
-              selectedUserId === user._id ? "bg-blue-100" : ""
-            }`}
-          >
-            <span className="flex-1">{user.name}</span>
-            <span className="text-gray-500 text-xs">({user.username})</span>
-          </button>
-        ))}
-      </div>
 
       {/* Save/Cancel buttons */}
       <div className="flex justify-end gap-2">

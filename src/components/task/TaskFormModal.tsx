@@ -5,17 +5,15 @@ import { bg } from "date-fns/locale/bg";
 import {
   XMarkIcon,
   ClipboardDocumentCheckIcon,
-  XCircleIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
 } from "@heroicons/react/24/outline";
 import { ITask, CasePriority } from "../../db/interfaces";
 import { useCreateTask, useUpdateTask } from "../../graphql/hooks/task";
 import { useCurrentUser } from "../../context/UserContext";
-import { useQuery } from "@apollo/client";
-import { GET_LEAN_USERS } from "../../graphql/query/user";
 import CaseAnswerSelector from "./CaseAnswerSelector";
 import UnifiedEditor from "../forms/partials/UnifiedRichTextEditor";
+import UserCombobox from "../global/dropdown/UserCombobox";
 
 import "react-datepicker/dist/react-datepicker.css";
 
@@ -110,25 +108,9 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
   const [priority, setPriority] = useState<CasePriority>(CasePriority.Medium);
   const [dueDate, setDueDate] = useState<Date | null>(null);
   const [assigneeId, setAssigneeId] = useState<string>("");
-  const [assigneeSearchQuery, setAssigneeSearchQuery] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [attachments, setAttachments] = useState<File[]>([]);
   const [existingAttachments, setExistingAttachments] = useState<string[]>([]);
-
-  // Fetch users for assignee dropdown (lean query - no access restriction)
-  const { data: leanUsersData } = useQuery(GET_LEAN_USERS);
-  const users = leanUsersData?.getLeanUsers || [];
-
-  // Filter users based on search query
-  const filteredUsers = useMemo(() => {
-    if (!assigneeSearchQuery.trim()) return users;
-    const query = assigneeSearchQuery.toLowerCase();
-    return users.filter(
-      (user: { _id: string; name: string; username: string }) =>
-        user.name.toLowerCase().includes(query) ||
-        user.username.toLowerCase().includes(query),
-    );
-  }, [users, assigneeSearchQuery]);
 
   // Track removed existing attachments
   const originalExistingAttachments = useMemo(
@@ -156,7 +138,6 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
         setExistingAttachments([]);
       }
       setAttachments([]);
-      setAssigneeSearchQuery("");
       setError(null);
     }
   }, [isOpen, mode, task, initialDescription]);
@@ -207,9 +188,6 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
   };
 
   const isLoading = createLoading || updateLoading;
-
-  // Get selected user for display
-  const selectedUser = users?.find((u: { _id: string }) => u._id === assigneeId);
 
   return (
     <Dialog.Root open={isOpen} onOpenChange={onOpenChange}>
@@ -360,64 +338,15 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
               </div>
             </div>
 
-            {/* Assignee - only show in create mode with smart search */}
+            {/* Assignee - only show in create mode */}
             {mode === "create" && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Възложи на
-                </label>
-
-                {/* Search input */}
-                <input
-                  type="text"
-                  value={assigneeSearchQuery}
-                  onChange={(e) => setAssigneeSearchQuery(e.target.value)}
-                  placeholder="Търси потребител..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 mb-2"
-                />
-
-                {/* Scrollable user list */}
-                <div className="max-h-40 overflow-y-auto border border-gray-200 rounded-md bg-white custom-scrollbar-xs">
-                  <button
-                    type="button"
-                    onClick={() => setAssigneeId("")}
-                    className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-50 ${!assigneeId ? "bg-blue-50" : ""}`}
-                  >
-                    -- Без възложен --
-                  </button>
-                  {filteredUsers.map((user: { _id: string; name: string; username: string }) => (
-                    <button
-                      type="button"
-                      key={user._id}
-                      onClick={() => setAssigneeId(user._id)}
-                      className={`w-full px-3 py-2 text-left text-sm hover:bg-blue-50 flex items-center gap-2 cursor-pointer ${
-                        assigneeId === user._id ? "bg-blue-100" : ""
-                      }`}
-                    >
-                      <span className="flex-1">{user.name}</span>
-                      <span className="text-gray-500 text-xs">
-                        ({user.username})
-                      </span>
-                    </button>
-                  ))}
-                </div>
-
-                {/* Show selected user */}
-                {selectedUser && (
-                  <div className="mt-2 flex items-center gap-2 p-2 bg-blue-50 rounded-md">
-                    <span className="text-sm text-gray-700">
-                      {selectedUser.name}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setAssigneeId("")}
-                      className="ml-auto text-gray-400 hover:text-gray-600 cursor-pointer"
-                    >
-                      <XCircleIcon className="h-4 w-4" />
-                    </button>
-                  </div>
-                )}
-              </div>
+              <UserCombobox
+                selectedUserId={assigneeId}
+                onSelect={setAssigneeId}
+                label="Възложи на"
+                placeholder="Търси потребител..."
+                allowUnassign
+              />
             )}
 
           </div>

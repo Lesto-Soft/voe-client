@@ -1,9 +1,10 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router";
 import { useGetTaskByNumber, useDeleteTask } from "../graphql/hooks/task";
 import { useQuery } from "@apollo/client";
 import { GET_LEAN_USERS } from "../graphql/query/user";
 import { useCurrentUser } from "../context/UserContext";
+import { useNotificationSubscription } from "../graphql/hooks/notificationHook";
 import { ITask } from "../db/interfaces";
 import { ROLES } from "../utils/GLOBAL_PARAMETERS";
 import { useAuthorization } from "../hooks/useAuthorization";
@@ -79,6 +80,26 @@ const TaskDetail: React.FC = () => {
       ),
     [leanUsersData],
   );
+
+  // Real-time: silently refetch task data when a notification arrives for this task.
+  // No navigation or disruption — the user stays where they are.
+  // Highlighting only happens when the user clicks a notification from the bell icon.
+  const refetchRef = useRef(refetch);
+  refetchRef.current = refetch;
+
+  const handleNotification = useCallback(
+    ({ data }: any) => {
+      const notification = data.data?.notificationAdded;
+      if (!notification || notification.taskNumber !== numericTaskNumber) return;
+      refetchRef.current();
+    },
+    [numericTaskNumber],
+  );
+
+  useNotificationSubscription({
+    variables: { userId: currentUser._id },
+    onData: handleNotification,
+  });
 
   // Now we can have early returns
   if (numericTaskNumber <= 0) {

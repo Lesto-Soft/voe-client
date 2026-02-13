@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
+import { useLocation, useNavigate } from "react-router";
 import { useCurrentUser } from "../context/UserContext";
 import { useGetAllTasks } from "../graphql/hooks/task";
 import { TaskStatus, CasePriority } from "../db/interfaces";
@@ -8,6 +9,15 @@ import { ROLES } from "../utils/GLOBAL_PARAMETERS";
 
 const DEFAULT_ITEMS_PER_PAGE = 12;
 const TASK_VIEW_PREFS_KEY = "taskDashboard_viewPrefs";
+
+const VALID_FILTER_MODES: TaskFilterMode[] = [
+  "all",
+  "assignedToMe",
+  "createdByMe",
+  "accessible",
+];
+const VALID_STATUSES = ["all", TaskStatus.Todo, TaskStatus.InProgress, TaskStatus.Done];
+const VALID_PRIORITIES = ["all", CasePriority.High, CasePriority.Medium, CasePriority.Low];
 
 interface TaskViewPrefs {
   filterMode: TaskFilterMode;
@@ -30,35 +40,90 @@ const savePrefs = (prefs: Partial<TaskViewPrefs>) => {
       TASK_VIEW_PREFS_KEY,
       JSON.stringify({ ...current, ...prefs }),
     );
-  } catch (error) {
-    console.warn(
-      "Failed to save task view preferences to sessionStorage:",
-      error,
-    );
+  } catch {
+    // Ignore storage errors
   }
+};
+
+/** Read initial filter state from URL search params, falling back to sessionStorage / defaults */
+const getInitialState = (search: string) => {
+  const params = new URLSearchParams(search);
+  const stored = getStoredPrefs();
+
+  const tabParam = params.get("tab");
+  const filterMode: TaskFilterMode =
+    tabParam && VALID_FILTER_MODES.includes(tabParam as TaskFilterMode)
+      ? (tabParam as TaskFilterMode)
+      : stored.filterMode || "assignedToMe";
+
+  const statusParam = params.get("status");
+  const statusFilter: TaskStatus | "all" =
+    statusParam && VALID_STATUSES.includes(statusParam)
+      ? (statusParam as TaskStatus | "all")
+      : "all";
+
+  const priorityParam = params.get("priority");
+  const priorityFilter: CasePriority | "all" =
+    priorityParam && VALID_PRIORITIES.includes(priorityParam)
+      ? (priorityParam as CasePriority | "all")
+      : "all";
+
+  const searchQuery = params.get("search") || "";
+
+  const viewParam = params.get("view");
+  const viewMode: "grid" | "table" =
+    viewParam === "grid" || viewParam === "table"
+      ? viewParam
+      : stored.viewMode || "grid";
+
+  const pageParam = Number(params.get("page"));
+  const currentPage = pageParam >= 1 ? pageParam : 1;
+
+  const perPageParam = Number(params.get("perPage"));
+  const itemsPerPage = perPageParam > 0 ? perPageParam : DEFAULT_ITEMS_PER_PAGE;
+
+  return { filterMode, statusFilter, priorityFilter, searchQuery, viewMode, currentPage, itemsPerPage };
 };
 
 const TasksPage: React.FC = () => {
   const currentUser = useCurrentUser();
+  const location = useLocation();
+  const navigate = useNavigate();
 
-  // Filter state - initialize from sessionStorage
-  const [filterMode, setFilterMode] = useState<TaskFilterMode>(() => {
-    const stored = getStoredPrefs();
-    return stored.filterMode || "assignedToMe";
-  });
-  const [statusFilter, setStatusFilter] = useState<TaskStatus | "all">("all");
-  const [priorityFilter, setPriorityFilter] = useState<CasePriority | "all">(
-    "all",
+  // Initialize state from URL params
+  const initial = useMemo(() => getInitialState(location.search), []);
+
+  const [filterMode, setFilterMode] = useState<TaskFilterMode>(initial.filterMode);
+  const [statusFilter, setStatusFilter] = useState<TaskStatus | "all">(initial.statusFilter);
+  const [priorityFilter, setPriorityFilter] = useState<CasePriority | "all">(initial.priorityFilter);
+  const [searchQuery, setSearchQuery] = useState(initial.searchQuery);
+  const [viewMode, setViewMode] = useState<"grid" | "table">(initial.viewMode);
+  const [currentPage, setCurrentPage] = useState(initial.currentPage);
+  const [itemsPerPage, setItemsPerPage] = useState(initial.itemsPerPage);
+
+  // Sync state to URL
+  const syncUrl = useCallback(
+    (overrides: Record<string, string | undefined>) => {
+      const params = new URLSearchParams();
+      const values: Record<string, string | undefined> = {
+        tab: filterMode,
+        status: statusFilter !== "all" ? statusFilter : undefined,
+        priority: priorityFilter !== "all" ? priorityFilter : undefined,
+        search: searchQuery.trim() || undefined,
+        view: viewMode,
+        page: String(currentPage),
+        perPage: String(itemsPerPage),
+        ...overrides,
+      };
+      for (const [key, val] of Object.entries(values)) {
+        if (val !== undefined && val !== "") params.set(key, val);
+      }
+      navigate(`${location.pathname}?${params.toString()}`, { replace: true });
+    },
+    [filterMode, statusFilter, priorityFilter, searchQuery, viewMode, currentPage, itemsPerPage, navigate, location.pathname],
   );
-  const [searchQuery, setSearchQuery] = useState("");
-  const [viewMode, setViewMode] = useState<"grid" | "table">(() => {
-    const stored = getStoredPrefs();
-    return stored.viewMode || "grid";
-  });
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(DEFAULT_ITEMS_PER_PAGE);
 
-  // Compute accessible-only task IDs (tasks user has access to but didn't create and isn't assigned to)
+  // Compute accessible-only task IDs
   const accessibleOnlyTaskIds = useMemo(() => {
     return currentUser?.accessibleTasks?.map((t) => t._id) || [];
   }, [currentUser?.accessibleTasks]);
@@ -67,7 +132,7 @@ const TasksPage: React.FC = () => {
   const queryInput = useMemo(() => {
     const input: Record<string, unknown> = {
       itemsPerPage,
-      currentPage: currentPage - 1, // Pagination component is 1-based, server is 0-based
+      currentPage: currentPage - 1,
     };
 
     if (statusFilter !== "all") {
@@ -80,7 +145,6 @@ const TasksPage: React.FC = () => {
       input.searchQuery = searchQuery.trim();
     }
     if (filterMode === "all") {
-      // Admin sees everything; non-admin sees assigned + created + accessible
       if (currentUser?.role?._id !== ROLES.ADMIN) {
         input.viewableByUserId = currentUser?._id;
       }
@@ -116,21 +180,42 @@ const TasksPage: React.FC = () => {
     setFilterMode(mode);
     setCurrentPage(1);
     savePrefs({ filterMode: mode });
+    syncUrl({ tab: mode, page: "1" });
   };
 
   const handleStatusFilterChange = (status: TaskStatus | "all") => {
     setStatusFilter(status);
     setCurrentPage(1);
+    syncUrl({ status: status !== "all" ? status : undefined, page: "1" });
   };
 
   const handlePriorityFilterChange = (priority: CasePriority | "all") => {
     setPriorityFilter(priority);
     setCurrentPage(1);
+    syncUrl({ priority: priority !== "all" ? priority : undefined, page: "1" });
   };
 
   const handleSearchQueryChange = (query: string) => {
     setSearchQuery(query);
     setCurrentPage(1);
+    syncUrl({ search: query.trim() || undefined, page: "1" });
+  };
+
+  const handleViewModeChange = (mode: "grid" | "table") => {
+    setViewMode(mode);
+    savePrefs({ viewMode: mode });
+    syncUrl({ view: mode });
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    syncUrl({ page: String(page) });
+  };
+
+  const handleItemsPerPageChange = (newSize: number) => {
+    setItemsPerPage(newSize);
+    setCurrentPage(1);
+    syncUrl({ perPage: String(newSize), page: "1" });
   };
 
   if (error) {
@@ -159,10 +244,7 @@ const TasksPage: React.FC = () => {
         searchQuery={searchQuery}
         onSearchQueryChange={handleSearchQueryChange}
         viewMode={viewMode}
-        onViewModeChange={(mode) => {
-          setViewMode(mode);
-          savePrefs({ viewMode: mode });
-        }}
+        onViewModeChange={handleViewModeChange}
       />
 
       {/* Task List */}
@@ -177,11 +259,8 @@ const TasksPage: React.FC = () => {
           totalCount={count}
           currentPage={currentPage}
           itemsPerPage={itemsPerPage}
-          onItemsPerPageChange={(newSize) => {
-            setItemsPerPage(newSize);
-            setCurrentPage(1);
-          }}
-          onPageChange={setCurrentPage}
+          onItemsPerPageChange={handleItemsPerPageChange}
+          onPageChange={handlePageChange}
         />
       )}
 

@@ -269,7 +269,7 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
 
   // Deep-link scroll & highlight (runs once per hash)
   const location = useLocation();
-  const highlightedRef = useRef<HTMLDivElement | null>(null);
+  const highlightedRef = useRef<HTMLElement | null>(null);
   const highlightedHashRef = useRef<string | null>(null);
 
   useEffect(() => {

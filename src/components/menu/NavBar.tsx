@@ -291,16 +291,16 @@ const NavBar: React.FC<{ me: IMe }> = ({ me }) => {
             )}
 
             <NavLink
-              to="/tasks"
-              icon={<ClipboardDocumentCheckIcon className="h-6 w-6" />}
-              label={t("tasks", "Задачи")}
+              to="/dashboard"
+              icon={<ClipboardDocumentListIcon className="h-6 w-6" />}
+              label={t("dashboard")}
               theme="red"
             />
 
             <NavLink
-              to="/dashboard"
-              icon={<ClipboardDocumentListIcon className="h-6 w-6" />}
-              label={t("dashboard")}
+              to="/tasks"
+              icon={<ClipboardDocumentCheckIcon className="h-6 w-6" />}
+              label={t("tasks", "Задачи")}
               theme="red"
             />
 

@@ -1,4 +1,4 @@
-import { ICase, IMe, IUser, ICategory } from "../db/interfaces";
+import { ICase, IMe, IUser, ICategory, ITask } from "../db/interfaces";
 import { ROLES, CASE_STATUS } from "./GLOBAL_PARAMETERS";
 
 export const checkNormal = (userRoleId: string): boolean => {
@@ -166,6 +166,14 @@ export const canViewCase = (currentUser: IMe, caseData: ICase): boolean => {
   }
 
   return false;
+};
+
+export const canViewTask = (currentUser: IMe, task: ITask): boolean => {
+  if (!currentUser || !task) return false;
+
+  if (currentUser.role?._id === ROLES.ADMIN) return true;
+
+  return currentUser.accessibleTasks?.some((t) => t._id === task._id) ?? false;
 };
 
 export const canViewRatingMetric = (currentUser: IMe): boolean => {

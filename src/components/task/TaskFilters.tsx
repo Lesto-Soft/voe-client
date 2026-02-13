@@ -3,12 +3,14 @@ import { TaskStatus, CasePriority } from "../../db/interfaces";
 import {
   UserCircleIcon,
   UsersIcon,
+  EyeIcon,
   Bars3Icon,
   Squares2X2Icon,
   MagnifyingGlassIcon,
+  QueueListIcon,
 } from "@heroicons/react/24/solid";
 
-export type TaskFilterMode = "assignedToMe" | "createdByMe" | "all";
+export type TaskFilterMode = "assignedToMe" | "createdByMe" | "accessible" | "all";
 
 interface TaskFiltersProps {
   filterMode: TaskFilterMode;
@@ -42,6 +44,16 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
         {/* Filter mode buttons */}
         <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-lg">
           <button
+            onClick={() => onFilterModeChange("all")}
+            className={`px-4 py-2 text-sm font-semibold rounded-md flex items-center gap-2 transition-colors ${
+              filterMode === "all"
+                ? "bg-blue-600 text-white shadow"
+                : "text-gray-700 hover:bg-gray-200 cursor-pointer"
+            }`}
+          >
+            <QueueListIcon className="h-5 w-5" /> Всички
+          </button>
+          <button
             onClick={() => onFilterModeChange("assignedToMe")}
             className={`px-4 py-2 text-sm font-semibold rounded-md flex items-center gap-2 transition-colors ${
               filterMode === "assignedToMe"
@@ -60,6 +72,16 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
             }`}
           >
             <UsersIcon className="h-5 w-5" /> Създадени от мен
+          </button>
+          <button
+            onClick={() => onFilterModeChange("accessible")}
+            className={`px-4 py-2 text-sm font-semibold rounded-md flex items-center gap-2 transition-colors ${
+              filterMode === "accessible"
+                ? "bg-blue-600 text-white shadow"
+                : "text-gray-700 hover:bg-gray-200 cursor-pointer"
+            }`}
+          >
+            <EyeIcon className="h-5 w-5" /> Споменат / Предишен
           </button>
         </div>
 

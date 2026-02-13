@@ -38,9 +38,13 @@ export interface TaskFiltersInput {
   assigneeId?: string;
   creatorId?: string;
   caseId?: string;
+  taskIds?: string[];
   searchQuery?: string;
   startDate?: string;
   endDate?: string;
+  excludeAssigneeId?: string;
+  excludeCreatorId?: string;
+  viewableByUserId?: string;
   itemsPerPage?: number;
   currentPage?: number;
 }
@@ -129,9 +133,13 @@ export function buildTaskQueryVariables(input?: TaskFiltersInput) {
     assigneeId,
     creatorId,
     caseId,
+    taskIds,
     searchQuery,
     startDate,
     endDate,
+    excludeAssigneeId,
+    excludeCreatorId,
+    viewableByUserId,
   } = input || {};
 
   const variables: { input: Record<string, unknown> } = {
@@ -146,9 +154,13 @@ export function buildTaskQueryVariables(input?: TaskFiltersInput) {
   if (assigneeId) variables.input.assigneeId = assigneeId;
   if (creatorId) variables.input.creatorId = creatorId;
   if (caseId) variables.input.caseId = caseId;
+  if (taskIds && taskIds.length > 0) variables.input.taskIds = taskIds;
   if (searchQuery) variables.input.searchQuery = searchQuery;
   if (startDate) variables.input.startDate = startDate;
   if (endDate) variables.input.endDate = endDate;
+  if (excludeAssigneeId) variables.input.excludeAssigneeId = excludeAssigneeId;
+  if (excludeCreatorId) variables.input.excludeCreatorId = excludeCreatorId;
+  if (viewableByUserId) variables.input.viewableByUserId = viewableByUserId;
 
   return variables;
 }

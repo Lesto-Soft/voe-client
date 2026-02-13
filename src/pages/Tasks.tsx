@@ -68,6 +68,11 @@ const TasksPage: React.FC = () => {
   });
   const [currentPage, setCurrentPage] = useState(0);
 
+  // Compute accessible-only task IDs (tasks user has access to but didn't create and isn't assigned to)
+  const accessibleOnlyTaskIds = useMemo(() => {
+    return currentUser?.accessibleTasks?.map((t) => t._id) || [];
+  }, [currentUser?.accessibleTasks]);
+
   // Build query input
   const queryInput = useMemo(() => {
     const input: Record<string, unknown> = {
@@ -84,10 +89,19 @@ const TasksPage: React.FC = () => {
     if (searchQuery.trim()) {
       input.searchQuery = searchQuery.trim();
     }
-    if (filterMode === "assignedToMe") {
+    if (filterMode === "all") {
+      // Admin sees everything; non-admin sees assigned + created + accessible
+      if (currentUser?.role?._id !== ROLES.ADMIN) {
+        input.viewableByUserId = currentUser?._id;
+      }
+    } else if (filterMode === "assignedToMe") {
       input.assigneeId = currentUser?._id;
     } else if (filterMode === "createdByMe") {
       input.creatorId = currentUser?._id;
+    } else if (filterMode === "accessible") {
+      input.taskIds = accessibleOnlyTaskIds;
+      input.excludeAssigneeId = currentUser?._id;
+      input.excludeCreatorId = currentUser?._id;
     }
 
     return input;
@@ -98,6 +112,7 @@ const TasksPage: React.FC = () => {
     currentPage,
     filterMode,
     currentUser?._id,
+    accessibleOnlyTaskIds,
   ]);
 
   // Fetch tasks

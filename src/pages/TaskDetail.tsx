@@ -6,7 +6,9 @@ import { GET_LEAN_USERS } from "../graphql/query/user";
 import { useCurrentUser } from "../context/UserContext";
 import { ITask } from "../db/interfaces";
 import { ROLES } from "../utils/GLOBAL_PARAMETERS";
+import { useAuthorization } from "../hooks/useAuthorization";
 import PageStatusDisplay from "../components/global/PageStatusDisplay";
+import ForbiddenPage from "./ErrorPages/ForbiddenPage";
 import TaskPriorityBadge from "../components/task/TaskPriorityBadge";
 import TaskStatusPill from "../components/task/TaskStatusPill";
 import TaskActivities from "../components/task/TaskActivities";
@@ -25,7 +27,7 @@ import {
   PencilIcon,
   TrashIcon,
   ChatBubbleLeftRightIcon,
-  PuzzlePieceIcon,
+  BeakerIcon,
   ExclamationTriangleIcon,
 } from "@heroicons/react/24/solid";
 import { ClockIcon } from "@heroicons/react/24/outline";
@@ -55,6 +57,12 @@ const TaskDetail: React.FC = () => {
     useGetTaskByNumber(numericTaskNumber);
   const { deleteTask, loading: deleteLoading } = useDeleteTask({
     onCompleted: () => navigate("/tasks"),
+  });
+
+  // Access gate - must be called before early returns (hook rule)
+  const { isAllowed, isLoading: authLoading } = useAuthorization({
+    type: "task",
+    data: task as ITask | null,
   });
 
   // Fetch all users for mention suggestions in task activities
@@ -97,6 +105,10 @@ const TaskDetail: React.FC = () => {
         message={`Не беше намерена задача с номер: "${numericTaskNumber}".`}
       />
     );
+  }
+
+  if (!authLoading && !isAllowed) {
+    return <ForbiddenPage />;
   }
 
   const taskData = task as ITask;
@@ -320,7 +332,7 @@ const TaskDetail: React.FC = () => {
                     : "border-gray-300 shadow-sm bg-gray-100 text-gray-700 hover:bg-blue-50 hover:text-blue-600"
                 }`}
               >
-                <PuzzlePieceIcon className="h-5 w-5 mr-2" />
+                <BeakerIcon className="h-5 w-5 mr-2" />
                 Анализи
                 <sup className="ml-1">
                   {(taskData.fiveWhys?.length || 0) +

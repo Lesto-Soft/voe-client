@@ -108,6 +108,18 @@ const TasksPage: React.FC = () => {
   const [viewMode, setViewMode] = useState<"grid" | "table">(initial.viewMode);
   const [currentPage, setCurrentPage] = useState(initial.currentPage);
   const [itemsPerPage, setItemsPerPage] = useState(initial.itemsPerPage);
+  const [showFilters, setShowFilters] = useState(true);
+
+  // Check if any filter field (not filter mode / view) is active
+  const isAnyFilterActive = useMemo(() => {
+    return (
+      statusFilter.length > 0 ||
+      priorityFilter.length > 0 ||
+      dueDateFilter.length > 0 ||
+      caseRelationFilter !== null ||
+      searchQuery.trim() !== ""
+    );
+  }, [statusFilter, priorityFilter, dueDateFilter, caseRelationFilter, searchQuery]);
 
   // Sync state to URL
   const syncUrl = useCallback(
@@ -237,6 +249,23 @@ const TasksPage: React.FC = () => {
     syncUrl({ view: mode });
   };
 
+  const handleClearFilters = () => {
+    setStatusFilter([]);
+    setPriorityFilter([]);
+    setDueDateFilter([]);
+    setCaseRelationFilter(null);
+    setSearchQuery("");
+    setCurrentPage(1);
+    syncUrl({
+      status: undefined,
+      priority: undefined,
+      dueDate: undefined,
+      caseRelation: undefined,
+      search: undefined,
+      page: "1",
+    });
+  };
+
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
     syncUrl({ page: String(page) });
@@ -279,6 +308,10 @@ const TasksPage: React.FC = () => {
         onSearchQueryChange={handleSearchQueryChange}
         viewMode={viewMode}
         onViewModeChange={handleViewModeChange}
+        showFilters={showFilters}
+        onToggleFilters={() => setShowFilters(!showFilters)}
+        isAnyFilterActive={isAnyFilterActive}
+        onClearFilters={handleClearFilters}
       />
 
       {/* Task List */}

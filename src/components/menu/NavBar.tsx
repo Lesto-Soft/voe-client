@@ -437,9 +437,7 @@ const NavBar: React.FC<{ me: IMe }> = ({ me }) => {
         onOpenChange={setIsCreateTaskModalOpen}
         mode="create"
         onSuccess={() => {
-          if (location.pathname !== "/tasks") {
-            navigate("/tasks");
-          }
+          window.location.reload();
         }}
       />
     </div>

@@ -30,8 +30,10 @@ import {
   ChatBubbleLeftRightIcon,
   BeakerIcon,
   ExclamationTriangleIcon,
+  LockClosedIcon,
 } from "@heroicons/react/24/solid";
 import { ClockIcon } from "@heroicons/react/24/outline";
+import TaskAccessModal from "../components/task/TaskAccessModal";
 
 const TaskDetail: React.FC = () => {
   const navigate = useNavigate();
@@ -41,6 +43,7 @@ const TaskDetail: React.FC = () => {
   // Modal state
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isAccessModalOpen, setIsAccessModalOpen] = useState(false);
 
   // Right panel view toggle
   const [rightPanelView, setRightPanelView] = useState<
@@ -165,6 +168,13 @@ const TaskDetail: React.FC = () => {
               </h1>
               {canEdit && (
                 <div className="flex items-center gap-1 flex-shrink-0">
+                  <button
+                    onClick={() => setIsAccessModalOpen(true)}
+                    title="Управление на достъпа"
+                    className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors cursor-pointer"
+                  >
+                    <LockClosedIcon className="h-4 w-4" />
+                  </button>
                   <button
                     onClick={() => setIsEditModalOpen(true)}
                     title="Редактирай"
@@ -417,6 +427,17 @@ const TaskDetail: React.FC = () => {
         confirmButtonText={deleteLoading ? "Изтриване..." : "Изтрий"}
         cancelButtonText="Отмени"
         isDestructiveAction
+      />
+
+      {/* Access Management Modal */}
+      <TaskAccessModal
+        isOpen={isAccessModalOpen}
+        onOpenChange={setIsAccessModalOpen}
+        taskId={taskData._id}
+        canAccessUsers={taskData.canAccessUsers || []}
+        assigneeId={taskData.assignee?._id}
+        creatorId={taskData.creator._id}
+        onAccessChanged={refetch}
       />
     </div>
   );

@@ -32,11 +32,16 @@ import {
 
 // --- Input Types ---
 
+export type DueDateFilter = "OVERDUE" | "CLOSE_TO_OVERDUE" | "ON_TIME" | "FINISHED_ON_TIME" | "NO_DUE_DATE";
+export type CaseRelationFilter = "WITH_CASE" | "WITHOUT_CASE";
+
 export interface TaskFiltersInput {
   status?: TaskStatus;
   statuses?: TaskStatus[];
   priority?: CasePriority;
   priorities?: CasePriority[];
+  dueDateFilters?: DueDateFilter[];
+  caseRelationFilter?: CaseRelationFilter;
   assigneeId?: string;
   creatorId?: string;
   caseId?: string;
@@ -144,6 +149,8 @@ export function buildTaskQueryVariables(input?: TaskFiltersInput) {
     excludeAssigneeId,
     excludeCreatorId,
     viewableByUserId,
+    dueDateFilters,
+    caseRelationFilter,
   } = input || {};
 
   const variables: { input: Record<string, unknown> } = {
@@ -157,6 +164,8 @@ export function buildTaskQueryVariables(input?: TaskFiltersInput) {
   else if (status) variables.input.status = status;
   if (priorities && priorities.length > 0) variables.input.priorities = priorities;
   else if (priority) variables.input.priority = priority;
+  if (dueDateFilters && dueDateFilters.length > 0) variables.input.dueDateFilters = dueDateFilters;
+  if (caseRelationFilter) variables.input.caseRelationFilter = caseRelationFilter;
   if (assigneeId) variables.input.assigneeId = assigneeId;
   if (creatorId) variables.input.creatorId = creatorId;
   if (caseId) variables.input.caseId = caseId;

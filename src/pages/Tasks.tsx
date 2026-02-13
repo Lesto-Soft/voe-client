@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { useCurrentUser } from "../context/UserContext";
-import { useGetAllTasks } from "../graphql/hooks/task";
+import { useGetAllTasks, DueDateFilter, CaseRelationFilter } from "../graphql/hooks/task";
 import { TaskStatus, CasePriority } from "../db/interfaces";
 import { TaskList, TaskFilters, TaskFilterMode } from "../components/task";
 import Pagination from "../components/tables/Pagination";
@@ -18,6 +18,8 @@ const VALID_FILTER_MODES: TaskFilterMode[] = [
 ];
 const VALID_STATUSES: string[] = [TaskStatus.Todo, TaskStatus.InProgress, TaskStatus.Done];
 const VALID_PRIORITIES: string[] = [CasePriority.High, CasePriority.Medium, CasePriority.Low];
+const VALID_DUE_DATE_FILTERS: string[] = ["OVERDUE", "CLOSE_TO_OVERDUE", "ON_TIME", "FINISHED_ON_TIME", "NO_DUE_DATE"];
+const VALID_CASE_RELATIONS: string[] = ["WITH_CASE", "WITHOUT_CASE"];
 
 interface TaskViewPrefs {
   filterMode: TaskFilterMode;
@@ -64,6 +66,13 @@ const getInitialState = (search: string) => {
 
   const statusFilter = parseArrayParam(params.get("status"), VALID_STATUSES) as TaskStatus[];
   const priorityFilter = parseArrayParam(params.get("priority"), VALID_PRIORITIES) as CasePriority[];
+  const dueDateFilter = parseArrayParam(params.get("dueDate"), VALID_DUE_DATE_FILTERS) as DueDateFilter[];
+
+  const caseRelParam = params.get("caseRelation");
+  const caseRelationFilter: CaseRelationFilter | null =
+    caseRelParam && VALID_CASE_RELATIONS.includes(caseRelParam)
+      ? (caseRelParam as CaseRelationFilter)
+      : null;
 
   const searchQuery = params.get("search") || "";
 
@@ -79,7 +88,7 @@ const getInitialState = (search: string) => {
   const perPageParam = Number(params.get("perPage"));
   const itemsPerPage = perPageParam > 0 ? perPageParam : DEFAULT_ITEMS_PER_PAGE;
 
-  return { filterMode, statusFilter, priorityFilter, searchQuery, viewMode, currentPage, itemsPerPage };
+  return { filterMode, statusFilter, priorityFilter, dueDateFilter, caseRelationFilter, searchQuery, viewMode, currentPage, itemsPerPage };
 };
 
 const TasksPage: React.FC = () => {
@@ -93,6 +102,8 @@ const TasksPage: React.FC = () => {
   const [filterMode, setFilterMode] = useState<TaskFilterMode>(initial.filterMode);
   const [statusFilter, setStatusFilter] = useState<TaskStatus[]>(initial.statusFilter);
   const [priorityFilter, setPriorityFilter] = useState<CasePriority[]>(initial.priorityFilter);
+  const [dueDateFilter, setDueDateFilter] = useState<DueDateFilter[]>(initial.dueDateFilter);
+  const [caseRelationFilter, setCaseRelationFilter] = useState<CaseRelationFilter | null>(initial.caseRelationFilter);
   const [searchQuery, setSearchQuery] = useState(initial.searchQuery);
   const [viewMode, setViewMode] = useState<"grid" | "table">(initial.viewMode);
   const [currentPage, setCurrentPage] = useState(initial.currentPage);
@@ -106,6 +117,8 @@ const TasksPage: React.FC = () => {
         tab: filterMode,
         status: statusFilter.length > 0 ? statusFilter.join(",") : undefined,
         priority: priorityFilter.length > 0 ? priorityFilter.join(",") : undefined,
+        dueDate: dueDateFilter.length > 0 ? dueDateFilter.join(",") : undefined,
+        caseRelation: caseRelationFilter || undefined,
         search: searchQuery.trim() || undefined,
         view: viewMode,
         page: String(currentPage),
@@ -117,7 +130,7 @@ const TasksPage: React.FC = () => {
       }
       navigate(`${location.pathname}?${params.toString()}`, { replace: true });
     },
-    [filterMode, statusFilter, priorityFilter, searchQuery, viewMode, currentPage, itemsPerPage, navigate, location.pathname],
+    [filterMode, statusFilter, priorityFilter, dueDateFilter, caseRelationFilter, searchQuery, viewMode, currentPage, itemsPerPage, navigate, location.pathname],
   );
 
   // Compute accessible-only task IDs
@@ -137,6 +150,12 @@ const TasksPage: React.FC = () => {
     }
     if (priorityFilter.length > 0) {
       input.priorities = priorityFilter;
+    }
+    if (dueDateFilter.length > 0) {
+      input.dueDateFilters = dueDateFilter;
+    }
+    if (caseRelationFilter) {
+      input.caseRelationFilter = caseRelationFilter;
     }
     if (searchQuery.trim()) {
       input.searchQuery = searchQuery.trim();
@@ -159,6 +178,8 @@ const TasksPage: React.FC = () => {
   }, [
     statusFilter,
     priorityFilter,
+    dueDateFilter,
+    caseRelationFilter,
     searchQuery,
     currentPage,
     itemsPerPage,
@@ -190,6 +211,18 @@ const TasksPage: React.FC = () => {
     setPriorityFilter(priorities);
     setCurrentPage(1);
     syncUrl({ priority: priorities.length > 0 ? priorities.join(",") : undefined, page: "1" });
+  };
+
+  const handleDueDateFilterChange = (filters: DueDateFilter[]) => {
+    setDueDateFilter(filters);
+    setCurrentPage(1);
+    syncUrl({ dueDate: filters.length > 0 ? filters.join(",") : undefined, page: "1" });
+  };
+
+  const handleCaseRelationFilterChange = (filter: CaseRelationFilter | null) => {
+    setCaseRelationFilter(filter);
+    setCurrentPage(1);
+    syncUrl({ caseRelation: filter || undefined, page: "1" });
   };
 
   const handleSearchQueryChange = (query: string) => {
@@ -238,6 +271,10 @@ const TasksPage: React.FC = () => {
         onStatusFilterChange={handleStatusFilterChange}
         priorityFilter={priorityFilter}
         onPriorityFilterChange={handlePriorityFilterChange}
+        dueDateFilter={dueDateFilter}
+        onDueDateFilterChange={handleDueDateFilterChange}
+        caseRelationFilter={caseRelationFilter}
+        onCaseRelationFilterChange={handleCaseRelationFilterChange}
         searchQuery={searchQuery}
         onSearchQueryChange={handleSearchQueryChange}
         viewMode={viewMode}

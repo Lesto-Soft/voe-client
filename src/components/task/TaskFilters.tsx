@@ -10,8 +10,16 @@ import {
   QueueListIcon,
 } from "@heroicons/react/24/solid";
 import CustomMultiSelectDropdown from "../global/dropdown/CustomMultiSelectDropdown";
+import type {
+  DueDateFilter,
+  CaseRelationFilter,
+} from "../../graphql/hooks/task";
 
-export type TaskFilterMode = "assignedToMe" | "createdByMe" | "accessible" | "all";
+export type TaskFilterMode =
+  | "assignedToMe"
+  | "createdByMe"
+  | "accessible"
+  | "all";
 
 const TASK_STATUS_OPTIONS = [
   { value: TaskStatus.Todo, label: "Незапочната" },
@@ -25,6 +33,19 @@ const TASK_PRIORITY_OPTIONS = [
   { value: CasePriority.Low, label: "Нисък" },
 ];
 
+const DUE_DATE_OPTIONS = [
+  { value: "OVERDUE", label: "Просрочена" },
+  { value: "CLOSE_TO_OVERDUE", label: "Наближава срок" },
+  { value: "ON_TIME", label: "В срок" },
+  { value: "FINISHED_ON_TIME", label: "Завършена навреме" },
+  { value: "NO_DUE_DATE", label: "Без краен срок" },
+];
+
+const CASE_RELATION_OPTIONS = [
+  { value: "WITH_CASE", label: "Свързана със сигнал" },
+  { value: "WITHOUT_CASE", label: "Без свързан сигнал" },
+];
+
 interface TaskFiltersProps {
   filterMode: TaskFilterMode;
   onFilterModeChange: (mode: TaskFilterMode) => void;
@@ -32,6 +53,10 @@ interface TaskFiltersProps {
   onStatusFilterChange: (statuses: TaskStatus[]) => void;
   priorityFilter: CasePriority[];
   onPriorityFilterChange: (priorities: CasePriority[]) => void;
+  dueDateFilter: DueDateFilter[];
+  onDueDateFilterChange: (filters: DueDateFilter[]) => void;
+  caseRelationFilter: CaseRelationFilter | null;
+  onCaseRelationFilterChange: (filter: CaseRelationFilter | null) => void;
   searchQuery: string;
   onSearchQueryChange: (query: string) => void;
   viewMode: "grid" | "table";
@@ -45,6 +70,10 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
   onStatusFilterChange,
   priorityFilter,
   onPriorityFilterChange,
+  dueDateFilter,
+  onDueDateFilterChange,
+  caseRelationFilter,
+  onCaseRelationFilterChange,
   searchQuery,
   onSearchQueryChange,
   viewMode,
@@ -126,9 +155,9 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
       </div>
 
       {/* Bottom row: Search and dropdown filters */}
-      <div className="flex flex-col sm:flex-row gap-4 items-end">
+      <div className="flex flex-col sm:flex-row gap-4 items-end flex-wrap">
         {/* Search input */}
-        <div className="relative flex-1">
+        <div className="relative flex-1 min-w-[200px]">
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Търсене
           </label>
@@ -158,9 +187,45 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
           label="Приоритет"
           options={TASK_PRIORITY_OPTIONS}
           selectedValues={priorityFilter}
-          onChange={(values) => onPriorityFilterChange(values as CasePriority[])}
+          onChange={(values) =>
+            onPriorityFilterChange(values as CasePriority[])
+          }
           placeholder="Всички приоритети"
         />
+
+        {/* Due date multiselect */}
+        <CustomMultiSelectDropdown
+          label="Краен срок"
+          options={DUE_DATE_OPTIONS}
+          selectedValues={dueDateFilter}
+          onChange={(values) =>
+            onDueDateFilterChange(values as DueDateFilter[])
+          }
+          placeholder="Всички"
+        />
+
+        {/* Case relation filter */}
+        <div className="w-48">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Сигнал
+          </label>
+          <select
+            value={caseRelationFilter || ""}
+            onChange={(e) =>
+              onCaseRelationFilterChange(
+                (e.target.value as CaseRelationFilter) || null,
+              )
+            }
+            className="w-full bg-white px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm focus:outline-none focus:border-indigo-500"
+          >
+            <option value="">Всички</option>
+            {CASE_RELATION_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
     </div>
   );

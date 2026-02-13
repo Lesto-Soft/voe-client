@@ -34,7 +34,9 @@ import {
 
 export interface TaskFiltersInput {
   status?: TaskStatus;
+  statuses?: TaskStatus[];
   priority?: CasePriority;
+  priorities?: CasePriority[];
   assigneeId?: string;
   creatorId?: string;
   caseId?: string;
@@ -129,7 +131,9 @@ export function buildTaskQueryVariables(input?: TaskFiltersInput) {
     itemsPerPage = 10,
     currentPage = 0,
     status,
+    statuses,
     priority,
+    priorities,
     assigneeId,
     creatorId,
     caseId,
@@ -149,8 +153,10 @@ export function buildTaskQueryVariables(input?: TaskFiltersInput) {
     },
   };
 
-  if (status) variables.input.status = status;
-  if (priority) variables.input.priority = priority;
+  if (statuses && statuses.length > 0) variables.input.statuses = statuses;
+  else if (status) variables.input.status = status;
+  if (priorities && priorities.length > 0) variables.input.priorities = priorities;
+  else if (priority) variables.input.priority = priority;
   if (assigneeId) variables.input.assigneeId = assigneeId;
   if (creatorId) variables.input.creatorId = creatorId;
   if (caseId) variables.input.caseId = caseId;

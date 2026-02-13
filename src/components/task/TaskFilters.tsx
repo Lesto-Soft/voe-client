@@ -9,16 +9,29 @@ import {
   MagnifyingGlassIcon,
   QueueListIcon,
 } from "@heroicons/react/24/solid";
+import CustomMultiSelectDropdown from "../global/dropdown/CustomMultiSelectDropdown";
 
 export type TaskFilterMode = "assignedToMe" | "createdByMe" | "accessible" | "all";
+
+const TASK_STATUS_OPTIONS = [
+  { value: TaskStatus.Todo, label: "Незапочната" },
+  { value: TaskStatus.InProgress, label: "В процес" },
+  { value: TaskStatus.Done, label: "Завършена" },
+];
+
+const TASK_PRIORITY_OPTIONS = [
+  { value: CasePriority.High, label: "Висок" },
+  { value: CasePriority.Medium, label: "Среден" },
+  { value: CasePriority.Low, label: "Нисък" },
+];
 
 interface TaskFiltersProps {
   filterMode: TaskFilterMode;
   onFilterModeChange: (mode: TaskFilterMode) => void;
-  statusFilter: TaskStatus | "all";
-  onStatusFilterChange: (status: TaskStatus | "all") => void;
-  priorityFilter: CasePriority | "all";
-  onPriorityFilterChange: (priority: CasePriority | "all") => void;
+  statusFilter: TaskStatus[];
+  onStatusFilterChange: (statuses: TaskStatus[]) => void;
+  priorityFilter: CasePriority[];
+  onPriorityFilterChange: (priorities: CasePriority[]) => void;
   searchQuery: string;
   onSearchQueryChange: (query: string) => void;
   viewMode: "grid" | "table";
@@ -113,46 +126,41 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
       </div>
 
       {/* Bottom row: Search and dropdown filters */}
-      <div className="flex flex-col sm:flex-row gap-4">
+      <div className="flex flex-col sm:flex-row gap-4 items-end">
         {/* Search input */}
         <div className="relative flex-1">
-          <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Търсене по заглавие..."
-            value={searchQuery}
-            onChange={(e) => onSearchQueryChange(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-          />
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Търсене
+          </label>
+          <div className="relative">
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Търсене по заглавие..."
+              value={searchQuery}
+              onChange={(e) => onSearchQueryChange(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+            />
+          </div>
         </div>
 
-        {/* Status filter */}
-        <select
-          value={statusFilter}
-          onChange={(e) =>
-            onStatusFilterChange(e.target.value as TaskStatus | "all")
-          }
-          className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white"
-        >
-          <option value="all">Всички статуси</option>
-          <option value={TaskStatus.Todo}>Незапочната</option>
-          <option value={TaskStatus.InProgress}>В процес</option>
-          <option value={TaskStatus.Done}>Завършена</option>
-        </select>
+        {/* Status multiselect */}
+        <CustomMultiSelectDropdown
+          label="Статус"
+          options={TASK_STATUS_OPTIONS}
+          selectedValues={statusFilter}
+          onChange={(values) => onStatusFilterChange(values as TaskStatus[])}
+          placeholder="Всички статуси"
+        />
 
-        {/* Priority filter */}
-        <select
-          value={priorityFilter}
-          onChange={(e) =>
-            onPriorityFilterChange(e.target.value as CasePriority | "all")
-          }
-          className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white"
-        >
-          <option value="all">Всички приоритети</option>
-          <option value={CasePriority.High}>Висок</option>
-          <option value={CasePriority.Medium}>Среден</option>
-          <option value={CasePriority.Low}>Нисък</option>
-        </select>
+        {/* Priority multiselect */}
+        <CustomMultiSelectDropdown
+          label="Приоритет"
+          options={TASK_PRIORITY_OPTIONS}
+          selectedValues={priorityFilter}
+          onChange={(values) => onPriorityFilterChange(values as CasePriority[])}
+          placeholder="Всички приоритети"
+        />
       </div>
     </div>
   );

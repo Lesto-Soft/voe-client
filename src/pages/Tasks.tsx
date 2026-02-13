@@ -16,8 +16,8 @@ const VALID_FILTER_MODES: TaskFilterMode[] = [
   "createdByMe",
   "accessible",
 ];
-const VALID_STATUSES = ["all", TaskStatus.Todo, TaskStatus.InProgress, TaskStatus.Done];
-const VALID_PRIORITIES = ["all", CasePriority.High, CasePriority.Medium, CasePriority.Low];
+const VALID_STATUSES: string[] = [TaskStatus.Todo, TaskStatus.InProgress, TaskStatus.Done];
+const VALID_PRIORITIES: string[] = [CasePriority.High, CasePriority.Medium, CasePriority.Low];
 
 interface TaskViewPrefs {
   filterMode: TaskFilterMode;
@@ -45,6 +45,12 @@ const savePrefs = (prefs: Partial<TaskViewPrefs>) => {
   }
 };
 
+/** Parse a comma-separated URL param into a validated array */
+const parseArrayParam = (param: string | null, validValues: string[]): string[] => {
+  if (!param) return [];
+  return param.split(",").filter((v) => validValues.includes(v));
+};
+
 /** Read initial filter state from URL search params, falling back to sessionStorage / defaults */
 const getInitialState = (search: string) => {
   const params = new URLSearchParams(search);
@@ -56,17 +62,8 @@ const getInitialState = (search: string) => {
       ? (tabParam as TaskFilterMode)
       : stored.filterMode || "assignedToMe";
 
-  const statusParam = params.get("status");
-  const statusFilter: TaskStatus | "all" =
-    statusParam && VALID_STATUSES.includes(statusParam)
-      ? (statusParam as TaskStatus | "all")
-      : "all";
-
-  const priorityParam = params.get("priority");
-  const priorityFilter: CasePriority | "all" =
-    priorityParam && VALID_PRIORITIES.includes(priorityParam)
-      ? (priorityParam as CasePriority | "all")
-      : "all";
+  const statusFilter = parseArrayParam(params.get("status"), VALID_STATUSES) as TaskStatus[];
+  const priorityFilter = parseArrayParam(params.get("priority"), VALID_PRIORITIES) as CasePriority[];
 
   const searchQuery = params.get("search") || "";
 
@@ -94,8 +91,8 @@ const TasksPage: React.FC = () => {
   const initial = useMemo(() => getInitialState(location.search), []);
 
   const [filterMode, setFilterMode] = useState<TaskFilterMode>(initial.filterMode);
-  const [statusFilter, setStatusFilter] = useState<TaskStatus | "all">(initial.statusFilter);
-  const [priorityFilter, setPriorityFilter] = useState<CasePriority | "all">(initial.priorityFilter);
+  const [statusFilter, setStatusFilter] = useState<TaskStatus[]>(initial.statusFilter);
+  const [priorityFilter, setPriorityFilter] = useState<CasePriority[]>(initial.priorityFilter);
   const [searchQuery, setSearchQuery] = useState(initial.searchQuery);
   const [viewMode, setViewMode] = useState<"grid" | "table">(initial.viewMode);
   const [currentPage, setCurrentPage] = useState(initial.currentPage);
@@ -107,8 +104,8 @@ const TasksPage: React.FC = () => {
       const params = new URLSearchParams();
       const values: Record<string, string | undefined> = {
         tab: filterMode,
-        status: statusFilter !== "all" ? statusFilter : undefined,
-        priority: priorityFilter !== "all" ? priorityFilter : undefined,
+        status: statusFilter.length > 0 ? statusFilter.join(",") : undefined,
+        priority: priorityFilter.length > 0 ? priorityFilter.join(",") : undefined,
         search: searchQuery.trim() || undefined,
         view: viewMode,
         page: String(currentPage),
@@ -135,11 +132,11 @@ const TasksPage: React.FC = () => {
       currentPage: currentPage - 1,
     };
 
-    if (statusFilter !== "all") {
-      input.status = statusFilter;
+    if (statusFilter.length > 0) {
+      input.statuses = statusFilter;
     }
-    if (priorityFilter !== "all") {
-      input.priority = priorityFilter;
+    if (priorityFilter.length > 0) {
+      input.priorities = priorityFilter;
     }
     if (searchQuery.trim()) {
       input.searchQuery = searchQuery.trim();
@@ -183,16 +180,16 @@ const TasksPage: React.FC = () => {
     syncUrl({ tab: mode, page: "1" });
   };
 
-  const handleStatusFilterChange = (status: TaskStatus | "all") => {
-    setStatusFilter(status);
+  const handleStatusFilterChange = (statuses: TaskStatus[]) => {
+    setStatusFilter(statuses);
     setCurrentPage(1);
-    syncUrl({ status: status !== "all" ? status : undefined, page: "1" });
+    syncUrl({ status: statuses.length > 0 ? statuses.join(",") : undefined, page: "1" });
   };
 
-  const handlePriorityFilterChange = (priority: CasePriority | "all") => {
-    setPriorityFilter(priority);
+  const handlePriorityFilterChange = (priorities: CasePriority[]) => {
+    setPriorityFilter(priorities);
     setCurrentPage(1);
-    syncUrl({ priority: priority !== "all" ? priority : undefined, page: "1" });
+    syncUrl({ priority: priorities.length > 0 ? priorities.join(",") : undefined, page: "1" });
   };
 
   const handleSearchQueryChange = (query: string) => {

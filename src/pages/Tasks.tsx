@@ -2,16 +2,11 @@ import React, { useState, useMemo } from "react";
 import { useCurrentUser } from "../context/UserContext";
 import { useGetAllTasks } from "../graphql/hooks/task";
 import { TaskStatus, CasePriority } from "../db/interfaces";
-import {
-  TaskList,
-  TaskFilters,
-  TaskFilterMode,
-  TaskFormModal,
-} from "../components/task";
-import { PlusIcon } from "@heroicons/react/24/outline";
+import { TaskList, TaskFilters, TaskFilterMode } from "../components/task";
+import Pagination from "../components/tables/Pagination";
 import { ROLES } from "../utils/GLOBAL_PARAMETERS";
 
-const ITEMS_PER_PAGE = 12;
+const DEFAULT_ITEMS_PER_PAGE = 12;
 const TASK_VIEW_PREFS_KEY = "taskDashboard_viewPrefs";
 
 interface TaskViewPrefs {
@@ -45,12 +40,6 @@ const savePrefs = (prefs: Partial<TaskViewPrefs>) => {
 
 const TasksPage: React.FC = () => {
   const currentUser = useCurrentUser();
-  const canCreateTask =
-    currentUser?.role?._id === ROLES.ADMIN ||
-    currentUser?.role?._id === ROLES.EXPERT;
-
-  // Modal state
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   // Filter state - initialize from sessionStorage
   const [filterMode, setFilterMode] = useState<TaskFilterMode>(() => {
@@ -66,7 +55,8 @@ const TasksPage: React.FC = () => {
     const stored = getStoredPrefs();
     return stored.viewMode || "grid";
   });
-  const [currentPage, setCurrentPage] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(DEFAULT_ITEMS_PER_PAGE);
 
   // Compute accessible-only task IDs (tasks user has access to but didn't create and isn't assigned to)
   const accessibleOnlyTaskIds = useMemo(() => {
@@ -76,8 +66,8 @@ const TasksPage: React.FC = () => {
   // Build query input
   const queryInput = useMemo(() => {
     const input: Record<string, unknown> = {
-      itemsPerPage: ITEMS_PER_PAGE,
-      currentPage,
+      itemsPerPage,
+      currentPage: currentPage - 1, // Pagination component is 1-based, server is 0-based
     };
 
     if (statusFilter !== "all") {
@@ -110,36 +100,37 @@ const TasksPage: React.FC = () => {
     priorityFilter,
     searchQuery,
     currentPage,
+    itemsPerPage,
     filterMode,
     currentUser?._id,
     accessibleOnlyTaskIds,
   ]);
 
   // Fetch tasks
-  const { tasks, count, loading, error, refetch } = useGetAllTasks(queryInput);
+  const { tasks, count, loading, error } = useGetAllTasks(queryInput);
 
   // Pagination
-  const totalPages = Math.ceil(count / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(count / itemsPerPage);
 
   const handleFilterModeChange = (mode: TaskFilterMode) => {
     setFilterMode(mode);
-    setCurrentPage(0);
+    setCurrentPage(1);
     savePrefs({ filterMode: mode });
   };
 
   const handleStatusFilterChange = (status: TaskStatus | "all") => {
     setStatusFilter(status);
-    setCurrentPage(0);
+    setCurrentPage(1);
   };
 
   const handlePriorityFilterChange = (priority: CasePriority | "all") => {
     setPriorityFilter(priority);
-    setCurrentPage(0);
+    setCurrentPage(1);
   };
 
   const handleSearchQueryChange = (query: string) => {
     setSearchQuery(query);
-    setCurrentPage(0);
+    setCurrentPage(1);
   };
 
   if (error) {
@@ -157,25 +148,6 @@ const TasksPage: React.FC = () => {
 
   return (
     <div className="min-h-full bg-gray-100 p-6">
-      {/* Header */}
-      <header className="mb-6 flex justify-between items-start">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-800">Табло за Задачи</h1>
-          <p className="text-gray-600 mt-1">
-            Преглеждайте и управлявайте вашите задачи.
-          </p>
-        </div>
-        {canCreateTask && (
-          <button
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-md cursor-pointer"
-            onClick={() => setIsCreateModalOpen(true)}
-          >
-            <PlusIcon className="h-5 w-5" />
-            Нова задача
-          </button>
-        )}
-      </header>
-
       {/* Filters */}
       <TaskFilters
         filterMode={filterMode}
@@ -200,49 +172,19 @@ const TasksPage: React.FC = () => {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="mt-6 flex justify-center items-center gap-2">
-          <button
-            onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
-            disabled={currentPage === 0}
-            className="px-4 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Предишна
-          </button>
-          <span className="text-sm text-gray-600">
-            Страница {currentPage + 1} от {totalPages}
-          </span>
-          <button
-            onClick={() =>
-              setCurrentPage((p) => Math.min(totalPages - 1, p + 1))
-            }
-            disabled={currentPage >= totalPages - 1}
-            className="px-4 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Следваща
-          </button>
-        </div>
+        <Pagination
+          totalPages={totalPages}
+          totalCount={count}
+          currentPage={currentPage}
+          itemsPerPage={itemsPerPage}
+          onItemsPerPageChange={(newSize) => {
+            setItemsPerPage(newSize);
+            setCurrentPage(1);
+          }}
+          onPageChange={setCurrentPage}
+        />
       )}
 
-      {/* Results count */}
-      {!loading && (
-        <div className="mt-4 text-center text-sm text-gray-500">
-          Показани {tasks.length} от {count} задачи
-        </div>
-      )}
-
-      {/* Create Task Modal */}
-      <TaskFormModal
-        isOpen={isCreateModalOpen}
-        onOpenChange={setIsCreateModalOpen}
-        mode="create"
-        onSuccess={() => {
-          if (filterMode !== "createdByMe") {
-            handleFilterModeChange("createdByMe");
-          } else {
-            refetch();
-          }
-        }}
-      />
     </div>
   );
 };

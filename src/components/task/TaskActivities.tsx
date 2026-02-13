@@ -21,6 +21,7 @@ import {
   ArrowPathIcon,
   UserGroupIcon,
   ExclamationTriangleIcon,
+  BeakerIcon,
   PencilIcon,
   TrashIcon,
   XMarkIcon,
@@ -85,6 +86,14 @@ const activityTypeConfig: Record<
     textColor: "text-blue-700",
     borderColor: "border-blue-200",
     leftBorderColor: "border-l-blue-500",
+  },
+  [TaskActivityType.AnalysisSubmitted]: {
+    label: "Подаден анализ",
+    icon: BeakerIcon,
+    bgColor: "bg-teal-50",
+    textColor: "text-teal-700",
+    borderColor: "border-teal-200",
+    leftBorderColor: "border-l-teal-500",
   },
 };
 

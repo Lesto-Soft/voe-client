@@ -1,7 +1,5 @@
 // src/pages/Analyses.tsx
 import React, { useState, useMemo } from "react";
-import { useCurrentUser } from "../context/UserContext";
-import { ROLES } from "../utils/GLOBAL_PARAMETERS";
 import { useGetAnalyticsDataCases } from "../graphql/hooks/case";
 import { useGetRankedUsers } from "../graphql/hooks/user";
 import {
@@ -37,8 +35,10 @@ import {
   TYPE_COLORS,
 } from "../components/features/analyses/constants";
 import { getStartAndEndOfWeek } from "../utils/dateUtils";
-import { ICase, IMe, ITask, CasePriority, CaseType, TaskStatus } from "../db/interfaces";
+import { ICase, ITask, CasePriority, CaseType, TaskStatus } from "../db/interfaces";
 import { PieSegmentData } from "../components/charts/PieChart";
+import { useCurrentUser } from "../context/UserContext";
+import { ROLES } from "../utils/GLOBAL_PARAMETERS";
 
 // Define the shape of the filters object for clarity
 type CaseFilters = {
@@ -50,7 +50,7 @@ type CaseFilters = {
 };
 
 const Analyses: React.FC = () => {
-  const currentUser = useCurrentUser() as IMe;
+  const currentUser = useCurrentUser();
   const isAdmin = currentUser?.role?._id === ROLES.ADMIN;
 
   const [activeTopTab, setActiveTopTab] = useState<"cases" | "tasks">("cases");
@@ -505,16 +505,15 @@ const Analyses: React.FC = () => {
             averageCompletionData={taskAnalytics.averageCompletionData}
             barChartMode={filters.barChartMode}
             loading={tasksLoading}
-            isAdmin={isAdmin}
             rankedCreators={rankedTaskCreators as RankedUser[]}
             rankedCompleters={rankedTaskCompleters as RankedUser[]}
             rankedCommenters={rankedTaskCommenters as RankedUser[]}
             rankedFastest={rankedTaskFastest as RankedUser[]}
             onBarClick={handleBarChartClick}
             onChartAreaRightClick={handleChartAreaRightClick}
-            onBarMiddleClick={handleTaskBarMiddleClick}
-            onStatusPieMiddleClick={handleTaskStatusPieMiddleClick}
-            onPriorityPieMiddleClick={handleTaskPriorityPieMiddleClick}
+            onBarMiddleClick={isAdmin ? handleTaskBarMiddleClick : undefined}
+            onStatusPieMiddleClick={isAdmin ? handleTaskStatusPieMiddleClick : undefined}
+            onPriorityPieMiddleClick={isAdmin ? handleTaskPriorityPieMiddleClick : undefined}
             onPodiumClick={(title, users) =>
               setPodiumState({ title, users })
             }
@@ -534,9 +533,7 @@ const Analyses: React.FC = () => {
                   barStyle={barChartStyle}
                   onBarClick={handleBarChartClick}
                   onChartAreaRightClick={handleChartAreaRightClick}
-                  onBarMiddleClick={
-                    isAdmin ? handleCaseBarMiddleClick : undefined
-                  }
+                  onBarMiddleClick={isAdmin ? handleCaseBarMiddleClick : undefined}
                 />
               )}
             </div>
@@ -699,11 +696,7 @@ const Analyses: React.FC = () => {
                     <DistributionChartCard
                       title="Разпределение по категории"
                       pieData={caseAnalytics.categoryPieData}
-                      onSegmentMiddleClick={
-                        isAdmin
-                          ? (segment) => handleCategoryPieMiddleClick(segment)
-                          : undefined
-                      }
+                      onSegmentMiddleClick={isAdmin ? (segment) => handleCategoryPieMiddleClick(segment) : undefined}
                     />
                     <SummaryCard
                       title="Среден рейтинг на сигнал"

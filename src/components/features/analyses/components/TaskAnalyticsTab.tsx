@@ -38,7 +38,6 @@ interface TaskAnalyticsTabProps {
   averageCompletionData: { average: number | null; count: number };
   barChartMode: BarChartDisplayMode;
   loading: boolean;
-  isAdmin: boolean;
   // Rankings
   rankedCreators: RankedUser[];
   rankedCompleters: RankedUser[];
@@ -66,7 +65,6 @@ const TaskAnalyticsTab: React.FC<TaskAnalyticsTabProps> = ({
   averageCompletionData,
   barChartMode,
   loading,
-  isAdmin,
   rankedCreators,
   rankedCompleters,
   rankedCommenters,
@@ -95,7 +93,7 @@ const TaskAnalyticsTab: React.FC<TaskAnalyticsTabProps> = ({
             barStyle={barChartStyle}
             onBarClick={onBarClick}
             onChartAreaRightClick={onChartAreaRightClick}
-            onBarMiddleClick={isAdmin ? onBarMiddleClick : undefined}
+            onBarMiddleClick={onBarMiddleClick}
             middleClickLabel="задачи"
           />
         )}
@@ -256,11 +254,9 @@ const TaskAnalyticsTab: React.FC<TaskAnalyticsTabProps> = ({
                   barChartMode === "status" ? priorityPieData : statusPieData
                 }
                 onSegmentMiddleClick={
-                  isAdmin
-                    ? barChartMode === "status"
-                      ? onPriorityPieMiddleClick
-                      : onStatusPieMiddleClick
-                    : undefined
+                  barChartMode === "status"
+                    ? onPriorityPieMiddleClick
+                    : onStatusPieMiddleClick
                 }
                 middleClickLabel="задачи"
               />
@@ -275,11 +271,9 @@ const TaskAnalyticsTab: React.FC<TaskAnalyticsTabProps> = ({
                   barChartMode === "status" ? statusPieData : priorityPieData
                 }
                 onSegmentMiddleClick={
-                  isAdmin
-                    ? barChartMode === "status"
-                      ? onStatusPieMiddleClick
-                      : onPriorityPieMiddleClick
-                    : undefined
+                  barChartMode === "status"
+                    ? onStatusPieMiddleClick
+                    : onPriorityPieMiddleClick
                 }
                 middleClickLabel="задачи"
               />

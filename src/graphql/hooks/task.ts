@@ -32,15 +32,26 @@ import {
 
 // --- Input Types ---
 
+export type DueDateFilter = "OVERDUE" | "CLOSE_TO_OVERDUE" | "ON_TIME" | "FINISHED_ON_TIME" | "NO_DUE_DATE";
+export type CaseRelationFilter = "WITH_CASE" | "WITHOUT_CASE";
+
 export interface TaskFiltersInput {
   status?: TaskStatus;
+  statuses?: TaskStatus[];
   priority?: CasePriority;
+  priorities?: CasePriority[];
+  dueDateFilters?: DueDateFilter[];
+  caseRelationFilter?: CaseRelationFilter;
   assigneeId?: string;
   creatorId?: string;
   caseId?: string;
+  taskIds?: string[];
   searchQuery?: string;
   startDate?: string;
   endDate?: string;
+  excludeAssigneeId?: string;
+  excludeCreatorId?: string;
+  viewableByUserId?: string;
   itemsPerPage?: number;
   currentPage?: number;
 }
@@ -125,13 +136,21 @@ export function buildTaskQueryVariables(input?: TaskFiltersInput) {
     itemsPerPage = 10,
     currentPage = 0,
     status,
+    statuses,
     priority,
+    priorities,
     assigneeId,
     creatorId,
     caseId,
+    taskIds,
     searchQuery,
     startDate,
     endDate,
+    excludeAssigneeId,
+    excludeCreatorId,
+    viewableByUserId,
+    dueDateFilters,
+    caseRelationFilter,
   } = input || {};
 
   const variables: { input: Record<string, unknown> } = {
@@ -141,14 +160,22 @@ export function buildTaskQueryVariables(input?: TaskFiltersInput) {
     },
   };
 
-  if (status) variables.input.status = status;
-  if (priority) variables.input.priority = priority;
+  if (statuses && statuses.length > 0) variables.input.statuses = statuses;
+  else if (status) variables.input.status = status;
+  if (priorities && priorities.length > 0) variables.input.priorities = priorities;
+  else if (priority) variables.input.priority = priority;
+  if (dueDateFilters && dueDateFilters.length > 0) variables.input.dueDateFilters = dueDateFilters;
+  if (caseRelationFilter) variables.input.caseRelationFilter = caseRelationFilter;
   if (assigneeId) variables.input.assigneeId = assigneeId;
   if (creatorId) variables.input.creatorId = creatorId;
   if (caseId) variables.input.caseId = caseId;
+  if (taskIds && taskIds.length > 0) variables.input.taskIds = taskIds;
   if (searchQuery) variables.input.searchQuery = searchQuery;
   if (startDate) variables.input.startDate = startDate;
   if (endDate) variables.input.endDate = endDate;
+  if (excludeAssigneeId) variables.input.excludeAssigneeId = excludeAssigneeId;
+  if (excludeCreatorId) variables.input.excludeCreatorId = excludeCreatorId;
+  if (viewableByUserId) variables.input.viewableByUserId = viewableByUserId;
 
   return variables;
 }

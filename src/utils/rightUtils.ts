@@ -1,4 +1,4 @@
-import { ICase, IMe, IUser, ICategory } from "../db/interfaces";
+import { ICase, IMe, IUser, ICategory, ITask } from "../db/interfaces";
 import { ROLES, CASE_STATUS } from "./GLOBAL_PARAMETERS";
 
 export const checkNormal = (userRoleId: string): boolean => {
@@ -145,11 +145,35 @@ export const canViewCategory = (
 };
 
 export const canViewCase = (currentUser: IMe, caseData: ICase): boolean => {
-  if (!currentUser || !caseData || !caseData.creator) return false;
+  if (!currentUser || !caseData) return false;
 
-  // Use the existing rights determination function. If the user has *any* right, they can view.
-  const rights = determineUserRightsForCase(currentUser, caseData);
-  return rights.length > 0;
+  // Admins can always view any case regardless of populated fields
+  if (currentUser.role?._id === ROLES.ADMIN) return true;
+
+  // Standard rights check (requires creator to be populated)
+  if (caseData.creator) {
+    const rights = determineUserRightsForCase(currentUser, caseData);
+    if (rights.length > 0) return true;
+  }
+
+  // Extended access: user can view a case if they have access to any task linked to it
+  if (
+    caseData.tasks?.some((task) =>
+      currentUser.accessibleTasks?.some((at) => at._id === task._id)
+    )
+  ) {
+    return true;
+  }
+
+  return false;
+};
+
+export const canViewTask = (currentUser: IMe, task: ITask): boolean => {
+  if (!currentUser || !task) return false;
+
+  if (currentUser.role?._id === ROLES.ADMIN) return true;
+
+  return currentUser.accessibleTasks?.some((t) => t._id === task._id) ?? false;
 };
 
 export const canViewRatingMetric = (currentUser: IMe): boolean => {

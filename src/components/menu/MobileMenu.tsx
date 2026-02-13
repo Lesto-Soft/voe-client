@@ -103,15 +103,15 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
           </>
         )}
         <MobileNavLink
-          to="/tasks"
-          icon={<ClipboardDocumentCheckIcon className="h-6 w-6" />}
-          label={t("tasks", "Задачи")}
-          onClick={onLinkClick}
-        />
-        <MobileNavLink
           to="/dashboard"
           icon={<ClipboardDocumentListIcon className="h-6 w-6" />}
           label={t("dashboard")}
+          onClick={onLinkClick}
+        />
+        <MobileNavLink
+          to="/tasks"
+          icon={<ClipboardDocumentCheckIcon className="h-6 w-6" />}
+          label={t("tasks", "Задачи")}
           onClick={onLinkClick}
         />
         <MobileNavLink

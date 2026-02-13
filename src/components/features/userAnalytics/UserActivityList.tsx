@@ -1,6 +1,17 @@
 // src/components/features/userAnalytics/UserActivityList.tsx
 import React, { useMemo, useEffect, useState, useRef } from "react";
-import { IUser, ICase, IAnswer, IComment, ITask, ITaskActivity } from "../../../db/interfaces";
+import {
+  IUser,
+  ICase,
+  IAnswer,
+  IComment,
+  ITask,
+  ITaskActivity,
+  CasePriority,
+  CaseType,
+  ICaseStatus,
+  TaskStatus,
+} from "../../../db/interfaces";
 import UserActivityItemCard from "./UserActivityItemCard";
 import UserRatingActivityCard from "./UserRatingActivityCard";
 import UserTaskActivityCard from "./UserTaskActivityCard";
@@ -9,27 +20,32 @@ import {
   InboxIcon,
   ArrowDownCircleIcon,
   CalendarDaysIcon,
+  DocumentTextIcon,
+  ClipboardDocumentCheckIcon,
 } from "@heroicons/react/24/outline";
 import useUserActivityScrollPersistence from "../../../hooks/useUserActivityScrollPersistence";
 import DateRangeSelector from "./DateRangeSelector";
-import { CasePriority, CaseType, ICaseStatus } from "../../../db/interfaces";
-import { StatsActivityType } from "./UserStatisticsPanel";
+import type {
+  ParentTab,
+  CaseSubTab,
+  TaskSubTab,
+  PieTab,
+} from "./UserStatisticsPanel";
 import { RatingTierLabel } from "../../../pages/User";
 import FilterTag from "../../global/FilterTag";
 import {
   translateCaseType,
   translatePriority,
   translateStatus,
+  translateTaskStatus,
 } from "../../../utils/categoryDisplayUtils";
-import { PieTab } from "./UserStatisticsPanel";
-
-// REMOVED: Local ActivityTab type is no longer needed
 
 interface RatedCaseActivity {
   case: ICase;
   averageScore: number;
 }
-interface CombinedActivity {
+
+export interface CombinedActivity {
   id: string;
   date: string;
   item: ICase | IAnswer | IComment | RatedCaseActivity | ITask | ITaskActivity;
@@ -45,7 +61,11 @@ interface CombinedActivity {
     | "task_completed"
     | "task_comment"
     | "task_help_request"
-    | "task_approval_request";
+    | "task_approval_request"
+    | "task_status_change"
+    | "task_priority_change"
+    | "task_assignee_change"
+    | "task_analysis_submitted";
 }
 
 interface UserActivityListProps {
@@ -53,7 +73,8 @@ interface UserActivityListProps {
   activities: CombinedActivity[];
   isLoading?: boolean;
   counts: {
-    all: number;
+    casesTotal: number;
+    tasksTotal: number;
     cases: number;
     answers: number;
     comments: number;
@@ -61,6 +82,8 @@ interface UserActivityListProps {
     approvals: number;
     finances: number;
     tasks: number;
+    entries: number;
+    analyses: number;
   };
   userId?: string;
   dateRange: { startDate: Date | null; endDate: Date | null };
@@ -70,6 +93,7 @@ interface UserActivityListProps {
   }) => void;
   isAnyFilterActive: boolean;
   onClearAllFilters: () => void;
+  // Case filter props
   activeCategoryName: string | null;
   onClearCategoryFilter: () => void;
   activeRatingTier: RatingTierLabel;
@@ -78,18 +102,91 @@ interface UserActivityListProps {
   onClearPriorityFilter: () => void;
   activeType: CaseType | "all";
   onClearTypeFilter: () => void;
-  activeResolution: string; // The label string
+  activeResolution: string;
   onClearResolutionFilter: () => void;
   activeStatus: ICaseStatus | "all";
   onClearStatusFilter: () => void;
+  // Task filter props
+  activeTaskStatus: TaskStatus | "all";
+  onClearTaskStatusFilter: () => void;
+  activeTaskPriority: CasePriority | "all";
+  onClearTaskPriorityFilter: () => void;
+  activeTaskTimeliness: string;
+  onClearTaskTimelinessFilter: () => void;
   onPieTabChange?: (tab: PieTab) => void;
   cardView?: "full" | "compact";
-  // MODIFIED: Added props to control the component
-  activeTab: StatsActivityType;
-  onTabChange: (tab: StatsActivityType) => void;
-  showDateFilter?: boolean; // Add a new prop to control visibility
+  // 2-level tab props
+  parentTab: ParentTab;
+  subTab: CaseSubTab | TaskSubTab;
+  onParentTabChange: (tab: ParentTab) => void;
+  onSubTabChange: (tab: CaseSubTab | TaskSubTab) => void;
+  showDateFilter?: boolean;
   showFiltersBar?: boolean;
 }
+
+const TASK_ACTIVITY_CARD_TYPES = new Set([
+  "task_comment",
+  "task_help_request",
+  "task_approval_request",
+  "task_status_change",
+  "task_priority_change",
+  "task_assignee_change",
+  "task_analysis_submitted",
+]);
+
+const TASK_LIFECYCLE_TYPES = new Set([
+  "task_created",
+  "task_assigned",
+  "task_completed",
+]);
+
+const LIFECYCLE_ACTIVITY_TYPES = new Set([
+  "task_created",
+  "task_assigned",
+  "task_completed",
+  "task_status_change",
+  "task_priority_change",
+  "task_assignee_change",
+]);
+
+const ENTRY_ACTIVITY_TYPES = new Set([
+  "task_comment",
+  "task_help_request",
+  "task_approval_request",
+]);
+
+const TIMELINESS_LABELS: Record<string, string> = {
+  onTime: "Завършени на време",
+  inProgress: "В процес",
+  overdue: "Закъсняващи",
+  lateCompletion: "Закъснели",
+  noDueDate: "Без краен срок",
+};
+
+const caseSubTabsConfig: {
+  key: CaseSubTab;
+  label: string;
+  countKey: string;
+}[] = [
+  { key: "all", label: "Всички", countKey: "casesTotal" },
+  { key: "cases", label: "Сигнали", countKey: "cases" },
+  { key: "answers", label: "Решения", countKey: "answers" },
+  { key: "comments", label: "Коментари", countKey: "comments" },
+  { key: "ratings", label: "Оценки", countKey: "ratings" },
+  { key: "approvals", label: "Одобрени", countKey: "approvals" },
+  { key: "finances", label: "Финансирани", countKey: "finances" },
+];
+
+const taskSubTabsConfig: {
+  key: TaskSubTab;
+  label: string;
+  countKey: string;
+}[] = [
+  { key: "all", label: "Всички", countKey: "tasksTotal" },
+  { key: "tasks", label: "Задачи", countKey: "tasks" },
+  { key: "entries", label: "Записи", countKey: "entries" },
+  { key: "analyses", label: "Анализи", countKey: "analyses" },
+];
 
 const UserActivityList: React.FC<UserActivityListProps> = ({
   user,
@@ -113,26 +210,37 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
   onClearResolutionFilter,
   activeStatus,
   onClearStatusFilter,
+  activeTaskStatus,
+  onClearTaskStatusFilter,
+  activeTaskPriority,
+  onClearTaskPriorityFilter,
+  activeTaskTimeliness,
+  onClearTaskTimelinessFilter,
   onPieTabChange,
   cardView = "full",
-  activeTab,
-  onTabChange,
-  showDateFilter = true, // Default the new prop to true
+  parentTab,
+  subTab,
+  onParentTabChange,
+  onSubTabChange,
+  showDateFilter = true,
   showFiltersBar = true,
 }) => {
   const [isDateFilterVisible, setIsDateFilterVisible] = useState(false);
   const isDateFilterActive =
     dateRange.startDate !== null || dateRange.endDate !== null;
   const isDataReady = !isLoading && !!user;
-  const tabsContainerRef = useRef<HTMLDivElement>(null);
+  const subTabsContainerRef = useRef<HTMLDivElement>(null);
   const filtersContainerRef = useRef<HTMLDivElement>(null);
 
+  // Combine parentTab + subTab for scroll persistence key
+  const scrollTabKey = `${parentTab}_${subTab}`;
+
   const {
-    visibleCounts,
+    visibleCount,
     scrollableActivityListRef,
     handleLoadMoreItems,
     resetScrollAndVisibleCount,
-  } = useUserActivityScrollPersistence(userId, activeTab, isDataReady); // MODIFIED: Pass activeTab to the hook
+  } = useUserActivityScrollPersistence(userId, scrollTabKey, isDataReady);
 
   useEffect(() => {
     if (resetScrollAndVisibleCount) {
@@ -145,16 +253,13 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
     resetScrollAndVisibleCount,
   ]);
 
+  // Horizontal scroll on sub-tabs
   useEffect(() => {
-    const scrollContainer = tabsContainerRef.current;
-
+    const scrollContainer = subTabsContainerRef.current;
     if (!scrollContainer) return;
 
     const handleWheel = (e: WheelEvent) => {
-      // If there's horizontal scroll, let the browser handle it natively
       if (e.deltaX !== 0) return;
-
-      // If there's vertical scroll and the container is overflowing, convert it
       if (
         e.deltaY !== 0 &&
         scrollContainer.scrollWidth > scrollContainer.clientWidth
@@ -165,128 +270,191 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
     };
 
     scrollContainer.addEventListener("wheel", handleWheel, { passive: false });
+    return () => scrollContainer.removeEventListener("wheel", handleWheel);
+  }, [parentTab]);
 
-    return () => {
-      scrollContainer.removeEventListener("wheel", handleWheel);
-    };
-  }, []);
-
-  // add a new useEffect to handle mouse wheel scrolling on the filters bar
+  // Horizontal scroll on filters bar
   useEffect(() => {
     const scrollContainer = filtersContainerRef.current;
     if (!scrollContainer) return;
 
     const handleWheel = (e: WheelEvent) => {
-      // Proceed only if scrolling vertically and the container is overflowing
-      // If there's horizontal scroll, let the browser handle it natively
       if (e.deltaX !== 0) return;
-
-      // If there's vertical scroll and the container is overflowing, convert it
       if (
         e.deltaY !== 0 &&
         scrollContainer.scrollWidth > scrollContainer.clientWidth
       ) {
-        e.preventDefault(); // Prevent the main page from scrolling
+        e.preventDefault();
         scrollContainer.scrollLeft += e.deltaY;
       }
     };
+
     scrollContainer.addEventListener("wheel", handleWheel, { passive: false });
     return () => scrollContainer.removeEventListener("wheel", handleWheel);
   }, [isAnyFilterActive]);
 
-  // NEW: This effect triggers whenever the active tab changes.
+  // Scroll active sub-tab into view
   useEffect(() => {
-    // Find the HTML element for the currently active tab using its ID.
     const activeTabElement = document.getElementById(
-      `activity-tab-${activeTab}`
+      `activity-subtab-${subTab}`,
     );
-
-    // If the element is found, scroll it into the visible area.
     if (activeTabElement) {
       activeTabElement.scrollIntoView({
-        behavior: "smooth", // For a smooth scrolling animation
-        inline: "nearest", // Ensures horizontal alignment
-        block: "nearest", // Ensures vertical alignment
+        behavior: "smooth",
+        inline: "nearest",
+        block: "nearest",
       });
     }
-  }, [activeTab]); // The effect depends on the activeTab prop.
+  }, [subTab]);
 
   const activitiesToDisplay = useMemo((): CombinedActivity[] => {
     let baseActivities: CombinedActivity[];
-    switch (activeTab) {
-      case "cases":
-        baseActivities = activities.filter((a) => a.activityType === "case");
-        break;
-      case "answers":
-        baseActivities = activities.filter((a) => a.activityType === "answer");
-        break;
-      case "comments":
-        baseActivities = activities.filter((a) => a.activityType === "comment");
-        break;
-      case "ratings":
-        baseActivities = activities.filter((a) => a.activityType === "rating");
-        break;
-      case "approvals":
-        baseActivities = activities.filter(
-          (a) => a.activityType === "base_approval"
-        );
-        break;
-      case "finances":
-        baseActivities = activities.filter(
-          (a) => a.activityType === "finance_approval"
-        );
-        break;
-      case "tasks":
-        baseActivities = activities.filter((a) =>
-          a.activityType.startsWith("task_")
-        );
-        break;
-      case "all":
-      default:
-        baseActivities = activities;
-        break;
-    }
-    return baseActivities.slice(0, visibleCounts[activeTab]);
-  }, [activeTab, activities, visibleCounts]);
 
-  const tabs: { key: StatsActivityType; label: string; count: number }[] = [
-    { key: "all", label: "Всички", count: counts.all },
-    { key: "cases", label: "Сигнали", count: counts.cases },
-    { key: "answers", label: "Решения", count: counts.answers },
-    { key: "comments", label: "Коментари", count: counts.comments },
-    { key: "ratings", label: "Оценки", count: counts.ratings },
-    { key: "approvals", label: "Одобрени", count: counts.approvals },
-    { key: "finances", label: "Финансирани", count: counts.finances },
-    { key: "tasks", label: "Задачи", count: counts.tasks },
-  ];
+    if (parentTab === "cases") {
+      const caseActivities = activities.filter(
+        (a) => !a.activityType.startsWith("task_"),
+      );
+      switch (subTab as CaseSubTab) {
+        case "cases":
+          baseActivities = caseActivities.filter(
+            (a) => a.activityType === "case",
+          );
+          break;
+        case "answers":
+          baseActivities = caseActivities.filter(
+            (a) => a.activityType === "answer",
+          );
+          break;
+        case "comments":
+          baseActivities = caseActivities.filter(
+            (a) => a.activityType === "comment",
+          );
+          break;
+        case "ratings":
+          baseActivities = caseActivities.filter(
+            (a) => a.activityType === "rating",
+          );
+          break;
+        case "approvals":
+          baseActivities = caseActivities.filter(
+            (a) => a.activityType === "base_approval",
+          );
+          break;
+        case "finances":
+          baseActivities = caseActivities.filter(
+            (a) => a.activityType === "finance_approval",
+          );
+          break;
+        case "all":
+        default:
+          baseActivities = caseActivities;
+          break;
+      }
+    } else {
+      const taskActivities = activities.filter((a) =>
+        a.activityType.startsWith("task_"),
+      );
+      switch (subTab as TaskSubTab) {
+        case "tasks":
+          baseActivities = taskActivities.filter((a) =>
+            LIFECYCLE_ACTIVITY_TYPES.has(a.activityType),
+          );
+          break;
+        case "entries":
+          baseActivities = taskActivities.filter((a) =>
+            ENTRY_ACTIVITY_TYPES.has(a.activityType),
+          );
+          break;
+        case "analyses":
+          baseActivities = taskActivities.filter(
+            (a) => a.activityType === "task_analysis_submitted",
+          );
+          break;
+        case "all":
+        default:
+          baseActivities = taskActivities;
+          break;
+      }
+    }
+
+    return baseActivities.slice(0, visibleCount);
+  }, [parentTab, subTab, activities, visibleCount]);
+
+  const activeSubTabsConfig =
+    parentTab === "tasks" ? taskSubTabsConfig : caseSubTabsConfig;
 
   const getCurrentTabTotalCount = (): number => {
-    switch (activeTab) {
-      case "cases":
-        return activities.filter((a) => a.activityType === "case").length;
-      case "answers":
-        return activities.filter((a) => a.activityType === "answer").length;
-      case "comments":
-        return activities.filter((a) => a.activityType === "comment").length;
-      case "ratings":
-        return activities.filter((a) => a.activityType === "rating").length;
-      case "approvals":
-        return activities.filter((a) => a.activityType === "base_approval")
-          .length;
-      case "finances":
-        return activities.filter((a) => a.activityType === "finance_approval")
-          .length;
-      case "tasks":
-        return activities.filter((a) => a.activityType.startsWith("task_"))
-          .length;
-      case "all":
-      default:
-        return activities.length;
+    if (parentTab === "cases") {
+      const caseActivities = activities.filter(
+        (a) => !a.activityType.startsWith("task_"),
+      );
+      switch (subTab as CaseSubTab) {
+        case "cases":
+          return caseActivities.filter((a) => a.activityType === "case").length;
+        case "answers":
+          return caseActivities.filter((a) => a.activityType === "answer")
+            .length;
+        case "comments":
+          return caseActivities.filter((a) => a.activityType === "comment")
+            .length;
+        case "ratings":
+          return caseActivities.filter((a) => a.activityType === "rating")
+            .length;
+        case "approvals":
+          return caseActivities.filter(
+            (a) => a.activityType === "base_approval",
+          ).length;
+        case "finances":
+          return caseActivities.filter(
+            (a) => a.activityType === "finance_approval",
+          ).length;
+        case "all":
+        default:
+          return caseActivities.length;
+      }
+    } else {
+      const taskActivities = activities.filter((a) =>
+        a.activityType.startsWith("task_"),
+      );
+      switch (subTab as TaskSubTab) {
+        case "tasks":
+          return taskActivities.filter((a) =>
+            LIFECYCLE_ACTIVITY_TYPES.has(a.activityType),
+          ).length;
+        case "entries":
+          return taskActivities.filter((a) =>
+            ENTRY_ACTIVITY_TYPES.has(a.activityType),
+          ).length;
+        case "analyses":
+          return taskActivities.filter(
+            (a) => a.activityType === "task_analysis_submitted",
+          ).length;
+        case "all":
+        default:
+          return taskActivities.length;
+      }
     }
   };
 
   const totalItemsForCurrentTab = getCurrentTabTotalCount();
-  const canLoadMore = totalItemsForCurrentTab > visibleCounts[activeTab];
+  const canLoadMore = totalItemsForCurrentTab > visibleCount;
+
+  // Determine which filter tags are relevant for the current parent tab
+  const hasCaseFilters =
+    activeCategoryName !== null ||
+    activeRatingTier !== "all" ||
+    activePriority !== "all" ||
+    activeType !== "all" ||
+    activeResolution !== "all" ||
+    activeStatus !== "all";
+  const hasTaskFilters =
+    activeTaskStatus !== "all" ||
+    activeTaskPriority !== "all" ||
+    activeTaskTimeliness !== "all";
+  const hasRelevantFilters =
+    parentTab === "cases"
+      ? hasCaseFilters || isDateFilterActive
+      : hasTaskFilters || isDateFilterActive;
 
   if (isLoading) {
     return (
@@ -316,32 +484,35 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-lg flex flex-col overflow-hidden max-h-full  h-full">
+    <div className="bg-white rounded-lg shadow-lg flex flex-col overflow-hidden max-h-full h-full">
       <div className="p-1 sm:p-2 border-b border-gray-200">
+        {/* Row 1: Parent tabs + calendar */}
         <div className="flex items-center justify-between pb-1">
-          <div
-            ref={tabsContainerRef}
-            className="flex py-1 space-x-1 sm:space-x-2 mr-5 overflow-x-auto custom-scrollbar-xs"
-          >
-            {tabs.map((tab) => (
-              <button
-                key={tab.key}
-                // ADDED: A unique ID to make the button findable in the DOM.
-                id={`activity-tab-${tab.key}`}
-                onClick={() => onTabChange(tab.key)}
-                disabled={tab.count === 0}
-                className={`hover:cursor-pointer px-3 py-1.5 text-xs sm:text-sm font-medium rounded-md whitespace-nowrap transition-colors duration-150 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed ${
-                  activeTab === tab.key
-                    ? "bg-indigo-600 text-white shadow-sm"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-              >
-                {tab.label} ({tab.count})
-              </button>
-            ))}
+          <div className="flex py-1 space-x-1 sm:space-x-2 mr-5">
+            <button
+              onClick={() => onParentTabChange("cases")}
+              className={`hover:cursor-pointer px-3 py-1.5 text-xs sm:text-sm font-medium rounded-md whitespace-nowrap transition-colors duration-150 focus:outline-none flex items-center gap-x-1.5 ${
+                parentTab === "cases"
+                  ? "bg-indigo-600 text-white shadow-sm"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              <DocumentTextIcon className="h-4 w-4" />
+              Сигнали ({counts.casesTotal})
+            </button>
+            <button
+              onClick={() => onParentTabChange("tasks")}
+              className={`hover:cursor-pointer px-3 py-1.5 text-xs sm:text-sm font-medium rounded-md whitespace-nowrap transition-colors duration-150 focus:outline-none flex items-center gap-x-1.5 ${
+                parentTab === "tasks"
+                  ? "bg-indigo-600 text-white shadow-sm"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              <ClipboardDocumentCheckIcon className="h-4 w-4" />
+              Задачи ({counts.tasksTotal})
+            </button>
           </div>
 
-          {/* Conditionally render the calendar button */}
           {showDateFilter && (
             <button
               onClick={() => setIsDateFilterVisible((prev) => !prev)}
@@ -350,8 +521,8 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
                 isDateFilterVisible
                   ? "bg-indigo-100 text-indigo-600"
                   : isDateFilterActive
-                  ? "bg-indigo-100 text-gray-500"
-                  : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                    ? "bg-indigo-100 text-gray-500"
+                    : "bg-gray-100 text-gray-500 hover:bg-gray-200"
               }`}
             >
               <CalendarDaysIcon className="h-5 w-5" />
@@ -359,9 +530,34 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
           )}
         </div>
 
-        {/* Conditionally render the DateRangeSelector itself */}
+        {/* Row 2: Sub-tabs */}
+        <div
+          ref={subTabsContainerRef}
+          className="flex py-1 space-x-1 sm:space-x-2 overflow-x-auto pl-1 custom-scrollbar-xs"
+        >
+          {activeSubTabsConfig.map((tab) => {
+            const count = counts[tab.countKey as keyof typeof counts] ?? 0;
+            return (
+              <button
+                key={tab.key}
+                id={`activity-subtab-${tab.key}`}
+                onClick={() => onSubTabChange(tab.key)}
+                disabled={count === 0}
+                className={`hover:cursor-pointer px-3 py-1.5 text-xs sm:text-sm font-medium rounded-md whitespace-nowrap transition-colors duration-150 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed ${
+                  subTab === tab.key
+                    ? "bg-indigo-100 text-indigo-700 ring-1 ring-indigo-300"
+                    : "bg-gray-50 text-gray-600 hover:bg-gray-100"
+                }`}
+              >
+                {tab.label} ({count})
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Date filter */}
         {showDateFilter && isDateFilterVisible && (
-          <div className=" border-t pt-1 border-gray-200">
+          <div className="border-t pt-1 border-gray-200">
             <DateRangeSelector
               dateRange={dateRange}
               onDateRangeChange={onDateRangeChange}
@@ -369,7 +565,9 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
           </div>
         )}
       </div>
-      {showFiltersBar && isAnyFilterActive && (
+
+      {/* Filter tags bar */}
+      {showFiltersBar && hasRelevantFilters && (
         <div className="px-4 py-1.5 border-b border-gray-200 bg-gray-50 flex items-center justify-between gap-x-4">
           <div
             ref={filtersContainerRef}
@@ -378,48 +576,80 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
             <span className="text-xs font-semibold text-gray-600 mr-2 flex-shrink-0">
               Активни филтри:
             </span>
-            {activeCategoryName && (
-              <FilterTag
-                label={`Категория: ${activeCategoryName}`}
-                onRemove={onClearCategoryFilter}
-                onClick={() => onPieTabChange?.("categories")}
-              />
+            {/* Case filter tags */}
+            {parentTab === "cases" && (
+              <>
+                {activeCategoryName && (
+                  <FilterTag
+                    label={`Категория: ${activeCategoryName}`}
+                    onRemove={onClearCategoryFilter}
+                    onClick={() => onPieTabChange?.("categories")}
+                  />
+                )}
+                {activeRatingTier !== "all" && (
+                  <FilterTag
+                    label={`Оценка: ${activeRatingTier}`}
+                    onRemove={onClearRatingTierFilter}
+                    onClick={() => onPieTabChange?.("ratings")}
+                  />
+                )}
+                {activePriority !== "all" && (
+                  <FilterTag
+                    label={`Приоритет: ${translatePriority(activePriority)}`}
+                    onRemove={onClearPriorityFilter}
+                    onClick={() => onPieTabChange?.("priority")}
+                  />
+                )}
+                {activeType !== "all" && (
+                  <FilterTag
+                    label={`Тип: ${translateCaseType(activeType)}`}
+                    onRemove={onClearTypeFilter}
+                    onClick={() => onPieTabChange?.("type")}
+                  />
+                )}
+                {activeResolution !== "all" && (
+                  <FilterTag
+                    label={`Реакция: ${activeResolution}`}
+                    onRemove={onClearResolutionFilter}
+                    onClick={() => onPieTabChange?.("resolution")}
+                  />
+                )}
+                {activeStatus !== "all" && (
+                  <FilterTag
+                    label={`Статус: ${translateStatus(activeStatus)}`}
+                    onRemove={onClearStatusFilter}
+                    onClick={() => onPieTabChange?.("status")}
+                  />
+                )}
+              </>
             )}
-            {activeRatingTier !== "all" && (
-              <FilterTag
-                label={`Оценка: ${activeRatingTier}`}
-                onRemove={onClearRatingTierFilter}
-                onClick={() => onPieTabChange?.("ratings")}
-              />
+            {/* Task filter tags */}
+            {parentTab === "tasks" && (
+              <>
+                {activeTaskStatus !== "all" && (
+                  <FilterTag
+                    label={`Статус: ${translateTaskStatus(activeTaskStatus)}`}
+                    onRemove={onClearTaskStatusFilter}
+                    onClick={() => onPieTabChange?.("taskStatus")}
+                  />
+                )}
+                {activeTaskPriority !== "all" && (
+                  <FilterTag
+                    label={`Приоритет: ${translatePriority(activeTaskPriority)}`}
+                    onRemove={onClearTaskPriorityFilter}
+                    onClick={() => onPieTabChange?.("taskPriority")}
+                  />
+                )}
+                {activeTaskTimeliness !== "all" && (
+                  <FilterTag
+                    label={`Срок: ${TIMELINESS_LABELS[activeTaskTimeliness] || activeTaskTimeliness}`}
+                    onRemove={onClearTaskTimelinessFilter}
+                    onClick={() => onPieTabChange?.("taskTimeliness")}
+                  />
+                )}
+              </>
             )}
-            {activePriority !== "all" && (
-              <FilterTag
-                label={`Приоритет: ${translatePriority(activePriority)}`}
-                onRemove={onClearPriorityFilter}
-                onClick={() => onPieTabChange?.("priority")}
-              />
-            )}
-            {activeType !== "all" && (
-              <FilterTag
-                label={`Тип: ${translateCaseType(activeType)}`}
-                onRemove={onClearTypeFilter}
-                onClick={() => onPieTabChange?.("type")}
-              />
-            )}
-            {activeResolution !== "all" && (
-              <FilterTag
-                label={`Реакция: ${activeResolution}`}
-                onRemove={onClearResolutionFilter}
-                onClick={() => onPieTabChange?.("resolution")}
-              />
-            )}
-            {activeStatus !== "all" && (
-              <FilterTag
-                label={`Статус: ${translateStatus(activeStatus)}`}
-                onRemove={onClearStatusFilter}
-                onClick={() => onPieTabChange?.("status")}
-              />
-            )}
+            {/* Date filter tag (always relevant) */}
             {isDateFilterActive && (
               <FilterTag
                 label="Период"
@@ -437,6 +667,8 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
           </button>
         </div>
       )}
+
+      {/* Activity list */}
       <div
         ref={scrollableActivityListRef}
         className="flex-1 overflow-y-auto custom-scrollbar-xs max-h-[calc(100vh-6rem)]"
@@ -456,17 +688,15 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
                     actor={user!}
                     view={cardView}
                   />
-                ) : activity.activityType === "task_comment" ||
-                  activity.activityType === "task_help_request" ||
-                  activity.activityType === "task_approval_request" ? (
+                ) : TASK_ACTIVITY_CARD_TYPES.has(activity.activityType) ? (
                   <UserTaskActivityActivityCard
                     key={activity.id}
                     taskActivity={activity.item as ITaskActivity}
-                    activityType={activity.activityType}
+                    activityType={activity.activityType as any}
                     date={activity.date}
                     view={cardView}
                   />
-                ) : activity.activityType.startsWith("task_") ? (
+                ) : TASK_LIFECYCLE_TYPES.has(activity.activityType) ? (
                   <UserTaskActivityCard
                     key={activity.id}
                     task={activity.item as ITask}
@@ -495,7 +725,7 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
                     date={activity.date}
                     view={cardView}
                   />
-                )
+                ),
               )}
             </div>
 
@@ -506,8 +736,8 @@ const UserActivityList: React.FC<UserActivityListProps> = ({
                   className="cursor-pointer flex items-center px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded-md hover:bg-blue-600 transition-colors duration-150"
                 >
                   <ArrowDownCircleIcon className="h-5 w-5 mr-2" />
-                  Зареди още... (
-                  {totalItemsForCurrentTab - visibleCounts[activeTab]} остават)
+                  Зареди още... ({totalItemsForCurrentTab - visibleCount}{" "}
+                  остават)
                 </button>
               </div>
             )}

@@ -1,17 +1,19 @@
 // src/hooks/useAuthorization.ts
 import { useMemo } from "react";
 import { useCurrentUser } from "../context/UserContext";
-import { IMe, ICase, IUser, ICategory } from "../db/interfaces";
+import { IMe, ICase, IUser, ICategory, ITask } from "../db/interfaces";
 import {
   canViewCase,
   canViewUserProfile,
   canViewCategory,
+  canViewTask,
 } from "../utils/rightUtils";
 
 type AuthorizationInput =
   | { type: "case"; data: ICase | null | undefined }
   | { type: "user"; data: IUser | null | undefined }
-  | { type: "category"; data: ICategory | null | undefined };
+  | { type: "category"; data: ICategory | null | undefined }
+  | { type: "task"; data: ITask | null | undefined };
 
 /**
  * A hook to check if the current user is authorized to view a specific piece of data.
@@ -35,6 +37,8 @@ export const useAuthorization = ({ type, data }: AuthorizationInput) => {
         return canViewUserProfile(currentUser, data as IUser);
       case "category":
         return canViewCategory(currentUser, data as ICategory);
+      case "task":
+        return canViewTask(currentUser, data as ITask);
       default:
         return false;
     }

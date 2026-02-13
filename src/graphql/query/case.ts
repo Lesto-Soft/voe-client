@@ -63,6 +63,9 @@ const caseFragment = gql`
         _id
       }
     }
+    tasks {
+      _id
+    }
   }
 `;
 
@@ -338,6 +341,9 @@ export const GET_CASE_BY_CASE_NUMBER = gql`
           }
         }
         date
+      }
+      tasks {
+        _id
       }
     }
   }

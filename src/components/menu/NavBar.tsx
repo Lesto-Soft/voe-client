@@ -27,6 +27,7 @@ import { ROLES } from "../../utils/GLOBAL_PARAMETERS";
 import { capitalizeFirstLetter } from "../../utils/stringUtils";
 import { useGetActiveCategories } from "../../graphql/hooks/category";
 import CaseDialog from "../modals/caseModals/CaseDialog";
+import TaskFormModal from "../task/TaskFormModal";
 import UserAvatar from "../cards/UserAvatar";
 import NotificationCenter from "../notification/NotificationCenter";
 import { useNavigate } from "react-router";
@@ -86,6 +87,7 @@ const NavBar: React.FC<{ me: IMe }> = ({ me }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const [isMgmtDropdownOpen, setIsMgmtDropdownOpen] = useState(false);
+  const [isCreateTaskModalOpen, setIsCreateTaskModalOpen] = useState(false);
   const { t } = useTranslation("menu");
 
   const {
@@ -170,8 +172,9 @@ const NavBar: React.FC<{ me: IMe }> = ({ me }) => {
   }
 
   const isAdmin = me.role._id === ROLES.ADMIN;
-  const isManagerExpert =
-    me.role._id === ROLES.EXPERT && me.managed_categories.length > 0;
+  const isExpert = me.role._id === ROLES.EXPERT;
+  const isManagerExpert = isExpert && me.managed_categories.length > 0;
+  const canCreateTask = isAdmin || isExpert;
 
   return (
     <div className="bg-gradient-to-r z-20 from-gray-100 to-gray-200 shadow-md relative max-w-full h-[6rem]">
@@ -215,6 +218,15 @@ const NavBar: React.FC<{ me: IMe }> = ({ me }) => {
                   </button>
                 </CaseDialog>
               </>
+            )}
+            {canCreateTask && (
+              <button
+                title={t("new_task", "Нова Задача")}
+                onClick={() => setIsCreateTaskModalOpen(true)}
+                className="hover:cursor-pointer p-2 bg-blue-600 text-white rounded-md shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75 transition-transform transform hover:scale-110"
+              >
+                <ClipboardDocumentCheckIcon className="h-5 w-5" />
+              </button>
             )}
           </div>
         </div>
@@ -291,16 +303,16 @@ const NavBar: React.FC<{ me: IMe }> = ({ me }) => {
             )}
 
             <NavLink
-              to="/tasks"
-              icon={<ClipboardDocumentCheckIcon className="h-6 w-6" />}
-              label={t("tasks", "Задачи")}
+              to="/dashboard"
+              icon={<ClipboardDocumentListIcon className="h-6 w-6" />}
+              label={t("dashboard")}
               theme="red"
             />
 
             <NavLink
-              to="/dashboard"
-              icon={<ClipboardDocumentListIcon className="h-6 w-6" />}
-              label={t("dashboard")}
+              to="/tasks"
+              icon={<ClipboardDocumentCheckIcon className="h-6 w-6" />}
+              label={t("tasks", "Задачи")}
               theme="red"
             />
 
@@ -419,6 +431,16 @@ const NavBar: React.FC<{ me: IMe }> = ({ me }) => {
         handleSignOut={handleSignOut}
         onLinkClick={closeMobileMenu}
         me={me}
+      />
+      <TaskFormModal
+        isOpen={isCreateTaskModalOpen}
+        onOpenChange={setIsCreateTaskModalOpen}
+        mode="create"
+        onSuccess={() => {
+          if (location.pathname !== "/tasks") {
+            navigate("/tasks");
+          }
+        }}
       />
     </div>
   );

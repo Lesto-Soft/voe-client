@@ -9,12 +9,11 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
 } from "@heroicons/react/24/outline";
-import { ITask, IUser, CasePriority } from "../../db/interfaces";
+import { ITask, CasePriority } from "../../db/interfaces";
 import { useCreateTask, useUpdateTask } from "../../graphql/hooks/task";
-import { useGetAllUsers } from "../../graphql/hooks/user";
 import { useCurrentUser } from "../../context/UserContext";
-import UserAvatar from "../cards/UserAvatar";
-import { endpoint } from "../../db/config";
+import { useQuery } from "@apollo/client";
+import { GET_LEAN_USERS } from "../../graphql/query/user";
 import CaseAnswerSelector from "./CaseAnswerSelector";
 import UnifiedEditor from "../forms/partials/UnifiedRichTextEditor";
 
@@ -116,15 +115,16 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
   const [attachments, setAttachments] = useState<File[]>([]);
   const [existingAttachments, setExistingAttachments] = useState<string[]>([]);
 
-  // Fetch users for assignee dropdown
-  const { users } = useGetAllUsers({ itemsPerPage: 1000, currentPage: 0 });
+  // Fetch users for assignee dropdown (lean query - no access restriction)
+  const { data: leanUsersData } = useQuery(GET_LEAN_USERS);
+  const users = leanUsersData?.getLeanUsers || [];
 
   // Filter users based on search query
   const filteredUsers = useMemo(() => {
-    if (!assigneeSearchQuery.trim()) return users || [];
+    if (!assigneeSearchQuery.trim()) return users;
     const query = assigneeSearchQuery.toLowerCase();
-    return (users || []).filter(
-      (user: IUser) =>
+    return users.filter(
+      (user: { _id: string; name: string; username: string }) =>
         user.name.toLowerCase().includes(query) ||
         user.username.toLowerCase().includes(query),
     );
@@ -209,7 +209,7 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
   const isLoading = createLoading || updateLoading;
 
   // Get selected user for display
-  const selectedUser = users?.find((u: IUser) => u._id === assigneeId);
+  const selectedUser = users?.find((u: { _id: string }) => u._id === assigneeId);
 
   return (
     <Dialog.Root open={isOpen} onOpenChange={onOpenChange}>
@@ -385,7 +385,7 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
                   >
                     -- Без възложен --
                   </button>
-                  {filteredUsers.map((user: IUser) => (
+                  {filteredUsers.map((user: { _id: string; name: string; username: string }) => (
                     <button
                       type="button"
                       key={user._id}
@@ -394,15 +394,6 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
                         assigneeId === user._id ? "bg-blue-100" : ""
                       }`}
                     >
-                      <UserAvatar
-                        name={user.name}
-                        imageUrl={
-                          user.avatar
-                            ? `${endpoint}/static/avatars/${user._id}/${user.avatar}`
-                            : null
-                        }
-                        size={24}
-                      />
                       <span className="flex-1">{user.name}</span>
                       <span className="text-gray-500 text-xs">
                         ({user.username})
@@ -414,15 +405,6 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
                 {/* Show selected user */}
                 {selectedUser && (
                   <div className="mt-2 flex items-center gap-2 p-2 bg-blue-50 rounded-md">
-                    <UserAvatar
-                      name={selectedUser.name}
-                      imageUrl={
-                        selectedUser.avatar
-                          ? `${endpoint}/static/avatars/${selectedUser._id}/${selectedUser.avatar}`
-                          : null
-                      }
-                      size={24}
-                    />
                     <span className="text-sm text-gray-700">
                       {selectedUser.name}
                     </span>

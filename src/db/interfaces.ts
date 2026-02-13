@@ -15,6 +15,7 @@ export interface ICase {
   calculatedRating?: number | null;
   readBy?: IReadBy[]; // MODIFIED
   history?: ICaseHistory[];
+  tasks?: ITask[];
   last_update?: string;
 }
 
@@ -59,6 +60,7 @@ export interface IUser {
   assignedTasks?: ITask[];
   createdTasks?: ITask[];
   createdTaskActivities?: ITaskActivity[];
+  accessibleTasks?: ITask[];
 }
 
 /**
@@ -225,6 +227,7 @@ export enum TaskActivityType {
   AssigneeChange = "ASSIGNEE_CHANGE",
   HelpRequest = "HELP_REQUEST",
   ApprovalRequest = "APPROVAL_REQUEST",
+  AnalysisSubmitted = "ANALYSIS_SUBMITTED",
 }
 
 // Task-related interfaces
@@ -248,6 +251,7 @@ export interface ITask {
   activities?: ITaskActivity[];
   fiveWhys?: IFiveWhy[];
   riskAssessments?: IRiskAssessment[];
+  canAccessUsers?: IUser[];
   createdAt?: string;
   updatedAt?: string;
   completedAt?: string;

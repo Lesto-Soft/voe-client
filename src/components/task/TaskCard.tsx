@@ -8,15 +8,15 @@ import TaskLink from "../global/links/TaskLink";
 import CaseLink from "../global/links/CaseLink";
 import UserLink from "../global/links/UserLink";
 import ShowDate from "../global/ShowDate";
-import { ExclamationTriangleIcon, ClockIcon } from "@heroicons/react/24/outline";
-import { useTranslation } from "react-i18next";
-
+import {
+  ExclamationTriangleIcon,
+  ClockIcon,
+} from "@heroicons/react/24/outline";
 interface TaskCardProps {
   task: ITask;
 }
 
 const TaskCard: React.FC<TaskCardProps> = ({ task }) => {
-  const { t } = useTranslation();
   const borderColor = getPriorityBorderColor(task.priority);
 
   return (
@@ -50,7 +50,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task }) => {
                 <>
                   <span>Сигнал:</span>
                   <div className="w-20" onClick={(e) => e.stopPropagation()}>
-                    <CaseLink my_case={task.relatedCase} t={t} />
+                    <CaseLink my_case={task.relatedCase} />
                   </div>
                 </>
               )}
@@ -69,12 +69,14 @@ const TaskCard: React.FC<TaskCardProps> = ({ task }) => {
               {task.dueDate ? (
                 <div className="flex items-center gap-1.5">
                   <ShowDate date={task.dueDate} />
-                  {getDueDateStatus(task.dueDate, task.status) === "overdue" && (
+                  {getDueDateStatus(task.dueDate, task.status) ===
+                    "overdue" && (
                     <span title="Просрочена задача">
                       <ExclamationTriangleIcon className="h-4 w-4 text-red-500" />
                     </span>
                   )}
-                  {getDueDateStatus(task.dueDate, task.status) === "warning" && (
+                  {getDueDateStatus(task.dueDate, task.status) ===
+                    "warning" && (
                     <span title="Краен срок наближава">
                       <ClockIcon className="h-4 w-4 text-amber-500" />
                     </span>

@@ -5,7 +5,10 @@ import { useQuery } from "@apollo/client";
 import { GET_LEAN_USERS } from "../graphql/query/user";
 import { useCurrentUser } from "../context/UserContext";
 import { ITask } from "../db/interfaces";
+import { ROLES } from "../utils/GLOBAL_PARAMETERS";
+import { useAuthorization } from "../hooks/useAuthorization";
 import PageStatusDisplay from "../components/global/PageStatusDisplay";
+import ForbiddenPage from "./ErrorPages/ForbiddenPage";
 import TaskPriorityBadge from "../components/task/TaskPriorityBadge";
 import TaskStatusPill from "../components/task/TaskStatusPill";
 import TaskActivities from "../components/task/TaskActivities";
@@ -20,18 +23,16 @@ import UserAvatar from "../components/cards/UserAvatar";
 import ShowDate from "../components/global/ShowDate";
 import ConfirmActionDialog from "../components/modals/ConfirmActionDialog";
 import { endpoint } from "../db/config";
-import { useTranslation } from "react-i18next";
 import {
   PencilIcon,
   TrashIcon,
   ChatBubbleLeftRightIcon,
-  PuzzlePieceIcon,
+  BeakerIcon,
   ExclamationTriangleIcon,
 } from "@heroicons/react/24/solid";
 import { ClockIcon } from "@heroicons/react/24/outline";
 
 const TaskDetail: React.FC = () => {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const { taskNumber: taskNumberParam } = useParams<{ taskNumber: string }>();
   const currentUser = useCurrentUser();
@@ -56,6 +57,12 @@ const TaskDetail: React.FC = () => {
     useGetTaskByNumber(numericTaskNumber);
   const { deleteTask, loading: deleteLoading } = useDeleteTask({
     onCompleted: () => navigate("/tasks"),
+  });
+
+  // Access gate - must be called before early returns (hook rule)
+  const { isAllowed, isLoading: authLoading } = useAuthorization({
+    type: "task",
+    data: task as ITask | null,
   });
 
   // Fetch all users for mention suggestions in task activities
@@ -100,6 +107,10 @@ const TaskDetail: React.FC = () => {
     );
   }
 
+  if (!authLoading && !isAllowed) {
+    return <ForbiddenPage />;
+  }
+
   const taskData = task as ITask;
 
   const handleDelete = async () => {
@@ -110,17 +121,15 @@ const TaskDetail: React.FC = () => {
     }
   };
 
-  // Check if current user can edit the task
-  const canEdit =
-    currentUser._id === taskData.creator._id ||
-    currentUser._id === taskData.assignee?._id ||
-    currentUser.role?._id === "ADMIN";
+  const isAdmin = currentUser.role?._id === ROLES.ADMIN;
+  const isCreator = currentUser._id === taskData.creator._id;
 
-  // Check if current user can change status directly (only creator and admin)
-  // Assignee changes status through activities (auto-transition)
-  const canChangeStatus =
-    currentUser._id === taskData.creator._id ||
-    currentUser.role?._id === "ADMIN";
+  // Only admins and task creators can edit/delete and change assignee
+  const canEdit = isAdmin || isCreator;
+
+  // Only admins and task creators can manually change status
+  // Assignee changes status indirectly through activities (auto-transition)
+  const canChangeStatus = isAdmin || isCreator;
 
   return (
     <div className="flex flex-col lg:flex-row bg-gray-50 lg:h-[calc(100vh-6rem)] w-full">
@@ -168,7 +177,7 @@ const TaskDetail: React.FC = () => {
                 <h3 className="text-xs font-semibold text-gray-500 mb-2 flex items-center gap-1.5">
                   Произход:
                 </h3>
-                <CaseLink my_case={taskData.relatedCase} t={t} />
+                <CaseLink my_case={taskData.relatedCase} />
               </div>
             )}
 
@@ -323,7 +332,7 @@ const TaskDetail: React.FC = () => {
                     : "border-gray-300 shadow-sm bg-gray-100 text-gray-700 hover:bg-blue-50 hover:text-blue-600"
                 }`}
               >
-                <PuzzlePieceIcon className="h-5 w-5 mr-2" />
+                <BeakerIcon className="h-5 w-5 mr-2" />
                 Анализи
                 <sup className="ml-1">
                   {(taskData.fiveWhys?.length || 0) +

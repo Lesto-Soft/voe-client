@@ -1,17 +1,25 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
+import { useLocation, useNavigate } from "react-router";
 import { useCurrentUser } from "../context/UserContext";
-import { useGetAllTasks } from "../graphql/hooks/task";
+import { useGetAllTasks, DueDateFilter, CaseRelationFilter } from "../graphql/hooks/task";
 import { TaskStatus, CasePriority } from "../db/interfaces";
-import {
-  TaskList,
-  TaskFilters,
-  TaskFilterMode,
-  TaskFormModal,
-} from "../components/task";
-import { PlusIcon } from "@heroicons/react/24/outline";
+import { TaskList, TaskFilters, TaskFilterMode } from "../components/task";
+import Pagination from "../components/tables/Pagination";
+import { ROLES } from "../utils/GLOBAL_PARAMETERS";
 
-const ITEMS_PER_PAGE = 12;
+const DEFAULT_ITEMS_PER_PAGE = 12;
 const TASK_VIEW_PREFS_KEY = "taskDashboard_viewPrefs";
+
+const VALID_FILTER_MODES: TaskFilterMode[] = [
+  "all",
+  "assignedToMe",
+  "createdByMe",
+  "accessible",
+];
+const VALID_STATUSES: string[] = [TaskStatus.Todo, TaskStatus.InProgress, TaskStatus.Done];
+const VALID_PRIORITIES: string[] = [CasePriority.High, CasePriority.Medium, CasePriority.Low];
+const VALID_DUE_DATE_FILTERS: string[] = ["OVERDUE", "CLOSE_TO_OVERDUE", "ON_TIME", "FINISHED_ON_TIME", "NO_DUE_DATE"];
+const VALID_CASE_RELATIONS: string[] = ["WITH_CASE", "WITHOUT_CASE"];
 
 interface TaskViewPrefs {
   filterMode: TaskFilterMode;
@@ -34,93 +42,210 @@ const savePrefs = (prefs: Partial<TaskViewPrefs>) => {
       TASK_VIEW_PREFS_KEY,
       JSON.stringify({ ...current, ...prefs }),
     );
-  } catch (error) {
-    console.warn(
-      "Failed to save task view preferences to sessionStorage:",
-      error,
-    );
+  } catch {
+    // Ignore storage errors
   }
+};
+
+/** Parse a comma-separated URL param into a validated array */
+const parseArrayParam = (param: string | null, validValues: string[]): string[] => {
+  if (!param) return [];
+  return param.split(",").filter((v) => validValues.includes(v));
+};
+
+/** Read initial filter state from URL search params, falling back to sessionStorage / defaults */
+const getInitialState = (search: string) => {
+  const params = new URLSearchParams(search);
+  const stored = getStoredPrefs();
+
+  const tabParam = params.get("tab");
+  const filterMode: TaskFilterMode =
+    tabParam && VALID_FILTER_MODES.includes(tabParam as TaskFilterMode)
+      ? (tabParam as TaskFilterMode)
+      : stored.filterMode || "assignedToMe";
+
+  const statusFilter = parseArrayParam(params.get("status"), VALID_STATUSES) as TaskStatus[];
+  const priorityFilter = parseArrayParam(params.get("priority"), VALID_PRIORITIES) as CasePriority[];
+  const dueDateFilter = parseArrayParam(params.get("dueDate"), VALID_DUE_DATE_FILTERS) as DueDateFilter[];
+
+  const caseRelParam = params.get("caseRelation");
+  const caseRelationFilter: CaseRelationFilter | null =
+    caseRelParam && VALID_CASE_RELATIONS.includes(caseRelParam)
+      ? (caseRelParam as CaseRelationFilter)
+      : null;
+
+  const searchQuery = params.get("search") || "";
+
+  const viewParam = params.get("view");
+  const viewMode: "grid" | "table" =
+    viewParam === "grid" || viewParam === "table"
+      ? viewParam
+      : stored.viewMode || "grid";
+
+  const pageParam = Number(params.get("page"));
+  const currentPage = pageParam >= 1 ? pageParam : 1;
+
+  const perPageParam = Number(params.get("perPage"));
+  const itemsPerPage = perPageParam > 0 ? perPageParam : DEFAULT_ITEMS_PER_PAGE;
+
+  return { filterMode, statusFilter, priorityFilter, dueDateFilter, caseRelationFilter, searchQuery, viewMode, currentPage, itemsPerPage };
 };
 
 const TasksPage: React.FC = () => {
   const currentUser = useCurrentUser();
+  const location = useLocation();
+  const navigate = useNavigate();
 
-  // Modal state
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  // Initialize state from URL params
+  const initial = useMemo(() => getInitialState(location.search), []);
 
-  // Filter state - initialize from sessionStorage
-  const [filterMode, setFilterMode] = useState<TaskFilterMode>(() => {
-    const stored = getStoredPrefs();
-    return stored.filterMode || "assignedToMe";
-  });
-  const [statusFilter, setStatusFilter] = useState<TaskStatus | "all">("all");
-  const [priorityFilter, setPriorityFilter] = useState<CasePriority | "all">(
-    "all",
+  const [filterMode, setFilterMode] = useState<TaskFilterMode>(initial.filterMode);
+  const [statusFilter, setStatusFilter] = useState<TaskStatus[]>(initial.statusFilter);
+  const [priorityFilter, setPriorityFilter] = useState<CasePriority[]>(initial.priorityFilter);
+  const [dueDateFilter, setDueDateFilter] = useState<DueDateFilter[]>(initial.dueDateFilter);
+  const [caseRelationFilter, setCaseRelationFilter] = useState<CaseRelationFilter | null>(initial.caseRelationFilter);
+  const [searchQuery, setSearchQuery] = useState(initial.searchQuery);
+  const [viewMode, setViewMode] = useState<"grid" | "table">(initial.viewMode);
+  const [currentPage, setCurrentPage] = useState(initial.currentPage);
+  const [itemsPerPage, setItemsPerPage] = useState(initial.itemsPerPage);
+
+  // Sync state to URL
+  const syncUrl = useCallback(
+    (overrides: Record<string, string | undefined>) => {
+      const params = new URLSearchParams();
+      const values: Record<string, string | undefined> = {
+        tab: filterMode,
+        status: statusFilter.length > 0 ? statusFilter.join(",") : undefined,
+        priority: priorityFilter.length > 0 ? priorityFilter.join(",") : undefined,
+        dueDate: dueDateFilter.length > 0 ? dueDateFilter.join(",") : undefined,
+        caseRelation: caseRelationFilter || undefined,
+        search: searchQuery.trim() || undefined,
+        view: viewMode,
+        page: String(currentPage),
+        perPage: String(itemsPerPage),
+        ...overrides,
+      };
+      for (const [key, val] of Object.entries(values)) {
+        if (val !== undefined && val !== "") params.set(key, val);
+      }
+      navigate(`${location.pathname}?${params.toString()}`, { replace: true });
+    },
+    [filterMode, statusFilter, priorityFilter, dueDateFilter, caseRelationFilter, searchQuery, viewMode, currentPage, itemsPerPage, navigate, location.pathname],
   );
-  const [searchQuery, setSearchQuery] = useState("");
-  const [viewMode, setViewMode] = useState<"grid" | "table">(() => {
-    const stored = getStoredPrefs();
-    return stored.viewMode || "grid";
-  });
-  const [currentPage, setCurrentPage] = useState(0);
+
+  // Compute accessible-only task IDs
+  const accessibleOnlyTaskIds = useMemo(() => {
+    return currentUser?.accessibleTasks?.map((t) => t._id) || [];
+  }, [currentUser?.accessibleTasks]);
 
   // Build query input
   const queryInput = useMemo(() => {
     const input: Record<string, unknown> = {
-      itemsPerPage: ITEMS_PER_PAGE,
-      currentPage,
+      itemsPerPage,
+      currentPage: currentPage - 1,
     };
 
-    if (statusFilter !== "all") {
-      input.status = statusFilter;
+    if (statusFilter.length > 0) {
+      input.statuses = statusFilter;
     }
-    if (priorityFilter !== "all") {
-      input.priority = priorityFilter;
+    if (priorityFilter.length > 0) {
+      input.priorities = priorityFilter;
+    }
+    if (dueDateFilter.length > 0) {
+      input.dueDateFilters = dueDateFilter;
+    }
+    if (caseRelationFilter) {
+      input.caseRelationFilter = caseRelationFilter;
     }
     if (searchQuery.trim()) {
       input.searchQuery = searchQuery.trim();
     }
-    if (filterMode === "assignedToMe") {
+    if (filterMode === "all") {
+      if (currentUser?.role?._id !== ROLES.ADMIN) {
+        input.viewableByUserId = currentUser?._id;
+      }
+    } else if (filterMode === "assignedToMe") {
       input.assigneeId = currentUser?._id;
     } else if (filterMode === "createdByMe") {
       input.creatorId = currentUser?._id;
+    } else if (filterMode === "accessible") {
+      input.taskIds = accessibleOnlyTaskIds;
+      input.excludeAssigneeId = currentUser?._id;
+      input.excludeCreatorId = currentUser?._id;
     }
 
     return input;
   }, [
     statusFilter,
     priorityFilter,
+    dueDateFilter,
+    caseRelationFilter,
     searchQuery,
     currentPage,
+    itemsPerPage,
     filterMode,
     currentUser?._id,
+    accessibleOnlyTaskIds,
   ]);
 
   // Fetch tasks
-  const { tasks, count, loading, error, refetch } = useGetAllTasks(queryInput);
+  const { tasks, count, loading, error } = useGetAllTasks(queryInput);
 
   // Pagination
-  const totalPages = Math.ceil(count / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(count / itemsPerPage);
 
   const handleFilterModeChange = (mode: TaskFilterMode) => {
     setFilterMode(mode);
-    setCurrentPage(0);
+    setCurrentPage(1);
     savePrefs({ filterMode: mode });
+    syncUrl({ tab: mode, page: "1" });
   };
 
-  const handleStatusFilterChange = (status: TaskStatus | "all") => {
-    setStatusFilter(status);
-    setCurrentPage(0);
+  const handleStatusFilterChange = (statuses: TaskStatus[]) => {
+    setStatusFilter(statuses);
+    setCurrentPage(1);
+    syncUrl({ status: statuses.length > 0 ? statuses.join(",") : undefined, page: "1" });
   };
 
-  const handlePriorityFilterChange = (priority: CasePriority | "all") => {
-    setPriorityFilter(priority);
-    setCurrentPage(0);
+  const handlePriorityFilterChange = (priorities: CasePriority[]) => {
+    setPriorityFilter(priorities);
+    setCurrentPage(1);
+    syncUrl({ priority: priorities.length > 0 ? priorities.join(",") : undefined, page: "1" });
+  };
+
+  const handleDueDateFilterChange = (filters: DueDateFilter[]) => {
+    setDueDateFilter(filters);
+    setCurrentPage(1);
+    syncUrl({ dueDate: filters.length > 0 ? filters.join(",") : undefined, page: "1" });
+  };
+
+  const handleCaseRelationFilterChange = (filter: CaseRelationFilter | null) => {
+    setCaseRelationFilter(filter);
+    setCurrentPage(1);
+    syncUrl({ caseRelation: filter || undefined, page: "1" });
   };
 
   const handleSearchQueryChange = (query: string) => {
     setSearchQuery(query);
-    setCurrentPage(0);
+    setCurrentPage(1);
+    syncUrl({ search: query.trim() || undefined, page: "1" });
+  };
+
+  const handleViewModeChange = (mode: "grid" | "table") => {
+    setViewMode(mode);
+    savePrefs({ viewMode: mode });
+    syncUrl({ view: mode });
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    syncUrl({ page: String(page) });
+  };
+
+  const handleItemsPerPageChange = (newSize: number) => {
+    setItemsPerPage(newSize);
+    setCurrentPage(1);
+    syncUrl({ perPage: String(newSize), page: "1" });
   };
 
   if (error) {
@@ -138,23 +263,6 @@ const TasksPage: React.FC = () => {
 
   return (
     <div className="min-h-full bg-gray-100 p-6">
-      {/* Header */}
-      <header className="mb-6 flex justify-between items-start">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-800">Табло за Задачи</h1>
-          <p className="text-gray-600 mt-1">
-            Преглеждайте и управлявайте вашите задачи.
-          </p>
-        </div>
-        <button
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-md cursor-pointer"
-          onClick={() => setIsCreateModalOpen(true)}
-        >
-          <PlusIcon className="h-5 w-5" />
-          Нова задача
-        </button>
-      </header>
-
       {/* Filters */}
       <TaskFilters
         filterMode={filterMode}
@@ -163,13 +271,14 @@ const TasksPage: React.FC = () => {
         onStatusFilterChange={handleStatusFilterChange}
         priorityFilter={priorityFilter}
         onPriorityFilterChange={handlePriorityFilterChange}
+        dueDateFilter={dueDateFilter}
+        onDueDateFilterChange={handleDueDateFilterChange}
+        caseRelationFilter={caseRelationFilter}
+        onCaseRelationFilterChange={handleCaseRelationFilterChange}
         searchQuery={searchQuery}
         onSearchQueryChange={handleSearchQueryChange}
         viewMode={viewMode}
-        onViewModeChange={(mode) => {
-          setViewMode(mode);
-          savePrefs({ viewMode: mode });
-        }}
+        onViewModeChange={handleViewModeChange}
       />
 
       {/* Task List */}
@@ -179,43 +288,16 @@ const TasksPage: React.FC = () => {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="mt-6 flex justify-center items-center gap-2">
-          <button
-            onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
-            disabled={currentPage === 0}
-            className="px-4 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Предишна
-          </button>
-          <span className="text-sm text-gray-600">
-            Страница {currentPage + 1} от {totalPages}
-          </span>
-          <button
-            onClick={() =>
-              setCurrentPage((p) => Math.min(totalPages - 1, p + 1))
-            }
-            disabled={currentPage >= totalPages - 1}
-            className="px-4 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Следваща
-          </button>
-        </div>
+        <Pagination
+          totalPages={totalPages}
+          totalCount={count}
+          currentPage={currentPage}
+          itemsPerPage={itemsPerPage}
+          onItemsPerPageChange={handleItemsPerPageChange}
+          onPageChange={handlePageChange}
+        />
       )}
 
-      {/* Results count */}
-      {!loading && (
-        <div className="mt-4 text-center text-sm text-gray-500">
-          Показани {tasks.length} от {count} задачи
-        </div>
-      )}
-
-      {/* Create Task Modal */}
-      <TaskFormModal
-        isOpen={isCreateModalOpen}
-        onOpenChange={setIsCreateModalOpen}
-        mode="create"
-        onSuccess={refetch}
-      />
     </div>
   );
 };

@@ -49,6 +49,9 @@ const filterMap: Record<
     "mention_in_answer_comment",
   ],
   TASKS: [
+    "new_task_comment",
+    "new_task_help_request",
+    "new_task_approval_request",
     "mention_in_task_comment",
     "mention_in_task_help_request",
     "mention_in_task_approval_request",
@@ -235,6 +238,9 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }) => {
         "mention_in_answer_comment",
       ],
       TASKS: [
+        "new_task_comment",
+        "new_task_help_request",
+        "new_task_approval_request",
         "mention_in_task_comment",
         "mention_in_task_help_request",
         "mention_in_task_approval_request",

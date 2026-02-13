@@ -83,6 +83,14 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
         return <AtSymbolIcon className="h-5 w-5 text-purple-600" />;
       case "case_reminder":
         return <BellAlertIcon className="h-5 w-5 text-red-600" />;
+      case "new_task_comment":
+        return (
+          <ChatBubbleOvalLeftEllipsisIcon className="h-5 w-5 text-purple-500" />
+        );
+      case "new_task_help_request":
+        return <InformationCircleIcon className="h-5 w-5 text-red-500" />;
+      case "new_task_approval_request":
+        return <InformationCircleIcon className="h-5 w-5 text-yellow-500" />;
       case "mention_in_task_comment":
         return <AtSymbolIcon className="h-5 w-5 text-purple-600" />;
       case "mention_in_task_help_request":

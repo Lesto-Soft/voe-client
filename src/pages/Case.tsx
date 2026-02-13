@@ -11,8 +11,9 @@ import { ICase, ICategory, IReadBy, IUser } from "../db/interfaces";
 import { useCurrentUser } from "../context/UserContext";
 import { determineUserRightsForCase } from "../utils/rightUtils";
 import { ROLES } from "../utils/GLOBAL_PARAMETERS";
-import { useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { UnsavedChangesProvider } from "../context/UnsavedChangesContext";
+import { useNotificationSubscription } from "../graphql/hooks/notificationHook";
 
 // Authorization
 import { useAuthorization } from "../hooks/useAuthorization";
@@ -110,6 +111,26 @@ const Case = () => {
   const { isAllowed, isLoading: authLoading } = useAuthorization({
     type: "case",
     data: caseData,
+  });
+
+  // Real-time: silently refetch case data when a notification arrives for this case.
+  // No navigation or tab switching — the user stays where they are undisturbed.
+  // Highlighting only happens when the user clicks a notification from the bell icon.
+  const refetchRef = useRef(refetch);
+  refetchRef.current = refetch;
+
+  const handleNotification = useCallback(
+    ({ data }: any) => {
+      const notification = data.data?.notificationAdded;
+      if (!notification || notification.caseNumber !== numericCaseNumber) return;
+      refetchRef.current();
+    },
+    [numericCaseNumber],
+  );
+
+  useNotificationSubscription({
+    variables: { userId: currentUser._id },
+    onData: handleNotification,
   });
 
   if (errorCase) {

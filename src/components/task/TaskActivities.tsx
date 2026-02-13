@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
+import { useLocation } from "react-router";
 import { ITaskActivity, IMe, TaskActivityType } from "../../db/interfaces";
 import {
   useCreateTaskActivity,
@@ -266,6 +267,40 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
     );
   };
 
+  // Deep-link scroll & highlight (runs once per hash)
+  const location = useLocation();
+  const highlightedRef = useRef<HTMLDivElement | null>(null);
+  const highlightedHashRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    const hash = location.hash; // e.g. "#activity-abc123"
+    if (!hash.startsWith("#activity-")) return;
+    if (highlightedHashRef.current === hash) return;
+
+    const targetId = hash.substring(1); // "activity-abc123"
+
+    // Small delay to allow the DOM to render
+    const timerId = setTimeout(() => {
+      const el = document.getElementById(targetId);
+      if (!el) return;
+
+      highlightedHashRef.current = hash;
+
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.classList.add("highlight");
+      highlightedRef.current = el;
+
+      setTimeout(() => {
+        el.classList.remove("highlight");
+        highlightedRef.current = null;
+      }, 5000);
+    }, 300);
+
+    return () => {
+      clearTimeout(timerId);
+    };
+  }, [location.hash, activities]);
+
   // Sort activities by creation date (newest first)
   const sortedActivities = [...activities].sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
@@ -343,6 +378,7 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
               return (
                 <div
                   key={activity._id}
+                  id={`activity-${activity._id}`}
                   className={`flex items-center gap-2 py-1.5 px-3 text-xs rounded-md border-l-2 ${config.leftBorderColor} ${config.bgColor}`}
                 >
                   <Icon
@@ -362,6 +398,7 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
             return (
               <div
                 key={activity._id}
+                id={`activity-${activity._id}`}
                 className={`border-l-4 ${config.leftBorderColor} rounded-lg py-2 px-3 bg-white shadow-sm border border-gray-200`}
               >
                 <div className="flex items-start gap-2">

@@ -17,6 +17,7 @@ import {
   DocumentTextIcon,
   ChatBubbleBottomCenterTextIcon,
   ChatBubbleOvalLeftEllipsisIcon,
+  ClipboardDocumentListIcon,
 } from "@heroicons/react/24/solid";
 import { BellIcon } from "@heroicons/react/24/outline";
 
@@ -24,7 +25,7 @@ interface NotificationCenterProps {
   userId: string;
 }
 
-type NotificationTab = "ALL" | "CASES" | "ANSWERS" | "COMMENTS";
+type NotificationTab = "ALL" | "CASES" | "ANSWERS" | "COMMENTS" | "TASKS";
 const filterMap: Record<
   Exclude<NotificationTab, "ALL" | "UNREAD">,
   string[]
@@ -46,6 +47,15 @@ const filterMap: Record<
     "new_answer_comment",
     "mention_in_comment",
     "mention_in_answer_comment",
+  ],
+  TASKS: [
+    "new_task_comment",
+    "new_task_help_request",
+    "new_task_approval_request",
+    "mention_in_task_comment",
+    "mention_in_task_help_request",
+    "mention_in_task_approval_request",
+    "task_closed",
   ],
 };
 
@@ -78,6 +88,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }) => {
               ns="menu"
               values={{
                 caseNumber: newNotification.caseNumber,
+                taskNumber: newNotification.taskNumber,
                 username: newNotification.username,
                 categoryName: newNotification.new_categories
                   ? newNotification.new_categories.join(", ")
@@ -168,6 +179,11 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }) => {
       icon: ChatBubbleOvalLeftEllipsisIcon,
       title: t("notification_contents.comments"),
     },
+    {
+      name: "TASKS",
+      icon: ClipboardDocumentListIcon,
+      title: t("notification_contents.tasks"),
+    },
   ];
   const unreadCountsByTab = useMemo(() => {
     const counts: Record<NotificationTab, number> = {
@@ -175,6 +191,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }) => {
       CASES: 0,
       ANSWERS: 0,
       COMMENTS: 0,
+      TASKS: 0,
     };
     const unreadNotifications = notifications.filter((n) => !n.read);
     counts.ALL = unreadNotifications.length;
@@ -183,6 +200,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }) => {
       if (filterMap.CASES.includes(n.content)) counts.CASES++;
       if (filterMap.ANSWERS.includes(n.content)) counts.ANSWERS++;
       if (filterMap.COMMENTS.includes(n.content)) counts.COMMENTS++;
+      if (filterMap.TASKS.includes(n.content)) counts.TASKS++;
     });
 
     return counts;
@@ -218,6 +236,15 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }) => {
         "new_answer_comment",
         "mention_in_comment",
         "mention_in_answer_comment",
+      ],
+      TASKS: [
+        "new_task_comment",
+        "new_task_help_request",
+        "new_task_approval_request",
+        "mention_in_task_comment",
+        "mention_in_task_help_request",
+        "mention_in_task_approval_request",
+        "task_closed",
       ],
     };
 

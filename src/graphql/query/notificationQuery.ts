@@ -8,6 +8,7 @@ export const GET_NOTIFICATIONS = gql`
       read
       date
       caseNumber
+      taskNumber
       username
       new_categories
       entityId

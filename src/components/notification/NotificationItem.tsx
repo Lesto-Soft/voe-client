@@ -83,6 +83,14 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
         return <AtSymbolIcon className="h-5 w-5 text-purple-600" />;
       case "case_reminder":
         return <BellAlertIcon className="h-5 w-5 text-red-600" />;
+      case "mention_in_task_comment":
+        return <AtSymbolIcon className="h-5 w-5 text-purple-600" />;
+      case "mention_in_task_help_request":
+        return <AtSymbolIcon className="h-5 w-5 text-red-500" />;
+      case "mention_in_task_approval_request":
+        return <AtSymbolIcon className="h-5 w-5 text-yellow-500" />;
+      case "task_closed":
+        return <InformationCircleIcon className="h-5 w-5 text-green-600" />;
       default:
         return <InformationCircleIcon className="h-5 w-5 text-gray-500" />;
     }
@@ -119,9 +127,18 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
         onClick={() => {
           if (setDropdownOpen) setDropdownOpen(false);
           markAsRead({ variables: { notificationIds: [notification._id] } });
-          const { content, caseNumber, entityId, username } = notification;
+          const { content, caseNumber, taskNumber, entityId, username } =
+            notification;
           if (content.includes("_to_category")) {
             return navigate(`/category/${notification.new_categories?.[0]}`);
+          }
+          if (taskNumber) {
+            if (entityId) {
+              return navigate(
+                `/tasks/${taskNumber}#activity-${entityId}`
+              );
+            }
+            return navigate(`/tasks/${taskNumber}`);
           }
           if (content.includes("reopen_")) {
             return navigate(`/case/${caseNumber}#answers`, {
@@ -171,6 +188,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
               ns="menu"
               values={{
                 caseNumber: notification.caseNumber,
+                taskNumber: notification.taskNumber,
                 username: notification.username,
                 categoryName: notification.new_categories
                   ? notification.new_categories.join(", ")

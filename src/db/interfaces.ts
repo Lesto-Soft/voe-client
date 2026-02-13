@@ -163,6 +163,7 @@ export interface INotification {
   userId: string;
   caseId: string;
   caseNumber?: number;
+  taskNumber?: number;
   username?: string;
   new_categories?: string[];
   entityId?: string;

@@ -11,8 +11,10 @@ import {
   ChevronDownIcon,
   XMarkIcon,
 } from "@heroicons/react/24/solid";
+import { CalendarDaysIcon } from "@heroicons/react/24/outline";
 import ClearableInput from "../global/inputs/ClearableInput";
 import CustomMultiSelectDropdown from "../global/dropdown/CustomMultiSelectDropdown";
+import DateRangeSelector from "../features/userAnalytics/DateRangeSelector";
 import type {
   DueDateFilter,
   CaseRelationFilter,
@@ -62,6 +64,10 @@ interface TaskFiltersProps {
   onCaseRelationFilterChange: (filter: CaseRelationFilter | null) => void;
   searchQuery: string;
   onSearchQueryChange: (query: string) => void;
+  dateRange: { startDate: Date | null; endDate: Date | null };
+  onDateRangeChange: (range: { startDate: Date | null; endDate: Date | null }) => void;
+  isDateSelectorVisible: boolean;
+  onToggleDateSelector: () => void;
   viewMode: "grid" | "table";
   onViewModeChange: (mode: "grid" | "table") => void;
   showFilters: boolean;
@@ -110,6 +116,10 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
   onCaseRelationFilterChange,
   searchQuery,
   onSearchQueryChange,
+  dateRange,
+  onDateRangeChange,
+  isDateSelectorVisible,
+  onToggleDateSelector,
   viewMode,
   onViewModeChange,
   showFilters,
@@ -117,6 +127,7 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
   isAnyFilterActive,
   onClearFilters,
 }) => {
+  const isDateFilterActive = dateRange.startDate !== null || dateRange.endDate !== null;
   return (
     <div className="mb-6">
       {/* Top bar: Filter mode buttons (left) + View toggle & Filter button (right) */}
@@ -256,6 +267,27 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
               placeholder="Всички"
             />
 
+            {/* Date filter toggle */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Дата
+              </label>
+              <button
+                type="button"
+                onClick={onToggleDateSelector}
+                title="Филтриране по дата"
+                className={`cursor-pointer px-3 py-2 flex items-center justify-center border rounded-md shadow-sm transition duration-150 ease-in-out text-sm ${
+                  isDateSelectorVisible
+                    ? "bg-indigo-100 border-indigo-500 text-indigo-600"
+                    : isDateFilterActive
+                    ? "bg-white border-indigo-400 text-indigo-600"
+                    : "bg-white text-gray-500 border-gray-300 hover:border-gray-400"
+                }`}
+              >
+                <CalendarDaysIcon className="h-5 w-5" />
+              </button>
+            </div>
+
             {/* Case relation filter */}
             <div className="w-48">
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -279,6 +311,16 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
               </select>
             </div>
           </div>
+
+          {isDateSelectorVisible && (
+            <div className="mt-4 border-t border-gray-200 pt-4">
+              <DateRangeSelector
+                dateRange={dateRange}
+                onDateRangeChange={onDateRangeChange}
+                justify="end"
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>

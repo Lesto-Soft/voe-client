@@ -132,10 +132,12 @@ const UserTaskActivityActivityCard: React.FC<
                   <TaskStatusBadge status={task.status} size="sm" />
                   <TaskPriorityBadge priority={task.priority} size="sm" />
                   {task.relatedCase && task.relatedCase.case_number && (
-                    <CaseLink
-                      my_case={task.relatedCase as ICase}
-                      t={tFunctionForCaseLinkProp}
-                    />
+                    <div className="w-20">
+                      <CaseLink
+                        my_case={task.relatedCase as ICase}
+                        t={tFunctionForCaseLinkProp}
+                      />
+                    </div>
                   )}
                 </div>
               )}

@@ -27,7 +27,7 @@ interface NotificationCenterProps {
 
 type NotificationTab = "ALL" | "CASES" | "ANSWERS" | "COMMENTS" | "TASKS";
 const filterMap: Record<
-  Exclude<NotificationTab, "ALL" | "UNREAD">,
+  Exclude<NotificationTab, "ALL">,
   string[]
 > = {
   CASES: [
@@ -64,6 +64,8 @@ const filterMap: Record<
     "task_due_approaching",
     "task_overdue_reminder",
     "task_due_passed",
+    "task_assigned",
+    "task_deleted",
   ],
 };
 
@@ -215,46 +217,9 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }) => {
   }, [notifications]);
 
   const filteredNotifications = useMemo(() => {
-    // if (activeTab === "UNREAD") {
-    //   return notifications.filter((n) => !n.read);
-    // }
-
     if (activeTab === "ALL") {
       return notifications;
     }
-
-    const filterMap: Record<
-      Exclude<NotificationTab, "ALL" | "UNREAD">,
-      string[]
-    > = {
-      CASES: [
-        "new_case",
-        "approve_answer_close_case",
-        "reopen_case",
-        "case_reminder",
-      ],
-      ANSWERS: [
-        "new_answer",
-        "approve_answer_await_finance_case",
-        "approve_answer_finance_case",
-        "mention_in_answer",
-      ],
-      COMMENTS: [
-        "new_comment_case",
-        "new_answer_comment",
-        "mention_in_comment",
-        "mention_in_answer_comment",
-      ],
-      TASKS: [
-        "new_task_comment",
-        "new_task_help_request",
-        "new_task_approval_request",
-        "mention_in_task_comment",
-        "mention_in_task_help_request",
-        "mention_in_task_approval_request",
-        "task_closed",
-      ],
-    };
 
     const keywords = filterMap[activeTab];
     return notifications.filter((n) => keywords.includes(n.content));
@@ -403,7 +368,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }) => {
             <div className="max-h-96 overflow-y-auto">
               {initialLoading && (
                 <div className="p-4 text-center text-gray-500">
-                  Зареждане...
+                  {t("notification_contents.loading", "Зареждане...")}
                 </div>
               )}
 

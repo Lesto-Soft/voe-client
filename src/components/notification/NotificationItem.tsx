@@ -125,6 +125,10 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
         return <BellAlertIcon className="h-5 w-5 text-red-600" />;
       case "task_due_passed":
         return <ClockIcon className="h-5 w-5 text-red-500" />;
+      case "task_assigned":
+        return <UserIcon className="h-5 w-5 text-green-500" />;
+      case "task_deleted":
+        return <TrashIcon className="h-5 w-5 text-red-500" />;
       default:
         return <InformationCircleIcon className="h-5 w-5 text-gray-500" />;
     }

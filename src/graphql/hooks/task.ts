@@ -454,10 +454,10 @@ export const useDeleteTask = (
     }
   );
 
-  const deleteTask = async (_id: string) => {
+  const deleteTask = async (_id: string, userId: string) => {
     try {
       const response = await deleteTaskMutation({
-        variables: { _id },
+        variables: { _id, userId },
       });
       return response.data.deleteTask;
     } catch (err) {
@@ -526,7 +526,7 @@ export const useAssignTask = (taskId?: string) => {
     }
   );
 
-  const assignTask = async (taskIdParam: string, assigneeId?: string, userId?: string) => {
+  const assignTask = async (taskIdParam: string, assigneeId: string | undefined, userId: string) => {
     try {
       const response = await assignTaskMutation({
         variables: { taskId: taskIdParam, assigneeId, userId },

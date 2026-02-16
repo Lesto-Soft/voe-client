@@ -119,6 +119,7 @@ const systemActivityTypes: TaskActivityType[] = [
   TaskActivityType.PriorityChange,
   TaskActivityType.AssigneeChange,
   TaskActivityType.DescriptionChange,
+  TaskActivityType.AnalysisSubmitted,
 ];
 
 // Helper component to display activity attachments in read-only mode

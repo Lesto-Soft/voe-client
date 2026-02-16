@@ -139,7 +139,7 @@ const TaskDetail: React.FC = () => {
 
   const handleDelete = async () => {
     try {
-      await deleteTask(taskData._id);
+      await deleteTask(taskData._id, currentUser._id);
     } catch (err) {
       console.error("Failed to delete task:", err);
     }

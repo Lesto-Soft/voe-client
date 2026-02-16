@@ -96,6 +96,14 @@ const activityTypeConfig: Record<
     borderColor: "border-teal-200",
     leftBorderColor: "border-l-teal-500",
   },
+  [TaskActivityType.DescriptionChange]: {
+    label: "Промяна на описание",
+    icon: PencilIcon,
+    bgColor: "bg-gray-50",
+    textColor: "text-gray-700",
+    borderColor: "border-gray-200",
+    leftBorderColor: "border-l-gray-500",
+  },
 };
 
 // User-selectable activity types (exclude system-generated types)
@@ -110,6 +118,7 @@ const systemActivityTypes: TaskActivityType[] = [
   TaskActivityType.StatusChange,
   TaskActivityType.PriorityChange,
   TaskActivityType.AssigneeChange,
+  TaskActivityType.DescriptionChange,
 ];
 
 // Helper component to display activity attachments in read-only mode

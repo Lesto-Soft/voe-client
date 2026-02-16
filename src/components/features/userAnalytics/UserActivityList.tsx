@@ -65,7 +65,8 @@ export interface CombinedActivity {
     | "task_status_change"
     | "task_priority_change"
     | "task_assignee_change"
-    | "task_analysis_submitted";
+    | "task_analysis_submitted"
+    | "task_description_change";
 }
 
 interface UserActivityListProps {
@@ -132,6 +133,7 @@ const TASK_ACTIVITY_CARD_TYPES = new Set([
   "task_priority_change",
   "task_assignee_change",
   "task_analysis_submitted",
+  "task_description_change",
 ]);
 
 const TASK_LIFECYCLE_TYPES = new Set([
@@ -147,6 +149,7 @@ const LIFECYCLE_ACTIVITY_TYPES = new Set([
   "task_status_change",
   "task_priority_change",
   "task_assignee_change",
+  "task_description_change",
 ]);
 
 const ENTRY_ACTIVITY_TYPES = new Set([

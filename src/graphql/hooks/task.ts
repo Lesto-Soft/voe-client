@@ -417,10 +417,10 @@ export const useUpdateTask = (taskId?: string) => {
     }
   );
 
-  const updateTask = async (_id: string, input: UpdateTaskInput) => {
+  const updateTask = async (_id: string, input: UpdateTaskInput, userId: string) => {
     try {
       const response = await updateTaskMutation({
-        variables: { _id, input },
+        variables: { _id, input, userId },
         refetchQueries: [{ query: GET_TASK_BY_ID, variables: { _id } }],
         awaitRefetchQueries: true,
       });

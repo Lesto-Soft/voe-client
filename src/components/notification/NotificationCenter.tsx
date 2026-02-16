@@ -56,6 +56,14 @@ const filterMap: Record<
     "mention_in_task_help_request",
     "mention_in_task_approval_request",
     "task_closed",
+    "task_reopened",
+    "new_task_analysis",
+    "task_assignee_changed",
+    "task_priority_changed",
+    "task_description_changed",
+    "task_due_approaching",
+    "task_overdue_reminder",
+    "task_due_passed",
   ],
 };
 
@@ -264,7 +272,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }) => {
       .then(() => {
         const idSet = new Set(idsToMark);
         setNotifications((prev) =>
-          prev.map((n) => (idSet.has(n._id) ? { ...n, read: true } : n))
+          prev.map((n) => (idSet.has(n._id) ? { ...n, read: true } : n)),
         );
       })
       .catch((err) => {
@@ -289,9 +297,6 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }) => {
       pauseOnHover: true,
       draggable: true,
       progress: undefined,
-      style: {
-        marginTop: "130px",
-      },
     });
   };
 

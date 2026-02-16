@@ -88,7 +88,8 @@ interface CombinedActivity {
     | "task_status_change"
     | "task_priority_change"
     | "task_assignee_change"
-    | "task_analysis_submitted";
+    | "task_analysis_submitted"
+    | "task_description_change";
 }
 const getTierForScore = (score: number): RatingTierLabel => {
   if (score >= TIERS.GOLD) return "Отлични";
@@ -440,6 +441,7 @@ const User: React.FC = () => {
         PRIORITY_CHANGE: "task_priority_change",
         ASSIGNEE_CHANGE: "task_assignee_change",
         ANALYSIS_SUBMITTED: "task_analysis_submitted",
+        DESCRIPTION_CHANGE: "task_description_change",
       };
       user.createdTaskActivities
         .filter((ta) => ta.createdAt && isInDateRange(ta.createdAt))
@@ -738,6 +740,7 @@ const User: React.FC = () => {
         "task_status_change",
         "task_priority_change",
         "task_assignee_change",
+        "task_description_change",
       ]),
     []
   );

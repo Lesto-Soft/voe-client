@@ -13,6 +13,7 @@ import {
   ExclamationTriangleIcon,
   UserIcon,
   BeakerIcon,
+  PencilSquareIcon,
 } from "@heroicons/react/24/outline";
 
 type TaskActivityActivityType =
@@ -22,7 +23,8 @@ type TaskActivityActivityType =
   | "task_status_change"
   | "task_priority_change"
   | "task_assignee_change"
-  | "task_analysis_submitted";
+  | "task_analysis_submitted"
+  | "task_description_change";
 
 interface UserTaskActivityActivityCardProps {
   taskActivity: ITaskActivity;
@@ -62,6 +64,10 @@ const ACTIVITY_CONFIG: Record<
   task_analysis_submitted: {
     icon: <BeakerIcon className="h-5 w-5 text-teal-500" />,
     label: "Подаде анализ за задача",
+  },
+  task_description_change: {
+    icon: <PencilSquareIcon className="h-5 w-5 text-gray-500" />,
+    label: "Промени описание на задача",
   },
 };
 
@@ -132,10 +138,12 @@ const UserTaskActivityActivityCard: React.FC<
                   <TaskStatusBadge status={task.status} size="sm" />
                   <TaskPriorityBadge priority={task.priority} size="sm" />
                   {task.relatedCase && task.relatedCase.case_number && (
-                    <CaseLink
-                      my_case={task.relatedCase as ICase}
-                      t={tFunctionForCaseLinkProp}
-                    />
+                    <div className="w-20">
+                      <CaseLink
+                        my_case={task.relatedCase as ICase}
+                        t={tFunctionForCaseLinkProp}
+                      />
+                    </div>
                   )}
                 </div>
               )}

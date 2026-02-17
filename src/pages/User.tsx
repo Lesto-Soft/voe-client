@@ -14,6 +14,7 @@ import {
   CaseType,
   ICaseStatus,
   TaskStatus,
+  TaskActivityType,
 } from "../db/interfaces";
 import { UpdateUserInput } from "../graphql/mutation/user";
 import { parseActivityDate } from "../utils/dateUtils";
@@ -27,7 +28,7 @@ import { useCurrentUser } from "../context/UserContext";
 import PageStatusDisplay from "../components/global/PageStatusDisplay";
 import UserPageSkeleton from "../components/skeletons/UserPageSkeleton";
 import UserInformationPanel from "../components/features/userAnalytics/UserInformationPanel";
-import UserActivityList from "../components/features/userAnalytics/UserActivityList";
+import UserActivityList, { CombinedActivity } from "../components/features/userAnalytics/UserActivityList";
 import UserStatisticsPanel, {
   UserTextStats,
   PieTab,
@@ -67,28 +68,6 @@ type ResolutionCategoryLabel =
 interface RatedCaseActivity {
   case: ICase;
   averageScore: number;
-}
-interface CombinedActivity {
-  id: string;
-  date: string;
-  item: ICase | IAnswer | IComment | RatedCaseActivity | ITask | ITaskActivity;
-  activityType:
-    | "case"
-    | "answer"
-    | "comment"
-    | "rating"
-    | "base_approval"
-    | "finance_approval"
-    | "task_created"
-    | "task_assigned"
-    | "task_completed"
-    | "task_comment"
-    | "task_help_request"
-    | "task_approval_request"
-    | "task_status_change"
-    | "task_priority_change"
-    | "task_assignee_change"
-    | "task_analysis_submitted";
 }
 const getTierForScore = (score: number): RatingTierLabel => {
   if (score >= TIERS.GOLD) return "Отлични";
@@ -430,16 +409,17 @@ const User: React.FC = () => {
     // TaskActivity entries (comments, help requests, approval requests, status/priority/assignee changes, analysis submissions)
     if (user.createdTaskActivities) {
       const activityTypeMap: Record<
-        string,
+        TaskActivityType,
         CombinedActivity["activityType"]
       > = {
-        COMMENT: "task_comment",
-        HELP_REQUEST: "task_help_request",
-        APPROVAL_REQUEST: "task_approval_request",
-        STATUS_CHANGE: "task_status_change",
-        PRIORITY_CHANGE: "task_priority_change",
-        ASSIGNEE_CHANGE: "task_assignee_change",
-        ANALYSIS_SUBMITTED: "task_analysis_submitted",
+        [TaskActivityType.Comment]: "task_comment",
+        [TaskActivityType.HelpRequest]: "task_help_request",
+        [TaskActivityType.ApprovalRequest]: "task_approval_request",
+        [TaskActivityType.StatusChange]: "task_status_change",
+        [TaskActivityType.PriorityChange]: "task_priority_change",
+        [TaskActivityType.AssigneeChange]: "task_assignee_change",
+        [TaskActivityType.AnalysisSubmitted]: "task_analysis_submitted",
+        [TaskActivityType.DescriptionChange]: "task_description_change",
       };
       user.createdTaskActivities
         .filter((ta) => ta.createdAt && isInDateRange(ta.createdAt))
@@ -738,6 +718,7 @@ const User: React.FC = () => {
         "task_status_change",
         "task_priority_change",
         "task_assignee_change",
+        "task_description_change",
       ]),
     []
   );

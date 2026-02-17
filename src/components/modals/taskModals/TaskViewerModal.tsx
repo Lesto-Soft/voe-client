@@ -5,9 +5,11 @@ import {
   XMarkIcon,
   ArrowTopRightOnSquareIcon,
 } from "@heroicons/react/24/outline";
+import moment from "moment";
 import { useGetAllTasks, TaskFiltersInput } from "../../../graphql/hooks/task";
 import { TaskStatus, CasePriority } from "../../../db/interfaces";
 import { TaskList } from "../../task";
+import Pagination from "../../tables/Pagination";
 
 export type TaskModalFilters = {
   status?: TaskStatus;
@@ -23,7 +25,7 @@ interface TaskViewerModalProps {
   title: string;
 }
 
-const ITEMS_PER_PAGE = 12;
+const DEFAULT_ITEMS_PER_PAGE = 12;
 
 const TaskViewerModal: React.FC<TaskViewerModalProps> = ({
   isOpen,
@@ -31,12 +33,36 @@ const TaskViewerModal: React.FC<TaskViewerModalProps> = ({
   initialFilters,
   title,
 }) => {
-  const [currentPage, setCurrentPage] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(DEFAULT_ITEMS_PER_PAGE);
+
+  // Build dashboard URL from filters (same pattern as CaseViewerModal)
+  const dashboardUrl = useMemo(() => {
+    const params = new URLSearchParams();
+    params.set("tab", "all");
+    const { status, priority, startDate, endDate } = initialFilters;
+
+    if (status) {
+      params.set("status", status);
+    }
+    if (priority) {
+      params.set("priority", priority);
+    }
+    if (startDate) {
+      params.set("startDate", moment(startDate).format("DD-MM-YYYY"));
+    }
+    if (endDate) {
+      params.set("endDate", moment(endDate).format("DD-MM-YYYY"));
+    }
+
+    const queryString = params.toString();
+    return `/tasks${queryString ? `?${queryString}` : ""}`;
+  }, [initialFilters]);
 
   const queryInput: TaskFiltersInput = useMemo(() => {
     const input: TaskFiltersInput = {
-      itemsPerPage: ITEMS_PER_PAGE,
-      currentPage,
+      itemsPerPage,
+      currentPage: currentPage - 1,
     };
 
     if (initialFilters.status) input.status = initialFilters.status;
@@ -50,13 +76,13 @@ const TaskViewerModal: React.FC<TaskViewerModalProps> = ({
     }
 
     return input;
-  }, [initialFilters, currentPage]);
+  }, [initialFilters, currentPage, itemsPerPage]);
 
   const { tasks, count, loading } = useGetAllTasks(
     isOpen ? queryInput : undefined
   );
 
-  const totalPages = Math.ceil(count / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(count / itemsPerPage);
 
   if (!isOpen) return null;
 
@@ -72,7 +98,7 @@ const TaskViewerModal: React.FC<TaskViewerModalProps> = ({
                 {title}
               </Dialog.Title>
               <a
-                href="/tasks"
+                href={dashboardUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 title="Отвори в нов прозорец"
@@ -99,27 +125,17 @@ const TaskViewerModal: React.FC<TaskViewerModalProps> = ({
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="mt-6 flex justify-center items-center gap-2">
-                <button
-                  onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
-                  disabled={currentPage === 0}
-                  className="px-4 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Предишна
-                </button>
-                <span className="text-sm text-gray-600">
-                  Страница {currentPage + 1} от {totalPages}
-                </span>
-                <button
-                  onClick={() =>
-                    setCurrentPage((p) => Math.min(totalPages - 1, p + 1))
-                  }
-                  disabled={currentPage >= totalPages - 1}
-                  className="px-4 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Следваща
-                </button>
-              </div>
+              <Pagination
+                totalPages={totalPages}
+                totalCount={count}
+                currentPage={currentPage}
+                itemsPerPage={itemsPerPage}
+                onItemsPerPageChange={(newSize) => {
+                  setItemsPerPage(newSize);
+                  setCurrentPage(1);
+                }}
+                onPageChange={setCurrentPage}
+              />
             )}
 
             {/* Results count */}

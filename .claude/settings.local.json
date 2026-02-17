@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(find:*)",
-      "Bash(start \"\" \"C:\\\\mypc\\\\notification-matrix.html\")"
+      "Bash(start \"\" \"C:\\\\mypc\\\\notification-matrix.html\")",
+      "Bash(npx tsc:*)"
     ]
   }
 }

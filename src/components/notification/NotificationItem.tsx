@@ -11,6 +11,11 @@ import {
   EnvelopeIcon,
   TrashIcon,
   HandThumbDownIcon,
+  ArrowPathIcon,
+  UserIcon,
+  ExclamationTriangleIcon,
+  PencilSquareIcon,
+  ClockIcon,
 } from "@heroicons/react/24/outline";
 import { INotification } from "../../db/interfaces";
 import { clsx } from "clsx";
@@ -26,6 +31,7 @@ import {
   AcademicCapIcon,
   AtSymbolIcon,
   BellAlertIcon,
+  BeakerIcon,
 } from "@heroicons/react/24/solid";
 
 interface NotificationItemProps {
@@ -73,6 +79,10 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
         return <AcademicCapIcon className="h-5 w-5 text-yellow-500" />;
       case "add_manager_to_category":
         return <AcademicCapIcon className="h-5 w-5 text-blue-600" />;
+      case "add_experts_to_category":
+        return <AcademicCapIcon className="h-5 w-5 text-yellow-500" />;
+      case "add_managers_to_category":
+        return <AcademicCapIcon className="h-5 w-5 text-blue-600" />;
       case "add_financial_approver":
         return <BanknotesIcon className="h-5 w-5 text-green-500" />;
       case "mention_in_answer":
@@ -99,6 +109,26 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
         return <AtSymbolIcon className="h-5 w-5 text-yellow-500" />;
       case "task_closed":
         return <InformationCircleIcon className="h-5 w-5 text-green-600" />;
+      case "task_reopened":
+        return <ArrowPathIcon className="h-5 w-5 text-orange-500" />;
+      case "new_task_analysis":
+        return <BeakerIcon className="h-5 w-5 text-teal-500" />;
+      case "task_assignee_changed":
+        return <UserIcon className="h-5 w-5 text-blue-500" />;
+      case "task_priority_changed":
+        return <ExclamationTriangleIcon className="h-5 w-5 text-amber-500" />;
+      case "task_description_changed":
+        return <PencilSquareIcon className="h-5 w-5 text-gray-500" />;
+      case "task_due_approaching":
+        return <ClockIcon className="h-5 w-5 text-yellow-500" />;
+      case "task_overdue_reminder":
+        return <BellAlertIcon className="h-5 w-5 text-red-600" />;
+      case "task_due_passed":
+        return <ClockIcon className="h-5 w-5 text-red-500" />;
+      case "task_assigned":
+        return <UserIcon className="h-5 w-5 text-green-500" />;
+      case "task_deleted":
+        return <TrashIcon className="h-5 w-5 text-red-500" />;
       default:
         return <InformationCircleIcon className="h-5 w-5 text-gray-500" />;
     }

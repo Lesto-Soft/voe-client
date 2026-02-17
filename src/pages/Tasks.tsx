@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router";
+import moment from "moment";
 import { useCurrentUser } from "../context/UserContext";
 import { useGetAllTasks, DueDateFilter, CaseRelationFilter } from "../graphql/hooks/task";
 import { TaskStatus, CasePriority } from "../db/interfaces";
@@ -62,7 +63,7 @@ const getInitialState = (search: string) => {
   const filterMode: TaskFilterMode =
     tabParam && VALID_FILTER_MODES.includes(tabParam as TaskFilterMode)
       ? (tabParam as TaskFilterMode)
-      : stored.filterMode || "assignedToMe";
+      : stored.filterMode || "all";
 
   const statusFilter = parseArrayParam(params.get("status"), VALID_STATUSES) as TaskStatus[];
   const priorityFilter = parseArrayParam(params.get("priority"), VALID_PRIORITIES) as CasePriority[];
@@ -88,7 +89,14 @@ const getInitialState = (search: string) => {
   const perPageParam = Number(params.get("perPage"));
   const itemsPerPage = perPageParam > 0 ? perPageParam : DEFAULT_ITEMS_PER_PAGE;
 
-  return { filterMode, statusFilter, priorityFilter, dueDateFilter, caseRelationFilter, searchQuery, viewMode, currentPage, itemsPerPage };
+  const startDate = params.get("startDate")
+    ? moment(params.get("startDate"), "DD-MM-YYYY").toDate()
+    : null;
+  const endDate = params.get("endDate")
+    ? moment(params.get("endDate"), "DD-MM-YYYY").toDate()
+    : null;
+
+  return { filterMode, statusFilter, priorityFilter, dueDateFilter, caseRelationFilter, searchQuery, viewMode, currentPage, itemsPerPage, startDate, endDate };
 };
 
 const TasksPage: React.FC = () => {
@@ -108,6 +116,9 @@ const TasksPage: React.FC = () => {
   const [viewMode, setViewMode] = useState<"grid" | "table">(initial.viewMode);
   const [currentPage, setCurrentPage] = useState(initial.currentPage);
   const [itemsPerPage, setItemsPerPage] = useState(initial.itemsPerPage);
+  const [startDate, setStartDate] = useState<Date | null>(initial.startDate);
+  const [endDate, setEndDate] = useState<Date | null>(initial.endDate);
+  const [isDateSelectorVisible, setIsDateSelectorVisible] = useState(initial.startDate !== null || initial.endDate !== null);
   const [showFilters, setShowFilters] = useState(true);
 
   // Check if any filter field (not filter mode / view) is active
@@ -117,9 +128,11 @@ const TasksPage: React.FC = () => {
       priorityFilter.length > 0 ||
       dueDateFilter.length > 0 ||
       caseRelationFilter !== null ||
-      searchQuery.trim() !== ""
+      searchQuery.trim() !== "" ||
+      startDate !== null ||
+      endDate !== null
     );
-  }, [statusFilter, priorityFilter, dueDateFilter, caseRelationFilter, searchQuery]);
+  }, [statusFilter, priorityFilter, dueDateFilter, caseRelationFilter, searchQuery, startDate, endDate]);
 
   // Sync state to URL
   const syncUrl = useCallback(
@@ -132,6 +145,8 @@ const TasksPage: React.FC = () => {
         dueDate: dueDateFilter.length > 0 ? dueDateFilter.join(",") : undefined,
         caseRelation: caseRelationFilter || undefined,
         search: searchQuery.trim() || undefined,
+        startDate: startDate ? moment(startDate).format("DD-MM-YYYY") : undefined,
+        endDate: endDate ? moment(endDate).format("DD-MM-YYYY") : undefined,
         view: viewMode,
         page: String(currentPage),
         perPage: String(itemsPerPage),
@@ -142,7 +157,7 @@ const TasksPage: React.FC = () => {
       }
       navigate(`${location.pathname}?${params.toString()}`, { replace: true });
     },
-    [filterMode, statusFilter, priorityFilter, dueDateFilter, caseRelationFilter, searchQuery, viewMode, currentPage, itemsPerPage, navigate, location.pathname],
+    [filterMode, statusFilter, priorityFilter, dueDateFilter, caseRelationFilter, searchQuery, startDate, endDate, viewMode, currentPage, itemsPerPage, navigate, location.pathname],
   );
 
   // Compute accessible-only task IDs
@@ -172,6 +187,14 @@ const TasksPage: React.FC = () => {
     if (searchQuery.trim()) {
       input.searchQuery = searchQuery.trim();
     }
+    if (startDate) {
+      input.startDate = startDate.toISOString();
+    }
+    if (endDate) {
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+      input.endDate = end.toISOString();
+    }
     if (filterMode === "all") {
       if (currentUser?.role?._id !== ROLES.ADMIN) {
         input.viewableByUserId = currentUser?._id;
@@ -193,6 +216,8 @@ const TasksPage: React.FC = () => {
     dueDateFilter,
     caseRelationFilter,
     searchQuery,
+    startDate,
+    endDate,
     currentPage,
     itemsPerPage,
     filterMode,
@@ -249,12 +274,25 @@ const TasksPage: React.FC = () => {
     syncUrl({ view: mode });
   };
 
+  const handleDateRangeChange = (range: { startDate: Date | null; endDate: Date | null }) => {
+    setStartDate(range.startDate);
+    setEndDate(range.endDate);
+    setCurrentPage(1);
+    syncUrl({
+      startDate: range.startDate ? moment(range.startDate).format("DD-MM-YYYY") : undefined,
+      endDate: range.endDate ? moment(range.endDate).format("DD-MM-YYYY") : undefined,
+      page: "1",
+    });
+  };
+
   const handleClearFilters = () => {
     setStatusFilter([]);
     setPriorityFilter([]);
     setDueDateFilter([]);
     setCaseRelationFilter(null);
     setSearchQuery("");
+    setStartDate(null);
+    setEndDate(null);
     setCurrentPage(1);
     syncUrl({
       status: undefined,
@@ -262,6 +300,8 @@ const TasksPage: React.FC = () => {
       dueDate: undefined,
       caseRelation: undefined,
       search: undefined,
+      startDate: undefined,
+      endDate: undefined,
       page: "1",
     });
   };
@@ -306,6 +346,10 @@ const TasksPage: React.FC = () => {
         onCaseRelationFilterChange={handleCaseRelationFilterChange}
         searchQuery={searchQuery}
         onSearchQueryChange={handleSearchQueryChange}
+        dateRange={{ startDate, endDate }}
+        onDateRangeChange={handleDateRangeChange}
+        isDateSelectorVisible={isDateSelectorVisible}
+        onToggleDateSelector={() => setIsDateSelectorVisible((prev) => !prev)}
         viewMode={viewMode}
         onViewModeChange={handleViewModeChange}
         showFilters={showFilters}

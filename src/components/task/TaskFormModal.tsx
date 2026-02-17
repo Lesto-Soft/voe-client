@@ -177,7 +177,7 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
           attachments: attachments.length > 0 ? attachments : undefined,
           deletedAttachments:
             removedAttachments.length > 0 ? removedAttachments : undefined,
-        });
+        }, currentUser._id);
       }
 
       onOpenChange(false);

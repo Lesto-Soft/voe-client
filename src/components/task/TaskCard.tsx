@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router";
+import { useNavigate } from "react-router";
 import { ITask } from "../../db/interfaces";
 import { getPriorityBorderColor } from "./TaskPriorityBadge";
 import TaskStatusBadge from "./TaskStatusBadge";
@@ -17,10 +17,18 @@ interface TaskCardProps {
 }
 
 const TaskCard: React.FC<TaskCardProps> = ({ task }) => {
+  const navigate = useNavigate();
   const borderColor = getPriorityBorderColor(task.priority);
 
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Don't navigate if the click originated from an inner link
+    const target = e.target as HTMLElement;
+    if (target.closest("a")) return;
+    navigate(`/tasks/${task.taskNumber}`);
+  };
+
   return (
-    <Link to={`/tasks/${task.taskNumber}`} className="block">
+    <div onClick={handleCardClick} className="block cursor-pointer">
       <div
         className={`bg-white p-4 rounded-lg shadow-md border-t-8 ${borderColor} hover:shadow-xl transition-shadow duration-200 flex flex-col h-52`}
       >
@@ -43,13 +51,13 @@ const TaskCard: React.FC<TaskCardProps> = ({ task }) => {
           <div className="pb-3 text-xs text-gray-500 space-y-2">
             <div className="flex items-center gap-2">
               <span>Задача:</span>
-              <div className="w-20" onClick={(e) => e.stopPropagation()}>
+              <div className="w-20">
                 <TaskLink task={task} />
               </div>
               {task.relatedCase && (
                 <>
                   <span>Сигнал:</span>
-                  <div className="w-20" onClick={(e) => e.stopPropagation()}>
+                  <div className="w-20">
                     <CaseLink my_case={task.relatedCase} />
                   </div>
                 </>
@@ -57,9 +65,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task }) => {
             </div>
             <div className="flex items-center gap-2">
               <span>Създадена от:</span>
-              <div onClick={(e) => e.stopPropagation()}>
-                <UserLink user={task.creator} />
-              </div>
+              <UserLink user={task.creator} />
             </div>
           </div>
 
@@ -86,15 +92,13 @@ const TaskCard: React.FC<TaskCardProps> = ({ task }) => {
                 <span className="text-xs text-gray-400">Няма краен срок</span>
               )}
               {task.assignee && (
-                <div onClick={(e) => e.stopPropagation()}>
                   <UserLink user={task.assignee} />
-                </div>
               )}
             </div>
           </div>
         </div>
       </div>
-    </Link>
+    </div>
   );
 };
 

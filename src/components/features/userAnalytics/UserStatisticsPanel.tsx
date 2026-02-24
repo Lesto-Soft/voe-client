@@ -325,13 +325,13 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
     >
       <StatItem
         icon={ClipboardDocumentCheckIcon}
-        label="Общо задачи"
+        label="Общо дейности"
         value={activityCounts.tasksTotal}
         iconColorClass="text-blue-500"
       />
       <StatItem
         icon={ClipboardDocumentListIcon}
-        label="Жизнен цикъл"
+        label="Дейности по задачи"
         value={activityCounts.tasks}
         iconColorClass="text-green-500"
       />

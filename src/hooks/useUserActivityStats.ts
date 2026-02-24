@@ -174,9 +174,11 @@ const useUserActivityStats = (
       .filter((segment) => segment.value > 0)
       .sort((a, b) => b.value - a.value);
 
+    // Average rating based only on the user's own submitted cases
     let ratedCasesSum = 0;
     let ratedCasesCount = 0;
-    casesToAnalyze.forEach((c) => {
+    const ownCases = user.cases?.filter((c) => isInDateRange(c.date)) || [];
+    ownCases.forEach((c) => {
       if (
         c.calculatedRating !== null &&
         c.calculatedRating !== undefined &&

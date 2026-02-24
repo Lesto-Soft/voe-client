@@ -14,7 +14,7 @@ import {
   ClockIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
-import * as Tooltip from "@radix-ui/react-tooltip";
+import HoverTooltip from "../../global/HoverTooltip";
 
 interface UserInformationPanelProps {
   user: IUser | undefined | null;
@@ -219,24 +219,11 @@ const UserInformationPanel: React.FC<UserInformationPanelProps> = ({
                       : "")}
                 </span>
                 {isMisconfigured && (
-                  <Tooltip.Provider>
-                    <Tooltip.Root>
-                      <Tooltip.Trigger asChild>
-                        <span className="ml-2">
-                          <ExclamationTriangleIcon className="h-5 w-5 text-yellow-600" />
-                        </span>
-                      </Tooltip.Trigger>
-                      <Tooltip.Portal>
-                        <Tooltip.Content
-                          sideOffset={5}
-                          className="z-50 max-w-xs rounded-md bg-gray-800 px-3 py-1.5 text-sm text-white shadow-lg"
-                        >
-                          Експерт без зададени категории
-                          <Tooltip.Arrow className="fill-gray-800" />
-                        </Tooltip.Content>
-                      </Tooltip.Portal>
-                    </Tooltip.Root>
-                  </Tooltip.Provider>
+                  <HoverTooltip content="Експерт без зададени категории">
+                    <span className="ml-2">
+                      <ExclamationTriangleIcon className="h-5 w-5 text-yellow-600" />
+                    </span>
+                  </HoverTooltip>
                 )}
               </span>
             }

@@ -13,7 +13,7 @@ import CategoryTableSkeleton from "../../skeletons/CategoryTableSkeleton";
 import TruncatedListWithDialog from "./TruncatedListWithDialog";
 import { isNullOrEmptyArray } from "../../../utils/arrayUtils";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
-import * as Tooltip from "@radix-ui/react-tooltip";
+import HoverTooltip from "../../global/HoverTooltip";
 
 // Import your custom Link components (ensure paths are correct)
 import CategoryLink from "../../global/links/CategoryLink";
@@ -308,24 +308,14 @@ const CategoryTable: React.FC<CategoryTableProps> = ({
                           <CategoryLink {...category} />
                         </div>
                         {isMisconfigured && (
-                          <Tooltip.Provider delayDuration={100}>
-                            <Tooltip.Root>
-                              <Tooltip.Trigger asChild>
-                                <span className="ml-2 flex-shrink-0">
-                                  <ExclamationTriangleIcon className="h-5 w-5 text-yellow-600" />
-                                </span>
-                              </Tooltip.Trigger>
-                              <Tooltip.Portal>
-                                <Tooltip.Content
-                                  sideOffset={5}
-                                  className="z-50 max-w-xs rounded-md bg-gray-800 px-3 py-1.5 text-sm text-white shadow-lg"
-                                >
-                                  Категория без експерти или мениджъри
-                                  <Tooltip.Arrow className="fill-gray-800" />
-                                </Tooltip.Content>
-                              </Tooltip.Portal>
-                            </Tooltip.Root>
-                          </Tooltip.Provider>
+                          <HoverTooltip
+                            content="Категория без експерти или мениджъри"
+                            delayDuration={100}
+                          >
+                            <span className="ml-2 flex-shrink-0">
+                              <ExclamationTriangleIcon className="h-5 w-5 text-yellow-600" />
+                            </span>
+                          </HoverTooltip>
                         )}
                       </div>
                     </td>

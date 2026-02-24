@@ -1,6 +1,6 @@
 import React from "react";
 import * as Dialog from "@radix-ui/react-dialog";
-import * as Tooltip from "@radix-ui/react-tooltip";
+import HoverTooltip from "../../global/HoverTooltip";
 import { XMarkIcon, TableCellsIcon } from "@heroicons/react/24/outline";
 import { InformationCircleIcon } from "@heroicons/react/24/solid";
 import { IRiskAssessment } from "../../../db/interfaces";
@@ -111,22 +111,15 @@ const RiskMatrix: React.FC<RiskMatrixProps> = ({
                   className="relative z-10 flex items-center gap-1 bg-white/60 backdrop-blur-sm rounded-full p-0.5 pr-1.5"
                 >
                   <UserLink user={a.creator} />
-                  <Tooltip.Root delayDuration={100}>
-                    <Tooltip.Trigger asChild>
-                      <button type="button">
-                        <InformationCircleIcon className="h-4 w-4 text-gray-600 hover:text-blue-600" />
-                      </button>
-                    </Tooltip.Trigger>
-                    <Tooltip.Portal>
-                      <Tooltip.Content
-                        className="bg-gray-800 text-white text-xs rounded-md p-2 max-w-xs shadow-lg z-[60]"
-                        sideOffset={5}
-                      >
-                        {a.riskDescription}
-                        <Tooltip.Arrow className="fill-gray-800" />
-                      </Tooltip.Content>
-                    </Tooltip.Portal>
-                  </Tooltip.Root>
+                  <HoverTooltip
+                    content={a.riskDescription}
+                    delayDuration={100}
+                    contentClassName="bg-gray-800 text-white text-xs rounded-md p-2 max-w-xs shadow-lg z-[60]"
+                  >
+                    <button type="button">
+                      <InformationCircleIcon className="h-4 w-4 text-gray-600 hover:text-blue-600" />
+                    </button>
+                  </HoverTooltip>
                 </div>
               ))}
             </div>
@@ -153,7 +146,6 @@ const RiskMatrix: React.FC<RiskMatrixProps> = ({
     <Dialog.Root open={isOpen} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm" />
-        <Tooltip.Provider>
           <Dialog.Content className="fixed top-1/2 left-1/2 z-50 w-[95vw] max-w-[52rem] -translate-x-1/2 -translate-y-1/2 rounded-lg bg-white shadow-xl focus:outline-none max-h-[90vh] flex flex-col">
             {/* Header */}
             <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
@@ -171,22 +163,15 @@ const RiskMatrix: React.FC<RiskMatrixProps> = ({
                     : overallRisk.text}
                 </span>
                 {maxRiskAssessment && (
-                  <Tooltip.Root delayDuration={100}>
-                    <Tooltip.Trigger asChild>
-                      <button type="button">
-                        <InformationCircleIcon className="h-5 w-5 text-gray-600 hover:text-blue-600" />
-                      </button>
-                    </Tooltip.Trigger>
-                    <Tooltip.Portal>
-                      <Tooltip.Content
-                        className="bg-gray-800 text-white text-xs rounded-md p-2 max-w-xs shadow-lg z-[60]"
-                        sideOffset={5}
-                      >
-                        {maxRiskAssessment.riskDescription}
-                        <Tooltip.Arrow className="fill-gray-800" />
-                      </Tooltip.Content>
-                    </Tooltip.Portal>
-                  </Tooltip.Root>
+                  <HoverTooltip
+                    content={maxRiskAssessment.riskDescription}
+                    delayDuration={100}
+                    contentClassName="bg-gray-800 text-white text-xs rounded-md p-2 max-w-xs shadow-lg z-[60]"
+                  >
+                    <button type="button">
+                      <InformationCircleIcon className="h-5 w-5 text-gray-600 hover:text-blue-600" />
+                    </button>
+                  </HoverTooltip>
                 )}
               </div>
 
@@ -244,7 +229,6 @@ const RiskMatrix: React.FC<RiskMatrixProps> = ({
               </div>
             </div>
           </Dialog.Content>
-        </Tooltip.Provider>
       </Dialog.Portal>
     </Dialog.Root>
   );

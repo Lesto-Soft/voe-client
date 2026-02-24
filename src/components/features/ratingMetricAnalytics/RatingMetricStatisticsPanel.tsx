@@ -1,6 +1,6 @@
 // src/components/features/ratingMetricAnalytics/RatingMetricStatisticsPanel.tsx
 import React, { useMemo, useRef, useEffect } from "react";
-import * as Tooltip from "@radix-ui/react-tooltip"; // <-- ADD
+import HoverTooltip from "../../global/HoverTooltip";
 import { IMetricScore } from "../../../db/interfaces";
 import useRatingMetricStats from "../../../hooks/useRatingMetricStats";
 import {
@@ -157,29 +157,21 @@ const RatingMetricStatisticsPanel: React.FC<
   }
 
   return (
-    <Tooltip.Provider>
-      <aside className="lg:col-span-3 bg-white rounded-lg shadow-lg flex flex-col overflow-hidden">
+    <aside className="lg:col-span-3 bg-white rounded-lg shadow-lg flex flex-col overflow-hidden">
         <div className="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1 custom-scrollbar-xs">
           <h3 className="text-xl font-semibold text-gray-700 mb-1 flex items-center gap-x-2">
             <ChartPieIcon className="h-6 w-6 mr-2 text-teal-600" />
             <span>Статистика</span>
             {isInteractive && (
-              <Tooltip.Root delayDuration={150}>
-                <Tooltip.Trigger asChild>
-                  <button className="cursor-help text-gray-400 hover:text-sky-600">
-                    <InformationCircleIcon className="h-5 w-5" />
-                  </button>
-                </Tooltip.Trigger>
-                <Tooltip.Portal>
-                  <Tooltip.Content
-                    className="select-none rounded-md bg-gray-800 px-3 py-2 text-sm leading-tight text-white shadow-lg z-50"
-                    sideOffset={5}
-                  >
-                    Кликнете върху диаграмите, за да филтрирате.
-                    <Tooltip.Arrow className="fill-gray-800" />
-                  </Tooltip.Content>
-                </Tooltip.Portal>
-              </Tooltip.Root>
+              <HoverTooltip
+                content="Кликнете върху диаграмите, за да филтрирате."
+                delayDuration={150}
+                contentClassName="select-none rounded-md bg-gray-800 px-3 py-2 text-sm leading-tight text-white shadow-lg z-50"
+              >
+                <button className="cursor-help text-gray-400 hover:text-sky-600">
+                  <InformationCircleIcon className="h-5 w-5" />
+                </button>
+              </HoverTooltip>
             )}
           </h3>
 
@@ -303,8 +295,7 @@ const RatingMetricStatisticsPanel: React.FC<
             )}
           </div>
         </div>
-      </aside>
-    </Tooltip.Provider>
+    </aside>
   );
 };
 

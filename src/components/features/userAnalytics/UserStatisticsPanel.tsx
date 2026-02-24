@@ -19,7 +19,7 @@ import { UserActivityStats } from "../../../hooks/useUserActivityStats";
 import StatisticPieChart from "../../charts/StatisticPieChart";
 import { PieSegmentData } from "../../charts/PieChart";
 import { RatingTierLabel } from "../../../pages/User";
-import * as Tooltip from "@radix-ui/react-tooltip";
+import HoverTooltip from "../../global/HoverTooltip";
 import DateRangeSelector from "./DateRangeSelector";
 import { CasePriority, CaseType, ICaseStatus, TaskStatus } from "../../../db/interfaces";
 import {
@@ -653,30 +653,22 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
   );
 
   return (
-    <Tooltip.Provider>
-      <aside className="bg-white rounded-lg shadow-lg flex flex-col overflow-hidden h-full">
+    <aside className="bg-white rounded-lg shadow-lg flex flex-col overflow-hidden h-full">
         <div className="p-4 sm:p-4 space-y-3 overflow-y-auto flex-1 custom-scrollbar-xs">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-x-2">
               <ChartPieIcon className="h-6 w-6 mr-2 text-teal-600" />
               Статистика
               {isInteractive && (
-                <Tooltip.Root delayDuration={150}>
-                  <Tooltip.Trigger asChild>
-                    <button className="cursor-help text-gray-400 hover:text-sky-600">
-                      <InformationCircleIcon className="h-5 w-5" />
-                    </button>
-                  </Tooltip.Trigger>
-                  <Tooltip.Portal>
-                    <Tooltip.Content
-                      className="select-none rounded-md bg-gray-800 px-3 py-2 text-sm leading-tight text-white shadow-lg z-50"
-                      sideOffset={5}
-                    >
-                      Кликнете върху диаграмите, за да филтрирате.
-                      <Tooltip.Arrow className="fill-gray-800" />
-                    </Tooltip.Content>
-                  </Tooltip.Portal>
-                </Tooltip.Root>
+                <HoverTooltip
+                  content="Кликнете върху диаграмите, за да филтрирате."
+                  delayDuration={150}
+                  contentClassName="select-none rounded-md bg-gray-800 px-3 py-2 text-sm leading-tight text-white shadow-lg z-50"
+                >
+                  <button className="cursor-help text-gray-400 hover:text-sky-600">
+                    <InformationCircleIcon className="h-5 w-5" />
+                  </button>
+                </HoverTooltip>
               )}
             </h3>
             {viewMode === "center" && (
@@ -813,8 +805,7 @@ const UserStatisticsPanel: React.FC<UserStatisticsPanelProps> = ({
             </>
           )}
         </div>
-      </aside>
-    </Tooltip.Provider>
+    </aside>
   );
 };
 

@@ -240,7 +240,7 @@ const CategoryCasesList: React.FC<CategoryCasesListProps> = ({
           <button
             onClick={() => setIsDateFilterVisible((prev) => !prev)}
             title="Филтрирай по дата"
-            className={`hover:cursor-pointer p-2 rounded-md transition-colors duration-150 ml-2 ${
+            className={`hover:cursor-pointer p-2 rounded-md transition-colors duration-150 ml-2 cursor-pointer ${
               isDateFilterVisible
                 ? "bg-indigo-100 text-indigo-600" // Style when selector is OPEN
                 : isDateFilterActive

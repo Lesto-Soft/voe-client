@@ -1,7 +1,7 @@
 // src/components/forms/partials/UserInputFields.tsx
 import React from "react";
 import { InformationCircleIcon } from "@heroicons/react/20/solid";
-import * as Tooltip from "@radix-ui/react-tooltip";
+import HoverTooltip from "../../global/HoverTooltip";
 import { Role } from "../../../types/userManagementTypes";
 
 interface UserInputFieldsProps {
@@ -69,8 +69,7 @@ const UserInputFields: React.FC<UserInputFieldsProps> = ({
     "disabled:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-70";
 
   return (
-    <Tooltip.Provider delayDuration={300}>
-      <>
+    <>
         {/* Username Input */}
         <div>
           <label
@@ -212,28 +211,21 @@ const UserInputFields: React.FC<UserInputFieldsProps> = ({
                 >
                   Роля<span className="text-red-500">*</span>
                 </label>
-                <Tooltip.Root>
-                  <Tooltip.Trigger asChild>
-                    <button
-                      type="button"
-                      className="flex items-center text-gray-500 hover:text-gray-700"
-                    >
-                      <InformationCircleIcon
-                        className="h-5 w-5 text-yellow-500 hover:text-yellow-700"
-                        aria-hidden="true"
-                      />
-                    </button>
-                  </Tooltip.Trigger>
-                  <Tooltip.Portal>
-                    <Tooltip.Content
-                      sideOffset={5}
-                      className="z-50 max-w-xs bg-yellow-50 border border-yellow-300 text-yellow-800 p-3 rounded-md shadow-lg text-sm"
-                    >
-                      {roleChangeWarningText}
-                      <Tooltip.Arrow className="fill-yellow-100" />
-                    </Tooltip.Content>
-                  </Tooltip.Portal>
-                </Tooltip.Root>
+                <HoverTooltip
+                  content={roleChangeWarningText}
+                  contentClassName="z-50 max-w-xs bg-yellow-50 border border-yellow-300 text-yellow-800 p-3 rounded-md shadow-lg text-sm"
+                  arrowClassName="fill-yellow-100"
+                >
+                  <button
+                    type="button"
+                    className="flex items-center text-gray-500 hover:text-gray-700"
+                  >
+                    <InformationCircleIcon
+                      className="h-5 w-5 text-yellow-500 hover:text-yellow-700"
+                      aria-hidden="true"
+                    />
+                  </button>
+                </HoverTooltip>
               </div>
               <select
                 id="role"
@@ -288,8 +280,7 @@ const UserInputFields: React.FC<UserInputFieldsProps> = ({
             </div>
           </div>
         </div>
-      </>
-    </Tooltip.Provider>
+    </>
   );
 };
 

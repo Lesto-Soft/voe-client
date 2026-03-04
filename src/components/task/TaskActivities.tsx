@@ -10,10 +10,12 @@ import UserLink from "../global/links/UserLink";
 import ActionMenu from "../global/ActionMenu";
 import ShowDate from "../global/ShowDate";
 import { renderContentSafely } from "../../utils/contentRenderer";
+import { ROLES } from "../../utils/GLOBAL_PARAMETERS";
 import { createFileUrl } from "../../utils/fileUtils";
 import ImagePreviewModal, {
   GalleryItem,
 } from "../modals/imageModals/ImagePreviewModal";
+import ConfirmActionDialog from "../modals/ConfirmActionDialog";
 import UnifiedEditor from "../forms/partials/UnifiedRichTextEditor";
 import {
   ChatBubbleLeftIcon,
@@ -273,7 +275,7 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
     // Allow modification if user is the creator OR is an admin
     return (
       activity.createdBy._id === currentUser._id ||
-      currentUser.role?._id === "ADMIN"
+      currentUser.role?._id === ROLES.ADMIN
     );
   };
 
@@ -363,15 +365,15 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
             maxLength={1500}
             isSending={createLoading}
             type="taskActivity"
-            editorMinHeight="min-h-[85px]"
-            editorClassName="max-h-[85px]"
+            editorMinHeight="min-h-[125px]"
+            editorClassName="max-h-[125px]"
             autoFocus
           />
         </div>
       </div>
 
       {/* Activities list - SCROLLABLE */}
-      <div className="flex-grow overflow-y-auto space-y-2 custom-scrollbar-xs ml-3">
+      <div className="flex-grow overflow-y-auto space-y-2 custom-scrollbar-xs px-5">
         {sortedActivities.length === 0 ? (
           <p className="text-center text-gray-500 py-4">
             Няма активност все още. Бъдете първият!
@@ -384,7 +386,6 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
               activity.type,
             );
             const isEditing = editingActivityId === activity._id;
-            const isDeleting = deletingActivityId === activity._id;
             const canModify = canModifyActivity(activity) && !isSystemActivity;
 
             // Compact rendering for system activities
@@ -432,7 +433,7 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
                       <div className="flex items-center gap-2">
                         <ShowDate date={activity.createdAt} />
                         {/* ActionMenu with Edit/Delete */}
-                        {canModify && !isEditing && !isDeleting && (
+                        {canModify && !isEditing && (
                           <ActionMenu>
                             <button
                               onClick={() => handleStartEdit(activity)}
@@ -499,31 +500,6 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
                           </button>
                         </div>
                       </div>
-                    ) : isDeleting ? (
-                      /* Delete confirmation */
-                      <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-                        <p className="text-sm text-red-700 mb-3">
-                          Сигурни ли сте, че искате да изтриете това?
-                        </p>
-                        <div className="flex justify-end gap-2">
-                          <button
-                            type="button"
-                            onClick={() => setDeletingActivityId(null)}
-                            disabled={deleteLoading}
-                            className="px-3 py-1.5 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors cursor-pointer"
-                          >
-                            Отмени
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleDelete(activity._id)}
-                            disabled={deleteLoading}
-                            className="px-3 py-1.5 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
-                          >
-                            {deleteLoading ? "Изтриване..." : "Изтрий"}
-                          </button>
-                        </div>
-                      </div>
                     ) : (
                       /* Normal content display */
                       <>
@@ -546,6 +522,17 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
           })
         )}
       </div>
+
+      <ConfirmActionDialog
+        isOpen={deletingActivityId !== null}
+        onOpenChange={(open) => { if (!open) setDeletingActivityId(null); }}
+        onConfirm={() => { if (deletingActivityId) handleDelete(deletingActivityId); }}
+        title="Изтриване на запис"
+        description="Сигурни ли сте, че искате да изтриете този запис? Това действие е необратимо."
+        confirmButtonText="Изтрий"
+        cancelButtonText="Отмени"
+        isDestructiveAction
+      />
     </div>
   );
 };

@@ -15,6 +15,7 @@ import {
   ShieldCheckIcon,
   TableCellsIcon,
 } from "@heroicons/react/24/outline";
+import { ROLES } from "../../../utils/GLOBAL_PARAMETERS";
 
 interface RiskAssessmentListProps {
   taskId: string;
@@ -53,7 +54,7 @@ const RiskAssessmentList: React.FC<RiskAssessmentListProps> = ({
   const canEditAssessment = (assessment: IRiskAssessment) => {
     return (
       currentUser._id === assessment.creator._id ||
-      currentUser.role?._id === "ADMIN"
+      currentUser.role?._id === ROLES.ADMIN
     );
   };
 

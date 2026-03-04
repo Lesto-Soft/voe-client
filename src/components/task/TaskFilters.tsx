@@ -13,6 +13,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { CalendarDaysIcon } from "@heroicons/react/24/outline";
 import ClearableInput from "../global/inputs/ClearableInput";
+import UserSelector from "../global/dropdown/UserSelector";
 import CustomMultiSelectDropdown from "../global/dropdown/CustomMultiSelectDropdown";
 import CustomDropdown from "../global/dropdown/CustomDropdown";
 import DateRangeSelector from "../features/userAnalytics/DateRangeSelector";
@@ -71,6 +72,10 @@ interface TaskFiltersProps {
   onSearchQueryChange: (query: string) => void;
   descriptionQuery: string;
   onDescriptionQueryChange: (query: string) => void;
+  creatorId: string;
+  onCreatorIdChange: (id: string) => void;
+  assigneeId: string;
+  onAssigneeIdChange: (id: string) => void;
   dateRange: { startDate: Date | null; endDate: Date | null };
   onDateRangeChange: (range: { startDate: Date | null; endDate: Date | null }) => void;
   isDateSelectorVisible: boolean;
@@ -127,6 +132,10 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
   onSearchQueryChange,
   descriptionQuery,
   onDescriptionQueryChange,
+  creatorId,
+  onCreatorIdChange,
+  assigneeId,
+  onAssigneeIdChange,
   dateRange,
   onDateRangeChange,
   isDateSelectorVisible,
@@ -304,6 +313,26 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
                 placeholder="Търсене по описание..."
               />
             </div>
+
+            {/* Creator/Assignee filters (admin/expert only) */}
+            {(currentUser?.role?._id === ROLES.ADMIN || currentUser?.role?._id === ROLES.EXPERT) && (
+              <>
+                <UserSelector
+                  label="Създател"
+                  placeholder="Търси създател..."
+                  selectedUserId={creatorId}
+                  setSelectedUserId={onCreatorIdChange}
+                  t={(key) => ({ loading: "Зареждане...", error: "Грешка", no_users: "Няма потребители", clear: "Изчисти" }[key] || key)}
+                />
+                <UserSelector
+                  label="Възложен на"
+                  placeholder="Търси изпълнител..."
+                  selectedUserId={assigneeId}
+                  setSelectedUserId={onAssigneeIdChange}
+                  t={(key) => ({ loading: "Зареждане...", error: "Грешка", no_users: "Няма потребители", clear: "Изчисти" }[key] || key)}
+                />
+              </>
+            )}
 
             {/* Due date multiselect */}
             <CustomMultiSelectDropdown

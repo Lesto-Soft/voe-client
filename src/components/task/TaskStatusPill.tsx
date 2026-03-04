@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { TaskStatus } from "../../db/interfaces";
 import { useChangeTaskStatus } from "../../graphql/hooks/task";
 import { useCurrentUser } from "../../context/UserContext";
+import ConfirmActionDialog from "../modals/ConfirmActionDialog";
 import TaskStatusBadge from "./TaskStatusBadge";
 import {
   ChevronDownIcon,
@@ -48,6 +49,7 @@ const TaskStatusPill: React.FC<TaskStatusPillProps> = ({
 }) => {
   const { changeTaskStatus, loading } = useChangeTaskStatus(taskId);
   const currentUser = useCurrentUser();
+  const [pendingStatus, setPendingStatus] = useState<TaskStatus | null>(null);
 
   const handleStatusChange = async (newStatus: TaskStatus) => {
     if (newStatus === currentStatus || !currentUser || loading) {
@@ -69,6 +71,7 @@ const TaskStatusPill: React.FC<TaskStatusPillProps> = ({
 
   // Interactive: show badge with dropdown
   return (
+    <>
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
         <button
@@ -96,7 +99,7 @@ const TaskStatusPill: React.FC<TaskStatusPillProps> = ({
               <DropdownMenu.Item
                 key={option.value}
                 disabled={isCurrent}
-                onSelect={() => handleStatusChange(option.value)}
+                onSelect={() => setPendingStatus(option.value)}
                 className={`flex items-center gap-2 px-3 py-2 text-sm rounded-md cursor-pointer outline-none transition-colors ${
                   isCurrent
                     ? "bg-blue-50 text-blue-700 font-medium cursor-default"
@@ -114,6 +117,19 @@ const TaskStatusPill: React.FC<TaskStatusPillProps> = ({
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>
+
+      <ConfirmActionDialog
+        isOpen={pendingStatus !== null}
+        onOpenChange={(open) => { if (!open) setPendingStatus(null); }}
+        onConfirm={() => { if (pendingStatus) { handleStatusChange(pendingStatus); setPendingStatus(null); } }}
+        title="Промяна на статус"
+        description={`Сигурни ли сте, че искате да промените статуса на задачата на "${
+          statusOptions.find(o => o.value === pendingStatus)?.label || ""
+        }"?`}
+        confirmButtonText="Промени"
+        cancelButtonText="Отмени"
+      />
+    </>
   );
 };
 

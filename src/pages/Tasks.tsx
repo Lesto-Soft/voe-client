@@ -98,7 +98,10 @@ const getInitialState = (search: string) => {
     ? moment(params.get("endDate"), "DD-MM-YYYY").toDate()
     : null;
 
-  return { filterMode, statusFilter, priorityFilter, dueDateFilter, caseRelationFilter, taskNumber, searchQuery, descriptionQuery, viewMode, currentPage, itemsPerPage, startDate, endDate };
+  const creatorId = params.get("creatorId") || "";
+  const assigneeId = params.get("assigneeId") || "";
+
+  return { filterMode, statusFilter, priorityFilter, dueDateFilter, caseRelationFilter, taskNumber, searchQuery, descriptionQuery, creatorId, assigneeId, viewMode, currentPage, itemsPerPage, startDate, endDate };
 };
 
 const TasksPage: React.FC = () => {
@@ -117,6 +120,8 @@ const TasksPage: React.FC = () => {
   const [taskNumber, setTaskNumber] = useState(initial.taskNumber);
   const [searchQuery, setSearchQuery] = useState(initial.searchQuery);
   const [descriptionQuery, setDescriptionQuery] = useState(initial.descriptionQuery);
+  const [creatorId, setCreatorId] = useState(initial.creatorId);
+  const [assigneeId, setAssigneeId] = useState(initial.assigneeId);
   const [viewMode, setViewMode] = useState<"grid" | "table">(initial.viewMode);
   const [currentPage, setCurrentPage] = useState(initial.currentPage);
   const [itemsPerPage, setItemsPerPage] = useState(initial.itemsPerPage);
@@ -135,10 +140,12 @@ const TasksPage: React.FC = () => {
       taskNumber.trim() !== "" ||
       searchQuery.trim() !== "" ||
       descriptionQuery.trim() !== "" ||
+      creatorId !== "" ||
+      assigneeId !== "" ||
       startDate !== null ||
       endDate !== null
     );
-  }, [statusFilter, priorityFilter, dueDateFilter, caseRelationFilter, taskNumber, searchQuery, descriptionQuery, startDate, endDate]);
+  }, [statusFilter, priorityFilter, dueDateFilter, caseRelationFilter, taskNumber, searchQuery, descriptionQuery, creatorId, assigneeId, startDate, endDate]);
 
   // Sync state to URL
   const syncUrl = useCallback(
@@ -153,6 +160,8 @@ const TasksPage: React.FC = () => {
         taskNumber: taskNumber.trim() || undefined,
         search: searchQuery.trim() || undefined,
         description: descriptionQuery.trim() || undefined,
+        creatorId: creatorId || undefined,
+        assigneeId: assigneeId || undefined,
         startDate: startDate ? moment(startDate).format("DD-MM-YYYY") : undefined,
         endDate: endDate ? moment(endDate).format("DD-MM-YYYY") : undefined,
         view: viewMode,
@@ -165,7 +174,7 @@ const TasksPage: React.FC = () => {
       }
       navigate(`${location.pathname}?${params.toString()}`, { replace: true });
     },
-    [filterMode, statusFilter, priorityFilter, dueDateFilter, caseRelationFilter, taskNumber, searchQuery, descriptionQuery, startDate, endDate, viewMode, currentPage, itemsPerPage, navigate, location.pathname],
+    [filterMode, statusFilter, priorityFilter, dueDateFilter, caseRelationFilter, taskNumber, searchQuery, descriptionQuery, creatorId, assigneeId, startDate, endDate, viewMode, currentPage, itemsPerPage, navigate, location.pathname],
   );
 
   // Compute accessible-only task IDs
@@ -213,6 +222,8 @@ const TasksPage: React.FC = () => {
       if (currentUser?.role?._id !== ROLES.ADMIN) {
         input.viewableByUserId = currentUser?._id;
       }
+      if (creatorId) input.creatorId = creatorId;
+      if (assigneeId) input.assigneeId = assigneeId;
     } else if (filterMode === "assignedToMe") {
       input.assigneeId = currentUser?._id;
     } else if (filterMode === "createdByMe") {
@@ -232,6 +243,8 @@ const TasksPage: React.FC = () => {
     taskNumber,
     searchQuery,
     descriptionQuery,
+    creatorId,
+    assigneeId,
     startDate,
     endDate,
     currentPage,
@@ -296,6 +309,18 @@ const TasksPage: React.FC = () => {
     syncUrl({ description: query.trim() || undefined, page: "1" });
   };
 
+  const handleCreatorIdChange = (id: string) => {
+    setCreatorId(id);
+    setCurrentPage(1);
+    syncUrl({ creatorId: id || undefined, page: "1" });
+  };
+
+  const handleAssigneeIdChange = (id: string) => {
+    setAssigneeId(id);
+    setCurrentPage(1);
+    syncUrl({ assigneeId: id || undefined, page: "1" });
+  };
+
   const handleViewModeChange = (mode: "grid" | "table") => {
     setViewMode(mode);
     savePrefs({ viewMode: mode });
@@ -321,6 +346,8 @@ const TasksPage: React.FC = () => {
     setTaskNumber("");
     setSearchQuery("");
     setDescriptionQuery("");
+    setCreatorId("");
+    setAssigneeId("");
     setStartDate(null);
     setEndDate(null);
     setCurrentPage(1);
@@ -332,6 +359,8 @@ const TasksPage: React.FC = () => {
       taskNumber: undefined,
       search: undefined,
       description: undefined,
+      creatorId: undefined,
+      assigneeId: undefined,
       startDate: undefined,
       endDate: undefined,
       page: "1",
@@ -382,6 +411,10 @@ const TasksPage: React.FC = () => {
         onSearchQueryChange={handleSearchQueryChange}
         descriptionQuery={descriptionQuery}
         onDescriptionQueryChange={handleDescriptionQueryChange}
+        creatorId={creatorId}
+        onCreatorIdChange={handleCreatorIdChange}
+        assigneeId={assigneeId}
+        onAssigneeIdChange={handleAssigneeIdChange}
         dateRange={{ startDate, endDate }}
         onDateRangeChange={handleDateRangeChange}
         isDateSelectorVisible={isDateSelectorVisible}

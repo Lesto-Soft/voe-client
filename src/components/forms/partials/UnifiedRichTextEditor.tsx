@@ -275,7 +275,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
             existingAttachments.length > 0 ||
             isCompressing ||
             fileError) && (
-            <div className="flex-shrink-0 border-t border-gray-100 bg-gray-50/50 p-2 max-h-[160px] overflow-y-auto custom-scrollbar-xs">
+            <div className="flex-shrink-0 border-t border-gray-100 bg-gray-50/50 p-1 max-h-[160px] overflow-y-auto custom-scrollbar-xs">
               {/* ЛОУДЪР ПРИ ОБРАБОТКА (ВЪЗСТАНОВЕН) */}
               {isCompressing && (
                 <div className="flex items-center gap-2 px-3 py-1.5 mb-2 text-[11px] text-blue-600 font-bold bg-blue-50 border border-blue-100 rounded-lg animate-pulse">

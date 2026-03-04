@@ -319,7 +319,7 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
   return (
     <div className="flex flex-col h-full">
       {/* Add activity section - FIXED AT TOP */}
-      <div className="flex-shrink-0 mb-4 border border-0 border-b-3 border-gray-300 p-3 pb-12 bg-gray-50 shadow-md">
+      <div className="flex-shrink-0 mb-4 border border-0 border-b-3 border-gray-300 p-3 bg-gray-50 shadow-md">
         {/* Title and activity type selector on same line */}
         <div className="flex items-center gap-3 mb-2">
           <h3 className="text-sm font-semibold text-gray-700 whitespace-nowrap">
@@ -363,7 +363,8 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
             maxLength={1500}
             isSending={createLoading}
             type="taskActivity"
-            editorMinHeight="min-h-[60px]"
+            editorMinHeight="min-h-[85px]"
+            editorClassName="max-h-[85px]"
             autoFocus
           />
         </div>
@@ -457,7 +458,7 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
                     {/* Edit mode */}
                     {isEditing ? (
                       <div className="mt-2">
-                        <div className="min-h-[150px]">
+                        <div className="min-h-[100px]">
                           <UnifiedEditor
                             content={editContent}
                             onContentChange={setEditContent}
@@ -472,6 +473,7 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
                             type="taskActivity"
                             hideSideButtons
                             editorMinHeight="min-h-[80px]"
+                            editorClassName="max-h-[90px]"
                             caseId={activity._id}
                             attachmentFolder="taskActivities"
                           />

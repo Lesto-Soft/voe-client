@@ -45,7 +45,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task }) => {
 
         {/* Description preview */}
         {task.description && (
-          <p className="text-xs text-gray-500 mt-2 line-clamp-2">
+          <p className="text-xs text-gray-500 my-1 line-clamp-2">
             {getContentPreview(task.description, 120)}
           </p>
         )}

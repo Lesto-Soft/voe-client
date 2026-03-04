@@ -416,7 +416,7 @@ const ImagePreviewModal: React.FC<ImagePreviewProps> = ({
               )
             ) : isPdfFile ? (
               <div className="flex flex-col items-center w-full h-full">
-                <div className="flex-1 w-full overflow-y-auto flex justify-center pt-4">
+                <div className="flex-1 w-full overflow-y-auto flex justify-center pt-4 custom-scrollbar-xs">
                   <Document
                     file={currentItem.url}
                     onLoadSuccess={onDocumentLoadSuccess}

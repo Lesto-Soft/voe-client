@@ -75,6 +75,7 @@ const getInitialState = (search: string) => {
       ? (caseRelParam as CaseRelationFilter)
       : null;
 
+  const taskNumber = params.get("taskNumber") || "";
   const searchQuery = params.get("search") || "";
 
   const viewParam = params.get("view");
@@ -96,7 +97,7 @@ const getInitialState = (search: string) => {
     ? moment(params.get("endDate"), "DD-MM-YYYY").toDate()
     : null;
 
-  return { filterMode, statusFilter, priorityFilter, dueDateFilter, caseRelationFilter, searchQuery, viewMode, currentPage, itemsPerPage, startDate, endDate };
+  return { filterMode, statusFilter, priorityFilter, dueDateFilter, caseRelationFilter, taskNumber, searchQuery, viewMode, currentPage, itemsPerPage, startDate, endDate };
 };
 
 const TasksPage: React.FC = () => {
@@ -112,6 +113,7 @@ const TasksPage: React.FC = () => {
   const [priorityFilter, setPriorityFilter] = useState<CasePriority[]>(initial.priorityFilter);
   const [dueDateFilter, setDueDateFilter] = useState<DueDateFilter[]>(initial.dueDateFilter);
   const [caseRelationFilter, setCaseRelationFilter] = useState<CaseRelationFilter | null>(initial.caseRelationFilter);
+  const [taskNumber, setTaskNumber] = useState(initial.taskNumber);
   const [searchQuery, setSearchQuery] = useState(initial.searchQuery);
   const [viewMode, setViewMode] = useState<"grid" | "table">(initial.viewMode);
   const [currentPage, setCurrentPage] = useState(initial.currentPage);
@@ -128,11 +130,12 @@ const TasksPage: React.FC = () => {
       priorityFilter.length > 0 ||
       dueDateFilter.length > 0 ||
       caseRelationFilter !== null ||
+      taskNumber.trim() !== "" ||
       searchQuery.trim() !== "" ||
       startDate !== null ||
       endDate !== null
     );
-  }, [statusFilter, priorityFilter, dueDateFilter, caseRelationFilter, searchQuery, startDate, endDate]);
+  }, [statusFilter, priorityFilter, dueDateFilter, caseRelationFilter, taskNumber, searchQuery, startDate, endDate]);
 
   // Sync state to URL
   const syncUrl = useCallback(
@@ -144,6 +147,7 @@ const TasksPage: React.FC = () => {
         priority: priorityFilter.length > 0 ? priorityFilter.join(",") : undefined,
         dueDate: dueDateFilter.length > 0 ? dueDateFilter.join(",") : undefined,
         caseRelation: caseRelationFilter || undefined,
+        taskNumber: taskNumber.trim() || undefined,
         search: searchQuery.trim() || undefined,
         startDate: startDate ? moment(startDate).format("DD-MM-YYYY") : undefined,
         endDate: endDate ? moment(endDate).format("DD-MM-YYYY") : undefined,
@@ -157,7 +161,7 @@ const TasksPage: React.FC = () => {
       }
       navigate(`${location.pathname}?${params.toString()}`, { replace: true });
     },
-    [filterMode, statusFilter, priorityFilter, dueDateFilter, caseRelationFilter, searchQuery, startDate, endDate, viewMode, currentPage, itemsPerPage, navigate, location.pathname],
+    [filterMode, statusFilter, priorityFilter, dueDateFilter, caseRelationFilter, taskNumber, searchQuery, startDate, endDate, viewMode, currentPage, itemsPerPage, navigate, location.pathname],
   );
 
   // Compute accessible-only task IDs
@@ -183,6 +187,9 @@ const TasksPage: React.FC = () => {
     }
     if (caseRelationFilter) {
       input.caseRelationFilter = caseRelationFilter;
+    }
+    if (taskNumber.trim()) {
+      input.taskNumber = taskNumber.trim();
     }
     if (searchQuery.trim()) {
       input.searchQuery = searchQuery.trim();
@@ -215,6 +222,7 @@ const TasksPage: React.FC = () => {
     priorityFilter,
     dueDateFilter,
     caseRelationFilter,
+    taskNumber,
     searchQuery,
     startDate,
     endDate,
@@ -262,6 +270,12 @@ const TasksPage: React.FC = () => {
     syncUrl({ caseRelation: filter || undefined, page: "1" });
   };
 
+  const handleTaskNumberChange = (value: string) => {
+    setTaskNumber(value);
+    setCurrentPage(1);
+    syncUrl({ taskNumber: value.trim() || undefined, page: "1" });
+  };
+
   const handleSearchQueryChange = (query: string) => {
     setSearchQuery(query);
     setCurrentPage(1);
@@ -290,6 +304,7 @@ const TasksPage: React.FC = () => {
     setPriorityFilter([]);
     setDueDateFilter([]);
     setCaseRelationFilter(null);
+    setTaskNumber("");
     setSearchQuery("");
     setStartDate(null);
     setEndDate(null);
@@ -299,6 +314,7 @@ const TasksPage: React.FC = () => {
       priority: undefined,
       dueDate: undefined,
       caseRelation: undefined,
+      taskNumber: undefined,
       search: undefined,
       startDate: undefined,
       endDate: undefined,
@@ -319,7 +335,7 @@ const TasksPage: React.FC = () => {
 
   if (error) {
     return (
-      <div className="min-h-full bg-gray-100 p-6">
+      <div className="flex flex-col flex-1 min-h-0 h-full">
         <div className="text-center py-16 text-red-500">
           <p className="text-lg font-semibold">
             Грешка при зареждане на задачите
@@ -331,7 +347,7 @@ const TasksPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-full bg-gray-100 p-6">
+    <div className="flex flex-col flex-1 min-h-0 h-full">
       {/* Filters */}
       <TaskFilters
         filterMode={filterMode}
@@ -344,6 +360,8 @@ const TasksPage: React.FC = () => {
         onDueDateFilterChange={handleDueDateFilterChange}
         caseRelationFilter={caseRelationFilter}
         onCaseRelationFilterChange={handleCaseRelationFilterChange}
+        taskNumber={taskNumber}
+        onTaskNumberChange={handleTaskNumberChange}
         searchQuery={searchQuery}
         onSearchQueryChange={handleSearchQueryChange}
         dateRange={{ startDate, endDate }}
@@ -359,20 +377,22 @@ const TasksPage: React.FC = () => {
       />
 
       {/* Task List */}
-      <main>
+      <main className="px-8">
         <TaskList tasks={tasks} viewMode={viewMode} loading={loading} />
       </main>
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <Pagination
-          totalPages={totalPages}
-          totalCount={count}
-          currentPage={currentPage}
-          itemsPerPage={itemsPerPage}
-          onItemsPerPageChange={handleItemsPerPageChange}
-          onPageChange={handlePageChange}
-        />
+        <div className="px-8">
+          <Pagination
+            totalPages={totalPages}
+            totalCount={count}
+            currentPage={currentPage}
+            itemsPerPage={itemsPerPage}
+            onItemsPerPageChange={handleItemsPerPageChange}
+            onPageChange={handlePageChange}
+          />
+        </div>
       )}
 
     </div>

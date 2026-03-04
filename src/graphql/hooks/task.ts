@@ -47,6 +47,7 @@ export interface TaskFiltersInput {
   creatorId?: string;
   caseId?: string;
   taskIds?: string[];
+  taskNumber?: string;
   searchQuery?: string;
   startDate?: string;
   endDate?: string;
@@ -171,6 +172,7 @@ export function buildTaskQueryVariables(input?: TaskFiltersInput) {
   if (creatorId) variables.input.creatorId = creatorId;
   if (caseId) variables.input.caseId = caseId;
   if (taskIds && taskIds.length > 0) variables.input.taskIds = taskIds;
+  if (input?.taskNumber) variables.input.taskNumber = input.taskNumber;
   if (searchQuery) variables.input.searchQuery = searchQuery;
   if (startDate) variables.input.startDate = startDate;
   if (endDate) variables.input.endDate = endDate;

@@ -62,6 +62,8 @@ interface TaskFiltersProps {
   onDueDateFilterChange: (filters: DueDateFilter[]) => void;
   caseRelationFilter: CaseRelationFilter | null;
   onCaseRelationFilterChange: (filter: CaseRelationFilter | null) => void;
+  taskNumber: string;
+  onTaskNumberChange: (value: string) => void;
   searchQuery: string;
   onSearchQueryChange: (query: string) => void;
   dateRange: { startDate: Date | null; endDate: Date | null };
@@ -114,6 +116,8 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
   onDueDateFilterChange,
   caseRelationFilter,
   onCaseRelationFilterChange,
+  taskNumber,
+  onTaskNumberChange,
   searchQuery,
   onSearchQueryChange,
   dateRange,
@@ -129,9 +133,9 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
 }) => {
   const isDateFilterActive = dateRange.startDate !== null || dateRange.endDate !== null;
   return (
-    <div className="mb-6">
+    <div>
       {/* Top bar: Filter mode buttons (left) + View toggle & Filter button (right) */}
-      <div className="flex items-center justify-between gap-2 mb-4">
+      <div className="flex items-center justify-between gap-2 mb-6 px-8 mt-6">
         {/* Filter mode buttons */}
         <div className="flex flex-wrap gap-2">
           {FILTER_MODE_CONFIG.map((mode) => (
@@ -154,7 +158,7 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
         {/* Right side: View toggle + Filter button + Clear */}
         <div className="flex items-center gap-2">
           {/* View mode toggle */}
-          <div className="flex items-center bg-gray-100 p-1 rounded-lg border border-gray-300">
+          <div className="flex items-center bg-gray-100 rounded-lg border border-gray-300">
             <button
               onClick={() => onViewModeChange("table")}
               title="Таблица"
@@ -221,8 +225,19 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
             : "max-h-0 opacity-0 pointer-events-none"
         }`}
       >
-        <div className="py-5">
+        <div className="px-4 sm:px-6 lg:px-8 py-5">
           <div className="flex flex-wrap gap-x-4 gap-y-3 items-end">
+            {/* Task number */}
+            <div className="w-28">
+              <ClearableInput
+                id="taskNumber"
+                label="Номер"
+                value={taskNumber}
+                onChange={onTaskNumberChange}
+                placeholder="Търсене..."
+              />
+            </div>
+
             {/* Priority multiselect */}
             <CustomMultiSelectDropdown
               label="Приоритет"

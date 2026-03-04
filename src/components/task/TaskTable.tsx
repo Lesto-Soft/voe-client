@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router";
-import { ITask } from "../../db/interfaces";
+import { ITask, TaskStatus } from "../../db/interfaces";
 import TaskStatusBadge from "./TaskStatusBadge";
 import TaskPriorityBadge from "./TaskPriorityBadge";
 import { getDueDateStatus } from "./TaskDueDateIndicator";
@@ -130,6 +130,11 @@ const TaskTable: React.FC<TaskTableProps> = ({ tasks }) => {
       columns={columns}
       data={tasks}
       rowKey={(task) => task._id}
+      rowClassName={(task) =>
+        task.status === TaskStatus.Done
+          ? "bg-gray-100 text-gray-500"
+          : "transition-colors duration-150 hover:bg-gray-50"
+      }
     />
   );
 };

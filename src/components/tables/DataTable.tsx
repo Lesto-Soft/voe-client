@@ -5,7 +5,7 @@ export interface DataTableColumn<T> {
   header: string;
   width?: string;
   headerClassName?: string;
-  cellClassName?: string;
+  cellClassName?: string | ((item: T, index: number) => string);
   render: (item: T, index: number) => React.ReactNode;
 }
 
@@ -64,14 +64,20 @@ function DataTable<T>({
                     : "transition-colors duration-150 hover:bg-gray-50"
                 }
               >
-                {columns.map((col) => (
-                  <td
-                    key={col.key}
-                    className={`px-3 py-4 ${col.cellClassName ?? ""}`}
-                  >
-                    {col.render(item, index)}
-                  </td>
-                ))}
+                {columns.map((col) => {
+                  const cellClass =
+                    typeof col.cellClassName === "function"
+                      ? col.cellClassName(item, index)
+                      : (col.cellClassName ?? "");
+                  return (
+                    <td
+                      key={col.key}
+                      className={`px-3 py-4 ${cellClass}`}
+                    >
+                      {col.render(item, index)}
+                    </td>
+                  );
+                })}
               </tr>
             ))}
             {data.length === 0 && (

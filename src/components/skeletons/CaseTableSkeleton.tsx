@@ -12,7 +12,7 @@ const CaseTableSkeleton: React.FC<CaseTableSkeletonProps> = ({ rows = 10 }) => {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-500 sticky top-0 z-10">
             <tr>
-              <th colSpan={9} className="h-[68px] bg-gray-500"></th>
+              <th colSpan={9} className="h-13 bg-gray-500"></th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">

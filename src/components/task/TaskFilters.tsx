@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { TaskStatus, CasePriority } from "../../db/interfaces";
 import {
   UserCircleIcon,
@@ -19,6 +19,8 @@ import type {
   DueDateFilter,
   CaseRelationFilter,
 } from "../../graphql/hooks/task";
+import { useCurrentUser } from "../../context/UserContext";
+import { ROLES } from "../../utils/GLOBAL_PARAMETERS";
 
 export type TaskFilterMode =
   | "assignedToMe"
@@ -131,14 +133,24 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
   isAnyFilterActive,
   onClearFilters,
 }) => {
+  const currentUser = useCurrentUser();
   const isDateFilterActive = dateRange.startDate !== null || dateRange.endDate !== null;
+
+  const visibleModes = useMemo(() => {
+    const userRole = currentUser?.role?._id;
+    if (userRole === ROLES.NORMAL || userRole === ROLES.LEFT) {
+      return FILTER_MODE_CONFIG.filter((m) => m.key === "all");
+    }
+    return FILTER_MODE_CONFIG;
+  }, [currentUser?.role?._id]);
+
   return (
     <div>
       {/* Top bar: Filter mode buttons (left) + View toggle & Filter button (right) */}
       <div className="flex items-center justify-between gap-2 mb-6 px-8 mt-6">
         {/* Filter mode buttons */}
         <div className="flex flex-wrap gap-2">
-          {FILTER_MODE_CONFIG.map((mode) => (
+          {visibleModes.map((mode) => (
             <button
               key={mode.key}
               type="button"

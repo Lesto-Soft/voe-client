@@ -1,18 +1,19 @@
 // src/components/features/userManagement/UserTable.tsx
 import React, { useState, useEffect, useRef } from "react";
-import { Link } from "react-router"; // Corrected import
-import { PencilSquareIcon, TrashIcon } from "@heroicons/react/24/solid"; // Or your preferred variant
-import UserAvatar from "../../cards/UserAvatar"; // Adjust path
-import UserTableSkeleton from "../../skeletons/UserTableSkeleton"; // Adjust path
-import Pagination from "../../tables/Pagination"; // Adjust path
-import { capitalizeFirstLetter } from "../../../utils/stringUtils"; // Adjust path
-import { isNullOrEmptyArray } from "../../../utils/arrayUtils"; // Ensure this path is correct
+import { Link } from "react-router";
+import { PencilSquareIcon, TrashIcon } from "@heroicons/react/24/solid";
+import UserAvatar from "../../cards/UserAvatar";
+import UserTableSkeleton from "../../skeletons/UserTableSkeleton";
+import Pagination from "../../tables/Pagination";
+import { capitalizeFirstLetter } from "../../../utils/stringUtils";
+import { isNullOrEmptyArray } from "../../../utils/arrayUtils";
 import UserLink from "../../global/links/UserLink";
 import { IMe, IUser } from "../../../db/interfaces";
 import { useCurrentUser } from "../../../context/UserContext";
 import { ROLES } from "../../../utils/GLOBAL_PARAMETERS";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import HoverTooltip from "../../global/HoverTooltip";
+import DataTable, { DataTableColumn } from "../../tables/DataTable";
 
 interface UserTableProps {
   users: IUser[];
@@ -24,16 +25,25 @@ interface UserTableProps {
   onPageChange: (page: number) => void;
   onItemsPerPageChange: (size: number) => void;
   onEditUser: (user: IUser) => void;
-  onDeleteUser: (user: IUser) => void; // New prop
+  onDeleteUser: (user: IUser) => void;
   serverBaseUrl: string;
   avatarVersion: number;
-  currentQueryInput: any; // Consider more specific type
+  currentQueryInput: any;
   createLoading: boolean;
   updateLoading: boolean;
-  deleteUserLoading?: boolean; // New prop
+  deleteUserLoading?: boolean;
 }
 
 const MIN_SKELETON_TIME = 250;
+
+const getUserStates = (user: IUser) => {
+  const isMisconfiguredExpert =
+    user.role?.name === "експерт" &&
+    (!user.expert_categories || user.expert_categories.length === 0) &&
+    (!user.managed_categories || user.managed_categories.length === 0);
+  const isInactive = user.role?.name === "напуснал";
+  return { isMisconfiguredExpert, isInactive };
+};
 
 const UserTable: React.FC<UserTableProps> = ({
   users,
@@ -45,13 +55,10 @@ const UserTable: React.FC<UserTableProps> = ({
   onPageChange,
   onItemsPerPageChange,
   onEditUser,
-  onDeleteUser, // Destructure new prop
+  onDeleteUser,
   serverBaseUrl,
   avatarVersion,
   currentQueryInput,
-  // createLoading,
-  // updateLoading,
-  // deleteUserLoading, // Destructure new prop
 }) => {
   const [showSkeleton, setShowSkeleton] = useState(true);
   const skeletonTimerRef = useRef<number | null>(null);
@@ -75,15 +82,192 @@ const UserTable: React.FC<UserTableProps> = ({
     };
   }, [isLoadingUsers]);
 
-  const columnWidths = {
-    avatar: "w-16", // approx 64px
-    name: "w-1/6",
-    username: "w-1/5",
-    position: "w-1/5",
-    email: "w-1/6",
-    role: "w-1/10",
-    edit: "w-1/10",
-  };
+  const columns: DataTableColumn<IUser>[] = [
+    {
+      key: "avatar",
+      header: "Аватар",
+      width: "w-16",
+      cellClassName: (user) => {
+        const { isMisconfiguredExpert, isInactive } = getUserStates(user);
+        let classes = "whitespace-nowrap flex justify-center items-center";
+        if (isMisconfiguredExpert) classes += " shadow-[inset_4px_0_0_#EAB308]";
+        else classes += " shadow-[inset_4px_0_0_transparent]";
+        if (isInactive) classes += " opacity-50";
+        return classes;
+      },
+      render: (user) => {
+        const imageUrl =
+          user.avatar && user._id
+            ? `${serverBaseUrl}/static/avatars/${user._id}/${user.avatar}?v=${avatarVersion}`
+            : null;
+        return (
+          <UserAvatar
+            name={user.name || user.username || "U"}
+            imageUrl={imageUrl}
+            size={42}
+            enablePreview={true}
+          />
+        );
+      },
+    },
+    {
+      key: "name",
+      header: "Име",
+      width: "w-1/6",
+      cellClassName: "text-sm",
+      render: (user) => (
+        <div className="flex items-center justify-start flex-row">
+          <UserLink user={user} />
+        </div>
+      ),
+    },
+    {
+      key: "username",
+      header: "Потребителско име",
+      width: "w-1/5",
+      headerClassName: "whitespace-nowrap",
+      cellClassName: "whitespace-nowrap text-sm",
+      render: (user) => <>{user.username || "-"}</>,
+    },
+    {
+      key: "position",
+      header: "Позиция",
+      width: "w-1/5",
+      headerClassName: "hidden md:table-cell",
+      cellClassName: "hidden md:table-cell whitespace-nowrap text-sm",
+      render: (user) => <>{user.position || "-"}</>,
+    },
+    {
+      key: "email",
+      header: "Имейл",
+      width: "w-1/6",
+      headerClassName: "hidden md:table-cell",
+      cellClassName: "hidden md:table-cell whitespace-nowrap text-sm",
+      render: (user) => <>{user.email || "-"}</>,
+    },
+    {
+      key: "role",
+      header: "Роля",
+      width: "w-1/10",
+      cellClassName: "whitespace-nowrap text-sm",
+      render: (user) => {
+        const { isMisconfiguredExpert, isInactive } = getUserStates(user);
+        return (
+          <div className="flex items-center justify-between w-full">
+            <div className="flex items-center truncate">
+              <span
+                className={`${isInactive ? "opacity-70" : ""} truncate`}
+                title={capitalizeFirstLetter(user.role?.name) || "-"}
+              >
+                {capitalizeFirstLetter(user.role?.name) || "-"}
+              </span>
+              {isMisconfiguredExpert && (
+                <HoverTooltip
+                  content="Експерт без зададени категории"
+                  delayDuration={100}
+                >
+                  <span className="ml-2 flex-shrink-0">
+                    <ExclamationTriangleIcon className="h-5 w-5 text-yellow-600" />
+                  </span>
+                </HoverTooltip>
+              )}
+            </div>
+            <div className="flex items-center flex-shrink-0 space-x-1">
+              {user.financial_approver ? (
+                <span
+                  className={`inline-flex items-center justify-center px-1.5 py-0.5 text-xs rounded font-medium text-center align-middle w-6 h-5 ${
+                    isInactive
+                      ? "bg-green-50 text-green-500 border border-green-100 opacity-75"
+                      : "bg-green-100 text-green-700 border border-green-200"
+                  }`}
+                  title="Финансов одобрител"
+                >
+                  $
+                </span>
+              ) : (
+                <span
+                  className="inline-block w-6 h-5"
+                  aria-hidden="true"
+                ></span>
+              )}
+              {user.managed_categories &&
+              user.managed_categories?.length > 0 ? (
+                <Link
+                  to={`/category-management?page=1&itemsPerPage=10&managers=${user._id}`}
+                  className={`inline-flex items-center justify-center px-1.5 py-0.5 text-xs rounded font-medium text-center align-middle w-6 h-5 ${
+                    isInactive
+                      ? "bg-blue-50 text-blue-500 hover:bg-blue-100 border border-blue-100 opacity-75"
+                      : "bg-blue-100 text-blue-700 hover:bg-blue-200 border border-blue-200"
+                  }`}
+                  title="Менажира категории"
+                >
+                  M
+                </Link>
+              ) : (
+                <span
+                  className="inline-block w-6 h-5"
+                  aria-hidden="true"
+                ></span>
+              )}
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      key: "actions",
+      header: "Действия",
+      width: "w-1/10",
+      cellClassName: "whitespace-nowrap text-center",
+      render: (user) => {
+        const { isInactive } = getUserStates(user);
+        const canDeleteUser =
+          isNullOrEmptyArray(user.cases) &&
+          isNullOrEmptyArray(user.comments) &&
+          isNullOrEmptyArray(user.answers) &&
+          isNullOrEmptyArray(user.expert_categories) &&
+          isNullOrEmptyArray(user.managed_categories) &&
+          !user.financial_approver;
+        return (
+          <div
+            className={`inline-flex items-center ${
+              canDeleteUser ? "space-x-1" : ""
+            }`}
+          >
+            <button
+              onClick={() => onEditUser(user)}
+              className={`${
+                isInactive ? "opacity-50" : ""
+              } ${
+                canDeleteUser ? "w-10" : "w-20"
+              } inline-flex justify-center items-center rounded bg-sky-100 p-1.5 text-sky-700 border border-sky-200 hover:border-sky-300 transition-all duration-150 ease-in-out hover:cursor-pointer hover:bg-sky-200 hover:text-sky-800 active:bg-sky-300 active:scale-[0.96] disabled:bg-gray-100 disabled:text-gray-400 disabled:opacity-70 disabled:cursor-not-allowed disabled:scale-100`}
+              aria-label={`Редактирай ${user.username}`}
+              title={`Редактирай ${user.username}`}
+              disabled={
+                currentUser?.role?._id !== ROLES.ADMIN &&
+                user.role?._id === ROLES.ADMIN
+              }
+            >
+              <PencilSquareIcon className="h-5 w-5" />
+            </button>
+
+            {canDeleteUser && (
+              <button
+                onClick={() => onDeleteUser(user)}
+                className={`${
+                  isInactive ? "opacity-50" : ""
+                } w-10 inline-flex justify-center items-center rounded bg-red-100 p-1.5 text-red-700 border border-red-200 hover:border-red-300 transition-all duration-150 ease-in-out hover:cursor-pointer hover:bg-red-200 hover:text-red-800 active:bg-red-300 active:scale-[0.96] disabled:bg-gray-100 disabled:text-gray-400 disabled:opacity-70 disabled:cursor-not-allowed disabled:scale-100`}
+                aria-label={`Изтрий ${user.username}`}
+                title={`Изтрий ${user.username}`}
+              >
+                <TrashIcon className="h-5 w-5" />
+              </button>
+            )}
+          </div>
+        );
+      },
+    },
+  ];
 
   if (showSkeleton && isLoadingUsers)
     return <UserTableSkeleton rows={itemsPerPage} />;
@@ -96,296 +280,28 @@ const UserTable: React.FC<UserTableProps> = ({
 
   return (
     <>
-      <section className="flex flex-col shadow-md rounded-lg overflow-hidden bg-white border border-gray-200">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 table-fixed">
-            <thead className="bg-gray-500 sticky top-0 z-10">
-              <tr>
-                <th
-                  scope="col"
-                  className={`${columnWidths.avatar} px-3 py-4 text-center text-sm font-semibold text-white uppercase tracking-wide`}
-                >
-                  Аватар
-                </th>
-                <th
-                  scope="col"
-                  className={`${columnWidths.name} px-3 py-4 text-center text-sm font-semibold text-white uppercase tracking-wide relative`}
-                >
-                  <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-px bg-gray-400"></span>
-                  Име
-                </th>
-                <th
-                  scope="col"
-                  className={`${columnWidths.username} px-3 py-4 text-center text-sm font-semibold text-white uppercase tracking-wide relative whitespace-nowrap`}
-                >
-                  <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-px bg-gray-400"></span>
-                  Потребителско име
-                </th>
-                <th
-                  scope="col"
-                  className={`${columnWidths.position} hidden md:table-cell px-3 py-4 text-center text-sm font-semibold text-white uppercase tracking-wide relative`}
-                >
-                  <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-px bg-gray-400"></span>
-                  Позиция
-                </th>
-                <th
-                  scope="col"
-                  className={`${columnWidths.email} hidden md:table-cell px-3 py-4 text-center text-sm font-semibold text-white uppercase tracking-wide relative`}
-                >
-                  <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-px bg-gray-400"></span>
-                  Имейл
-                </th>
-                <th
-                  scope="col"
-                  className={`${columnWidths.role} px-3 py-4 text-center text-sm font-semibold text-white uppercase tracking-wide relative`}
-                >
-                  <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-px bg-gray-400"></span>
-                  Роля
-                </th>
-                <th
-                  scope="col"
-                  className={`${columnWidths.edit} px-3 py-4 text-center text-sm font-semibold text-white uppercase tracking-wide relative`}
-                >
-                  <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-px bg-gray-400"></span>
-                  Действия
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200 text-gray-700">
-              {users.map((user) => {
-                const imageUrl =
-                  user.avatar && user._id
-                    ? `${serverBaseUrl}/static/avatars/${user._id}/${user.avatar}?v=${avatarVersion}`
-                    : null;
-                //  Define check for misconfigured expert
-                const isMisconfiguredExpert =
-                  user.role?.name === "експерт" &&
-                  (!user.expert_categories ||
-                    user.expert_categories.length === 0) &&
-                  (!user.managed_categories ||
-                    user.managed_categories.length === 0);
-
-                const isInactive = user.role?.name === "напуснал";
-
-                // 👇 1. Define classes for the row (background color only)
-                let rowClasses = "transition-colors duration-150";
-
-                // 👇 2. Define classes for the first cell (border color and other styles)
-                let firstCellClasses = `w-full px-3 py-4 whitespace-nowrap flex justify-center items-center`;
-
-                if (isMisconfiguredExpert) {
-                  rowClasses += " bg-yellow-50 hover:bg-yellow-100";
-                  firstCellClasses += " shadow-[inset_4px_0_0_#EAB308]";
-                } else if (isInactive) {
-                  rowClasses = "bg-gray-50 text-gray-400 hover:bg-gray-100";
-                  firstCellClasses += " shadow-[inset_4px_0_0_transparent]";
-                } else {
-                  rowClasses += " hover:bg-gray-100";
-                  firstCellClasses += " shadow-[inset_4px_0_0_transparent]";
-                }
-
-                if (isInactive) {
-                  firstCellClasses += " opacity-50";
-                }
-
-                const canDeleteUser =
-                  isNullOrEmptyArray(user.cases) &&
-                  isNullOrEmptyArray(user.comments) &&
-                  isNullOrEmptyArray(user.answers) &&
-                  isNullOrEmptyArray(user.expert_categories) &&
-                  isNullOrEmptyArray(user.managed_categories) &&
-                  !user.financial_approver;
-
-                return (
-                  <tr key={user._id} className={rowClasses}>
-                    <td className={firstCellClasses}>
-                      <UserAvatar
-                        name={user.name || user.username || "U"}
-                        imageUrl={imageUrl}
-                        size={42}
-                        enablePreview={true}
-                      />
-                    </td>
-                    <td className={`${columnWidths.name} px-3 py-4 text-sm`}>
-                      <div className="flex items-center justify-start flex-row">
-                        <UserLink user={user} />
-                      </div>
-                    </td>
-                    <td
-                      className={`${columnWidths.username} px-3 py-4 whitespace-nowrap text-sm`}
-                    >
-                      {user.username || "-"}
-                    </td>
-                    <td
-                      className={`${columnWidths.position} hidden md:table-cell px-3 py-4 whitespace-nowrap text-sm`}
-                    >
-                      {user.position || "-"}
-                    </td>
-                    <td
-                      className={`${columnWidths.email} hidden md:table-cell px-3 py-4 whitespace-nowrap text-sm`}
-                    >
-                      {user.email || "-"}
-                    </td>
-                    <td
-                      className={`${columnWidths.role} px-3 py-4 whitespace-nowrap text-sm`}
-                    >
-                      <div className="flex items-center justify-between w-full">
-                        {/* Role Name and Warning Icon */}
-                        <div className="flex items-center truncate">
-                          <span
-                            className={`${
-                              isInactive ? "opacity-70" : ""
-                            } truncate`}
-                            title={
-                              capitalizeFirstLetter(user.role?.name) || "-"
-                            }
-                          >
-                            {capitalizeFirstLetter(user.role?.name) || "-"}
-                          </span>
-                          {/* 👇 5. Add Icon and Tooltip */}
-                          {isMisconfiguredExpert && (
-                            <HoverTooltip
-                              content="Експерт без зададени категории"
-                              delayDuration={100}
-                            >
-                              <span className="ml-2 flex-shrink-0">
-                                <ExclamationTriangleIcon className="h-5 w-5 text-yellow-600" />
-                              </span>
-                            </HoverTooltip>
-                          )}
-                        </div>
-
-                        {/* Badges */}
-                        {/* Container for both badges - this group will be on the right */}
-                        <div className="flex items-center flex-shrink-0 space-x-1">
-                          {" "}
-                          {/* flex-shrink-0 prevents this container from shrinking */}
-                          {/* Financial Approver Badge or Placeholder */}
-                          {user.financial_approver ? (
-                            <span
-                              className={`inline-flex items-center justify-center px-1.5 py-0.5 text-xs rounded font-medium text-center align-middle w-6 h-5 ${
-                                /* Fixed width and height */ ""
-                              }
-            ${
-              isInactive
-                ? "bg-green-50 text-green-500 border border-green-100 opacity-75"
-                : "bg-green-100 text-green-700 border border-green-200"
-            }`}
-                              title="Финансов одобрител"
-                            >
-                              $
-                            </span>
-                          ) : (
-                            <span
-                              className="inline-block w-6 h-5"
-                              aria-hidden="true"
-                            ></span> /* Placeholder with same dimensions */
-                          )}
-                          {/* Manager Badge or Placeholder */}
-                          {user.managed_categories &&
-                          user.managed_categories?.length > 0 ? (
-                            <Link
-                              to={`/category-management?page=1&itemsPerPage=10&managers=${user._id}`}
-                              className={`inline-flex items-center justify-center px-1.5 py-0.5 text-xs rounded font-medium text-center align-middle w-6 h-5 ${
-                                /* Fixed width and height */ ""
-                              }
-            ${
-              isInactive
-                ? "bg-blue-50 text-blue-500 hover:bg-blue-100 border border-blue-100 opacity-75"
-                : "bg-blue-100 text-blue-700 hover:bg-blue-200 border border-blue-200"
-            }`}
-                              title="Менажира категории"
-                            >
-                              M
-                            </Link>
-                          ) : (
-                            <span
-                              className="inline-block w-6 h-5"
-                              aria-hidden="true"
-                            ></span> /* Placeholder with same dimensions */
-                          )}
-                        </div>
-                      </div>
-                    </td>
-                    <td
-                      className={`${columnWidths.edit} px-3 py-4 whitespace-nowrap text-center`}
-                    >
-                      <div
-                        className={`inline-flex items-center ${
-                          canDeleteUser ? "space-x-1" : ""
-                        }`}
-                      >
-                        <button
-                          onClick={() => onEditUser(user)}
-                          className={`${
-                            isInactive ? "opacity-50" : "" // pointer-events-none" : ""
-                          } ${
-                            canDeleteUser ? "w-10" : "w-20"
-                          } inline-flex justify-center items-center rounded bg-sky-100 p-1.5 text-sky-700 border border-sky-200 hover:border-sky-300 transition-all duration-150 ease-in-out hover:cursor-pointer hover:bg-sky-200 hover:text-sky-800 active:bg-sky-300 active:scale-[0.96] disabled:bg-gray-100 disabled:text-gray-400 disabled:opacity-70 disabled:cursor-not-allowed disabled:scale-100`}
-                          aria-label={`Редактирай ${user.username}`}
-                          title={`Редактирай ${user.username}`}
-                          disabled={
-                            currentUser?.role?._id !== ROLES.ADMIN &&
-                            user.role?._id === ROLES.ADMIN
-                          }
-                          // disabled={
-                          //   isInactive ||
-                          //   createLoading ||
-                          //   updateLoading ||
-                          //   deleteUserLoading ||
-                          //   isLoadingUsers
-                          // }
-                        >
-                          <PencilSquareIcon className="h-5 w-5" />
-                        </button>
-
-                        {canDeleteUser && (
-                          <button
-                            onClick={() => onDeleteUser(user)}
-                            className={`${
-                              isInactive ? "opacity-50" : "" // pointer-events-none" : ""
-                            } w-10 inline-flex justify-center items-center rounded bg-red-100 p-1.5 text-red-700 border border-red-200 hover:border-red-300 transition-all duration-150 ease-in-out hover:cursor-pointer hover:bg-red-200 hover:text-red-800 active:bg-red-300 active:scale-[0.96] disabled:bg-gray-100 disabled:text-gray-400 disabled:opacity-70 disabled:cursor-not-allowed disabled:scale-100`}
-                            aria-label={`Изтрий ${user.username}`}
-                            title={`Изтрий ${user.username}`}
-                            // disabled={
-                            //   isInactive ||
-                            //   createLoading ||
-                            //   updateLoading ||
-                            //   deleteUserLoading ||
-                            //   isLoadingUsers
-                            // }
-                          >
-                            <TrashIcon className="h-5 w-5" />
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-              {!isLoadingUsers && users.length === 0 && (
-                <tr>
-                  <td
-                    colSpan={Object.keys(columnWidths).length}
-                    className="px-3 py-10 text-center text-gray-500"
-                  >
-                    Няма намерени потребители
-                    {Object.keys(currentQueryInput || {}).some((key) => {
-                      if (key === "itemsPerPage" || key === "currentPage")
-                        return false;
-                      const value = currentQueryInput[key];
-                      return Array.isArray(value) ? value.length > 0 : !!value;
-                    })
-                      ? " съответстващи на филтрите"
-                      : ""}
-                    .
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
+      <DataTable
+        columns={columns}
+        data={users}
+        rowKey={(user) => user._id}
+        rowClassName={(user) => {
+          const { isMisconfiguredExpert, isInactive } = getUserStates(user);
+          if (isMisconfiguredExpert)
+            return "transition-colors duration-150 bg-yellow-50 hover:bg-yellow-100";
+          if (isInactive)
+            return "bg-gray-50 text-gray-400 hover:bg-gray-100";
+          return "transition-colors duration-150 hover:bg-gray-100";
+        }}
+        emptyMessage={`Няма намерени потребители${
+          Object.keys(currentQueryInput || {}).some((key) => {
+            if (key === "itemsPerPage" || key === "currentPage") return false;
+            const value = currentQueryInput[key];
+            return Array.isArray(value) ? value.length > 0 : !!value;
+          })
+            ? " съответстващи на филтрите"
+            : ""
+        }.`}
+      />
       {!isLoadingUsers && totalUserCount > 0 && (
         <Pagination
           totalPages={Math.ceil(totalUserCount / itemsPerPage)}

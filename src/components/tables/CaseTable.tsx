@@ -343,7 +343,7 @@ const CaseTable: React.FC<ICaseTableProps> = ({
   ];
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 px-4 sm:px-6 lg:px-8">
+    <div className="px-4 sm:px-6 lg:px-8">
       <DataTable
         columns={columns}
         data={cases}
@@ -358,7 +358,6 @@ const CaseTable: React.FC<ICaseTableProps> = ({
           return "hover:bg-gray-50";
         }}
         tableFixed={false}
-        wrapperClassName="flex-1 min-h-0 overflow-y-auto shadow-md rounded-lg border border-gray-200"
         emptyMessage={t("no_cases_found")}
       />
       <ConfirmActionDialog

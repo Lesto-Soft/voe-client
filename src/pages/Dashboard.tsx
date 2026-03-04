@@ -272,7 +272,7 @@ const DashboardPage: React.FC<DashboardContentProps> = ({
                     replace: true,
                   });
                 }}
-                className={`flex items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 w-42  
+                className={`flex items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 min-w-42  
                   ${
                     selectedHookIdx === idx
                       ? "border border-btnRedHover text-btnRedHover shadow"

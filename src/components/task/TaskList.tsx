@@ -25,7 +25,7 @@ const TaskListSkeleton: React.FC<{ viewMode: "grid" | "table" }> = ({ viewMode }
     return (
       <div className="bg-white shadow-md rounded-lg overflow-hidden border border-gray-200">
         <div className="animate-pulse">
-          <div className="h-14 bg-gray-500 rounded-t-lg" />
+          <div className="h-13 bg-gray-500 rounded-t-lg" />
           {[...Array(5)].map((_, i) => (
             <div key={i} className="h-16 border-t border-gray-200 flex items-center px-3 gap-3">
               <div className="h-4 bg-gray-200 rounded" style={{ width: "6%" }} />

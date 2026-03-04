@@ -10,7 +10,6 @@ import CaseTable from "./CaseTable";
 import CaseSearchBar from "./CaseSearchBar";
 import Pagination from "./Pagination";
 import CaseTableSkeleton from "../skeletons/CaseTableSkeleton";
-import PaginationSkeleton from "../skeletons/PaginationSkeleton";
 import { ICase, CasePriority, CaseType } from "../../db/interfaces";
 import moment from "moment";
 
@@ -365,7 +364,7 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
           t={t}
         />
       </div>
-      <div className="flex-1 min-h-0 flex flex-col">
+      <div>
         {showSkeleton ? (
           <CaseTableSkeleton rows={itemsPerPage} />
         ) : cases && cases.length > 0 ? (
@@ -376,23 +375,18 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
           </div>
         )}
       </div>
-      {/* This entire block is updated */}
-      {showSkeleton ? (
-        <PaginationSkeleton />
-      ) : (
-        count > 0 && (
-          <Pagination
-            totalPages={Math.ceil(Number(count) / itemsPerPage)}
-            totalCount={Number(count)}
-            currentPage={currentPage}
-            itemsPerPage={itemsPerPage}
-            onItemsPerPageChange={(newSize) => {
-              setItemsPerPage(newSize);
-              setCurrentPage(1);
-            }}
-            onPageChange={handlePageChange}
-          />
-        )
+      {!showSkeleton && Math.ceil(Number(count) / itemsPerPage) > 1 && (
+        <Pagination
+          totalPages={Math.ceil(Number(count) / itemsPerPage)}
+          totalCount={Number(count)}
+          currentPage={currentPage}
+          itemsPerPage={itemsPerPage}
+          onItemsPerPageChange={(newSize) => {
+            setItemsPerPage(newSize);
+            setCurrentPage(1);
+          }}
+          onPageChange={handlePageChange}
+        />
       )}
     </div>
   );

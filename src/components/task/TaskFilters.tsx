@@ -10,10 +10,11 @@ import {
   ChevronUpIcon,
   ChevronDownIcon,
   XMarkIcon,
-} from "@heroicons/react/24/solid";
+} from "@heroicons/react/24/outline";
 import { CalendarDaysIcon } from "@heroicons/react/24/outline";
 import ClearableInput from "../global/inputs/ClearableInput";
 import CustomMultiSelectDropdown from "../global/dropdown/CustomMultiSelectDropdown";
+import CustomDropdown from "../global/dropdown/CustomDropdown";
 import DateRangeSelector from "../features/userAnalytics/DateRangeSelector";
 import type {
   DueDateFilter,
@@ -155,7 +156,7 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
               key={mode.key}
               type="button"
               onClick={() => onFilterModeChange(mode.key)}
-              className={`flex items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 ${
+              className={`flex items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 min-w-42 ${
                 filterMode === mode.key
                   ? "border border-blue-600 text-blue-600 shadow"
                   : "border border-gray-300 shadow-sm bg-gray-100 text-gray-700 hover:bg-blue-50 hover:text-blue-600 hover:cursor-pointer"
@@ -246,7 +247,7 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
                 label="Номер"
                 value={taskNumber}
                 onChange={onTaskNumberChange}
-                placeholder="Търсене..."
+                placeholder="Номер..."
               />
             </div>
 
@@ -258,31 +259,25 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
               onChange={(values) =>
                 onPriorityFilterChange(values as CasePriority[])
               }
-              placeholder="Всички приоритети"
+              placeholder="Всички"
             />
 
             {/* Case relation filter */}
-            <div className="w-48">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Сигнал
-              </label>
-              <select
-                value={caseRelationFilter || ""}
-                onChange={(e) =>
-                  onCaseRelationFilterChange(
-                    (e.target.value as CaseRelationFilter) || null,
-                  )
-                }
-                className="w-full bg-white px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm focus:outline-none focus:border-indigo-500"
-              >
-                <option value="">Всички</option>
-                {CASE_RELATION_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <CustomDropdown
+              label="Сигнал"
+              options={[
+                { value: "", label: "Всички" },
+                ...CASE_RELATION_OPTIONS,
+              ]}
+              value={caseRelationFilter || ""}
+              onChange={(val) =>
+                onCaseRelationFilterChange(
+                  (val as CaseRelationFilter) || null,
+                )
+              }
+              placeholder="Всички"
+              widthClass="w-48"
+            />
 
             {/* Search input */}
             <div className="flex-1 min-w-[200px]">

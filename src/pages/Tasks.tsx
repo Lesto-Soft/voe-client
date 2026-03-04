@@ -81,7 +81,7 @@ const getInitialState = (search: string) => {
   const viewMode: "grid" | "table" =
     viewParam === "grid" || viewParam === "table"
       ? viewParam
-      : stored.viewMode || "grid";
+      : stored.viewMode || "table";
 
   const pageParam = Number(params.get("page"));
   const currentPage = pageParam >= 1 ? pageParam : 1;

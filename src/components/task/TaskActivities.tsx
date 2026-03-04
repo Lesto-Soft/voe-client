@@ -363,6 +363,7 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
           isSending={createLoading}
           type="taskActivity"
           editorClassName="h-[80px] min-h-[80px] max-h-[80px]"
+          editorMinHeight="min-h-[60px]"
         />
       </div>
 
@@ -468,6 +469,7 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
                           type="taskActivity"
                           hideSideButtons
                           editorClassName="h-[100px] min-h-[100px] max-h-[100px]"
+          editorMinHeight="min-h-[80px]"
                           caseId={activity._id}
                           attachmentFolder="taskActivities"
                         />

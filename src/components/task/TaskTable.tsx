@@ -12,109 +12,115 @@ import {
   ExclamationTriangleIcon,
   ClockIcon,
 } from "@heroicons/react/24/outline";
+import DataTable, { DataTableColumn } from "../tables/DataTable";
+
 interface TaskTableProps {
   tasks: ITask[];
 }
 
-const TaskTable: React.FC<TaskTableProps> = ({ tasks }) => {
+const columns: DataTableColumn<ITask>[] = [
+  {
+    key: "number",
+    header: "Номер",
+    width: "w-[7%]",
+    cellClassName: "whitespace-nowrap",
+    render: (task) => <TaskLink task={task} />,
+  },
+  {
+    key: "title",
+    header: "Задача",
+    width: "w-[22%]",
+    cellClassName: "whitespace-nowrap",
+    render: (task) => (
+      <Link
+        to={`/tasks/${task.taskNumber}`}
+        className="text-sm font-semibold text-gray-900 hover:text-blue-600 transition-colors max-w-xs truncate block"
+        title={task.title}
+      >
+        {task.title}
+      </Link>
+    ),
+  },
+  {
+    key: "relatedCase",
+    header: "От Сигнал",
+    width: "w-[9%]",
+    cellClassName: "whitespace-nowrap",
+    render: (task) =>
+      task.relatedCase ? (
+        <div className="w-20">
+          <CaseLink my_case={task.relatedCase} />
+        </div>
+      ) : (
+        <span className="text-gray-400 text-sm">—</span>
+      ),
+  },
+  {
+    key: "priority",
+    header: "Приоритет",
+    width: "w-[10%]",
+    cellClassName: "whitespace-nowrap",
+    render: (task) => <TaskPriorityBadge priority={task.priority} />,
+  },
+  {
+    key: "dueDate",
+    header: "Краен Срок",
+    width: "w-[13%]",
+    cellClassName: "whitespace-nowrap",
+    render: (task) =>
+      task.dueDate ? (
+        <div className="flex items-center gap-1.5">
+          <ShowDate date={task.dueDate} />
+          {getDueDateStatus(task.dueDate, task.status) === "overdue" && (
+            <span title="Просрочена задача">
+              <ExclamationTriangleIcon className="h-4 w-4 text-red-500" />
+            </span>
+          )}
+          {getDueDateStatus(task.dueDate, task.status) === "warning" && (
+            <span title="Краен срок наближава">
+              <ClockIcon className="h-4 w-4 text-amber-500" />
+            </span>
+          )}
+        </div>
+      ) : (
+        <span className="text-gray-400 text-sm">—</span>
+      ),
+  },
+  {
+    key: "creator",
+    header: "Създадена от",
+    width: "w-[13%]",
+    cellClassName: "whitespace-nowrap",
+    render: (task) => <UserLink user={task.creator} />,
+  },
+  {
+    key: "assignee",
+    header: "Възложена на",
+    width: "w-[13%]",
+    cellClassName: "whitespace-nowrap",
+    render: (task) =>
+      task.assignee ? (
+        <UserLink user={task.assignee} />
+      ) : (
+        <span className="text-gray-400 text-sm">Невъзложена</span>
+      ),
+  },
+  {
+    key: "status",
+    header: "Статус",
+    width: "w-[13%]",
+    cellClassName: "whitespace-nowrap",
+    render: (task) => <TaskStatusBadge status={task.status} />,
+  },
+];
 
+const TaskTable: React.FC<TaskTableProps> = ({ tasks }) => {
   return (
-    <div className="bg-white shadow-md rounded-lg overflow-x-auto">
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
-          <tr>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Номер
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Задача
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              От Сигнал
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Приоритет
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Краен Срок
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Създадена от
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Възложена на
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Статус
-            </th>
-          </tr>
-        </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
-          {tasks.map((task) => (
-            <tr key={task._id} className="hover:bg-gray-50 group">
-              <td className="px-6 py-4 whitespace-nowrap">
-                <TaskLink task={task} />
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <Link
-                  to={`/tasks/${task.taskNumber}`}
-                  className="text-sm font-semibold text-gray-900 group-hover:text-blue-600 transition-colors max-w-xs truncate block"
-                  title={task.title}
-                >
-                  {task.title}
-                </Link>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                {task.relatedCase ? (
-                  <div className="w-20">
-                    <CaseLink my_case={task.relatedCase} />
-                  </div>
-                ) : (
-                  <span className="text-gray-400 text-sm">—</span>
-                )}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <TaskPriorityBadge priority={task.priority} />
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                {task.dueDate ? (
-                  <div className="flex items-center gap-1.5">
-                    <ShowDate date={task.dueDate} />
-                    {getDueDateStatus(task.dueDate, task.status) ===
-                      "overdue" && (
-                      <span title="Просрочена задача">
-                        <ExclamationTriangleIcon className="h-4 w-4 text-red-500" />
-                      </span>
-                    )}
-                    {getDueDateStatus(task.dueDate, task.status) ===
-                      "warning" && (
-                      <span title="Краен срок наближава">
-                        <ClockIcon className="h-4 w-4 text-amber-500" />
-                      </span>
-                    )}
-                  </div>
-                ) : (
-                  <span className="text-gray-400 text-sm">—</span>
-                )}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <UserLink user={task.creator} />
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                {task.assignee ? (
-                  <UserLink user={task.assignee} />
-                ) : (
-                  <span className="text-gray-400 text-sm">Невъзложена</span>
-                )}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <TaskStatusBadge status={task.status} />
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <DataTable
+      columns={columns}
+      data={tasks}
+      rowKey={(task) => task._id}
+    />
   );
 };
 

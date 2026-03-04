@@ -46,6 +46,7 @@ interface UnifiedEditorProps {
   attachmentFolder?: string;
   type: "case" | "answer" | "comment" | "task" | "taskActivity";
   editorClassName?: string;
+  editorMinHeight?: string;
   hideAttachments?: boolean;
 }
 
@@ -69,6 +70,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
     caseId,
     attachmentFolder,
     editorClassName,
+    editorMinHeight,
     hideAttachments = false,
   } = props;
 
@@ -109,7 +111,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
     editorProps: {
       attributes: {
         class:
-          "focus:outline-none prose prose-sm max-w-none p-4 min-h-[150px] break-words custom-tiptap-editor",
+          `focus:outline-none prose prose-sm max-w-none p-4 ${editorMinHeight ?? "min-h-[150px]"} break-words custom-tiptap-editor`,
       },
     },
   });

@@ -156,17 +156,6 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
           {/* View mode toggle */}
           <div className="flex items-center bg-gray-100 p-1 rounded-lg border border-gray-300">
             <button
-              onClick={() => onViewModeChange("grid")}
-              title="Мрежа"
-              className={`p-2 rounded-md transition-colors ${
-                viewMode === "grid"
-                  ? "bg-blue-600 text-white shadow"
-                  : "text-gray-600 hover:bg-gray-200 cursor-pointer"
-              }`}
-            >
-              <Squares2X2Icon className="h-5 w-5" />
-            </button>
-            <button
               onClick={() => onViewModeChange("table")}
               title="Таблица"
               className={`p-2 rounded-md transition-colors ${
@@ -176,6 +165,17 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
               }`}
             >
               <Bars3Icon className="h-5 w-5" />
+            </button>
+            <button
+              onClick={() => onViewModeChange("grid")}
+              title="Мрежа"
+              className={`p-2 rounded-md transition-colors ${
+                viewMode === "grid"
+                  ? "bg-blue-600 text-white shadow"
+                  : "text-gray-600 hover:bg-gray-200 cursor-pointer"
+              }`}
+            >
+              <Squares2X2Icon className="h-5 w-5" />
             </button>
           </div>
 

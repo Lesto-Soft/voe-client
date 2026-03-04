@@ -67,11 +67,11 @@ const columns: DataTableColumn<ITask>[] = [
   {
     key: "title",
     header: "Заглавие",
-    width: "w-[14%]",
+    width: "w-[12%]",
     cellClassName: "text-sm",
     render: (task) => (
       <span className="font-semibold truncate block" title={task.title}>
-        {task.title}
+        {getContentPreview(task.title, 20)}
       </span>
     ),
   },

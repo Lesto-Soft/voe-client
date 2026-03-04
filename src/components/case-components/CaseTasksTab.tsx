@@ -36,22 +36,20 @@ const TaskCard: React.FC<TaskCardProps> = ({ task }) => {
         {/* Top Section: Title + Status */}
         <div className="flex-shrink-0">
           <div className="flex justify-between items-start gap-2 mb-2">
-            <p className="text-sm font-bold text-gray-800 line-clamp-2 flex-1">
+            <p className="text-sm font-bold text-gray-800 line-clamp-2 flex-1 truncate">
               {task.title}
             </p>
             <TaskStatusBadge status={task.status} size="sm" />
           </div>
 
-          {/* Description preview */}
-          {task.description && (
-            <p className="text-xs text-gray-500 line-clamp-2 mb-2">
-              {getContentPreview(task.description, 100)}
-            </p>
-          )}
+          {/* Description preview (fixed 2-line height) */}
+          <p className="text-xs text-gray-500 line-clamp-2 min-h-[2lh] mb-2">
+            {task.description ? getContentPreview(task.description, 100) : "\u00A0"}
+          </p>
 
           <div className="flex items-center gap-2 mb-2">
             <TaskLink task={task} />
-            <TaskPriorityBadge priority={task.priority} />
+            {/* <TaskPriorityBadge priority={task.priority} /> */}
           </div>
         </div>
 
@@ -74,11 +72,13 @@ const TaskCard: React.FC<TaskCardProps> = ({ task }) => {
               )}
             </div>
           </div>
+          <div className="flex items-center gap-1">
+          <span>Срок:</span>
           <TaskDueDateIndicator
             dueDate={task.dueDate}
             status={task.status}
             size="sm"
-          />
+          /></div>
         </div>
       </div>
     </div>

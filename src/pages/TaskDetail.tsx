@@ -163,8 +163,8 @@ const TaskDetail: React.FC = () => {
           <div className="p-4 flex flex-col gap-3">
             {/* Top row: Title + Action buttons */}
             <div className="flex items-start justify-between gap-2">
-              <h1 className="text-xl font-bold text-gray-900 flex-1">
-                {taskData.title}
+              <h1 className="text-xl font-bold text-gray-900 flex-1 truncate" title={task.title}>
+                {task.title}
               </h1>
               {canEdit && (
                 <div className="flex items-center gap-1 flex-shrink-0">

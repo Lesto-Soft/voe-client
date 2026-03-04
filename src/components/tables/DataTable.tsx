@@ -44,8 +44,11 @@ function DataTable<T>({
               {columns.map((col, i) => (
                 <th
                   key={col.key}
-                  className={`${col.width ?? ""} px-3 py-4 text-center text-sm font-semibold text-white uppercase tracking-wide ${i > 0 ? "border-l border-gray-400" : ""} ${col.headerClassName ?? ""}`}
+                  className={`${col.width ?? ""} px-3 py-4 text-center text-sm font-semibold text-white uppercase tracking-wide relative ${col.headerClassName ?? ""}`}
                 >
+                  {i > 0 && (
+                    <span className="absolute left-0 top-1/2 -translate-y-1/2 w-px h-1/2 bg-gray-400" />
+                  )}
                   {col.header}
                 </th>
               ))}

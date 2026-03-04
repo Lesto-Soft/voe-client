@@ -47,6 +47,7 @@ interface UnifiedEditorProps {
   type: "case" | "answer" | "comment" | "task" | "taskActivity";
   editorClassName?: string;
   editorMinHeight?: string;
+  autoFocus?: boolean;
   hideAttachments?: boolean;
 }
 
@@ -71,6 +72,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
     attachmentFolder,
     editorClassName,
     editorMinHeight,
+    autoFocus = false,
     hideAttachments = false,
   } = props;
 
@@ -115,6 +117,13 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
       },
     },
   });
+
+  // Auto-focus the editor on mount when requested
+  useEffect(() => {
+    if (autoFocus && editor && !editor.isDestroyed) {
+      editor.commands.focus("end");
+    }
+  }, [autoFocus, editor]);
 
   // Sync external content changes (e.g. CaseAnswerSelector) into the editor
   useEffect(() => {
@@ -243,7 +252,12 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
 
         <div className="relative flex-grow flex flex-col min-h-0">
           <div
-            className={`flex-grow overflow-y-auto overflow-x-hidden custom-scrollbar-xs ${editorClassName}`}
+            className={`flex-grow overflow-y-auto overflow-x-hidden custom-scrollbar-xs cursor-text ${editorClassName}`}
+            onClick={() => {
+              if (editor && !editor.isFocused && !editor.isDestroyed) {
+                editor.commands.focus("end");
+              }
+            }}
           >
             <EditorContent editor={editor} />
           </div>

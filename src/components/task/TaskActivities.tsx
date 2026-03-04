@@ -350,21 +350,23 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
         </div>
 
         {/* Rich text input with send button */}
-        <UnifiedEditor
-          content={newContent}
-          onContentChange={setNewContent}
-          attachments={newAttachments}
-          setAttachments={setNewAttachments}
-          onSend={handleSubmitActivity}
-          mentions={mentions}
-          placeholder="Добавете запис..."
-          minLength={0}
-          maxLength={1500}
-          isSending={createLoading}
-          type="taskActivity"
-          editorClassName="h-[80px] min-h-[80px] max-h-[80px]"
-          editorMinHeight="min-h-[60px]"
-        />
+        <div className="min-h-[130px]">
+          <UnifiedEditor
+            content={newContent}
+            onContentChange={setNewContent}
+            attachments={newAttachments}
+            setAttachments={setNewAttachments}
+            onSend={handleSubmitActivity}
+            mentions={mentions}
+            placeholder="Добавете запис..."
+            minLength={0}
+            maxLength={1500}
+            isSending={createLoading}
+            type="taskActivity"
+            editorMinHeight="min-h-[60px]"
+            autoFocus
+          />
+        </div>
       </div>
 
       {/* Activities list - SCROLLABLE */}
@@ -455,24 +457,25 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
                     {/* Edit mode */}
                     {isEditing ? (
                       <div className="mt-2">
-                        <UnifiedEditor
-                          content={editContent}
-                          onContentChange={setEditContent}
-                          attachments={editAttachments}
-                          setAttachments={setEditAttachments}
-                          existingAttachments={editExistingAttachments}
-                          setExistingAttachments={setEditExistingAttachments}
-                          mentions={mentions}
-                          placeholder="Редактирайте съдържанието..."
-                          minLength={0}
-                          maxLength={1500}
-                          type="taskActivity"
-                          hideSideButtons
-                          editorClassName="h-[100px] min-h-[100px] max-h-[100px]"
-          editorMinHeight="min-h-[80px]"
-                          caseId={activity._id}
-                          attachmentFolder="taskActivities"
-                        />
+                        <div className="min-h-[150px]">
+                          <UnifiedEditor
+                            content={editContent}
+                            onContentChange={setEditContent}
+                            attachments={editAttachments}
+                            setAttachments={setEditAttachments}
+                            existingAttachments={editExistingAttachments}
+                            setExistingAttachments={setEditExistingAttachments}
+                            mentions={mentions}
+                            placeholder="Редактирайте съдържанието..."
+                            minLength={0}
+                            maxLength={1500}
+                            type="taskActivity"
+                            hideSideButtons
+                            editorMinHeight="min-h-[80px]"
+                            caseId={activity._id}
+                            attachmentFolder="taskActivities"
+                          />
+                        </div>
                         <div className="flex justify-end gap-2 mt-2">
                           <button
                             type="button"

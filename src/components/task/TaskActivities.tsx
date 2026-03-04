@@ -350,7 +350,7 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
         </div>
 
         {/* Rich text input with send button */}
-        <div className="min-h-[130px]">
+        <div className="min-h-[160px]">
           <UnifiedEditor
             content={newContent}
             onContentChange={setNewContent}

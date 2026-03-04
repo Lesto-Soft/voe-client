@@ -223,28 +223,6 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
       >
         <div className="py-5">
           <div className="flex flex-wrap gap-x-4 gap-y-3 items-end">
-            {/* Search input */}
-            <div className="flex-1 min-w-[200px]">
-              <ClearableInput
-                id="taskSearch"
-                label="Търсене"
-                value={searchQuery}
-                onChange={onSearchQueryChange}
-                placeholder="Търсене по заглавие..."
-              />
-            </div>
-
-            {/* Status multiselect */}
-            <CustomMultiSelectDropdown
-              label="Статус"
-              options={TASK_STATUS_OPTIONS}
-              selectedValues={statusFilter}
-              onChange={(values) =>
-                onStatusFilterChange(values as TaskStatus[])
-              }
-              placeholder="Всички статуси"
-            />
-
             {/* Priority multiselect */}
             <CustomMultiSelectDropdown
               label="Приоритет"
@@ -255,6 +233,40 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
               }
               placeholder="Всички приоритети"
             />
+
+            {/* Case relation filter */}
+            <div className="w-48">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Сигнал
+              </label>
+              <select
+                value={caseRelationFilter || ""}
+                onChange={(e) =>
+                  onCaseRelationFilterChange(
+                    (e.target.value as CaseRelationFilter) || null,
+                  )
+                }
+                className="w-full bg-white px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm focus:outline-none focus:border-indigo-500"
+              >
+                <option value="">Всички</option>
+                {CASE_RELATION_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Search input */}
+            <div className="flex-1 min-w-[200px]">
+              <ClearableInput
+                id="taskSearch"
+                label="Търсене"
+                value={searchQuery}
+                onChange={onSearchQueryChange}
+                placeholder="Търсене по заглавие..."
+              />
+            </div>
 
             {/* Due date multiselect */}
             <CustomMultiSelectDropdown
@@ -288,28 +300,16 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
               </button>
             </div>
 
-            {/* Case relation filter */}
-            <div className="w-48">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Сигнал
-              </label>
-              <select
-                value={caseRelationFilter || ""}
-                onChange={(e) =>
-                  onCaseRelationFilterChange(
-                    (e.target.value as CaseRelationFilter) || null,
-                  )
-                }
-                className="w-full bg-white px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm focus:outline-none focus:border-indigo-500"
-              >
-                <option value="">Всички</option>
-                {CASE_RELATION_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {/* Status multiselect */}
+            <CustomMultiSelectDropdown
+              label="Статус"
+              options={TASK_STATUS_OPTIONS}
+              selectedValues={statusFilter}
+              onChange={(values) =>
+                onStatusFilterChange(values as TaskStatus[])
+              }
+              placeholder="Всички статуси"
+            />
           </div>
 
           {isDateSelectorVisible && (

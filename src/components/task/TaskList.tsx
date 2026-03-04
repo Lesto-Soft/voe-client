@@ -23,19 +23,20 @@ const TaskListEmpty: React.FC = () => (
 const TaskListSkeleton: React.FC<{ viewMode: "grid" | "table" }> = ({ viewMode }) => {
   if (viewMode === "table") {
     return (
-      <div className="bg-white shadow-md rounded-lg overflow-hidden">
+      <div className="bg-white shadow-md rounded-lg overflow-hidden border border-gray-200">
         <div className="animate-pulse">
-          <div className="h-12 bg-gray-100" />
+          <div className="h-14 bg-gray-500 rounded-t-lg" />
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="h-16 border-t border-gray-200 flex items-center px-6 gap-4">
-              <div className="h-4 bg-gray-200 rounded w-16" />
-              <div className="h-4 bg-gray-200 rounded w-48" />
-              <div className="h-4 bg-gray-200 rounded w-16" />
-              <div className="h-4 bg-gray-200 rounded w-20" />
-              <div className="h-4 bg-gray-200 rounded w-24" />
-              <div className="h-4 bg-gray-200 rounded w-24" />
-              <div className="h-4 bg-gray-200 rounded w-24" />
-              <div className="h-4 bg-gray-200 rounded w-20" />
+            <div key={i} className="h-16 border-t border-gray-200 flex items-center px-3 gap-3">
+              <div className="h-4 bg-gray-200 rounded" style={{ width: "6%" }} />
+              <div className="h-4 bg-gray-200 rounded" style={{ width: "8%" }} />
+              <div className="h-4 bg-gray-200 rounded" style={{ width: "8%" }} />
+              <div className="h-4 bg-gray-200 rounded" style={{ width: "11%" }} />
+              <div className="h-4 bg-gray-200 rounded" style={{ width: "11%" }} />
+              <div className="h-4 bg-gray-200 rounded" style={{ width: "21%" }} />
+              <div className="h-4 bg-gray-200 rounded" style={{ width: "11%" }} />
+              <div className="h-4 bg-gray-200 rounded" style={{ width: "11%" }} />
+              <div className="h-4 bg-gray-200 rounded" style={{ width: "10%" }} />
             </div>
           ))}
         </div>

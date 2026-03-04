@@ -21,11 +21,11 @@ const TaskLink: React.FC<TaskLinkProps> = ({ task }) => {
     currentUser.accessibleTasks?.some((t) => t._id === task._id);
 
   const baseClasses =
-    "inline-flex items-center justify-center w-full px-2 py-1 rounded-md text-xs font-bold transition-colors duration-150 ease-in-out border shadow-sm";
+    "inline-flex items-center justify-center px-2 py-1 rounded-md font-bold transition-colors duration-150 ease-in-out border shadow-sm";
 
   const linkContent = (
     <>
-      <span className="font-bold">#{task.taskNumber}</span>
+      <span className="font-bold">{task.taskNumber}</span>
       <svg
         className="ml-1 h-4 w-4 text-rose-400"
         fill="none"

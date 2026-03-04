@@ -22,14 +22,52 @@ const columns: DataTableColumn<ITask>[] = [
   {
     key: "number",
     header: "Номер",
-    width: "w-[7%]",
+    width: "w-[6%]",
     cellClassName: "whitespace-nowrap",
     render: (task) => <TaskLink task={task} />,
   },
   {
+    key: "priority",
+    header: "Приоритет",
+    width: "w-[8%]",
+    cellClassName: "whitespace-nowrap",
+    render: (task) => <TaskPriorityBadge priority={task.priority} />,
+  },
+  {
+    key: "relatedCase",
+    header: "Сигнал",
+    width: "w-[8%]",
+    cellClassName: "whitespace-nowrap text-sm",
+    render: (task) =>
+      task.relatedCase ? (
+        <CaseLink my_case={task.relatedCase} />
+      ) : (
+        <span className="text-gray-400">—</span>
+      ),
+  },
+  {
+    key: "creator",
+    header: "Създадена от",
+    width: "w-[11%]",
+    cellClassName: "whitespace-nowrap",
+    render: (task) => <UserLink user={task.creator} />,
+  },
+  {
+    key: "assignee",
+    header: "Възложена на",
+    width: "w-[11%]",
+    cellClassName: "whitespace-nowrap",
+    render: (task) =>
+      task.assignee ? (
+        <UserLink user={task.assignee} />
+      ) : (
+        <span className="text-gray-400 text-sm">Невъзложена</span>
+      ),
+  },
+  {
     key: "title",
     header: "Задача",
-    width: "w-[22%]",
+    width: "w-[21%]",
     cellClassName: "whitespace-nowrap",
     render: (task) => (
       <Link
@@ -42,30 +80,9 @@ const columns: DataTableColumn<ITask>[] = [
     ),
   },
   {
-    key: "relatedCase",
-    header: "От Сигнал",
-    width: "w-[9%]",
-    cellClassName: "whitespace-nowrap",
-    render: (task) =>
-      task.relatedCase ? (
-        <div className="w-20">
-          <CaseLink my_case={task.relatedCase} />
-        </div>
-      ) : (
-        <span className="text-gray-400 text-sm">—</span>
-      ),
-  },
-  {
-    key: "priority",
-    header: "Приоритет",
-    width: "w-[10%]",
-    cellClassName: "whitespace-nowrap",
-    render: (task) => <TaskPriorityBadge priority={task.priority} />,
-  },
-  {
     key: "dueDate",
     header: "Краен Срок",
-    width: "w-[13%]",
+    width: "w-[11%]",
     cellClassName: "whitespace-nowrap",
     render: (task) =>
       task.dueDate ? (
@@ -87,28 +104,21 @@ const columns: DataTableColumn<ITask>[] = [
       ),
   },
   {
-    key: "creator",
-    header: "Създадена от",
-    width: "w-[13%]",
-    cellClassName: "whitespace-nowrap",
-    render: (task) => <UserLink user={task.creator} />,
-  },
-  {
-    key: "assignee",
-    header: "Възложена на",
-    width: "w-[13%]",
+    key: "createdAt",
+    header: "Създадена на",
+    width: "w-[11%]",
     cellClassName: "whitespace-nowrap",
     render: (task) =>
-      task.assignee ? (
-        <UserLink user={task.assignee} />
+      task.createdAt ? (
+        <ShowDate date={task.createdAt} />
       ) : (
-        <span className="text-gray-400 text-sm">Невъзложена</span>
+        <span className="text-gray-400 text-sm">—</span>
       ),
   },
   {
     key: "status",
     header: "Статус",
-    width: "w-[13%]",
+    width: "w-[10%]",
     cellClassName: "whitespace-nowrap",
     render: (task) => <TaskStatusBadge status={task.status} />,
   },

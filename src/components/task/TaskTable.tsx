@@ -1,5 +1,4 @@
 import React from "react";
-import { Link } from "react-router";
 import { ITask, TaskStatus } from "../../db/interfaces";
 import TaskStatusBadge from "./TaskStatusBadge";
 import TaskPriorityBadge from "./TaskPriorityBadge";
@@ -13,6 +12,7 @@ import {
   ClockIcon,
 } from "@heroicons/react/24/outline";
 import DataTable, { DataTableColumn } from "../tables/DataTable";
+import { getContentPreview, stripHtmlTags } from "../../utils/contentRenderer";
 
 interface TaskTableProps {
   tasks: ITask[];
@@ -22,21 +22,21 @@ const columns: DataTableColumn<ITask>[] = [
   {
     key: "number",
     header: "Номер",
-    width: "w-[6%]",
+    width: "w-[5%]",
     cellClassName: "whitespace-nowrap",
     render: (task) => <TaskLink task={task} />,
   },
   {
     key: "priority",
     header: "Приоритет",
-    width: "w-[8%]",
+    width: "w-[7%]",
     cellClassName: "whitespace-nowrap",
     render: (task) => <TaskPriorityBadge priority={task.priority} />,
   },
   {
     key: "relatedCase",
     header: "Сигнал",
-    width: "w-[8%]",
+    width: "w-[6%]",
     cellClassName: "whitespace-nowrap text-sm",
     render: (task) =>
       task.relatedCase ? (
@@ -48,14 +48,14 @@ const columns: DataTableColumn<ITask>[] = [
   {
     key: "creator",
     header: "Създадена от",
-    width: "w-[11%]",
+    width: "w-[10%]",
     cellClassName: "whitespace-nowrap",
     render: (task) => <UserLink user={task.creator} />,
   },
   {
     key: "assignee",
     header: "Възложена на",
-    width: "w-[11%]",
+    width: "w-[10%]",
     cellClassName: "whitespace-nowrap",
     render: (task) =>
       task.assignee ? (
@@ -66,23 +66,36 @@ const columns: DataTableColumn<ITask>[] = [
   },
   {
     key: "title",
-    header: "Задача",
-    width: "w-[21%]",
-    cellClassName: "whitespace-nowrap",
+    header: "Заглавие",
+    width: "w-[14%]",
+    cellClassName: "text-sm",
     render: (task) => (
-      <Link
-        to={`/tasks/${task.taskNumber}`}
-        className="text-sm font-semibold text-gray-900 hover:text-blue-600 transition-colors max-w-xs truncate block"
-        title={task.title}
-      >
+      <span className="font-semibold truncate block" title={task.title}>
         {task.title}
-      </Link>
+      </span>
     ),
+  },
+  {
+    key: "description",
+    header: "Описание",
+    width: "w-[14%]",
+    cellClassName: "text-sm",
+    render: (task) =>
+      task.description ? (
+        <span
+          className="block truncate"
+          title={stripHtmlTags(task.description)}
+        >
+          {getContentPreview(task.description, 25)}
+        </span>
+      ) : (
+        <span className="text-gray-400">—</span>
+      ),
   },
   {
     key: "dueDate",
     header: "Краен Срок",
-    width: "w-[11%]",
+    width: "w-[10%]",
     cellClassName: "whitespace-nowrap",
     render: (task) =>
       task.dueDate ? (
@@ -106,7 +119,7 @@ const columns: DataTableColumn<ITask>[] = [
   {
     key: "createdAt",
     header: "Създадена на",
-    width: "w-[11%]",
+    width: "w-[10%]",
     cellClassName: "whitespace-nowrap",
     render: (task) =>
       task.createdAt ? (
@@ -118,7 +131,7 @@ const columns: DataTableColumn<ITask>[] = [
   {
     key: "status",
     header: "Статус",
-    width: "w-[10%]",
+    width: "w-[9%]",
     cellClassName: "whitespace-nowrap",
     render: (task) => <TaskStatusBadge status={task.status} />,
   },

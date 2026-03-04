@@ -69,6 +69,8 @@ interface TaskFiltersProps {
   onTaskNumberChange: (value: string) => void;
   searchQuery: string;
   onSearchQueryChange: (query: string) => void;
+  descriptionQuery: string;
+  onDescriptionQueryChange: (query: string) => void;
   dateRange: { startDate: Date | null; endDate: Date | null };
   onDateRangeChange: (range: { startDate: Date | null; endDate: Date | null }) => void;
   isDateSelectorVisible: boolean;
@@ -123,6 +125,8 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
   onTaskNumberChange,
   searchQuery,
   onSearchQueryChange,
+  descriptionQuery,
+  onDescriptionQueryChange,
   dateRange,
   onDateRangeChange,
   isDateSelectorVisible,
@@ -279,14 +283,25 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
               widthClass="w-48"
             />
 
-            {/* Search input */}
-            <div className="flex-1 min-w-[200px]">
+            {/* Title search */}
+            <div className="flex-1 min-w-[150px]">
               <ClearableInput
                 id="taskSearch"
-                label="Търсене"
+                label="Заглавие"
                 value={searchQuery}
                 onChange={onSearchQueryChange}
                 placeholder="Търсене по заглавие..."
+              />
+            </div>
+
+            {/* Description search */}
+            <div className="flex-1 min-w-[150px]">
+              <ClearableInput
+                id="taskDescriptionSearch"
+                label="Описание"
+                value={descriptionQuery}
+                onChange={onDescriptionQueryChange}
+                placeholder="Търсене по описание..."
               />
             </div>
 

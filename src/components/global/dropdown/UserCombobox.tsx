@@ -81,6 +81,10 @@ const UserCombobox: React.FC<UserComboboxProps> = ({
 
   const handleInputFocus = () => {
     setIsOpen(true);
+    // Auto-scroll so the dropdown is visible within the scrollable parent
+    setTimeout(() => {
+      dropdownRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }, 50);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -102,7 +106,10 @@ const UserCombobox: React.FC<UserComboboxProps> = ({
           onClick={() => {
             setIsOpen(true);
             setSearchQuery("");
-            setTimeout(() => inputRef.current?.focus(), 0);
+            setTimeout(() => {
+              inputRef.current?.focus();
+              dropdownRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+            }, 50);
           }}
           className="cursor-pointer w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-white flex items-center justify-between gap-2"
         >

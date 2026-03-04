@@ -77,6 +77,7 @@ const getInitialState = (search: string) => {
 
   const taskNumber = params.get("taskNumber") || "";
   const searchQuery = params.get("search") || "";
+  const descriptionQuery = params.get("description") || "";
 
   const viewParam = params.get("view");
   const viewMode: "grid" | "table" =
@@ -97,7 +98,7 @@ const getInitialState = (search: string) => {
     ? moment(params.get("endDate"), "DD-MM-YYYY").toDate()
     : null;
 
-  return { filterMode, statusFilter, priorityFilter, dueDateFilter, caseRelationFilter, taskNumber, searchQuery, viewMode, currentPage, itemsPerPage, startDate, endDate };
+  return { filterMode, statusFilter, priorityFilter, dueDateFilter, caseRelationFilter, taskNumber, searchQuery, descriptionQuery, viewMode, currentPage, itemsPerPage, startDate, endDate };
 };
 
 const TasksPage: React.FC = () => {
@@ -115,6 +116,7 @@ const TasksPage: React.FC = () => {
   const [caseRelationFilter, setCaseRelationFilter] = useState<CaseRelationFilter | null>(initial.caseRelationFilter);
   const [taskNumber, setTaskNumber] = useState(initial.taskNumber);
   const [searchQuery, setSearchQuery] = useState(initial.searchQuery);
+  const [descriptionQuery, setDescriptionQuery] = useState(initial.descriptionQuery);
   const [viewMode, setViewMode] = useState<"grid" | "table">(initial.viewMode);
   const [currentPage, setCurrentPage] = useState(initial.currentPage);
   const [itemsPerPage, setItemsPerPage] = useState(initial.itemsPerPage);
@@ -132,10 +134,11 @@ const TasksPage: React.FC = () => {
       caseRelationFilter !== null ||
       taskNumber.trim() !== "" ||
       searchQuery.trim() !== "" ||
+      descriptionQuery.trim() !== "" ||
       startDate !== null ||
       endDate !== null
     );
-  }, [statusFilter, priorityFilter, dueDateFilter, caseRelationFilter, taskNumber, searchQuery, startDate, endDate]);
+  }, [statusFilter, priorityFilter, dueDateFilter, caseRelationFilter, taskNumber, searchQuery, descriptionQuery, startDate, endDate]);
 
   // Sync state to URL
   const syncUrl = useCallback(
@@ -149,6 +152,7 @@ const TasksPage: React.FC = () => {
         caseRelation: caseRelationFilter || undefined,
         taskNumber: taskNumber.trim() || undefined,
         search: searchQuery.trim() || undefined,
+        description: descriptionQuery.trim() || undefined,
         startDate: startDate ? moment(startDate).format("DD-MM-YYYY") : undefined,
         endDate: endDate ? moment(endDate).format("DD-MM-YYYY") : undefined,
         view: viewMode,
@@ -161,7 +165,7 @@ const TasksPage: React.FC = () => {
       }
       navigate(`${location.pathname}?${params.toString()}`, { replace: true });
     },
-    [filterMode, statusFilter, priorityFilter, dueDateFilter, caseRelationFilter, taskNumber, searchQuery, startDate, endDate, viewMode, currentPage, itemsPerPage, navigate, location.pathname],
+    [filterMode, statusFilter, priorityFilter, dueDateFilter, caseRelationFilter, taskNumber, searchQuery, descriptionQuery, startDate, endDate, viewMode, currentPage, itemsPerPage, navigate, location.pathname],
   );
 
   // Compute accessible-only task IDs
@@ -194,6 +198,9 @@ const TasksPage: React.FC = () => {
     if (searchQuery.trim()) {
       input.searchQuery = searchQuery.trim();
     }
+    if (descriptionQuery.trim()) {
+      input.descriptionQuery = descriptionQuery.trim();
+    }
     if (startDate) {
       input.startDate = startDate.toISOString();
     }
@@ -224,6 +231,7 @@ const TasksPage: React.FC = () => {
     caseRelationFilter,
     taskNumber,
     searchQuery,
+    descriptionQuery,
     startDate,
     endDate,
     currentPage,
@@ -282,6 +290,12 @@ const TasksPage: React.FC = () => {
     syncUrl({ search: query.trim() || undefined, page: "1" });
   };
 
+  const handleDescriptionQueryChange = (query: string) => {
+    setDescriptionQuery(query);
+    setCurrentPage(1);
+    syncUrl({ description: query.trim() || undefined, page: "1" });
+  };
+
   const handleViewModeChange = (mode: "grid" | "table") => {
     setViewMode(mode);
     savePrefs({ viewMode: mode });
@@ -306,6 +320,7 @@ const TasksPage: React.FC = () => {
     setCaseRelationFilter(null);
     setTaskNumber("");
     setSearchQuery("");
+    setDescriptionQuery("");
     setStartDate(null);
     setEndDate(null);
     setCurrentPage(1);
@@ -316,6 +331,7 @@ const TasksPage: React.FC = () => {
       caseRelation: undefined,
       taskNumber: undefined,
       search: undefined,
+      description: undefined,
       startDate: undefined,
       endDate: undefined,
       page: "1",
@@ -364,6 +380,8 @@ const TasksPage: React.FC = () => {
         onTaskNumberChange={handleTaskNumberChange}
         searchQuery={searchQuery}
         onSearchQueryChange={handleSearchQueryChange}
+        descriptionQuery={descriptionQuery}
+        onDescriptionQueryChange={handleDescriptionQueryChange}
         dateRange={{ startDate, endDate }}
         onDateRangeChange={handleDateRangeChange}
         isDateSelectorVisible={isDateSelectorVisible}

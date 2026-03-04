@@ -49,6 +49,7 @@ export interface TaskFiltersInput {
   taskIds?: string[];
   taskNumber?: string;
   searchQuery?: string;
+  descriptionQuery?: string;
   startDate?: string;
   endDate?: string;
   excludeAssigneeId?: string;
@@ -146,6 +147,7 @@ export function buildTaskQueryVariables(input?: TaskFiltersInput) {
     caseId,
     taskIds,
     searchQuery,
+    descriptionQuery,
     startDate,
     endDate,
     excludeAssigneeId,
@@ -174,6 +176,7 @@ export function buildTaskQueryVariables(input?: TaskFiltersInput) {
   if (taskIds && taskIds.length > 0) variables.input.taskIds = taskIds;
   if (input?.taskNumber) variables.input.taskNumber = input.taskNumber;
   if (searchQuery) variables.input.searchQuery = searchQuery;
+  if (descriptionQuery) variables.input.descriptionQuery = descriptionQuery;
   if (startDate) variables.input.startDate = startDate;
   if (endDate) variables.input.endDate = endDate;
   if (excludeAssigneeId) variables.input.excludeAssigneeId = excludeAssigneeId;

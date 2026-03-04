@@ -28,15 +28,16 @@ const TaskListSkeleton: React.FC<{ viewMode: "grid" | "table" }> = ({ viewMode }
           <div className="h-13 bg-gray-500 rounded-t-lg" />
           {[...Array(5)].map((_, i) => (
             <div key={i} className="h-16 border-t border-gray-200 flex items-center px-3 gap-3">
+              <div className="h-4 bg-gray-200 rounded" style={{ width: "5%" }} />
+              <div className="h-4 bg-gray-200 rounded" style={{ width: "7%" }} />
               <div className="h-4 bg-gray-200 rounded" style={{ width: "6%" }} />
-              <div className="h-4 bg-gray-200 rounded" style={{ width: "8%" }} />
-              <div className="h-4 bg-gray-200 rounded" style={{ width: "8%" }} />
-              <div className="h-4 bg-gray-200 rounded" style={{ width: "11%" }} />
-              <div className="h-4 bg-gray-200 rounded" style={{ width: "11%" }} />
-              <div className="h-4 bg-gray-200 rounded" style={{ width: "21%" }} />
-              <div className="h-4 bg-gray-200 rounded" style={{ width: "11%" }} />
-              <div className="h-4 bg-gray-200 rounded" style={{ width: "11%" }} />
               <div className="h-4 bg-gray-200 rounded" style={{ width: "10%" }} />
+              <div className="h-4 bg-gray-200 rounded" style={{ width: "10%" }} />
+              <div className="h-4 bg-gray-200 rounded" style={{ width: "14%" }} />
+              <div className="h-4 bg-gray-200 rounded" style={{ width: "14%" }} />
+              <div className="h-4 bg-gray-200 rounded" style={{ width: "10%" }} />
+              <div className="h-4 bg-gray-200 rounded" style={{ width: "10%" }} />
+              <div className="h-4 bg-gray-200 rounded" style={{ width: "9%" }} />
             </div>
           ))}
         </div>

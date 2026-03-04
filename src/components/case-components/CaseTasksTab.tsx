@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router";
+import { useNavigate } from "react-router";
 import { ICase, ITask } from "../../db/interfaces";
 import { useGetAllTasks } from "../../graphql/hooks/task";
 import { TaskFormModal, TaskDueDateIndicator } from "../task";
@@ -11,27 +11,44 @@ import {
   ClipboardDocumentCheckIcon,
   PlusIcon,
 } from "@heroicons/react/24/outline";
+import { getContentPreview } from "../../utils/contentRenderer";
 
 interface TaskCardProps {
   task: ITask;
 }
 
 const TaskCard: React.FC<TaskCardProps> = ({ task }) => {
+  const navigate = useNavigate();
+
+  const handleCardClick = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    if (target.closest("a")) return;
+    navigate(`/tasks/${task.taskNumber}`);
+  };
+
   return (
-    <Link to={`/tasks/${task.taskNumber}`} className="block">
+    <div onClick={handleCardClick} className="block cursor-pointer">
       <div
         className={`bg-white p-3 rounded-lg shadow-md border-t-4 ${getPriorityBorderColor(
           task.priority
         )} hover:shadow-lg transition-shadow duration-200 flex flex-col h-full min-h-[160px]`}
       >
-        {/* Top Section */}
+        {/* Top Section: Title + Status */}
         <div className="flex-shrink-0">
           <div className="flex justify-between items-start gap-2 mb-2">
-            <p className="text-sm font-semibold text-gray-800 line-clamp-2 flex-1">
+            <p className="text-sm font-bold text-gray-800 line-clamp-2 flex-1">
               {task.title}
             </p>
             <TaskStatusBadge status={task.status} size="sm" />
           </div>
+
+          {/* Description preview */}
+          {task.description && (
+            <p className="text-xs text-gray-500 line-clamp-2 mb-2">
+              {getContentPreview(task.description, 100)}
+            </p>
+          )}
+
           <div className="flex items-center gap-2 mb-2">
             <TaskLink task={task} />
             <TaskPriorityBadge priority={task.priority} />
@@ -43,11 +60,10 @@ const TaskCard: React.FC<TaskCardProps> = ({ task }) => {
 
         {/* Bottom Section */}
         <div className="flex-shrink-0 pt-2 border-t border-gray-100 text-xs text-gray-500 space-y-1.5">
-          <TaskDueDateIndicator
-            dueDate={task.dueDate}
-            status={task.status}
-            size="sm"
-          />
+          <div className="flex items-center gap-1">
+            <span>Създадена от:</span>
+            <UserLink user={task.creator} />
+          </div>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1">
               <span>Възложена на:</span>
@@ -58,9 +74,14 @@ const TaskCard: React.FC<TaskCardProps> = ({ task }) => {
               )}
             </div>
           </div>
+          <TaskDueDateIndicator
+            dueDate={task.dueDate}
+            status={task.status}
+            size="sm"
+          />
         </div>
       </div>
-    </Link>
+    </div>
   );
 };
 

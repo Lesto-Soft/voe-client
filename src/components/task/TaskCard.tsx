@@ -12,6 +12,7 @@ import {
   ExclamationTriangleIcon,
   ClockIcon,
 } from "@heroicons/react/24/outline";
+import { getContentPreview } from "../../utils/contentRenderer";
 interface TaskCardProps {
   task: ITask;
 }
@@ -41,6 +42,13 @@ const TaskCard: React.FC<TaskCardProps> = ({ task }) => {
             <TaskStatusBadge status={task.status} showIcon={false} />
           </div>
         </div>
+
+        {/* Description preview */}
+        {task.description && (
+          <p className="text-xs text-gray-500 mt-2 line-clamp-2">
+            {getContentPreview(task.description, 120)}
+          </p>
+        )}
 
         {/* Spacer */}
         <div className="flex-grow" />

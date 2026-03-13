@@ -7,6 +7,7 @@ import { TaskStatus, CasePriority } from "../db/interfaces";
 import { TaskList, TaskFilters, TaskFilterMode } from "../components/task";
 import Pagination from "../components/tables/Pagination";
 import { ROLES } from "../utils/GLOBAL_PARAMETERS";
+import useDocumentTitle from "../hooks/useDocumentTitle";
 
 const DEFAULT_ITEMS_PER_PAGE = 12;
 const TASK_VIEW_PREFS_KEY = "taskDashboard_viewPrefs";
@@ -105,6 +106,7 @@ const getInitialState = (search: string) => {
 };
 
 const TasksPage: React.FC = () => {
+  useDocumentTitle("Задачи");
   const currentUser = useCurrentUser();
   const location = useLocation();
   const navigate = useNavigate();

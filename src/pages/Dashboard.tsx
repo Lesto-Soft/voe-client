@@ -1,5 +1,6 @@
 // src/pages/DashboardContent.tsx
 import { useState, useEffect, useMemo, useCallback } from "react";
+import useDocumentTitle from "../hooks/useDocumentTitle";
 import {
   useGetAllCases,
   useGetCasesByUserCategories,
@@ -68,6 +69,7 @@ function withUserIdHook(
 const DashboardPage: React.FC<DashboardContentProps> = ({
   initialFiltersOverride,
 }) => {
+  useDocumentTitle("Сигнали");
   const { t } = useTranslation("dashboard");
   const location = useLocation();
   const navigate = useNavigate();

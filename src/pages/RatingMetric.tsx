@@ -8,6 +8,7 @@ import {
 } from "../graphql/hooks/ratingMetric";
 import { useCurrentUser } from "../context/UserContext";
 import { IMe, IRatingMetric } from "../db/interfaces";
+import useDocumentTitle from "../hooks/useDocumentTitle";
 import { ROLES, TIERS } from "../utils/GLOBAL_PARAMETERS";
 import PageStatusDisplay from "../components/global/PageStatusDisplay";
 import RatingMetricPageSkeleton from "../components/skeletons/RatingMetricSkeleton";
@@ -53,6 +54,7 @@ const RatingMetric: React.FC = () => {
     metric,
     refetch: refetchMetric,
   } = useGetRatingMetricById(metricIdFromParams);
+  useDocumentTitle(metric ? `Метрика: ${metric.name}` : undefined);
 
   const {
     loading: scoresLoading,

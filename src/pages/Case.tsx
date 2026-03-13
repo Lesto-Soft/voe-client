@@ -19,6 +19,7 @@ import { useNotificationSubscription } from "../graphql/hooks/notificationHook";
 import { useAuthorization } from "../hooks/useAuthorization";
 import ForbiddenPage from "./ErrorPages/ForbiddenPage";
 import PageStatusDisplay from "../components/global/PageStatusDisplay";
+import useDocumentTitle from "../hooks/useDocumentTitle";
 
 function getUniqueMentionableUsers(
   categories: ICategory[],
@@ -62,6 +63,8 @@ const Case = () => {
   const location = useLocation();
   const { number: numberParam } = useParams<{ number: string }>();
   const currentUser = useCurrentUser();
+  const numericCaseNumber = numberParam ? parseInt(numberParam, 10) : NaN;
+  useDocumentTitle(numericCaseNumber > 0 ? `Сигнал #${numericCaseNumber}` : undefined);
 
   if (
     !numberParam ||
@@ -77,7 +80,6 @@ const Case = () => {
       />
     );
   }
-  const numericCaseNumber = parseInt(numberParam, 10);
 
   const {
     caseData,

@@ -34,6 +34,7 @@ import {
 } from "@heroicons/react/24/solid";
 import { ClockIcon } from "@heroicons/react/24/outline";
 import TaskAccessModal from "../components/task/TaskAccessModal";
+import useDocumentTitle from "../hooks/useDocumentTitle";
 
 const TaskDetail: React.FC = () => {
   const navigate = useNavigate();
@@ -59,6 +60,8 @@ const TaskDetail: React.FC = () => {
   // All hooks must be called before any early returns
   const { task, loading, error, refetch } =
     useGetTaskByNumber(numericTaskNumber);
+
+  useDocumentTitle(task ? `Задача #${task.taskNumber}` : numericTaskNumber > 0 ? `Задача #${numericTaskNumber}` : undefined);
   const { deleteTask, loading: deleteLoading } = useDeleteTask({
     onCompleted: () => navigate("/tasks"),
   });
@@ -347,7 +350,7 @@ const TaskDetail: React.FC = () => {
                 onClick={() => setRightPanelView("activities")}
                 className={`flex items-center px-4 py-2 rounded-lg font-semibold text-sm transition-colors duration-150 border cursor-pointer ${
                   rightPanelView === "activities"
-                    ? "border-btnRedHover text-btnRedHover shadow bg-red-50"
+                    ? "border-btnRedHover text-btnRedHover shadow"
                     : "border-gray-300 shadow-sm bg-gray-100 text-gray-700 hover:bg-red-100 hover:text-btnRedHover"
                 }`}
               >
@@ -359,7 +362,7 @@ const TaskDetail: React.FC = () => {
                 onClick={() => setRightPanelView("analysis")}
                 className={`flex items-center px-4 py-2 rounded-lg font-semibold text-sm transition-colors duration-150 border cursor-pointer ${
                   rightPanelView === "analysis"
-                    ? "border-btnRedHover text-btnRedHover shadow bg-red-50"
+                    ? "border-btnRedHover text-btnRedHover shadow"
                     : "border-gray-300 shadow-sm bg-gray-100 text-gray-700 hover:bg-red-100 hover:text-btnRedHover"
                 }`}
               >

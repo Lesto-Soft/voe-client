@@ -13,6 +13,7 @@ import { useGetAllPaletteColors } from "../graphql/hooks/colorPalette";
 import { GET_LEAN_USERS } from "../graphql/query/user"; // Adjust path
 // --- MODIFIED: Import CasePriority ---
 import { IMe, CaseType, IPaletteColor, CasePriority } from "../db/interfaces";
+import useDocumentTitle from "../hooks/useDocumentTitle";
 import {
   ResolutionCategoryKey,
   RESOLUTION_CATEGORY_CONFIG,
@@ -68,6 +69,7 @@ export type CaseStatusTab =
 
 const Category: React.FC = () => {
   const { name: categoryNameFromParams } = useParams<{ name: string }>();
+  useDocumentTitle(categoryNameFromParams ? `Категория: ${categoryNameFromParams}` : undefined);
   const navigate = useNavigate();
   const currentUser = useCurrentUser() as IMe | undefined;
   const isAdmin = currentUser?.role?._id === ROLES.ADMIN;

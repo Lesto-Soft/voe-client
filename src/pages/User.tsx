@@ -22,6 +22,7 @@ import { PieSegmentData } from "../components/charts/PieChart";
 
 // Hooks
 import useUserActivityStats from "../hooks/useUserActivityStats";
+import useDocumentTitle from "../hooks/useDocumentTitle";
 import { useCurrentUser } from "../context/UserContext";
 
 // UI Components
@@ -81,6 +82,7 @@ const User: React.FC = () => {
   const { username: userUsernameFromParams } = useParams<{
     username: string;
   }>();
+  useDocumentTitle(userUsernameFromParams ? `Потребител: ${userUsernameFromParams}` : undefined);
 
   const [layout, setLayout] = useState<"standard" | "analytics">("standard");
 

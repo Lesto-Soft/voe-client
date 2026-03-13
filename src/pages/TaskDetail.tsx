@@ -347,8 +347,8 @@ const TaskDetail: React.FC = () => {
                 onClick={() => setRightPanelView("activities")}
                 className={`flex items-center px-4 py-2 rounded-lg font-semibold text-sm transition-colors duration-150 border cursor-pointer ${
                   rightPanelView === "activities"
-                    ? "border-blue-500 text-blue-600 shadow bg-blue-50"
-                    : "border-gray-300 shadow-sm bg-gray-100 text-gray-700 hover:bg-blue-50 hover:text-blue-600"
+                    ? "border-btnRedHover text-btnRedHover shadow bg-red-50"
+                    : "border-gray-300 shadow-sm bg-gray-100 text-gray-700 hover:bg-red-100 hover:text-btnRedHover"
                 }`}
               >
                 <ChatBubbleLeftRightIcon className="h-5 w-5 mr-2" />
@@ -359,8 +359,8 @@ const TaskDetail: React.FC = () => {
                 onClick={() => setRightPanelView("analysis")}
                 className={`flex items-center px-4 py-2 rounded-lg font-semibold text-sm transition-colors duration-150 border cursor-pointer ${
                   rightPanelView === "analysis"
-                    ? "border-blue-500 text-blue-600 shadow bg-blue-50"
-                    : "border-gray-300 shadow-sm bg-gray-100 text-gray-700 hover:bg-blue-50 hover:text-blue-600"
+                    ? "border-btnRedHover text-btnRedHover shadow bg-red-50"
+                    : "border-gray-300 shadow-sm bg-gray-100 text-gray-700 hover:bg-red-100 hover:text-btnRedHover"
                 }`}
               >
                 <BeakerIcon className="h-5 w-5 mr-2" />

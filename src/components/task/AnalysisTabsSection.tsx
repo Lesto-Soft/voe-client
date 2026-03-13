@@ -59,7 +59,7 @@ const AnalysisTabsSection: React.FC<AnalysisTabsSectionProps> = ({
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors cursor-pointer ${
                   isActive
-                    ? "border-blue-500 text-blue-600 bg-blue-50/50"
+                    ? "border-red-300 text-btnRedHover bg-red-50/50"
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50"
                 }`}
               >
@@ -69,7 +69,7 @@ const AnalysisTabsSection: React.FC<AnalysisTabsSectionProps> = ({
                   <span
                     className={`text-xs px-1.5 py-0.5 rounded-full ${
                       isActive
-                        ? "bg-blue-100 text-blue-700"
+                        ? "bg-red-100 text-red-700"
                         : "bg-gray-100 text-gray-600"
                     }`}
                   >

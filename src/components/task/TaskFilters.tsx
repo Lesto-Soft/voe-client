@@ -188,9 +188,9 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
             <button
               onClick={() => onViewModeChange("table")}
               title="Таблица"
-              className={`p-2 rounded-md transition-colors ${
+              className={`p-2 rounded-l-md transition-colors ${
                 viewMode === "table"
-                  ? "bg-blue-600 text-white shadow"
+                  ? "bg-blue-500 text-white shadow"
                   : "text-gray-600 hover:bg-gray-200 cursor-pointer"
               }`}
             >
@@ -199,9 +199,9 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
             <button
               onClick={() => onViewModeChange("grid")}
               title="Мрежа"
-              className={`p-2 rounded-md transition-colors ${
+              className={`p-2 rounded-r-md transition-colors ${
                 viewMode === "grid"
-                  ? "bg-blue-600 text-white shadow"
+                  ? "bg-blue-500 text-white shadow"
                   : "text-gray-600 hover:bg-gray-200 cursor-pointer"
               }`}
             >

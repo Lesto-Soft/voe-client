@@ -199,13 +199,13 @@ export function useUserManagement(): UseUserManagementReturn {
       manager: filterManager,
     };
     const previousEffectiveFilters = prevFiltersRef.current ?? {
-      name: initialStateFromUrl.name,
-      username: initialStateFromUrl.username,
-      position: initialStateFromUrl.position,
-      email: initialStateFromUrl.email,
-      roleIds: initialStateFromUrl.roleIds,
-      financial: initialStateFromUrl.financial,
-      manager: initialStateFromUrl.manager, // <-- ADDED
+      name: initialStateFromUrl.name || "",
+      username: initialStateFromUrl.username || "",
+      position: initialStateFromUrl.position || "",
+      email: initialStateFromUrl.email || "",
+      roleIds: initialStateFromUrl.roleIds || [],
+      financial: initialStateFromUrl.financial || false,
+      manager: initialStateFromUrl.manager || false,
     };
 
     const stringifyFilters = (filters: UserFiltersState) =>

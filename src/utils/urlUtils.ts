@@ -9,7 +9,7 @@ import { UrlParamsInput, StateForUrl } from "../types/userManagementTypes"; // A
 export function getUrlParams(params: URLSearchParams): UrlParamsInput {
   const page = Number(params.get("page")) || 1;
   const perPageParam = Number(params.get("perPage"));
-  const perPage = [10, 25, 50].includes(perPageParam) ? perPageParam : 10;
+  const perPage = [10, 20, 50].includes(perPageParam) ? perPageParam : 10;
 
   const name = params.get("name") || undefined;
   const username = params.get("username") || undefined;

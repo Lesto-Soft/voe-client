@@ -67,7 +67,7 @@ export function useCategoryManagement(): UseCategoryManagementReturn {
     const params = new URLSearchParams(location.search);
     return {
       page: parseInt(params.get("page") || "1", 10),
-      itemsPerPage: parseInt(params.get("itemsPerPage") || "10", 10),
+      itemsPerPage: parseInt(params.get("perPage") || params.get("itemsPerPage") || "10", 10),
       name: params.get("name") || "",
       expertIds: parseStringArrayParam(params.get("experts")),
       managerIds: parseStringArrayParam(params.get("managers")),
@@ -106,7 +106,7 @@ export function useCategoryManagement(): UseCategoryManagementReturn {
   useEffect(() => {
     const params = new URLSearchParams();
     params.set("page", String(currentPage));
-    params.set("itemsPerPage", String(itemsPerPage));
+    params.set("perPage", String(itemsPerPage));
 
     if (filterName) params.set("name", filterName);
     else params.delete("name"); // Explicitly remove if empty

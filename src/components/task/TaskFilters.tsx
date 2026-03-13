@@ -171,8 +171,8 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
               onClick={() => onFilterModeChange(mode.key)}
               className={`flex items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 min-w-42 ${
                 filterMode === mode.key
-                  ? "border border-blue-600 text-blue-600 shadow"
-                  : "border border-gray-300 shadow-sm bg-gray-100 text-gray-700 hover:bg-blue-50 hover:text-blue-600 hover:cursor-pointer"
+                  ? "border border-btnRedHover text-btnRedHover shadow"
+                  : "border border-gray-300 shadow-sm bg-gray-100 text-gray-700 hover:bg-red-100 hover:text-btnRedHover hover:cursor-pointer"
               }`}
             >
               {mode.icon}

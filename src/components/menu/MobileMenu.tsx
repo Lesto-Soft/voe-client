@@ -9,6 +9,7 @@ import {
   StarIcon,
   UserIcon,
   ArrowRightCircleIcon,
+  Cog6ToothIcon,
 } from "@heroicons/react/24/solid";
 import { useTranslation } from "react-i18next";
 import { NavLinkProps } from "./NavBar";
@@ -62,8 +63,8 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
   const { t } = useTranslation("menu");
 
   const isAdmin = me.role._id === ROLES.ADMIN;
-  const isManagerExpert =
-    me.role._id === ROLES.EXPERT && me.managed_categories.length > 0;
+  const isExpert = me.role._id === ROLES.EXPERT;
+  const isManagerExpert = isExpert && me.managed_categories.length > 0;
   return (
     <div
       className={`
@@ -122,10 +123,18 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
         />
         <MobileNavLink
           to={`/user/${me.username}`}
-          icon={<UserIcon className="h-6 w-6" />} // Add icon if desired
+          icon={<UserIcon className="h-6 w-6" />}
           label={t("profile")}
           onClick={onLinkClick}
         />
+        {(isAdmin || isExpert) && (
+          <MobileNavLink
+            to="/settings"
+            icon={<Cog6ToothIcon className="h-6 w-6" />}
+            label={t("settings", "Настройки")}
+            onClick={onLinkClick}
+          />
+        )}
         <button
           onClick={() => {
             handleSignOut();

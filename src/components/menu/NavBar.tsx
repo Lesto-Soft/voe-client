@@ -16,6 +16,7 @@ import {
   ExclamationTriangleIcon,
   StarIcon,
   WrenchScrewdriverIcon,
+  Cog6ToothIcon,
 } from "@heroicons/react/24/solid";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { endpoint } from "../../db/config";
@@ -132,6 +133,7 @@ const NavBar: React.FC<{ me: IMe }> = ({ me }) => {
     "/category-management": t("categories_desc"),
     "/rating-management": t("ratings_desc"),
     "/analyses": t("analyses_desc"),
+    "/settings": t("settings_desc", "Настройки за известия"),
   };
 
   let currentPage: string;
@@ -393,6 +395,18 @@ const NavBar: React.FC<{ me: IMe }> = ({ me }) => {
                         theme="red"
                       />
                     </DropdownMenu.Item>
+                    {(isAdmin || isExpert) && (
+                      <DropdownMenu.Item asChild className="focus:outline-none">
+                        <NavLink
+                          to="/settings"
+                          dropdown={true}
+                          label={t("settings", "Настройки")}
+                          icon={<Cog6ToothIcon className="h-6 w-6" />}
+                          onClick={() => setIsUserDropdownOpen(false)}
+                          theme="red"
+                        />
+                      </DropdownMenu.Item>
+                    )}
                     <DropdownMenu.Item asChild className="focus:outline-none">
                       <button
                         onClick={handleSignOut}

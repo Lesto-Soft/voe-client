@@ -9,7 +9,7 @@ import Pagination from "../components/tables/Pagination";
 import { ROLES } from "../utils/GLOBAL_PARAMETERS";
 import useDocumentTitle from "../hooks/useDocumentTitle";
 
-const DEFAULT_ITEMS_PER_PAGE = 12;
+const DEFAULT_ITEMS_PER_PAGE = 10;
 const TASK_VIEW_PREFS_KEY = "taskDashboard_viewPrefs";
 
 const VALID_FILTER_MODES: TaskFilterMode[] = [

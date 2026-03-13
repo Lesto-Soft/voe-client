@@ -109,7 +109,12 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const VALID_PER_PAGE = [10, 20, 50];
+  const [itemsPerPage, setItemsPerPage] = useState(() => {
+    if (initialFiltersOverride) return 10;
+    const param = Number(new URLSearchParams(location.search).get("perPage"));
+    return VALID_PER_PAGE.includes(param) ? param : 10;
+  });
 
   // Determine initial filters based on prop or URL
   const initialFilters = useMemo(() => {
@@ -159,10 +164,13 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
     setDateRange({
       startDate: filters.startDate || null,
       endDate: filters.endDate || null,
-    }); // Also sync the current page from the URL
-    setCurrentPage(
-      Number(new URLSearchParams(location.search).get("page")) || 1
-    );
+    }); // Also sync the current page and perPage from the URL
+    const searchParams = new URLSearchParams(location.search);
+    setCurrentPage(Number(searchParams.get("page")) || 1);
+    const perPageParam = Number(searchParams.get("perPage"));
+    if (VALID_PER_PAGE.includes(perPageParam)) {
+      setItemsPerPage(perPageParam);
+    }
   }, [initialFilters, location.search]);
 
   const debouncedCaseNumber = useDebounce(caseNumber, 500);
@@ -384,6 +392,12 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
           onItemsPerPageChange={(newSize) => {
             setItemsPerPage(newSize);
             setCurrentPage(1);
+            if (!initialFiltersOverride) {
+              const params = new URLSearchParams(location.search);
+              params.set("perPage", String(newSize));
+              params.set("page", "1");
+              navigate(`${location.pathname}?${params.toString()}`, { replace: true });
+            }
           }}
           onPageChange={handlePageChange}
         />

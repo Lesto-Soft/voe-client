@@ -217,8 +217,8 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
 
     if (filtersChanged) {
       const params = new URLSearchParams(location.search);
-      params.set("perPage", String(itemsPerPage));
       setCurrentPage(1);
+      params.set("perPage", String(itemsPerPage));
       params.set("page", "1");
       setFiltersToParams(params, filtersForUrl);
       navigate(`${location.pathname}?${params.toString()}`, { replace: true });

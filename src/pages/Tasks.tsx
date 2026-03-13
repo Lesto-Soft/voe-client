@@ -154,6 +154,8 @@ const TasksPage: React.FC = () => {
     (overrides: Record<string, string | undefined>) => {
       const params = new URLSearchParams();
       const values: Record<string, string | undefined> = {
+        perPage: String(itemsPerPage),
+        page: String(currentPage),
         tab: filterMode,
         status: statusFilter.length > 0 ? statusFilter.join(",") : undefined,
         priority: priorityFilter.length > 0 ? priorityFilter.join(",") : undefined,
@@ -167,8 +169,6 @@ const TasksPage: React.FC = () => {
         startDate: startDate ? moment(startDate).format("DD-MM-YYYY") : undefined,
         endDate: endDate ? moment(endDate).format("DD-MM-YYYY") : undefined,
         view: viewMode,
-        page: String(currentPage),
-        perPage: String(itemsPerPage),
         ...overrides,
       };
       for (const [key, val] of Object.entries(values)) {

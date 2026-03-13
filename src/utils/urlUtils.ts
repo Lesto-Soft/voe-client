@@ -48,8 +48,8 @@ export function setUrlParams(
   params: URLSearchParams,
   state: StateForUrl // StateForUrl now has financial_approver?: string and is_manager?: string
 ): void {
-  params.set("page", String(state.currentPage));
   params.set("perPage", String(state.itemsPerPage));
+  params.set("page", String(state.currentPage));
 
   state.filterName
     ? params.set("name", state.filterName)

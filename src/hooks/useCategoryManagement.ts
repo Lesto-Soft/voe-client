@@ -105,8 +105,8 @@ export function useCategoryManagement(): UseCategoryManagementReturn {
   // Effect to update URL from state changes (State -> URL)
   useEffect(() => {
     const params = new URLSearchParams();
-    params.set("page", String(currentPage));
     params.set("perPage", String(itemsPerPage));
+    params.set("page", String(currentPage));
 
     if (filterName) params.set("name", filterName);
     else params.delete("name"); // Explicitly remove if empty

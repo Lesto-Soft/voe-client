@@ -321,9 +321,13 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
                 <DatePicker
                   selected={dueDate}
                   onChange={(date) => setDueDate(date)}
-                  dateFormat="dd/MM/yyyy"
+                  dateFormat="dd/MM/yyyy HH:mm"
+                  showTimeSelect
+                  timeFormat="HH:mm"
+                  timeIntervals={15}
+                  timeCaption="Час"
                   locale="bg"
-                  placeholderText="Изберете дата"
+                  placeholderText="Изберете дата и час"
                   isClearable
                   showYearDropdown
                   scrollableYearDropdown

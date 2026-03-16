@@ -6,7 +6,7 @@ import { GET_LEAN_USERS } from "../graphql/query/user";
 import { useCurrentUser } from "../context/UserContext";
 import { useNotificationSubscription } from "../graphql/hooks/notificationHook";
 import { ITask } from "../db/interfaces";
-import { ROLES } from "../utils/GLOBAL_PARAMETERS";
+import { ROLES, EXAMPLE_TASK_NUMBER } from "../utils/GLOBAL_PARAMETERS";
 import { useAuthorization } from "../hooks/useAuthorization";
 import PageStatusDisplay from "../components/global/PageStatusDisplay";
 import ForbiddenPage from "./ErrorPages/ForbiddenPage";
@@ -150,7 +150,7 @@ const TaskDetail: React.FC = () => {
 
   const isAdmin = currentUser.role?._id === ROLES.ADMIN;
   const isCreator = currentUser._id === taskData.creator._id;
-  const isExampleTask = taskData.taskNumber === 0;
+  const isExampleTask = taskData.taskNumber === EXAMPLE_TASK_NUMBER;
 
   // Only admins and task creators can edit/delete and change assignee
   // Example task (taskNumber 0) is only editable by admins

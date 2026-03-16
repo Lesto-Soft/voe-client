@@ -26,7 +26,7 @@ const TaskListSkeleton: React.FC<{ viewMode: "grid" | "table" }> = ({ viewMode }
       <div className="bg-white shadow-md rounded-lg overflow-hidden border border-gray-200">
         <div className="animate-pulse">
           <div className="h-13 bg-gray-500 rounded-t-lg" />
-          {[...Array(5)].map((_, i) => (
+          {[...Array(10)].map((_, i) => (
             <div key={i} className="h-16 border-t border-gray-200 flex items-center px-3 gap-3">
               <div className="h-4 bg-gray-200 rounded" style={{ width: "5%" }} />
               <div className="h-4 bg-gray-200 rounded" style={{ width: "7%" }} />
@@ -47,7 +47,7 @@ const TaskListSkeleton: React.FC<{ viewMode: "grid" | "table" }> = ({ viewMode }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-      {[...Array(8)].map((_, i) => (
+      {[...Array(10)].map((_, i) => (
         <div key={i} className="bg-white p-4 rounded-lg shadow-md border-t-8 border-gray-200 h-52 animate-pulse flex flex-col">
           {/* 1. Title + Status */}
           <div className="flex justify-between items-start">

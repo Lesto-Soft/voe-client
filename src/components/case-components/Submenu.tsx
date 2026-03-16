@@ -15,7 +15,7 @@ import Comment from "./comment/Comment";
 import Answer from "./answer/Answer";
 import AddComment from "./comment/AddComment";
 import AddAnswer from "./answer/AddAnswer";
-import { USER_RIGHTS /*, CASE_STATUS */ } from "../../utils/GLOBAL_PARAMETERS";
+import { USER_RIGHTS, EXAMPLE_CASE_NUMBER /*, CASE_STATUS */ } from "../../utils/GLOBAL_PARAMETERS";
 import { useGetAllTasks } from "../../graphql/hooks/task";
 import { useLocation } from "react-router";
 import useMediaQuery from "../../hooks/useMediaQuery";
@@ -356,7 +356,7 @@ const Submenu: React.FC<SubmenuProps> = ({
   const isCreatorAndNothingElse =
     userRights.length === 1 && userRights.includes("creator");
 
-  const isExampleCase = caseData.case_number === 0;
+  const isExampleCase = caseData.case_number === EXAMPLE_CASE_NUMBER;
   const isAdmin = userRights.includes(USER_RIGHTS.ADMIN);
 
   const canAddAnswer =

@@ -18,7 +18,7 @@ import EditAnswerButton from "../../global/EditAnswerButton";
 import { useDeleteAnswer } from "../../../graphql/hooks/answer";
 import DeleteModal from "../../modals/DeleteModal";
 import { renderContentSafely } from "../../../utils/contentRenderer";
-import { ROLES } from "../../../utils/GLOBAL_PARAMETERS";
+import { ROLES, EXAMPLE_CASE_NUMBER } from "../../../utils/GLOBAL_PARAMETERS";
 import UserAvatar from "../../cards/UserAvatar";
 import {
   ChevronDownIcon,
@@ -120,7 +120,7 @@ const Answer: React.FC<{
   const canInteractWithGeneralApproval = isCategoryManagerForCase || isAdmin;
   const { deleteAnswer } = useDeleteAnswer(caseNumber);
 
-  const isExampleCase = caseNumber === 0;
+  const isExampleCase = caseNumber === EXAMPLE_CASE_NUMBER;
   const canEditOrDelete =
     !isExampleCase &&
     (isCreator || isAdmin) &&
@@ -128,6 +128,7 @@ const Answer: React.FC<{
       status === "IN_PROGRESS" ||
       isAdmin ||
       isCategoryManagerForCase);
+
   const canApproveNow =
     !approved && status !== "CLOSED" && status !== "AWAITING_FINANCE";
   const canUnapproveNow = approved;
@@ -290,18 +291,19 @@ const Answer: React.FC<{
         }`}
       >
         {/* Left Side: Add Comment Button */}
-        {(!isExampleCase || isAdmin) && <button
-          className="cursor-pointer text-gray-800 bg-gray-100 hover:bg-gray-200 absolute left-2 top-1/2 -translate-y-1/2 w-42 px-2 py-1 rounded text-sm font-semibold transition-colors duration-200"
-          onClick={handleToggleCommentBox}
-        >
-          <div className="flex w-full items-center gap-2">
-            <ChatBubbleOvalLeftEllipsisIcon className="h-5 w-5 flex-shrink-0 text-gray-500" />
-            <div className="flex-1 text-center">
-              {isCommentBoxVisible ? t("cancelWriting") : t("addComment")}{" "}
-              {/* MODIFIED */}
+        {(!isExampleCase || isAdmin) && (
+          <button
+            className="cursor-pointer text-gray-800 bg-gray-100 hover:bg-gray-200 absolute left-2 top-1/2 -translate-y-1/2 w-42 px-2 py-1 rounded text-sm font-semibold transition-colors duration-200"
+            onClick={handleToggleCommentBox}
+          >
+            <div className="flex w-full items-center gap-2">
+              <ChatBubbleOvalLeftEllipsisIcon className="h-5 w-5 flex-shrink-0 text-gray-500" />
+              <div className="flex-1 text-center">
+                {isCommentBoxVisible ? t("cancelWriting") : t("addComment")}{" "}
+              </div>
             </div>
-          </div>
-        </button>}
+          </button>
+        )}
 
         {/* Center: Toggle Comments List */}
         {answer.comments && answer.comments.length > 0 && (

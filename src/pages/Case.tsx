@@ -10,7 +10,7 @@ import Submenu from "../components/case-components/Submenu";
 import { ICase, ICategory, IReadBy, IUser } from "../db/interfaces";
 import { useCurrentUser } from "../context/UserContext";
 import { determineUserRightsForCase } from "../utils/rightUtils";
-import { ROLES } from "../utils/GLOBAL_PARAMETERS";
+import { ROLES, EXAMPLE_CASE_NUMBER } from "../utils/GLOBAL_PARAMETERS";
 import { useCallback, useEffect, useRef } from "react";
 import { UnsavedChangesProvider } from "../context/UnsavedChangesContext";
 import { useNotificationSubscription } from "../graphql/hooks/notificationHook";
@@ -159,7 +159,7 @@ const Case = () => {
   const c = caseData as ICase;
   const userRights = determineUserRightsForCase(currentUser, caseData as ICase);
 
-  const isExampleCase = c.case_number === 0;
+  const isExampleCase = c.case_number === EXAMPLE_CASE_NUMBER;
   if (
     !isExampleCase &&
     (!userRights ||

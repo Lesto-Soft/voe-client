@@ -2,7 +2,7 @@ import React from "react";
 import { Link } from "react-router";
 import { ITask } from "../../../db/interfaces";
 import { useCurrentUser } from "../../../context/UserContext";
-import { ROLES } from "../../../utils/GLOBAL_PARAMETERS";
+import { ROLES, EXAMPLE_TASK_NUMBER } from "../../../utils/GLOBAL_PARAMETERS";
 
 interface TaskLinkProps {
   task: ITask;
@@ -16,7 +16,7 @@ const TaskLink: React.FC<TaskLinkProps> = ({ task }) => {
   }
 
   const isAdmin = currentUser.role?._id === ROLES.ADMIN;
-  const isExampleTask = task.taskNumber === 0;
+  const isExampleTask = task.taskNumber === EXAMPLE_TASK_NUMBER;
   const hasAccess =
     isExampleTask ||
     isAdmin ||

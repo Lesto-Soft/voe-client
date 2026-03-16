@@ -19,7 +19,7 @@ import ImagePreviewModal, {
 } from "../modals/imageModals/ImagePreviewModal";
 import { createFileUrl } from "../../utils/fileUtils";
 import ContentDialog from "../modals/caseModals/ContentDialog";
-import { CASE_STATUS, USER_RIGHTS } from "../../utils/GLOBAL_PARAMETERS";
+import { CASE_STATUS, USER_RIGHTS, EXAMPLE_CASE_NUMBER } from "../../utils/GLOBAL_PARAMETERS";
 import { useGetActiveCategories } from "../../graphql/hooks/category";
 import { renderContentSafely } from "../../utils/contentRenderer";
 import RateCaseModal from "../modals/caseModals/RateCaseModal";
@@ -189,7 +189,7 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
                     <EyeIcon className="h-5 w-5" />
                   </button>
                 )}
-                {(caseNumber === 0
+                {(caseNumber === EXAMPLE_CASE_NUMBER
                   ? rights.includes(USER_RIGHTS.ADMIN)
                   : rights.includes(USER_RIGHTS.CREATOR) ||
                     rights.includes(USER_RIGHTS.ADMIN) ||
@@ -312,7 +312,7 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
                   metricScores={metricScores}
                   calculatedRating={calculatedRating}
                   onOpenModal={() => setRatingModalOpen(true)}
-                  disabled={isCurrentUserCreator || caseNumber === 0}
+                  disabled={isCurrentUserCreator || caseNumber === EXAMPLE_CASE_NUMBER}
                   hasUserRated={hasUserRated}
                 />
               </div>

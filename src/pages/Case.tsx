@@ -64,12 +64,12 @@ const Case = () => {
   const { number: numberParam } = useParams<{ number: string }>();
   const currentUser = useCurrentUser();
   const numericCaseNumber = numberParam ? parseInt(numberParam, 10) : NaN;
-  useDocumentTitle(numericCaseNumber > 0 ? `Сигнал #${numericCaseNumber}` : undefined);
+  useDocumentTitle(numericCaseNumber >= 0 ? `Сигнал #${numericCaseNumber}` : undefined);
 
   if (
     !numberParam ||
     isNaN(parseInt(numberParam, 10)) ||
-    parseInt(numberParam, 10) <= 0
+    parseInt(numberParam, 10) < 0
   ) {
     return (
       <PageStatusDisplay
@@ -159,9 +159,11 @@ const Case = () => {
   const c = caseData as ICase;
   const userRights = determineUserRightsForCase(currentUser, caseData as ICase);
 
+  const isExampleCase = c.case_number === 0;
   if (
-    !userRights ||
-    (userRights.length === 0 && currentUser.role?._id !== ROLES.ADMIN)
+    !isExampleCase &&
+    (!userRights ||
+      (userRights.length === 0 && currentUser.role?._id !== ROLES.ADMIN))
   ) {
     return (
       <div>You do not have the necessary permissions to view this case.</div>
@@ -171,7 +173,12 @@ const Case = () => {
   const expert_managers = getUniqueMentionableUsers(c.categories, c.creator);
   return (
     <UnsavedChangesProvider>
-      <div className="flex flex-col lg:flex-row bg-gray-50 lg:h-[calc(100vh-6rem)] w-full">
+      {isExampleCase && (
+        <div className="bg-blue-50 border-b border-blue-200 px-4 py-3 text-center text-sm text-blue-800">
+          Това е примерен сигнал, създаден за демонстрационни цели. Съдържанието му не е реално.
+        </div>
+      )}
+      <div className={`flex flex-col lg:flex-row bg-gray-50 w-full ${isExampleCase ? "lg:h-[calc(100vh-6rem-44px)]" : "lg:h-[calc(100vh-6rem)]"}`}>
         <div
           className={
             "max-w-full lg:w-96 lg:shrink-0 lg:sticky lg:top-[6rem] order-1 lg:order-none lg:h-full lg:mb-0 z-2"

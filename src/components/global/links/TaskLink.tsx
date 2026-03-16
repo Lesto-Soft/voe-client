@@ -16,7 +16,9 @@ const TaskLink: React.FC<TaskLinkProps> = ({ task }) => {
   }
 
   const isAdmin = currentUser.role?._id === ROLES.ADMIN;
+  const isExampleTask = task.taskNumber === 0;
   const hasAccess =
+    isExampleTask ||
     isAdmin ||
     currentUser.accessibleTasks?.some((t) => t._id === task._id);
 

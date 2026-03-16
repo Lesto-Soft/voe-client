@@ -158,6 +158,7 @@ interface TaskActivitiesProps {
   currentUser: IMe;
   refetch: () => void;
   mentions?: { _id: string; name: string; username: string }[];
+  readOnly?: boolean;
 }
 
 const TaskActivities: React.FC<TaskActivitiesProps> = ({
@@ -166,6 +167,7 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
   currentUser,
   refetch,
   mentions = [],
+  readOnly = false,
 }) => {
   const [newContent, setNewContent] = useState("");
   const [activityType, setActivityType] = useState<TaskActivityType>(
@@ -272,6 +274,7 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
   };
 
   const canModifyActivity = (activity: ITaskActivity) => {
+    if (readOnly) return false;
     // Allow modification if user is the creator OR is an admin
     return (
       activity.createdBy._id === currentUser._id ||
@@ -321,7 +324,7 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
   return (
     <div className="flex flex-col h-full">
       {/* Add activity section - FIXED AT TOP */}
-      <div className="flex-shrink-0 mb-4 border border-0 border-b-3 border-gray-300 p-3 bg-gray-50 shadow-md">
+      {!readOnly && <div className="flex-shrink-0 mb-4 border border-0 border-b-3 border-gray-300 p-3 bg-gray-50 shadow-md">
         {/* Title and activity type selector on same line */}
         <div className="flex items-center gap-3 mb-2">
           <h3 className="text-sm font-semibold text-gray-700 whitespace-nowrap">
@@ -370,7 +373,7 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
             autoFocus
           />
         </div>
-      </div>
+      </div>}
 
       {/* Activities list - SCROLLABLE */}
       <div className="flex-grow overflow-y-auto space-y-2 custom-scrollbar-xs px-5">

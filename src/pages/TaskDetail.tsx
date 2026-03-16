@@ -51,17 +51,17 @@ const TaskDetail: React.FC = () => {
     "activities" | "analysis"
   >("activities");
 
-  // Parse task number (0 if invalid - hook will skip)
+  // Parse task number (-1 if invalid - hook will skip)
   const numericTaskNumber =
-    taskNumberParam && !isNaN(parseInt(taskNumberParam, 10))
+    taskNumberParam != null && taskNumberParam !== "" && !isNaN(parseInt(taskNumberParam, 10))
       ? parseInt(taskNumberParam, 10)
-      : 0;
+      : -1;
 
   // All hooks must be called before any early returns
   const { task, loading, error, refetch } =
     useGetTaskByNumber(numericTaskNumber);
 
-  useDocumentTitle(task ? `Задача #${task.taskNumber}` : numericTaskNumber > 0 ? `Задача #${numericTaskNumber}` : undefined);
+  useDocumentTitle(task ? `Задача #${task.taskNumber}` : numericTaskNumber >= 0 ? `Задача #${numericTaskNumber}` : undefined);
   const { deleteTask, loading: deleteLoading } = useDeleteTask({
     onCompleted: () => navigate("/tasks"),
   });
@@ -108,7 +108,7 @@ const TaskDetail: React.FC = () => {
   });
 
   // Now we can have early returns
-  if (numericTaskNumber <= 0) {
+  if (numericTaskNumber < 0) {
     return (
       <PageStatusDisplay
         notFound
@@ -150,16 +150,24 @@ const TaskDetail: React.FC = () => {
 
   const isAdmin = currentUser.role?._id === ROLES.ADMIN;
   const isCreator = currentUser._id === taskData.creator._id;
+  const isExampleTask = taskData.taskNumber === 0;
 
   // Only admins and task creators can edit/delete and change assignee
-  const canEdit = isAdmin || isCreator;
+  // Example task (taskNumber 0) is only editable by admins
+  const canEdit = isExampleTask ? isAdmin : isAdmin || isCreator;
 
   // Only admins and task creators can manually change status
   // Assignee changes status indirectly through activities (auto-transition)
-  const canChangeStatus = isAdmin || isCreator;
+  const canChangeStatus = isExampleTask ? isAdmin : isAdmin || isCreator;
 
   return (
-    <div className="flex flex-col lg:flex-row bg-gray-50 lg:h-[calc(100vh-6rem)] w-full">
+    <div className="flex flex-col bg-gray-50 lg:h-[calc(100vh-6rem)] w-full">
+      {isExampleTask && (
+        <div className="bg-blue-50 border-b border-blue-200 px-4 py-3 text-center text-sm text-blue-800 flex-shrink-0">
+          Това е примерна задача, създадена за демонстрационни цели. Съдържанието й не е реално.
+        </div>
+      )}
+      <div className="flex flex-col lg:flex-row flex-1 min-h-0">
       {/* Left Panel - Task Info Sidebar (like CaseInfo) */}
       <div className="max-w-full lg:w-96 lg:shrink-0 order-1 lg:order-none lg:h-full">
         <div className="w-full h-full bg-white shadow-md overflow-y-auto custom-scrollbar-xs">
@@ -386,6 +394,7 @@ const TaskDetail: React.FC = () => {
                   currentUser={currentUser}
                   refetch={refetch}
                   mentions={mentions}
+                  readOnly={isExampleTask && !isAdmin}
                 />
               ) : (
                 <AnalysisTabsSection
@@ -442,6 +451,7 @@ const TaskDetail: React.FC = () => {
         creatorId={taskData.creator._id}
         onAccessChanged={refetch}
       />
+      </div>
     </div>
   );
 };

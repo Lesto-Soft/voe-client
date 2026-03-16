@@ -356,10 +356,16 @@ const Submenu: React.FC<SubmenuProps> = ({
   const isCreatorAndNothingElse =
     userRights.length === 1 && userRights.includes("creator");
 
+  const isExampleCase = caseData.case_number === 0;
+  const isAdmin = userRights.includes(USER_RIGHTS.ADMIN);
+
   const canAddAnswer =
-    userRights.includes(USER_RIGHTS.EXPERT) ||
-    userRights.includes(USER_RIGHTS.MANAGER) ||
-    userRights.includes(USER_RIGHTS.ADMIN);
+    !isExampleCase &&
+    (userRights.includes(USER_RIGHTS.EXPERT) ||
+      userRights.includes(USER_RIGHTS.MANAGER) ||
+      isAdmin);
+
+  const canAddComment = !isExampleCase || isAdmin;
 
   const submenu = [
     {
@@ -575,6 +581,7 @@ const Submenu: React.FC<SubmenuProps> = ({
           )}
           {view === "comments" && (
             <>
+              {canAddComment && (
               <div
                 ref={addCommentContainerRef}
                 className="mb-2 transition-all duration-300"
@@ -617,6 +624,7 @@ const Submenu: React.FC<SubmenuProps> = ({
                   </div>
                 )}
               </div>
+              )}
               {caseData.comments && caseData.comments.length > 0 ? (
                 <div className="mx-5 space-y-2">
                   {[...caseData.comments]

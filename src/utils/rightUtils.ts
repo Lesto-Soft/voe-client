@@ -147,6 +147,9 @@ export const canViewCategory = (
 export const canViewCase = (currentUser: IMe, caseData: ICase): boolean => {
   if (!currentUser || !caseData) return false;
 
+  // Example case (case_number 0) is viewable by everyone
+  if (caseData.case_number === 0) return true;
+
   // Admins can always view any case regardless of populated fields
   if (currentUser.role?._id === ROLES.ADMIN) return true;
 
@@ -170,6 +173,9 @@ export const canViewCase = (currentUser: IMe, caseData: ICase): boolean => {
 
 export const canViewTask = (currentUser: IMe, task: ITask): boolean => {
   if (!currentUser || !task) return false;
+
+  // Example task (taskNumber 0) is viewable by everyone
+  if (task.taskNumber === 0) return true;
 
   if (currentUser.role?._id === ROLES.ADMIN) return true;
 

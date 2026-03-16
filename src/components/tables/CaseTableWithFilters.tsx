@@ -93,7 +93,7 @@ function setFiltersToParams(params: URLSearchParams, filters: any) {
       }
     } else if (value instanceof Date) {
       params.set(key, moment(value).format("DD-MM-YYYY"));
-    } else if (value) {
+    } else if (value != null && value !== "" && value !== false) {
       params.set(key, String(value));
     } else {
       params.delete(key);
@@ -283,7 +283,7 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
       currentPage: currentPage - 1,
     };
     if (debouncedContent) input.query = debouncedContent;
-    if (debouncedCaseNumber) input.case_number = parseInt(debouncedCaseNumber);
+    if (debouncedCaseNumber !== "") input.case_number = parseInt(debouncedCaseNumber);
     if (priority) input.priority = priority;
     if (type) input.type = type;
     if (creatorId) input.creatorId = creatorId;

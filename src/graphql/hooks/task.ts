@@ -215,7 +215,7 @@ export const useGetTaskById = (taskId?: string) => {
 export const useGetTaskByNumber = (taskNumber?: number) => {
   const { loading, error, data, refetch } = useQuery(GET_TASK_BY_NUMBER, {
     variables: { taskNumber },
-    skip: !taskNumber || taskNumber <= 0,
+    skip: taskNumber == null || taskNumber < 0,
   });
 
   const task = data?.getTaskByNumber || null;

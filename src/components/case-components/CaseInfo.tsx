@@ -189,9 +189,11 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
                     <EyeIcon className="h-5 w-5" />
                   </button>
                 )}
-                {(rights.includes(USER_RIGHTS.CREATOR) ||
-                  rights.includes(USER_RIGHTS.ADMIN) ||
-                  rights.includes(USER_RIGHTS.MANAGER)) &&
+                {(caseNumber === 0
+                  ? rights.includes(USER_RIGHTS.ADMIN)
+                  : rights.includes(USER_RIGHTS.CREATOR) ||
+                    rights.includes(USER_RIGHTS.ADMIN) ||
+                    rights.includes(USER_RIGHTS.MANAGER)) &&
                   status !== CASE_STATUS.AWAITING_FINANCE &&
                   status !== CASE_STATUS.CLOSED && (
                     <CaseDialog
@@ -310,7 +312,7 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
                   metricScores={metricScores}
                   calculatedRating={calculatedRating}
                   onOpenModal={() => setRatingModalOpen(true)}
-                  disabled={isCurrentUserCreator}
+                  disabled={isCurrentUserCreator || caseNumber === 0}
                   hasUserRated={hasUserRated}
                 />
               </div>

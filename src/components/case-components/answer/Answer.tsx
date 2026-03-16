@@ -120,19 +120,22 @@ const Answer: React.FC<{
   const canInteractWithGeneralApproval = isCategoryManagerForCase || isAdmin;
   const { deleteAnswer } = useDeleteAnswer(caseNumber);
 
+  const isExampleCase = caseNumber === 0;
   const canEditOrDelete =
+    !isExampleCase &&
     (isCreator || isAdmin) &&
     (status === "OPEN" ||
       status === "IN_PROGRESS" ||
       isAdmin ||
       isCategoryManagerForCase);
-
   const canApproveNow =
     !approved && status !== "CLOSED" && status !== "AWAITING_FINANCE";
   const canUnapproveNow = approved;
   const showApproveBtn =
+    !isExampleCase &&
     canInteractWithGeneralApproval && (canApproveNow || canUnapproveNow);
   const showFinanceApproveBtn =
+    !isExampleCase &&
     me?.financial_approver === true &&
     answer.needs_finance === true &&
     approved === true;
@@ -287,7 +290,7 @@ const Answer: React.FC<{
         }`}
       >
         {/* Left Side: Add Comment Button */}
-        <button
+        {(!isExampleCase || isAdmin) && <button
           className="cursor-pointer text-gray-800 bg-gray-100 hover:bg-gray-200 absolute left-2 top-1/2 -translate-y-1/2 w-42 px-2 py-1 rounded text-sm font-semibold transition-colors duration-200"
           onClick={handleToggleCommentBox}
         >
@@ -298,7 +301,7 @@ const Answer: React.FC<{
               {/* MODIFIED */}
             </div>
           </div>
-        </button>
+        </button>}
 
         {/* Center: Toggle Comments List */}
         {answer.comments && answer.comments.length > 0 && (

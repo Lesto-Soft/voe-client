@@ -422,7 +422,7 @@ const Answer: React.FC<{
               });
               const total = sorted.length;
               return sorted.map((comment: IComment, commentIndex: number) => {
-                const commentNum = commentSortAsc ? total - commentIndex : commentIndex + 1;
+                const commentNum = commentSortAsc ? commentIndex + 1 : total - commentIndex;
                 return (
                   <div
                     key={comment._id}

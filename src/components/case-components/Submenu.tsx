@@ -547,7 +547,7 @@ const Submenu: React.FC<SubmenuProps> = ({
                         attachments: [],
                         isVisible: false,
                       };
-                      const displayNumber = answerSortAsc ? total - index : index + 1;
+                      const displayNumber = answerSortAsc ? index + 1 : total - index;
 
                       return (
                         <Answer
@@ -672,7 +672,7 @@ const Submenu: React.FC<SubmenuProps> = ({
                       <Comment
                         key={comment._id}
                         comment={comment}
-                        displayNumber={commentSortAsc ? total - index : index + 1}
+                        displayNumber={commentSortAsc ? index + 1 : total - index}
                         me={me}
                         caseNumber={caseData.case_number}
                         mentions={mentions}

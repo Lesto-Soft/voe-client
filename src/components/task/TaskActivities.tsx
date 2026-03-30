@@ -28,6 +28,8 @@ import {
   PencilIcon,
   TrashIcon,
   XMarkIcon,
+  BarsArrowDownIcon,
+  BarsArrowUpIcon,
 } from "@heroicons/react/24/solid";
 
 // Activity type configuration with icons and colors
@@ -169,6 +171,7 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
   mentions = [],
   readOnly = false,
 }) => {
+  const [activitySortAsc, setActivitySortAsc] = useState(false);
   const [newContent, setNewContent] = useState("");
   const [activityType, setActivityType] = useState<TaskActivityType>(
     TaskActivityType.Comment,
@@ -316,10 +319,12 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
     };
   }, [location.hash, activities]);
 
-  // Sort activities by creation date (newest first)
-  const sortedActivities = [...activities].sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-  );
+  // Sort activities by creation date
+  const sortedActivities = [...activities].sort((a, b) => {
+    const dateA = new Date(a.createdAt).getTime();
+    const dateB = new Date(b.createdAt).getTime();
+    return activitySortAsc ? dateA - dateB : dateB - dateA;
+  });
 
   return (
     <div className="flex flex-col h-full">
@@ -384,7 +389,24 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
             Няма активност все още. Бъдете първият!
           </p>
         ) : (
-          sortedActivities.map((activity) => {
+          <>
+          {sortedActivities.length > 1 && (
+            <div className="flex justify-end mb-1">
+              <button
+                onClick={() => setActivitySortAsc((prev) => !prev)}
+                className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 cursor-pointer"
+                title={activitySortAsc ? "Най-нови първо" : "Най-стари първо"}
+              >
+                {activitySortAsc ? (
+                  <BarsArrowUpIcon className="h-4 w-4" />
+                ) : (
+                  <BarsArrowDownIcon className="h-4 w-4" />
+                )}
+              </button>
+            </div>
+          )}
+          {sortedActivities.map((activity, index) => {
+            const displayNumber = activitySortAsc ? index + 1 : sortedActivities.length - index;
             const config = activityTypeConfig[activity.type];
             const Icon = config.icon;
             const isSystemActivity = systemActivityTypes.includes(
@@ -401,6 +423,9 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
                   id={`activity-${activity._id}`}
                   className={`flex items-center gap-2 py-1.5 px-3 text-xs rounded-md border-l-2 ${config.leftBorderColor} ${config.bgColor}`}
                 >
+                  <span className="text-xs font-bold text-gray-400 flex-shrink-0">
+                    #{displayNumber}
+                  </span>
                   <Icon
                     className={`h-3.5 w-3.5 flex-shrink-0 ${config.textColor}`}
                   />
@@ -422,6 +447,9 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
                 className={`border-l-4 ${config.leftBorderColor} rounded-lg py-2 px-3 bg-white shadow-sm border border-gray-200`}
               >
                 <div className="flex items-start gap-2">
+                  <span className="text-xs font-bold text-gray-400 flex-shrink-0 mt-0.5">
+                    #{displayNumber}
+                  </span>
                   <div className={`mt-0.5 ${config.textColor}`}>
                     <Icon className="h-4 w-4" />
                   </div>
@@ -524,7 +552,8 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
                 </div>
               </div>
             );
-          })
+          })}
+          </>
         )}
       </div>
 

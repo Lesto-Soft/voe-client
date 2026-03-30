@@ -89,6 +89,14 @@ const Answer: React.FC<{
 
   const [isCommentScrolled, setIsCommentScrolled] = useState(false);
   const commentsContainerRef = useRef<HTMLDivElement>(null);
+  const answerContentRef = useRef<HTMLDivElement>(null);
+  const [isContentOverflowing, setIsContentOverflowing] = useState(false);
+  const [isContentExpanded, setIsContentExpanded] = useState(false);
+
+  useEffect(() => {
+    const el = answerContentRef.current;
+    if (el) setIsContentOverflowing(el.scrollHeight > el.clientHeight);
+  }, [answer.content]);
 
   useEffect(() => {
     const container = commentsContainerRef.current;
@@ -228,7 +236,10 @@ const Answer: React.FC<{
   const answerContentAndAttachments = (
     <>
       <div
-        className={`text-gray-800 whitespace-pre-line break-words overflow-y-auto rounded p-3 mt-4 max-h-52 ${
+        ref={answerContentRef}
+        className={`text-gray-800 whitespace-pre-line break-words rounded p-3 mt-4 ${
+          isContentExpanded ? "" : "max-h-52 overflow-y-auto"
+        } ${
           approved
             ? answer.needs_finance
               ? answer.financial_approved
@@ -240,6 +251,18 @@ const Answer: React.FC<{
       >
         {renderContentSafely(answer.content as string | "")}
       </div>
+      {(isContentOverflowing || isContentExpanded) && (
+        <button
+          onClick={() => setIsContentExpanded((prev) => !prev)}
+          className="flex items-center gap-1 text-xs text-blue-500 hover:text-blue-700 mt-1 cursor-pointer"
+        >
+          {isContentExpanded ? (
+            <>Скрий <ChevronUpIcon className="h-3 w-3" /></>
+          ) : (
+            <>Покажи цялото съдържание <ChevronDownIcon className="h-3 w-3" /></>
+          )}
+        </button>
+      )}
 
       {answer.attachments && answer.attachments.length > 0 && (
         <div className="flex flex-wrap gap-2 mt-4">

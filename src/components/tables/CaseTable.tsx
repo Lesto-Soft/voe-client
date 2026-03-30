@@ -16,7 +16,7 @@ import {
   getStatusStyle,
   getTypeBadgeStyle,
 } from "../../utils/style-helpers";
-import { getContentPreview } from "../../utils/contentRenderer";
+import { getContentPreview, stripHtmlTags } from "../../utils/contentRenderer";
 import ShowDate from "../global/ShowDate";
 import { useCurrentUser } from "../../context/UserContext";
 import { ROLES } from "../../utils/GLOBAL_PARAMETERS";
@@ -218,7 +218,7 @@ const CaseTable: React.FC<ICaseTableProps> = ({
       width: "max-w-[200px] sm:max-w-[250px] lg:max-w-[300px]",
       cellClassName: "text-sm break-words",
       render: (my_case) => (
-        <span>
+        <span title={stripHtmlTags(my_case.content)}>
           {getContentPreview(my_case.content, getContentTruncateLength())}
         </span>
       ),

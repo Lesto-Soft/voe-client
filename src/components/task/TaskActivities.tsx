@@ -333,7 +333,7 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
     <div className="flex flex-col h-full">
       {/* Add activity toggle + sort toggle row */}
       {!readOnly && (
-        <div className="flex-shrink-0 mb-2 px-5">
+        <div className="flex-shrink-0 mb-2 px-5 py-3">
           <div className="flex items-center gap-2">
             <button
               onClick={() => setIsAddActivityVisible((prev) => !prev)}
@@ -364,7 +364,7 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
             )}
           </div>
           {isAddActivityVisible && (
-            <div className="mt-4 border border-0 border-b-3 border-gray-300 p-3 bg-gray-50 shadow-md rounded-lg">
+            <div className="mt-4 border border-gray-300 p-3 bg-white shadow-md rounded-lg">
               {/* Title and activity type selector on same line */}
               <div className="flex items-center gap-3 mb-2">
                 <h3 className="text-sm font-semibold text-gray-700 whitespace-nowrap">
@@ -436,7 +436,7 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
       )}
 
       {/* Activities list - SCROLLABLE */}
-      <div className="flex-grow overflow-y-auto space-y-2 custom-scrollbar-xs px-5">
+      <div className="flex-grow overflow-y-auto space-y-2 custom-scrollbar-xs px-5 py-3">
         {sortedActivities.length === 0 ? (
           <p className="text-center text-gray-500 py-4">
             Няма активност все още. Бъдете първият!

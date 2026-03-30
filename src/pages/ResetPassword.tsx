@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router";
 import { useVerifyResetToken, useResetPassword } from "../graphql/hooks/user";
 import { CheckCircleIcon, XCircleIcon } from "@heroicons/react/24/solid";
+import PasswordInput from "../components/ui/PasswordInput";
 
 const ResetPassword = () => {
   // 1. Get the token from the URL and setup navigation
@@ -118,9 +119,8 @@ const ResetPassword = () => {
                 <label htmlFor="password-input" className="sr-only">
                   Нова парола
                 </label>
-                <input
+                <PasswordInput
                   id="password-input"
-                  type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Нова парола"
@@ -132,9 +132,8 @@ const ResetPassword = () => {
                 <label htmlFor="confirm-password-input" className="sr-only">
                   Потвърди парола
                 </label>
-                <input
+                <PasswordInput
                   id="confirm-password-input"
-                  type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Потвърди парола"

@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import { useTranslation } from "react-i18next";
 import { endpoint } from "../../db/config";
+import PasswordInput from "../ui/PasswordInput";
 
 interface LoginFormProps {
   onLoginSuccess: () => void;
@@ -85,8 +86,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
           />
         </div>
         <div>
-          <input
-            type="password"
+          <PasswordInput
             id="modal_password"
             placeholder={t("login.passwordPlaceholder", "Парола")}
             value={password}

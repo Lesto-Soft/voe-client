@@ -2,6 +2,7 @@
 
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import "./moment-setup";
 import "./i18n";
 import "./index.css";
 // import Router from "./router/MainRouter"; // <- Вече не импортираме Router директно

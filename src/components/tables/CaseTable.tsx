@@ -7,9 +7,6 @@ import {
   EnvelopeOpenIcon,
   PaperClipIcon,
 } from "@heroicons/react/24/solid";
-import moment from "moment";
-// @ts-ignore
-import "moment/dist/locale/bg";
 import { ICase } from "../../db/interfaces";
 import UserLink from "../global/links/UserLink";
 import CategoryLink from "../global/links/CategoryLink";
@@ -19,7 +16,8 @@ import {
   getStatusStyle,
   getTypeBadgeStyle,
 } from "../../utils/style-helpers";
-import { getContentPreview, stripHtmlTags } from "../../utils/contentRenderer";
+import { getContentPreview } from "../../utils/contentRenderer";
+import ShowDate from "../global/ShowDate";
 import { useCurrentUser } from "../../context/UserContext";
 import { ROLES } from "../../utils/GLOBAL_PARAMETERS";
 import {
@@ -161,7 +159,7 @@ const CaseTable: React.FC<ICaseTableProps> = ({
       render: (my_case) => {
         const priorityStyle = getPriorityStyle(my_case.priority);
         return (
-          <div className="flex items-center" title={my_case.priority}>
+          <div className="flex items-center">
             <FlagIcon
               className={`mr-1.5 h-4 w-4 flex-shrink-0 ${priorityStyle}`}
             />
@@ -220,7 +218,7 @@ const CaseTable: React.FC<ICaseTableProps> = ({
       width: "max-w-[200px] sm:max-w-[250px] lg:max-w-[300px]",
       cellClassName: "text-sm break-words",
       render: (my_case) => (
-        <span title={stripHtmlTags(my_case.content)}>
+        <span>
           {getContentPreview(my_case.content, getContentTruncateLength())}
         </span>
       ),
@@ -228,15 +226,10 @@ const CaseTable: React.FC<ICaseTableProps> = ({
     {
       key: "date",
       header: t("date"),
-      width: "w-32",
-      cellClassName: "whitespace-nowrap text-sm",
+      width: "w-52",
+      cellClassName: "text-sm overflow-hidden max-w-0",
       render: (my_case) => (
-        <div className="flex items-center" title={my_case.date}>
-          {`${moment
-            .utc(parseInt(my_case.date, 10))
-            .local()
-            .format("lll")}`}
-        </div>
+        <ShowDate date={my_case.date} isCase truncate />
       ),
     },
     {
@@ -247,7 +240,7 @@ const CaseTable: React.FC<ICaseTableProps> = ({
       render: (my_case) => {
         const statusStyle = getStatusStyle(my_case.status);
         return (
-          <div className="flex items-center" title={my_case.status}>
+          <div className="flex items-center">
             <div
               className={`mr-1.5 h-2.5 w-2.5 rounded-full flex-shrink-0 ${statusStyle.dotBgColor}`}
             ></div>

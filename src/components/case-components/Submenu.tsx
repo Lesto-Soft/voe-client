@@ -658,7 +658,7 @@ const Submenu: React.FC<SubmenuProps> = ({
 
           {view === "history" &&
             (caseData.history && caseData.history.length > 0 ? (
-              <div className="flex flex-col gap-4 mb-8 ml-4">
+              <div className="flex flex-col gap-4 mb-8 mx-4">
                 <CaseHistoryContent history={caseData.history} />
               </div>
             ) : (

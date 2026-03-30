@@ -7,6 +7,8 @@ import {
   MinusCircleIcon,
   ChevronDoubleUpIcon,
   ClipboardDocumentCheckIcon,
+  BarsArrowDownIcon,
+  BarsArrowUpIcon,
 } from "@heroicons/react/24/solid";
 import { IAnswer, ICase, IComment, IMe } from "../../db/interfaces";
 import CaseHistoryContent from "./CaseHistoryContent";
@@ -101,6 +103,8 @@ const Submenu: React.FC<SubmenuProps> = ({
   // state for editor content AND attachments
   const [answerContent, setAnswerContent] = useState("");
   const [answerAttachments, setAnswerAttachments] = useState<File[]>([]);
+  const [answerSortAsc, setAnswerSortAsc] = useState(false);
+  const [commentSortAsc, setCommentSortAsc] = useState(false);
   const [caseCommentContent, setCaseCommentContent] = useState("");
   const [caseCommentAttachments, setCaseCommentAttachments] = useState<File[]>(
     [],
@@ -514,26 +518,42 @@ const Submenu: React.FC<SubmenuProps> = ({
               {/* Renders the list of answers if there are any */}
               {visibleAnswers.length > 0 ? (
                 <>
-                  {visibleAnswers
-                    .sort((a, b) => {
+                  <div className="flex justify-end mx-5 mb-1">
+                    <button
+                      onClick={() => setAnswerSortAsc((prev) => !prev)}
+                      className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 cursor-pointer"
+                      title={answerSortAsc ? "Най-нови първо" : "Най-стари първо"}
+                    >
+                      {answerSortAsc ? (
+                        <BarsArrowUpIcon className="h-4 w-4" />
+                      ) : (
+                        <BarsArrowDownIcon className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
+                  {(() => {
+                    const sorted = [...visibleAnswers].sort((a, b) => {
                       if (a.approved && !b.approved) return -1;
                       if (!a.approved && b.approved) return 1;
                       const dateA = new Date(a.date).getTime();
                       const dateB = new Date(b.date).getTime();
-                      return dateB - dateA;
-                    })
-                    .map((answer: IAnswer) => {
+                      return answerSortAsc ? dateA - dateB : dateB - dateA;
+                    });
+                    const total = sorted.length;
+                    return sorted.map((answer: IAnswer, index: number) => {
                       //get the correct state for this specific answer
                       const commentState = answerCommentStates[answer._id] || {
                         content: "",
                         attachments: [],
                         isVisible: false,
                       };
+                      const displayNumber = answerSortAsc ? total - index : index + 1;
 
                       return (
                         <Answer
                           key={answer._id}
                           answer={answer}
+                          displayNumber={displayNumber}
                           me={me}
                           refetch={refetch}
                           caseNumber={caseData.case_number}
@@ -561,7 +581,8 @@ const Submenu: React.FC<SubmenuProps> = ({
                           }
                         />
                       );
-                    })}
+                    });
+                  })()}
                 </>
               ) : (
                 // If there are no visible answers, show a placeholder message,
@@ -627,21 +648,38 @@ const Submenu: React.FC<SubmenuProps> = ({
               )}
               {caseData.comments && caseData.comments.length > 0 ? (
                 <div className="mx-5 space-y-2">
-                  {[...caseData.comments]
-                    .sort(
-                      (a, b) =>
-                        new Date(b.date).getTime() - new Date(a.date).getTime(),
-                    )
-                    .map((comment: IComment) => (
+                  <div className="flex justify-end">
+                    <button
+                      onClick={() => setCommentSortAsc((prev) => !prev)}
+                      className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 cursor-pointer"
+                      title={commentSortAsc ? "Най-нови първо" : "Най-стари първо"}
+                    >
+                      {commentSortAsc ? (
+                        <BarsArrowUpIcon className="h-4 w-4" />
+                      ) : (
+                        <BarsArrowDownIcon className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
+                  {(() => {
+                    const sorted = [...caseData.comments].sort((a, b) => {
+                      const dateA = new Date(a.date).getTime();
+                      const dateB = new Date(b.date).getTime();
+                      return commentSortAsc ? dateA - dateB : dateB - dateA;
+                    });
+                    const total = sorted.length;
+                    return sorted.map((comment: IComment, index: number) => (
                       <Comment
                         key={comment._id}
                         comment={comment}
+                        displayNumber={commentSortAsc ? total - index : index + 1}
                         me={me}
                         caseNumber={caseData.case_number}
                         mentions={mentions}
                         targetId={targetId}
                       />
-                    ))}
+                    ));
+                  })()}
                 </div>
               ) : (
                 // Hide "no comments" message if the user is about to write one

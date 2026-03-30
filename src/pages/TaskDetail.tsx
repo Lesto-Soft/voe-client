@@ -386,7 +386,7 @@ const TaskDetail: React.FC = () => {
 
           {/* Scrollable Content Area */}
           <div className="lg:flex-grow lg:min-h-0 lg:relative">
-            <div className="lg:absolute lg:inset-0 lg:overflow-y-auto custom-scrollbar-xs">
+            <div className="pt-6 lg:absolute lg:inset-0 lg:overflow-y-auto custom-scrollbar-xs">
               {rightPanelView === "activities" ? (
                 <TaskActivities
                   taskId={taskData._id}

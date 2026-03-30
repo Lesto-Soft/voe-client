@@ -30,6 +30,8 @@ import {
   XMarkIcon,
   BarsArrowDownIcon,
   BarsArrowUpIcon,
+  PlusCircleIcon,
+  MinusCircleIcon,
 } from "@heroicons/react/24/solid";
 
 // Activity type configuration with icons and colors
@@ -172,6 +174,7 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
   readOnly = false,
 }) => {
   const [activitySortAsc, setActivitySortAsc] = useState(false);
+  const [isAddActivityVisible, setIsAddActivityVisible] = useState(false);
   const [newContent, setNewContent] = useState("");
   const [activityType, setActivityType] = useState<TaskActivityType>(
     TaskActivityType.Comment,
@@ -328,58 +331,108 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
 
   return (
     <div className="flex flex-col h-full">
-      {/* Add activity section - FIXED AT TOP */}
+      {/* Add activity toggle + sort toggle row */}
       {!readOnly && (
-        <div className="flex-shrink-0 mb-4 border border-0 border-b-3 border-gray-300 p-3 bg-gray-50 shadow-md">
-        {/* Title and activity type selector on same line */}
-        <div className="flex items-center gap-3 mb-2">
-          <h3 className="text-sm font-semibold text-gray-700 whitespace-nowrap">
-            Нов запис
-          </h3>
-          <div className="flex flex-wrap gap-1.5">
-            {selectableActivityTypes.map((type) => {
-              const config = activityTypeConfig[type];
-              const Icon = config.icon;
-              const isSelected = activityType === type;
-              return (
-                <button
-                  key={type}
-                  type="button"
-                  onClick={() => setActivityType(type)}
-                  className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border transition-colors cursor-pointer ${
-                    isSelected
-                      ? `${config.bgColor} ${config.textColor} ${config.borderColor}`
-                      : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"
-                  }`}
-                >
-                  <Icon className="h-3.5 w-3.5" />
-                  {config.label}
-                </button>
-              );
-            })}
+        <div className="flex-shrink-0 mb-2 px-5">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsAddActivityVisible((prev) => !prev)}
+              className="cursor-pointer flex-1 flex justify-between items-center p-3 bg-gray-100 hover:bg-gray-200 rounded-lg text-left text-gray-700 font-semibold ring-1 ring-gray-300 focus:outline-none active:ring-2 active:ring-indigo-400 transition-colors"
+            >
+              <span className="flex items-center justify-center gap-2 text-sm">
+                <ChatBubbleLeftIcon className="h-6 w-6 text-gray-500" />
+                {isAddActivityVisible ? "Скрий добавяне на запис" : "Добави запис"}
+              </span>
+              {isAddActivityVisible ? (
+                <MinusCircleIcon className="h-6 w-6 text-gray-500" />
+              ) : (
+                <PlusCircleIcon className="h-6 w-6 text-gray-500" />
+              )}
+            </button>
+            {sortedActivities.length > 1 && (
+              <button
+                onClick={() => setActivitySortAsc((prev) => !prev)}
+                className="flex items-center text-gray-400 hover:text-gray-600 cursor-pointer p-2 rounded hover:bg-gray-50"
+                title={activitySortAsc ? "Най-нови първо" : "Най-стари първо"}
+              >
+                {activitySortAsc ? (
+                  <BarsArrowUpIcon className="h-5 w-5" />
+                ) : (
+                  <BarsArrowDownIcon className="h-5 w-5" />
+                )}
+              </button>
+            )}
           </div>
-        </div>
+          {isAddActivityVisible && (
+            <div className="mt-4 border border-0 border-b-3 border-gray-300 p-3 bg-gray-50 shadow-md rounded-lg">
+              {/* Title and activity type selector on same line */}
+              <div className="flex items-center gap-3 mb-2">
+                <h3 className="text-sm font-semibold text-gray-700 whitespace-nowrap">
+                  Нов запис
+                </h3>
+                <div className="flex flex-wrap gap-1.5">
+                  {selectableActivityTypes.map((type) => {
+                    const config = activityTypeConfig[type];
+                    const TypeIcon = config.icon;
+                    const isSelected = activityType === type;
+                    return (
+                      <button
+                        key={type}
+                        type="button"
+                        onClick={() => setActivityType(type)}
+                        className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border transition-colors cursor-pointer ${
+                          isSelected
+                            ? `${config.bgColor} ${config.textColor} ${config.borderColor}`
+                            : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"
+                        }`}
+                      >
+                        <TypeIcon className="h-3.5 w-3.5" />
+                        {config.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
 
-        {/* Rich text input with send button */}
-        <div className="min-h-[160px]">
-          <UnifiedEditor
-            content={newContent}
-            onContentChange={setNewContent}
-            attachments={newAttachments}
-            setAttachments={setNewAttachments}
-            onSend={handleSubmitActivity}
-            mentions={mentions}
-            placeholder="Добавете запис..."
-            minLength={0}
-            maxLength={1500}
-            isSending={createLoading}
-            type="taskActivity"
-            editorMinHeight="min-h-[125px]"
-            editorClassName="max-h-[125px]"
-            autoFocus
-          />
+              {/* Rich text input with send button */}
+              <div className="min-h-[160px]">
+                <UnifiedEditor
+                  content={newContent}
+                  onContentChange={setNewContent}
+                  attachments={newAttachments}
+                  setAttachments={setNewAttachments}
+                  onSend={handleSubmitActivity}
+                  mentions={mentions}
+                  placeholder="Добавете запис..."
+                  minLength={0}
+                  maxLength={1500}
+                  isSending={createLoading}
+                  type="taskActivity"
+                  editorMinHeight="min-h-[125px]"
+                  editorClassName="max-h-[125px]"
+                  autoFocus
+                />
+              </div>
+            </div>
+          )}
         </div>
-      </div>
+      )}
+
+      {/* Sort toggle for read-only mode */}
+      {readOnly && sortedActivities.length > 1 && (
+        <div className="flex justify-end px-5 mb-2">
+          <button
+            onClick={() => setActivitySortAsc((prev) => !prev)}
+            className="flex items-center text-gray-400 hover:text-gray-600 cursor-pointer p-1 rounded hover:bg-gray-50"
+            title={activitySortAsc ? "Най-нови първо" : "Най-стари първо"}
+          >
+            {activitySortAsc ? (
+              <BarsArrowUpIcon className="h-5 w-5" />
+            ) : (
+              <BarsArrowDownIcon className="h-5 w-5" />
+            )}
+          </button>
+        </div>
       )}
 
       {/* Activities list - SCROLLABLE */}
@@ -390,21 +443,6 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
           </p>
         ) : (
           <>
-          {sortedActivities.length > 1 && (
-            <div className="flex justify-end mb-1">
-              <button
-                onClick={() => setActivitySortAsc((prev) => !prev)}
-                className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 cursor-pointer"
-                title={activitySortAsc ? "Най-нови първо" : "Най-стари първо"}
-              >
-                {activitySortAsc ? (
-                  <BarsArrowUpIcon className="h-4 w-4" />
-                ) : (
-                  <BarsArrowDownIcon className="h-4 w-4" />
-                )}
-              </button>
-            </div>
-          )}
           {sortedActivities.map((activity, index) => {
             const displayNumber = activitySortAsc ? index + 1 : sortedActivities.length - index;
             const config = activityTypeConfig[activity.type];

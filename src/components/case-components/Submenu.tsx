@@ -440,7 +440,7 @@ const Submenu: React.FC<SubmenuProps> = ({
   return (
     <div className="flex flex-col lg:h-full relative custom-scrollbar-xs">
       <div className="flex-shrink-0 sticky top-0 z-1 bg-white border-b border-gray-200">
-        <div className="flex justify-center gap-2 py-4">
+        <div className="flex justify-center gap-2 py-3">
           {submenu.map((item) => (
             <button
               key={item.key}
@@ -476,10 +476,10 @@ const Submenu: React.FC<SubmenuProps> = ({
                   ref={addAnswerContainerRef}
                   className="mb-2 transition-all duration-300"
                 >
-                  <div className="mx-5">
+                  <div className="mx-5 flex items-center gap-2">
                     <button
                       onClick={handleToggleAddAnswer}
-                      className="cursor-pointer w-full flex justify-between items-center p-3 bg-gray-100 hover:bg-gray-200 rounded-lg text-left text-gray-700 font-semibold ring-1 ring-gray-300 focus:outline-none active:ring-2 active:ring-indigo-400 transition-colors"
+                      className="cursor-pointer flex-1 flex justify-between items-center p-3 bg-gray-100 hover:bg-gray-200 rounded-lg text-left text-gray-700 font-semibold ring-1 ring-gray-300 focus:outline-none active:ring-2 active:ring-indigo-400 transition-colors"
                       aria-expanded={isAddAnswerVisible}
                       aria-controls="add-answer-form"
                     >
@@ -495,6 +495,19 @@ const Submenu: React.FC<SubmenuProps> = ({
                         <PlusCircleIcon className="h-6 w-6 text-gray-500" />
                       )}
                     </button>
+                    {visibleAnswers.length > 1 && (
+                      <button
+                        onClick={() => setAnswerSortAsc((prev) => !prev)}
+                        className="flex items-center text-gray-400 hover:text-gray-600 cursor-pointer p-2 rounded hover:bg-gray-50"
+                        title={answerSortAsc ? "Най-нови първо" : "Най-стари първо"}
+                      >
+                        {answerSortAsc ? (
+                          <BarsArrowUpIcon className="h-5 w-5" />
+                        ) : (
+                          <BarsArrowDownIcon className="h-5 w-5" />
+                        )}
+                      </button>
+                    )}
                   </div>
                   {isAddAnswerVisible && (
                     <div id="add-answer-form" className="mt-4">
@@ -518,19 +531,6 @@ const Submenu: React.FC<SubmenuProps> = ({
               {/* Renders the list of answers if there are any */}
               {visibleAnswers.length > 0 ? (
                 <>
-                  <div className="flex justify-end mx-5 mb-1">
-                    <button
-                      onClick={() => setAnswerSortAsc((prev) => !prev)}
-                      className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 cursor-pointer"
-                      title={answerSortAsc ? "Най-нови първо" : "Най-стари първо"}
-                    >
-                      {answerSortAsc ? (
-                        <BarsArrowUpIcon className="h-4 w-4" />
-                      ) : (
-                        <BarsArrowDownIcon className="h-4 w-4" />
-                      )}
-                    </button>
-                  </div>
                   {(() => {
                     const sorted = [...visibleAnswers].sort((a, b) => {
                       if (a.approved && !b.approved) return -1;
@@ -607,10 +607,10 @@ const Submenu: React.FC<SubmenuProps> = ({
                 ref={addCommentContainerRef}
                 className="mb-2 transition-all duration-300"
               >
-                <div className="mx-5">
+                <div className="mx-5 flex items-center gap-2">
                   <button
                     onClick={handleToggleAddComment}
-                    className="cursor-pointer w-full flex justify-between items-center p-3 bg-gray-100 hover:bg-gray-200 rounded-lg text-left text-gray-700 font-semibold ring-1 ring-gray-300 focus:outline-none active:ring-2 active:ring-indigo-400 transition-colors"
+                    className="cursor-pointer flex-1 flex justify-between items-center p-3 bg-gray-100 hover:bg-gray-200 rounded-lg text-left text-gray-700 font-semibold ring-1 ring-gray-300 focus:outline-none active:ring-2 active:ring-indigo-400 transition-colors"
                     aria-expanded={isAddCommentVisible}
                     aria-controls="add-comment-form"
                   >
@@ -626,6 +626,19 @@ const Submenu: React.FC<SubmenuProps> = ({
                       <PlusCircleIcon className="h-6 w-6 text-gray-500" />
                     )}
                   </button>
+                  {caseData.comments && caseData.comments.length > 1 && (
+                    <button
+                      onClick={() => setCommentSortAsc((prev) => !prev)}
+                      className="flex items-center text-gray-400 hover:text-gray-600 cursor-pointer p-2 rounded hover:bg-gray-50"
+                      title={commentSortAsc ? "Най-нови първо" : "Най-стари първо"}
+                    >
+                      {commentSortAsc ? (
+                        <BarsArrowUpIcon className="h-5 w-5" />
+                      ) : (
+                        <BarsArrowDownIcon className="h-5 w-5" />
+                      )}
+                    </button>
+                  )}
                 </div>
                 {isAddCommentVisible && (
                   <div id="add-comment-form" className="mt-4">
@@ -648,19 +661,6 @@ const Submenu: React.FC<SubmenuProps> = ({
               )}
               {caseData.comments && caseData.comments.length > 0 ? (
                 <div className="mx-5 space-y-2">
-                  <div className="flex justify-end">
-                    <button
-                      onClick={() => setCommentSortAsc((prev) => !prev)}
-                      className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 cursor-pointer"
-                      title={commentSortAsc ? "Най-нови първо" : "Най-стари първо"}
-                    >
-                      {commentSortAsc ? (
-                        <BarsArrowUpIcon className="h-4 w-4" />
-                      ) : (
-                        <BarsArrowDownIcon className="h-4 w-4" />
-                      )}
-                    </button>
-                  </div>
                   {(() => {
                     const sorted = [...caseData.comments].sort((a, b) => {
                       const dateA = new Date(a.date).getTime();

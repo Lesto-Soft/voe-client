@@ -229,7 +229,7 @@ const CaseTable: React.FC<ICaseTableProps> = ({
       width: "w-52",
       cellClassName: "text-sm overflow-hidden max-w-0",
       render: (my_case) => (
-        <ShowDate date={my_case.date} isCase truncate />
+        <ShowDate date={my_case.date} isCase truncate defaultFull />
       ),
     },
     {

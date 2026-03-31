@@ -46,14 +46,16 @@ const ShowDate = ({
   isCase = false,
   collapsible = false,
   truncate = false,
+  defaultFull = false,
 }: {
   date: string;
   centered?: boolean;
   isCase?: boolean;
   collapsible?: boolean;
   truncate?: boolean;
+  defaultFull?: boolean;
 }) => {
-  const [showDate, setShowDate] = useState(false);
+  const [showDate, setShowDate] = useState(defaultFull);
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const isMobile = useMediaQuery("(max-width: 40rem)"); // Corresponds to `sm:` breakpoint
   const containerRef = useRef<HTMLDivElement>(null);

@@ -100,7 +100,7 @@ const columns: DataTableColumn<ITask>[] = [
     render: (task) =>
       task.dueDate ? (
         <div className="flex items-center gap-1.5">
-          <ShowDate date={task.dueDate} />
+          <ShowDate date={task.dueDate} defaultFull />
           {getDueDateStatus(task.dueDate, task.status) === "overdue" && (
             <span title="Просрочена задача">
               <ExclamationTriangleIcon className="h-4 w-4 text-red-500" />
@@ -123,7 +123,7 @@ const columns: DataTableColumn<ITask>[] = [
     cellClassName: "whitespace-nowrap",
     render: (task) =>
       task.createdAt ? (
-        <ShowDate date={task.createdAt} />
+        <ShowDate date={task.createdAt} defaultFull />
       ) : (
         <span className="text-gray-400 text-sm">—</span>
       ),

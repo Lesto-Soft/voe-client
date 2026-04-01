@@ -35,6 +35,7 @@ import {
 import { ClockIcon } from "@heroicons/react/24/outline";
 import TaskAccessModal from "../components/task/TaskAccessModal";
 import useDocumentTitle from "../hooks/useDocumentTitle";
+import TaskContentDialog from "../components/modals/taskModals/TaskContentDialog";
 
 const TaskDetail: React.FC = () => {
   const navigate = useNavigate();
@@ -170,15 +171,21 @@ const TaskDetail: React.FC = () => {
       <div className="flex flex-col lg:flex-row flex-1 min-h-0">
       {/* Left Panel - Task Info Sidebar (like CaseInfo) */}
       <div className="max-w-full lg:w-96 lg:shrink-0 order-1 lg:order-none lg:h-full">
-        <div className="w-full h-full bg-white shadow-md overflow-y-auto custom-scrollbar-xs">
-          <div className="p-4 flex flex-col gap-3">
+        <div className="w-full h-full bg-white shadow-md flex flex-col overflow-hidden">
+          <div className="p-4 flex flex-col gap-3 flex-1 min-h-0">
             {/* Top row: Title + Action buttons */}
             <div className="flex items-start justify-between gap-2">
               <h1 className="text-xl font-bold text-gray-900 flex-1 truncate" title={task.title}>
                 {task.title}
               </h1>
+              <div className="flex items-center gap-1 flex-shrink-0">
+                <TaskContentDialog
+                  taskData={taskData}
+                  refetch={refetch}
+                  canChangeStatus={canChangeStatus}
+                />
               {canEdit && (
-                <div className="flex items-center gap-1 flex-shrink-0">
+                <>
                   <button
                     onClick={() => setIsAccessModalOpen(true)}
                     title="Управление на достъпа"
@@ -200,12 +207,13 @@ const TaskDetail: React.FC = () => {
                   >
                     <TrashIcon className="h-4 w-4" />
                   </button>
-                </div>
+                </>
               )}
+              </div>
             </div>
 
-            {/* Task Description - always expanded, fixed-height container */}
-            <div className="h-48">
+            {/* Task Description - fills remaining vertical space */}
+            <div className="flex-1 min-h-0">
               <TaskDescriptionCard
                 description={taskData.description}
                 attachments={taskData.attachments}

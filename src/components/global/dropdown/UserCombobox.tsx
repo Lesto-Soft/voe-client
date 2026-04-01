@@ -29,6 +29,7 @@ const UserCombobox: React.FC<UserComboboxProps> = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -51,6 +52,63 @@ const UserCombobox: React.FC<UserComboboxProps> = ({
         u.username.toLowerCase().includes(q),
     );
   }, [users, searchQuery]);
+
+  // Build flat options list for keyboard navigation
+  const optionIds = useMemo(() => {
+    const ids: string[] = [];
+    if (allowUnassign) ids.push("__unassign__");
+    ids.push(...filteredUsers.map((u) => u._id));
+    return ids;
+  }, [allowUnassign, filteredUsers]);
+
+  // Reset highlight when filtered list changes
+  useEffect(() => {
+    setHighlightedIndex(-1);
+  }, [searchQuery, isOpen]);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!isOpen) {
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        setIsOpen(true);
+        e.preventDefault();
+      }
+      return;
+    }
+
+    switch (e.key) {
+      case "ArrowDown":
+        e.preventDefault();
+        setHighlightedIndex((prev) =>
+          prev < optionIds.length - 1 ? prev + 1 : 0
+        );
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        setHighlightedIndex((prev) =>
+          prev > 0 ? prev - 1 : optionIds.length - 1
+        );
+        break;
+      case "Enter":
+        e.preventDefault();
+        if (highlightedIndex >= 0 && highlightedIndex < optionIds.length) {
+          const id = optionIds[highlightedIndex];
+          handleSelect(id === "__unassign__" ? "" : id);
+        }
+        break;
+      case "Escape":
+        e.preventDefault();
+        setIsOpen(false);
+        setSearchQuery("");
+        break;
+    }
+  };
+
+  // Scroll highlighted item into view
+  useEffect(() => {
+    if (highlightedIndex < 0 || !dropdownRef.current) return;
+    const items = dropdownRef.current.querySelectorAll("[data-option]");
+    items[highlightedIndex]?.scrollIntoView({ block: "nearest" });
+  }, [highlightedIndex]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -138,6 +196,7 @@ const UserCombobox: React.FC<UserComboboxProps> = ({
           value={searchQuery}
           onChange={handleInputChange}
           onFocus={handleInputFocus}
+          onKeyDown={handleKeyDown}
           placeholder={placeholder}
           autoComplete="off"
           className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
@@ -148,14 +207,16 @@ const UserCombobox: React.FC<UserComboboxProps> = ({
       {isOpen && (
         <div
           ref={dropdownRef}
-          className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto custom-scrollbar-xs"
+          className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-28 overflow-y-auto custom-scrollbar-xs"
         >
           {allowUnassign && (
             <button
               type="button"
+              data-option
               onMouseDown={() => handleSelect("")}
+              onMouseEnter={() => setHighlightedIndex(0)}
               className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-50 cursor-pointer ${
-                !selectedUserId ? "bg-blue-50" : ""
+                highlightedIndex === 0 ? "bg-blue-50" : !selectedUserId ? "bg-blue-50" : ""
               }`}
             >
               {unassignLabel}
@@ -166,13 +227,17 @@ const UserCombobox: React.FC<UserComboboxProps> = ({
               Няма намерени потребители
             </div>
           ) : (
-            filteredUsers.map((user) => (
+            filteredUsers.map((user, i) => {
+              const optIdx = allowUnassign ? i + 1 : i;
+              return (
               <button
                 type="button"
                 key={user._id}
+                data-option
                 onMouseDown={() => handleSelect(user._id)}
+                onMouseEnter={() => setHighlightedIndex(optIdx)}
                 className={`w-full px-3 py-2 text-left text-sm hover:bg-blue-50 flex items-center gap-2 cursor-pointer ${
-                  selectedUserId === user._id ? "bg-blue-100" : ""
+                  highlightedIndex === optIdx ? "bg-blue-50" : selectedUserId === user._id ? "bg-blue-100" : ""
                 }`}
               >
                 <UserAvatar name={user.name} imageUrl={null} size={24} />
@@ -181,7 +246,8 @@ const UserCombobox: React.FC<UserComboboxProps> = ({
                   ({user.username})
                 </span>
               </button>
-            ))
+              );
+            })
           )}
         </div>
       )}

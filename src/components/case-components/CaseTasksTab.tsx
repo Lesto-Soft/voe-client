@@ -4,7 +4,7 @@ import { ICase, ITask } from "../../db/interfaces";
 import { useGetAllTasks } from "../../graphql/hooks/task";
 import { TaskFormModal, TaskDueDateIndicator } from "../task";
 import TaskStatusBadge from "../task/TaskStatusBadge";
-import TaskPriorityBadge, { getPriorityBorderColor } from "../task/TaskPriorityBadge";
+import { getPriorityBorderColor } from "../task/TaskPriorityBadge";
 import UserLink from "../global/links/UserLink";
 import TaskLink from "../global/links/TaskLink";
 import {
@@ -30,7 +30,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task }) => {
     <div onClick={handleCardClick} className="block cursor-pointer">
       <div
         className={`bg-white p-3 rounded-lg shadow-md border-t-4 ${getPriorityBorderColor(
-          task.priority
+          task.priority,
         )} hover:shadow-lg transition-shadow duration-200 flex flex-col h-full min-h-[160px]`}
       >
         {/* Top Section: Title + Status */}
@@ -44,7 +44,9 @@ const TaskCard: React.FC<TaskCardProps> = ({ task }) => {
 
           {/* Description preview (fixed 2-line height) */}
           <p className="text-xs text-gray-500 line-clamp-2 min-h-[2lh] mb-2">
-            {task.description ? getContentPreview(task.description, 100) : "\u00A0"}
+            {task.description
+              ? getContentPreview(task.description, 100)
+              : "\u00A0"}
           </p>
 
           <div className="flex items-center gap-2 mb-2">
@@ -73,12 +75,13 @@ const TaskCard: React.FC<TaskCardProps> = ({ task }) => {
             </div>
           </div>
           <div className="flex items-center gap-1">
-          <span>Срок:</span>
-          <TaskDueDateIndicator
-            dueDate={task.dueDate}
-            status={task.status}
-            size="sm"
-          /></div>
+            <span>Срок:</span>
+            <TaskDueDateIndicator
+              dueDate={task.dueDate}
+              status={task.status}
+              size="sm"
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -106,7 +109,9 @@ const CaseTasksTab: React.FC<CaseTasksTabProps> = ({ caseData }) => {
         <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
           <ClipboardDocumentCheckIcon className="h-6 w-6 text-rose-500" />
           Задачи по сигнала
-          {!loading && <span className="text-gray-400 font-normal">({count})</span>}
+          {!loading && (
+            <span className="text-gray-400 font-normal">({count})</span>
+          )}
         </h3>
         <button
           onClick={() => setIsCreateModalOpen(true)}

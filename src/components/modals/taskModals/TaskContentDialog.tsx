@@ -10,10 +10,7 @@ import UserLink from "../../global/links/UserLink";
 import UserAvatar from "../../cards/UserAvatar";
 import ShowDate from "../../global/ShowDate";
 import { getDueDateStatus } from "../../task/TaskDueDateIndicator";
-import {
-  ExclamationTriangleIcon,
-  FlagIcon,
-} from "@heroicons/react/24/solid";
+import { ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 import { ClockIcon } from "@heroicons/react/24/outline";
 import { endpoint } from "../../../db/config";
 

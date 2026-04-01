@@ -1,4 +1,5 @@
 import moment from "moment";
+// @ts-ignore
 import "moment/dist/locale/bg";
 
 // Force bg as global locale — must run after the locale file is loaded

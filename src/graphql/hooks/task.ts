@@ -383,7 +383,7 @@ export const useCreateTask = () => {
   const [createTaskMutation, { data, loading, error }] = useMutation(
     CREATE_TASK,
     {
-      refetchQueries: [{ query: GET_ALL_TASKS }],
+      refetchQueries: ["GetAllTasks"],
       awaitRefetchQueries: true,
     }
   );
@@ -454,7 +454,7 @@ export const useDeleteTask = (
     DELETE_TASK,
     {
       onCompleted: options.onCompleted,
-      refetchQueries: [{ query: GET_ALL_TASKS }],
+      refetchQueries: ["GetAllTasks"],
       awaitRefetchQueries: true,
     }
   );

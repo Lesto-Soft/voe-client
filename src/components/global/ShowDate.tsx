@@ -4,26 +4,7 @@ import {
   // ArrowPathIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
-import moment from "moment";
-
-moment.updateLocale("bg", {
-  relativeTime: {
-    past: (input) =>
-      input === "няколко секунди" ? "току-що" : `преди ${input}`,
-    s: "няколко секунди",
-    ss: "%d секунди",
-    m: "минута",
-    mm: "%d минути",
-    h: "час",
-    hh: "%d часа",
-    d: "ден",
-    dd: "%d дни",
-    M: "месец",
-    MM: "%d месеца",
-    y: "година",
-    yy: "%d години",
-  },
-});
+import moment from "moment"; // locale setup in moment-setup.ts
 
 // A simple hook to check for screen size without needing a separate file
 const useMediaQuery = (query: string): boolean => {

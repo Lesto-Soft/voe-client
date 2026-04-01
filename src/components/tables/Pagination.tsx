@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ArrowLeftIcon, ArrowRightIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import { useLocation, useNavigate } from "react-router";
@@ -70,6 +70,19 @@ const Pagination = ({
   const location = useLocation();
   const navigate = useNavigate();
   const allPages = generatePagination(currentPage, totalPages);
+
+  // Clamp out-of-bounds page to the last valid page
+  useEffect(() => {
+    if (totalPages > 0 && currentPage > totalPages) {
+      if (onPageChange) {
+        onPageChange(totalPages);
+      } else {
+        const params = new URLSearchParams(location.search);
+        params.set("page", String(totalPages));
+        navigate(`${location.pathname}?${params.toString()}`, { replace: true });
+      }
+    }
+  }, [currentPage, totalPages, onPageChange, navigate, location.search, location.pathname]);
 
   // State for "Go to page"
   const [gotoValue, setGotoValue] = useState("");

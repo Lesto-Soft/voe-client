@@ -38,7 +38,7 @@ const ImagePreviewWithThumbnail: React.FC<ImagePreviewWithThumbnailProps> = ({
           triggerElement={
             <div
               onClick={() => setCurrentIndex(index)}
-              className={`flex items-center bg-white p-2 border border-gray-200 rounded-md text-xs text-gray-700 w-[11.5rem] cursor-pointer transition-all hover:shadow-sm hover:border-blue-300 ${
+              className={`flex items-center bg-white p-1 border border-gray-200 rounded-md text-xs text-gray-700 w-[11.5rem] cursor-pointer transition-all hover:shadow-sm hover:border-blue-300 ${
                 index === currentIndex ? "ring-1 ring-blue-400" : ""
               }`}
               title={item.name}

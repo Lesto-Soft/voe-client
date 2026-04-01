@@ -6,7 +6,7 @@ import { GET_LEAN_USERS } from "../graphql/query/user";
 import { useCurrentUser } from "../context/UserContext";
 import { useNotificationSubscription } from "../graphql/hooks/notificationHook";
 import { ITask } from "../db/interfaces";
-import { ROLES } from "../utils/GLOBAL_PARAMETERS";
+import { ROLES, EXAMPLE_TASK_NUMBER } from "../utils/GLOBAL_PARAMETERS";
 import { useAuthorization } from "../hooks/useAuthorization";
 import PageStatusDisplay from "../components/global/PageStatusDisplay";
 import ForbiddenPage from "./ErrorPages/ForbiddenPage";
@@ -34,6 +34,7 @@ import {
 } from "@heroicons/react/24/solid";
 import { ClockIcon } from "@heroicons/react/24/outline";
 import TaskAccessModal from "../components/task/TaskAccessModal";
+import useDocumentTitle from "../hooks/useDocumentTitle";
 
 const TaskDetail: React.FC = () => {
   const navigate = useNavigate();
@@ -50,15 +51,17 @@ const TaskDetail: React.FC = () => {
     "activities" | "analysis"
   >("activities");
 
-  // Parse task number (0 if invalid - hook will skip)
+  // Parse task number (-1 if invalid - hook will skip)
   const numericTaskNumber =
-    taskNumberParam && !isNaN(parseInt(taskNumberParam, 10))
+    taskNumberParam != null && taskNumberParam !== "" && !isNaN(parseInt(taskNumberParam, 10))
       ? parseInt(taskNumberParam, 10)
-      : 0;
+      : -1;
 
   // All hooks must be called before any early returns
   const { task, loading, error, refetch } =
     useGetTaskByNumber(numericTaskNumber);
+
+  useDocumentTitle(task ? `Задача #${task.taskNumber}` : numericTaskNumber >= 0 ? `Задача #${numericTaskNumber}` : undefined);
   const { deleteTask, loading: deleteLoading } = useDeleteTask({
     onCompleted: () => navigate("/tasks"),
   });
@@ -105,7 +108,7 @@ const TaskDetail: React.FC = () => {
   });
 
   // Now we can have early returns
-  if (numericTaskNumber <= 0) {
+  if (numericTaskNumber < 0) {
     return (
       <PageStatusDisplay
         notFound
@@ -147,24 +150,32 @@ const TaskDetail: React.FC = () => {
 
   const isAdmin = currentUser.role?._id === ROLES.ADMIN;
   const isCreator = currentUser._id === taskData.creator._id;
+  const isExampleTask = taskData.taskNumber === EXAMPLE_TASK_NUMBER;
 
   // Only admins and task creators can edit/delete and change assignee
-  const canEdit = isAdmin || isCreator;
+  // Example task (taskNumber 0) is only editable by admins
+  const canEdit = isExampleTask ? isAdmin : isAdmin || isCreator;
 
   // Only admins and task creators can manually change status
   // Assignee changes status indirectly through activities (auto-transition)
-  const canChangeStatus = isAdmin || isCreator;
+  const canChangeStatus = isExampleTask ? isAdmin : isAdmin || isCreator;
 
   return (
-    <div className="flex flex-col lg:flex-row bg-gray-50 lg:h-[calc(100vh-6rem)] w-full">
+    <div className="flex flex-col bg-gray-50 lg:h-[calc(100vh-6rem)] w-full">
+      {isExampleTask && (
+        <div className="bg-blue-50 border-b border-blue-200 px-4 py-3 text-center text-sm text-blue-800 flex-shrink-0">
+          Това е примерна задача, създадена за демонстрационни цели. Съдържанието й не е реално.
+        </div>
+      )}
+      <div className="flex flex-col lg:flex-row flex-1 min-h-0">
       {/* Left Panel - Task Info Sidebar (like CaseInfo) */}
       <div className="max-w-full lg:w-96 lg:shrink-0 order-1 lg:order-none lg:h-full">
         <div className="w-full h-full bg-white shadow-md overflow-y-auto custom-scrollbar-xs">
           <div className="p-4 flex flex-col gap-3">
             {/* Top row: Title + Action buttons */}
             <div className="flex items-start justify-between gap-2">
-              <h1 className="text-xl font-bold text-gray-900 flex-1">
-                {taskData.title}
+              <h1 className="text-xl font-bold text-gray-900 flex-1 truncate" title={task.title}>
+                {task.title}
               </h1>
               {canEdit && (
                 <div className="flex items-center gap-1 flex-shrink-0">
@@ -347,8 +358,8 @@ const TaskDetail: React.FC = () => {
                 onClick={() => setRightPanelView("activities")}
                 className={`flex items-center px-4 py-2 rounded-lg font-semibold text-sm transition-colors duration-150 border cursor-pointer ${
                   rightPanelView === "activities"
-                    ? "border-blue-500 text-blue-600 shadow bg-blue-50"
-                    : "border-gray-300 shadow-sm bg-gray-100 text-gray-700 hover:bg-blue-50 hover:text-blue-600"
+                    ? "border-btnRedHover text-btnRedHover shadow"
+                    : "border-gray-300 shadow-sm bg-gray-100 text-gray-700 hover:bg-red-100 hover:text-btnRedHover"
                 }`}
               >
                 <ChatBubbleLeftRightIcon className="h-5 w-5 mr-2" />
@@ -359,8 +370,8 @@ const TaskDetail: React.FC = () => {
                 onClick={() => setRightPanelView("analysis")}
                 className={`flex items-center px-4 py-2 rounded-lg font-semibold text-sm transition-colors duration-150 border cursor-pointer ${
                   rightPanelView === "analysis"
-                    ? "border-blue-500 text-blue-600 shadow bg-blue-50"
-                    : "border-gray-300 shadow-sm bg-gray-100 text-gray-700 hover:bg-blue-50 hover:text-blue-600"
+                    ? "border-btnRedHover text-btnRedHover shadow"
+                    : "border-gray-300 shadow-sm bg-gray-100 text-gray-700 hover:bg-red-100 hover:text-btnRedHover"
                 }`}
               >
                 <BeakerIcon className="h-5 w-5 mr-2" />
@@ -374,8 +385,8 @@ const TaskDetail: React.FC = () => {
           </div>
 
           {/* Scrollable Content Area */}
-          <div className="lg:flex-grow lg:min-h-0 lg:relative">
-            <div className="lg:absolute lg:inset-0 lg:overflow-y-auto custom-scrollbar-xs">
+          <div className="lg:flex-grow lg:min-h-0 lg:relative bg-gray-50">
+            <div className="pt-6 lg:absolute lg:inset-0 lg:overflow-y-auto custom-scrollbar-xs">
               {rightPanelView === "activities" ? (
                 <TaskActivities
                   taskId={taskData._id}
@@ -383,6 +394,7 @@ const TaskDetail: React.FC = () => {
                   currentUser={currentUser}
                   refetch={refetch}
                   mentions={mentions}
+                  readOnly={isExampleTask && !isAdmin}
                 />
               ) : (
                 <AnalysisTabsSection
@@ -439,6 +451,7 @@ const TaskDetail: React.FC = () => {
         creatorId={taskData.creator._id}
         onAccessChanged={refetch}
       />
+      </div>
     </div>
   );
 };

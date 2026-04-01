@@ -46,6 +46,8 @@ interface UnifiedEditorProps {
   attachmentFolder?: string;
   type: "case" | "answer" | "comment" | "task" | "taskActivity";
   editorClassName?: string;
+  editorMinHeight?: string;
+  autoFocus?: boolean;
   hideAttachments?: boolean;
 }
 
@@ -69,6 +71,8 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
     caseId,
     attachmentFolder,
     editorClassName,
+    editorMinHeight,
+    autoFocus = false,
     hideAttachments = false,
   } = props;
 
@@ -109,10 +113,17 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
     editorProps: {
       attributes: {
         class:
-          "focus:outline-none prose prose-sm max-w-none p-4 min-h-[150px] break-words custom-tiptap-editor",
+          `focus:outline-none prose prose-sm max-w-none p-4 ${editorMinHeight ?? "min-h-[150px]"} break-words custom-tiptap-editor`,
       },
     },
   });
+
+  // Auto-focus the editor on mount when requested
+  useEffect(() => {
+    if (autoFocus && editor && !editor.isDestroyed) {
+      editor.commands.focus("end");
+    }
+  }, [autoFocus, editor]);
 
   // Sync external content changes (e.g. CaseAnswerSelector) into the editor
   useEffect(() => {
@@ -241,7 +252,12 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
 
         <div className="relative flex-grow flex flex-col min-h-0">
           <div
-            className={`flex-grow overflow-y-auto overflow-x-hidden custom-scrollbar-xs ${editorClassName}`}
+            className={`flex-grow overflow-y-auto overflow-x-hidden custom-scrollbar-xs cursor-text ${editorClassName}`}
+            onClick={() => {
+              if (editor && !editor.isFocused && !editor.isDestroyed) {
+                editor.commands.focus("end");
+              }
+            }}
           >
             <EditorContent editor={editor} />
           </div>
@@ -259,7 +275,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
             existingAttachments.length > 0 ||
             isCompressing ||
             fileError) && (
-            <div className="flex-shrink-0 border-t border-gray-100 bg-gray-50/50 p-2 max-h-[160px] overflow-y-auto custom-scrollbar-xs">
+            <div className="flex-shrink-0 border-t border-gray-100 bg-gray-50/50 p-1 max-h-[160px] overflow-y-auto custom-scrollbar-xs">
               {/* ЛОУДЪР ПРИ ОБРАБОТКА (ВЪЗСТАНОВЕН) */}
               {isCompressing && (
                 <div className="flex items-center gap-2 px-3 py-1.5 mb-2 text-[11px] text-blue-600 font-bold bg-blue-50 border border-blue-100 rounded-lg animate-pulse">

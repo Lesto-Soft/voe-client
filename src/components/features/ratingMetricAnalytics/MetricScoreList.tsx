@@ -240,7 +240,7 @@ const MetricScoreList: React.FC<MetricScoreListProps> = ({
           <button
             onClick={() => setIsDateFilterVisible((prev) => !prev)}
             title="Филтрирай по дата"
-            className={`p-2 rounded-md transition-colors duration-150 ml-2 ${
+            className={`p-2 rounded-md transition-colors duration-150 ml-2 cursor-pointer ${
               isDateFilterActive
                 ? "bg-indigo-100 text-indigo-600 hover:bg-indigo-200"
                 : "bg-gray-100 text-gray-700 hover:bg-gray-200"

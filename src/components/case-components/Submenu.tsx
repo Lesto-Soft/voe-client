@@ -7,6 +7,8 @@ import {
   MinusCircleIcon,
   ChevronDoubleUpIcon,
   ClipboardDocumentCheckIcon,
+  BarsArrowDownIcon,
+  BarsArrowUpIcon,
 } from "@heroicons/react/24/solid";
 import { IAnswer, ICase, IComment, IMe } from "../../db/interfaces";
 import CaseHistoryContent from "./CaseHistoryContent";
@@ -15,7 +17,7 @@ import Comment from "./comment/Comment";
 import Answer from "./answer/Answer";
 import AddComment from "./comment/AddComment";
 import AddAnswer from "./answer/AddAnswer";
-import { USER_RIGHTS /*, CASE_STATUS */ } from "../../utils/GLOBAL_PARAMETERS";
+import { USER_RIGHTS, EXAMPLE_CASE_NUMBER /*, CASE_STATUS */ } from "../../utils/GLOBAL_PARAMETERS";
 import { useGetAllTasks } from "../../graphql/hooks/task";
 import { useLocation } from "react-router";
 import useMediaQuery from "../../hooks/useMediaQuery";
@@ -101,6 +103,8 @@ const Submenu: React.FC<SubmenuProps> = ({
   // state for editor content AND attachments
   const [answerContent, setAnswerContent] = useState("");
   const [answerAttachments, setAnswerAttachments] = useState<File[]>([]);
+  const [answerSortAsc, setAnswerSortAsc] = useState(false);
+  const [commentSortAsc, setCommentSortAsc] = useState(false);
   const [caseCommentContent, setCaseCommentContent] = useState("");
   const [caseCommentAttachments, setCaseCommentAttachments] = useState<File[]>(
     [],
@@ -356,10 +360,16 @@ const Submenu: React.FC<SubmenuProps> = ({
   const isCreatorAndNothingElse =
     userRights.length === 1 && userRights.includes("creator");
 
+  const isExampleCase = caseData.case_number === EXAMPLE_CASE_NUMBER;
+  const isAdmin = userRights.includes(USER_RIGHTS.ADMIN);
+
   const canAddAnswer =
-    userRights.includes(USER_RIGHTS.EXPERT) ||
-    userRights.includes(USER_RIGHTS.MANAGER) ||
-    userRights.includes(USER_RIGHTS.ADMIN);
+    !isExampleCase &&
+    (userRights.includes(USER_RIGHTS.EXPERT) ||
+      userRights.includes(USER_RIGHTS.MANAGER) ||
+      isAdmin);
+
+  const canAddComment = !isExampleCase || isAdmin;
 
   const submenu = [
     {
@@ -430,7 +440,7 @@ const Submenu: React.FC<SubmenuProps> = ({
   return (
     <div className="flex flex-col lg:h-full relative custom-scrollbar-xs">
       <div className="flex-shrink-0 sticky top-0 z-1 bg-white border-b border-gray-200">
-        <div className="flex justify-center gap-2 py-4">
+        <div className="flex justify-center gap-2 py-3">
           {submenu.map((item) => (
             <button
               key={item.key}
@@ -466,10 +476,10 @@ const Submenu: React.FC<SubmenuProps> = ({
                   ref={addAnswerContainerRef}
                   className="mb-2 transition-all duration-300"
                 >
-                  <div className="mx-5">
+                  <div className="mx-5 flex items-center gap-2">
                     <button
                       onClick={handleToggleAddAnswer}
-                      className="cursor-pointer w-full flex justify-between items-center p-3 bg-gray-100 hover:bg-gray-200 rounded-lg text-left text-gray-700 font-semibold ring-1 ring-gray-300 focus:outline-none active:ring-2 active:ring-indigo-400 transition-colors"
+                      className="cursor-pointer flex-1 flex justify-between items-center p-3 bg-gray-100 hover:bg-gray-200 rounded-lg text-left text-gray-700 font-semibold ring-1 ring-gray-300 focus:outline-none active:ring-2 active:ring-indigo-400 transition-colors"
                       aria-expanded={isAddAnswerVisible}
                       aria-controls="add-answer-form"
                     >
@@ -485,6 +495,19 @@ const Submenu: React.FC<SubmenuProps> = ({
                         <PlusCircleIcon className="h-6 w-6 text-gray-500" />
                       )}
                     </button>
+                    {visibleAnswers.length > 1 && (
+                      <button
+                        onClick={() => setAnswerSortAsc((prev) => !prev)}
+                        className="flex items-center text-gray-400 hover:text-gray-600 cursor-pointer p-2 rounded hover:bg-gray-50"
+                        title={answerSortAsc ? "Най-нови първо" : "Най-стари първо"}
+                      >
+                        {answerSortAsc ? (
+                          <BarsArrowUpIcon className="h-5 w-5" />
+                        ) : (
+                          <BarsArrowDownIcon className="h-5 w-5" />
+                        )}
+                      </button>
+                    )}
                   </div>
                   {isAddAnswerVisible && (
                     <div id="add-answer-form" className="mt-4">
@@ -508,26 +531,29 @@ const Submenu: React.FC<SubmenuProps> = ({
               {/* Renders the list of answers if there are any */}
               {visibleAnswers.length > 0 ? (
                 <>
-                  {visibleAnswers
-                    .sort((a, b) => {
+                  {(() => {
+                    const sorted = [...visibleAnswers].sort((a, b) => {
                       if (a.approved && !b.approved) return -1;
                       if (!a.approved && b.approved) return 1;
                       const dateA = new Date(a.date).getTime();
                       const dateB = new Date(b.date).getTime();
-                      return dateB - dateA;
-                    })
-                    .map((answer: IAnswer) => {
+                      return answerSortAsc ? dateA - dateB : dateB - dateA;
+                    });
+                    const total = sorted.length;
+                    return sorted.map((answer: IAnswer, index: number) => {
                       //get the correct state for this specific answer
                       const commentState = answerCommentStates[answer._id] || {
                         content: "",
                         attachments: [],
                         isVisible: false,
                       };
+                      const displayNumber = answerSortAsc ? index + 1 : total - index;
 
                       return (
                         <Answer
                           key={answer._id}
                           answer={answer}
+                          displayNumber={displayNumber}
                           me={me}
                           refetch={refetch}
                           caseNumber={caseData.case_number}
@@ -555,7 +581,8 @@ const Submenu: React.FC<SubmenuProps> = ({
                           }
                         />
                       );
-                    })}
+                    });
+                  })()}
                 </>
               ) : (
                 // If there are no visible answers, show a placeholder message,
@@ -575,14 +602,15 @@ const Submenu: React.FC<SubmenuProps> = ({
           )}
           {view === "comments" && (
             <>
+              {canAddComment && (
               <div
                 ref={addCommentContainerRef}
                 className="mb-2 transition-all duration-300"
               >
-                <div className="mx-5">
+                <div className="mx-5 flex items-center gap-2">
                   <button
                     onClick={handleToggleAddComment}
-                    className="cursor-pointer w-full flex justify-between items-center p-3 bg-gray-100 hover:bg-gray-200 rounded-lg text-left text-gray-700 font-semibold ring-1 ring-gray-300 focus:outline-none active:ring-2 active:ring-indigo-400 transition-colors"
+                    className="cursor-pointer flex-1 flex justify-between items-center p-3 bg-gray-100 hover:bg-gray-200 rounded-lg text-left text-gray-700 font-semibold ring-1 ring-gray-300 focus:outline-none active:ring-2 active:ring-indigo-400 transition-colors"
                     aria-expanded={isAddCommentVisible}
                     aria-controls="add-comment-form"
                   >
@@ -598,6 +626,19 @@ const Submenu: React.FC<SubmenuProps> = ({
                       <PlusCircleIcon className="h-6 w-6 text-gray-500" />
                     )}
                   </button>
+                  {caseData.comments && caseData.comments.length > 1 && (
+                    <button
+                      onClick={() => setCommentSortAsc((prev) => !prev)}
+                      className="flex items-center text-gray-400 hover:text-gray-600 cursor-pointer p-2 rounded hover:bg-gray-50"
+                      title={commentSortAsc ? "Най-нови първо" : "Най-стари първо"}
+                    >
+                      {commentSortAsc ? (
+                        <BarsArrowUpIcon className="h-5 w-5" />
+                      ) : (
+                        <BarsArrowDownIcon className="h-5 w-5" />
+                      )}
+                    </button>
+                  )}
                 </div>
                 {isAddCommentVisible && (
                   <div id="add-comment-form" className="mt-4">
@@ -617,23 +658,28 @@ const Submenu: React.FC<SubmenuProps> = ({
                   </div>
                 )}
               </div>
+              )}
               {caseData.comments && caseData.comments.length > 0 ? (
                 <div className="mx-5 space-y-2">
-                  {[...caseData.comments]
-                    .sort(
-                      (a, b) =>
-                        new Date(b.date).getTime() - new Date(a.date).getTime(),
-                    )
-                    .map((comment: IComment) => (
+                  {(() => {
+                    const sorted = [...caseData.comments].sort((a, b) => {
+                      const dateA = new Date(a.date).getTime();
+                      const dateB = new Date(b.date).getTime();
+                      return commentSortAsc ? dateA - dateB : dateB - dateA;
+                    });
+                    const total = sorted.length;
+                    return sorted.map((comment: IComment, index: number) => (
                       <Comment
                         key={comment._id}
                         comment={comment}
+                        displayNumber={commentSortAsc ? index + 1 : total - index}
                         me={me}
                         caseNumber={caseData.case_number}
                         mentions={mentions}
                         targetId={targetId}
                       />
-                    ))}
+                    ));
+                  })()}
                 </div>
               ) : (
                 // Hide "no comments" message if the user is about to write one
@@ -650,7 +696,7 @@ const Submenu: React.FC<SubmenuProps> = ({
 
           {view === "history" &&
             (caseData.history && caseData.history.length > 0 ? (
-              <div className="flex flex-col gap-4 mb-8 ml-4">
+              <div className="flex flex-col gap-4 mb-8 mx-4">
                 <CaseHistoryContent history={caseData.history} />
               </div>
             ) : (

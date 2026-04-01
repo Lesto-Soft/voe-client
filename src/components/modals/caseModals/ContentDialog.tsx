@@ -74,7 +74,10 @@ const ContentDialog: React.FC<ContentDialogProps> = ({
         <Dialog.Overlay className="fixed inset-0 bg-black/50 z-40" />
         <Dialog.Content className="fixed z-50 inset-4 md:inset-12 lg:inset-24 bg-white rounded-lg shadow-2xl flex flex-col focus:outline-none">
           {/* Header */}
-          <div className="flex items-center gap-4 p-4 border-b border-gray-200 flex-shrink-0">
+          <div className="flex items-center justify-between gap-4 p-4 border-b border-gray-200 flex-shrink-0">
+            <Dialog.Title className="text-xl font-bold text-gray-800">
+              {title}
+            </Dialog.Title>
             <Dialog.Close asChild>
               <button
                 className="p-2 rounded-full text-gray-500 hover:text-gray-800 focus:outline-none hover:cursor-pointer"
@@ -84,9 +87,6 @@ const ContentDialog: React.FC<ContentDialogProps> = ({
                 <XMarkIcon className="h-6 w-6" />
               </button>
             </Dialog.Close>
-            <Dialog.Title className="text-xl font-bold text-gray-800">
-              {title}
-            </Dialog.Title>
           </div>
 
           {/* Body with two columns */}

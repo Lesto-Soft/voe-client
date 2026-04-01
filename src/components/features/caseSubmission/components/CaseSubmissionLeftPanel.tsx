@@ -14,6 +14,8 @@ interface CaseSubmissionLeftPanelProps {
   userLookupError: ApolloError | undefined;
   notFoundUsername: string | null;
   fetchedName: string;
+  isAnonymous: boolean;
+  onToggleAnonymous: () => void;
   content: string;
   onContentChange: (value: string) => void;
   priority: CreateCaseMutationInput["priority"];
@@ -33,6 +35,8 @@ const CaseSubmissionLeftPanel: React.FC<CaseSubmissionLeftPanelProps> = ({
   userLookupError,
   notFoundUsername,
   fetchedName,
+  isAnonymous,
+  onToggleAnonymous,
   content,
   onContentChange,
   priority,
@@ -58,6 +62,29 @@ const CaseSubmissionLeftPanel: React.FC<CaseSubmissionLeftPanelProps> = ({
 
   return (
     <div className="rounded-2xl shadow-md bg-white p-6 h-full flex flex-col space-y-4 overflow-hidden">
+      {/* Anonymous toggle */}
+      <div
+        className="flex-shrink-0 flex items-center gap-3 cursor-pointer select-none"
+        onClick={onToggleAnonymous}
+        role="switch"
+        aria-checked={isAnonymous}
+      >
+        <div
+          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 cursor-pointer ${
+            isAnonymous ? "bg-blue-500" : "bg-gray-300"
+          }`}
+        >
+          <span
+            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 shadow ${
+              isAnonymous ? "translate-x-6" : "translate-x-1"
+            }`}
+          />
+        </div>
+        <span className="text-sm font-medium text-gray-700">
+          {t("caseSubmission.anonymousToggle", "Анонимно подаване")}
+        </span>
+      </div>
+
       <div className="flex-shrink-0 flex flex-col md:flex-row md:gap-x-4 space-y-4 md:space-y-0">
         <div className="flex-1">
           <label
@@ -71,9 +98,13 @@ const CaseSubmissionLeftPanel: React.FC<CaseSubmissionLeftPanelProps> = ({
             type="text"
             id="username"
             placeholder={t("caseSubmission.usernamePlaceholder")}
-            className="w-full border border-gray-300 p-3 rounded-md focus:outline-none focus:border-indigo-500"
+            className={`w-full border border-gray-300 p-3 rounded-md focus:outline-none focus:border-indigo-500 ${
+              isAnonymous ? "bg-gray-100 cursor-not-allowed" : ""
+            }`}
             value={usernameInput}
             onChange={handleUsernameChange}
+            disabled={isAnonymous}
+            readOnly={isAnonymous}
           />
           <div className="h-5 mt-1">
             {isUserLoading && (

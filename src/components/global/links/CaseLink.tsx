@@ -34,7 +34,7 @@ const CaseLink: React.FC<ICaseLinkProps> = ({
   const isClosed = my_case.status === "CLOSED";
 
   const baseClasses =
-    "relative inline-flex items-center justify-center w-full px-2 py-1 rounded-md transition-colors duration-150 border shadow-sm";
+    "relative inline-flex items-center justify-center px-2 py-1 rounded-md transition-colors duration-150 border shadow-sm";
 
   const disabledClasses = "opacity-60 cursor-not-allowed";
   const title = isAllowed

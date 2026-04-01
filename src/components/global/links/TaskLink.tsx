@@ -2,7 +2,7 @@ import React from "react";
 import { Link } from "react-router";
 import { ITask } from "../../../db/interfaces";
 import { useCurrentUser } from "../../../context/UserContext";
-import { ROLES } from "../../../utils/GLOBAL_PARAMETERS";
+import { ROLES, EXAMPLE_TASK_NUMBER } from "../../../utils/GLOBAL_PARAMETERS";
 
 interface TaskLinkProps {
   task: ITask;
@@ -16,16 +16,18 @@ const TaskLink: React.FC<TaskLinkProps> = ({ task }) => {
   }
 
   const isAdmin = currentUser.role?._id === ROLES.ADMIN;
+  const isExampleTask = task.taskNumber === EXAMPLE_TASK_NUMBER;
   const hasAccess =
+    isExampleTask ||
     isAdmin ||
     currentUser.accessibleTasks?.some((t) => t._id === task._id);
 
   const baseClasses =
-    "inline-flex items-center justify-center w-full px-2 py-1 rounded-md text-xs font-bold transition-colors duration-150 ease-in-out border shadow-sm";
+    "inline-flex items-center justify-center px-2 py-1 rounded-md font-bold transition-colors duration-150 ease-in-out border shadow-sm";
 
   const linkContent = (
     <>
-      <span className="font-bold">#{task.taskNumber}</span>
+      <span className="font-bold">{task.taskNumber}</span>
       <svg
         className="ml-1 h-4 w-4 text-rose-400"
         fill="none"

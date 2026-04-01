@@ -22,6 +22,7 @@ import { PieSegmentData } from "../components/charts/PieChart";
 
 // Hooks
 import useUserActivityStats from "../hooks/useUserActivityStats";
+import useDocumentTitle from "../hooks/useDocumentTitle";
 import { useCurrentUser } from "../context/UserContext";
 
 // UI Components
@@ -81,6 +82,7 @@ const User: React.FC = () => {
   const { username: userUsernameFromParams } = useParams<{
     username: string;
   }>();
+  useDocumentTitle(userUsernameFromParams ? `Потребител: ${userUsernameFromParams}` : undefined);
 
   const [layout, setLayout] = useState<"standard" | "analytics">("standard");
 
@@ -764,30 +766,14 @@ const User: React.FC = () => {
   }, [filteredActivities, LIFECYCLE_TYPES, ENTRY_TYPES]);
 
   const filteredTextStats = useMemo((): UserTextStats => {
-    const filteredCases = filteredActivities
-      .map((a) => {
-        if (a.activityType === "case") return a.item as ICase;
-        if (a.activityType === "answer") return (a.item as IAnswer).case;
-        if (a.activityType === "comment")
-          return (a.item as IComment).case || (a.item as IComment).answer?.case;
-        if (a.activityType === "rating")
-          return (a.item as RatedCaseActivity).case;
-        if (
-          a.activityType === "base_approval" ||
-          a.activityType === "finance_approval"
-        )
-          return (a.item as IAnswer).case;
-        return null;
-      })
-      .filter((c): c is ICase => !!c);
-
-    const uniqueCases = Array.from(
-      new Map(filteredCases.map((c) => [c._id, c])).values()
-    );
+    // Average rating based only on the user's own submitted cases
+    const ownCases = filteredActivities
+      .filter((a) => a.activityType === "case")
+      .map((a) => a.item as ICase);
 
     let ratedCasesSum = 0;
     let ratedCasesCount = 0;
-    uniqueCases.forEach((c) => {
+    ownCases.forEach((c) => {
       if (
         c.calculatedRating !== null &&
         c.calculatedRating !== undefined &&

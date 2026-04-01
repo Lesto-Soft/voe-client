@@ -147,6 +147,8 @@ const CaseSubmissionPage: React.FC = () => {
             userLookupError={formState.userLookupError}
             notFoundUsername={formState.notFoundUsername}
             fetchedName={formState.fetchedName}
+            isAnonymous={formState.isAnonymous}
+            onToggleAnonymous={formState.toggleAnonymous}
             content={formState.content}
             onContentChange={formState.setContent}
             priority={formState.priority}

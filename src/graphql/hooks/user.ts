@@ -14,6 +14,7 @@ import {
   REQUEST_PASSWORD_RESET,
   RESET_PASSWORD,
   VERIFY_RESET_TOKEN,
+  UPDATE_NOTIFICATION_PREFERENCES,
 } from "../query/user"; // Adjust path if needed
 import {
   CREATE_USER,
@@ -425,4 +426,31 @@ export const useResetPassword = () => {
   );
 
   return { resetPassword, loading, error };
+};
+
+export interface NotificationPreferencesInput {
+  caseNotifications?: boolean;
+  taskNotifications?: boolean;
+  mentions?: boolean;
+  reminders?: boolean;
+}
+
+export const useUpdateNotificationPreferences = () => {
+  const [updateMutation, { loading, error }] = useMutation(
+    UPDATE_NOTIFICATION_PREFERENCES,
+  );
+
+  const updatePreferences = useCallback(
+    async (input: NotificationPreferencesInput) => {
+      try {
+        const response = await updateMutation({ variables: { input } });
+        return response.data?.updateNotificationPreferences;
+      } catch (err) {
+        throw err;
+      }
+    },
+    [updateMutation],
+  );
+
+  return { updatePreferences, loading, error };
 };

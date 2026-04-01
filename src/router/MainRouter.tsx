@@ -27,6 +27,7 @@ import ResetPassword from "../pages/ResetPassword";
 import DashboardPage from "../pages/Dashboard";
 import TasksPage from "../pages/Tasks";
 import TaskDetailPage from "../pages/TaskDetail";
+import SettingsPage from "../pages/Settings";
 
 const AppLayout = () => {
   const { me, error, loading } = useGetMe();
@@ -126,6 +127,14 @@ export const mainRouter = createBrowserRouter([
         element: (
           <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.EXPERT]}>
             <RatingManagement />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "/settings",
+        element: (
+          <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.EXPERT]}>
+            <SettingsPage />
           </ProtectedRoute>
         ),
       },

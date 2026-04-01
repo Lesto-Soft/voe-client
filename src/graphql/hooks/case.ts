@@ -80,7 +80,7 @@ export function buildCaseQueryVariables(input: any) {
     },
   };
   if (query) variables.input.query = query;
-  if (case_number) variables.input.case_number = case_number;
+  if (case_number != null) variables.input.case_number = case_number;
   if (priority) variables.input.priority = priority;
   if (type) variables.input.type = type;
   if (creatorId) variables.input.creatorId = creatorId;

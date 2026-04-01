@@ -28,8 +28,10 @@ import ConfirmActionDialog from "../components/modals/ConfirmActionDialog";
 import { useCurrentUser } from "../context/UserContext";
 import { ROLES, TIERS } from "../utils/GLOBAL_PARAMETERS";
 import ClearFiltersButton from "../components/global/ClearFiltersButton";
+import useDocumentTitle from "../hooks/useDocumentTitle";
 
 const RatingManagement: React.FC = () => {
+  useDocumentTitle("Рейтинг метрики");
   const {
     filterName,
     setFilterName,

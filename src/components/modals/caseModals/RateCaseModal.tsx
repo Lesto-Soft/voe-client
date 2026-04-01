@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
-import * as Tooltip from "@radix-ui/react-tooltip";
+import HoverTooltip from "../../global/HoverTooltip";
 import { StarIcon as StarSolid } from "@heroicons/react/24/solid";
 import {
   QuestionMarkCircleIcon,
@@ -338,7 +338,6 @@ const RateCaseModal: React.FC<RateCaseModalProps> = ({
           if (!open) handleAttemptClose();
         }}
       >
-        <Tooltip.Provider>
           <Dialog.Portal>
             <Dialog.Overlay className="fixed inset-0 z-40 bg-black/50 data-[state=open]:animate-overlayShow" />
             <Dialog.Content
@@ -396,27 +395,20 @@ const RateCaseModal: React.FC<RateCaseModalProps> = ({
                                 <label className="text-sm font-medium text-gray-700">
                                   {metric.name}
                                 </label>
-                                <Tooltip.Root delayDuration={100}>
-                                  <Tooltip.Trigger asChild>
-                                    <button
-                                      type="button"
-                                      className="text-gray-400 hover:text-gray-600 focus:outline-none"
-                                      tabIndex={-1}
-                                    >
-                                      <QuestionMarkCircleIcon className="h-5 w-5" />
-                                    </button>
-                                  </Tooltip.Trigger>
-                                  <Tooltip.Portal>
-                                    <Tooltip.Content
-                                      className="z-[99] max-w-sm rounded-lg bg-gray-900 text-white p-4 shadow-xl"
-                                      sideOffset={5}
-                                      align="start"
-                                    >
-                                      <RatingHintContent metric={metric} />
-                                      <Tooltip.Arrow className="fill-gray-900" />
-                                    </Tooltip.Content>
-                                  </Tooltip.Portal>
-                                </Tooltip.Root>
+                                <HoverTooltip
+                                  content={<RatingHintContent metric={metric} />}
+                                  delayDuration={100}
+                                  contentClassName="z-[99] max-w-sm rounded-lg bg-gray-900 text-white p-4 shadow-xl"
+                                  arrowClassName="fill-gray-900"
+                                >
+                                  <button
+                                    type="button"
+                                    className="text-gray-400 hover:text-gray-600 focus:outline-none"
+                                    tabIndex={-1}
+                                  >
+                                    <QuestionMarkCircleIcon className="h-5 w-5" />
+                                  </button>
+                                </HoverTooltip>
                               </div>
                               <div className="flex items-center gap-2">
                                 <div>
@@ -661,7 +653,6 @@ const RateCaseModal: React.FC<RateCaseModalProps> = ({
                 )}
             </Dialog.Content>
           </Dialog.Portal>
-        </Tooltip.Provider>
       </Dialog.Root>
 
       <ConfirmActionDialog

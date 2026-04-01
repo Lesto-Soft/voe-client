@@ -18,12 +18,14 @@ import EditAnswerButton from "../../global/EditAnswerButton";
 import { useDeleteAnswer } from "../../../graphql/hooks/answer";
 import DeleteModal from "../../modals/DeleteModal";
 import { renderContentSafely } from "../../../utils/contentRenderer";
-import { ROLES } from "../../../utils/GLOBAL_PARAMETERS";
+import { ROLES, EXAMPLE_CASE_NUMBER } from "../../../utils/GLOBAL_PARAMETERS";
 import UserAvatar from "../../cards/UserAvatar";
 import {
   ChevronDownIcon,
   ChevronUpIcon,
   ChatBubbleOvalLeftEllipsisIcon,
+  BarsArrowDownIcon,
+  BarsArrowUpIcon,
 } from "@heroicons/react/24/solid";
 import ActionMenu from "../../global/ActionMenu";
 
@@ -47,6 +49,7 @@ const Answer: React.FC<{
   ) => void;
   onToggleCommentBox: () => void;
   onCommentSubmitted: () => void;
+  displayNumber?: number;
 }> = ({
   answer,
   me,
@@ -65,6 +68,7 @@ const Answer: React.FC<{
   onSetCommentState,
   onToggleCommentBox,
   onCommentSubmitted,
+  displayNumber,
 }) => {
   const { t } = useTranslation("answer");
   const approved = !!answer.approved;
@@ -88,7 +92,16 @@ const Answer: React.FC<{
   );
 
   const [isCommentScrolled, setIsCommentScrolled] = useState(false);
+  const [commentSortAsc, setCommentSortAsc] = useState(false);
   const commentsContainerRef = useRef<HTMLDivElement>(null);
+  const answerContentRef = useRef<HTMLDivElement>(null);
+  const [isContentOverflowing, setIsContentOverflowing] = useState(false);
+  const [isContentExpanded, setIsContentExpanded] = useState(false);
+
+  useEffect(() => {
+    const el = answerContentRef.current;
+    if (el) setIsContentOverflowing(el.scrollHeight > el.clientHeight);
+  }, [answer.content]);
 
   useEffect(() => {
     const container = commentsContainerRef.current;
@@ -120,7 +133,9 @@ const Answer: React.FC<{
   const canInteractWithGeneralApproval = isCategoryManagerForCase || isAdmin;
   const { deleteAnswer } = useDeleteAnswer(caseNumber);
 
+  const isExampleCase = caseNumber === EXAMPLE_CASE_NUMBER;
   const canEditOrDelete =
+    !isExampleCase &&
     (isCreator || isAdmin) &&
     (status === "OPEN" ||
       status === "IN_PROGRESS" ||
@@ -131,8 +146,10 @@ const Answer: React.FC<{
     !approved && status !== "CLOSED" && status !== "AWAITING_FINANCE";
   const canUnapproveNow = approved;
   const showApproveBtn =
+    !isExampleCase &&
     canInteractWithGeneralApproval && (canApproveNow || canUnapproveNow);
   const showFinanceApproveBtn =
+    !isExampleCase &&
     me?.financial_approver === true &&
     answer.needs_finance === true &&
     approved === true;
@@ -223,8 +240,23 @@ const Answer: React.FC<{
 
   const answerContentAndAttachments = (
     <>
+      {(isContentOverflowing || isContentExpanded) && (
+        <button
+          onClick={() => setIsContentExpanded((prev) => !prev)}
+          className="flex items-center gap-1 text-xs text-blue-500 hover:text-blue-700 mt-2 cursor-pointer"
+        >
+          {isContentExpanded ? (
+            <>Скрий <ChevronUpIcon className="h-3 w-3" /></>
+          ) : (
+            <>Покажи цялото съдържание <ChevronDownIcon className="h-3 w-3" /></>
+          )}
+        </button>
+      )}
       <div
-        className={`text-gray-800 whitespace-pre-line break-words overflow-y-auto rounded p-3 mt-4 max-h-52 ${
+        ref={answerContentRef}
+        className={`text-gray-800 whitespace-pre-line break-words rounded p-3 mt-2 ${
+          isContentExpanded ? "" : "max-h-52 overflow-y-auto"
+        } ${
           approved
             ? answer.needs_finance
               ? answer.financial_approved
@@ -287,18 +319,19 @@ const Answer: React.FC<{
         }`}
       >
         {/* Left Side: Add Comment Button */}
-        <button
-          className="cursor-pointer text-gray-800 bg-gray-100 hover:bg-gray-200 absolute left-2 top-1/2 -translate-y-1/2 w-42 px-2 py-1 rounded text-sm font-semibold transition-colors duration-200"
-          onClick={handleToggleCommentBox}
-        >
-          <div className="flex w-full items-center gap-2">
-            <ChatBubbleOvalLeftEllipsisIcon className="h-5 w-5 flex-shrink-0 text-gray-500" />
-            <div className="flex-1 text-center">
-              {isCommentBoxVisible ? t("cancelWriting") : t("addComment")}{" "}
-              {/* MODIFIED */}
+        {(!isExampleCase || isAdmin) && (
+          <button
+            className="cursor-pointer text-gray-800 bg-gray-100 hover:bg-gray-200 absolute left-2 top-1/2 -translate-y-1/2 w-42 px-2 py-1 rounded text-sm font-semibold transition-colors duration-200"
+            onClick={handleToggleCommentBox}
+          >
+            <div className="flex w-full items-center gap-2">
+              <ChatBubbleOvalLeftEllipsisIcon className="h-5 w-5 flex-shrink-0 text-gray-500" />
+              <div className="flex-1 text-center">
+                {isCommentBoxVisible ? t("cancelWriting") : t("addComment")}{" "}
+              </div>
             </div>
-          </div>
-        </button>
+          </button>
+        )}
 
         {/* Center: Toggle Comments List */}
         {answer.comments && answer.comments.length > 0 && (
@@ -335,6 +368,21 @@ const Answer: React.FC<{
             </span>
           </button>
         )}
+
+        {/* Right Side: Sort Toggle (only when comments are visible and > 1) */}
+        {areCommentsVisible && answer.comments && answer.comments.length > 1 && (
+          <button
+            onClick={() => setCommentSortAsc((prev) => !prev)}
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer p-1 rounded hover:bg-gray-50"
+            title={commentSortAsc ? "Най-нови първо" : "Най-стари първо"}
+          >
+            {commentSortAsc ? (
+              <BarsArrowUpIcon className="h-4 w-4" />
+            ) : (
+              <BarsArrowDownIcon className="h-4 w-4" />
+            )}
+          </button>
+        )}
       </div>
 
       {isCommentBoxVisible && (
@@ -366,29 +414,40 @@ const Answer: React.FC<{
             ref={commentsContainerRef}
             className="pl-4 max-h-96 overflow-y-auto custom-scrollbar-xs space-y-2"
           >
-            {answer.comments.map((comment: IComment) => (
-              <div
-                key={comment._id}
-                ref={(node) => {
-                  if (node) {
-                    commentRefs.current.set(comment._id, node);
-                  } else {
-                    commentRefs.current.delete(comment._id);
-                  }
-                }}
-                className="ml-1 mt-1 mr-2"
-              >
-                <Comment
-                  key={comment._id}
-                  comment={comment}
-                  me={me}
-                  caseNumber={caseNumber}
-                  mentions={mentions}
-                  parentType="answer"
-                  targetId={childTargetId}
-                />
-              </div>
-            ))}
+            {(() => {
+              const sorted = [...answer.comments].sort((a, b) => {
+                const dateA = new Date(a.date).getTime();
+                const dateB = new Date(b.date).getTime();
+                return commentSortAsc ? dateA - dateB : dateB - dateA;
+              });
+              const total = sorted.length;
+              return sorted.map((comment: IComment, commentIndex: number) => {
+                const commentNum = commentSortAsc ? commentIndex + 1 : total - commentIndex;
+                return (
+                  <div
+                    key={comment._id}
+                    ref={(node) => {
+                      if (node) {
+                        commentRefs.current.set(comment._id, node);
+                      } else {
+                        commentRefs.current.delete(comment._id);
+                      }
+                    }}
+                    className="ml-1 mt-1 mr-2"
+                  >
+                    <Comment
+                      comment={comment}
+                      displayNumber={displayNumber != null ? `${displayNumber}.${commentNum}` : undefined}
+                      me={me}
+                      caseNumber={caseNumber}
+                      mentions={mentions}
+                      parentType="answer"
+                      targetId={childTargetId}
+                    />
+                  </div>
+                );
+              });
+            })()}
           </div>
 
           <div
@@ -407,7 +466,7 @@ const Answer: React.FC<{
   return (
     <div className="mt-3 mb-3 min-w-full px-5 transition-all duration-500 relative">
       <div
-        className={`bg-white shadow-md rounded-lg p-4 transition-colors ${
+        className={`relative bg-white shadow-md rounded-lg p-4 transition-colors ${
           approved
             ? "border-l-4 border-l-btnGreenHover"
             : "border-l-4 border-transparent"
@@ -415,8 +474,13 @@ const Answer: React.FC<{
         id={`answers-${answer._id}`}
         ref={answerRef}
       >
+        {displayNumber != null && (
+          <span className="absolute top-2 left-2 text-xs font-bold text-gray-400">
+            #{displayNumber}
+          </span>
+        )}
         {/* --- NEW UNIFIED HEADER --- */}
-        <div className="flex justify-between items-start gap-4 mb-3">
+        <div className={`flex justify-between items-start gap-4 mb-3 ${displayNumber != null ? "ml-5" : ""}`}>
           {/* Left side: Avatar, Creator Info, and potentially Buttons */}
           <div className="flex min-w-0 flex-grow items-center gap-3">
             <UserAvatar

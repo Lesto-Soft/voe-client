@@ -1,5 +1,6 @@
 // src/components/forms/partials/PasswordFields.tsx
 import React from "react";
+import PasswordInput from "../../ui/PasswordInput";
 
 interface PasswordFieldsProps {
   isEditing: boolean;
@@ -43,8 +44,7 @@ const PasswordFields: React.FC<PasswordFieldsProps> = ({
             >
               Парола<span className="text-red-500">*</span>
             </label>
-            <input
-              type="password"
+            <PasswordInput
               id="password"
               value={password}
               onChange={(e) => setPassword?.(e.target.value)}
@@ -62,8 +62,7 @@ const PasswordFields: React.FC<PasswordFieldsProps> = ({
             >
               Повтори парола<span className="text-red-500">*</span>
             </label>
-            <input
-              type="password"
+            <PasswordInput
               id="confirmPassword"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword?.(e.target.value)}
@@ -96,8 +95,7 @@ const PasswordFields: React.FC<PasswordFieldsProps> = ({
                 (оставете празно, ако не променяте)
               </span>
             </label>
-            <input
-              type="password"
+            <PasswordInput
               id="newPassword"
               value={newPassword}
               onChange={(e) => setNewPassword?.(e.target.value)}
@@ -115,8 +113,7 @@ const PasswordFields: React.FC<PasswordFieldsProps> = ({
             >
               Потвърди нова парола
             </label>
-            <input
-              type="password"
+            <PasswordInput
               id="confirmNewPassword"
               value={confirmNewPassword}
               onChange={(e) => setConfirmNewPassword?.(e.target.value)}

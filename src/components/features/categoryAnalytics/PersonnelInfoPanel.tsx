@@ -10,7 +10,7 @@ import {
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { TagIcon } from "@heroicons/react/24/solid";
-import * as Tooltip from "@radix-ui/react-tooltip";
+import HoverTooltip from "../../global/HoverTooltip";
 
 // Note: No need for useCurrentUser or role checks here.
 // All permission logic is handled in the parent `Category.tsx` page.
@@ -173,24 +173,14 @@ const PersonnelInfoPanel: React.FC<PersonnelInfoPanelProps> = ({
               <UserGroupIcon className="h-5 w-5 mr-1.5 text-teal-600" />
               Експерти
               {isMisconfigured && hasNoExperts && (
-                <Tooltip.Provider delayDuration={100}>
-                  <Tooltip.Root>
-                    <Tooltip.Trigger asChild>
-                      <span className="ml-1.5">
-                        <ExclamationTriangleIcon className="h-5 w-5 text-yellow-500" />
-                      </span>
-                    </Tooltip.Trigger>
-                    <Tooltip.Portal>
-                      <Tooltip.Content
-                        sideOffset={5}
-                        className="z-50 max-w-xs rounded-md bg-gray-800 px-3 py-1.5 text-sm text-white shadow-lg"
-                      >
-                        Няма посочени експерти
-                        <Tooltip.Arrow className="fill-gray-800" />
-                      </Tooltip.Content>
-                    </Tooltip.Portal>
-                  </Tooltip.Root>
-                </Tooltip.Provider>
+                <HoverTooltip
+                  content="Няма посочени експерти"
+                  delayDuration={100}
+                >
+                  <span className="ml-1.5">
+                    <ExclamationTriangleIcon className="h-5 w-5 text-yellow-500" />
+                  </span>
+                </HoverTooltip>
               )}
             </button>
             <button
@@ -204,24 +194,14 @@ const PersonnelInfoPanel: React.FC<PersonnelInfoPanelProps> = ({
               <UserGroupIcon className="h-5 w-5 mr-1.5 text-purple-600" />
               Мениджъри
               {isMisconfigured && hasNoManagers && (
-                <Tooltip.Provider delayDuration={100}>
-                  <Tooltip.Root>
-                    <Tooltip.Trigger asChild>
-                      <span className="ml-1.5">
-                        <ExclamationTriangleIcon className="h-5 w-5 text-yellow-500" />
-                      </span>
-                    </Tooltip.Trigger>
-                    <Tooltip.Portal>
-                      <Tooltip.Content
-                        sideOffset={5}
-                        className="z-50 max-w-xs rounded-md bg-gray-800 px-3 py-1.5 text-sm text-white shadow-lg"
-                      >
-                        Няма посочени мениджъри
-                        <Tooltip.Arrow className="fill-gray-800" />
-                      </Tooltip.Content>
-                    </Tooltip.Portal>
-                  </Tooltip.Root>
-                </Tooltip.Provider>
+                <HoverTooltip
+                  content="Няма посочени мениджъри"
+                  delayDuration={100}
+                >
+                  <span className="ml-1.5">
+                    <ExclamationTriangleIcon className="h-5 w-5 text-yellow-500" />
+                  </span>
+                </HoverTooltip>
               )}
             </button>
           </div>

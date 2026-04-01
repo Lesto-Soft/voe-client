@@ -21,6 +21,7 @@ interface CommentProps {
   mentions: { name: string; username: string; _id: string }[];
   targetId?: string | null;
   parentType?: "case" | "answer";
+  displayNumber?: number | string;
 }
 
 const Comment: React.FC<CommentProps> = ({
@@ -30,6 +31,7 @@ const Comment: React.FC<CommentProps> = ({
   mentions,
   targetId,
   parentType,
+  displayNumber,
 }) => {
   const { deleteComment } = useDeleteComment(caseNumber);
   const commentRef = useRef<HTMLDivElement>(null);
@@ -92,6 +94,11 @@ const Comment: React.FC<CommentProps> = ({
    this flex container to truncate properly.
  */}
         <div className="flex min-w-0 flex-row items-center gap-2">
+          {displayNumber != null && (
+            <span className="text-xs font-bold text-gray-400 flex-shrink-0">
+              #{displayNumber}
+            </span>
+          )}
           {/* `flex-shrink-0` prevents the UserLink from being squished */}
           <div className="flex-shrink-0">
             <UserLink user={comment.creator} />

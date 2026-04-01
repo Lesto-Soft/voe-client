@@ -47,7 +47,9 @@ export interface TaskFiltersInput {
   creatorId?: string;
   caseId?: string;
   taskIds?: string[];
+  taskNumber?: string;
   searchQuery?: string;
+  descriptionQuery?: string;
   startDate?: string;
   endDate?: string;
   excludeAssigneeId?: string;
@@ -145,6 +147,7 @@ export function buildTaskQueryVariables(input?: TaskFiltersInput) {
     caseId,
     taskIds,
     searchQuery,
+    descriptionQuery,
     startDate,
     endDate,
     excludeAssigneeId,
@@ -171,7 +174,9 @@ export function buildTaskQueryVariables(input?: TaskFiltersInput) {
   if (creatorId) variables.input.creatorId = creatorId;
   if (caseId) variables.input.caseId = caseId;
   if (taskIds && taskIds.length > 0) variables.input.taskIds = taskIds;
+  if (input?.taskNumber) variables.input.taskNumber = input.taskNumber;
   if (searchQuery) variables.input.searchQuery = searchQuery;
+  if (descriptionQuery) variables.input.descriptionQuery = descriptionQuery;
   if (startDate) variables.input.startDate = startDate;
   if (endDate) variables.input.endDate = endDate;
   if (excludeAssigneeId) variables.input.excludeAssigneeId = excludeAssigneeId;
@@ -210,7 +215,7 @@ export const useGetTaskById = (taskId?: string) => {
 export const useGetTaskByNumber = (taskNumber?: number) => {
   const { loading, error, data, refetch } = useQuery(GET_TASK_BY_NUMBER, {
     variables: { taskNumber },
-    skip: !taskNumber || taskNumber <= 0,
+    skip: taskNumber == null || taskNumber < 0,
   });
 
   const task = data?.getTaskByNumber || null;

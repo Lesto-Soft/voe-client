@@ -1,6 +1,6 @@
 // src/components/forms/partials/ColorPicker.tsx
 import React, { useMemo } from "react";
-import * as Tooltip from "@radix-ui/react-tooltip";
+import HoverTooltip from "../../global/HoverTooltip";
 import {
   CheckIcon,
   NoSymbolIcon,
@@ -52,67 +52,60 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
         )}
       </div>
       <div className="grid grid-cols-12 gap-2">
-        <Tooltip.Provider delayDuration={100}>
-          {paletteColors.map((color) => {
-            const isSelected =
-              color.hexCode.toUpperCase() === selectedColor.toUpperCase();
-            const usedByCategory = usedColorMap.get(
-              color.hexCode.toUpperCase()
-            );
-            const isDisabled = !!(usedByCategory && !isSelected);
-            const tooltipContent = isDisabled
-              ? `Използван от: ${usedByCategory}`
-              : color.label || color.hexCode;
+        {paletteColors.map((color) => {
+          const isSelected =
+            color.hexCode.toUpperCase() === selectedColor.toUpperCase();
+          const usedByCategory = usedColorMap.get(
+            color.hexCode.toUpperCase()
+          );
+          const isDisabled = !!(usedByCategory && !isSelected);
+          const tooltipContent = isDisabled
+            ? `Използван от: ${usedByCategory}`
+            : color.label || color.hexCode;
 
-            const iconColorClass =
-              getContrastingTextColor(color.hexCode) === "dark"
-                ? "text-gray-800"
-                : "text-white";
+          const iconColorClass =
+            getContrastingTextColor(color.hexCode) === "dark"
+              ? "text-gray-800"
+              : "text-white";
 
-            return (
-              <Tooltip.Root key={color._id}>
-                <Tooltip.Trigger asChild>
-                  <button
-                    type="button"
-                    onClick={() => onSelectColor(color.hexCode)}
-                    disabled={isDisabled}
-                    className={`relative flex h-8 w-full items-center justify-center rounded-md border-2 transition-transform duration-150
-                      ${
-                        isSelected
-                          ? "scale-110 border-blue-500 shadow-lg"
-                          : "border-transparent"
-                      }
-                      ${
-                        isDisabled
-                          ? "cursor-not-allowed opacity-30"
-                          : "cursor-pointer hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
-                      }`}
-                    style={{ backgroundColor: color.hexCode }}
-                    aria-label={`Select color ${color.label || color.hexCode}`}
-                  >
-                    {isSelected && (
-                      <CheckIcon className={`h-5 w-5 ${iconColorClass}`} />
-                    )}
-                    {isDisabled && (
-                      <NoSymbolIcon
-                        className={`absolute h-5 w-5 ${iconColorClass}`}
-                      />
-                    )}
-                  </button>
-                </Tooltip.Trigger>
-                <Tooltip.Portal>
-                  <Tooltip.Content
-                    sideOffset={5}
-                    className="z-50 max-w-xs rounded-md bg-gray-800 px-2 py-1 text-sm text-white shadow-lg"
-                  >
-                    {tooltipContent}
-                    <Tooltip.Arrow className="fill-gray-800" />
-                  </Tooltip.Content>
-                </Tooltip.Portal>
-              </Tooltip.Root>
-            );
-          })}
-        </Tooltip.Provider>
+          return (
+            <HoverTooltip
+              key={color._id}
+              content={tooltipContent}
+              delayDuration={100}
+              contentClassName="z-50 max-w-xs rounded-md bg-gray-800 px-2 py-1 text-sm text-white shadow-lg"
+              wrapperClassName="flex"
+            >
+              <button
+                type="button"
+                onClick={() => onSelectColor(color.hexCode)}
+                disabled={isDisabled}
+                className={`relative flex h-8 w-full items-center justify-center rounded-md border-2 transition-transform duration-150
+                  ${
+                    isSelected
+                      ? "scale-110 border-blue-500 shadow-lg"
+                      : "border-transparent"
+                  }
+                  ${
+                    isDisabled
+                      ? "cursor-not-allowed opacity-30"
+                      : "cursor-pointer hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                  }`}
+                style={{ backgroundColor: color.hexCode }}
+                aria-label={`Select color ${color.label || color.hexCode}`}
+              >
+                {isSelected && (
+                  <CheckIcon className={`h-5 w-5 ${iconColorClass}`} />
+                )}
+                {isDisabled && (
+                  <NoSymbolIcon
+                    className={`absolute h-5 w-5 ${iconColorClass}`}
+                  />
+                )}
+              </button>
+            </HoverTooltip>
+          );
+        })}
       </div>
     </div>
   );

@@ -23,19 +23,21 @@ const TaskListEmpty: React.FC = () => (
 const TaskListSkeleton: React.FC<{ viewMode: "grid" | "table" }> = ({ viewMode }) => {
   if (viewMode === "table") {
     return (
-      <div className="bg-white shadow-md rounded-lg overflow-hidden">
+      <div className="bg-white shadow-md rounded-lg overflow-hidden border border-gray-200">
         <div className="animate-pulse">
-          <div className="h-12 bg-gray-100" />
-          {[...Array(5)].map((_, i) => (
-            <div key={i} className="h-16 border-t border-gray-200 flex items-center px-6 gap-4">
-              <div className="h-4 bg-gray-200 rounded w-16" />
-              <div className="h-4 bg-gray-200 rounded w-48" />
-              <div className="h-4 bg-gray-200 rounded w-16" />
-              <div className="h-4 bg-gray-200 rounded w-20" />
-              <div className="h-4 bg-gray-200 rounded w-24" />
-              <div className="h-4 bg-gray-200 rounded w-24" />
-              <div className="h-4 bg-gray-200 rounded w-24" />
-              <div className="h-4 bg-gray-200 rounded w-20" />
+          <div className="h-13 bg-gray-500 rounded-t-lg" />
+          {[...Array(10)].map((_, i) => (
+            <div key={i} className="h-16 border-t border-gray-200 flex items-center px-3 gap-3">
+              <div className="h-4 bg-gray-200 rounded" style={{ width: "5%" }} />
+              <div className="h-4 bg-gray-200 rounded" style={{ width: "7%" }} />
+              <div className="h-4 bg-gray-200 rounded" style={{ width: "6%" }} />
+              <div className="h-4 bg-gray-200 rounded" style={{ width: "10%" }} />
+              <div className="h-4 bg-gray-200 rounded" style={{ width: "10%" }} />
+              <div className="h-4 bg-gray-200 rounded" style={{ width: "14%" }} />
+              <div className="h-4 bg-gray-200 rounded" style={{ width: "14%" }} />
+              <div className="h-4 bg-gray-200 rounded" style={{ width: "10%" }} />
+              <div className="h-4 bg-gray-200 rounded" style={{ width: "10%" }} />
+              <div className="h-4 bg-gray-200 rounded" style={{ width: "9%" }} />
             </div>
           ))}
         </div>
@@ -45,20 +47,30 @@ const TaskListSkeleton: React.FC<{ viewMode: "grid" | "table" }> = ({ viewMode }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-      {[...Array(8)].map((_, i) => (
-        <div key={i} className="bg-white p-4 rounded-lg shadow-md border-t-8 border-gray-200 h-52 animate-pulse">
-          <div className="flex justify-between items-start mb-4">
+      {[...Array(10)].map((_, i) => (
+        <div key={i} className="bg-white p-4 rounded-lg shadow-md border-t-8 border-gray-200 h-52 animate-pulse flex flex-col">
+          {/* 1. Title + Status */}
+          <div className="flex justify-between items-start">
             <div className="h-5 bg-gray-200 rounded w-3/4" />
             <div className="h-5 bg-gray-200 rounded w-16" />
           </div>
+          {/* 2. Description */}
+          <div className="h-3 bg-gray-200 rounded w-2/3 mt-2" />
+          {/* 3. Task + Case links */}
+          <div className="flex gap-2 mt-2">
+            <div className="h-4 bg-gray-200 rounded w-16" />
+            <div className="h-4 bg-gray-200 rounded w-16" />
+          </div>
+          {/* Spacer */}
           <div className="flex-grow" />
-          <div className="space-y-3 mt-auto">
-            <div className="h-4 bg-gray-200 rounded w-1/2" />
-            <div className="h-4 bg-gray-200 rounded w-2/3" />
-            <div className="flex justify-between pt-3 border-t border-gray-100">
-              <div className="h-4 bg-gray-200 rounded w-24" />
-              <div className="h-6 bg-gray-200 rounded-full w-20" />
+          {/* Bottom metadata */}
+          <div className="border-t border-gray-100 pt-2 space-y-2">
+            <div className="flex items-center gap-2">
+              <div className="h-3 bg-gray-200 rounded w-20" />
+              <div className="h-3 bg-gray-200 rounded w-3" />
+              <div className="h-3 bg-gray-200 rounded w-20" />
             </div>
+            <div className="h-3 bg-gray-200 rounded w-28" />
           </div>
         </div>
       ))}

@@ -8,6 +8,7 @@ import {
   ExclamationTriangleIcon,
 } from "@heroicons/react/24/solid";
 import ForgotPasswordModal from "../components/modals/ForgotPasswordModal";
+import PasswordInput from "../components/ui/PasswordInput";
 
 const FormHeader = ({ subtitleKey }: { subtitleKey: string }) => {
   const { t } = useTranslation();
@@ -138,7 +139,7 @@ const LoginForm = ({
           onSubmit={handleLoginSubmit}
           className={`flex flex-col justify-center items-center space-y-4 ${FORM_SECTION_MIN_HEIGHT}`}
         >
-          <div>
+          <div className="lg:w-88 w-full">
             <input
               type="text"
               id="username"
@@ -147,19 +148,18 @@ const LoginForm = ({
               onChange={(e) => setUsername(e.target.value)}
               required
               disabled={isLoading}
-              className="lg:w-88 w-full py-3 px-5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+              className="w-full py-3 px-5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
             />
           </div>
-          <div>
-            <input
-              type="password"
+          <div className="lg:w-88 w-full">
+            <PasswordInput
               id="password"
               placeholder={t("login.passwordPlaceholder", "Парола")}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
               disabled={isLoading}
-              className="lg:w-88 w-full py-3 px-5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+              className="w-full py-3 px-5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
             />
           </div>
 

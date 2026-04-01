@@ -5,8 +5,6 @@ import {
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import moment from "moment";
-// @ts-ignore
-import "moment/locale/bg"; // Import Bulgarian locale for moment
 
 moment.updateLocale("bg", {
   relativeTime: {
@@ -47,13 +45,17 @@ const ShowDate = ({
   centered = false,
   isCase = false,
   collapsible = false,
+  truncate = false,
+  defaultFull = false,
 }: {
   date: string;
   centered?: boolean;
   isCase?: boolean;
   collapsible?: boolean;
+  truncate?: boolean;
+  defaultFull?: boolean;
 }) => {
-  const [showDate, setShowDate] = useState(false);
+  const [showDate, setShowDate] = useState(defaultFull);
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const isMobile = useMediaQuery("(max-width: 40rem)"); // Corresponds to `sm:` breakpoint
   const containerRef = useRef<HTMLDivElement>(null);
@@ -92,9 +94,9 @@ const ShowDate = ({
   return (
     <div
       ref={containerRef}
-      className={`whitespace-nowrap text-sm text-gray-500 flex items-center flex-shrink-0 ${
-        centered ? "justify-center" : ""
-      } gap-1.5 group relative hover:cursor-pointer`}
+      className={`text-sm text-gray-500 flex items-center whitespace-nowrap ${
+        truncate ? "overflow-hidden min-w-0" : "flex-shrink-0"
+      } ${centered ? "justify-center" : ""} gap-1.5 group relative hover:cursor-pointer`}
       onClick={handleMainClick}
       title={
         isMobile && collapsible
@@ -106,10 +108,10 @@ const ShowDate = ({
     >
       <CalendarIcon className="!h-4 !w-4 min-w-4 min-h-4" />
       {!showDate && (
-        <span className={textVisibilityClass}>{relativeFormatDate}</span>
+        <span className={`${textVisibilityClass} ${truncate ? "truncate" : ""}`}>{relativeFormatDate}</span>
       )}
       {showDate && (
-        <span className={textVisibilityClass}>{fullFormatDate}</span>
+        <span className={`${textVisibilityClass} ${truncate ? "truncate" : ""}`}>{fullFormatDate}</span>
       )}
 
       {isMobile && collapsible && isPopoverOpen && (

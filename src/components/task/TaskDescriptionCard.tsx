@@ -47,7 +47,7 @@ const TaskDescriptionCard: React.FC<TaskDescriptionCardProps> = ({
         </div>
         <div>
           {attachments && attachments.length > 0 && (
-            <div className="flex flex-wrap gap-2 mt-2">
+            <div className="flex flex-wrap gap-2 mt-2 px-1">
               {attachments.map((file) => (
                 <ImagePreviewModal
                   key={file}

@@ -14,6 +14,7 @@ import { useLazyQuery, ApolloError } from "@apollo/client";
 import { useTranslation } from "react-i18next";
 import { TFunction } from "i18next";
 import { GET_USER_BY_USERNAME } from "../../../../graphql/query/user";
+import { ANONYMOUS_USERNAME } from "../../../../utils/GLOBAL_PARAMETERS";
 import {
   FormCategory,
   CreateCaseMutationInput,
@@ -47,6 +48,7 @@ export interface UseCaseFormStateReturn {
   isUserLoading: boolean;
   userLookupError: ApolloError | undefined;
   isSubmittingForm: boolean;
+  isAnonymous: boolean;
   setContent: React.Dispatch<React.SetStateAction<string>>;
   setPriority: React.Dispatch<
     React.SetStateAction<CreateCaseMutationInput["priority"]>
@@ -54,6 +56,7 @@ export interface UseCaseFormStateReturn {
   toggleCategory: (categoryName: string) => void;
   setAttachments: React.Dispatch<React.SetStateAction<File[]>>;
   handleUsernameChange: (event: ChangeEvent<HTMLInputElement>) => void;
+  toggleAnonymous: () => void;
   handleSubmit: (event: FormEvent<HTMLFormElement>) => Promise<void>;
   getCategoryClass: (categoryName: string) => string;
   getSubmitButtonClass: (isMutationLoading: boolean) => string;
@@ -90,6 +93,7 @@ export const useCaseFormState = ({
   const [notFoundUsername, setNotFoundUsername] = useState<string | null>(null);
   const [searchedUsername, setSearchedUsername] = useState<string | null>(null);
   const [isSubmittingForm, setIsSubmittingForm] = useState<boolean>(false);
+  const [isAnonymous, setIsAnonymous] = useState<boolean>(false);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [
@@ -102,6 +106,23 @@ export const useCaseFormState = ({
   const handleUsernameChange = (event: ChangeEvent<HTMLInputElement>): void => {
     setNotFoundUsername(null);
     setUsernameInput(event.target.value);
+  };
+
+  const toggleAnonymous = (): void => {
+    if (isAnonymous) {
+      // Turning OFF anonymous mode — clear the prefilled fields
+      setIsAnonymous(false);
+      setUsernameInput("");
+      setFetchedName("");
+      setFetchedCreatorId(null);
+      setNotFoundUsername(null);
+      setSearchedUsername(null);
+    } else {
+      // Turning ON anonymous mode — prefill with anonymous user
+      setIsAnonymous(true);
+      setUsernameInput(ANONYMOUS_USERNAME);
+      setNotFoundUsername(null);
+    }
   };
 
   useEffect(() => {
@@ -139,9 +160,12 @@ export const useCaseFormState = ({
 
     if (typeof userLookupData !== "undefined") {
       if (userLookupData?.getLeanUserByUsername) {
-        setFetchedName(userLookupData.getLeanUserByUsername.name);
-        setFetchedCreatorId(userLookupData.getLeanUserByUsername._id);
-        setNotFoundUsername(null);
+        // Only apply the result if the username input still matches what was searched
+        if (searchedUsername && usernameInput.trim() === searchedUsername) {
+          setFetchedName(userLookupData.getLeanUserByUsername.name);
+          setFetchedCreatorId(userLookupData.getLeanUserByUsername._id);
+          setNotFoundUsername(null);
+        }
       } else {
         setFetchedName("");
         setFetchedCreatorId(null);
@@ -344,6 +368,7 @@ export const useCaseFormState = ({
       setFetchedCreatorId(null);
       setSearchedUsername(null);
       setNotFoundUsername(null);
+      setIsAnonymous(false);
     } catch (err) {
       console.error("Submission error caught by form:", err);
       const errorMsg =
@@ -377,11 +402,13 @@ export const useCaseFormState = ({
     isUserLoading,
     userLookupError,
     isSubmittingForm,
+    isAnonymous,
     setContent,
     setPriority,
     toggleCategory,
     setAttachments,
     handleUsernameChange,
+    toggleAnonymous,
     handleSubmit,
     getCategoryClass,
     getSubmitButtonClass,

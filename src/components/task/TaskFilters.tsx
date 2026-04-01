@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { TaskStatus, CasePriority } from "../../db/interfaces";
 import {
   UserCircleIcon,
@@ -10,15 +10,19 @@ import {
   ChevronUpIcon,
   ChevronDownIcon,
   XMarkIcon,
-} from "@heroicons/react/24/solid";
+} from "@heroicons/react/24/outline";
 import { CalendarDaysIcon } from "@heroicons/react/24/outline";
 import ClearableInput from "../global/inputs/ClearableInput";
+import UserSelector from "../global/dropdown/UserSelector";
 import CustomMultiSelectDropdown from "../global/dropdown/CustomMultiSelectDropdown";
+import CustomDropdown from "../global/dropdown/CustomDropdown";
 import DateRangeSelector from "../features/userAnalytics/DateRangeSelector";
 import type {
   DueDateFilter,
   CaseRelationFilter,
 } from "../../graphql/hooks/task";
+import { useCurrentUser } from "../../context/UserContext";
+import { ROLES } from "../../utils/GLOBAL_PARAMETERS";
 
 export type TaskFilterMode =
   | "assignedToMe"
@@ -62,8 +66,16 @@ interface TaskFiltersProps {
   onDueDateFilterChange: (filters: DueDateFilter[]) => void;
   caseRelationFilter: CaseRelationFilter | null;
   onCaseRelationFilterChange: (filter: CaseRelationFilter | null) => void;
+  taskNumber: string;
+  onTaskNumberChange: (value: string) => void;
   searchQuery: string;
   onSearchQueryChange: (query: string) => void;
+  descriptionQuery: string;
+  onDescriptionQueryChange: (query: string) => void;
+  creatorId: string;
+  onCreatorIdChange: (id: string) => void;
+  assigneeId: string;
+  onAssigneeIdChange: (id: string) => void;
   dateRange: { startDate: Date | null; endDate: Date | null };
   onDateRangeChange: (range: { startDate: Date | null; endDate: Date | null }) => void;
   isDateSelectorVisible: boolean;
@@ -114,8 +126,16 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
   onDueDateFilterChange,
   caseRelationFilter,
   onCaseRelationFilterChange,
+  taskNumber,
+  onTaskNumberChange,
   searchQuery,
   onSearchQueryChange,
+  descriptionQuery,
+  onDescriptionQueryChange,
+  creatorId,
+  onCreatorIdChange,
+  assigneeId,
+  onAssigneeIdChange,
   dateRange,
   onDateRangeChange,
   isDateSelectorVisible,
@@ -127,22 +147,32 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
   isAnyFilterActive,
   onClearFilters,
 }) => {
+  const currentUser = useCurrentUser();
   const isDateFilterActive = dateRange.startDate !== null || dateRange.endDate !== null;
+
+  const visibleModes = useMemo(() => {
+    const userRole = currentUser?.role?._id;
+    if (userRole === ROLES.NORMAL || userRole === ROLES.LEFT) {
+      return FILTER_MODE_CONFIG.filter((m) => m.key === "all");
+    }
+    return FILTER_MODE_CONFIG;
+  }, [currentUser?.role?._id]);
+
   return (
-    <div className="mb-6">
+    <div>
       {/* Top bar: Filter mode buttons (left) + View toggle & Filter button (right) */}
-      <div className="flex items-center justify-between gap-2 mb-4">
+      <div className="flex items-center justify-between gap-2 mb-6 px-8 mt-6">
         {/* Filter mode buttons */}
         <div className="flex flex-wrap gap-2">
-          {FILTER_MODE_CONFIG.map((mode) => (
+          {visibleModes.map((mode) => (
             <button
               key={mode.key}
               type="button"
               onClick={() => onFilterModeChange(mode.key)}
-              className={`flex items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 ${
+              className={`flex items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 min-w-42 ${
                 filterMode === mode.key
-                  ? "border border-blue-600 text-blue-600 shadow"
-                  : "border border-gray-300 shadow-sm bg-gray-100 text-gray-700 hover:bg-blue-50 hover:text-blue-600 hover:cursor-pointer"
+                  ? "border border-btnRedHover text-btnRedHover shadow"
+                  : "border border-gray-300 shadow-sm bg-gray-100 text-gray-700 hover:bg-red-100 hover:text-btnRedHover hover:cursor-pointer"
               }`}
             >
               {mode.icon}
@@ -154,28 +184,28 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
         {/* Right side: View toggle + Filter button + Clear */}
         <div className="flex items-center gap-2">
           {/* View mode toggle */}
-          <div className="flex items-center bg-gray-100 p-1 rounded-lg border border-gray-300">
-            <button
-              onClick={() => onViewModeChange("grid")}
-              title="Мрежа"
-              className={`p-2 rounded-md transition-colors ${
-                viewMode === "grid"
-                  ? "bg-blue-600 text-white shadow"
-                  : "text-gray-600 hover:bg-gray-200 cursor-pointer"
-              }`}
-            >
-              <Squares2X2Icon className="h-5 w-5" />
-            </button>
+          <div className="flex items-center bg-gray-100 rounded-lg border border-gray-300">
             <button
               onClick={() => onViewModeChange("table")}
               title="Таблица"
-              className={`p-2 rounded-md transition-colors ${
+              className={`p-2 rounded-l-md transition-colors ${
                 viewMode === "table"
-                  ? "bg-blue-600 text-white shadow"
+                  ? "bg-blue-500 text-white shadow"
                   : "text-gray-600 hover:bg-gray-200 cursor-pointer"
               }`}
             >
               <Bars3Icon className="h-5 w-5" />
+            </button>
+            <button
+              onClick={() => onViewModeChange("grid")}
+              title="Мрежа"
+              className={`p-2 rounded-r-md transition-colors ${
+                viewMode === "grid"
+                  ? "bg-blue-500 text-white shadow"
+                  : "text-gray-600 hover:bg-gray-200 cursor-pointer"
+              }`}
+            >
+              <Squares2X2Icon className="h-5 w-5" />
             </button>
           </div>
 
@@ -221,29 +251,18 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
             : "max-h-0 opacity-0 pointer-events-none"
         }`}
       >
-        <div className="py-5">
+        <div className="px-4 sm:px-6 lg:px-8 py-5">
           <div className="flex flex-wrap gap-x-4 gap-y-3 items-end">
-            {/* Search input */}
-            <div className="flex-1 min-w-[200px]">
+            {/* Task number */}
+            <div className="w-28">
               <ClearableInput
-                id="taskSearch"
-                label="Търсене"
-                value={searchQuery}
-                onChange={onSearchQueryChange}
-                placeholder="Търсене по заглавие..."
+                id="taskNumber"
+                label="Номер"
+                value={taskNumber}
+                onChange={onTaskNumberChange}
+                placeholder="Номер..."
               />
             </div>
-
-            {/* Status multiselect */}
-            <CustomMultiSelectDropdown
-              label="Статус"
-              options={TASK_STATUS_OPTIONS}
-              selectedValues={statusFilter}
-              onChange={(values) =>
-                onStatusFilterChange(values as TaskStatus[])
-              }
-              placeholder="Всички статуси"
-            />
 
             {/* Priority multiselect */}
             <CustomMultiSelectDropdown
@@ -253,8 +272,67 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
               onChange={(values) =>
                 onPriorityFilterChange(values as CasePriority[])
               }
-              placeholder="Всички приоритети"
+              placeholder="Всички"
             />
+
+            {/* Case relation filter */}
+            <CustomDropdown
+              label="Сигнал"
+              options={[
+                { value: "", label: "Всички" },
+                ...CASE_RELATION_OPTIONS,
+              ]}
+              value={caseRelationFilter || ""}
+              onChange={(val) =>
+                onCaseRelationFilterChange(
+                  (val as CaseRelationFilter) || null,
+                )
+              }
+              placeholder="Всички"
+              widthClass="w-48"
+            />
+
+            {/* Title search */}
+            <div className="flex-1 min-w-[150px]">
+              <ClearableInput
+                id="taskSearch"
+                label="Заглавие"
+                value={searchQuery}
+                onChange={onSearchQueryChange}
+                placeholder="Търсене по заглавие..."
+              />
+            </div>
+
+            {/* Description search */}
+            <div className="flex-1 min-w-[150px]">
+              <ClearableInput
+                id="taskDescriptionSearch"
+                label="Описание"
+                value={descriptionQuery}
+                onChange={onDescriptionQueryChange}
+                placeholder="Търсене по описание..."
+              />
+            </div>
+
+            {/* Creator/Assignee filters (admin/expert only) */}
+            {(currentUser?.role?._id === ROLES.ADMIN || currentUser?.role?._id === ROLES.EXPERT) && (
+              <>
+                <UserSelector
+                  label="Създател"
+                  placeholder="Търси създател..."
+                  selectedUserId={creatorId}
+                  setSelectedUserId={onCreatorIdChange}
+                  t={(key) => ({ loading: "Зареждане...", error: "Грешка", no_users: "Няма потребители", clear: "Изчисти" }[key] || key)}
+                />
+                <UserSelector
+                  label="Възложен на"
+                  placeholder="Търси изпълнител..."
+                  selectedUserId={assigneeId}
+                  setSelectedUserId={onAssigneeIdChange}
+                  t={(key) => ({ loading: "Зареждане...", error: "Грешка", no_users: "Няма потребители", clear: "Изчисти" }[key] || key)}
+                />
+              </>
+            )}
 
             {/* Due date multiselect */}
             <CustomMultiSelectDropdown
@@ -288,28 +366,16 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
               </button>
             </div>
 
-            {/* Case relation filter */}
-            <div className="w-48">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Сигнал
-              </label>
-              <select
-                value={caseRelationFilter || ""}
-                onChange={(e) =>
-                  onCaseRelationFilterChange(
-                    (e.target.value as CaseRelationFilter) || null,
-                  )
-                }
-                className="w-full bg-white px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm focus:outline-none focus:border-indigo-500"
-              >
-                <option value="">Всички</option>
-                {CASE_RELATION_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {/* Status multiselect */}
+            <CustomMultiSelectDropdown
+              label="Статус"
+              options={TASK_STATUS_OPTIONS}
+              selectedValues={statusFilter}
+              onChange={(values) =>
+                onStatusFilterChange(values as TaskStatus[])
+              }
+              placeholder="Всички статуси"
+            />
           </div>
 
           {isDateSelectorVisible && (

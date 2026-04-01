@@ -36,8 +36,10 @@ import UserTable from "../components/features/userManagement/UserTable";
 import { useUserManagement } from "../hooks/useUserManagement"; // Adjust path
 import { ROLES } from "../utils/GLOBAL_PARAMETERS";
 import ClearFiltersButton from "../components/global/ClearFiltersButton";
+import useDocumentTitle from "../hooks/useDocumentTitle";
 
 const UserManagement: React.FC = () => {
+  useDocumentTitle("Потребители");
   const {
     currentPage,
     itemsPerPage,

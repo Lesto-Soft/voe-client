@@ -28,6 +28,7 @@ import {
   useCategoryManagement,
   CategoryQueryApiParams,
 } from "../hooks/useCategoryManagement"; // Adjust path as needed
+import useDocumentTitle from "../hooks/useDocumentTitle";
 import CategoryFilters from "../components/features/categoryManagement/CategoryFilters"; // Adjust path as needed
 import CategoryModal from "../components/modals/CategoryModal"; // Adjust path as needed
 import CategoryForm, {
@@ -59,6 +60,7 @@ interface ILeanUserForForm {
 }
 
 const CategoryManagement: React.FC = () => {
+  useDocumentTitle("Категории");
   const {
     currentPage,
     itemsPerPage,

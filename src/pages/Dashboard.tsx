@@ -1,5 +1,6 @@
 // src/pages/DashboardContent.tsx
 import { useState, useEffect, useMemo, useCallback } from "react";
+import useDocumentTitle from "../hooks/useDocumentTitle";
 import {
   useGetAllCases,
   useGetCasesByUserCategories,
@@ -68,6 +69,7 @@ function withUserIdHook(
 const DashboardPage: React.FC<DashboardContentProps> = ({
   initialFiltersOverride,
 }) => {
+  useDocumentTitle("Сигнали");
   const { t } = useTranslation("dashboard");
   const location = useLocation();
   const navigate = useNavigate();
@@ -272,7 +274,7 @@ const DashboardPage: React.FC<DashboardContentProps> = ({
                     replace: true,
                   });
                 }}
-                className={`flex items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 w-42  
+                className={`flex items-center px-4 py-2 rounded-lg font-semibold transition-colors duration-150 min-w-42  
                   ${
                     selectedHookIdx === idx
                       ? "border border-btnRedHover text-btnRedHover shadow"

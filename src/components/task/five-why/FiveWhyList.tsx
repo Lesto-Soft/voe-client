@@ -15,6 +15,7 @@ import {
   TrashIcon,
   QuestionMarkCircleIcon,
 } from "@heroicons/react/24/outline";
+import { ROLES } from "../../../utils/GLOBAL_PARAMETERS";
 
 interface FiveWhyListProps {
   taskId: string;
@@ -52,7 +53,7 @@ const FiveWhyList: React.FC<FiveWhyListProps> = ({
   const canEditFiveWhy = (fiveWhy: IFiveWhy) => {
     return (
       currentUser._id === fiveWhy.creator._id ||
-      currentUser.role?._id === "ADMIN"
+      currentUser.role?._id === ROLES.ADMIN
     );
   };
 

@@ -10,10 +10,12 @@ import UserLink from "../global/links/UserLink";
 import ActionMenu from "../global/ActionMenu";
 import ShowDate from "../global/ShowDate";
 import { renderContentSafely } from "../../utils/contentRenderer";
+import { ROLES } from "../../utils/GLOBAL_PARAMETERS";
 import { createFileUrl } from "../../utils/fileUtils";
 import ImagePreviewModal, {
   GalleryItem,
 } from "../modals/imageModals/ImagePreviewModal";
+import ConfirmActionDialog from "../modals/ConfirmActionDialog";
 import UnifiedEditor from "../forms/partials/UnifiedRichTextEditor";
 import {
   ChatBubbleLeftIcon,
@@ -26,6 +28,10 @@ import {
   PencilIcon,
   TrashIcon,
   XMarkIcon,
+  BarsArrowDownIcon,
+  BarsArrowUpIcon,
+  PlusCircleIcon,
+  MinusCircleIcon,
 } from "@heroicons/react/24/solid";
 
 // Activity type configuration with icons and colors
@@ -156,6 +162,7 @@ interface TaskActivitiesProps {
   currentUser: IMe;
   refetch: () => void;
   mentions?: { _id: string; name: string; username: string }[];
+  readOnly?: boolean;
 }
 
 const TaskActivities: React.FC<TaskActivitiesProps> = ({
@@ -164,7 +171,10 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
   currentUser,
   refetch,
   mentions = [],
+  readOnly = false,
 }) => {
+  const [activitySortAsc, setActivitySortAsc] = useState(false);
+  const [isAddActivityVisible, setIsAddActivityVisible] = useState(false);
   const [newContent, setNewContent] = useState("");
   const [activityType, setActivityType] = useState<TaskActivityType>(
     TaskActivityType.Comment,
@@ -270,10 +280,11 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
   };
 
   const canModifyActivity = (activity: ITaskActivity) => {
+    if (readOnly) return false;
     // Allow modification if user is the creator OR is an admin
     return (
       activity.createdBy._id === currentUser._id ||
-      currentUser.role?._id === "ADMIN"
+      currentUser.role?._id === ROLES.ADMIN
     );
   };
 
@@ -311,76 +322,135 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
     };
   }, [location.hash, activities]);
 
-  // Sort activities by creation date (newest first)
-  const sortedActivities = [...activities].sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-  );
+  // Sort activities by creation date
+  const sortedActivities = [...activities].sort((a, b) => {
+    const dateA = new Date(a.createdAt).getTime();
+    const dateB = new Date(b.createdAt).getTime();
+    return activitySortAsc ? dateA - dateB : dateB - dateA;
+  });
 
   return (
     <div className="flex flex-col h-full">
-      {/* Add activity section - FIXED AT TOP */}
-      <div className="flex-shrink-0 mb-4 border border-0 border-b-3 border-gray-300 p-3 pb-12 bg-gray-50 shadow-md">
-        {/* Title and activity type selector on same line */}
-        <div className="flex items-center gap-3 mb-2">
-          <h3 className="text-sm font-semibold text-gray-700 whitespace-nowrap">
-            Нов запис
-          </h3>
-          <div className="flex flex-wrap gap-1.5">
-            {selectableActivityTypes.map((type) => {
-              const config = activityTypeConfig[type];
-              const Icon = config.icon;
-              const isSelected = activityType === type;
-              return (
-                <button
-                  key={type}
-                  type="button"
-                  onClick={() => setActivityType(type)}
-                  className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border transition-colors cursor-pointer ${
-                    isSelected
-                      ? `${config.bgColor} ${config.textColor} ${config.borderColor}`
-                      : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"
-                  }`}
-                >
-                  <Icon className="h-3.5 w-3.5" />
-                  {config.label}
-                </button>
-              );
-            })}
+      {/* Add activity toggle + sort toggle row */}
+      {!readOnly && (
+        <div className="flex-shrink-0 mb-2 px-5 py-3">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsAddActivityVisible((prev) => !prev)}
+              className="cursor-pointer flex-1 flex justify-between items-center p-3 bg-gray-100 hover:bg-gray-200 rounded-lg text-left text-gray-700 font-semibold ring-1 ring-gray-300 focus:outline-none active:ring-2 active:ring-indigo-400 transition-colors"
+            >
+              <span className="flex items-center justify-center gap-2 text-sm">
+                <ChatBubbleLeftIcon className="h-6 w-6 text-gray-500" />
+                {isAddActivityVisible ? "Скрий добавяне на запис" : "Добави запис"}
+              </span>
+              {isAddActivityVisible ? (
+                <MinusCircleIcon className="h-6 w-6 text-gray-500" />
+              ) : (
+                <PlusCircleIcon className="h-6 w-6 text-gray-500" />
+              )}
+            </button>
+            {sortedActivities.length > 1 && (
+              <button
+                onClick={() => setActivitySortAsc((prev) => !prev)}
+                className="flex items-center text-gray-400 hover:text-gray-600 cursor-pointer p-2 rounded hover:bg-gray-50"
+                title={activitySortAsc ? "Най-нови първо" : "Най-стари първо"}
+              >
+                {activitySortAsc ? (
+                  <BarsArrowUpIcon className="h-5 w-5" />
+                ) : (
+                  <BarsArrowDownIcon className="h-5 w-5" />
+                )}
+              </button>
+            )}
           </div>
-        </div>
+          {isAddActivityVisible && (
+            <div className="mt-4 border border-gray-300 p-3 bg-white shadow-md rounded-lg">
+              {/* Title and activity type selector on same line */}
+              <div className="flex items-center gap-3 mb-2">
+                <h3 className="text-sm font-semibold text-gray-700 whitespace-nowrap">
+                  Нов запис
+                </h3>
+                <div className="flex flex-wrap gap-1.5">
+                  {selectableActivityTypes.map((type) => {
+                    const config = activityTypeConfig[type];
+                    const TypeIcon = config.icon;
+                    const isSelected = activityType === type;
+                    return (
+                      <button
+                        key={type}
+                        type="button"
+                        onClick={() => setActivityType(type)}
+                        className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border transition-colors cursor-pointer ${
+                          isSelected
+                            ? `${config.bgColor} ${config.textColor} ${config.borderColor}`
+                            : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"
+                        }`}
+                      >
+                        <TypeIcon className="h-3.5 w-3.5" />
+                        {config.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
 
-        {/* Rich text input with send button */}
-        <UnifiedEditor
-          content={newContent}
-          onContentChange={setNewContent}
-          attachments={newAttachments}
-          setAttachments={setNewAttachments}
-          onSend={handleSubmitActivity}
-          mentions={mentions}
-          placeholder="Добавете запис..."
-          minLength={0}
-          maxLength={1500}
-          isSending={createLoading}
-          type="taskActivity"
-          editorClassName="h-[80px] min-h-[80px] max-h-[80px]"
-        />
-      </div>
+              {/* Rich text input with send button */}
+              <div className="min-h-[160px]">
+                <UnifiedEditor
+                  content={newContent}
+                  onContentChange={setNewContent}
+                  attachments={newAttachments}
+                  setAttachments={setNewAttachments}
+                  onSend={handleSubmitActivity}
+                  mentions={mentions}
+                  placeholder="Добавете запис..."
+                  minLength={0}
+                  maxLength={1500}
+                  isSending={createLoading}
+                  type="taskActivity"
+                  editorMinHeight="min-h-[125px]"
+                  editorClassName="max-h-[125px]"
+                  autoFocus
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Sort toggle for read-only mode */}
+      {readOnly && sortedActivities.length > 1 && (
+        <div className="flex justify-end px-5 mb-2">
+          <button
+            onClick={() => setActivitySortAsc((prev) => !prev)}
+            className="flex items-center text-gray-400 hover:text-gray-600 cursor-pointer p-1 rounded hover:bg-gray-50"
+            title={activitySortAsc ? "Най-нови първо" : "Най-стари първо"}
+          >
+            {activitySortAsc ? (
+              <BarsArrowUpIcon className="h-5 w-5" />
+            ) : (
+              <BarsArrowDownIcon className="h-5 w-5" />
+            )}
+          </button>
+        </div>
+      )}
 
       {/* Activities list - SCROLLABLE */}
-      <div className="flex-grow overflow-y-auto space-y-2 custom-scrollbar-xs ml-3">
+      <div className="flex-grow overflow-y-auto space-y-2 custom-scrollbar-xs px-5 py-3">
         {sortedActivities.length === 0 ? (
           <p className="text-center text-gray-500 py-4">
             Няма активност все още. Бъдете първият!
           </p>
         ) : (
-          sortedActivities.map((activity) => {
+          <>
+          {sortedActivities.map((activity, index) => {
+            const displayNumber = activitySortAsc ? index + 1 : sortedActivities.length - index;
             const config = activityTypeConfig[activity.type];
             const Icon = config.icon;
             const isSystemActivity = systemActivityTypes.includes(
               activity.type,
             );
             const isEditing = editingActivityId === activity._id;
-            const isDeleting = deletingActivityId === activity._id;
             const canModify = canModifyActivity(activity) && !isSystemActivity;
 
             // Compact rendering for system activities
@@ -391,6 +461,9 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
                   id={`activity-${activity._id}`}
                   className={`flex items-center gap-2 py-1.5 px-3 text-xs rounded-md border-l-2 ${config.leftBorderColor} ${config.bgColor}`}
                 >
+                  <span className="text-xs font-bold text-gray-400 flex-shrink-0">
+                    #{displayNumber}
+                  </span>
                   <Icon
                     className={`h-3.5 w-3.5 flex-shrink-0 ${config.textColor}`}
                   />
@@ -412,6 +485,9 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
                 className={`border-l-4 ${config.leftBorderColor} rounded-lg py-2 px-3 bg-white shadow-sm border border-gray-200`}
               >
                 <div className="flex items-start gap-2">
+                  <span className="text-xs font-bold text-gray-400 flex-shrink-0 mt-0.5">
+                    #{displayNumber}
+                  </span>
                   <div className={`mt-0.5 ${config.textColor}`}>
                     <Icon className="h-4 w-4" />
                   </div>
@@ -428,7 +504,7 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
                       <div className="flex items-center gap-2">
                         <ShowDate date={activity.createdAt} />
                         {/* ActionMenu with Edit/Delete */}
-                        {canModify && !isEditing && !isDeleting && (
+                        {canModify && !isEditing && (
                           <ActionMenu>
                             <button
                               onClick={() => handleStartEdit(activity)}
@@ -454,23 +530,26 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
                     {/* Edit mode */}
                     {isEditing ? (
                       <div className="mt-2">
-                        <UnifiedEditor
-                          content={editContent}
-                          onContentChange={setEditContent}
-                          attachments={editAttachments}
-                          setAttachments={setEditAttachments}
-                          existingAttachments={editExistingAttachments}
-                          setExistingAttachments={setEditExistingAttachments}
-                          mentions={mentions}
-                          placeholder="Редактирайте съдържанието..."
-                          minLength={0}
-                          maxLength={1500}
-                          type="taskActivity"
-                          hideSideButtons
-                          editorClassName="h-[100px] min-h-[100px] max-h-[100px]"
-                          caseId={activity._id}
-                          attachmentFolder="taskActivities"
-                        />
+                        <div className="min-h-[100px]">
+                          <UnifiedEditor
+                            content={editContent}
+                            onContentChange={setEditContent}
+                            attachments={editAttachments}
+                            setAttachments={setEditAttachments}
+                            existingAttachments={editExistingAttachments}
+                            setExistingAttachments={setEditExistingAttachments}
+                            mentions={mentions}
+                            placeholder="Редактирайте съдържанието..."
+                            minLength={0}
+                            maxLength={1500}
+                            type="taskActivity"
+                            hideSideButtons
+                            editorMinHeight="min-h-[80px]"
+                            editorClassName="max-h-[90px]"
+                            caseId={activity._id}
+                            attachmentFolder="taskActivities"
+                          />
+                        </div>
                         <div className="flex justify-end gap-2 mt-2">
                           <button
                             type="button"
@@ -489,31 +568,6 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
                           >
                             <CheckCircleIcon className="h-4 w-4" />
                             {updateLoading ? "Запазване..." : "Запази"}
-                          </button>
-                        </div>
-                      </div>
-                    ) : isDeleting ? (
-                      /* Delete confirmation */
-                      <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-                        <p className="text-sm text-red-700 mb-3">
-                          Сигурни ли сте, че искате да изтриете това?
-                        </p>
-                        <div className="flex justify-end gap-2">
-                          <button
-                            type="button"
-                            onClick={() => setDeletingActivityId(null)}
-                            disabled={deleteLoading}
-                            className="px-3 py-1.5 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors cursor-pointer"
-                          >
-                            Отмени
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleDelete(activity._id)}
-                            disabled={deleteLoading}
-                            className="px-3 py-1.5 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
-                          >
-                            {deleteLoading ? "Изтриване..." : "Изтрий"}
                           </button>
                         </div>
                       </div>
@@ -536,9 +590,21 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
                 </div>
               </div>
             );
-          })
+          })}
+          </>
         )}
       </div>
+
+      <ConfirmActionDialog
+        isOpen={deletingActivityId !== null}
+        onOpenChange={(open) => { if (!open) setDeletingActivityId(null); }}
+        onConfirm={() => { if (deletingActivityId) handleDelete(deletingActivityId); }}
+        title="Изтриване на запис"
+        description="Сигурни ли сте, че искате да изтриете този запис? Това действие е необратимо."
+        confirmButtonText="Изтрий"
+        cancelButtonText="Отмени"
+        isDestructiveAction
+      />
     </div>
   );
 };

@@ -3,7 +3,7 @@ import React from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { IRatingMetric } from "../../../db/interfaces";
-import * as Tooltip from "@radix-ui/react-tooltip"; // <-- Import Radix Tooltip
+import HoverTooltip from "../../global/HoverTooltip";
 import {
   PencilSquareIcon,
   TrashIcon,
@@ -92,20 +92,13 @@ export const SortableMetricRow: React.FC<SortableMetricRowProps> = ({
     >
       <td className="w-16 px-3 py-4 text-center">
         {isFiltered ? (
-          <Tooltip.Provider delayDuration={300}>
-            <Tooltip.Root>
-              <Tooltip.Trigger asChild>{dragHandle}</Tooltip.Trigger>
-              <Tooltip.Portal>
-                <Tooltip.Content
-                  sideOffset={5}
-                  className="z-50 bg-gray-800 text-white px-3 py-1.5 text-xs rounded-md shadow-lg"
-                >
-                  Изчистете филтрите, за да пренаредите
-                  <Tooltip.Arrow className="fill-gray-800" />
-                </Tooltip.Content>
-              </Tooltip.Portal>
-            </Tooltip.Root>
-          </Tooltip.Provider>
+          <HoverTooltip
+            content="Изчистете филтрите, за да пренаредите"
+            delayDuration={300}
+            contentClassName="z-50 bg-gray-800 text-white px-3 py-1.5 text-xs rounded-md shadow-lg"
+          >
+            {dragHandle}
+          </HoverTooltip>
         ) : (
           dragHandle
         )}

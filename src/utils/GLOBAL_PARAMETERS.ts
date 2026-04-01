@@ -44,5 +44,9 @@ export const USER_RIGHTS = {
   ADMIN: "admin",
 };
 
+export const ANONYMOUS_USERNAME = "emp000";
+export const EXAMPLE_CASE_NUMBER = 0;
+export const EXAMPLE_TASK_NUMBER = 0;
+
 export const UPLOAD_MAX_SIZE_MB = 1;
 export const UPLOAD_MAX_SIZE_BYTES = UPLOAD_MAX_SIZE_MB * 1024 * 1024;

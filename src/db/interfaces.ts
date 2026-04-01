@@ -183,6 +183,13 @@ export const CASE_STATUS_DISPLAY_ORDER: ICaseStatus[] = [
   ICaseStatus.Closed,
 ];
 
+export interface INotificationPreferences {
+  caseNotifications: boolean;
+  taskNotifications: boolean;
+  mentions: boolean;
+  reminders: boolean;
+}
+
 export interface IMe {
   _id: string;
   username: string;
@@ -197,6 +204,7 @@ export interface IMe {
   comments?: IComment[];
   answers?: IAnswer[];
   financial_approver?: boolean;
+  notificationPreferences?: INotificationPreferences;
 }
 
 export interface IMe extends Omit<IUser, "role"> {

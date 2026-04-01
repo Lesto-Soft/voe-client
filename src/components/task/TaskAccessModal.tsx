@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { LockClosedIcon } from "@heroicons/react/24/solid";
@@ -6,6 +6,7 @@ import { IUser } from "../../db/interfaces";
 import { useRevokeTaskAccess } from "../../graphql/hooks/task";
 import UserAvatar from "../cards/UserAvatar";
 import UserLink from "../global/links/UserLink";
+import ConfirmActionDialog from "../modals/ConfirmActionDialog";
 import { endpoint } from "../../db/config";
 
 interface TaskAccessModalProps {
@@ -28,6 +29,7 @@ const TaskAccessModal: React.FC<TaskAccessModalProps> = ({
   onAccessChanged,
 }) => {
   const { revokeTaskAccess, loading } = useRevokeTaskAccess(taskId);
+  const [revokingUserId, setRevokingUserId] = useState<string | null>(null);
 
   const handleRevoke = async (userId: string) => {
     try {
@@ -110,7 +112,7 @@ const TaskAccessModal: React.FC<TaskAccessModalProps> = ({
 
                       {removable ? (
                         <button
-                          onClick={() => handleRevoke(user._id)}
+                          onClick={() => setRevokingUserId(user._id)}
                           disabled={loading}
                           className="flex-shrink-0 p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                           title="Премахни достъп"
@@ -134,6 +136,17 @@ const TaskAccessModal: React.FC<TaskAccessModalProps> = ({
               добавя автоматично при споменаване или преназначаване.
             </p>
           </div>
+
+          <ConfirmActionDialog
+            isOpen={revokingUserId !== null}
+            onOpenChange={(open) => { if (!open) setRevokingUserId(null); }}
+            onConfirm={() => { if (revokingUserId) { handleRevoke(revokingUserId); setRevokingUserId(null); } }}
+            title="Премахване на достъп"
+            description="Сигурни ли сте, че искате да премахнете достъпа на този потребител до задачата?"
+            confirmButtonText="Премахни"
+            cancelButtonText="Отмени"
+            isDestructiveAction
+          />
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>

@@ -448,9 +448,29 @@ export const GET_ME = gql`
       accessibleTasks {
         _id
       }
+      notificationPreferences {
+        caseNotifications
+        taskNotifications
+        mentions
+        reminders
+      }
     }
   }
   ${userFragment}
+`;
+
+export const UPDATE_NOTIFICATION_PREFERENCES = gql`
+  mutation UpdateNotificationPreferences($input: NotificationPreferencesInput!) {
+    updateNotificationPreferences(input: $input) {
+      _id
+      notificationPreferences {
+        caseNotifications
+        taskNotifications
+        mentions
+        reminders
+      }
+    }
+  }
 `;
 
 export const GET_RANKED_USERS = gql`

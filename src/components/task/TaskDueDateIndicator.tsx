@@ -42,14 +42,24 @@ export const getDueDateStatus = (
   return "normal";
 };
 
+// Check if the due date has a meaningful time (not midnight)
+const hasTime = (dueDate: string): boolean => {
+  const date = new Date(dueDate);
+  return date.getHours() !== 0 || date.getMinutes() !== 0;
+};
+
 // Format due date with relative text
 const formatDueDate = (dueDate: string, status: DueDateStatus): string => {
   const daysUntil = getDaysUntilDue(dueDate);
-  const dateStr = new Date(dueDate).toLocaleDateString("bg-BG", {
+  const date = new Date(dueDate);
+  let dateStr = date.toLocaleDateString("bg-BG", {
     day: "numeric",
     month: "short",
     year: "numeric",
   });
+  if (hasTime(dueDate)) {
+    dateStr += `, ${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`;
+  }
 
   if (status === "overdue") {
     const daysOverdue = Math.abs(daysUntil);

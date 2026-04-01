@@ -122,6 +122,7 @@ const AddComment: React.FC<AddCommentProps> = ({
           maxLength={COMMENT_CONTENT.MAX}
           isSending={loading}
           type="comment"
+          autoFocus={!!answerId}
         />
 
         {/* Специфични грешки при изпращане (API грешки) */}

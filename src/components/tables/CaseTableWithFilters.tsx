@@ -10,7 +10,6 @@ import CaseTable from "./CaseTable";
 import CaseSearchBar from "./CaseSearchBar";
 import Pagination from "./Pagination";
 import CaseTableSkeleton from "../skeletons/CaseTableSkeleton";
-import PaginationSkeleton from "../skeletons/PaginationSkeleton";
 import { ICase, CasePriority, CaseType } from "../../db/interfaces";
 import moment from "moment";
 
@@ -94,7 +93,7 @@ function setFiltersToParams(params: URLSearchParams, filters: any) {
       }
     } else if (value instanceof Date) {
       params.set(key, moment(value).format("DD-MM-YYYY"));
-    } else if (value) {
+    } else if (value != null && value !== "" && value !== false) {
       params.set(key, String(value));
     } else {
       params.delete(key);
@@ -110,7 +109,12 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const VALID_PER_PAGE = [10, 20, 50];
+  const [itemsPerPage, setItemsPerPage] = useState(() => {
+    if (initialFiltersOverride) return 10;
+    const param = Number(new URLSearchParams(location.search).get("perPage"));
+    return VALID_PER_PAGE.includes(param) ? param : 10;
+  });
 
   // Determine initial filters based on prop or URL
   const initialFilters = useMemo(() => {
@@ -160,10 +164,13 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
     setDateRange({
       startDate: filters.startDate || null,
       endDate: filters.endDate || null,
-    }); // Also sync the current page from the URL
-    setCurrentPage(
-      Number(new URLSearchParams(location.search).get("page")) || 1
-    );
+    }); // Also sync the current page and perPage from the URL
+    const searchParams = new URLSearchParams(location.search);
+    setCurrentPage(Number(searchParams.get("page")) || 1);
+    const perPageParam = Number(searchParams.get("perPage"));
+    if (VALID_PER_PAGE.includes(perPageParam)) {
+      setItemsPerPage(perPageParam);
+    }
   }, [initialFilters, location.search]);
 
   const debouncedCaseNumber = useDebounce(caseNumber, 500);
@@ -210,8 +217,8 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
 
     if (filtersChanged) {
       const params = new URLSearchParams(location.search);
-      params.set("perPage", String(itemsPerPage));
       setCurrentPage(1);
+      params.set("perPage", String(itemsPerPage));
       params.set("page", "1");
       setFiltersToParams(params, filtersForUrl);
       navigate(`${location.pathname}?${params.toString()}`, { replace: true });
@@ -276,7 +283,7 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
       currentPage: currentPage - 1,
     };
     if (debouncedContent) input.query = debouncedContent;
-    if (debouncedCaseNumber) input.case_number = parseInt(debouncedCaseNumber);
+    if (debouncedCaseNumber !== "") input.case_number = parseInt(debouncedCaseNumber);
     if (priority) input.priority = priority;
     if (type) input.type = type;
     if (creatorId) input.creatorId = creatorId;
@@ -365,7 +372,7 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
           t={t}
         />
       </div>
-      <div className="flex-1 min-h-0 flex flex-col">
+      <div>
         {showSkeleton ? (
           <CaseTableSkeleton rows={itemsPerPage} />
         ) : cases && cases.length > 0 ? (
@@ -376,23 +383,24 @@ const CaseTableWithFilters: React.FC<CaseTableWithFiltersProps> = ({
           </div>
         )}
       </div>
-      {/* This entire block is updated */}
-      {showSkeleton ? (
-        <PaginationSkeleton />
-      ) : (
-        count > 0 && (
-          <Pagination
-            totalPages={Math.ceil(Number(count) / itemsPerPage)}
-            totalCount={Number(count)}
-            currentPage={currentPage}
-            itemsPerPage={itemsPerPage}
-            onItemsPerPageChange={(newSize) => {
-              setItemsPerPage(newSize);
-              setCurrentPage(1);
-            }}
-            onPageChange={handlePageChange}
-          />
-        )
+      {!showSkeleton && Math.ceil(Number(count) / itemsPerPage) > 1 && (
+        <Pagination
+          totalPages={Math.ceil(Number(count) / itemsPerPage)}
+          totalCount={Number(count)}
+          currentPage={currentPage}
+          itemsPerPage={itemsPerPage}
+          onItemsPerPageChange={(newSize) => {
+            setItemsPerPage(newSize);
+            setCurrentPage(1);
+            if (!initialFiltersOverride) {
+              const params = new URLSearchParams(location.search);
+              params.set("perPage", String(newSize));
+              params.set("page", "1");
+              navigate(`${location.pathname}?${params.toString()}`, { replace: true });
+            }
+          }}
+          onPageChange={handlePageChange}
+        />
       )}
     </div>
   );

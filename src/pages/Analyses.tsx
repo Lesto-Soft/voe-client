@@ -22,6 +22,7 @@ import TaskViewerModal, {
   TaskModalFilters,
 } from "../components/modals/taskModals/TaskViewerModal";
 import PageStatusDisplay from "../components/global/PageStatusDisplay";
+import useDocumentTitle from "../hooks/useDocumentTitle";
 import { RankingType, RankedUser } from "../components/features/analyses/types";
 import StatCardSkeleton from "../components/skeletons/StatCardSkeleton";
 import BarChartSkeleton from "../components/skeletons/BarChartSkeleton";
@@ -50,6 +51,7 @@ type CaseFilters = {
 };
 
 const Analyses: React.FC = () => {
+  useDocumentTitle("Анализи");
   const currentUser = useCurrentUser();
   const isAdmin = currentUser?.role?._id === ROLES.ADMIN;
 

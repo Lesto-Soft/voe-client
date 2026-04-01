@@ -7,8 +7,9 @@ import { TaskStatus, CasePriority } from "../db/interfaces";
 import { TaskList, TaskFilters, TaskFilterMode } from "../components/task";
 import Pagination from "../components/tables/Pagination";
 import { ROLES } from "../utils/GLOBAL_PARAMETERS";
+import useDocumentTitle from "../hooks/useDocumentTitle";
 
-const DEFAULT_ITEMS_PER_PAGE = 12;
+const DEFAULT_ITEMS_PER_PAGE = 10;
 const TASK_VIEW_PREFS_KEY = "taskDashboard_viewPrefs";
 
 const VALID_FILTER_MODES: TaskFilterMode[] = [
@@ -75,13 +76,15 @@ const getInitialState = (search: string) => {
       ? (caseRelParam as CaseRelationFilter)
       : null;
 
+  const taskNumber = params.get("taskNumber") || "";
   const searchQuery = params.get("search") || "";
+  const descriptionQuery = params.get("description") || "";
 
   const viewParam = params.get("view");
   const viewMode: "grid" | "table" =
     viewParam === "grid" || viewParam === "table"
       ? viewParam
-      : stored.viewMode || "grid";
+      : stored.viewMode || "table";
 
   const pageParam = Number(params.get("page"));
   const currentPage = pageParam >= 1 ? pageParam : 1;
@@ -96,10 +99,14 @@ const getInitialState = (search: string) => {
     ? moment(params.get("endDate"), "DD-MM-YYYY").toDate()
     : null;
 
-  return { filterMode, statusFilter, priorityFilter, dueDateFilter, caseRelationFilter, searchQuery, viewMode, currentPage, itemsPerPage, startDate, endDate };
+  const creatorId = params.get("creatorId") || "";
+  const assigneeId = params.get("assigneeId") || "";
+
+  return { filterMode, statusFilter, priorityFilter, dueDateFilter, caseRelationFilter, taskNumber, searchQuery, descriptionQuery, creatorId, assigneeId, viewMode, currentPage, itemsPerPage, startDate, endDate };
 };
 
 const TasksPage: React.FC = () => {
+  useDocumentTitle("Задачи");
   const currentUser = useCurrentUser();
   const location = useLocation();
   const navigate = useNavigate();
@@ -112,7 +119,11 @@ const TasksPage: React.FC = () => {
   const [priorityFilter, setPriorityFilter] = useState<CasePriority[]>(initial.priorityFilter);
   const [dueDateFilter, setDueDateFilter] = useState<DueDateFilter[]>(initial.dueDateFilter);
   const [caseRelationFilter, setCaseRelationFilter] = useState<CaseRelationFilter | null>(initial.caseRelationFilter);
+  const [taskNumber, setTaskNumber] = useState(initial.taskNumber);
   const [searchQuery, setSearchQuery] = useState(initial.searchQuery);
+  const [descriptionQuery, setDescriptionQuery] = useState(initial.descriptionQuery);
+  const [creatorId, setCreatorId] = useState(initial.creatorId);
+  const [assigneeId, setAssigneeId] = useState(initial.assigneeId);
   const [viewMode, setViewMode] = useState<"grid" | "table">(initial.viewMode);
   const [currentPage, setCurrentPage] = useState(initial.currentPage);
   const [itemsPerPage, setItemsPerPage] = useState(initial.itemsPerPage);
@@ -128,28 +139,36 @@ const TasksPage: React.FC = () => {
       priorityFilter.length > 0 ||
       dueDateFilter.length > 0 ||
       caseRelationFilter !== null ||
+      taskNumber.trim() !== "" ||
       searchQuery.trim() !== "" ||
+      descriptionQuery.trim() !== "" ||
+      creatorId !== "" ||
+      assigneeId !== "" ||
       startDate !== null ||
       endDate !== null
     );
-  }, [statusFilter, priorityFilter, dueDateFilter, caseRelationFilter, searchQuery, startDate, endDate]);
+  }, [statusFilter, priorityFilter, dueDateFilter, caseRelationFilter, taskNumber, searchQuery, descriptionQuery, creatorId, assigneeId, startDate, endDate]);
 
   // Sync state to URL
   const syncUrl = useCallback(
     (overrides: Record<string, string | undefined>) => {
       const params = new URLSearchParams();
       const values: Record<string, string | undefined> = {
+        perPage: String(itemsPerPage),
+        page: String(currentPage),
         tab: filterMode,
         status: statusFilter.length > 0 ? statusFilter.join(",") : undefined,
         priority: priorityFilter.length > 0 ? priorityFilter.join(",") : undefined,
         dueDate: dueDateFilter.length > 0 ? dueDateFilter.join(",") : undefined,
         caseRelation: caseRelationFilter || undefined,
+        taskNumber: taskNumber.trim() || undefined,
         search: searchQuery.trim() || undefined,
+        description: descriptionQuery.trim() || undefined,
+        creatorId: creatorId || undefined,
+        assigneeId: assigneeId || undefined,
         startDate: startDate ? moment(startDate).format("DD-MM-YYYY") : undefined,
         endDate: endDate ? moment(endDate).format("DD-MM-YYYY") : undefined,
         view: viewMode,
-        page: String(currentPage),
-        perPage: String(itemsPerPage),
         ...overrides,
       };
       for (const [key, val] of Object.entries(values)) {
@@ -157,7 +176,7 @@ const TasksPage: React.FC = () => {
       }
       navigate(`${location.pathname}?${params.toString()}`, { replace: true });
     },
-    [filterMode, statusFilter, priorityFilter, dueDateFilter, caseRelationFilter, searchQuery, startDate, endDate, viewMode, currentPage, itemsPerPage, navigate, location.pathname],
+    [filterMode, statusFilter, priorityFilter, dueDateFilter, caseRelationFilter, taskNumber, searchQuery, descriptionQuery, creatorId, assigneeId, startDate, endDate, viewMode, currentPage, itemsPerPage, navigate, location.pathname],
   );
 
   // Compute accessible-only task IDs
@@ -184,8 +203,14 @@ const TasksPage: React.FC = () => {
     if (caseRelationFilter) {
       input.caseRelationFilter = caseRelationFilter;
     }
+    if (taskNumber.trim()) {
+      input.taskNumber = taskNumber.trim();
+    }
     if (searchQuery.trim()) {
       input.searchQuery = searchQuery.trim();
+    }
+    if (descriptionQuery.trim()) {
+      input.descriptionQuery = descriptionQuery.trim();
     }
     if (startDate) {
       input.startDate = startDate.toISOString();
@@ -199,6 +224,8 @@ const TasksPage: React.FC = () => {
       if (currentUser?.role?._id !== ROLES.ADMIN) {
         input.viewableByUserId = currentUser?._id;
       }
+      if (creatorId) input.creatorId = creatorId;
+      if (assigneeId) input.assigneeId = assigneeId;
     } else if (filterMode === "assignedToMe") {
       input.assigneeId = currentUser?._id;
     } else if (filterMode === "createdByMe") {
@@ -215,7 +242,11 @@ const TasksPage: React.FC = () => {
     priorityFilter,
     dueDateFilter,
     caseRelationFilter,
+    taskNumber,
     searchQuery,
+    descriptionQuery,
+    creatorId,
+    assigneeId,
     startDate,
     endDate,
     currentPage,
@@ -262,10 +293,34 @@ const TasksPage: React.FC = () => {
     syncUrl({ caseRelation: filter || undefined, page: "1" });
   };
 
+  const handleTaskNumberChange = (value: string) => {
+    setTaskNumber(value);
+    setCurrentPage(1);
+    syncUrl({ taskNumber: value.trim() || undefined, page: "1" });
+  };
+
   const handleSearchQueryChange = (query: string) => {
     setSearchQuery(query);
     setCurrentPage(1);
     syncUrl({ search: query.trim() || undefined, page: "1" });
+  };
+
+  const handleDescriptionQueryChange = (query: string) => {
+    setDescriptionQuery(query);
+    setCurrentPage(1);
+    syncUrl({ description: query.trim() || undefined, page: "1" });
+  };
+
+  const handleCreatorIdChange = (id: string) => {
+    setCreatorId(id);
+    setCurrentPage(1);
+    syncUrl({ creatorId: id || undefined, page: "1" });
+  };
+
+  const handleAssigneeIdChange = (id: string) => {
+    setAssigneeId(id);
+    setCurrentPage(1);
+    syncUrl({ assigneeId: id || undefined, page: "1" });
   };
 
   const handleViewModeChange = (mode: "grid" | "table") => {
@@ -290,7 +345,11 @@ const TasksPage: React.FC = () => {
     setPriorityFilter([]);
     setDueDateFilter([]);
     setCaseRelationFilter(null);
+    setTaskNumber("");
     setSearchQuery("");
+    setDescriptionQuery("");
+    setCreatorId("");
+    setAssigneeId("");
     setStartDate(null);
     setEndDate(null);
     setCurrentPage(1);
@@ -299,7 +358,11 @@ const TasksPage: React.FC = () => {
       priority: undefined,
       dueDate: undefined,
       caseRelation: undefined,
+      taskNumber: undefined,
       search: undefined,
+      description: undefined,
+      creatorId: undefined,
+      assigneeId: undefined,
       startDate: undefined,
       endDate: undefined,
       page: "1",
@@ -319,7 +382,7 @@ const TasksPage: React.FC = () => {
 
   if (error) {
     return (
-      <div className="min-h-full bg-gray-100 p-6">
+      <div className="flex flex-col flex-1 min-h-0 h-full">
         <div className="text-center py-16 text-red-500">
           <p className="text-lg font-semibold">
             Грешка при зареждане на задачите
@@ -331,7 +394,7 @@ const TasksPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-full bg-gray-100 p-6">
+    <div className="flex flex-col flex-1 min-h-0 h-full">
       {/* Filters */}
       <TaskFilters
         filterMode={filterMode}
@@ -344,8 +407,16 @@ const TasksPage: React.FC = () => {
         onDueDateFilterChange={handleDueDateFilterChange}
         caseRelationFilter={caseRelationFilter}
         onCaseRelationFilterChange={handleCaseRelationFilterChange}
+        taskNumber={taskNumber}
+        onTaskNumberChange={handleTaskNumberChange}
         searchQuery={searchQuery}
         onSearchQueryChange={handleSearchQueryChange}
+        descriptionQuery={descriptionQuery}
+        onDescriptionQueryChange={handleDescriptionQueryChange}
+        creatorId={creatorId}
+        onCreatorIdChange={handleCreatorIdChange}
+        assigneeId={assigneeId}
+        onAssigneeIdChange={handleAssigneeIdChange}
         dateRange={{ startDate, endDate }}
         onDateRangeChange={handleDateRangeChange}
         isDateSelectorVisible={isDateSelectorVisible}
@@ -359,20 +430,22 @@ const TasksPage: React.FC = () => {
       />
 
       {/* Task List */}
-      <main>
+      <main className="px-8">
         <TaskList tasks={tasks} viewMode={viewMode} loading={loading} />
       </main>
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <Pagination
-          totalPages={totalPages}
-          totalCount={count}
-          currentPage={currentPage}
-          itemsPerPage={itemsPerPage}
-          onItemsPerPageChange={handleItemsPerPageChange}
-          onPageChange={handlePageChange}
-        />
+        <div className="px-8">
+          <Pagination
+            totalPages={totalPages}
+            totalCount={count}
+            currentPage={currentPage}
+            itemsPerPage={itemsPerPage}
+            onItemsPerPageChange={handleItemsPerPageChange}
+            onPageChange={handlePageChange}
+          />
+        </div>
       )}
 
     </div>

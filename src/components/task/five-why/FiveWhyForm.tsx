@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { IFiveWhy, IWhyStep } from "../../../db/interfaces";
 
+const autoResize = (el: HTMLTextAreaElement) => {
+  el.style.height = "auto";
+  const lineHeight = parseInt(getComputedStyle(el).lineHeight) || 20;
+  const maxHeight = lineHeight * 3 + 16; // 3 lines + padding
+  el.style.height = `${Math.min(el.scrollHeight, maxHeight)}px`;
+};
+
 interface FiveWhyFormProps {
   fiveWhy?: IFiveWhy;
   onSubmit: (data: {
@@ -99,7 +106,7 @@ const FiveWhyForm: React.FC<FiveWhyFormProps> = ({
       )}
 
       {/* Why pairs */}
-      <div className="space-y-4 max-h-[30vh] overflow-y-auto custom-scrollbar-xs">
+      <div className="space-y-4 max-h-[50vh] overflow-y-auto custom-scrollbar-xs">
         {whys.map((pair, i) => (
           <div
             key={i}
@@ -116,12 +123,16 @@ const FiveWhyForm: React.FC<FiveWhyFormProps> = ({
               >
                 Защо?
               </label>
-              <input
-                type="text"
+              <textarea
                 id={`why-${i}`}
                 value={pair.question}
-                onChange={(e) => handleWhyChange(i, "question", e.target.value)}
-                className="w-full rounded-md border border-gray-300 p-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                onChange={(e) => {
+                  handleWhyChange(i, "question", e.target.value);
+                  autoResize(e.target);
+                }}
+                ref={(el) => { if (el && pair.question) autoResize(el); }}
+                rows={1}
+                className="w-full rounded-md border border-gray-300 p-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent resize-y"
                 placeholder="Въведете въпрос..."
               />
             </div>
@@ -132,12 +143,16 @@ const FiveWhyForm: React.FC<FiveWhyFormProps> = ({
               >
                 Защото...
               </label>
-              <input
-                type="text"
+              <textarea
                 id={`because-${i}`}
                 value={pair.answer}
-                onChange={(e) => handleWhyChange(i, "answer", e.target.value)}
-                className="w-full rounded-md border border-gray-300 p-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                onChange={(e) => {
+                  handleWhyChange(i, "answer", e.target.value);
+                  autoResize(e.target);
+                }}
+                ref={(el) => { if (el && pair.answer) autoResize(el); }}
+                rows={1}
+                className="w-full rounded-md border border-gray-300 p-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent resize-y"
                 placeholder="Въведете отговор..."
               />
             </div>
@@ -158,7 +173,7 @@ const FiveWhyForm: React.FC<FiveWhyFormProps> = ({
           value={rootCause}
           onChange={(e) => setRootCause(e.target.value)}
           rows={2}
-          className="w-full rounded-md border border-gray-300 p-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent resize-none"
+          className="w-full rounded-md border border-gray-300 p-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent resize-y"
           placeholder="Въведете идентифицираната първопричина..."
         />
       </div>
@@ -176,7 +191,7 @@ const FiveWhyForm: React.FC<FiveWhyFormProps> = ({
           value={counterMeasures}
           onChange={(e) => setCounterMeasures(e.target.value)}
           rows={2}
-          className="w-full rounded-md border border-gray-300 p-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent resize-none"
+          className="w-full rounded-md border border-gray-300 p-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent resize-y"
           placeholder="Опишете предложените контрамерки..."
         />
       </div>

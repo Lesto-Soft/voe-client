@@ -3,7 +3,6 @@ import { useLocation } from "react-router";
 import { ITaskActivity, IMe, TaskActivityType } from "../../db/interfaces";
 import {
   useCreateTaskActivity,
-  useUpdateTaskActivity,
   useDeleteTaskActivity,
 } from "../../graphql/hooks/task";
 import UserLink from "../global/links/UserLink";
@@ -17,6 +16,7 @@ import ImagePreviewModal, {
 } from "../modals/imageModals/ImagePreviewModal";
 import ConfirmActionDialog from "../modals/ConfirmActionDialog";
 import UnifiedEditor from "../forms/partials/UnifiedRichTextEditor";
+import EditTaskActivityModal from "./EditTaskActivityModal";
 import {
   ChatBubbleLeftIcon,
   QuestionMarkCircleIcon,
@@ -27,11 +27,12 @@ import {
   BeakerIcon,
   PencilIcon,
   TrashIcon,
-  XMarkIcon,
   BarsArrowDownIcon,
   BarsArrowUpIcon,
   PlusCircleIcon,
   MinusCircleIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
 } from "@heroicons/react/24/solid";
 
 // Activity type configuration with icons and colors
@@ -179,10 +180,7 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
   const [activityType, setActivityType] = useState<TaskActivityType>(
     TaskActivityType.Comment,
   );
-  const [editingActivityId, setEditingActivityId] = useState<string | null>(
-    null,
-  );
-  const [editContent, setEditContent] = useState("");
+  const [editingActivity, setEditingActivity] = useState<ITaskActivity | null>(null);
   const [deletingActivityId, setDeletingActivityId] = useState<string | null>(
     null,
   );
@@ -190,19 +188,30 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
   // Attachment state for new activity
   const [newAttachments, setNewAttachments] = useState<File[]>([]);
 
-  // Attachment state for editing activity
-  const [editAttachments, setEditAttachments] = useState<File[]>([]);
-  const [editExistingAttachments, setEditExistingAttachments] = useState<
-    string[]
-  >([]);
-  const [editOriginalAttachments, setEditOriginalAttachments] = useState<
-    string[]
-  >([]);
+  const [expandedActivities, setExpandedActivities] = useState<Set<string>>(new Set());
+  const contentRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  const [overflowingActivities, setOverflowingActivities] = useState<Set<string>>(new Set());
+
+  // Detect overflow on user activity content
+  useEffect(() => {
+    const newOverflowing = new Set<string>();
+    contentRefs.current.forEach((el, id) => {
+      if (el.scrollHeight > el.clientHeight) newOverflowing.add(id);
+    });
+    setOverflowingActivities(newOverflowing);
+  }, [activities]);
+
+  const toggleExpand = (id: string) => {
+    setExpandedActivities((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   const { createTaskActivity, loading: createLoading } =
     useCreateTaskActivity(taskId);
-  const { updateTaskActivity, loading: updateLoading } =
-    useUpdateTaskActivity(taskId);
   const { deleteTaskActivity, loading: deleteLoading } =
     useDeleteTaskActivity(taskId);
 
@@ -227,44 +236,7 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
   };
 
   const handleStartEdit = (activity: ITaskActivity) => {
-    setEditingActivityId(activity._id);
-    setEditContent(activity.content || "");
-    setEditAttachments([]);
-    setEditExistingAttachments(activity.attachments || []);
-    setEditOriginalAttachments(activity.attachments || []);
-  };
-
-  const handleCancelEdit = () => {
-    setEditingActivityId(null);
-    setEditContent("");
-    setEditAttachments([]);
-    setEditExistingAttachments([]);
-    setEditOriginalAttachments([]);
-  };
-
-  const handleSaveEdit = async (activityId: string) => {
-    if (!editContent.trim() || updateLoading) return;
-
-    const removedAttachments = editOriginalAttachments.filter(
-      (a) => !editExistingAttachments.includes(a),
-    );
-
-    try {
-      await updateTaskActivity(activityId, {
-        content: editContent,
-        attachments: editAttachments.length > 0 ? editAttachments : undefined,
-        deletedAttachments:
-          removedAttachments.length > 0 ? removedAttachments : undefined,
-      });
-      setEditingActivityId(null);
-      setEditContent("");
-      setEditAttachments([]);
-      setEditExistingAttachments([]);
-      setEditOriginalAttachments([]);
-      refetch();
-    } catch (error) {
-      console.error("Failed to update activity:", error);
-    }
+    setEditingActivity(activity);
   };
 
   const handleDelete = async (activityId: string) => {
@@ -450,7 +422,6 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
             const isSystemActivity = systemActivityTypes.includes(
               activity.type,
             );
-            const isEditing = editingActivityId === activity._id;
             const canModify = canModifyActivity(activity) && !isSystemActivity;
 
             // Compact rendering for system activities
@@ -504,11 +475,11 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
                       <div className="flex items-center gap-2">
                         <ShowDate date={activity.createdAt} />
                         {/* ActionMenu with Edit/Delete */}
-                        {canModify && !isEditing && (
+                        {canModify && (
                           <ActionMenu>
                             <button
                               onClick={() => handleStartEdit(activity)}
-                              className="flex items-center gap-2 w-full p-2 text-sm text-blue-700 hover:bg-blue-50 rounded-md"
+                              className="flex items-center gap-2 w-full p-2 text-sm text-blue-700 hover:bg-blue-50 rounded-md cursor-pointer"
                             >
                               <PencilIcon className="h-4 w-4" />
                               Редактирай
@@ -527,54 +498,29 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
                       </div>
                     </div>
 
-                    {/* Edit mode */}
-                    {isEditing ? (
-                      <div className="mt-2">
-                        <div className="min-h-[100px]">
-                          <UnifiedEditor
-                            content={editContent}
-                            onContentChange={setEditContent}
-                            attachments={editAttachments}
-                            setAttachments={setEditAttachments}
-                            existingAttachments={editExistingAttachments}
-                            setExistingAttachments={setEditExistingAttachments}
-                            mentions={mentions}
-                            placeholder="Редактирайте съдържанието..."
-                            minLength={0}
-                            maxLength={1500}
-                            type="taskActivity"
-                            hideSideButtons
-                            editorMinHeight="min-h-[80px]"
-                            editorClassName="max-h-[90px]"
-                            caseId={activity._id}
-                            attachmentFolder="taskActivities"
-                          />
-                        </div>
-                        <div className="flex justify-end gap-2 mt-2">
+                    {/* Normal content display */}
+                    <>
+                        {(overflowingActivities.has(activity._id) || expandedActivities.has(activity._id)) && (
                           <button
-                            type="button"
-                            onClick={handleCancelEdit}
-                            disabled={updateLoading}
-                            className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors cursor-pointer"
+                            onClick={() => toggleExpand(activity._id)}
+                            className="flex items-center gap-1 text-xs text-blue-500 hover:text-blue-700 mb-1 cursor-pointer"
                           >
-                            <XMarkIcon className="h-4 w-4" />
-                            Отмени
+                            {expandedActivities.has(activity._id) ? (
+                              <>Скрий <ChevronUpIcon className="h-3 w-3" /></>
+                            ) : (
+                              <>Покажи цялото съдържание <ChevronDownIcon className="h-3 w-3" /></>
+                            )}
                           </button>
-                          <button
-                            type="button"
-                            onClick={() => handleSaveEdit(activity._id)}
-                            disabled={!editContent.trim() || updateLoading}
-                            className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
-                          >
-                            <CheckCircleIcon className="h-4 w-4" />
-                            {updateLoading ? "Запазване..." : "Запази"}
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      /* Normal content display */
-                      <>
-                        <div className="text-sm text-gray-700 max-h-40 overflow-y-auto custom-scrollbar-xs">
+                        )}
+                        <div
+                          ref={(el) => {
+                            if (el) contentRefs.current.set(activity._id, el);
+                            else contentRefs.current.delete(activity._id);
+                          }}
+                          className={`text-sm text-gray-700 bg-gray-50 rounded p-2 break-words ${
+                            expandedActivities.has(activity._id) ? "" : "max-h-40 overflow-y-auto"
+                          } custom-scrollbar-xs`}
+                        >
                           {renderContentSafely(activity.content || "")}
                         </div>
                         {activity.attachments &&
@@ -585,7 +531,6 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
                             />
                           )}
                       </>
-                    )}
                   </div>
                 </div>
               </div>
@@ -605,6 +550,17 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
         cancelButtonText="Отмени"
         isDestructiveAction
       />
+
+      {editingActivity && (
+        <EditTaskActivityModal
+          activity={editingActivity}
+          taskId={taskId}
+          mentions={mentions}
+          isOpen={!!editingActivity}
+          onOpenChange={(open) => { if (!open) setEditingActivity(null); }}
+          onSaved={refetch}
+        />
+      )}
     </div>
   );
 };

@@ -36,7 +36,7 @@ const FiveWhyModal: React.FC<FiveWhyModalProps> = ({
     <Dialog.Root open={isOpen} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm" />
-        <Dialog.Content className="fixed top-1/2 left-1/2 z-50 w-[95vw] max-w-xl -translate-x-1/2 -translate-y-1/2 rounded-lg bg-white shadow-xl focus:outline-none max-h-[90vh] flex flex-col">
+        <Dialog.Content className="fixed top-1/2 left-1/2 z-50 w-[95vw] max-w-3xl -translate-x-1/2 -translate-y-1/2 rounded-lg bg-white shadow-xl focus:outline-none max-h-[90vh] flex flex-col">
           {/* Header */}
           <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
             <Dialog.Title className="flex items-center gap-2 text-lg font-semibold text-gray-900">

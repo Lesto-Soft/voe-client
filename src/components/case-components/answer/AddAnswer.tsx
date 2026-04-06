@@ -55,7 +55,7 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
       setContent("");
       setAttachments([]);
       if (onAnswerSubmitted) onAnswerSubmitted();
-      toast.success(t("answerSubmitted"));
+      toast.success(t("answerSubmitted"), {className: "notification-toast"});
     } catch (error: any) {
       setSubmissionError(error?.message || "Грешка при изпращане.");
     }

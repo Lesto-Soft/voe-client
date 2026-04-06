@@ -65,16 +65,6 @@ const TaskContentDialog: React.FC<TaskContentDialogProps> = ({
                 {taskData.title}
               </h2>
 
-              {/* Related Case */}
-              {taskData.relatedCase && (
-                <div>
-                  <span className="text-xs text-gray-400">Произход:</span>
-                  <div className="mt-1">
-                    <CaseLink my_case={taskData.relatedCase} />
-                  </div>
-                </div>
-              )}
-
               {/* Creator */}
               <div>
                 <span className="text-xs text-gray-400">Възложена от:</span>
@@ -114,6 +104,16 @@ const TaskContentDialog: React.FC<TaskContentDialogProps> = ({
                   </p>
                 )}
               </div>
+
+              {/* Related Case */}
+              {taskData.relatedCase && (
+                <div>
+                  <span className="text-xs text-gray-400">Произход:</span>
+                  <div className="mt-1">
+                    <CaseLink my_case={taskData.relatedCase} />
+                  </div>
+                </div>
+              )}
 
               {/* Priority & Status */}
               <div className="flex flex-row justify-between gap-3">

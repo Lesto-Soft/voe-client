@@ -137,7 +137,7 @@ const UserTaskActivityActivityCard: React.FC<
                 <div className="mt-2 flex items-center flex-wrap gap-2 text-xs">
                   <TaskStatusBadge status={task.status} size="sm" />
                   <TaskPriorityBadge priority={task.priority} size="sm" />
-                  {task.relatedCase && task.relatedCase.case_number && (
+                  {task.relatedCase && task.relatedCase.case_number != null && (
                     <div className="w-20">
                       <CaseLink
                         my_case={task.relatedCase as ICase}

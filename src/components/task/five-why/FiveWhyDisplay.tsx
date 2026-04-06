@@ -31,10 +31,10 @@ const FiveWhyDisplay: React.FC<FiveWhyDisplayProps> = ({ fiveWhy }) => {
       <ul className="space-y-3">
         {fiveWhy.whys.map((step: IWhyStep, index: number) => (
           <li key={index} className="text-sm">
-            <p className="font-semibold text-gray-700">
+            <p className="font-semibold text-gray-700 break-words">
               {index + 1}. {step.question}
             </p>
-            <p className="text-gray-600 pl-4 border-l-2 border-gray-300 ml-2 mt-1 italic">
+            <p className="text-gray-600 pl-4 border-l-2 border-gray-300 ml-2 mt-1 italic break-words">
               {step.answer}
             </p>
           </li>
@@ -47,7 +47,7 @@ const FiveWhyDisplay: React.FC<FiveWhyDisplayProps> = ({ fiveWhy }) => {
           <LightBulbIcon className="h-4 w-4" />
           Първопричина
         </div>
-        <p className="text-sm text-amber-900">{fiveWhy.rootCause}</p>
+        <p className="text-sm text-amber-900 break-words">{fiveWhy.rootCause}</p>
       </div>
 
       {/* Counter Measures */}
@@ -56,7 +56,7 @@ const FiveWhyDisplay: React.FC<FiveWhyDisplayProps> = ({ fiveWhy }) => {
           <WrenchScrewdriverIcon className="h-4 w-4" />
           Контрамерки
         </div>
-        <p className="text-sm text-green-900">{fiveWhy.counterMeasures}</p>
+        <p className="text-sm text-green-900 break-words">{fiveWhy.counterMeasures}</p>
       </div>
     </div>
   );

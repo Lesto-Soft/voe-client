@@ -221,16 +221,6 @@ const TaskDetail: React.FC = () => {
               />
             </div>
 
-            {/* Origin - Related Case */}
-            {taskData.relatedCase && (
-              <div className="pt-2 border-t border-gray-100">
-                <h3 className="text-xs font-semibold text-gray-500 mb-2 flex items-center gap-1.5">
-                  Произход:
-                </h3>
-                <CaseLink my_case={taskData.relatedCase} />
-              </div>
-            )}
-
             {/* People - Creator & Assignee (stacked with avatars) */}
             <div className="pt-2 border-t border-gray-100">
               <div className="space-y-3">
@@ -283,6 +273,16 @@ const TaskDetail: React.FC = () => {
                 </div>
               </div>
             </div>
+
+            {/* Origin - Related Case */}
+            {taskData.relatedCase && (
+              <div className="pt-2 border-t border-gray-100">
+                <dt className="text-xs text-gray-400 mb-1">Произход:</dt>
+                <dd>
+                  <CaseLink my_case={taskData.relatedCase} />
+                </dd>
+              </div>
+            )}
 
             {/* Priority & Status */}
             <div className="pt-2 border-t border-gray-100">

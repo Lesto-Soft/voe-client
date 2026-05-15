@@ -35,10 +35,18 @@ export const createMentionSuggestion = (mentions: MentionUser[] = []) => ({
         popup = tippy("body", {
           getReferenceClientRect: props.clientRect,
           appendTo: () => {
-            const modalContainer = document.querySelector(
+            // When multiple paste-aware modals are stacked (e.g. an edit
+            // modal with the editor opened in fullscreen on top), Radix
+            // portals each Dialog.Content into document.body in mount
+            // order — the last data-mention-container in the DOM is the
+            // topmost dialog, which is where the popup must render so it
+            // isn't trapped under a higher-z overlay.
+            const containers = document.querySelectorAll(
               '[data-mention-container="true"]'
             );
-            return modalContainer || document.body;
+            return containers.length > 0
+              ? (containers[containers.length - 1] as HTMLElement)
+              : document.body;
           },
           content: component.element,
           showOnCreate: true,

@@ -403,6 +403,8 @@ const TaskDetail: React.FC = () => {
                   refetch={refetch}
                   mentions={mentions}
                   readOnly={isExampleTask && !isAdmin}
+                  currentStatus={taskData.status}
+                  canChangeStatus={canChangeStatus}
                 />
               ) : (
                 <AnalysisTabsSection

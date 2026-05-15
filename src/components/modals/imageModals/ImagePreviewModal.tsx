@@ -62,8 +62,33 @@ const ImagePreviewModal: React.FC<ImagePreviewProps> = ({
 
   const imageContainerRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
+  const pdfContainerRef = useRef<HTMLDivElement>(null);
+  const [pdfFitSize, setPdfFitSize] = useState<{
+    width: number;
+    height: number;
+  } | null>(null);
 
   const mouseWheelZoomStrength = 0.2;
+
+  // Shared clamp for pan position so the rendered content edges don't come into view.
+  const clampPan = (
+    px: number,
+    py: number,
+    contentW: number,
+    contentH: number,
+    containerW: number,
+    containerH: number,
+    zoom: number,
+  ) => {
+    const oX = Math.max(0, contentW * zoom - containerW);
+    const oY = Math.max(0, contentH * zoom - containerH);
+    const mPx = oX / (2 * zoom);
+    const mPy = oY / (2 * zoom);
+    return {
+      x: Math.max(-mPx, Math.min(px, mPx)),
+      y: Math.max(-mPy, Math.min(py, mPy)),
+    };
+  };
 
   const effectiveGallery = useMemo(() => {
     if (galleryItems && galleryItems.length > 0) return galleryItems;
@@ -92,6 +117,7 @@ const ImagePreviewModal: React.FC<ImagePreviewProps> = ({
     setZoomLevel(1);
     setPanPosition({ x: 0, y: 0 });
     setIsDragging(false);
+    setPdfFitSize(null);
   }, [currentItem.url]);
 
   const goToNext = useCallback(() => {
@@ -109,12 +135,23 @@ const ImagePreviewModal: React.FC<ImagePreviewProps> = ({
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "ArrowRight") goToNext();
-      else if (event.key === "ArrowLeft") goToPrevious();
+      if (event.key === "ArrowRight") {
+        if (numPages !== null && pageNumber < numPages) {
+          setPageNumber((p) => p + 1);
+        } else {
+          goToNext();
+        }
+      } else if (event.key === "ArrowLeft") {
+        if (numPages !== null && pageNumber > 1) {
+          setPageNumber((p) => p - 1);
+        } else {
+          goToPrevious();
+        }
+      }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, goToNext, goToPrevious]);
+  }, [isOpen, goToNext, goToPrevious, numPages, pageNumber]);
 
   const handleDownload = () => {
     const link = document.createElement("a");
@@ -161,6 +198,21 @@ const ImagePreviewModal: React.FC<ImagePreviewProps> = ({
    * cX_/cY_ or cX/cY (at the end): clamped X/Y - The final, bounded pan position that ensures the image edges don't come into view.
    */
 
+  const getImageRenderedSize = (
+    cRect: DOMRect,
+  ): { width: number; height: number } | null => {
+    if (!imageRef.current) return null;
+    const { naturalWidth, naturalHeight } = imageRef.current;
+    const iAR = naturalWidth / naturalHeight;
+    const cAR = cRect.width / cRect.height;
+    if (iAR > cAR) {
+      const rW = cRect.width;
+      return { width: rW, height: rW / iAR };
+    }
+    const rH = cRect.height;
+    return { width: rH * iAR, height: rH };
+  };
+
   const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
     if (isAvatar) return;
     e.preventDefault();
@@ -170,37 +222,24 @@ const ImagePreviewModal: React.FC<ImagePreviewProps> = ({
       1,
       Math.min(oldZoom + direction * mouseWheelZoomStrength, 5)
     );
-    if (newZoom === oldZoom || !imageContainerRef.current || !imageRef.current)
-      return;
-    const container = imageContainerRef.current;
-    const image = imageRef.current;
-    const cRect = container.getBoundingClientRect();
+    if (newZoom === oldZoom || !imageContainerRef.current) return;
+    const cRect = imageContainerRef.current.getBoundingClientRect();
+    const rendered = getImageRenderedSize(cRect);
+    if (!rendered) return;
     const mX = e.clientX - cRect.left - cRect.width / 2;
     const mY = e.clientY - cRect.top - cRect.height / 2;
     const cX = (mX - panPosition.x) / oldZoom;
     const cY = (mY - panPosition.y) / oldZoom;
     const nPx = mX - cX * newZoom;
     const nPy = mY - cY * newZoom;
-    const { naturalWidth, naturalHeight } = image;
-    const iAR = naturalWidth / naturalHeight;
-    const cAR = cRect.width / cRect.height;
-    let rW, rH;
-    if (iAR > cAR) {
-      rW = cRect.width;
-      rH = rW / iAR;
-    } else {
-      rH = cRect.height;
-      rW = rH * iAR;
-    }
-    const oX = Math.max(0, rW * newZoom - cRect.width);
-    const oY = Math.max(0, rH * newZoom - cRect.height);
-    const mPx = oX / (2 * newZoom);
-    const mPy = oY / (2 * newZoom);
-    const cX_ = Math.max(-mPx, Math.min(nPx, mPx));
-    const cY_ = Math.max(-mPy, Math.min(nPy, mPy));
     setZoomLevel(newZoom);
-    if (newZoom <= 1) setPanPosition({ x: 0, y: 0 });
-    else setPanPosition({ x: cX_, y: cY_ });
+    if (newZoom <= 1) {
+      setPanPosition({ x: 0, y: 0 });
+    } else {
+      setPanPosition(
+        clampPan(nPx, nPy, rendered.width, rendered.height, cRect.width, cRect.height, newZoom),
+      );
+    }
   };
 
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -214,41 +253,94 @@ const ImagePreviewModal: React.FC<ImagePreviewProps> = ({
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (
-      !isDragging ||
-      zoomLevel <= 1 ||
-      !imageContainerRef.current ||
-      !imageRef.current
-    )
-      return;
+    if (!isDragging || zoomLevel <= 1 || !imageContainerRef.current) return;
     e.preventDefault();
-    const container = imageContainerRef.current;
-    const image = imageRef.current;
-    const cRect = container.getBoundingClientRect();
-    const { naturalWidth, naturalHeight } = image;
-    const iAR = naturalWidth / naturalHeight;
-    const cAR = cRect.width / cRect.height;
-    let rW, rH;
-    if (iAR > cAR) {
-      rW = cRect.width;
-      rH = rW / iAR;
-    } else {
-      rH = cRect.height;
-      rW = rH * iAR;
-    }
-    const oX = Math.max(0, rW * zoomLevel - cRect.width);
-    const oY = Math.max(0, rH * zoomLevel - cRect.height);
-    const mPx = oX / (2 * zoomLevel);
-    const mPy = oY / (2 * zoomLevel);
+    const cRect = imageContainerRef.current.getBoundingClientRect();
+    const rendered = getImageRenderedSize(cRect);
+    if (!rendered) return;
     const nX = e.clientX - dragStart.x;
     const nY = e.clientY - dragStart.y;
-    const cX = Math.max(-mPx, Math.min(nX, mPx));
-    const cY = Math.max(-mPy, Math.min(nY, mPy));
-    setPanPosition({ x: cX, y: cY });
+    setPanPosition(
+      clampPan(nX, nY, rendered.width, rendered.height, cRect.width, cRect.height, zoomLevel),
+    );
   };
 
   const handleMouseUp = () => setIsDragging(false);
   const handleMouseLeave = () => setIsDragging(false);
+
+  // Compute the PDF page's fit-to-container size when it loads.
+  const handlePdfPageLoad = (page: {
+    originalWidth: number;
+    originalHeight: number;
+  }) => {
+    if (!pdfContainerRef.current) return;
+    const cRect = pdfContainerRef.current.getBoundingClientRect();
+    const padding = 16;
+    const cw = Math.max(0, cRect.width - padding * 2);
+    const ch = Math.max(0, cRect.height - padding * 2);
+    if (cw === 0 || ch === 0) return;
+    const pAspect = page.originalWidth / page.originalHeight;
+    const cAspect = cw / ch;
+    let fw: number;
+    let fh: number;
+    if (pAspect > cAspect) {
+      fw = cw;
+      fh = cw / pAspect;
+    } else {
+      fh = ch;
+      fw = ch * pAspect;
+    }
+    setPdfFitSize({ width: fw, height: fh });
+  };
+
+  const handlePdfWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    if (!pdfFitSize || !pdfContainerRef.current) return;
+    e.preventDefault();
+    const direction = e.deltaY < 0 ? 1 : -1;
+    const oldZoom = zoomLevel;
+    const newZoom = Math.max(
+      1,
+      Math.min(oldZoom + direction * mouseWheelZoomStrength, 5),
+    );
+    if (newZoom === oldZoom) return;
+    const cRect = pdfContainerRef.current.getBoundingClientRect();
+    const mX = e.clientX - cRect.left - cRect.width / 2;
+    const mY = e.clientY - cRect.top - cRect.height / 2;
+    const cX = (mX - panPosition.x) / oldZoom;
+    const cY = (mY - panPosition.y) / oldZoom;
+    const nPx = mX - cX * newZoom;
+    const nPy = mY - cY * newZoom;
+    setZoomLevel(newZoom);
+    if (newZoom <= 1) {
+      setPanPosition({ x: 0, y: 0 });
+    } else {
+      setPanPosition(
+        clampPan(nPx, nPy, pdfFitSize.width, pdfFitSize.height, cRect.width, cRect.height, newZoom),
+      );
+    }
+  };
+
+  const handlePdfMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (zoomLevel <= 1) return;
+    e.preventDefault();
+    setIsDragging(true);
+    setDragStart({
+      x: e.clientX - panPosition.x,
+      y: e.clientY - panPosition.y,
+    });
+  };
+
+  const handlePdfMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isDragging || zoomLevel <= 1 || !pdfContainerRef.current || !pdfFitSize)
+      return;
+    e.preventDefault();
+    const cRect = pdfContainerRef.current.getBoundingClientRect();
+    const nX = e.clientX - dragStart.x;
+    const nY = e.clientY - dragStart.y;
+    setPanPosition(
+      clampPan(nX, nY, pdfFitSize.width, pdfFitSize.height, cRect.width, cRect.height, zoomLevel),
+    );
+  };
 
   const isImageFile = useMemo(() => {
     if (isAvatar) return true;
@@ -416,25 +508,73 @@ const ImagePreviewModal: React.FC<ImagePreviewProps> = ({
               )
             ) : isPdfFile ? (
               <div className="flex flex-col items-center w-full h-full">
-                <div className="flex-1 w-full overflow-y-auto flex justify-center pt-4 custom-scrollbar-xs">
-                  <Document
-                    file={currentItem.url}
-                    onLoadSuccess={onDocumentLoadSuccess}
-                    onLoadError={onDocumentLoadError}
-                    loading={
-                      <div className="flex items-center justify-center h-32 text-gray-500">
-                        Зареждане на PDF...
-                      </div>
-                    }
+                <div
+                  ref={pdfContainerRef}
+                  className="relative flex-1 w-full overflow-hidden flex items-center justify-center"
+                  onMouseDown={handlePdfMouseDown}
+                  onMouseMove={handlePdfMouseMove}
+                  onWheel={handlePdfWheel}
+                  style={{
+                    cursor:
+                      zoomLevel > 1
+                        ? isDragging
+                          ? "grabbing"
+                          : "grab"
+                        : "default",
+                  }}
+                >
+                  <div
+                    style={{
+                      transform: `scale(${zoomLevel}) translate(${panPosition.x}px, ${panPosition.y}px)`,
+                      transformOrigin: "center center",
+                      willChange: "transform",
+                    }}
                   >
-                    <Page
-                      pageNumber={pageNumber}
-                      renderTextLayer={false}
-                      renderAnnotationLayer={false}
-                      className="max-w-full"
-                      scale={1.5}
-                    />
-                  </Document>
+                    <Document
+                      file={currentItem.url}
+                      onLoadSuccess={onDocumentLoadSuccess}
+                      onLoadError={onDocumentLoadError}
+                      loading={
+                        <div className="flex items-center justify-center h-32 text-gray-500">
+                          Зареждане на PDF...
+                        </div>
+                      }
+                    >
+                      <Page
+                        pageNumber={pageNumber}
+                        renderTextLayer={false}
+                        renderAnnotationLayer={false}
+                        onLoadSuccess={handlePdfPageLoad}
+                        width={pdfFitSize?.width}
+                      />
+                    </Document>
+                  </div>
+                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-sm p-1.5 rounded-lg flex items-center gap-2 shadow-lg">
+                    <button
+                      onClick={handleZoomOut}
+                      disabled={zoomLevel <= 1}
+                      className="p-1 text-white cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white/20 rounded-md transition-all"
+                      title="Намали"
+                    >
+                      <MagnifyingGlassMinusIcon className="h-6 w-6" />
+                    </button>
+                    <button
+                      onClick={handleZoomReset}
+                      disabled={zoomLevel === 1}
+                      className="p-1 text-white cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white/20 rounded-md transition-all"
+                      title="Нулиране"
+                    >
+                      <ArrowPathIcon className="h-5 w-5" />
+                    </button>
+                    <button
+                      onClick={handleZoomIn}
+                      disabled={zoomLevel >= 5}
+                      className="p-1 text-white cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white/20 rounded-md transition-all"
+                      title="Увеличи"
+                    >
+                      <MagnifyingGlassPlusIcon className="h-6 w-6" />
+                    </button>
+                  </div>
                 </div>
                 {numPages && numPages > 1 && (
                   <div className="flex items-center gap-4 py-4 text-sm text-gray-600 flex-shrink-0">

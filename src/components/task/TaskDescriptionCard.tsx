@@ -28,9 +28,6 @@ const TaskDescriptionCard: React.FC<TaskDescriptionCardProps> = ({
   if (!description && (!attachments || attachments.length === 0)) {
     return (
       <div>
-        <h3 className="text-xs font-semibold text-gray-500 flex items-center gap-1.5 mb-1.5">
-          Описание:
-        </h3>
         <p className="text-gray-400 italic text-sm">Няма описание.</p>
       </div>
     );

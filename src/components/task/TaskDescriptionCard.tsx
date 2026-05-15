@@ -35,9 +35,6 @@ const TaskDescriptionCard: React.FC<TaskDescriptionCardProps> = ({
 
   return (
     <div className="flex flex-col h-full min-h-0">
-      <h3 className="text-xs font-semibold text-gray-500 flex items-center gap-1.5 mb-1.5 flex-shrink-0">
-        Описание:
-      </h3>
       <div className="overflow-y-auto custom-scrollbar-xs flex-1 min-h-0">
         <div className="bg-gray-50 rounded-md p-3 text-gray-900 text-sm break-words">
           {description && renderContentSafely(description)}

@@ -49,6 +49,7 @@ interface UnifiedEditorProps {
   editorMinHeight?: string;
   autoFocus?: boolean;
   hideAttachments?: boolean;
+  enableHeightToggle?: boolean;
 }
 
 const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
@@ -74,11 +75,13 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
     editorMinHeight,
     autoFocus = false,
     hideAttachments = false,
+    enableHeightToggle = false,
   } = props;
 
   const { t } = useTranslation(["caseSubmission"]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [fileError, setFileError] = useState<string | null>(null);
+  const [isExpanded, setIsExpanded] = useState(false);
   const { processFiles, isCompressing } = useFileHandler();
 
   const isInternalChange = useRef(false);
@@ -247,12 +250,20 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
             isMaxFilesReached={isMaxFilesReached}
             type={type}
             hideAttach={hideAttachments}
+            isExpanded={isExpanded}
+            onToggleExpand={
+              enableHeightToggle ? () => setIsExpanded((v) => !v) : undefined
+            }
           />
         </div>
 
         <div className="relative flex-grow flex flex-col min-h-0">
           <div
-            className={`flex-grow overflow-y-auto overflow-x-hidden custom-scrollbar-xs cursor-text ${editorClassName}`}
+            className={`flex-grow overflow-y-auto overflow-x-hidden custom-scrollbar-xs cursor-text transition-[max-height,height,min-height] duration-300 ease-out ${
+              enableHeightToggle && isExpanded
+                ? "h-[55vh] max-h-[55vh] min-h-[55vh]"
+                : (editorClassName ?? "")
+            }`}
             onClick={() => {
               if (editor && !editor.isFocused && !editor.isDestroyed) {
                 editor.commands.focus("end");

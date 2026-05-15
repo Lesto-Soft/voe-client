@@ -169,6 +169,7 @@ const CaseSubmissionLeftPanel: React.FC<CaseSubmissionLeftPanelProps> = ({
           onProcessingChange={onProcessingChange}
           editorClassName="flex-1 h-full min-h-0"
           hideAttachments={true}
+          enableHeightToggle
         />
       </div>
       <div className="flex-shrink-0 pt-2 border-t border-gray-100">

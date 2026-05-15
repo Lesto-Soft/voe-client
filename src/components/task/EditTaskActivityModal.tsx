@@ -140,6 +140,7 @@ const EditTaskActivityModal: React.FC<EditTaskActivityModalProps> = ({
                 caseId={activity._id}
                 type="taskActivity"
                 attachmentFolder="taskActivities"
+                enableFullscreen
               />
             </div>
 

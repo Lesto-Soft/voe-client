@@ -8,6 +8,8 @@ import {
   NumberedListIcon,
   PaperClipIcon,
   AtSymbolIcon,
+  ArrowsPointingInIcon,
+  ArrowsPointingOutIcon,
 } from "@heroicons/react/20/solid";
 import { useTranslation } from "react-i18next";
 import TextEditorHelper from "./TextEditorHelper";
@@ -19,6 +21,8 @@ interface MenuBarProps {
   isMaxFilesReached: boolean;
   type: "case" | "answer" | "comment" | "task" | "taskActivity";
   hideAttach?: boolean;
+  isFullscreen?: boolean;
+  onToggleFullscreen?: () => void;
 }
 
 const MenuBar: React.FC<MenuBarProps> = ({
@@ -28,6 +32,8 @@ const MenuBar: React.FC<MenuBarProps> = ({
   isMaxFilesReached,
   type,
   hideAttach,
+  isFullscreen,
+  onToggleFullscreen,
 }) => {
   const { t } = useTranslation("menu");
   if (!editor) return null;
@@ -145,7 +151,23 @@ const MenuBar: React.FC<MenuBarProps> = ({
           </button>
         )}
       </div>
-      <TextEditorHelper type={type} hideAttach={hideAttach} />
+      <div className="flex items-center gap-1">
+        {onToggleFullscreen && (
+          <button
+            type="button"
+            onClick={onToggleFullscreen}
+            title={isFullscreen ? "Излез от цял екран" : "На цял екран"}
+            className="p-2 text-gray-500 hover:bg-gray-200 rounded-md cursor-pointer"
+          >
+            {isFullscreen ? (
+              <ArrowsPointingInIcon className="w-5 h-5" />
+            ) : (
+              <ArrowsPointingOutIcon className="w-5 h-5" />
+            )}
+          </button>
+        )}
+        <TextEditorHelper type={type} hideAttach={hideAttach} />
+      </div>
     </div>
   );
 };

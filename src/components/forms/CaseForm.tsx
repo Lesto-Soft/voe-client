@@ -246,6 +246,7 @@ const CaseForm: React.FC<CaseFormProps> = (props) => {
               caseId={props.mode === "edit" ? props.caseId : undefined}
               type="case"
               editorClassName="h-[180px] min-h-[180px] max-h-[180px]"
+              enableFullscreen
             />
           </div>
 

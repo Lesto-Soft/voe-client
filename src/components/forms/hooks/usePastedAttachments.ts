@@ -12,6 +12,11 @@ import { MAX_UPLOAD_FILES, MAX_UPLOAD_MB } from "../../../db/config";
 const activeHosts: number[] = [];
 let nextHostId = 1;
 
+// Rate-limit clipboard handling so a held Ctrl+V doesn't fire repeatedly and
+// attach the same image dozens of times at the OS auto-repeat rate.
+let lastHandledPasteAt = 0;
+const PASTE_THROTTLE_MS = 300;
+
 export const usePastedAttachments = (
   isOpen: boolean,
   newAttachments: File[],
@@ -54,6 +59,15 @@ export const usePastedAttachments = (
       if (!containsFiles) {
         return;
       }
+
+      // Held Ctrl+V auto-repeats at the OS rate (~30-50ms) and would
+      // otherwise re-attach the same clipboard image on every event.
+      const now = Date.now();
+      if (now - lastHandledPasteAt < PASTE_THROTTLE_MS) {
+        event.preventDefault();
+        return;
+      }
+      lastHandledPasteAt = now;
 
       const currentFilesCount =
         newAttachments.length + existingAttachments.length;

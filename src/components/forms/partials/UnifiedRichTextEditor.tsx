@@ -80,8 +80,10 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
 
   const { t } = useTranslation(["caseSubmission"]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [fileError, setFileError] = useState<string | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [hasOverflow, setHasOverflow] = useState(false);
   const { processFiles, isCompressing } = useFileHandler();
 
   const isInternalChange = useRef(false);
@@ -127,6 +129,35 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
       editor.commands.focus("end");
     }
   }, [autoFocus, editor]);
+
+  // Track whether the editor content overflows its visible (collapsed) height
+  // so the height-toggle button only shows when there's actually something to
+  // expand to — and stays available while expanded so the user can collapse
+  // back regardless of current content size.
+  useEffect(() => {
+    if (!enableHeightToggle) return;
+    const wrapper = scrollContainerRef.current;
+    if (!wrapper) return;
+
+    const checkOverflow = () => {
+      setHasOverflow(wrapper.scrollHeight > wrapper.clientHeight + 1);
+    };
+
+    checkOverflow();
+    const rafId = requestAnimationFrame(checkOverflow);
+
+    const ro = new ResizeObserver(checkOverflow);
+    ro.observe(wrapper);
+
+    const handleUpdate = () => checkOverflow();
+    if (editor) editor.on("update", handleUpdate);
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      ro.disconnect();
+      if (editor) editor.off("update", handleUpdate);
+    };
+  }, [enableHeightToggle, editor, isExpanded, editorClassName]);
 
   // Sync external content changes (e.g. CaseAnswerSelector) into the editor
   useEffect(() => {
@@ -252,13 +283,16 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
             hideAttach={hideAttachments}
             isExpanded={isExpanded}
             onToggleExpand={
-              enableHeightToggle ? () => setIsExpanded((v) => !v) : undefined
+              enableHeightToggle && (isExpanded || hasOverflow)
+                ? () => setIsExpanded((v) => !v)
+                : undefined
             }
           />
         </div>
 
         <div className="relative flex-grow flex flex-col min-h-0">
           <div
+            ref={scrollContainerRef}
             className={`flex-grow overflow-y-auto overflow-x-hidden custom-scrollbar-xs cursor-text transition-[max-height,height,min-height] duration-300 ease-out ${
               enableHeightToggle && isExpanded
                 ? "h-[55vh] max-h-[55vh] min-h-[55vh]"

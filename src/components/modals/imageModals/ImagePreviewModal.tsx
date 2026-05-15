@@ -67,6 +67,10 @@ const ImagePreviewModal: React.FC<ImagePreviewProps> = ({
     width: number;
     height: number;
   } | null>(null);
+  // The zoom at which the PDF canvas was last rasterized. Updated lazily after
+  // the user stops zooming so wheel scroll stays responsive, then the canvas
+  // re-renders at the new resolution for crisp text.
+  const [pdfRenderZoom, setPdfRenderZoom] = useState(1);
 
   const mouseWheelZoomStrength = 0.2;
 
@@ -84,6 +88,26 @@ const ImagePreviewModal: React.FC<ImagePreviewProps> = ({
     const oY = Math.max(0, contentH * zoom - containerH);
     const mPx = oX / (2 * zoom);
     const mPy = oY / (2 * zoom);
+    return {
+      x: Math.max(-mPx, Math.min(px, mPx)),
+      y: Math.max(-mPy, Math.min(py, mPy)),
+    };
+  };
+
+  // Clamp for pan stored in screen pixels (used by the PDF case so its
+  // render-zoom and display-zoom can vary independently).
+  const clampPanScreen = (
+    px: number,
+    py: number,
+    visualW: number,
+    visualH: number,
+    containerW: number,
+    containerH: number,
+  ) => {
+    const oX = Math.max(0, visualW - containerW);
+    const oY = Math.max(0, visualH - containerH);
+    const mPx = oX / 2;
+    const mPy = oY / 2;
     return {
       x: Math.max(-mPx, Math.min(px, mPx)),
       y: Math.max(-mPy, Math.min(py, mPy)),
@@ -118,7 +142,17 @@ const ImagePreviewModal: React.FC<ImagePreviewProps> = ({
     setPanPosition({ x: 0, y: 0 });
     setIsDragging(false);
     setPdfFitSize(null);
+    setPdfRenderZoom(1);
   }, [currentItem.url]);
+
+  // Debounce-trigger a re-render of the PDF canvas at the current zoom so
+  // zoomed-in text stays sharp once the user stops scrolling the wheel.
+  useEffect(() => {
+    if (!pdfFitSize) return;
+    if (pdfRenderZoom === zoomLevel) return;
+    const id = setTimeout(() => setPdfRenderZoom(zoomLevel), 250);
+    return () => clearTimeout(id);
+  }, [zoomLevel, pdfFitSize, pdfRenderZoom]);
 
   const goToNext = useCallback(() => {
     if (effectiveGallery.length <= 1) return;
@@ -293,29 +327,38 @@ const ImagePreviewModal: React.FC<ImagePreviewProps> = ({
     setPdfFitSize({ width: fw, height: fh });
   };
 
+  // PDF case uses screen-pixel pan storage so the displayed zoom and the
+  // canvas render-zoom can change independently without re-mapping pan.
   const handlePdfWheel = (e: React.WheelEvent<HTMLDivElement>) => {
     if (!pdfFitSize || !pdfContainerRef.current) return;
     e.preventDefault();
     const direction = e.deltaY < 0 ? 1 : -1;
-    const oldZoom = zoomLevel;
-    const newZoom = Math.max(
+    const oldZ = zoomLevel;
+    const newZ = Math.max(
       1,
-      Math.min(oldZoom + direction * mouseWheelZoomStrength, 5),
+      Math.min(oldZ + direction * mouseWheelZoomStrength, 5),
     );
-    if (newZoom === oldZoom) return;
+    if (newZ === oldZ) return;
     const cRect = pdfContainerRef.current.getBoundingClientRect();
     const mX = e.clientX - cRect.left - cRect.width / 2;
     const mY = e.clientY - cRect.top - cRect.height / 2;
-    const cX = (mX - panPosition.x) / oldZoom;
-    const cY = (mY - panPosition.y) / oldZoom;
-    const nPx = mX - cX * newZoom;
-    const nPy = mY - cY * newZoom;
-    setZoomLevel(newZoom);
-    if (newZoom <= 1) {
+    // Point-stable in screen-pixel pan space:
+    // panNew = mouse - (mouse - panOld) * (Znew / Zold)
+    const nPx = mX - (mX - panPosition.x) * (newZ / oldZ);
+    const nPy = mY - (mY - panPosition.y) * (newZ / oldZ);
+    setZoomLevel(newZ);
+    if (newZ <= 1) {
       setPanPosition({ x: 0, y: 0 });
     } else {
       setPanPosition(
-        clampPan(nPx, nPy, pdfFitSize.width, pdfFitSize.height, cRect.width, cRect.height, newZoom),
+        clampPanScreen(
+          nPx,
+          nPy,
+          pdfFitSize.width * newZ,
+          pdfFitSize.height * newZ,
+          cRect.width,
+          cRect.height,
+        ),
       );
     }
   };
@@ -338,7 +381,14 @@ const ImagePreviewModal: React.FC<ImagePreviewProps> = ({
     const nX = e.clientX - dragStart.x;
     const nY = e.clientY - dragStart.y;
     setPanPosition(
-      clampPan(nX, nY, pdfFitSize.width, pdfFitSize.height, cRect.width, cRect.height, zoomLevel),
+      clampPanScreen(
+        nX,
+        nY,
+        pdfFitSize.width * zoomLevel,
+        pdfFitSize.height * zoomLevel,
+        cRect.width,
+        cRect.height,
+      ),
     );
   };
 
@@ -525,7 +575,7 @@ const ImagePreviewModal: React.FC<ImagePreviewProps> = ({
                 >
                   <div
                     style={{
-                      transform: `scale(${zoomLevel}) translate(${panPosition.x}px, ${panPosition.y}px)`,
+                      transform: `translate(${panPosition.x}px, ${panPosition.y}px) scale(${zoomLevel / pdfRenderZoom})`,
                       transformOrigin: "center center",
                       willChange: "transform",
                     }}
@@ -545,7 +595,9 @@ const ImagePreviewModal: React.FC<ImagePreviewProps> = ({
                         renderTextLayer={false}
                         renderAnnotationLayer={false}
                         onLoadSuccess={handlePdfPageLoad}
-                        width={pdfFitSize?.width}
+                        width={
+                          pdfFitSize ? pdfFitSize.width * pdfRenderZoom : undefined
+                        }
                       />
                     </Document>
                   </div>

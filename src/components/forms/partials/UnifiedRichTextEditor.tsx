@@ -395,7 +395,6 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
             className="fixed top-[20vh] bottom-[20vh] left-4 right-4 md:left-8 md:right-8 lg:left-16 lg:right-16 bg-white rounded-lg shadow-2xl z-[9991] flex flex-col overflow-hidden focus:outline-none"
             onOpenAutoFocus={(e) => e.preventDefault()}
           >
-            <div data-mention-container="true" className="relative z-[9999]" />
             <header className="flex items-center justify-between px-4 py-3 border-b border-gray-200 flex-shrink-0">
               <Dialog.Title className="text-base font-semibold text-gray-800">
                 Редактор

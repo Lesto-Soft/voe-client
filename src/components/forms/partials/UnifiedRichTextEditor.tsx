@@ -392,11 +392,24 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 bg-black/60 z-[9990]" />
           <Dialog.Content
-            className="fixed inset-4 md:inset-8 lg:inset-16 bg-white rounded-lg shadow-2xl z-[9991] flex flex-col p-4 focus:outline-none"
+            className="fixed top-[20vh] bottom-[20vh] left-4 right-4 md:left-8 md:right-8 lg:left-16 lg:right-16 bg-white rounded-lg shadow-2xl z-[9991] flex flex-col overflow-hidden focus:outline-none"
             onOpenAutoFocus={(e) => e.preventDefault()}
           >
-            <Dialog.Title className="sr-only">Редактор на цял екран</Dialog.Title>
-            {body}
+            <header className="flex items-center justify-between px-4 py-3 border-b border-gray-200 flex-shrink-0">
+              <Dialog.Title className="text-base font-semibold text-gray-800">
+                Редактор
+              </Dialog.Title>
+              <Dialog.Close asChild>
+                <button
+                  type="button"
+                  aria-label="Затвори"
+                  className="p-1 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300 cursor-pointer"
+                >
+                  <XMarkIcon className="h-5 w-5" />
+                </button>
+              </Dialog.Close>
+            </header>
+            <div className="flex-1 min-h-0 p-4 overflow-hidden">{body}</div>
           </Dialog.Content>
         </Dialog.Portal>
       </Dialog.Root>

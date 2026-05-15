@@ -12,10 +12,29 @@ import { MAX_UPLOAD_FILES, MAX_UPLOAD_MB } from "../../../db/config";
 const activeHosts: number[] = [];
 let nextHostId = 1;
 
-// Rate-limit clipboard handling so a held Ctrl+V doesn't fire repeatedly and
-// attach the same image dozens of times at the OS auto-repeat rate.
-let lastHandledPasteAt = 0;
-const PASTE_THROTTLE_MS = 300;
+// Track whether the most recent paste-triggering keydown (Ctrl/Cmd+V) was a
+// key-repeat. The browser fires a fresh paste event for every auto-repeat
+// tick, so without this guard a held Ctrl+V attaches the same clipboard image
+// on every tick. Resets on key release so non-keyboard pastes (right-click
+// menu, etc.) aren't affected.
+let pasteKeydownWasRepeat = false;
+
+const handlePasteKeydown = (e: KeyboardEvent) => {
+  if ((e.ctrlKey || e.metaKey) && (e.key === "v" || e.key === "V")) {
+    pasteKeydownWasRepeat = e.repeat;
+  }
+};
+
+const handlePasteKeyup = (e: KeyboardEvent) => {
+  if (
+    e.key === "v" ||
+    e.key === "V" ||
+    e.key === "Control" ||
+    e.key === "Meta"
+  ) {
+    pasteKeydownWasRepeat = false;
+  }
+};
 
 export const usePastedAttachments = (
   isOpen: boolean,
@@ -50,6 +69,14 @@ export const usePastedAttachments = (
         return;
       }
 
+      // Held Ctrl+V keeps firing paste events at the OS auto-repeat rate.
+      // Skip every paste whose triggering keydown was a repeat — one attach
+      // per intentional Ctrl+V press, regardless of how long the key is held.
+      if (pasteKeydownWasRepeat) {
+        event.preventDefault();
+        return;
+      }
+
       const items = event.clipboardData?.items;
       if (!items) return;
 
@@ -59,15 +86,6 @@ export const usePastedAttachments = (
       if (!containsFiles) {
         return;
       }
-
-      // Held Ctrl+V auto-repeats at the OS rate (~30-50ms) and would
-      // otherwise re-attach the same clipboard image on every event.
-      const now = Date.now();
-      if (now - lastHandledPasteAt < PASTE_THROTTLE_MS) {
-        event.preventDefault();
-        return;
-      }
-      lastHandledPasteAt = now;
 
       const currentFilesCount =
         newAttachments.length + existingAttachments.length;
@@ -137,10 +155,14 @@ export const usePastedAttachments = (
 
     if (isOpen) {
       document.addEventListener("paste", handlePaste);
+      document.addEventListener("keydown", handlePasteKeydown);
+      document.addEventListener("keyup", handlePasteKeyup);
     }
 
     return () => {
       document.removeEventListener("paste", handlePaste);
+      document.removeEventListener("keydown", handlePasteKeydown);
+      document.removeEventListener("keyup", handlePasteKeyup);
     };
   }, [isOpen, newAttachments, existingAttachments, setNewAttachments, t]);
 };

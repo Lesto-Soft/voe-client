@@ -498,6 +498,21 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
                           {config.label}
                         </span>
                         <UserLink user={activity.createdBy} />
+                        {activity.type === TaskActivityType.ApprovalRequest &&
+                          canApproveTask && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setApprovingActivityId(activity._id)
+                              }
+                              disabled={statusLoading}
+                              className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium shadow-sm bg-btnGreen text-white hover:bg-btnGreenHover focus:ring-2 focus:ring-green-300 transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                              title="Одобри заявката и завърши задачата"
+                            >
+                              <HandThumbUpIcon className="h-3.5 w-3.5" />
+                              Одобри
+                            </button>
+                          )}
                       </div>
                       <div className="flex items-center gap-2">
                         <ShowDate date={activity.createdAt} />
@@ -556,23 +571,6 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
                               attachments={activity.attachments}
                               activityId={activity._id}
                             />
-                          )}
-                        {activity.type === TaskActivityType.ApprovalRequest &&
-                          canApproveTask && (
-                            <div className="mt-2 flex justify-end">
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setApprovingActivityId(activity._id)
-                                }
-                                disabled={statusLoading}
-                                className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium shadow-sm bg-btnGreen text-white hover:bg-btnGreenHover focus:ring-2 focus:ring-green-300 transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                                title="Одобри заявката и завърши задачата"
-                              >
-                                <HandThumbUpIcon className="h-4 w-4" />
-                                Одобри
-                              </button>
-                            </div>
                           )}
                       </>
                   </div>

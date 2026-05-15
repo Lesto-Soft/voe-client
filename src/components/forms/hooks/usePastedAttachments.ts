@@ -1,8 +1,40 @@
 // src/hooks/usePastedAttachments.ts
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { toast } from "react-toastify";
 import { TFunction } from "i18next";
 import { MAX_UPLOAD_FILES, MAX_UPLOAD_MB } from "../../../db/config";
+
+// Module-level stack of active paste-aware hosts (e.g. case editor, answer editor,
+// task activity editor). When several hosts are open at once (e.g. edit-case modal
+// over the case page while the new-answer panel is also expanded), only the host
+// at the top of the stack — the most recently mounted — should consume the paste.
+// Otherwise the same clipboard image ends up attached to every open host.
+const activeHosts: number[] = [];
+let nextHostId = 1;
+
+// Track whether the most recent paste-triggering keydown (Ctrl/Cmd+V) was a
+// key-repeat. The browser fires a fresh paste event for every auto-repeat
+// tick, so without this guard a held Ctrl+V attaches the same clipboard image
+// on every tick. Resets on key release so non-keyboard pastes (right-click
+// menu, etc.) aren't affected.
+let pasteKeydownWasRepeat = false;
+
+const handlePasteKeydown = (e: KeyboardEvent) => {
+  if ((e.ctrlKey || e.metaKey) && (e.key === "v" || e.key === "V")) {
+    pasteKeydownWasRepeat = e.repeat;
+  }
+};
+
+const handlePasteKeyup = (e: KeyboardEvent) => {
+  if (
+    e.key === "v" ||
+    e.key === "V" ||
+    e.key === "Control" ||
+    e.key === "Meta"
+  ) {
+    pasteKeydownWasRepeat = false;
+  }
+};
 
 export const usePastedAttachments = (
   isOpen: boolean,
@@ -11,8 +43,40 @@ export const usePastedAttachments = (
   setNewAttachments: React.Dispatch<React.SetStateAction<File[]>>,
   t: TFunction<("dashboard" | "caseSubmission")[], undefined>
 ) => {
+  const myIdRef = useRef<number | null>(null);
+
+  // Register / unregister this host in the stack. Depends only on `isOpen` so
+  // that unrelated re-renders (e.g. attachments state changing) don't reshuffle
+  // the stack and accidentally move this host to the top.
+  useEffect(() => {
+    if (!isOpen) return;
+    if (myIdRef.current === null) myIdRef.current = nextHostId++;
+    activeHosts.push(myIdRef.current);
+    return () => {
+      if (myIdRef.current === null) return;
+      const idx = activeHosts.lastIndexOf(myIdRef.current);
+      if (idx !== -1) activeHosts.splice(idx, 1);
+    };
+  }, [isOpen]);
+
   useEffect(() => {
     const handlePaste = (event: ClipboardEvent) => {
+      // Only the topmost open host should consume the paste.
+      if (
+        myIdRef.current === null ||
+        activeHosts[activeHosts.length - 1] !== myIdRef.current
+      ) {
+        return;
+      }
+
+      // Held Ctrl+V keeps firing paste events at the OS auto-repeat rate.
+      // Skip every paste whose triggering keydown was a repeat — one attach
+      // per intentional Ctrl+V press, regardless of how long the key is held.
+      if (pasteKeydownWasRepeat) {
+        event.preventDefault();
+        return;
+      }
+
       const items = event.clipboardData?.items;
       if (!items) return;
 
@@ -91,10 +155,14 @@ export const usePastedAttachments = (
 
     if (isOpen) {
       document.addEventListener("paste", handlePaste);
+      document.addEventListener("keydown", handlePasteKeydown);
+      document.addEventListener("keyup", handlePasteKeyup);
     }
 
     return () => {
       document.removeEventListener("paste", handlePaste);
+      document.removeEventListener("keydown", handlePasteKeydown);
+      document.removeEventListener("keyup", handlePasteKeyup);
     };
   }, [isOpen, newAttachments, existingAttachments, setNewAttachments, t]);
 };

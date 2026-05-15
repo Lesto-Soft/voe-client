@@ -1,9 +1,10 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import { useLocation } from "react-router";
-import { ITaskActivity, IMe, TaskActivityType } from "../../db/interfaces";
+import { ITaskActivity, IMe, TaskActivityType, TaskStatus } from "../../db/interfaces";
 import {
   useCreateTaskActivity,
   useDeleteTaskActivity,
+  useChangeTaskStatus,
 } from "../../graphql/hooks/task";
 import UserLink from "../global/links/UserLink";
 import ActionMenu from "../global/ActionMenu";
@@ -33,6 +34,7 @@ import {
   MinusCircleIcon,
   ChevronDownIcon,
   ChevronUpIcon,
+  HandThumbUpIcon,
 } from "@heroicons/react/24/solid";
 
 // Activity type configuration with icons and colors
@@ -164,6 +166,8 @@ interface TaskActivitiesProps {
   refetch: () => void;
   mentions?: { _id: string; name: string; username: string }[];
   readOnly?: boolean;
+  currentStatus?: TaskStatus;
+  canChangeStatus?: boolean;
 }
 
 const TaskActivities: React.FC<TaskActivitiesProps> = ({
@@ -173,6 +177,8 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
   refetch,
   mentions = [],
   readOnly = false,
+  currentStatus,
+  canChangeStatus = false,
 }) => {
   const [activitySortAsc, setActivitySortAsc] = useState(false);
   const [isAddActivityVisible, setIsAddActivityVisible] = useState(false);
@@ -214,6 +220,26 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
     useCreateTaskActivity(taskId);
   const { deleteTaskActivity, loading: deleteLoading } =
     useDeleteTaskActivity(taskId);
+  const { changeTaskStatus, loading: statusLoading } =
+    useChangeTaskStatus(taskId);
+
+  const [approvingActivityId, setApprovingActivityId] = useState<string | null>(
+    null,
+  );
+  const canApproveTask =
+    canChangeStatus && currentStatus !== undefined && currentStatus !== TaskStatus.Done;
+
+  const handleApprove = async () => {
+    if (statusLoading || !currentUser) return;
+    try {
+      await changeTaskStatus(taskId, TaskStatus.Done, currentUser._id);
+      refetch();
+    } catch (error) {
+      console.error("Failed to approve task:", error);
+    } finally {
+      setApprovingActivityId(null);
+    }
+  };
 
   const handleSubmitActivity = async () => {
     if (!newContent.trim() || createLoading) return;
@@ -383,6 +409,7 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
                   editorMinHeight="min-h-[125px]"
                   editorClassName="max-h-[125px]"
                   autoFocus
+                  enableHeightToggle
                 />
               </div>
             </div>
@@ -471,6 +498,21 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
                           {config.label}
                         </span>
                         <UserLink user={activity.createdBy} />
+                        {activity.type === TaskActivityType.ApprovalRequest &&
+                          canApproveTask && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setApprovingActivityId(activity._id)
+                              }
+                              disabled={statusLoading}
+                              className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium shadow-sm bg-btnGreen text-white hover:bg-btnGreenHover focus:ring-2 focus:ring-green-300 transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                              title="Одобри заявката и завърши задачата"
+                            >
+                              <HandThumbUpIcon className="h-3.5 w-3.5" />
+                              Одобри
+                            </button>
+                          )}
                       </div>
                       <div className="flex items-center gap-2">
                         <ShowDate date={activity.createdAt} />
@@ -549,6 +591,16 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
         confirmButtonText="Изтрий"
         cancelButtonText="Отмени"
         isDestructiveAction
+      />
+
+      <ConfirmActionDialog
+        isOpen={approvingActivityId !== null}
+        onOpenChange={(open) => { if (!open) setApprovingActivityId(null); }}
+        onConfirm={handleApprove}
+        title="Одобряване на задача"
+        description="Сигурни ли сте, че искате да одобрите тази заявка? Статусът на задачата ще бъде променен на „Завършена“."
+        confirmButtonText="Одобри"
+        cancelButtonText="Отмени"
       />
 
       {editingActivity && (

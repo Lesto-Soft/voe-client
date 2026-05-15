@@ -1,5 +1,6 @@
 // src/components/forms/partials/UnifiedRichTextEditor.tsx
 import React, { useRef, useMemo, useEffect, useState } from "react";
+import { flushSync } from "react-dom";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
@@ -49,6 +50,7 @@ interface UnifiedEditorProps {
   editorMinHeight?: string;
   autoFocus?: boolean;
   hideAttachments?: boolean;
+  enableHeightToggle?: boolean;
 }
 
 const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
@@ -74,11 +76,15 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
     editorMinHeight,
     autoFocus = false,
     hideAttachments = false,
+    enableHeightToggle = false,
   } = props;
 
   const { t } = useTranslation(["caseSubmission"]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [fileError, setFileError] = useState<string | null>(null);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [hasOverflow, setHasOverflow] = useState(false);
   const { processFiles, isCompressing } = useFileHandler();
 
   const isInternalChange = useRef(false);
@@ -124,6 +130,35 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
       editor.commands.focus("end");
     }
   }, [autoFocus, editor]);
+
+  // Track whether the editor content overflows its visible (collapsed) height
+  // so the height-toggle button only shows when there's actually something to
+  // expand to — and stays available while expanded so the user can collapse
+  // back regardless of current content size.
+  useEffect(() => {
+    if (!enableHeightToggle) return;
+    const wrapper = scrollContainerRef.current;
+    if (!wrapper) return;
+
+    const checkOverflow = () => {
+      setHasOverflow(wrapper.scrollHeight > wrapper.clientHeight + 1);
+    };
+
+    checkOverflow();
+    const rafId = requestAnimationFrame(checkOverflow);
+
+    const ro = new ResizeObserver(checkOverflow);
+    ro.observe(wrapper);
+
+    const handleUpdate = () => checkOverflow();
+    if (editor) editor.on("update", handleUpdate);
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      ro.disconnect();
+      if (editor) editor.off("update", handleUpdate);
+    };
+  }, [enableHeightToggle, editor, isExpanded, editorClassName]);
 
   // Sync external content changes (e.g. CaseAnswerSelector) into the editor
   useEffect(() => {
@@ -247,12 +282,47 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
             isMaxFilesReached={isMaxFilesReached}
             type={type}
             hideAttach={hideAttachments}
+            isExpanded={isExpanded}
+            onToggleExpand={
+              enableHeightToggle && (isExpanded || hasOverflow)
+                ? () => {
+                    const el = scrollContainerRef.current;
+                    if (!el) {
+                      setIsExpanded((v) => !v);
+                      return;
+                    }
+                    // CSS can't transition `height: auto` to/from a length.
+                    // Some consumers (e.g. the new task activity editor) only
+                    // set max-height in editorClassName, leaving height/min-h
+                    // at auto — which causes the expand animation to snap.
+                    // Lock the current rendered pixel height inline, flush
+                    // the class change, then drop the lock on the next frame
+                    // so the transition interpolates between two pixel values.
+                    const start = el.clientHeight;
+                    el.style.height = `${start}px`;
+                    el.style.maxHeight = `${start}px`;
+                    el.style.minHeight = `${start}px`;
+                    void el.offsetHeight;
+                    flushSync(() => setIsExpanded((v) => !v));
+                    requestAnimationFrame(() => {
+                      el.style.height = "";
+                      el.style.maxHeight = "";
+                      el.style.minHeight = "";
+                    });
+                  }
+                : undefined
+            }
           />
         </div>
 
         <div className="relative flex-grow flex flex-col min-h-0">
           <div
-            className={`flex-grow overflow-y-auto overflow-x-hidden custom-scrollbar-xs cursor-text ${editorClassName}`}
+            ref={scrollContainerRef}
+            className={`flex-grow overflow-y-auto overflow-x-hidden custom-scrollbar-xs cursor-text transition-[max-height,height,min-height] duration-300 ease-out ${
+              enableHeightToggle && isExpanded
+                ? "h-[55vh] max-h-[55vh] min-h-[55vh]"
+                : (editorClassName ?? "")
+            }`}
             onClick={() => {
               if (editor && !editor.isFocused && !editor.isDestroyed) {
                 editor.commands.focus("end");

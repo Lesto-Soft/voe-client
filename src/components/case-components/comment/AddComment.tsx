@@ -123,6 +123,7 @@ const AddComment: React.FC<AddCommentProps> = ({
           isSending={loading}
           type="comment"
           autoFocus={!!answerId}
+          enableHeightToggle
         />
 
         {/* Специфични грешки при изпращане (API грешки) */}

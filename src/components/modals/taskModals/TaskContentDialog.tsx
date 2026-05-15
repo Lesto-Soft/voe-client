@@ -198,17 +198,15 @@ const TaskContentDialog: React.FC<TaskContentDialogProps> = ({
             </div>
 
             {/* Right Column: Description */}
-            <div className="flex-grow md:w-2/3 lg:w-3/4 flex flex-col gap-4 border-l border-gray-100 pl-6">
+            <div className="flex-grow md:w-2/3 lg:w-3/4 flex flex-col border-l border-gray-100 pl-6 min-h-0">
               <div className="text-sm font-semibold text-gray-400">
                 Описание:
               </div>
-              <div className="bg-gray-50 rounded-md p-4 mb-2 text-gray-900 overflow-y-auto custom-scrollbar-xs break-words flex-grow">
-                <TaskDescriptionCard
-                  description={taskData.description}
-                  attachments={taskData.attachments}
-                  taskId={taskData._id}
-                />
-              </div>
+              <TaskDescriptionCard
+                description={taskData.description}
+                attachments={taskData.attachments}
+                taskId={taskData._id}
+              />
             </div>
           </div>
         </Dialog.Content>

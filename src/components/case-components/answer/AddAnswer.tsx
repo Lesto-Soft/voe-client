@@ -80,6 +80,7 @@ const AddAnswer: React.FC<AddAnswerProps> = ({
             minLength={ANSWER_CONTENT.MIN}
             maxLength={ANSWER_CONTENT.MAX}
             type="answer"
+            enableHeightToggle
           />
         </div>
       </div>

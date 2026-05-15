@@ -129,18 +129,6 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
     }
   }, [autoFocus, editor]);
 
-  // Auto-focus the editor when fullscreen opens — defer one frame so the
-  // EditorContent has re-attached inside the dialog portal before we focus.
-  useEffect(() => {
-    if (!isFullscreen || !editor || editor.isDestroyed) return;
-    const id = requestAnimationFrame(() => {
-      if (editor && !editor.isDestroyed) {
-        editor.commands.focus("end");
-      }
-    });
-    return () => cancelAnimationFrame(id);
-  }, [isFullscreen, editor]);
-
   // Sync external content changes (e.g. CaseAnswerSelector) into the editor
   useEffect(() => {
     if (!editor) return;
@@ -272,9 +260,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
 
         <div className="relative flex-grow flex flex-col min-h-0">
           <div
-            className={`flex-grow overflow-y-auto overflow-x-hidden custom-scrollbar-xs cursor-text ${
-              isFullscreen ? "" : (editorClassName ?? "")
-            }`}
+            className={`flex-grow overflow-y-auto overflow-x-hidden custom-scrollbar-xs cursor-text ${editorClassName}`}
             onClick={() => {
               if (editor && !editor.isFocused && !editor.isDestroyed) {
                 editor.commands.focus("end");

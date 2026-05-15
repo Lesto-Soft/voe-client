@@ -1,5 +1,6 @@
 // src/components/forms/partials/UnifiedRichTextEditor.tsx
 import React, { useRef, useMemo, useEffect, useState } from "react";
+import { flushSync } from "react-dom";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
@@ -284,7 +285,31 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
             isExpanded={isExpanded}
             onToggleExpand={
               enableHeightToggle && (isExpanded || hasOverflow)
-                ? () => setIsExpanded((v) => !v)
+                ? () => {
+                    const el = scrollContainerRef.current;
+                    if (!el) {
+                      setIsExpanded((v) => !v);
+                      return;
+                    }
+                    // CSS can't transition `height: auto` to/from a length.
+                    // Some consumers (e.g. the new task activity editor) only
+                    // set max-height in editorClassName, leaving height/min-h
+                    // at auto — which causes the expand animation to snap.
+                    // Lock the current rendered pixel height inline, flush
+                    // the class change, then drop the lock on the next frame
+                    // so the transition interpolates between two pixel values.
+                    const start = el.clientHeight;
+                    el.style.height = `${start}px`;
+                    el.style.maxHeight = `${start}px`;
+                    el.style.minHeight = `${start}px`;
+                    void el.offsetHeight;
+                    flushSync(() => setIsExpanded((v) => !v));
+                    requestAnimationFrame(() => {
+                      el.style.height = "";
+                      el.style.maxHeight = "";
+                      el.style.minHeight = "";
+                    });
+                  }
                 : undefined
             }
           />

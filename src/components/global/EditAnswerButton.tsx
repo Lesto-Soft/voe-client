@@ -166,7 +166,6 @@ const EditAnswerButton: React.FC<EditButtonProps> = ({
                 onProcessingChange={setIsProcessing}
                 caseId={answer._id}
                 type="answer"
-                enableHeightToggle
               />
             </div>
 

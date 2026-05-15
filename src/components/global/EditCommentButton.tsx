@@ -177,7 +177,6 @@ const EditButton: React.FC<EditButtonProps> = ({
                 onProcessingChange={setIsProcessing}
                 caseId={comment._id}
                 type="comment"
-                enableHeightToggle
               />
             </div>
 

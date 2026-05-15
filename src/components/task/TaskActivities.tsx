@@ -409,7 +409,6 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
                   editorMinHeight="min-h-[125px]"
                   editorClassName="max-h-[125px]"
                   autoFocus
-                  enableFullscreen
                 />
               </div>
             </div>

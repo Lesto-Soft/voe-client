@@ -7,7 +7,6 @@ import Underline from "@tiptap/extension-underline";
 import TextAlign from "@tiptap/extension-text-align";
 import CharacterCount from "@tiptap/extension-character-count";
 import { useTranslation } from "react-i18next";
-import * as Dialog from "@radix-ui/react-dialog";
 import {
   ArrowPathIcon,
   ExclamationTriangleIcon,
@@ -50,7 +49,6 @@ interface UnifiedEditorProps {
   editorMinHeight?: string;
   autoFocus?: boolean;
   hideAttachments?: boolean;
-  enableFullscreen?: boolean;
 }
 
 const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
@@ -76,13 +74,11 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
     editorMinHeight,
     autoFocus = false,
     hideAttachments = false,
-    enableFullscreen = false,
   } = props;
 
   const { t } = useTranslation(["caseSubmission"]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [fileError, setFileError] = useState<string | null>(null);
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const { processFiles, isCompressing } = useFileHandler();
 
   const isInternalChange = useRef(false);
@@ -234,7 +230,7 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
     t,
   );
 
-  const body = (
+  return (
     <div className="flex flex-col md:flex-row gap-3 w-full h-full min-h-0 overflow-hidden">
       <div
         className={`flex-grow flex flex-col border rounded-xl bg-white overflow-hidden transition-all duration-200 min-h-0 ${
@@ -251,10 +247,6 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
             isMaxFilesReached={isMaxFilesReached}
             type={type}
             hideAttach={hideAttachments}
-            isFullscreen={isFullscreen}
-            onToggleFullscreen={
-              enableFullscreen ? () => setIsFullscreen((v) => !v) : undefined
-            }
           />
         </div>
 
@@ -371,25 +363,6 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
       />
     </div>
   );
-
-  if (enableFullscreen && isFullscreen) {
-    return (
-      <Dialog.Root open onOpenChange={setIsFullscreen}>
-        <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 bg-black/60 z-[9990]" />
-          <Dialog.Content
-            className="fixed inset-4 md:inset-8 lg:inset-16 bg-white rounded-lg shadow-2xl z-[9991] flex flex-col p-4 focus:outline-none"
-            onOpenAutoFocus={(e) => e.preventDefault()}
-          >
-            <Dialog.Title className="sr-only">Редактор на цял екран</Dialog.Title>
-            {body}
-          </Dialog.Content>
-        </Dialog.Portal>
-      </Dialog.Root>
-    );
-  }
-
-  return body;
 };
 
 export default UnifiedEditor;

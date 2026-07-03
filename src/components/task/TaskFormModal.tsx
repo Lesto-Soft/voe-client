@@ -321,7 +321,20 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
               <div className="relative">
                 <DatePicker
                   selected={dueDate}
-                  onChange={(date) => setDueDate(date)}
+                  onChange={(date) => {
+                    // On first pick of a date (no previous due date) default the
+                    // time to 08:00 instead of midnight. Respect an explicit
+                    // non-midnight time the user may have chosen.
+                    if (
+                      date &&
+                      !dueDate &&
+                      date.getHours() === 0 &&
+                      date.getMinutes() === 0
+                    ) {
+                      date.setHours(8, 0, 0, 0);
+                    }
+                    setDueDate(date);
+                  }}
                   dateFormat="dd/MM/yyyy HH:mm"
                   showTimeSelect
                   timeFormat="HH:mm"

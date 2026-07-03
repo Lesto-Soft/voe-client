@@ -10,9 +10,10 @@ import ImagePreviewModal, {
 import DeleteModal from "../../modals/DeleteModal";
 import { renderContentSafely } from "../../../utils/contentRenderer";
 import { useDeleteComment } from "../../../graphql/hooks/comment";
-import { useEffect, useRef, useMemo } from "react";
+import { useEffect, useRef, useMemo, useState } from "react";
 // import UserAvatar from "../cards/UserAvatar";
 import ActionMenu from "../../global/ActionMenu";
+import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/solid";
 
 interface CommentProps {
   comment: IComment;
@@ -35,6 +36,14 @@ const Comment: React.FC<CommentProps> = ({
 }) => {
   const { deleteComment } = useDeleteComment(caseNumber);
   const commentRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [isContentOverflowing, setIsContentOverflowing] = useState(false);
+  const [isContentExpanded, setIsContentExpanded] = useState(false);
+
+  useEffect(() => {
+    const el = contentRef.current;
+    if (el) setIsContentOverflowing(el.scrollHeight > el.clientHeight);
+  }, [comment.content]);
 
   useEffect(() => {
     const elementId = `${
@@ -139,7 +148,28 @@ const Comment: React.FC<CommentProps> = ({
 
       {/* --- CONTENT & ATTACHMENTS --- */}
       <div className="">
-        <div className="text-sm text-gray-800 whitespace-pre-line bg-gray-50 rounded p-2 max-h-38 overflow-y-auto break-words custom-scrollbar-xs">
+        {(isContentOverflowing || isContentExpanded) && (
+          <button
+            onClick={() => setIsContentExpanded((prev) => !prev)}
+            className="flex items-center gap-1 text-xs text-blue-500 hover:text-blue-700 mb-1 cursor-pointer"
+          >
+            {isContentExpanded ? (
+              <>
+                Скрий <ChevronUpIcon className="h-3 w-3" />
+              </>
+            ) : (
+              <>
+                Покажи цялото съдържание <ChevronDownIcon className="h-3 w-3" />
+              </>
+            )}
+          </button>
+        )}
+        <div
+          ref={contentRef}
+          className={`text-sm text-gray-800 whitespace-pre-line bg-gray-50 rounded p-2 break-words custom-scrollbar-xs ${
+            isContentExpanded ? "" : "max-h-38 overflow-y-auto"
+          }`}
+        >
           {renderContentSafely(comment.content)}
         </div>
         {comment.attachments && comment.attachments.length > 0 && (

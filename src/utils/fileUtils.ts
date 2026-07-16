@@ -13,7 +13,13 @@ export const createFileUrl = (
   id: string,
   fileName: string
 ): string => {
-  return `${serverBaseUrl}/static/${type}/${id}/${fileName}`;
+  // The file name is stored verbatim (server-side `path.basename`), so it can
+  // contain characters that are URL syntax: `#` truncates the request at the
+  // fragment and `?` at the query string, while `%` sequences get decoded back
+  // into a name that no longer exists on disk.
+  return `${serverBaseUrl}/static/${type}/${id}/${encodeURIComponent(
+    fileName
+  )}`;
 };
 
 export const getIconForFile = (fileName: string) => {

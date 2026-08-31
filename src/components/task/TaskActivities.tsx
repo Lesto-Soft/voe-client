@@ -35,7 +35,10 @@ import {
   ChevronDownIcon,
   ChevronUpIcon,
   HandThumbUpIcon,
+  ArrowsPointingOutIcon,
+  ArrowsPointingInIcon,
 } from "@heroicons/react/24/solid";
+import { usePersistentState } from "../../hooks/usePersistentState";
 
 // Activity type configuration with icons and colors
 const activityTypeConfig: Record<
@@ -180,7 +183,10 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
   currentStatus,
   canChangeStatus = false,
 }) => {
-  const [activitySortAsc, setActivitySortAsc] = useState(false);
+  const [activitySortAsc, setActivitySortAsc] = usePersistentState(
+    "voe.taskActivities.sortAsc",
+    false,
+  );
   const [isAddActivityVisible, setIsAddActivityVisible] = useState(false);
   const [newContent, setNewContent] = useState("");
   const [activityType, setActivityType] = useState<TaskActivityType>(
@@ -194,26 +200,41 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
   // Attachment state for new activity
   const [newAttachments, setNewAttachments] = useState<File[]>([]);
 
-  const [expandedActivities, setExpandedActivities] = useState<Set<string>>(new Set());
+  // Expand/collapse: a persisted "expand all" preference plus per-item overrides
+  // (an override flips an item away from the preference; new items follow it)
+  const [expandAllActivities, setExpandAllActivities] = usePersistentState(
+    "voe.taskActivities.expandAll",
+    false,
+  );
+  const [expandOverrides, setExpandOverrides] = useState<Set<string>>(new Set());
   const contentRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const [overflowingActivities, setOverflowingActivities] = useState<Set<string>>(new Set());
 
-  // Detect overflow on user activity content
+  const isActivityExpanded = (id: string) =>
+    expandAllActivities !== expandOverrides.has(id);
+
+  // Detect overflow on user activity content (re-measure when expansion changes
+  // so a re-collapsed item keeps its toggle button)
   useEffect(() => {
     const newOverflowing = new Set<string>();
     contentRefs.current.forEach((el, id) => {
       if (el.scrollHeight > el.clientHeight) newOverflowing.add(id);
     });
     setOverflowingActivities(newOverflowing);
-  }, [activities]);
+  }, [activities, expandAllActivities, expandOverrides]);
 
   const toggleExpand = (id: string) => {
-    setExpandedActivities((prev) => {
+    setExpandOverrides((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
       return next;
     });
+  };
+
+  const handleToggleExpandAll = () => {
+    setExpandAllActivities((prev) => !prev);
+    setExpandOverrides(new Set());
   };
 
   const { createTaskActivity, loading: createLoading } =
@@ -360,6 +381,19 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
                 )}
               </button>
             )}
+            {sortedActivities.length > 0 && (
+              <button
+                onClick={handleToggleExpandAll}
+                className="flex items-center text-gray-400 hover:text-gray-600 cursor-pointer p-2 rounded hover:bg-gray-50"
+                title={expandAllActivities ? "Сгъни всички записи" : "Разгъни всички записи"}
+              >
+                {expandAllActivities ? (
+                  <ArrowsPointingInIcon className="h-5 w-5" />
+                ) : (
+                  <ArrowsPointingOutIcon className="h-5 w-5" />
+                )}
+              </button>
+            )}
           </div>
           {isAddActivityVisible && (
             <div className="mt-4 border border-gray-300 p-3 bg-white shadow-md rounded-lg">
@@ -417,18 +451,31 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
         </div>
       )}
 
-      {/* Sort toggle for read-only mode */}
-      {readOnly && sortedActivities.length > 1 && (
+      {/* Sort + expand/collapse toggles for read-only mode */}
+      {readOnly && sortedActivities.length > 0 && (
         <div className="flex justify-end px-5 mb-2">
+          {sortedActivities.length > 1 && (
+            <button
+              onClick={() => setActivitySortAsc((prev) => !prev)}
+              className="flex items-center text-gray-400 hover:text-gray-600 cursor-pointer p-1 rounded hover:bg-gray-50"
+              title={activitySortAsc ? "Най-нови първо" : "Най-стари първо"}
+            >
+              {activitySortAsc ? (
+                <BarsArrowUpIcon className="h-5 w-5" />
+              ) : (
+                <BarsArrowDownIcon className="h-5 w-5" />
+              )}
+            </button>
+          )}
           <button
-            onClick={() => setActivitySortAsc((prev) => !prev)}
+            onClick={handleToggleExpandAll}
             className="flex items-center text-gray-400 hover:text-gray-600 cursor-pointer p-1 rounded hover:bg-gray-50"
-            title={activitySortAsc ? "Най-нови първо" : "Най-стари първо"}
+            title={expandAllActivities ? "Сгъни всички записи" : "Разгъни всички записи"}
           >
-            {activitySortAsc ? (
-              <BarsArrowUpIcon className="h-5 w-5" />
+            {expandAllActivities ? (
+              <ArrowsPointingInIcon className="h-5 w-5" />
             ) : (
-              <BarsArrowDownIcon className="h-5 w-5" />
+              <ArrowsPointingOutIcon className="h-5 w-5" />
             )}
           </button>
         </div>
@@ -542,12 +589,12 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
 
                     {/* Normal content display */}
                     <>
-                        {(overflowingActivities.has(activity._id) || expandedActivities.has(activity._id)) && (
+                        {(overflowingActivities.has(activity._id) || isActivityExpanded(activity._id)) && (
                           <button
                             onClick={() => toggleExpand(activity._id)}
                             className="flex items-center gap-1 text-xs text-blue-500 hover:text-blue-700 mb-1 cursor-pointer"
                           >
-                            {expandedActivities.has(activity._id) ? (
+                            {isActivityExpanded(activity._id) ? (
                               <>Скрий <ChevronUpIcon className="h-3 w-3" /></>
                             ) : (
                               <>Покажи цялото съдържание <ChevronDownIcon className="h-3 w-3" /></>
@@ -560,7 +607,7 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
                             else contentRefs.current.delete(activity._id);
                           }}
                           className={`text-sm text-gray-700 bg-gray-50 rounded p-2 break-words ${
-                            expandedActivities.has(activity._id) ? "" : "max-h-40 overflow-y-auto"
+                            isActivityExpanded(activity._id) ? "" : "max-h-40 overflow-y-auto"
                           } custom-scrollbar-xs`}
                         >
                           {renderContentSafely(activity.content || "")}

@@ -23,6 +23,7 @@ interface CommentProps {
   targetId?: string | null;
   parentType?: "case" | "answer";
   displayNumber?: number | string;
+  expandAllContent?: boolean;
 }
 
 const Comment: React.FC<CommentProps> = ({
@@ -33,17 +34,25 @@ const Comment: React.FC<CommentProps> = ({
   targetId,
   parentType,
   displayNumber,
+  expandAllContent = false,
 }) => {
   const { deleteComment } = useDeleteComment(caseNumber);
   const commentRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const [isContentOverflowing, setIsContentOverflowing] = useState(false);
-  const [isContentExpanded, setIsContentExpanded] = useState(false);
+  const [isContentExpanded, setIsContentExpanded] = useState(expandAllContent);
 
+  // Snap to the feed-wide expand/collapse-all preference when it changes;
+  // the per-comment toggle still works on top of it
+  useEffect(() => {
+    setIsContentExpanded(expandAllContent);
+  }, [expandAllContent]);
+
+  // Re-measure when expansion changes so a re-collapsed comment keeps its toggle
   useEffect(() => {
     const el = contentRef.current;
     if (el) setIsContentOverflowing(el.scrollHeight > el.clientHeight);
-  }, [comment.content]);
+  }, [comment.content, isContentExpanded]);
 
   useEffect(() => {
     const elementId = `${

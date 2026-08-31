@@ -14,6 +14,8 @@ import { useCurrentUser } from "../../context/UserContext";
 import CaseAnswerSelector from "./CaseAnswerSelector";
 import UnifiedEditor from "../forms/partials/UnifiedRichTextEditor";
 import UserCombobox from "../global/dropdown/UserCombobox";
+import ConfirmActionDialog from "../modals/ConfirmActionDialog";
+import { stripHtmlTags } from "../../utils/contentRenderer";
 
 import "react-datepicker/dist/react-datepicker.css";
 
@@ -189,8 +191,52 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
 
   const isLoading = createLoading || updateLoading;
 
+  // Dirty check: compare the form against the values it was initialized with
+  // (mirrors the init effect above). Rich-text descriptions are compared as
+  // plain text so editor markup normalization doesn't count as a change.
+  const baseline = useMemo(() => {
+    if (mode === "edit" && task) {
+      return {
+        title: task.title,
+        description: task.description || "",
+        priority: task.priority,
+        dueDate: task.dueDate ? new Date(task.dueDate).getTime() : null,
+        assigneeId: task.assignee?._id || "",
+      };
+    }
+    return {
+      title: "",
+      description: initialDescription || "",
+      priority: CasePriority.Medium,
+      dueDate: null as number | null,
+      assigneeId: "",
+    };
+  }, [mode, task, initialDescription]);
+
+  const isDirty =
+    title.trim() !== baseline.title.trim() ||
+    stripHtmlTags(description).trim() !==
+      stripHtmlTags(baseline.description).trim() ||
+    priority !== baseline.priority ||
+    (dueDate ? dueDate.getTime() : null) !== baseline.dueDate ||
+    assigneeId !== baseline.assigneeId ||
+    attachments.length > 0 ||
+    existingAttachments.length !== originalExistingAttachments.length;
+
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false);
+
+  // Intercept any close attempt (outside click, Escape, X, Cancel) while dirty
+  const handleOpenChange = (open: boolean) => {
+    if (!open && isDirty && !isLoading) {
+      setShowCloseConfirm(true);
+      return;
+    }
+    onOpenChange(open);
+  };
+
   return (
-    <Dialog.Root open={isOpen} onOpenChange={onOpenChange}>
+    <>
+    <Dialog.Root open={isOpen} onOpenChange={handleOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm" />
         <Dialog.Content className="fixed top-1/2 left-1/2 z-50 w-[95vw] max-w-2xl -translate-x-1/2 -translate-y-1/2 rounded-lg bg-white shadow-xl focus:outline-none max-h-[90vh] flex flex-col">
@@ -396,6 +442,21 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
+
+    <ConfirmActionDialog
+      isOpen={showCloseConfirm}
+      onOpenChange={(open) => { if (!open) setShowCloseConfirm(false); }}
+      onConfirm={() => {
+        setShowCloseConfirm(false);
+        onOpenChange(false);
+      }}
+      title="Незапазени промени"
+      description="Имате незапазени промени по задачата, които ще бъдат изгубени. Сигурни ли сте, че искате да затворите?"
+      confirmButtonText="Затвори"
+      cancelButtonText="Отмени"
+      isDestructiveAction
+    />
+    </>
   );
 };
 

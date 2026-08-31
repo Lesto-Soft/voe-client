@@ -28,6 +28,7 @@ import {
   BarsArrowUpIcon,
 } from "@heroicons/react/24/solid";
 import ActionMenu from "../../global/ActionMenu";
+import { usePersistentState } from "../../../hooks/usePersistentState";
 
 const Answer: React.FC<{
   answer: IAnswer;
@@ -50,6 +51,7 @@ const Answer: React.FC<{
   onToggleCommentBox: () => void;
   onCommentSubmitted: () => void;
   displayNumber?: number;
+  expandAllContent?: boolean;
 }> = ({
   answer,
   me,
@@ -69,6 +71,7 @@ const Answer: React.FC<{
   onToggleCommentBox,
   onCommentSubmitted,
   displayNumber,
+  expandAllContent = false,
 }) => {
   const { t } = useTranslation("answer");
   const approved = !!answer.approved;
@@ -92,16 +95,26 @@ const Answer: React.FC<{
   );
 
   const [isCommentScrolled, setIsCommentScrolled] = useState(false);
-  const [commentSortAsc, setCommentSortAsc] = useState(false);
+  const [commentSortAsc, setCommentSortAsc] = usePersistentState(
+    "voe.answerComments.sortAsc",
+    false,
+  );
   const commentsContainerRef = useRef<HTMLDivElement>(null);
   const answerContentRef = useRef<HTMLDivElement>(null);
   const [isContentOverflowing, setIsContentOverflowing] = useState(false);
-  const [isContentExpanded, setIsContentExpanded] = useState(false);
+  const [isContentExpanded, setIsContentExpanded] = useState(expandAllContent);
 
+  // Snap to the feed-wide expand/collapse-all preference when it changes;
+  // the per-answer toggle still works on top of it
+  useEffect(() => {
+    setIsContentExpanded(expandAllContent);
+  }, [expandAllContent]);
+
+  // Re-measure when expansion changes so a re-collapsed answer keeps its toggle
   useEffect(() => {
     const el = answerContentRef.current;
     if (el) setIsContentOverflowing(el.scrollHeight > el.clientHeight);
-  }, [answer.content]);
+  }, [answer.content, isContentExpanded]);
 
   useEffect(() => {
     const container = commentsContainerRef.current;
@@ -443,6 +456,7 @@ const Answer: React.FC<{
                       mentions={mentions}
                       parentType="answer"
                       targetId={childTargetId}
+                      expandAllContent={expandAllContent}
                     />
                   </div>
                 );

@@ -9,6 +9,8 @@ import {
   ClipboardDocumentCheckIcon,
   BarsArrowDownIcon,
   BarsArrowUpIcon,
+  ArrowsPointingOutIcon,
+  ArrowsPointingInIcon,
 } from "@heroicons/react/24/solid";
 import { IAnswer, ICase, IComment, IMe } from "../../db/interfaces";
 import CaseHistoryContent from "./CaseHistoryContent";
@@ -22,6 +24,7 @@ import { useGetAllTasks } from "../../graphql/hooks/task";
 import { useLocation } from "react-router";
 import useMediaQuery from "../../hooks/useMediaQuery";
 import { useUnsavedChangesWarning } from "../../hooks/useUnsavedWarning";
+import { usePersistentState } from "../../hooks/usePersistentState";
 import ConfirmActionDialog from "../modals/ConfirmActionDialog";
 
 interface SubmenuProps {
@@ -103,8 +106,22 @@ const Submenu: React.FC<SubmenuProps> = ({
   // state for editor content AND attachments
   const [answerContent, setAnswerContent] = useState("");
   const [answerAttachments, setAnswerAttachments] = useState<File[]>([]);
-  const [answerSortAsc, setAnswerSortAsc] = useState(false);
-  const [commentSortAsc, setCommentSortAsc] = useState(false);
+  const [answerSortAsc, setAnswerSortAsc] = usePersistentState(
+    "voe.caseAnswers.sortAsc",
+    false,
+  );
+  const [commentSortAsc, setCommentSortAsc] = usePersistentState(
+    "voe.caseComments.sortAsc",
+    false,
+  );
+  const [answersExpandAll, setAnswersExpandAll] = usePersistentState(
+    "voe.caseAnswers.expandAll",
+    false,
+  );
+  const [commentsExpandAll, setCommentsExpandAll] = usePersistentState(
+    "voe.caseComments.expandAll",
+    false,
+  );
   const [caseCommentContent, setCaseCommentContent] = useState("");
   const [caseCommentAttachments, setCaseCommentAttachments] = useState<File[]>(
     [],
@@ -508,6 +525,19 @@ const Submenu: React.FC<SubmenuProps> = ({
                         )}
                       </button>
                     )}
+                    {visibleAnswers.length > 0 && (
+                      <button
+                        onClick={() => setAnswersExpandAll((prev) => !prev)}
+                        className="flex items-center text-gray-400 hover:text-gray-600 cursor-pointer p-2 rounded hover:bg-gray-50"
+                        title={answersExpandAll ? "Сгъни всички решения" : "Разгъни всички решения"}
+                      >
+                        {answersExpandAll ? (
+                          <ArrowsPointingInIcon className="h-5 w-5" />
+                        ) : (
+                          <ArrowsPointingOutIcon className="h-5 w-5" />
+                        )}
+                      </button>
+                    )}
                   </div>
                   {isAddAnswerVisible && (
                     <div id="add-answer-form" className="mt-4">
@@ -579,6 +609,7 @@ const Submenu: React.FC<SubmenuProps> = ({
                           onSetCommentState={(newState) =>
                             handleSetAnswerCommentState(answer._id, newState)
                           }
+                          expandAllContent={answersExpandAll}
                         />
                       );
                     });
@@ -639,6 +670,19 @@ const Submenu: React.FC<SubmenuProps> = ({
                       )}
                     </button>
                   )}
+                  {caseData.comments && caseData.comments.length > 0 && (
+                    <button
+                      onClick={() => setCommentsExpandAll((prev) => !prev)}
+                      className="flex items-center text-gray-400 hover:text-gray-600 cursor-pointer p-2 rounded hover:bg-gray-50"
+                      title={commentsExpandAll ? "Сгъни всички коментари" : "Разгъни всички коментари"}
+                    >
+                      {commentsExpandAll ? (
+                        <ArrowsPointingInIcon className="h-5 w-5" />
+                      ) : (
+                        <ArrowsPointingOutIcon className="h-5 w-5" />
+                      )}
+                    </button>
+                  )}
                 </div>
                 {isAddCommentVisible && (
                   <div id="add-comment-form" className="mt-4">
@@ -677,6 +721,7 @@ const Submenu: React.FC<SubmenuProps> = ({
                         caseNumber={caseData.case_number}
                         mentions={mentions}
                         targetId={targetId}
+                        expandAllContent={commentsExpandAll}
                       />
                     ));
                   })()}

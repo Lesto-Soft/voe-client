@@ -48,11 +48,15 @@ const Comment: React.FC<CommentProps> = ({
     setIsContentExpanded(expandAllContent);
   }, [expandAllContent]);
 
-  // Re-measure when expansion changes so a re-collapsed comment keeps its toggle
+  // Height of the collapsed content box (max-h-38 = 152px). Comparing
+  // scrollHeight against it detects "would overflow when clamped" regardless of
+  // the current expansion state, so short comments never get a toggle button.
+  const COMMENT_CONTENT_CLAMP_PX = 152;
+
   useEffect(() => {
     const el = contentRef.current;
-    if (el) setIsContentOverflowing(el.scrollHeight > el.clientHeight);
-  }, [comment.content, isContentExpanded]);
+    if (el) setIsContentOverflowing(el.scrollHeight > COMMENT_CONTENT_CLAMP_PX);
+  }, [comment.content]);
 
   useEffect(() => {
     const elementId = `${
@@ -157,7 +161,7 @@ const Comment: React.FC<CommentProps> = ({
 
       {/* --- CONTENT & ATTACHMENTS --- */}
       <div className="">
-        {(isContentOverflowing || isContentExpanded) && (
+        {isContentOverflowing && (
           <button
             onClick={() => setIsContentExpanded((prev) => !prev)}
             className="flex items-center gap-1 text-xs text-blue-500 hover:text-blue-700 mb-1 cursor-pointer"

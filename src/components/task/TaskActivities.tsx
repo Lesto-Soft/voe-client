@@ -213,15 +213,19 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
   const isActivityExpanded = (id: string) =>
     expandAllActivities !== expandOverrides.has(id);
 
-  // Detect overflow on user activity content (re-measure when expansion changes
-  // so a re-collapsed item keeps its toggle button)
+  // Height of the collapsed content box (max-h-40 = 160px). Comparing
+  // scrollHeight against it detects "would overflow when clamped" regardless of
+  // the current expansion state, so short entries never get a toggle button.
+  const ACTIVITY_CONTENT_CLAMP_PX = 160;
+
+  // Detect which activities actually need an expand/collapse toggle
   useEffect(() => {
     const newOverflowing = new Set<string>();
     contentRefs.current.forEach((el, id) => {
-      if (el.scrollHeight > el.clientHeight) newOverflowing.add(id);
+      if (el.scrollHeight > ACTIVITY_CONTENT_CLAMP_PX) newOverflowing.add(id);
     });
     setOverflowingActivities(newOverflowing);
-  }, [activities, expandAllActivities, expandOverrides]);
+  }, [activities]);
 
   const toggleExpand = (id: string) => {
     setExpandOverrides((prev) => {
@@ -589,7 +593,7 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
 
                     {/* Normal content display */}
                     <>
-                        {(overflowingActivities.has(activity._id) || isActivityExpanded(activity._id)) && (
+                        {overflowingActivities.has(activity._id) && (
                           <button
                             onClick={() => toggleExpand(activity._id)}
                             className="flex items-center gap-1 text-xs text-blue-500 hover:text-blue-700 mb-1 cursor-pointer"

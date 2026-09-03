@@ -74,7 +74,6 @@ export interface UpdateTaskInput {
   title?: string;
   description?: string;
   priority?: CasePriority;
-  status?: TaskStatus;
   dueDate?: string;
   attachments?: File[];
   deletedAttachments?: string[];

@@ -238,6 +238,9 @@ export enum TaskActivityType {
   ApprovalRequest = "APPROVAL_REQUEST",
   AnalysisSubmitted = "ANALYSIS_SUBMITTED",
   DescriptionChange = "DESCRIPTION_CHANGE",
+  TitleChange = "TITLE_CHANGE",
+  DueDateChange = "DUE_DATE_CHANGE",
+  AttachmentsChange = "ATTACHMENTS_CHANGE",
 }
 
 // Task-related interfaces

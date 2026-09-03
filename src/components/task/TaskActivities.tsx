@@ -37,6 +37,9 @@ import {
   HandThumbUpIcon,
   ArrowsPointingOutIcon,
   ArrowsPointingInIcon,
+  PencilSquareIcon,
+  CalendarDaysIcon,
+  PaperClipIcon,
 } from "@heroicons/react/24/solid";
 import { usePersistentState } from "../../hooks/usePersistentState";
 
@@ -116,6 +119,30 @@ const activityTypeConfig: Record<
     borderColor: "border-gray-200",
     leftBorderColor: "border-l-gray-500",
   },
+  [TaskActivityType.TitleChange]: {
+    label: "Промяна на заглавие",
+    icon: PencilSquareIcon,
+    bgColor: "bg-indigo-50",
+    textColor: "text-indigo-700",
+    borderColor: "border-indigo-200",
+    leftBorderColor: "border-l-indigo-500",
+  },
+  [TaskActivityType.DueDateChange]: {
+    label: "Промяна на краен срок",
+    icon: CalendarDaysIcon,
+    bgColor: "bg-orange-50",
+    textColor: "text-orange-700",
+    borderColor: "border-orange-200",
+    leftBorderColor: "border-l-orange-500",
+  },
+  [TaskActivityType.AttachmentsChange]: {
+    label: "Промяна на файлове",
+    icon: PaperClipIcon,
+    bgColor: "bg-cyan-50",
+    textColor: "text-cyan-700",
+    borderColor: "border-cyan-200",
+    leftBorderColor: "border-l-cyan-500",
+  },
 };
 
 // User-selectable activity types (exclude system-generated types)
@@ -132,6 +159,9 @@ const systemActivityTypes: TaskActivityType[] = [
   TaskActivityType.AssigneeChange,
   TaskActivityType.DescriptionChange,
   TaskActivityType.AnalysisSubmitted,
+  TaskActivityType.TitleChange,
+  TaskActivityType.DueDateChange,
+  TaskActivityType.AttachmentsChange,
 ];
 
 // Helper component to display activity attachments in read-only mode

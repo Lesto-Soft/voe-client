@@ -341,6 +341,7 @@ export const GET_CASE_BY_CASE_NUMBER = gql`
           }
         }
         date
+        lastReadAt
       }
       tasks {
         _id

@@ -154,6 +154,19 @@ export interface IReadBy {
     avatar?: string;
   };
   date: string;
+  lastReadAt?: string;
+}
+
+export interface ITaskReadBy {
+  _id: string;
+  user: {
+    _id: string;
+    name: string;
+    username: string;
+    avatar?: string;
+  };
+  date?: string;
+  lastReadAt?: string;
 }
 export interface INotification {
   _id: string;
@@ -265,6 +278,7 @@ export interface ITask {
   fiveWhys?: IFiveWhy[];
   riskAssessments?: IRiskAssessment[];
   canAccessUsers?: IUser[];
+  readBy?: ITaskReadBy[];
   createdAt?: string;
   updatedAt?: string;
   completedAt?: string;

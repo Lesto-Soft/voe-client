@@ -108,6 +108,12 @@ export const ASSIGN_TASK = gql`
 
 // --- Task Access Mutations ---
 
+export const MARK_TASK_AS_READ = gql`
+  mutation MarkTaskAsRead($taskId: ID!) {
+    markTaskAsRead(taskId: $taskId)
+  }
+`;
+
 export const REVOKE_TASK_ACCESS = gql`
   mutation RevokeTaskAccess($taskId: ID!, $userId: ID!) {
     revokeTaskAccess(taskId: $taskId, userId: $userId) {

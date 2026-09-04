@@ -154,6 +154,17 @@ const taskDetailFragment = gql`
     riskAssessments {
       ...RiskAssessmentFragment
     }
+    readBy {
+      _id
+      user {
+        _id
+        name
+        username
+        avatar
+      }
+      date
+      lastReadAt
+    }
   }
   ${taskFragment}
   ${taskActivityFragment}

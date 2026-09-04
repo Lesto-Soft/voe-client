@@ -2,10 +2,11 @@ import React, { useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { LockClosedIcon } from "@heroicons/react/24/solid";
-import { IUser } from "../../db/interfaces";
+import { IUser, ITaskReadBy } from "../../db/interfaces";
 import { useRevokeTaskAccess } from "../../graphql/hooks/task";
 import UserAvatar from "../cards/UserAvatar";
 import UserLink from "../global/links/UserLink";
+import ShowDate from "../global/ShowDate";
 import ConfirmActionDialog from "../modals/ConfirmActionDialog";
 import { endpoint } from "../../db/config";
 
@@ -14,6 +15,7 @@ interface TaskAccessModalProps {
   onOpenChange: (open: boolean) => void;
   taskId: string;
   canAccessUsers: IUser[];
+  readBy?: ITaskReadBy[];
   assigneeId?: string;
   creatorId: string;
   onAccessChanged: () => void;
@@ -24,6 +26,7 @@ const TaskAccessModal: React.FC<TaskAccessModalProps> = ({
   onOpenChange,
   taskId,
   canAccessUsers,
+  readBy = [],
   assigneeId,
   creatorId,
   onAccessChanged,
@@ -84,6 +87,9 @@ const TaskAccessModal: React.FC<TaskAccessModalProps> = ({
                 {canAccessUsers.map((user) => {
                   const role = getUserRole(user._id);
                   const removable = canRemove(user._id);
+                  const readEntry = readBy.find(
+                    (entry) => entry.user._id === user._id,
+                  );
 
                   return (
                     <div
@@ -108,6 +114,27 @@ const TaskAccessModal: React.FC<TaskAccessModalProps> = ({
                             </span>
                           )}
                         </div>
+                      </div>
+
+                      <div className="flex-shrink-0 flex flex-col items-end gap-0.5 text-xs ml-auto">
+                        {readEntry?.date ? (
+                          <>
+                            <div className="flex items-center gap-1">
+                              <span className="text-gray-400">първо:</span>
+                              <ShowDate date={readEntry.date} />
+                            </div>
+                            {readEntry.lastReadAt && (
+                              <div className="flex items-center gap-1">
+                                <span className="text-gray-400">последно:</span>
+                                <ShowDate date={readEntry.lastReadAt} />
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <span className="text-gray-400 italic">
+                            Не е отваряна
+                          </span>
+                        )}
                       </div>
 
                       {removable ? (

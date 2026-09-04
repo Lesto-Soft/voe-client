@@ -1,6 +1,10 @@
-import React, { useState, useMemo, useCallback, useRef } from "react";
+import React, { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { useParams, useNavigate } from "react-router";
-import { useGetTaskByNumber, useDeleteTask } from "../graphql/hooks/task";
+import {
+  useGetTaskByNumber,
+  useDeleteTask,
+  useMarkTaskAsRead,
+} from "../graphql/hooks/task";
 import { useQuery } from "@apollo/client";
 import { GET_LEAN_USERS } from "../graphql/query/user";
 import { useCurrentUser } from "../context/UserContext";
@@ -72,6 +76,16 @@ const TaskDetail: React.FC = () => {
     type: "task",
     data: task as ITask | null,
   });
+
+  // Record first/last opened for the current user (once per task visit)
+  const { markTaskAsRead } = useMarkTaskAsRead(numericTaskNumber);
+  const markedTaskIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (task && isAllowed && markedTaskIdRef.current !== task._id) {
+      markedTaskIdRef.current = task._id;
+      markTaskAsRead(task._id);
+    }
+  }, [task, isAllowed, markTaskAsRead]);
 
   // Fetch all users for mention suggestions in task activities
   const { data: leanUsersData } = useQuery(GET_LEAN_USERS);
@@ -457,6 +471,7 @@ const TaskDetail: React.FC = () => {
         onOpenChange={setIsAccessModalOpen}
         taskId={taskData._id}
         canAccessUsers={taskData.canAccessUsers || []}
+        readBy={taskData.readBy || []}
         assigneeId={taskData.assignee?._id}
         creatorId={taskData.creator._id}
         onAccessChanged={refetch}

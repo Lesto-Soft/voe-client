@@ -20,15 +20,14 @@ const CaseReadByModal: React.FC<CaseReadByModalProps> = ({
   onClose,
   readByData = [],
 }) => {
-  // 1. MODIFIED: The sorting logic now handles missing dates
+  // Sort by most recent activity (last opened, falling back to first read);
+  // dateless entries are treated as oldest and pushed to the bottom
   const sortedData = useMemo(() => {
-    return [...readByData].sort((a, b) => {
-      // Provide a fallback value of 0 if a date is missing.
-      // This treats dateless entries as the oldest and pushes them to the bottom.
-      const dateA = a.date ? new Date(a.date).getTime() : 0;
-      const dateB = b.date ? new Date(b.date).getTime() : 0;
-      return dateB - dateA; // Sorts newest to oldest
-    });
+    const activityTime = (entry: IReadBy) => {
+      const date = entry.lastReadAt || entry.date;
+      return date ? new Date(date).getTime() : 0;
+    };
+    return [...readByData].sort((a, b) => activityTime(b) - activityTime(a));
   }, [readByData]);
 
   if (!isOpen) {
@@ -90,10 +89,21 @@ const CaseReadByModal: React.FC<CaseReadByModalProps> = ({
                       </span>
                     </div>
                   </div>
-                  {/* 2. MODIFIED: Conditionally render the date or a placeholder */}
-                  <div className="pr-5">
+                  {/* First read + last opened timestamps */}
+                  <div className="pr-5 flex flex-col items-end gap-0.5 text-xs">
                     {entry.date ? (
-                      <ShowDate date={entry.date} />
+                      <>
+                        <div className="flex items-center gap-1">
+                          <span className="text-gray-400">първо:</span>
+                          <ShowDate date={entry.date} />
+                        </div>
+                        {entry.lastReadAt && (
+                          <div className="flex items-center gap-1">
+                            <span className="text-gray-400">последно:</span>
+                            <ShowDate date={entry.lastReadAt} />
+                          </div>
+                        )}
+                      </>
                     ) : (
                       <span className="text-sm text-gray-400">—</span>
                     )}

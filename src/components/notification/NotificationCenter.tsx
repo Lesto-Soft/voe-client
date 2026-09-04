@@ -65,6 +65,7 @@ const filterMap: Record<
     "task_title_changed",
     "task_due_date_changed",
     "task_attachments_changed",
+    "task_activity_edited",
     "task_due_approaching",
     "task_overdue_reminder",
     "task_due_passed",

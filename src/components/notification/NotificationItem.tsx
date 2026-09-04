@@ -127,6 +127,8 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
         return <ClockIcon className="h-5 w-5 text-orange-500" />;
       case "task_attachments_changed":
         return <PencilSquareIcon className="h-5 w-5 text-cyan-600" />;
+      case "task_activity_edited":
+        return <PencilSquareIcon className="h-5 w-5 text-purple-500" />;
       case "task_due_approaching":
         return <ClockIcon className="h-5 w-5 text-yellow-500" />;
       case "task_overdue_reminder":

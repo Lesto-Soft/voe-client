@@ -74,6 +74,7 @@
     "task_title_changed": "<1>{{username}}</1> changed the title of task <1>#{{taskNumber}}</1>",
     "task_due_date_changed": "<1>{{username}}</1> changed the due date of task <1>#{{taskNumber}}</1>",
     "task_attachments_changed": "<1>{{username}}</1> changed the attachments on task <1>#{{taskNumber}}</1>",
+    "task_activity_edited": "<1>{{username}}</1> edited an entry on task <1>#{{taskNumber}}</1>",
     "task_due_approaching": "Task <1>#{{taskNumber}}</1> is <1>due tomorrow</1>",
     "task_overdue_reminder": "Task <1>#{{taskNumber}}</1> is <1>overdue</1>",
     "task_due_passed": "Task <1>#{{taskNumber}}</1> <1>due date has passed</1>",

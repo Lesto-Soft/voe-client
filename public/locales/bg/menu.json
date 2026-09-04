@@ -62,6 +62,7 @@
     "mention_in_task_comment": "<1>{{username}}</1> ви спомена в коментар по задача <1>#{{taskNumber}}</1>",
     "mention_in_task_help_request": "<1>{{username}}</1> ви спомена в искане за помощ по задача <1>#{{taskNumber}}</1>",
     "mention_in_task_approval_request": "<1>{{username}}</1> ви спомена в искане за одобрение по задача <1>#{{taskNumber}}</1>",
+    "mention_in_task_description": "<1>{{username}}</1> ви спомена в описанието на задача <1>#{{taskNumber}}</1>",
     "task_closed": "Задача <1>#{{taskNumber}}</1> бе <1>затворена</1> от <1>{{username}}</1>",
     "task_reopened": "Задача <1>#{{taskNumber}}</1> бе <1>отворена отново</1> от <1>{{username}}</1>",
     "new_task_analysis": "<1>{{username}}</1> подаде анализ по задача <1>#{{taskNumber}}</1>",

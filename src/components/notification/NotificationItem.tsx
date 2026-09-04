@@ -107,6 +107,8 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
         return <AtSymbolIcon className="h-5 w-5 text-red-500" />;
       case "mention_in_task_approval_request":
         return <AtSymbolIcon className="h-5 w-5 text-yellow-500" />;
+      case "mention_in_task_description":
+        return <AtSymbolIcon className="h-5 w-5 text-indigo-500" />;
       case "task_closed":
         return <InformationCircleIcon className="h-5 w-5 text-green-600" />;
       case "task_reopened":

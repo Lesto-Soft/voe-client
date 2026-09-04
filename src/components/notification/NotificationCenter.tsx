@@ -55,6 +55,7 @@ const filterMap: Record<
     "mention_in_task_comment",
     "mention_in_task_help_request",
     "mention_in_task_approval_request",
+    "mention_in_task_description",
     "task_closed",
     "task_reopened",
     "new_task_analysis",

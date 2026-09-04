@@ -11,6 +11,8 @@ import {
 import { ITask, CasePriority } from "../../db/interfaces";
 import { useCreateTask, useUpdateTask } from "../../graphql/hooks/task";
 import { useCurrentUser } from "../../context/UserContext";
+import { useQuery } from "@apollo/client";
+import { GET_LEAN_USERS } from "../../graphql/query/user";
 import CaseAnswerSelector from "./CaseAnswerSelector";
 import UnifiedEditor from "../forms/partials/UnifiedRichTextEditor";
 import UserCombobox from "../global/dropdown/UserCombobox";
@@ -103,6 +105,21 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
   const currentUser = useCurrentUser();
   const { createTask, loading: createLoading } = useCreateTask();
   const { updateTask, loading: updateLoading } = useUpdateTask(task?._id);
+
+  // Mention suggestions for the description editor — mentioned users are
+  // granted access to the task server-side
+  const { data: leanUsersData } = useQuery(GET_LEAN_USERS);
+  const mentions = useMemo(
+    () =>
+      (leanUsersData?.getLeanUsers || []).map(
+        (u: { _id: string; name: string; username: string }) => ({
+          _id: u._id,
+          name: u.name,
+          username: u.username,
+        }),
+      ),
+    [leanUsersData],
+  );
 
   // Form state
   const [title, setTitle] = useState("");
@@ -309,6 +326,7 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
                 setAttachments={setAttachments}
                 existingAttachments={existingAttachments}
                 setExistingAttachments={setExistingAttachments}
+                mentions={mentions}
                 placeholder="Въведете описание на задачата"
                 minLength={0}
                 maxLength={1500}

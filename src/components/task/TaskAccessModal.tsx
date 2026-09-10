@@ -59,7 +59,7 @@ const TaskAccessModal: React.FC<TaskAccessModalProps> = ({
     <Dialog.Root open={isOpen} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm" />
-        <Dialog.Content className="fixed top-1/2 left-1/2 z-50 w-[95vw] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-lg bg-white shadow-xl focus:outline-none max-h-[70vh] flex flex-col">
+        <Dialog.Content className="fixed top-1/2 left-1/2 z-50 w-[95vw] max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-lg bg-white shadow-xl focus:outline-none max-h-[70vh] flex flex-col">
           {/* Header */}
           <div className="flex-shrink-0 flex items-center justify-between border-b border-gray-200 px-6 py-4">
             <Dialog.Title className="flex items-center gap-2 text-lg font-semibold text-gray-900">
@@ -116,24 +116,22 @@ const TaskAccessModal: React.FC<TaskAccessModalProps> = ({
                         </div>
                       </div>
 
-                      <div className="flex-shrink-0 flex flex-col items-end gap-0.5 text-xs ml-auto">
+                      <div className="flex-shrink-0 flex items-start gap-4 text-xs ml-auto">
                         {readEntry?.date ? (
                           <>
-                            <div className="flex items-center gap-1">
+                            <div className="flex flex-col items-end gap-0.5">
                               <span className="text-gray-400">първо:</span>
                               <ShowDate date={readEntry.date} />
                             </div>
                             {readEntry.lastReadAt && (
-                              <div className="flex items-center gap-1">
+                              <div className="flex flex-col items-end gap-0.5">
                                 <span className="text-gray-400">последно:</span>
                                 <ShowDate date={readEntry.lastReadAt} />
                               </div>
                             )}
                           </>
                         ) : (
-                          <span className="text-gray-400 italic">
-                            Не е отваряна
-                          </span>
+                          <span className="text-gray-400">—</span>
                         )}
                       </div>
 

@@ -42,7 +42,7 @@ const CaseReadByModal: React.FC<CaseReadByModalProps> = ({
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[80vh] flex flex-col"
+        className="bg-white rounded-lg shadow-xl w-full max-w-lg max-h-[80vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -90,15 +90,15 @@ const CaseReadByModal: React.FC<CaseReadByModalProps> = ({
                     </div>
                   </div>
                   {/* First read + last opened timestamps */}
-                  <div className="pr-5 flex flex-col items-end gap-0.5 text-xs">
+                  <div className="pr-5 flex items-start gap-4 text-xs">
                     {entry.date ? (
                       <>
-                        <div className="flex items-center gap-1">
+                        <div className="flex flex-col items-end gap-0.5">
                           <span className="text-gray-400">първо:</span>
                           <ShowDate date={entry.date} />
                         </div>
                         {entry.lastReadAt && (
-                          <div className="flex items-center gap-1">
+                          <div className="flex flex-col items-end gap-0.5">
                             <span className="text-gray-400">последно:</span>
                             <ShowDate date={entry.lastReadAt} />
                           </div>

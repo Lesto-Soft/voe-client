@@ -42,7 +42,7 @@ const CaseReadByModal: React.FC<CaseReadByModalProps> = ({
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-lg shadow-xl w-full max-w-lg max-h-[80vh] flex flex-col"
+        className="bg-white rounded-lg shadow-xl w-full max-w-xl max-h-[80vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -71,18 +71,20 @@ const CaseReadByModal: React.FC<CaseReadByModalProps> = ({
                   key={entry.user._id}
                   className="flex items-center justify-between p-2 rounded-md hover:bg-gray-50"
                 >
-                  <div className="flex items-center gap-3">
-                    <UserAvatar
-                      name={entry.user.name}
-                      imageUrl={
-                        entry.user.avatar
-                          ? `${serverBaseUrl}/static/avatars/${entry.user._id}/${entry.user.avatar}`
-                          : null
-                      }
-                      size={40}
-                      enablePreview={true}
-                    />
-                    <div className="flex flex-col">
+                  <div className="flex-1 flex items-center gap-3 min-w-0">
+                    <div className="flex-shrink-0">
+                      <UserAvatar
+                        name={entry.user.name}
+                        imageUrl={
+                          entry.user.avatar
+                            ? `${serverBaseUrl}/static/avatars/${entry.user._id}/${entry.user.avatar}`
+                            : null
+                        }
+                        size={40}
+                        enablePreview={true}
+                      />
+                    </div>
+                    <div className="flex flex-col min-w-0">
                       <UserLink user={entry.user} />
                       <span className="text-xs text-gray-500">
                         {entry.user.username}
@@ -90,7 +92,7 @@ const CaseReadByModal: React.FC<CaseReadByModalProps> = ({
                     </div>
                   </div>
                   {/* First read + last opened timestamps */}
-                  <div className="pr-5 flex items-start gap-4 text-xs">
+                  <div className="pr-5 flex-shrink-0 flex items-start gap-4 text-xs whitespace-nowrap">
                     {entry.date ? (
                       <>
                         <div className="flex flex-col items-end gap-0.5">
@@ -105,7 +107,7 @@ const CaseReadByModal: React.FC<CaseReadByModalProps> = ({
                         )}
                       </>
                     ) : (
-                      <span className="text-sm text-gray-400">—</span>
+                      <span className="text-sm text-gray-400">-</span>
                     )}
                   </div>
                 </li>

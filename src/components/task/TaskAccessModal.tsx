@@ -59,7 +59,7 @@ const TaskAccessModal: React.FC<TaskAccessModalProps> = ({
     <Dialog.Root open={isOpen} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm" />
-        <Dialog.Content className="fixed top-1/2 left-1/2 z-50 w-[95vw] max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-lg bg-white shadow-xl focus:outline-none max-h-[70vh] flex flex-col">
+        <Dialog.Content className="fixed top-1/2 left-1/2 z-50 w-[95vw] max-w-xl -translate-x-1/2 -translate-y-1/2 rounded-lg bg-white shadow-xl focus:outline-none max-h-[70vh] flex flex-col">
           {/* Header */}
           <div className="flex-shrink-0 flex items-center justify-between border-b border-gray-200 px-6 py-4">
             <Dialog.Title className="flex items-center gap-2 text-lg font-semibold text-gray-900">
@@ -96,16 +96,18 @@ const TaskAccessModal: React.FC<TaskAccessModalProps> = ({
                       key={user._id}
                       className="flex items-center justify-between gap-3 p-2 rounded-lg hover:bg-gray-50"
                     >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <UserAvatar
-                          name={user.name}
-                          imageUrl={
-                            user.avatar
-                              ? `${endpoint}/static/avatars/${user._id}/${user.avatar}`
-                              : null
-                          }
-                          size={36}
-                        />
+                      <div className="flex-1 flex items-center gap-3 min-w-0">
+                        <div className="flex-shrink-0">
+                          <UserAvatar
+                            name={user.name}
+                            imageUrl={
+                              user.avatar
+                                ? `${endpoint}/static/avatars/${user._id}/${user.avatar}`
+                                : null
+                            }
+                            size={36}
+                          />
+                        </div>
                         <div className="min-w-0">
                           <UserLink user={user} />
                           {role && (
@@ -116,7 +118,7 @@ const TaskAccessModal: React.FC<TaskAccessModalProps> = ({
                         </div>
                       </div>
 
-                      <div className="flex-shrink-0 flex items-start gap-4 text-xs ml-auto">
+                      <div className="flex-shrink-0 flex items-start gap-4 text-xs whitespace-nowrap">
                         {readEntry?.date ? (
                           <>
                             <div className="flex flex-col items-end gap-0.5">
@@ -131,7 +133,7 @@ const TaskAccessModal: React.FC<TaskAccessModalProps> = ({
                             )}
                           </>
                         ) : (
-                          <span className="text-gray-400">—</span>
+                          <span className="text-gray-400">-</span>
                         )}
                       </div>
 

@@ -71,8 +71,8 @@ const CaseReadByModal: React.FC<CaseReadByModalProps> = ({
                   <th className="text-left font-medium pb-2 pl-2">
                     Потребител
                   </th>
-                  <th className="text-left font-medium pb-2">Първо</th>
-                  <th className="text-left font-medium pb-2 pr-2">
+                  <th className="text-left font-medium pb-2 w-44">Първо</th>
+                  <th className="text-left font-medium pb-2 pr-2 w-44">
                     Последно
                   </th>
                 </tr>

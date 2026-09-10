@@ -90,8 +90,10 @@ const TaskAccessModal: React.FC<TaskAccessModalProps> = ({
                       Потребител
                     </th>
                     <th className="text-left font-medium pb-2">Роля</th>
-                    <th className="text-left font-medium pb-2">Първо</th>
-                    <th className="text-left font-medium pb-2">Последно</th>
+                    <th className="text-left font-medium pb-2 w-44">Първо</th>
+                    <th className="text-left font-medium pb-2 w-44">
+                      Последно
+                    </th>
                     <th className="pb-2 w-8" />
                   </tr>
                 </thead>

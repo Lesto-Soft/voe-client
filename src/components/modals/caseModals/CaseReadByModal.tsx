@@ -71,8 +71,8 @@ const CaseReadByModal: React.FC<CaseReadByModalProps> = ({
                   <th className="text-left font-medium pb-2 pl-2">
                     Потребител
                   </th>
-                  <th className="text-right font-medium pb-2">Първо</th>
-                  <th className="text-right font-medium pb-2 pr-2">
+                  <th className="text-left font-medium pb-2">Първо</th>
+                  <th className="text-left font-medium pb-2 pr-2">
                     Последно
                   </th>
                 </tr>
@@ -104,20 +104,16 @@ const CaseReadByModal: React.FC<CaseReadByModalProps> = ({
                     </td>
                     <td className="py-2 pr-3 whitespace-nowrap">
                       {entry.date ? (
-                        <div className="flex justify-end">
-                          <ShowDate date={entry.date} />
-                        </div>
+                        <ShowDate date={entry.date} />
                       ) : (
-                        <div className="text-right text-gray-400">-</div>
+                        <div className="text-gray-400">-</div>
                       )}
                     </td>
                     <td className="py-2 pr-2 whitespace-nowrap">
                       {entry.lastReadAt ? (
-                        <div className="flex justify-end">
-                          <ShowDate date={entry.lastReadAt} />
-                        </div>
+                        <ShowDate date={entry.lastReadAt} />
                       ) : (
-                        <div className="text-right text-gray-400">-</div>
+                        <div className="text-gray-400">-</div>
                       )}
                     </td>
                   </tr>

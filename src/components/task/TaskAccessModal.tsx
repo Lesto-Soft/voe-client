@@ -90,8 +90,8 @@ const TaskAccessModal: React.FC<TaskAccessModalProps> = ({
                       Потребител
                     </th>
                     <th className="text-left font-medium pb-2">Роля</th>
-                    <th className="text-right font-medium pb-2">Първо</th>
-                    <th className="text-right font-medium pb-2">Последно</th>
+                    <th className="text-left font-medium pb-2">Първо</th>
+                    <th className="text-left font-medium pb-2">Последно</th>
                     <th className="pb-2 w-8" />
                   </tr>
                 </thead>
@@ -134,20 +134,16 @@ const TaskAccessModal: React.FC<TaskAccessModalProps> = ({
                         </td>
                         <td className="py-2 pr-3 whitespace-nowrap">
                           {readEntry?.date ? (
-                            <div className="flex justify-end">
-                              <ShowDate date={readEntry.date} />
-                            </div>
+                            <ShowDate date={readEntry.date} />
                           ) : (
-                            <div className="text-right text-gray-400">-</div>
+                            <div className="text-gray-400">-</div>
                           )}
                         </td>
                         <td className="py-2 pr-3 whitespace-nowrap">
                           {readEntry?.lastReadAt ? (
-                            <div className="flex justify-end">
-                              <ShowDate date={readEntry.lastReadAt} />
-                            </div>
+                            <ShowDate date={readEntry.lastReadAt} />
                           ) : (
-                            <div className="text-right text-gray-400">-</div>
+                            <div className="text-gray-400">-</div>
                           )}
                         </td>
                         <td className="py-2 text-right">

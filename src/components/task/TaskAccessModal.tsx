@@ -83,76 +83,90 @@ const TaskAccessModal: React.FC<TaskAccessModalProps> = ({
                 Няма потребители с достъп
               </p>
             ) : (
-              <div className="space-y-2">
-                {canAccessUsers.map((user) => {
-                  const role = getUserRole(user._id);
-                  const removable = canRemove(user._id);
-                  const readEntry = readBy.find(
-                    (entry) => entry.user._id === user._id,
-                  );
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-xs text-gray-400">
+                    <th className="text-left font-medium pb-2 pl-2">
+                      Потребител
+                    </th>
+                    <th className="text-left font-medium pb-2">Роля</th>
+                    <th className="text-right font-medium pb-2">Първо</th>
+                    <th className="text-right font-medium pb-2">Последно</th>
+                    <th className="pb-2 w-8" />
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {canAccessUsers.map((user) => {
+                    const role = getUserRole(user._id);
+                    const removable = canRemove(user._id);
+                    const readEntry = readBy.find(
+                      (entry) => entry.user._id === user._id,
+                    );
 
-                  return (
-                    <div
-                      key={user._id}
-                      className="flex items-center justify-between gap-3 p-2 rounded-lg hover:bg-gray-50"
-                    >
-                      <div className="flex-1 flex items-center gap-3 min-w-0">
-                        <div className="flex-shrink-0">
-                          <UserAvatar
-                            name={user.name}
-                            imageUrl={
-                              user.avatar
-                                ? `${endpoint}/static/avatars/${user._id}/${user.avatar}`
-                                : null
-                            }
-                            size={36}
-                          />
-                        </div>
-                        <div className="min-w-0 flex flex-col items-start gap-0.5">
-                          <UserLink user={user} />
-                          {role && (
+                    return (
+                      <tr key={user._id} className="hover:bg-gray-50">
+                        <td className="py-2 pl-2 pr-3">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="flex-shrink-0">
+                              <UserAvatar
+                                name={user.name}
+                                imageUrl={
+                                  user.avatar
+                                    ? `${endpoint}/static/avatars/${user._id}/${user.avatar}`
+                                    : null
+                                }
+                                size={36}
+                              />
+                            </div>
+                            <div className="min-w-0">
+                              <UserLink user={user} />
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-2 pr-3 whitespace-nowrap">
+                          {role ? (
                             <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700">
                               {role}
                             </span>
+                          ) : (
+                            <span className="text-gray-400">-</span>
                           )}
-                        </div>
-                      </div>
-
-                      <div className="flex-shrink-0 flex items-start gap-4 text-xs whitespace-nowrap">
-                        {readEntry?.date ? (
-                          <>
-                            <div className="flex flex-col items-end gap-0.5">
-                              <span className="text-gray-400">първо:</span>
+                        </td>
+                        <td className="py-2 pr-3 whitespace-nowrap">
+                          {readEntry?.date ? (
+                            <div className="flex justify-end">
                               <ShowDate date={readEntry.date} />
                             </div>
-                            {readEntry.lastReadAt && (
-                              <div className="flex flex-col items-end gap-0.5">
-                                <span className="text-gray-400">последно:</span>
-                                <ShowDate date={readEntry.lastReadAt} />
-                              </div>
-                            )}
-                          </>
-                        ) : (
-                          <span className="text-gray-400">-</span>
-                        )}
-                      </div>
-
-                      {removable ? (
-                        <button
-                          onClick={() => setRevokingUserId(user._id)}
-                          disabled={loading}
-                          className="flex-shrink-0 p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                          title="Премахни достъп"
-                        >
-                          <XMarkIcon className="h-4 w-4" />
-                        </button>
-                      ) : (
-                        <span className="flex-shrink-0 w-7" />
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
+                          ) : (
+                            <div className="text-right text-gray-400">-</div>
+                          )}
+                        </td>
+                        <td className="py-2 pr-3 whitespace-nowrap">
+                          {readEntry?.lastReadAt ? (
+                            <div className="flex justify-end">
+                              <ShowDate date={readEntry.lastReadAt} />
+                            </div>
+                          ) : (
+                            <div className="text-right text-gray-400">-</div>
+                          )}
+                        </td>
+                        <td className="py-2 text-right">
+                          {removable && (
+                            <button
+                              onClick={() => setRevokingUserId(user._id)}
+                              disabled={loading}
+                              className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                              title="Премахни достъп"
+                            >
+                              <XMarkIcon className="h-4 w-4" />
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             )}
           </div>
 

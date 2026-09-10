@@ -107,6 +107,8 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
         return <AtSymbolIcon className="h-5 w-5 text-red-500" />;
       case "mention_in_task_approval_request":
         return <AtSymbolIcon className="h-5 w-5 text-yellow-500" />;
+      case "mention_in_task_description":
+        return <AtSymbolIcon className="h-5 w-5 text-indigo-500" />;
       case "task_closed":
         return <InformationCircleIcon className="h-5 w-5 text-green-600" />;
       case "task_reopened":
@@ -119,6 +121,14 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
         return <ExclamationTriangleIcon className="h-5 w-5 text-amber-500" />;
       case "task_description_changed":
         return <PencilSquareIcon className="h-5 w-5 text-gray-500" />;
+      case "task_title_changed":
+        return <PencilSquareIcon className="h-5 w-5 text-indigo-500" />;
+      case "task_due_date_changed":
+        return <ClockIcon className="h-5 w-5 text-orange-500" />;
+      case "task_attachments_changed":
+        return <PencilSquareIcon className="h-5 w-5 text-cyan-600" />;
+      case "task_activity_edited":
+        return <PencilSquareIcon className="h-5 w-5 text-purple-500" />;
       case "task_due_approaching":
         return <ClockIcon className="h-5 w-5 text-yellow-500" />;
       case "task_overdue_reminder":

@@ -75,7 +75,7 @@ const ShowDate = ({
   return (
     <div
       ref={containerRef}
-      className={`text-sm text-gray-500 flex items-center whitespace-nowrap ${
+      className={`text-sm text-gray-500 flex items-center whitespace-nowrap select-none ${
         truncate ? "overflow-hidden min-w-0" : "flex-shrink-0"
       } ${centered ? "justify-center" : ""} gap-1.5 group relative hover:cursor-pointer`}
       onClick={handleMainClick}

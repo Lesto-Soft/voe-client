@@ -7,7 +7,7 @@ import { useLocation, useParams } from "react-router";
 import { useTranslation } from "react-i18next";
 import CaseInfo from "../components/case-components/CaseInfo";
 import Submenu from "../components/case-components/Submenu";
-import { ICase, ICategory, IReadBy, IUser } from "../db/interfaces";
+import { ICase, ICategory, IUser } from "../db/interfaces";
 import { useCurrentUser } from "../context/UserContext";
 import { determineUserRightsForCase } from "../utils/rightUtils";
 import { ROLES, EXAMPLE_CASE_NUMBER } from "../utils/GLOBAL_PARAMETERS";
@@ -98,15 +98,13 @@ const Case = () => {
     }
   }, [location.state, refetch]);
 
+  // Record the open on every visit (refreshes lastReadAt server-side);
+  // the ref guard keeps it to once per case load instead of every refetch
+  const markedCaseIdRef = useRef<string | null>(null);
   useEffect(() => {
-    if (caseData && currentUser) {
-      const hasRead = caseData.readBy?.some(
-        (entry: IReadBy) => entry.user._id === currentUser._id
-      );
-
-      if (!hasRead) {
-        markCaseAsRead(caseData._id);
-      }
+    if (caseData && currentUser && markedCaseIdRef.current !== caseData._id) {
+      markedCaseIdRef.current = caseData._id;
+      markCaseAsRead(caseData._id);
     }
   }, [caseData, currentUser, markCaseAsRead]);
 

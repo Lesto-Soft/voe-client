@@ -154,6 +154,19 @@ export interface IReadBy {
     avatar?: string;
   };
   date: string;
+  lastReadAt?: string;
+}
+
+export interface ITaskReadBy {
+  _id: string;
+  user: {
+    _id: string;
+    name: string;
+    username: string;
+    avatar?: string;
+  };
+  date?: string;
+  lastReadAt?: string;
 }
 export interface INotification {
   _id: string;
@@ -238,6 +251,9 @@ export enum TaskActivityType {
   ApprovalRequest = "APPROVAL_REQUEST",
   AnalysisSubmitted = "ANALYSIS_SUBMITTED",
   DescriptionChange = "DESCRIPTION_CHANGE",
+  TitleChange = "TITLE_CHANGE",
+  DueDateChange = "DUE_DATE_CHANGE",
+  AttachmentsChange = "ATTACHMENTS_CHANGE",
 }
 
 // Task-related interfaces
@@ -262,6 +278,7 @@ export interface ITask {
   fiveWhys?: IFiveWhy[];
   riskAssessments?: IRiskAssessment[];
   canAccessUsers?: IUser[];
+  readBy?: ITaskReadBy[];
   createdAt?: string;
   updatedAt?: string;
   completedAt?: string;
@@ -273,6 +290,8 @@ export interface ITaskActivity {
   createdBy: IUser;
   type: TaskActivityType;
   content?: string;
+  oldValue?: string;
+  newValue?: string;
   attachments?: string[];
   createdAt: string;
   updatedAt: string;

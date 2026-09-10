@@ -110,11 +110,15 @@ const Answer: React.FC<{
     setIsContentExpanded(expandAllContent);
   }, [expandAllContent]);
 
-  // Re-measure when expansion changes so a re-collapsed answer keeps its toggle
+  // Height of the collapsed content box (max-h-52 = 208px). Comparing
+  // scrollHeight against it detects "would overflow when clamped" regardless of
+  // the current expansion state, so short answers never get a toggle button.
+  const ANSWER_CONTENT_CLAMP_PX = 208;
+
   useEffect(() => {
     const el = answerContentRef.current;
-    if (el) setIsContentOverflowing(el.scrollHeight > el.clientHeight);
-  }, [answer.content, isContentExpanded]);
+    if (el) setIsContentOverflowing(el.scrollHeight > ANSWER_CONTENT_CLAMP_PX);
+  }, [answer.content]);
 
   useEffect(() => {
     const container = commentsContainerRef.current;
@@ -253,7 +257,7 @@ const Answer: React.FC<{
 
   const answerContentAndAttachments = (
     <>
-      {(isContentOverflowing || isContentExpanded) && (
+      {isContentOverflowing && (
         <button
           onClick={() => setIsContentExpanded((prev) => !prev)}
           className="flex items-center gap-1 text-xs text-blue-500 hover:text-blue-700 mt-2 cursor-pointer"

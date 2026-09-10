@@ -24,6 +24,7 @@ import {
   UPDATE_RISK_ASSESSMENT,
   DELETE_RISK_ASSESSMENT,
   REVOKE_TASK_ACCESS,
+  MARK_TASK_AS_READ,
 } from "../mutation/task";
 import {
   TaskStatus,
@@ -74,7 +75,6 @@ export interface UpdateTaskInput {
   title?: string;
   description?: string;
   priority?: CasePriority;
-  status?: TaskStatus;
   dueDate?: string;
   attachments?: File[];
   deletedAttachments?: string[];
@@ -580,6 +580,22 @@ export const useRevokeTaskAccess = (taskId: string) => {
   };
 
   return { revokeTaskAccess, loading, error };
+};
+
+export const useMarkTaskAsRead = (taskNumber: number) => {
+  const [markTaskAsReadMutation] = useMutation(MARK_TASK_AS_READ, {
+    refetchQueries: [{ query: GET_TASK_BY_NUMBER, variables: { taskNumber } }],
+  });
+
+  const markTaskAsRead = async (taskId: string) => {
+    try {
+      await markTaskAsReadMutation({ variables: { taskId } });
+    } catch (err) {
+      console.error("Failed to mark task as read:", err);
+    }
+  };
+
+  return { markTaskAsRead };
 };
 
 // --- useTaskActivity Hooks ---

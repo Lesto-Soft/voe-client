@@ -20,15 +20,14 @@ const CaseReadByModal: React.FC<CaseReadByModalProps> = ({
   onClose,
   readByData = [],
 }) => {
-  // 1. MODIFIED: The sorting logic now handles missing dates
+  // Sort by most recent activity (last opened, falling back to first read);
+  // dateless entries are treated as oldest and pushed to the bottom
   const sortedData = useMemo(() => {
-    return [...readByData].sort((a, b) => {
-      // Provide a fallback value of 0 if a date is missing.
-      // This treats dateless entries as the oldest and pushes them to the bottom.
-      const dateA = a.date ? new Date(a.date).getTime() : 0;
-      const dateB = b.date ? new Date(b.date).getTime() : 0;
-      return dateB - dateA; // Sorts newest to oldest
-    });
+    const activityTime = (entry: IReadBy) => {
+      const date = entry.lastReadAt || entry.date;
+      return date ? new Date(date).getTime() : 0;
+    };
+    return [...readByData].sort((a, b) => activityTime(b) - activityTime(a));
   }, [readByData]);
 
   if (!isOpen) {
@@ -43,7 +42,7 @@ const CaseReadByModal: React.FC<CaseReadByModalProps> = ({
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[80vh] flex flex-col"
+        className="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[80vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -66,41 +65,61 @@ const CaseReadByModal: React.FC<CaseReadByModalProps> = ({
         {/* Content */}
         <div className="flex-grow p-4 overflow-y-auto custom-scrollbar-xs">
           {sortedData.length > 0 ? (
-            <ul className="space-y-3">
-              {sortedData.map((entry) => (
-                <li
-                  key={entry.user._id}
-                  className="flex items-center justify-between p-2 rounded-md hover:bg-gray-50"
-                >
-                  <div className="flex items-center gap-3">
-                    <UserAvatar
-                      name={entry.user.name}
-                      imageUrl={
-                        entry.user.avatar
-                          ? `${serverBaseUrl}/static/avatars/${entry.user._id}/${entry.user.avatar}`
-                          : null
-                      }
-                      size={40}
-                      enablePreview={true}
-                    />
-                    <div className="flex flex-col">
-                      <UserLink user={entry.user} />
-                      <span className="text-xs text-gray-500">
-                        {entry.user.username}
-                      </span>
-                    </div>
-                  </div>
-                  {/* 2. MODIFIED: Conditionally render the date or a placeholder */}
-                  <div className="pr-5">
-                    {entry.date ? (
-                      <ShowDate date={entry.date} />
-                    ) : (
-                      <span className="text-sm text-gray-400">—</span>
-                    )}
-                  </div>
-                </li>
-              ))}
-            </ul>
+            <table className="w-full text-sm table-fixed">
+              <thead>
+                <tr className="text-xs text-gray-400">
+                  <th className="text-left font-medium pb-2 pl-2">
+                    Потребител
+                  </th>
+                  <th className="text-left font-medium pb-2 w-40">Първо</th>
+                  <th className="text-left font-medium pb-2 pr-2 w-40">
+                    Последно
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {sortedData.map((entry) => (
+                  <tr key={entry.user._id} className="hover:bg-gray-50">
+                    <td className="py-2 pl-2 pr-3 overflow-hidden">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="flex-shrink-0">
+                          <UserAvatar
+                            name={entry.user.name}
+                            imageUrl={
+                              entry.user.avatar
+                                ? `${serverBaseUrl}/static/avatars/${entry.user._id}/${entry.user.avatar}`
+                                : null
+                            }
+                            size={40}
+                            enablePreview={true}
+                          />
+                        </div>
+                        <div className="flex flex-col min-w-0">
+                          <UserLink user={entry.user} />
+                          <span className="text-xs text-gray-500">
+                            {entry.user.username}
+                          </span>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-2 pr-3 whitespace-nowrap">
+                      {entry.date ? (
+                        <ShowDate date={entry.date} />
+                      ) : (
+                        <div className="text-gray-400">-</div>
+                      )}
+                    </td>
+                    <td className="py-2 pr-2 whitespace-nowrap">
+                      {entry.lastReadAt ? (
+                        <ShowDate date={entry.lastReadAt} />
+                      ) : (
+                        <div className="text-gray-400">-</div>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           ) : (
             <div className="text-center text-gray-500 italic py-8">
               Все още никой не е прочел сигнала.

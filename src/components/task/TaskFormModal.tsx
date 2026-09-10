@@ -11,6 +11,8 @@ import {
 import { ITask, CasePriority } from "../../db/interfaces";
 import { useCreateTask, useUpdateTask } from "../../graphql/hooks/task";
 import { useCurrentUser } from "../../context/UserContext";
+import { useQuery } from "@apollo/client";
+import { GET_LEAN_USERS } from "../../graphql/query/user";
 import CaseAnswerSelector from "./CaseAnswerSelector";
 import UnifiedEditor from "../forms/partials/UnifiedRichTextEditor";
 import UserCombobox from "../global/dropdown/UserCombobox";
@@ -103,6 +105,21 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
   const currentUser = useCurrentUser();
   const { createTask, loading: createLoading } = useCreateTask();
   const { updateTask, loading: updateLoading } = useUpdateTask(task?._id);
+
+  // Mention suggestions for the description editor — mentioned users are
+  // granted access to the task server-side
+  const { data: leanUsersData } = useQuery(GET_LEAN_USERS);
+  const mentions = useMemo(
+    () =>
+      (leanUsersData?.getLeanUsers || []).map(
+        (u: { _id: string; name: string; username: string }) => ({
+          _id: u._id,
+          name: u.name,
+          username: u.username,
+        }),
+      ),
+    [leanUsersData],
+  );
 
   // Form state
   const [title, setTitle] = useState("");
@@ -239,7 +256,18 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
     <Dialog.Root open={isOpen} onOpenChange={handleOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm" />
-        <Dialog.Content className="fixed top-1/2 left-1/2 z-50 w-[95vw] max-w-2xl -translate-x-1/2 -translate-y-1/2 rounded-lg bg-white shadow-xl focus:outline-none max-h-[90vh] flex flex-col">
+        <Dialog.Content
+          onPointerDownOutside={(e) => {
+            // Clicks inside the mention suggestion popup (tippy) must not
+            // count as outside clicks and dismiss/dirty-check the modal
+            if ((e.target as Element)?.closest("[data-tippy-root]")) {
+              e.preventDefault();
+            }
+          }}
+          className="fixed top-1/2 left-1/2 z-50 w-[95vw] max-w-2xl -translate-x-1/2 -translate-y-1/2 rounded-lg bg-white shadow-xl focus:outline-none max-h-[90vh] flex flex-col"
+        >
+          {/* Anchor so the mention popup mounts inside the dialog and stays clickable */}
+          <div data-mention-container="true" className="relative z-[1001]" />
           {/* Header */}
           <div className="flex-shrink-0 flex items-center justify-between border-b border-gray-200 px-6 py-4">
             <Dialog.Title className="flex items-center gap-2 text-lg font-semibold text-gray-900">
@@ -309,6 +337,7 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
                 setAttachments={setAttachments}
                 existingAttachments={existingAttachments}
                 setExistingAttachments={setExistingAttachments}
+                mentions={mentions}
                 placeholder="Въведете описание на задачата"
                 minLength={0}
                 maxLength={1500}

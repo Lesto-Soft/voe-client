@@ -2,10 +2,11 @@ import React, { useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { LockClosedIcon } from "@heroicons/react/24/solid";
-import { IUser } from "../../db/interfaces";
+import { IUser, ITaskReadBy } from "../../db/interfaces";
 import { useRevokeTaskAccess } from "../../graphql/hooks/task";
 import UserAvatar from "../cards/UserAvatar";
 import UserLink from "../global/links/UserLink";
+import ShowDate from "../global/ShowDate";
 import ConfirmActionDialog from "../modals/ConfirmActionDialog";
 import { endpoint } from "../../db/config";
 
@@ -14,6 +15,7 @@ interface TaskAccessModalProps {
   onOpenChange: (open: boolean) => void;
   taskId: string;
   canAccessUsers: IUser[];
+  readBy?: ITaskReadBy[];
   assigneeId?: string;
   creatorId: string;
   onAccessChanged: () => void;
@@ -24,6 +26,7 @@ const TaskAccessModal: React.FC<TaskAccessModalProps> = ({
   onOpenChange,
   taskId,
   canAccessUsers,
+  readBy = [],
   assigneeId,
   creatorId,
   onAccessChanged,
@@ -56,7 +59,7 @@ const TaskAccessModal: React.FC<TaskAccessModalProps> = ({
     <Dialog.Root open={isOpen} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm" />
-        <Dialog.Content className="fixed top-1/2 left-1/2 z-50 w-[95vw] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-lg bg-white shadow-xl focus:outline-none max-h-[70vh] flex flex-col">
+        <Dialog.Content className="fixed top-1/2 left-1/2 z-50 w-[95vw] max-w-3xl -translate-x-1/2 -translate-y-1/2 rounded-lg bg-white shadow-xl focus:outline-none max-h-[70vh] flex flex-col">
           {/* Header */}
           <div className="flex-shrink-0 flex items-center justify-between border-b border-gray-200 px-6 py-4">
             <Dialog.Title className="flex items-center gap-2 text-lg font-semibold text-gray-900">
@@ -80,52 +83,88 @@ const TaskAccessModal: React.FC<TaskAccessModalProps> = ({
                 Няма потребители с достъп
               </p>
             ) : (
-              <div className="space-y-2">
-                {canAccessUsers.map((user) => {
-                  const role = getUserRole(user._id);
-                  const removable = canRemove(user._id);
+              <table className="w-full text-sm table-fixed">
+                <thead>
+                  <tr className="text-xs text-gray-400">
+                    <th className="text-left font-medium pb-2 pl-2">
+                      Потребител
+                    </th>
+                    <th className="text-left font-medium pb-2 w-28">Роля</th>
+                    <th className="text-left font-medium pb-2 w-40">Първо</th>
+                    <th className="text-left font-medium pb-2 w-40">
+                      Последно
+                    </th>
+                    <th className="pb-2 w-8" />
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {canAccessUsers.map((user) => {
+                    const role = getUserRole(user._id);
+                    const removable = canRemove(user._id);
+                    const readEntry = readBy.find(
+                      (entry) => entry.user._id === user._id,
+                    );
 
-                  return (
-                    <div
-                      key={user._id}
-                      className="flex items-center justify-between gap-3 p-2 rounded-lg hover:bg-gray-50"
-                    >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <UserAvatar
-                          name={user.name}
-                          imageUrl={
-                            user.avatar
-                              ? `${endpoint}/static/avatars/${user._id}/${user.avatar}`
-                              : null
-                          }
-                          size={36}
-                        />
-                        <div className="min-w-0">
-                          <UserLink user={user} />
-                          {role && (
-                            <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700">
+                    return (
+                      <tr key={user._id} className="hover:bg-gray-50">
+                        <td className="py-2 pl-2 pr-3 overflow-hidden">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="flex-shrink-0">
+                              <UserAvatar
+                                name={user.name}
+                                imageUrl={
+                                  user.avatar
+                                    ? `${endpoint}/static/avatars/${user._id}/${user.avatar}`
+                                    : null
+                                }
+                                size={36}
+                              />
+                            </div>
+                            <div className="min-w-0">
+                              <UserLink user={user} />
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-2 pr-3 whitespace-nowrap">
+                          {role ? (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700">
                               {role}
                             </span>
+                          ) : (
+                            <span className="text-gray-400">-</span>
                           )}
-                        </div>
-                      </div>
-
-                      {removable ? (
-                        <button
-                          onClick={() => setRevokingUserId(user._id)}
-                          disabled={loading}
-                          className="flex-shrink-0 p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                          title="Премахни достъп"
-                        >
-                          <XMarkIcon className="h-4 w-4" />
-                        </button>
-                      ) : (
-                        <span className="flex-shrink-0 w-7" />
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
+                        </td>
+                        <td className="py-2 pr-3 whitespace-nowrap">
+                          {readEntry?.date ? (
+                            <ShowDate date={readEntry.date} />
+                          ) : (
+                            <div className="text-gray-400">-</div>
+                          )}
+                        </td>
+                        <td className="py-2 pr-3 whitespace-nowrap">
+                          {readEntry?.lastReadAt ? (
+                            <ShowDate date={readEntry.lastReadAt} />
+                          ) : (
+                            <div className="text-gray-400">-</div>
+                          )}
+                        </td>
+                        <td className="py-2 text-right">
+                          {removable && (
+                            <button
+                              onClick={() => setRevokingUserId(user._id)}
+                              disabled={loading}
+                              className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                              title="Премахни достъп"
+                            >
+                              <XMarkIcon className="h-4 w-4" />
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             )}
           </div>
 

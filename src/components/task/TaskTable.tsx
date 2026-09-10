@@ -93,6 +93,18 @@ const columns: DataTableColumn<ITask>[] = [
       ),
   },
   {
+    key: "createdAt",
+    header: "Създадена на",
+    width: "w-[10%]",
+    cellClassName: "whitespace-nowrap",
+    render: (task) =>
+      task.createdAt ? (
+        <ShowDate date={task.createdAt} defaultFull />
+      ) : (
+        <span className="text-gray-400 text-sm">—</span>
+      ),
+  },
+  {
     key: "dueDate",
     header: "Краен Срок",
     width: "w-[10%]",
@@ -112,18 +124,6 @@ const columns: DataTableColumn<ITask>[] = [
             </span>
           )}
         </div>
-      ) : (
-        <span className="text-gray-400 text-sm">—</span>
-      ),
-  },
-  {
-    key: "createdAt",
-    header: "Създадена на",
-    width: "w-[10%]",
-    cellClassName: "whitespace-nowrap",
-    render: (task) =>
-      task.createdAt ? (
-        <ShowDate date={task.createdAt} defaultFull />
       ) : (
         <span className="text-gray-400 text-sm">—</span>
       ),

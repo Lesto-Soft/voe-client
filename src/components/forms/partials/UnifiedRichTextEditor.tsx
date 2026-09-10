@@ -100,7 +100,9 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
       TextAlign.configure({ types: ["paragraph", "heading", "listItem"] }),
       Placeholder.configure({ placeholder }),
       CharacterCount, // Keep extension but don't use its limit (doesn't count mentions properly)
-      ...(type !== "case" && type !== "task"
+      // Mentions everywhere except the case submission form (cases can be
+      // anonymous); task descriptions use them to grant access
+      ...(type !== "case"
         ? [
             CustomMention.configure({
               suggestion: useMemo(

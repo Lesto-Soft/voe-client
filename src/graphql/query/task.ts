@@ -38,6 +38,8 @@ const taskActivityFragment = gql`
     _id
     type
     content
+    oldValue
+    newValue
     attachments
     createdAt
     updatedAt
@@ -153,6 +155,17 @@ const taskDetailFragment = gql`
     }
     riskAssessments {
       ...RiskAssessmentFragment
+    }
+    readBy {
+      _id
+      user {
+        _id
+        name
+        username
+        avatar
+      }
+      date
+      lastReadAt
     }
   }
   ${taskFragment}

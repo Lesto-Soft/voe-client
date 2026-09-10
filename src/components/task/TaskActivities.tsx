@@ -18,6 +18,7 @@ import ImagePreviewModal, {
 import ConfirmActionDialog from "../modals/ConfirmActionDialog";
 import UnifiedEditor from "../forms/partials/UnifiedRichTextEditor";
 import EditTaskActivityModal from "./EditTaskActivityModal";
+import TaskActivityDiffModal from "./TaskActivityDiffModal";
 import {
   ChatBubbleLeftIcon,
   QuestionMarkCircleIcon,
@@ -37,6 +38,10 @@ import {
   HandThumbUpIcon,
   ArrowsPointingOutIcon,
   ArrowsPointingInIcon,
+  PencilSquareIcon,
+  CalendarDaysIcon,
+  PaperClipIcon,
+  ArrowLongRightIcon,
 } from "@heroicons/react/24/solid";
 import { usePersistentState } from "../../hooks/usePersistentState";
 
@@ -116,6 +121,30 @@ const activityTypeConfig: Record<
     borderColor: "border-gray-200",
     leftBorderColor: "border-l-gray-500",
   },
+  [TaskActivityType.TitleChange]: {
+    label: "Промяна на заглавие",
+    icon: PencilSquareIcon,
+    bgColor: "bg-indigo-50",
+    textColor: "text-indigo-700",
+    borderColor: "border-indigo-200",
+    leftBorderColor: "border-l-indigo-500",
+  },
+  [TaskActivityType.DueDateChange]: {
+    label: "Промяна на краен срок",
+    icon: CalendarDaysIcon,
+    bgColor: "bg-orange-50",
+    textColor: "text-orange-700",
+    borderColor: "border-orange-200",
+    leftBorderColor: "border-l-orange-500",
+  },
+  [TaskActivityType.AttachmentsChange]: {
+    label: "Промяна на файлове",
+    icon: PaperClipIcon,
+    bgColor: "bg-cyan-50",
+    textColor: "text-cyan-700",
+    borderColor: "border-cyan-200",
+    leftBorderColor: "border-l-cyan-500",
+  },
 };
 
 // User-selectable activity types (exclude system-generated types)
@@ -125,6 +154,21 @@ const selectableActivityTypes: TaskActivityType[] = [
   TaskActivityType.ApprovalRequest,
 ];
 
+// Render the "→" in from → to activity contents as an actual icon so it
+// matches the icons around it
+const renderSystemContent = (content: string) => {
+  if (!content.includes("→")) return content;
+  const parts = content.split("→");
+  return parts.map((part, index) => (
+    <React.Fragment key={index}>
+      {part}
+      {index < parts.length - 1 && (
+        <ArrowLongRightIcon className="inline-block h-3.5 w-3.5 mx-0.5 align-text-bottom" />
+      )}
+    </React.Fragment>
+  ));
+};
+
 // System-generated activity types (rendered as compact notifications)
 const systemActivityTypes: TaskActivityType[] = [
   TaskActivityType.StatusChange,
@@ -132,6 +176,9 @@ const systemActivityTypes: TaskActivityType[] = [
   TaskActivityType.AssigneeChange,
   TaskActivityType.DescriptionChange,
   TaskActivityType.AnalysisSubmitted,
+  TaskActivityType.TitleChange,
+  TaskActivityType.DueDateChange,
+  TaskActivityType.AttachmentsChange,
 ];
 
 // Helper component to display activity attachments in read-only mode
@@ -213,15 +260,19 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
   const isActivityExpanded = (id: string) =>
     expandAllActivities !== expandOverrides.has(id);
 
-  // Detect overflow on user activity content (re-measure when expansion changes
-  // so a re-collapsed item keeps its toggle button)
+  // Height of the collapsed content box (max-h-40 = 160px). Comparing
+  // scrollHeight against it detects "would overflow when clamped" regardless of
+  // the current expansion state, so short entries never get a toggle button.
+  const ACTIVITY_CONTENT_CLAMP_PX = 160;
+
+  // Detect which activities actually need an expand/collapse toggle
   useEffect(() => {
     const newOverflowing = new Set<string>();
     contentRefs.current.forEach((el, id) => {
-      if (el.scrollHeight > el.clientHeight) newOverflowing.add(id);
+      if (el.scrollHeight > ACTIVITY_CONTENT_CLAMP_PX) newOverflowing.add(id);
     });
     setOverflowingActivities(newOverflowing);
-  }, [activities, expandAllActivities, expandOverrides]);
+  }, [activities]);
 
   const toggleExpand = (id: string) => {
     setExpandOverrides((prev) => {
@@ -500,6 +551,18 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
 
             // Compact rendering for system activities
             if (isSystemActivity) {
+              // Entries with a stored before/after pair get the diff trigger
+              // anchored right after the fixed label prefix ("Заглавие:"),
+              // keeping its horizontal position consistent between rows
+              const systemContent = activity.content || "";
+              const hasDiff =
+                activity.oldValue != null && activity.newValue != null;
+              const colonIndex = hasDiff ? systemContent.indexOf(":") : -1;
+              const diffLabel =
+                colonIndex > -1 ? systemContent.slice(0, colonIndex + 1) : null;
+              const diffRest =
+                colonIndex > -1 ? systemContent.slice(colonIndex + 1) : null;
+
               return (
                 <div
                   key={activity._id}
@@ -512,9 +575,34 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
                   <Icon
                     className={`h-3.5 w-3.5 flex-shrink-0 ${config.textColor}`}
                   />
-                  <span className={`font-medium ${config.textColor}`}>
-                    {activity.content}
-                  </span>
+                  {hasDiff && diffLabel != null ? (
+                    <>
+                      <span
+                        className={`font-medium ${config.textColor} flex-shrink-0`}
+                      >
+                        {diffLabel}
+                      </span>
+                      <TaskActivityDiffModal
+                        activity={activity}
+                        changeLabel={config.label}
+                      />
+                      <span className={`font-medium ${config.textColor}`}>
+                        {renderSystemContent(diffRest || "")}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <span className={`font-medium ${config.textColor}`}>
+                        {renderSystemContent(systemContent)}
+                      </span>
+                      {hasDiff && (
+                        <TaskActivityDiffModal
+                          activity={activity}
+                          changeLabel={config.label}
+                        />
+                      )}
+                    </>
+                  )}
                   <div className="ml-auto">
                     <ShowDate date={activity.createdAt} />
                   </div>
@@ -589,7 +677,7 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
 
                     {/* Normal content display */}
                     <>
-                        {(overflowingActivities.has(activity._id) || isActivityExpanded(activity._id)) && (
+                        {overflowingActivities.has(activity._id) && (
                           <button
                             onClick={() => toggleExpand(activity._id)}
                             className="flex items-center gap-1 text-xs text-blue-500 hover:text-blue-700 mb-1 cursor-pointer"

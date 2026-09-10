@@ -410,9 +410,10 @@ const User: React.FC = () => {
 
     // TaskActivity entries (comments, help requests, approval requests, status/priority/assignee changes, analysis submissions)
     if (user.createdTaskActivities) {
-      const activityTypeMap: Record<
-        TaskActivityType,
-        CombinedActivity["activityType"]
+      // Partial: attribute-edit types (title/due date/attachments changes)
+      // deliberately don't show up in the user activity feed
+      const activityTypeMap: Partial<
+        Record<TaskActivityType, CombinedActivity["activityType"]>
       > = {
         [TaskActivityType.Comment]: "task_comment",
         [TaskActivityType.HelpRequest]: "task_help_request",

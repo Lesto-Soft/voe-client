@@ -334,18 +334,8 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
               </>
             )}
 
-            {/* Due date multiselect */}
-            <CustomMultiSelectDropdown
-              label="Краен срок"
-              options={DUE_DATE_OPTIONS}
-              selectedValues={dueDateFilter}
-              onChange={(values) =>
-                onDueDateFilterChange(values as DueDateFilter[])
-              }
-              placeholder="Всички"
-            />
-
-            {/* Date filter toggle */}
+            {/* Date filter toggle (created-at period) — before the due-date
+                filter, matching the table's column order */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Дата
@@ -365,6 +355,17 @@ const TaskFilters: React.FC<TaskFiltersProps> = ({
                 <CalendarDaysIcon className="h-5 w-5" />
               </button>
             </div>
+
+            {/* Due date multiselect */}
+            <CustomMultiSelectDropdown
+              label="Краен срок"
+              options={DUE_DATE_OPTIONS}
+              selectedValues={dueDateFilter}
+              onChange={(values) =>
+                onDueDateFilterChange(values as DueDateFilter[])
+              }
+              placeholder="Всички"
+            />
 
             {/* Status multiselect */}
             <CustomMultiSelectDropdown

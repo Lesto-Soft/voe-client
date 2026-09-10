@@ -38,6 +38,8 @@ const taskActivityFragment = gql`
     _id
     type
     content
+    oldValue
+    newValue
     attachments
     createdAt
     updatedAt

@@ -18,6 +18,7 @@ import ImagePreviewModal, {
 import ConfirmActionDialog from "../modals/ConfirmActionDialog";
 import UnifiedEditor from "../forms/partials/UnifiedRichTextEditor";
 import EditTaskActivityModal from "./EditTaskActivityModal";
+import TaskActivityDiffModal from "./TaskActivityDiffModal";
 import {
   ChatBubbleLeftIcon,
   QuestionMarkCircleIcon,
@@ -549,6 +550,12 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
                   <span className={`font-medium ${config.textColor}`}>
                     {activity.content}
                   </span>
+                  {activity.oldValue != null && activity.newValue != null && (
+                    <TaskActivityDiffModal
+                      activity={activity}
+                      changeLabel={config.label}
+                    />
+                  )}
                   <div className="ml-auto">
                     <ShowDate date={activity.createdAt} />
                   </div>

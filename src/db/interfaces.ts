@@ -290,6 +290,8 @@ export interface ITaskActivity {
   createdBy: IUser;
   type: TaskActivityType;
   content?: string;
+  oldValue?: string;
+  newValue?: string;
   attachments?: string[];
   createdAt: string;
   updatedAt: string;

@@ -41,6 +41,7 @@ import {
   PencilSquareIcon,
   CalendarDaysIcon,
   PaperClipIcon,
+  ArrowLongRightIcon,
 } from "@heroicons/react/24/solid";
 import { usePersistentState } from "../../hooks/usePersistentState";
 
@@ -152,6 +153,21 @@ const selectableActivityTypes: TaskActivityType[] = [
   TaskActivityType.HelpRequest,
   TaskActivityType.ApprovalRequest,
 ];
+
+// Render the "→" in from → to activity contents as an actual icon so it
+// matches the icons around it
+const renderSystemContent = (content: string) => {
+  if (!content.includes("→")) return content;
+  const parts = content.split("→");
+  return parts.map((part, index) => (
+    <React.Fragment key={index}>
+      {part}
+      {index < parts.length - 1 && (
+        <ArrowLongRightIcon className="inline-block h-3.5 w-3.5 mx-0.5 align-text-bottom" />
+      )}
+    </React.Fragment>
+  ));
+};
 
 // System-generated activity types (rendered as compact notifications)
 const systemActivityTypes: TaskActivityType[] = [
@@ -535,6 +551,18 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
 
             // Compact rendering for system activities
             if (isSystemActivity) {
+              // Entries with a stored before/after pair get the diff trigger
+              // anchored right after the fixed label prefix ("Заглавие:"),
+              // keeping its horizontal position consistent between rows
+              const systemContent = activity.content || "";
+              const hasDiff =
+                activity.oldValue != null && activity.newValue != null;
+              const colonIndex = hasDiff ? systemContent.indexOf(":") : -1;
+              const diffLabel =
+                colonIndex > -1 ? systemContent.slice(0, colonIndex + 1) : null;
+              const diffRest =
+                colonIndex > -1 ? systemContent.slice(colonIndex + 1) : null;
+
               return (
                 <div
                   key={activity._id}
@@ -547,14 +575,33 @@ const TaskActivities: React.FC<TaskActivitiesProps> = ({
                   <Icon
                     className={`h-3.5 w-3.5 flex-shrink-0 ${config.textColor}`}
                   />
-                  <span className={`font-medium ${config.textColor}`}>
-                    {activity.content}
-                  </span>
-                  {activity.oldValue != null && activity.newValue != null && (
-                    <TaskActivityDiffModal
-                      activity={activity}
-                      changeLabel={config.label}
-                    />
+                  {hasDiff && diffLabel != null ? (
+                    <>
+                      <span
+                        className={`font-medium ${config.textColor} flex-shrink-0`}
+                      >
+                        {diffLabel}
+                      </span>
+                      <TaskActivityDiffModal
+                        activity={activity}
+                        changeLabel={config.label}
+                      />
+                      <span className={`font-medium ${config.textColor}`}>
+                        {renderSystemContent(diffRest || "")}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <span className={`font-medium ${config.textColor}`}>
+                        {renderSystemContent(systemContent)}
+                      </span>
+                      {hasDiff && (
+                        <TaskActivityDiffModal
+                          activity={activity}
+                          changeLabel={config.label}
+                        />
+                      )}
+                    </>
                   )}
                   <div className="ml-auto">
                     <ShowDate date={activity.createdAt} />

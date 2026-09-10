@@ -108,10 +108,10 @@ const TaskAccessModal: React.FC<TaskAccessModalProps> = ({
                             size={36}
                           />
                         </div>
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex flex-col items-start gap-0.5">
                           <UserLink user={user} />
                           {role && (
-                            <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700">
                               {role}
                             </span>
                           )}

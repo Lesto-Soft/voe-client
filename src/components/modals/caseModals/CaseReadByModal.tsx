@@ -65,14 +65,14 @@ const CaseReadByModal: React.FC<CaseReadByModalProps> = ({
         {/* Content */}
         <div className="flex-grow p-4 overflow-y-auto custom-scrollbar-xs">
           {sortedData.length > 0 ? (
-            <table className="w-full text-sm">
+            <table className="w-full text-sm table-fixed">
               <thead>
                 <tr className="text-xs text-gray-400">
                   <th className="text-left font-medium pb-2 pl-2">
                     Потребител
                   </th>
-                  <th className="text-left font-medium pb-2 w-44">Първо</th>
-                  <th className="text-left font-medium pb-2 pr-2 w-44">
+                  <th className="text-left font-medium pb-2 w-40">Първо</th>
+                  <th className="text-left font-medium pb-2 pr-2 w-40">
                     Последно
                   </th>
                 </tr>
@@ -80,7 +80,7 @@ const CaseReadByModal: React.FC<CaseReadByModalProps> = ({
               <tbody className="divide-y divide-gray-100">
                 {sortedData.map((entry) => (
                   <tr key={entry.user._id} className="hover:bg-gray-50">
-                    <td className="py-2 pl-2 pr-3">
+                    <td className="py-2 pl-2 pr-3 overflow-hidden">
                       <div className="flex items-center gap-3 min-w-0">
                         <div className="flex-shrink-0">
                           <UserAvatar

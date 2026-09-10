@@ -83,15 +83,15 @@ const TaskAccessModal: React.FC<TaskAccessModalProps> = ({
                 Няма потребители с достъп
               </p>
             ) : (
-              <table className="w-full text-sm">
+              <table className="w-full text-sm table-fixed">
                 <thead>
                   <tr className="text-xs text-gray-400">
                     <th className="text-left font-medium pb-2 pl-2">
                       Потребител
                     </th>
-                    <th className="text-left font-medium pb-2">Роля</th>
-                    <th className="text-left font-medium pb-2 w-44">Първо</th>
-                    <th className="text-left font-medium pb-2 w-44">
+                    <th className="text-left font-medium pb-2 w-28">Роля</th>
+                    <th className="text-left font-medium pb-2 w-40">Първо</th>
+                    <th className="text-left font-medium pb-2 w-40">
                       Последно
                     </th>
                     <th className="pb-2 w-8" />
@@ -107,7 +107,7 @@ const TaskAccessModal: React.FC<TaskAccessModalProps> = ({
 
                     return (
                       <tr key={user._id} className="hover:bg-gray-50">
-                        <td className="py-2 pl-2 pr-3">
+                        <td className="py-2 pl-2 pr-3 overflow-hidden">
                           <div className="flex items-center gap-3 min-w-0">
                             <div className="flex-shrink-0">
                               <UserAvatar

@@ -10,7 +10,11 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+dist-https
 *.env.*
+
+# TLS certificates for the HTTPS tablet instance (never commit)
+certs/
 
 # Editor directories and files
 .vscode/*

@@ -209,12 +209,19 @@ const Home = () => {
   return (
     <div className="h-screen flex flex-col">
       {/* EU funding attribution (required programme publicity) */}
-      <header className="flex-shrink-0 bg-white border-b border-gray-200 flex justify-center items-center py-2 px-4">
-        <img
-          src="/images/eu-cofunded.jpg"
-          alt="Съфинансирано от Европейския съюз"
-          className="h-12 md:h-14 w-auto"
-        />
+      <header className="flex-shrink-0 bg-white border-b border-gray-200 py-2 px-4 md:px-8">
+        <div className="max-w-6xl mx-auto flex justify-between items-center gap-4">
+          <img
+            src="/images/eu-cofunded.jpg"
+            alt="Съфинансирано от Европейския съюз"
+            className="h-10 md:h-14 w-auto"
+          />
+          <img
+            src="/images/pkip-logo.png"
+            alt="Програма „Конкурентоспособност и иновации в предприятията“"
+            className="h-10 md:h-14 w-auto"
+          />
+        </div>
       </header>
 
       <div className="container mx-auto flex-1 min-h-0 flex items-center justify-center">
@@ -243,13 +250,17 @@ const Home = () => {
         </div>
       </div>
 
-      {/* Programme logo (required programme publicity) */}
-      <footer className="flex-shrink-0 bg-white border-t border-gray-200 flex justify-center items-center py-2 px-4">
-        <img
-          src="/images/pkip-logo.png"
-          alt="Програма „Конкурентоспособност и иновации в предприятията“"
-          className="h-12 md:h-14 w-auto"
-        />
+      {/* Funding disclaimer (required programme publicity) */}
+      <footer className="flex-shrink-0 bg-white border-t border-gray-200 py-3 px-4">
+        <p className="max-w-4xl mx-auto text-center text-xs text-gray-500 leading-relaxed">
+          „Това съдържание е създадено с финансовата подкрепа на Програма
+          „Конкурентоспособност и иновации в предприятията“ 2021-2027,
+          съфинансирано от Европейския съюз чрез Европейския фонд за регионално
+          развитие. Цялата отговорност за съдържанието се носи от „ЛЕСТО
+          ПРОДУКТ“ ЕООД и при никакви обстоятелства не може да се приема, че
+          отразява официалното становище на Европейския съюз и Управляващия
+          орган.“
+        </p>
       </footer>
     </div>
   );

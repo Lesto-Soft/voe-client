@@ -207,11 +207,21 @@ const Home = () => {
   const subtitleKey = isLogin ? "home.enterYourProfile" : "home.subtitle";
 
   return (
-    <div className="container mx-auto h-screen flex items-center justify-center">
-      {/* <div className="absolute top-4 right-4 z-10">
+    <div className="h-screen flex flex-col">
+      {/* EU funding attribution (required programme publicity) */}
+      <header className="flex-shrink-0 bg-white border-b border-gray-200 flex justify-center items-center py-2 px-4">
+        <img
+          src="/images/eu-cofunded.jpg"
+          alt="Съфинансирано от Европейския съюз"
+          className="h-12 md:h-14 w-auto"
+        />
+      </header>
+
+      <div className="container mx-auto flex-1 min-h-0 flex items-center justify-center">
+        {/* <div className="absolute top-4 right-4 z-10">
         <LanguageSwitcher />
       </div> */}
-      <div className="flex flex-col-reverse lg:flex-row justify-around items-start w-full max-w-6xl p-6 lg:p-12">
+        <div className="flex flex-col-reverse lg:flex-row justify-around items-start w-full max-w-6xl p-6 lg:p-12">
         <div className="w-full lg:w-1/2 flex flex-col items-center mt-8 lg:mt-0">
           <FormHeader subtitleKey={subtitleKey} />
 
@@ -223,14 +233,24 @@ const Home = () => {
             )}
           </div>
         </div>
-        <div className="w-full lg:w-1/2 flex justify-center items-center">
-          <img
-            src="/images/illustrations/voe_visual.png"
-            alt="VOE Image"
-            className="h-48 w-48 md:h-64 md:w-64 lg:h-auto lg:w-full max-w-sm lg:max-w-md"
-          />
+          <div className="w-full lg:w-1/2 flex justify-center items-center">
+            <img
+              src="/images/illustrations/voe_visual.png"
+              alt="VOE Image"
+              className="h-48 w-48 md:h-64 md:w-64 lg:h-auto lg:w-full max-w-sm lg:max-w-md"
+            />
+          </div>
         </div>
       </div>
+
+      {/* Programme logo (required programme publicity) */}
+      <footer className="flex-shrink-0 bg-white border-t border-gray-200 flex justify-center items-center py-2 px-4">
+        <img
+          src="/images/pkip-logo.png"
+          alt="Програма „Конкурентоспособност и иновации в предприятията“"
+          className="h-12 md:h-14 w-auto"
+        />
+      </footer>
     </div>
   );
 };

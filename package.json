@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:devpreview": "tsc -b && vite build --mode devpreview",
     "lint": "eslint .",
     "preview": "vite preview --host",
     "dev:https": "vite --config vite.config.https.ts --mode https",

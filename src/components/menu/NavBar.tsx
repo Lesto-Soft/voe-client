@@ -190,7 +190,7 @@ const NavBar: React.FC<{ me: IMe }> = ({ me }) => {
               {currentPage}
             </h3>
           </div>
-          <div className="flex items-center gap-2 mr-2">
+          <div className="flex items-center gap-2 mr-2 flex-shrink-0">
             {!categoriesLoading && !categoriesError && (
               <>
                 <CaseDialog
@@ -236,7 +236,9 @@ const NavBar: React.FC<{ me: IMe }> = ({ me }) => {
         {/* --- REFACTORED RIGHT-SIDE CONTROLS --- */}
         <div className="flex items-center space-x-2 md:space-x-4">
           {/* This container holds desktop-only items */}
-          <div className="hidden md:flex items-center space-x-4">
+          {/* Desktop nav needs ~750px of its own — below xl it overflowed over
+              the title and submission buttons, so tablets get the burger menu */}
+          <div className="hidden xl:flex items-center space-x-4">
             {(isAdmin || isManagerExpert) && (
               <DropdownMenu.Root
                 open={isMgmtDropdownOpen}
@@ -425,8 +427,8 @@ const NavBar: React.FC<{ me: IMe }> = ({ me }) => {
           {/* This NotificationCenter is now rendered once on all screen sizes */}
           <NotificationCenter userId={me._id} />
 
-          {/* This hamburger button is now only visible on mobile */}
-          <div className="md:hidden">
+          {/* Hamburger for mobile and tablet widths (below xl) */}
+          <div className="xl:hidden">
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="text-gray-800 focus:outline-none "

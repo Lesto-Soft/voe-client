@@ -383,7 +383,9 @@ export const useCreateTask = () => {
   const [createTaskMutation, { data, loading, error }] = useMutation(
     CREATE_TASK,
     {
-      refetchQueries: ["GetAllTasks"],
+      // GetMe keeps me.accessibleTasks fresh — the creator is granted access
+      // server-side, and TaskLink/canViewTask gate on the cached list
+      refetchQueries: ["GetAllTasks", "GetMe"],
       awaitRefetchQueries: true,
     }
   );
@@ -416,8 +418,8 @@ export const useUpdateTask = (taskId?: string) => {
     UPDATE_TASK,
     {
       refetchQueries: taskId
-        ? [{ query: GET_TASK_BY_ID, variables: { _id: taskId } }]
-        : [],
+        ? [{ query: GET_TASK_BY_ID, variables: { _id: taskId } }, "GetMe"]
+        : ["GetMe"],
       awaitRefetchQueries: true,
     }
   );
@@ -525,8 +527,8 @@ export const useAssignTask = (taskId?: string) => {
     ASSIGN_TASK,
     {
       refetchQueries: taskId
-        ? [{ query: GET_TASK_BY_ID, variables: { _id: taskId } }]
-        : [],
+        ? [{ query: GET_TASK_BY_ID, variables: { _id: taskId } }, "GetMe"]
+        : ["GetMe"],
       awaitRefetchQueries: true,
     }
   );

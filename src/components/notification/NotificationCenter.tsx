@@ -20,10 +20,24 @@ import {
   ClipboardDocumentListIcon,
 } from "@heroicons/react/24/solid";
 import { BellIcon } from "@heroicons/react/24/outline";
+import { apolloClient } from "../../graphql/client";
 
 interface NotificationCenterProps {
   userId: string;
 }
+
+// Notifications whose arrival means this user was just granted access to a
+// task (server-side canAccessUsers/accessibleTasks sync). The cached GetMe
+// gates TaskLink/canViewTask, so it must be refetched or the task stays
+// locked in this session until a hard refresh.
+const ACCESS_GRANTING_CONTENTS = new Set([
+  "task_assigned",
+  "task_assignee_changed",
+  "mention_in_task_description",
+  "mention_in_task_comment",
+  "mention_in_task_help_request",
+  "mention_in_task_approval_request",
+]);
 
 type NotificationTab = "ALL" | "CASES" | "ANSWERS" | "COMMENTS" | "TASKS";
 const filterMap: Record<
@@ -95,6 +109,9 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId }) => {
       refetch();
       const newNotification = data.data?.notificationAdded;
       if (newNotification) {
+        if (ACCESS_GRANTING_CONTENTS.has(newNotification.content)) {
+          apolloClient.refetchQueries({ include: ["GetMe"] });
+        }
         setNotifications((prev) => [newNotification, ...prev]);
         const toastMessage = (
           <div>

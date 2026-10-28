@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useRef, useEffect } from "react";
 import { ApolloError } from "@apollo/client";
-import { ICategory, IMe, IMetricScore } from "../../db/interfaces";
+import { ICategory, IMe, IMetricScore, IUser } from "../../db/interfaces";
 import CategoryLink from "../global/links/CategoryLink";
 import { FlagIcon, PencilSquareIcon } from "@heroicons/react/24/solid";
 import {
@@ -25,9 +25,12 @@ import { renderContentSafely } from "../../utils/contentRenderer";
 import RateCaseModal from "../modals/caseModals/RateCaseModal";
 import CaseRatingDisplay from "./CaseRatingDisplay";
 import { IReadBy } from "../../db/interfaces";
-import { EyeIcon } from "@heroicons/react/24/outline";
+import { EyeIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import CaseReadByModal from "../modals/caseModals/CaseReadByModal";
 import CaseDialog from "../modals/caseModals/CaseDialog";
+import ConfirmActionDialog from "../modals/ConfirmActionDialog";
+import UserLink from "../global/links/UserLink";
+import { useRemoveCaseGuest } from "../../graphql/hooks/case";
 
 interface ICaseInfoProps {
   content: string;
@@ -48,6 +51,7 @@ interface ICaseInfoProps {
   error?: ApolloError | undefined; // <-- ADD THIS PROP
   rights: string[];
   readBy?: IReadBy[];
+  guests?: IUser[];
 }
 
 const CaseInfo: React.FC<ICaseInfoProps> = ({
@@ -69,6 +73,7 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
   isLoading,
   error,
   readBy = [],
+  guests = [],
 }) => {
   const { t } = useTranslation("dashboard");
 
@@ -78,6 +83,9 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
   const [isRatingModalOpen, setRatingModalOpen] = useState(false);
   // 2. ADD STATE FOR THE NEW MODAL
   const [isReadByModalOpen, setReadByModalOpen] = useState(false);
+  const [guestToRemove, setGuestToRemove] = useState<IUser | null>(null);
+  const { removeCaseGuest, loading: isRemovingGuest } =
+    useRemoveCaseGuest(caseNumber);
 
   useEffect(() => {
     const container = scrollContainerRef.current;
@@ -139,6 +147,8 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
     rights.includes("expert");
 
   const isCurrentUserCreator = creator?._id === me._id;
+  const canManageGuests =
+    rights.includes(USER_RIGHTS.ADMIN) || rights.includes(USER_RIGHTS.MANAGER);
 
   const caseInitialDataForEdit = {
     content,
@@ -200,6 +210,8 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
                       mode="edit"
                       caseId={caseId}
                       caseNumber={caseNumber}
+                      creatorId={creator?._id}
+                      guestIds={guests.map((guest) => guest._id)}
                       initialData={{
                         content: caseInitialDataForEdit.content,
                         priority: caseInitialDataForEdit.priority,
@@ -333,9 +345,59 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
                 )}
               </span>
             </div>
+
+            {/* Guests: users granted access by being mentioned */}
+            {guests.length > 0 && (
+              <div className={`${caseBoxClasses} flex-col bg-white`}>
+                <span className={labelTextClass}>{t("guests", "Гости")}:</span>
+                <span className="flex flex-wrap gap-1">
+                  {guests.map((guest) => (
+                    <span
+                      key={guest._id}
+                      className="inline-flex items-center gap-0.5"
+                      title={t("guest_access_hint", "Гост-достъп чрез споменаване")}
+                    >
+                      <UserLink user={guest} />
+                      {canManageGuests && (
+                        <button
+                          type="button"
+                          onClick={() => setGuestToRemove(guest)}
+                          disabled={isRemovingGuest}
+                          title={t("remove_guest", "Премахни гост-достъпа")}
+                          className="rounded p-0.5 text-gray-400 hover:bg-red-100 hover:text-red-600 hover:cursor-pointer disabled:opacity-50"
+                        >
+                          <XMarkIcon className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </span>
+                  ))}
+                </span>
+              </div>
+            )}
           </div>
         </div>
       </div>
+
+      <ConfirmActionDialog
+        isOpen={guestToRemove !== null}
+        onOpenChange={(open) => {
+          if (!open) setGuestToRemove(null);
+        }}
+        onConfirm={async () => {
+          if (!guestToRemove) return;
+          try {
+            await removeCaseGuest(caseId, guestToRemove._id);
+          } catch (err) {
+            console.error("Failed to remove case guest:", err);
+          } finally {
+            setGuestToRemove(null);
+          }
+        }}
+        title={t("remove_guest", "Премахни гост-достъпа")}
+        description={`${guestToRemove?.name || ""} ще спре да вижда сигнал #${caseNumber}. Това се записва в историята на сигнала.`}
+        confirmButtonText={t("remove_guest_confirm", "Премахни")}
+        isDestructiveAction
+      />
 
       <RateCaseModal
         isOpen={isRatingModalOpen}

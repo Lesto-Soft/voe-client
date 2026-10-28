@@ -35,6 +35,8 @@ type CaseDialogProps = {
         categories: ICategory[];
         attachments: string[];
       };
+      creatorId?: string;
+      guestIds?: string[];
     }
   | {
       mode: "create";

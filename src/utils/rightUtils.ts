@@ -66,6 +66,12 @@ export const determineUserRightsForCase = (
     rights.push("financial");
   }
 
+  // Guests were mentioned without rights on the case's categories and were
+  // granted access explicitly (server: Case.guests)
+  if ((caseData.guests || []).some((guest) => guest._id === currentUser._id)) {
+    rights.push("guest");
+  }
+
   return rights;
 };
 

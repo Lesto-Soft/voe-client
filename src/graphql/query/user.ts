@@ -415,6 +415,7 @@ export const GET_LEAN_USERS = gql`
       _id
       name
       username
+      position
       role {
         _id
       }

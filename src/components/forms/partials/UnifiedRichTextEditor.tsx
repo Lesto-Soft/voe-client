@@ -19,7 +19,11 @@ import {
 import { useFileHandler } from "../../../hooks/useFileHandler";
 import { usePastedAttachments } from "../hooks/usePastedAttachments";
 import { getTextLength } from "../../../utils/contentRenderer";
-import { createMentionSuggestion } from "./TextEditor/MentionSuggestion";
+import {
+  createMentionSuggestion,
+  type MentionUser,
+} from "./TextEditor/MentionSuggestion";
+import { useMentionGuestOptions } from "../../../context/MentionGuestContext";
 import { CustomMention } from "./TextEditor/CustomMention";
 import AttachmentZone from "./TextEditor/TextEditorWithAttachments/AttachmentZone";
 import MenuBar from "./TextEditor/MenuBar";
@@ -36,7 +40,7 @@ interface UnifiedEditorProps {
   existingAttachments?: string[];
   setExistingAttachments?: React.Dispatch<React.SetStateAction<string[]>>;
   onSend?: () => void | Promise<void>;
-  mentions?: any[];
+  mentions?: MentionUser[];
   placeholder?: string;
   minLength: number;
   maxLength: number;
@@ -93,6 +97,22 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
     onProcessingChange?.(isCompressing);
   }, [isCompressing, onProcessingChange]);
 
+  // The suggestion is created once per editor and reads the latest mentions
+  // and guest options through refs, so lists that arrive later don't go stale
+  const guestOptions = useMentionGuestOptions();
+  const mentionsRef = useRef(mentions);
+  mentionsRef.current = mentions;
+  const guestOptionsRef = useRef(guestOptions);
+  guestOptionsRef.current = guestOptions;
+  const mentionSuggestion = useMemo(
+    () =>
+      createMentionSuggestion(
+        () => mentionsRef.current,
+        () => guestOptionsRef.current,
+      ),
+    [],
+  );
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({ heading: false }),
@@ -100,18 +120,9 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = (props) => {
       TextAlign.configure({ types: ["paragraph", "heading", "listItem"] }),
       Placeholder.configure({ placeholder }),
       CharacterCount, // Keep extension but don't use its limit (doesn't count mentions properly)
-      // Mentions everywhere except the case submission form (cases can be
-      // anonymous); task descriptions use them to grant access
-      ...(type !== "case"
-        ? [
-            CustomMention.configure({
-              suggestion: useMemo(
-                () => createMentionSuggestion(mentions),
-                [mentions],
-              ),
-            }),
-          ]
-        : []),
+      // Mentions in every editor, case content included: in cases and tasks
+      // they grant the mentioned user access
+      CustomMention.configure({ suggestion: mentionSuggestion }),
     ],
     content,
     onUpdate: ({ editor }) => {

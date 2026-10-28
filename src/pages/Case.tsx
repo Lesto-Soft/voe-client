@@ -2,7 +2,11 @@
 import {
   useGetCaseByCaseNumber,
   useMarkCaseAsRead,
+  useUpdateCase,
 } from "../graphql/hooks/case";
+import { useGetActiveCategories } from "../graphql/hooks/category";
+import { useMentionTiers } from "../hooks/useMentionTiers";
+import { MentionGuestContext } from "../context/MentionGuestContext";
 import { useLocation, useParams } from "react-router";
 import { useTranslation } from "react-i18next";
 import CaseInfo from "../components/case-components/CaseInfo";
@@ -10,8 +14,13 @@ import Submenu from "../components/case-components/Submenu";
 import { ICase, ICategory, IUser } from "../db/interfaces";
 import { useCurrentUser } from "../context/UserContext";
 import { determineUserRightsForCase } from "../utils/rightUtils";
-import { ROLES, EXAMPLE_CASE_NUMBER } from "../utils/GLOBAL_PARAMETERS";
-import { useCallback, useEffect, useRef } from "react";
+import {
+  ROLES,
+  EXAMPLE_CASE_NUMBER,
+  USER_RIGHTS,
+  MAX_CASE_CATEGORIES,
+} from "../utils/GLOBAL_PARAMETERS";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { UnsavedChangesProvider } from "../context/UnsavedChangesContext";
 import { useNotificationSubscription } from "../graphql/hooks/notificationHook";
 
@@ -21,56 +30,11 @@ import ForbiddenPage from "./ErrorPages/ForbiddenPage";
 import PageStatusDisplay from "../components/global/PageStatusDisplay";
 import useDocumentTitle from "../hooks/useDocumentTitle";
 
-function getUniqueMentionableUsers(
-  categories: ICategory[],
-  creator: IUser
-): {
-  name: string;
-  username: string;
-  _id: string;
-}[] {
-  const uniqueUsersMap = new Map<
-    string,
-    { name: string; username: string; _id: string }
-  >();
-  if (creator && creator._id) {
-    uniqueUsersMap.set(creator._id, {
-      _id: creator._id,
-      name: creator.name,
-      username: creator.username,
-    });
-  }
-  const allUsers = categories.flatMap((cat) => [
-    ...(cat.experts || []),
-    ...(cat.managers || []),
-  ]);
-
-  for (const user of allUsers) {
-    if (user && user._id && !uniqueUsersMap.has(user._id)) {
-      uniqueUsersMap.set(user._id, {
-        _id: user._id,
-        name: user.name,
-        username: user.username,
-      });
-    }
-  }
-
-  return Array.from(uniqueUsersMap.values());
-}
-
 const Case = () => {
-  const { t } = useTranslation("dashboard");
-  const location = useLocation();
   const { number: numberParam } = useParams<{ number: string }>();
-  const currentUser = useCurrentUser();
   const numericCaseNumber = numberParam ? parseInt(numberParam, 10) : NaN;
-  useDocumentTitle(numericCaseNumber >= 0 ? `Сигнал #${numericCaseNumber}` : undefined);
 
-  if (
-    !numberParam ||
-    isNaN(parseInt(numberParam, 10)) ||
-    parseInt(numberParam, 10) < 0
-  ) {
+  if (!numberParam || isNaN(numericCaseNumber) || numericCaseNumber < 0) {
     return (
       <PageStatusDisplay
         notFound
@@ -81,6 +45,18 @@ const Case = () => {
     );
   }
 
+  // the number is validated here so every hook below runs unconditionally
+  return (
+    <CaseContent key={numericCaseNumber} numericCaseNumber={numericCaseNumber} />
+  );
+};
+
+const CaseContent = ({ numericCaseNumber }: { numericCaseNumber: number }) => {
+  const { t } = useTranslation("dashboard");
+  const location = useLocation();
+  const currentUser = useCurrentUser();
+  useDocumentTitle(`Сигнал #${numericCaseNumber}`);
+
   const {
     caseData,
     loading: loadingCase,
@@ -89,6 +65,23 @@ const Case = () => {
   } = useGetCaseByCaseNumber(numericCaseNumber, currentUser.role?._id);
 
   const { markCaseAsRead } = useMarkCaseAsRead(numericCaseNumber);
+
+  const { updateCase } = useUpdateCase(numericCaseNumber);
+  const { categories: activeCategories } = useGetActiveCategories();
+  const caseCategoryIds = useMemo(
+    () => (caseData?.categories || []).map((cat: ICategory) => cat._id),
+    [caseData?.categories],
+  );
+  const guestIds = useMemo(
+    () => (caseData?.guests || []).map((guest: IUser) => guest._id),
+    [caseData?.guests],
+  );
+  const mentions = useMentionTiers({
+    categoryIds: caseCategoryIds,
+    categories: activeCategories,
+    creatorId: caseData?.creator?._id,
+    guestIds,
+  });
 
   useEffect(() => {
     if (location.state?.refetch) {
@@ -168,53 +161,76 @@ const Case = () => {
     );
   }
 
-  const expert_managers = getUniqueMentionableUsers(c.categories, c.creator);
+  // Managers/admins may add the mentioned user's category instead of granting
+  // guest access; the forms cap a case at MAX_CASE_CATEGORIES categories
+  const canAddCategory =
+    (userRights.includes(USER_RIGHTS.MANAGER) ||
+      userRights.includes(USER_RIGHTS.ADMIN)) &&
+    c.categories.length < MAX_CASE_CATEGORIES;
+  const mentionGuestOptions = {
+    addCategoryLabel: "Добави категория",
+    emptyHint:
+      "Списъкът включва всички служители; тези без достъп до сигнала получават гост-достъп след потвърждение.",
+    onAddCategory: canAddCategory
+      ? async (categoryId: string) => {
+          await updateCase(c._id, currentUser._id, {
+            content: c.content,
+            type: c.type as "PROBLEM" | "SUGGESTION",
+            priority: c.priority as "LOW" | "MEDIUM" | "HIGH",
+            categories: [...caseCategoryIds, categoryId],
+          });
+        }
+      : undefined,
+  };
   return (
     <UnsavedChangesProvider>
-      {isExampleCase && (
-        <div className="bg-blue-50 border-b border-blue-200 px-4 py-3 text-center text-sm text-blue-800">
-          Това е примерен сигнал, създаден за демонстрационни цели. Съдържанието му не е реално.
-        </div>
-      )}
-      <div className={`flex flex-col lg:flex-row bg-gray-50 w-full ${isExampleCase ? "lg:h-[calc(100vh-6rem-44px)]" : "lg:h-[calc(100vh-6rem)]"}`}>
-        <div
-          className={
-            "max-w-full lg:w-96 lg:shrink-0 lg:sticky lg:top-[6rem] order-1 lg:order-none lg:h-full lg:mb-0 z-2"
-          }
-        >
-          <CaseInfo
-            content={c.content}
-            caseId={c._id}
-            type={c.type}
-            priority={c.priority}
-            status={c.status as string}
-            categories={c.categories}
-            creator={c.creator}
-            metricScores={c.metricScores}
-            calculatedRating={c.calculatedRating}
-            date={c.date}
-            me={currentUser}
-            refetch={refetch}
-            attachments={c.attachments}
-            caseNumber={c.case_number}
-            isLoading={loadingCase}
-            error={errorCase}
-            rights={userRights}
-            readBy={c.readBy}
-          />
-        </div>
+      <MentionGuestContext.Provider value={mentionGuestOptions}>
+        {isExampleCase && (
+          <div className="bg-blue-50 border-b border-blue-200 px-4 py-3 text-center text-sm text-blue-800">
+            Това е примерен сигнал, създаден за демонстрационни цели. Съдържанието му не е реално.
+          </div>
+        )}
+        <div className={`flex flex-col lg:flex-row bg-gray-50 w-full ${isExampleCase ? "lg:h-[calc(100vh-6rem-44px)]" : "lg:h-[calc(100vh-6rem)]"}`}>
+          <div
+            className={
+              "max-w-full lg:w-96 lg:shrink-0 lg:sticky lg:top-[6rem] order-1 lg:order-none lg:h-full lg:mb-0 z-2"
+            }
+          >
+            <CaseInfo
+              content={c.content}
+              caseId={c._id}
+              type={c.type}
+              priority={c.priority}
+              status={c.status as string}
+              categories={c.categories}
+              creator={c.creator}
+              metricScores={c.metricScores}
+              calculatedRating={c.calculatedRating}
+              date={c.date}
+              me={currentUser}
+              refetch={refetch}
+              attachments={c.attachments}
+              caseNumber={c.case_number}
+              isLoading={loadingCase}
+              error={errorCase}
+              rights={userRights}
+              readBy={c.readBy}
+              guests={c.guests}
+            />
+          </div>
 
-        <div className="w-full lg:flex-1 lg:w-auto order-2 lg:order-none lg:h-full">
-          <Submenu
-            caseData={c}
-            t={t}
-            me={currentUser}
-            refetch={refetch}
-            userRights={userRights}
-            mentions={expert_managers}
-          />
+          <div className="w-full lg:flex-1 lg:w-auto order-2 lg:order-none lg:h-full">
+            <Submenu
+              caseData={c}
+              t={t}
+              me={currentUser}
+              refetch={refetch}
+              userRights={userRights}
+              mentions={mentions}
+            />
+          </div>
         </div>
-      </div>
+      </MentionGuestContext.Provider>
     </UnsavedChangesProvider>
   );
 };

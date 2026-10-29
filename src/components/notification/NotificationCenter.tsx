@@ -47,6 +47,7 @@ const filterMap: Record<
   CASES: [
     "new_case",
     "mention_in_case",
+    "new_case_analysis",
     "approve_answer_close_case",
     "reopen_case",
     "case_reminder",

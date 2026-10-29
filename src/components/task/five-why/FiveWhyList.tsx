@@ -5,6 +5,7 @@ import {
   useCreateFiveWhy,
   useUpdateFiveWhy,
   useDeleteFiveWhy,
+  type AnalysisParent,
 } from "../../../graphql/hooks/task";
 import FiveWhyDisplay from "./FiveWhyDisplay";
 import FiveWhyModal from "./FiveWhyModal";
@@ -18,7 +19,9 @@ import {
 import { ROLES } from "../../../utils/GLOBAL_PARAMETERS";
 
 interface FiveWhyListProps {
-  taskId: string;
+  parent: AnalysisParent;
+  /** false hides the add buttons (editing own analyses is unaffected) */
+  canCreate?: boolean;
   fiveWhys: IFiveWhy[];
   currentUser: IUser;
   refetch: () => void;
@@ -26,7 +29,8 @@ interface FiveWhyListProps {
 }
 
 const FiveWhyList: React.FC<FiveWhyListProps> = ({
-  taskId,
+  parent,
+  canCreate = true,
   fiveWhys,
   currentUser,
   refetch,
@@ -39,9 +43,9 @@ const FiveWhyList: React.FC<FiveWhyListProps> = ({
   const [editingFiveWhy, setEditingFiveWhy] = useState<IFiveWhy | null>(null);
   const [deletingFiveWhy, setDeletingFiveWhy] = useState<IFiveWhy | null>(null);
 
-  const { createFiveWhy, loading: createLoading } = useCreateFiveWhy(taskId);
-  const { updateFiveWhy, loading: updateLoading } = useUpdateFiveWhy(taskId);
-  const { deleteFiveWhy, loading: deleteLoading } = useDeleteFiveWhy(taskId);
+  const { createFiveWhy, loading: createLoading } = useCreateFiveWhy(parent);
+  const { updateFiveWhy, loading: updateLoading } = useUpdateFiveWhy(parent);
+  const { deleteFiveWhy, loading: deleteLoading } = useDeleteFiveWhy(parent);
 
   const activeFiveWhy = fiveWhys.find((fw) => fw._id === activeTab);
 
@@ -64,7 +68,7 @@ const FiveWhyList: React.FC<FiveWhyListProps> = ({
   }) => {
     try {
       const result = await createFiveWhy({
-        task: taskId,
+        ...parent,
         creator: currentUser._id,
         whys: data.whys,
         rootCause: data.rootCause,
@@ -140,13 +144,15 @@ const FiveWhyList: React.FC<FiveWhyListProps> = ({
             <QuestionMarkCircleIcon className="h-5 w-5 text-amber-500" />5 Защо
             Анализи ({fiveWhys.length})
           </h3>
-          <button
-            onClick={() => setIsCreateModalOpen(true)}
-            className="p-1 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors cursor-pointer"
-            title="Добави нов анализ"
-          >
-            <PlusIcon className="h-4 w-4 text-gray-600" />
-          </button>
+          {canCreate && (
+            <button
+              onClick={() => setIsCreateModalOpen(true)}
+              className="p-1 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors cursor-pointer"
+              title="Добави нов анализ"
+            >
+              <PlusIcon className="h-4 w-4 text-gray-600" />
+            </button>
+          )}
         </div>
       )}
 
@@ -168,7 +174,7 @@ const FiveWhyList: React.FC<FiveWhyListProps> = ({
               </button>
             ))}
             {/* Add button - only show if current user doesn't have one */}
-            {!userHasFiveWhy && (
+            {canCreate && !userHasFiveWhy && (
               <button
                 onClick={() => setIsCreateModalOpen(true)}
                 className="px-2 py-2 text-xs font-medium border-b-2 -mb-px border-transparent text-amber-500 hover:text-amber-600 hover:bg-amber-50 transition-colors cursor-pointer flex items-center gap-1"
@@ -217,13 +223,15 @@ const FiveWhyList: React.FC<FiveWhyListProps> = ({
             }
           />
           <p className="text-sm text-gray-500">Няма добавени анализи.</p>
-          <button
-            onClick={() => setIsCreateModalOpen(true)}
-            className="mt-3 inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-amber-600 bg-amber-50 rounded-md hover:bg-amber-100 transition-colors cursor-pointer"
-          >
-            <PlusIcon className="h-4 w-4" />
-            Добави анализ
-          </button>
+          {canCreate && (
+            <button
+              onClick={() => setIsCreateModalOpen(true)}
+              className="mt-3 inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-amber-600 bg-amber-50 rounded-md hover:bg-amber-100 transition-colors cursor-pointer"
+            >
+              <PlusIcon className="h-4 w-4" />
+              Добави анализ
+            </button>
+          )}
         </div>
       )}
 

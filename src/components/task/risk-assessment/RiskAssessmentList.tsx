@@ -5,6 +5,7 @@ import {
   useCreateRiskAssessment,
   useUpdateRiskAssessment,
   useDeleteRiskAssessment,
+  type AnalysisParent,
 } from "../../../graphql/hooks/task";
 import RiskAssessmentCard from "./RiskAssessmentCard";
 import RiskAssessmentModal from "./RiskAssessmentModal";
@@ -18,7 +19,9 @@ import {
 import { ROLES } from "../../../utils/GLOBAL_PARAMETERS";
 
 interface RiskAssessmentListProps {
-  taskId: string;
+  parent: AnalysisParent;
+  /** false hides the add buttons (editing own assessments is unaffected) */
+  canCreate?: boolean;
   riskAssessments: IRiskAssessment[];
   currentUser: IUser;
   refetch: () => void;
@@ -26,7 +29,8 @@ interface RiskAssessmentListProps {
 }
 
 const RiskAssessmentList: React.FC<RiskAssessmentListProps> = ({
-  taskId,
+  parent,
+  canCreate = true,
   riskAssessments,
   currentUser,
   refetch,
@@ -40,11 +44,11 @@ const RiskAssessmentList: React.FC<RiskAssessmentListProps> = ({
   const [isMatrixOpen, setIsMatrixOpen] = useState(false);
 
   const { createRiskAssessment, loading: createLoading } =
-    useCreateRiskAssessment(taskId);
+    useCreateRiskAssessment(parent);
   const { updateRiskAssessment, loading: updateLoading } =
-    useUpdateRiskAssessment(taskId);
+    useUpdateRiskAssessment(parent);
   const { deleteRiskAssessment, loading: deleteLoading } =
-    useDeleteRiskAssessment(taskId);
+    useDeleteRiskAssessment(parent);
 
   // Check if current user already has a Risk Assessment
   const userHasAssessment = riskAssessments.some(
@@ -66,7 +70,7 @@ const RiskAssessmentList: React.FC<RiskAssessmentListProps> = ({
   }) => {
     try {
       await createRiskAssessment({
-        task: taskId,
+        ...parent,
         creator: currentUser._id,
         riskDescription: data.riskDescription,
         probability: data.probability,
@@ -129,13 +133,15 @@ const RiskAssessmentList: React.FC<RiskAssessmentListProps> = ({
             <ShieldCheckIcon className="h-5 w-5 text-blue-500" />
             Оценки на риска ({riskAssessments.length})
           </h3>
-          <button
-            onClick={() => setIsCreateModalOpen(true)}
-            className="p-1 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors cursor-pointer"
-            title="Добави нова оценка"
-          >
-            <PlusIcon className="h-4 w-4 text-gray-600" />
-          </button>
+          {canCreate && (
+            <button
+              onClick={() => setIsCreateModalOpen(true)}
+              className="p-1 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors cursor-pointer"
+              title="Добави нова оценка"
+            >
+              <PlusIcon className="h-4 w-4 text-gray-600" />
+            </button>
+          )}
         </div>
       )}
 
@@ -153,7 +159,7 @@ const RiskAssessmentList: React.FC<RiskAssessmentListProps> = ({
                 Покажи Матрица на Риска
               </button>
               {/* Add button - only show if current user doesn't have one */}
-              {!userHasAssessment && (
+              {canCreate && !userHasAssessment && (
                 <button
                   onClick={() => setIsCreateModalOpen(true)}
                   className="flex items-center gap-1 px-3 py-2 text-sm font-semibold text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100 transition-colors cursor-pointer"
@@ -190,13 +196,15 @@ const RiskAssessmentList: React.FC<RiskAssessmentListProps> = ({
             <p className="text-sm text-gray-500">
               Няма добавени оценки на риска.
             </p>
-            <button
-              onClick={() => setIsCreateModalOpen(true)}
-              className="mt-3 inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100 transition-colors cursor-pointer"
-            >
-              <PlusIcon className="h-4 w-4" />
-              Добави оценка
-            </button>
+            {canCreate && (
+              <button
+                onClick={() => setIsCreateModalOpen(true)}
+                className="mt-3 inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100 transition-colors cursor-pointer"
+              >
+                <PlusIcon className="h-4 w-4" />
+                Добави оценка
+              </button>
+            )}
           </div>
         )}
       </div>

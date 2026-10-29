@@ -2,13 +2,15 @@ import React, { useState } from "react";
 import { IMe, IFiveWhy, IRiskAssessment } from "../../db/interfaces";
 import { FiveWhyList } from "./five-why";
 import { RiskAssessmentList } from "./risk-assessment";
+import type { AnalysisParent } from "../../graphql/hooks/task";
 import {
   QuestionMarkCircleIcon,
   ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
 
 interface AnalysisTabsSectionProps {
-  taskId: string;
+  parent: AnalysisParent;
+  canCreate?: boolean;
   fiveWhys: IFiveWhy[];
   riskAssessments: IRiskAssessment[];
   currentUser: IMe;
@@ -18,7 +20,8 @@ interface AnalysisTabsSectionProps {
 type TabType = "fiveWhy" | "risks";
 
 const AnalysisTabsSection: React.FC<AnalysisTabsSectionProps> = ({
-  taskId,
+  parent,
+  canCreate = true,
   fiveWhys,
   riskAssessments,
   currentUser,
@@ -85,7 +88,8 @@ const AnalysisTabsSection: React.FC<AnalysisTabsSectionProps> = ({
       <div className="p-4">
         {activeTab === "fiveWhy" && (
           <FiveWhyList
-            taskId={taskId}
+            parent={parent}
+            canCreate={canCreate}
             fiveWhys={fiveWhys}
             currentUser={currentUser}
             refetch={refetch}
@@ -94,7 +98,8 @@ const AnalysisTabsSection: React.FC<AnalysisTabsSectionProps> = ({
         )}
         {activeTab === "risks" && (
           <RiskAssessmentList
-            taskId={taskId}
+            parent={parent}
+            canCreate={canCreate}
             riskAssessments={riskAssessments}
             currentUser={currentUser}
             refetch={refetch}

@@ -99,9 +99,19 @@ export interface WhyStepInput {
   answer: string;
 }
 
+/** What an analysis belongs to: a task or a case (by id) */
+export type AnalysisParent = { task: string } | { case: string };
+
+// Refreshes the page the analysis lives on
+const analysisRefetch = (parent: AnalysisParent) =>
+  "task" in parent
+    ? [{ query: GET_TASK_BY_ID, variables: { _id: parent.task } }]
+    : ["GET_CASE_BY_CASE_NUMBER"];
+
 export interface CreateFiveWhyInput {
-  task: string;
-  creator: string;
+  task?: string;
+  case?: string;
+  creator?: string;
   whys: WhyStepInput[];
   rootCause: string;
   counterMeasures: string;
@@ -114,8 +124,9 @@ export interface UpdateFiveWhyInput {
 }
 
 export interface CreateRiskAssessmentInput {
-  task: string;
-  creator: string;
+  task?: string;
+  case?: string;
+  creator?: string;
   riskDescription: string;
   probability: number;
   impact: number;
@@ -706,11 +717,11 @@ export const useDeleteTaskActivity = (taskId: string) => {
 /**
  * Creates a new Five Why analysis and refetches the parent task.
  */
-export const useCreateFiveWhy = (taskId: string) => {
+export const useCreateFiveWhy = (parent: AnalysisParent) => {
   const [createFiveWhyMutation, { data, loading, error }] = useMutation(
     CREATE_FIVE_WHY,
     {
-      refetchQueries: [{ query: GET_TASK_BY_ID, variables: { _id: taskId } }],
+      refetchQueries: analysisRefetch(parent),
       awaitRefetchQueries: true,
     }
   );
@@ -738,11 +749,11 @@ export const useCreateFiveWhy = (taskId: string) => {
 /**
  * Updates an existing Five Why analysis.
  */
-export const useUpdateFiveWhy = (taskId: string) => {
+export const useUpdateFiveWhy = (parent: AnalysisParent) => {
   const [updateFiveWhyMutation, { data, loading, error }] = useMutation(
     UPDATE_FIVE_WHY,
     {
-      refetchQueries: [{ query: GET_TASK_BY_ID, variables: { _id: taskId } }],
+      refetchQueries: analysisRefetch(parent),
       awaitRefetchQueries: true,
     }
   );
@@ -773,11 +784,11 @@ export const useUpdateFiveWhy = (taskId: string) => {
 /**
  * Deletes a Five Why analysis.
  */
-export const useDeleteFiveWhy = (taskId: string) => {
+export const useDeleteFiveWhy = (parent: AnalysisParent) => {
   const [deleteFiveWhyMutation, { data, loading, error }] = useMutation(
     DELETE_FIVE_WHY,
     {
-      refetchQueries: [{ query: GET_TASK_BY_ID, variables: { _id: taskId } }],
+      refetchQueries: analysisRefetch(parent),
       awaitRefetchQueries: true,
     }
   );
@@ -807,11 +818,11 @@ export const useDeleteFiveWhy = (taskId: string) => {
 /**
  * Creates a new risk assessment and refetches the parent task.
  */
-export const useCreateRiskAssessment = (taskId: string) => {
+export const useCreateRiskAssessment = (parent: AnalysisParent) => {
   const [createRiskMutation, { data, loading, error }] = useMutation(
     CREATE_RISK_ASSESSMENT,
     {
-      refetchQueries: [{ query: GET_TASK_BY_ID, variables: { _id: taskId } }],
+      refetchQueries: analysisRefetch(parent),
       awaitRefetchQueries: true,
     }
   );
@@ -839,11 +850,11 @@ export const useCreateRiskAssessment = (taskId: string) => {
 /**
  * Updates an existing risk assessment.
  */
-export const useUpdateRiskAssessment = (taskId: string) => {
+export const useUpdateRiskAssessment = (parent: AnalysisParent) => {
   const [updateRiskMutation, { data, loading, error }] = useMutation(
     UPDATE_RISK_ASSESSMENT,
     {
-      refetchQueries: [{ query: GET_TASK_BY_ID, variables: { _id: taskId } }],
+      refetchQueries: analysisRefetch(parent),
       awaitRefetchQueries: true,
     }
   );
@@ -874,11 +885,11 @@ export const useUpdateRiskAssessment = (taskId: string) => {
 /**
  * Deletes a risk assessment.
  */
-export const useDeleteRiskAssessment = (taskId: string) => {
+export const useDeleteRiskAssessment = (parent: AnalysisParent) => {
   const [deleteRiskMutation, { data, loading, error }] = useMutation(
     DELETE_RISK_ASSESSMENT,
     {
-      refetchQueries: [{ query: GET_TASK_BY_ID, variables: { _id: taskId } }],
+      refetchQueries: analysisRefetch(parent),
       awaitRefetchQueries: true,
     }
   );

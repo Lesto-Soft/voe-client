@@ -11,10 +11,12 @@ import {
   BarsArrowUpIcon,
   ArrowsPointingOutIcon,
   ArrowsPointingInIcon,
+  BeakerIcon,
 } from "@heroicons/react/24/solid";
 import { IAnswer, ICase, IComment, IMe } from "../../db/interfaces";
 import CaseHistoryContent from "./CaseHistoryContent";
 import CaseTasksTab from "./CaseTasksTab";
+import AnalysisTabsSection from "../task/AnalysisTabsSection";
 import Comment from "./comment/Comment";
 import Answer from "./answer/Answer";
 import AddComment from "./comment/AddComment";
@@ -56,6 +58,9 @@ const getStateFromHash = () => {
   }
   if (hash === "tasks") {
     return { view: "tasks" as const, targetId: null };
+  }
+  if (hash === "analyses") {
+    return { view: "analyses" as const, targetId: null };
   }
 
   // Default state if hash is empty or unrecognized
@@ -261,9 +266,10 @@ const Submenu: React.FC<SubmenuProps> = ({
         } else if (
           hashPart === "history" ||
           hashPart === "comments" ||
-          hashPart === "tasks"
+          hashPart === "tasks" ||
+          hashPart === "analyses"
         ) {
-          setView(hashPart as "history" | "comments" | "tasks");
+          setView(hashPart as "history" | "comments" | "tasks" | "analyses");
           setTargetId(null);
         } else {
           setView("answers");
@@ -424,6 +430,19 @@ const Submenu: React.FC<SubmenuProps> = ({
       icon: <ClipboardDocumentCheckIcon className="h-5 w-5 mr-2" />,
     },
     {
+      key: "analyses",
+      label: (
+        <>
+          {t("analyses")}
+          <sup>
+            {(caseData?.fiveWhys?.length || 0) +
+              (caseData?.riskAssessments?.length || 0)}
+          </sup>
+        </>
+      ),
+      icon: <BeakerIcon className="h-5 w-5 mr-2" />,
+    },
+    {
       key: "history",
       label: (
         <>
@@ -436,8 +455,11 @@ const Submenu: React.FC<SubmenuProps> = ({
   ];
 
   if (isParticipantOnly) {
-    // Remove history tab (index 3) for creators who have no other rights
-    submenu.splice(3, 1);
+    // Remove the history tab for creators/guests who have no other rights
+    submenu.splice(
+      submenu.findIndex((item) => item.key === "history"),
+      1,
+    );
   }
 
   const visibleAnswers = (caseData.answers || []).filter((answer) => {
@@ -744,6 +766,19 @@ const Submenu: React.FC<SubmenuProps> = ({
           )}
 
           {view === "tasks" && <CaseTasksTab caseData={caseData} />}
+
+          {view === "analyses" && (
+            <div className="mx-4 mb-8">
+              <AnalysisTabsSection
+                parent={{ case: caseData._id }}
+                fiveWhys={caseData.fiveWhys || []}
+                riskAssessments={caseData.riskAssessments || []}
+                currentUser={me}
+                refetch={refetch}
+                canCreate={!isExampleCase || isAdmin}
+              />
+            </div>
+          )}
 
           {view === "history" &&
             (caseData.history && caseData.history.length > 0 ? (

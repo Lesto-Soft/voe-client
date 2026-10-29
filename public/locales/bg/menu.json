@@ -67,6 +67,7 @@
     "task_closed": "Задача <1>#{{taskNumber}}</1> бе <1>затворена</1> от <1>{{username}}</1>",
     "task_reopened": "Задача <1>#{{taskNumber}}</1> бе <1>отворена отново</1> от <1>{{username}}</1>",
     "new_task_analysis": "<1>{{username}}</1> подаде анализ по задача <1>#{{taskNumber}}</1>",
+    "new_case_analysis": "<1>{{username}}</1> добави анализ по сигнал <1>#{{caseNumber}}</1>",
     "task_assignee_changed": "<1>{{username}}</1> промени изпълнителя на задача <1>#{{taskNumber}}</1>",
     "task_priority_changed": "<1>{{username}}</1> промени приоритета на задача <1>#{{taskNumber}}</1>",
     "task_description_changed": "<1>{{username}}</1> промени описанието на задача <1>#{{taskNumber}}</1>",

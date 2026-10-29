@@ -69,6 +69,7 @@
     "task_closed": "Task <1>#{{taskNumber}}</1> was <1>closed</1> by <1>{{username}}</1>",
     "task_reopened": "Task <1>#{{taskNumber}}</1> was <1>reopened</1> by <1>{{username}}</1>",
     "new_task_analysis": "<1>{{username}}</1> submitted an analysis on task <1>#{{taskNumber}}</1>",
+    "new_case_analysis": "<1>{{username}}</1> added an analysis to case <1>#{{caseNumber}}</1>",
     "task_assignee_changed": "<1>{{username}}</1> changed the assignee on task <1>#{{taskNumber}}</1>",
     "task_priority_changed": "<1>{{username}}</1> changed the priority on task <1>#{{taskNumber}}</1>",
     "task_description_changed": "<1>{{username}}</1> updated the description of task <1>#{{taskNumber}}</1>",

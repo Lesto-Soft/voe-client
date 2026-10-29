@@ -422,7 +422,7 @@ const TaskDetail: React.FC = () => {
                 />
               ) : (
                 <AnalysisTabsSection
-                  taskId={taskData._id}
+                  parent={{ task: taskData._id }}
                   fiveWhys={taskData.fiveWhys || []}
                   riskAssessments={taskData.riskAssessments || []}
                   currentUser={currentUser}

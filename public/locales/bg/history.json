@@ -14,9 +14,9 @@
   "HIGH": "ВИСОК",
   "priority": "Приоритет",
   "categories": "Категории",
-  "guests": "Гости",
-  "guest_access_granted": "Предоставен гост-достъп:",
-  "guest_access_revoked": "Премахнат гост-достъп:",
+  "guests": "Достъпен и за",
+  "guest_access_granted": "Добавени:",
+  "guest_access_revoked": "Премахнати:",
   "PROBLEM": "ПРОБЛЕМ",
   "SUGGESTION": "ПРЕДЛОЖЕНИЕ",
   "type": "Тип"

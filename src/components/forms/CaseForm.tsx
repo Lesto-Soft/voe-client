@@ -138,15 +138,11 @@ const CaseForm: React.FC<CaseFormProps> = (props) => {
     categories: availableCategories,
     creatorId: props.mode === "edit" ? props.creatorId : me._id,
     guestIds: props.mode === "edit" ? props.guestIds : undefined,
-    includeOthers: props.mode === "edit" || formData.categoryIds.length > 0,
   });
   const mentionGuestOptions = useMemo(
     () => ({
       addCategoryLabel: "Избери категория",
-      emptyHint:
-        formData.categoryIds.length === 0
-          ? "Изберете категория — хората от нея ще се появят тук."
-          : "Служителите без достъп до сигнала получават гост-достъп след потвърждение.",
+      emptyHint: "Търсят се всички служители по име и потребителско име.",
       onAddCategory:
         formData.categoryIds.length < MAX_SELECTED_CATEGORIES
           ? (categoryId: string) =>

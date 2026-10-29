@@ -169,8 +169,7 @@ const CaseContent = ({ numericCaseNumber }: { numericCaseNumber: number }) => {
     c.categories.length < MAX_CASE_CATEGORIES;
   const mentionGuestOptions = {
     addCategoryLabel: "Добави категория",
-    emptyHint:
-      "Списъкът включва всички служители; тези без достъп до сигнала получават гост-достъп след потвърждение.",
+    emptyHint: "Търсят се всички служители по име и потребителско име.",
     onAddCategory: canAddCategory
       ? async (categoryId: string) => {
           await updateCase(c._id, currentUser._id, {
@@ -216,6 +215,7 @@ const CaseContent = ({ numericCaseNumber }: { numericCaseNumber: number }) => {
               rights={userRights}
               readBy={c.readBy}
               guests={c.guests}
+              history={c.history}
             />
           </div>
 

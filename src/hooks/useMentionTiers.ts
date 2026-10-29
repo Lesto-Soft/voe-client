@@ -11,8 +11,6 @@ interface UseMentionTiersInput {
   categories: { _id: string; name: string }[];
   creatorId?: string | null;
   guestIds?: string[];
-  /** false hides the "other" tier, e.g. while a form has no category yet */
-  includeOthers?: boolean;
 }
 
 /**
@@ -24,7 +22,6 @@ export const useMentionTiers = ({
   categories,
   creatorId,
   guestIds,
-  includeOthers = true,
 }: UseMentionTiersInput): MentionUser[] => {
   const { data } = useQuery<{ getLeanUsers: LeanMentionUser[] }>(
     GET_LEAN_USERS
@@ -41,8 +38,7 @@ export const useMentionTiers = ({
         ),
         creatorId,
         guestIds,
-        includeOthers,
       }),
-    [users, categoryIds, categories, creatorId, guestIds, includeOthers]
+    [users, categoryIds, categories, creatorId, guestIds]
   );
 };

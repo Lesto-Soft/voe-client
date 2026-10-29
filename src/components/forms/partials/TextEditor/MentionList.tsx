@@ -25,7 +25,7 @@ const TIER_LABELS = {
 };
 
 const containerClass =
-  "bg-white rounded-lg shadow-lg border border-gray-200 text-sm z-[1000] overflow-y-auto max-h-72";
+  "bg-white rounded-lg shadow-lg border border-gray-200 text-sm z-[1000] overflow-y-auto overscroll-contain max-h-72";
 
 const MentionList = forwardRef<MentionListRef, MentionListProps>(
   (props, ref) => {
@@ -112,6 +112,7 @@ const MentionList = forwardRef<MentionListRef, MentionListProps>(
       return (
         <div
           className={`${containerClass} w-80 p-3 space-y-2`}
+          onMouseDown={(e) => e.preventDefault()}
           role="dialog"
           aria-label="Потвърждение за гост-достъп"
         >
@@ -174,7 +175,10 @@ const MentionList = forwardRef<MentionListRef, MentionListProps>(
 
     if (props.items.length === 0) {
       return (
-        <div className={`${containerClass} w-72 p-3 space-y-1`}>
+        <div
+          className={`${containerClass} w-72 p-3 space-y-1`}
+          onMouseDown={(e) => e.preventDefault()}
+        >
           <div className="text-gray-700">
             Няма съвпадение
             {props.query ? (
@@ -197,7 +201,11 @@ const MentionList = forwardRef<MentionListRef, MentionListProps>(
     const hasOtherTier = props.items.some((item) => item.tier === "other");
 
     return (
-      <div className={`${containerClass} w-72`} ref={scrollContainerRef}>
+      <div
+        className={`${containerClass} w-72`}
+        ref={scrollContainerRef}
+        onMouseDown={(e) => e.preventDefault()}
+      >
         {props.items.map((item, index) => {
           const tier = item.tier ?? "case";
           const previousTier =

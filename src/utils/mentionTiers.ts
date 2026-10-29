@@ -20,8 +20,6 @@ interface BuildMentionTiersInput {
   categoryNames: Map<string, string>;
   creatorId?: string | null;
   guestIds?: string[];
-  /** false hides the "other" tier, e.g. while a form has no category yet */
-  includeOthers?: boolean;
 }
 
 /**
@@ -37,14 +35,13 @@ export const buildMentionTiers = ({
   categoryNames,
   creatorId,
   guestIds = [],
-  includeOthers = true,
 }: BuildMentionTiersInput): MentionUser[] => {
   const caseCategories = new Set(categoryIds);
   const guests = new Set(guestIds);
 
   return users
     .filter((user) => user.role?._id !== ROLES.LEFT)
-    .flatMap((user): MentionUser[] => {
+    .map((user): MentionUser => {
       const userCategories = [
         ...(user.expert_categories || []),
         ...(user.managed_categories || []),
@@ -60,12 +57,11 @@ export const buildMentionTiers = ({
         username: user.username,
         position: user.position || undefined,
       };
-      if (hasAccess) return [{ ...base, tier: "case" as const }];
-      if (!includeOthers) return [];
+      if (hasAccess) return { ...base, tier: "case" };
 
       const fixCategories = [...new Set(userCategories)]
         .filter((id) => !caseCategories.has(id) && categoryNames.has(id))
         .map((id) => ({ _id: id, name: categoryNames.get(id) as string }));
-      return [{ ...base, tier: "other" as const, fixCategories }];
+      return { ...base, tier: "other", fixCategories };
     });
 };

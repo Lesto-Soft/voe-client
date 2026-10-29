@@ -90,14 +90,13 @@ export const createMentionSuggestion = (
 
           if (!props.clientRect) return;
 
+          // Mounted on <body> so no modal's overflow clips it. The list is a
+          // React portal inside the editor's tree, so Radix dialogs still
+          // treat clicks in it as inside; their modal mode sets
+          // `pointer-events: none` on <body>, hence the explicit override.
           popup = tippy("body", {
             getReferenceClientRect: props.clientRect,
-            appendTo: () => {
-              const modalContainer = document.querySelector(
-                '[data-mention-container="true"]'
-              );
-              return modalContainer || document.body;
-            },
+            appendTo: () => document.body,
             content: component.element,
             showOnCreate: editorHasFocus(props) && !isDismissed(),
             interactive: true,
@@ -105,6 +104,34 @@ export const createMentionSuggestion = (
             placement: "bottom-start",
             zIndex: 9999,
           });
+          // on the content element: tippy rewrites the popper's own
+          // pointer-events on every show
+          const content = component.element as HTMLElement;
+          content.style.pointerEvents = "auto";
+          // Radix's scroll lock cancels wheel/touch scrolling that reaches
+          // `document` from outside the dialog's DOM, which <body> is
+          const keepScrollLocal = (event: Event) => event.stopPropagation();
+          content.addEventListener("wheel", keepScrollLocal, { passive: true });
+          content.addEventListener("touchmove", keepScrollLocal, {
+            passive: true,
+          });
+
+          // TipTap's focus() command refocuses on the next animation frame,
+          // so a session started together with it begins hidden
+          if (!popup[0].state.isVisible && !isDismissed()) {
+            requestAnimationFrame(() => {
+              const instance = popup?.[0];
+              if (
+                instance &&
+                !instance.state.isDestroyed &&
+                !instance.state.isVisible &&
+                editorHasFocus(props) &&
+                !isDismissed()
+              ) {
+                instance.show();
+              }
+            });
+          }
         },
 
         onUpdate: (props: any) => {

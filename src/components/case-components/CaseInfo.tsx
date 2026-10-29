@@ -2,9 +2,19 @@
 
 import React, { useState, useMemo, useRef, useEffect } from "react";
 import { ApolloError } from "@apollo/client";
-import { ICategory, IMe, IMetricScore, IUser } from "../../db/interfaces";
+import {
+  ICaseHistory,
+  ICategory,
+  IMe,
+  IMetricScore,
+  IUser,
+} from "../../db/interfaces";
 import CategoryLink from "../global/links/CategoryLink";
-import { FlagIcon, PencilSquareIcon } from "@heroicons/react/24/solid";
+import {
+  FlagIcon,
+  PencilSquareIcon,
+  UserGroupIcon,
+} from "@heroicons/react/24/solid";
 import {
   getPriorityStyle,
   getStatusStyle,
@@ -25,11 +35,10 @@ import { renderContentSafely } from "../../utils/contentRenderer";
 import RateCaseModal from "../modals/caseModals/RateCaseModal";
 import CaseRatingDisplay from "./CaseRatingDisplay";
 import { IReadBy } from "../../db/interfaces";
-import { EyeIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { EyeIcon } from "@heroicons/react/24/outline";
 import CaseReadByModal from "../modals/caseModals/CaseReadByModal";
 import CaseDialog from "../modals/caseModals/CaseDialog";
-import ConfirmActionDialog from "../modals/ConfirmActionDialog";
-import UserLink from "../global/links/UserLink";
+import CaseGuestsModal from "../modals/caseModals/CaseGuestsModal";
 import { useRemoveCaseGuest } from "../../graphql/hooks/case";
 
 interface ICaseInfoProps {
@@ -52,6 +61,7 @@ interface ICaseInfoProps {
   rights: string[];
   readBy?: IReadBy[];
   guests?: IUser[];
+  history?: ICaseHistory[];
 }
 
 const CaseInfo: React.FC<ICaseInfoProps> = ({
@@ -74,6 +84,7 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
   error,
   readBy = [],
   guests = [],
+  history = [],
 }) => {
   const { t } = useTranslation("dashboard");
 
@@ -83,7 +94,7 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
   const [isRatingModalOpen, setRatingModalOpen] = useState(false);
   // 2. ADD STATE FOR THE NEW MODAL
   const [isReadByModalOpen, setReadByModalOpen] = useState(false);
-  const [guestToRemove, setGuestToRemove] = useState<IUser | null>(null);
+  const [isGuestsModalOpen, setGuestsModalOpen] = useState(false);
   const { removeCaseGuest, loading: isRemovingGuest } =
     useRemoveCaseGuest(caseNumber);
 
@@ -346,57 +357,45 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
               </span>
             </div>
 
-            {/* Guests: users granted access by being mentioned */}
+            {/* Users granted access by being mentioned; the names are
+                listed in a modal so a case with many of them stays compact */}
             {guests.length > 0 && (
               <div className={`${caseBoxClasses} flex-col bg-white`}>
-                <span className={labelTextClass}>{t("guests", "Гости")}:</span>
-                <span className="flex flex-wrap gap-1">
-                  {guests.map((guest) => (
-                    <span
-                      key={guest._id}
-                      className="inline-flex items-center gap-0.5"
-                      title={t("guest_access_hint", "Гост-достъп чрез споменаване")}
-                    >
-                      <UserLink user={guest} />
-                      {canManageGuests && (
-                        <button
-                          type="button"
-                          onClick={() => setGuestToRemove(guest)}
-                          disabled={isRemovingGuest}
-                          title={t("remove_guest", "Премахни гост-достъпа")}
-                          className="rounded p-0.5 text-gray-400 hover:bg-red-100 hover:text-red-600 hover:cursor-pointer disabled:opacity-50"
-                        >
-                          <XMarkIcon className="h-3.5 w-3.5" />
-                        </button>
-                      )}
-                    </span>
-                  ))}
+                <span className={labelTextClass}>
+                  {t("accessible_also_for", "Достъпен и за")}:
                 </span>
+                <button
+                  type="button"
+                  onClick={() => setGuestsModalOpen(true)}
+                  title={t(
+                    "accessible_also_for_hint",
+                    "Потребители, получили достъп чрез споменаване"
+                  )}
+                  className="inline-flex items-center gap-1.5 self-start rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-800 hover:bg-amber-100 hover:cursor-pointer"
+                >
+                  <UserGroupIcon className="h-4 w-4" />
+                  {t("guest_users", { count: guests.length })}
+                </button>
               </div>
             )}
           </div>
         </div>
       </div>
 
-      <ConfirmActionDialog
-        isOpen={guestToRemove !== null}
-        onOpenChange={(open) => {
-          if (!open) setGuestToRemove(null);
-        }}
-        onConfirm={async () => {
-          if (!guestToRemove) return;
+      <CaseGuestsModal
+        isOpen={isGuestsModalOpen}
+        onClose={() => setGuestsModalOpen(false)}
+        guests={guests}
+        history={history}
+        canManage={canManageGuests}
+        isRemoving={isRemovingGuest}
+        onRemove={async (guest) => {
           try {
-            await removeCaseGuest(caseId, guestToRemove._id);
+            await removeCaseGuest(caseId, guest._id);
           } catch (err) {
             console.error("Failed to remove case guest:", err);
-          } finally {
-            setGuestToRemove(null);
           }
         }}
-        title={t("remove_guest", "Премахни гост-достъпа")}
-        description={`${guestToRemove?.name || ""} ще спре да вижда сигнал #${caseNumber}. Това се записва в историята на сигнала.`}
-        confirmButtonText={t("remove_guest_confirm", "Премахни")}
-        isDestructiveAction
       />
 
       <RateCaseModal

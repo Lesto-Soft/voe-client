@@ -96,22 +96,13 @@ const CaseSubmissionPage: React.FC = () => {
     categoryIds: selectedCategoryIds,
     categories: formCategories,
     creatorId: formState.fetchedCreatorId,
-    // with no category picked yet the dropdown explains how to get people
-    // listed instead of offering everyone as a guest
-    includeOthers: selectedCategoryIds.length > 0,
   });
   const mentionGuestOptions = {
     addCategoryLabel: t("caseSubmission.mentionPickCategory", "Избери категория"),
-    emptyHint:
-      selectedCategoryIds.length === 0
-        ? t(
-            "caseSubmission.mentionEmptyNoCategory",
-            "Изберете категория — хората от нея ще се появят тук."
-          )
-        : t(
-            "caseSubmission.mentionEmptyHint",
-            "Служителите без достъп до сигнала получават гост-достъп след потвърждение."
-          ),
+    emptyHint: t(
+      "caseSubmission.mentionEmptyHint",
+      "Търсят се всички служители по име и потребителско име."
+    ),
     onAddCategory:
       formState.selectedCategories.length < MAX_CASE_CATEGORIES
         ? (categoryId: string) => {

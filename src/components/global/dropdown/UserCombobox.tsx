@@ -17,6 +17,8 @@ interface UserComboboxProps {
   placeholder?: string;
   allowUnassign?: boolean;
   unassignLabel?: string;
+  /** Rendered at the right end of the label row, e.g. a shortcut button */
+  labelAction?: React.ReactNode;
 }
 
 const UserCombobox: React.FC<UserComboboxProps> = ({
@@ -26,6 +28,7 @@ const UserCombobox: React.FC<UserComboboxProps> = ({
   placeholder = "Търси потребител...",
   allowUnassign = true,
   unassignLabel = "-- Без възложен --",
+  labelAction,
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
@@ -152,10 +155,15 @@ const UserCombobox: React.FC<UserComboboxProps> = ({
 
   return (
     <div ref={containerRef} className="relative">
-      {label && (
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          {label}
-        </label>
+      {(label || labelAction) && (
+        <div className="flex items-center justify-between gap-2 mb-1">
+          {label && (
+            <label className="block text-sm font-medium text-gray-700">
+              {label}
+            </label>
+          )}
+          {labelAction}
+        </div>
       )}
 
       {/* Selected user display / search input */}

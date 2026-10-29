@@ -4,8 +4,6 @@ import React, { useState, useEffect, useRef } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import * as AlertDialog from "@radix-ui/react-alert-dialog";
 import {
-  LightBulbIcon,
-  ExclamationTriangleIcon,
   XMarkIcon,
   ExclamationCircleIcon,
 } from "@heroicons/react/24/solid";
@@ -14,6 +12,7 @@ import { CASE_TYPE } from "../../../utils/GLOBAL_PARAMETERS";
 import { useTranslation } from "react-i18next";
 import SuccessConfirmationModal from "../SuccessConfirmationModal";
 import CaseForm from "../../forms/CaseForm";
+import SubmissionTypeIcon from "../../global/SubmissionTypeIcon";
 // Import the hook
 import { useFileHandler } from "../../../hooks/useFileHandler";
 
@@ -142,10 +141,11 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
       (props.mode === "edit" ? props.initialData.type : props.caseType) ===
       "SUGGESTION";
 
-    const icon = isSuggestion ? (
-      <LightBulbIcon className="h-7 w-7 mr-3 text-green-500 inline-block" />
-    ) : (
-      <ExclamationTriangleIcon className="h-7 w-7 mr-3 text-red-500 inline-block" />
+    const icon = (
+      <SubmissionTypeIcon
+        type={isSuggestion ? "suggestion" : "problem"}
+        className="mr-3"
+      />
     );
     const modeText =
       props.mode === "edit"

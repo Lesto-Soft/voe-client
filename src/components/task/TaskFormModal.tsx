@@ -4,7 +4,7 @@ import DatePicker, { registerLocale } from "react-datepicker";
 import { bg } from "date-fns/locale/bg";
 import {
   XMarkIcon,
-  ClipboardDocumentCheckIcon,
+  UserIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
 } from "@heroicons/react/24/outline";
@@ -16,6 +16,7 @@ import { GET_LEAN_USERS } from "../../graphql/query/user";
 import CaseAnswerSelector from "./CaseAnswerSelector";
 import UnifiedEditor from "../forms/partials/UnifiedRichTextEditor";
 import UserCombobox from "../global/dropdown/UserCombobox";
+import SubmissionTypeIcon from "../global/SubmissionTypeIcon";
 import ConfirmActionDialog from "../modals/ConfirmActionDialog";
 import { stripHtmlTags } from "../../utils/contentRenderer";
 
@@ -272,8 +273,8 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
         >
           {/* Header */}
           <div className="flex-shrink-0 flex items-center justify-between border-b border-gray-200 px-6 py-4">
-            <Dialog.Title className="flex items-center gap-2 text-lg font-semibold text-gray-900">
-              <ClipboardDocumentCheckIcon className="h-6 w-6 text-rose-500" />
+            <Dialog.Title className="flex items-center gap-3 text-lg font-semibold text-gray-900">
+              <SubmissionTypeIcon type="task" />
               {mode === "create" ? "Нова задача" : "Редактиране на задача"}
             </Dialog.Title>
             <Dialog.Close asChild>
@@ -441,6 +442,18 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
                 label="Възложи на"
                 placeholder="Търси потребител..."
                 allowUnassign
+                labelAction={
+                  assigneeId !== currentUser._id && (
+                    <button
+                      type="button"
+                      onClick={() => setAssigneeId(currentUser._id)}
+                      className="inline-flex items-center gap-1 rounded-md border border-blue-200 bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700 hover:bg-blue-100 cursor-pointer"
+                    >
+                      <UserIcon className="h-3.5 w-3.5" />
+                      Възложи на мен
+                    </button>
+                  )
+                }
               />
             )}
 

@@ -6,7 +6,12 @@ import UserLink from "../global/links/UserLink";
 import UserAvatar from "../cards/UserAvatar";
 import { endpoint } from "../../db/config";
 import UserCombobox from "../global/dropdown/UserCombobox";
-import { UserPlusIcon, XMarkIcon, CheckIcon } from "@heroicons/react/24/solid";
+import {
+  UserIcon,
+  UserPlusIcon,
+  XMarkIcon,
+  CheckIcon,
+} from "@heroicons/react/24/solid";
 
 interface TaskAssigneeChangerProps {
   taskId: string;
@@ -83,8 +88,19 @@ const TaskAssigneeChanger: React.FC<TaskAssigneeChangerProps> = ({
         allowUnassign
       />
 
-      {/* Save/Cancel buttons */}
-      <div className="flex justify-end gap-2">
+      {/* Assign-to-me shortcut, then Save/Cancel */}
+      <div className="flex items-center justify-end gap-2">
+        {selectedUserId !== currentUser._id && (
+          <button
+            type="button"
+            onClick={() => setSelectedUserId(currentUser._id)}
+            disabled={loading}
+            className="mr-auto flex items-center gap-1 rounded-md border border-blue-200 bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-700 hover:bg-blue-100 transition-colors cursor-pointer"
+          >
+            <UserIcon className="h-3.5 w-3.5" />
+            Възложи на мен
+          </button>
+        )}
         <button
           onClick={handleCancel}
           disabled={loading}

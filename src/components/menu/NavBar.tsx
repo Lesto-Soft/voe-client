@@ -176,7 +176,6 @@ const NavBar: React.FC<{ me: IMe }> = ({ me }) => {
   const isAdmin = me.role._id === ROLES.ADMIN;
   const isExpert = me.role._id === ROLES.EXPERT;
   const isManagerExpert = isExpert && me.managed_categories.length > 0;
-  const canCreateTask = isAdmin || isExpert;
 
   return (
     <div className="bg-gradient-to-r z-20 from-gray-100 to-gray-200 shadow-md relative max-w-full h-[6rem]">
@@ -221,15 +220,13 @@ const NavBar: React.FC<{ me: IMe }> = ({ me }) => {
                 </CaseDialog>
               </>
             )}
-            {canCreateTask && (
-              <button
-                title={t("new_task", "Нова Задача")}
-                onClick={() => setIsCreateTaskModalOpen(true)}
-                className="hover:cursor-pointer p-2 bg-blue-600 text-white rounded-md shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75 transition-transform transform hover:scale-110"
-              >
-                <ClipboardDocumentCheckIcon className="h-5 w-5" />
-              </button>
-            )}
+            <button
+              title={t("new_task", "Нова Задача")}
+              onClick={() => setIsCreateTaskModalOpen(true)}
+              className="hover:cursor-pointer p-2 bg-blue-600 text-white rounded-md shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75 transition-transform transform hover:scale-110"
+            >
+              <ClipboardDocumentCheckIcon className="h-5 w-5" />
+            </button>
           </div>
         </div>
 

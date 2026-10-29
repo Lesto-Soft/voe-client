@@ -27,6 +27,7 @@ import ResetPassword from "../pages/ResetPassword";
 import DashboardPage from "../pages/Dashboard";
 import TasksPage from "../pages/Tasks";
 import TaskDetailPage from "../pages/TaskDetail";
+import NewTaskPage from "../pages/NewTask";
 import SettingsPage from "../pages/Settings";
 
 const AppLayout = () => {
@@ -105,6 +106,7 @@ export const mainRouter = createBrowserRouter([
     children: [
       { path: "/dashboard", element: <DashboardPage /> },
       { path: "/tasks", element: <TasksPage /> },
+      { path: "/tasks/new", element: <NewTaskPage /> },
       { path: "/tasks/:taskNumber", element: <TaskDetailPage /> },
       {
         path: "/user-management",

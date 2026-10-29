@@ -6,11 +6,13 @@ import { useTranslation } from "react-i18next";
 import {
   LightBulbIcon,
   ExclamationTriangleIcon,
+  ClipboardDocumentCheckIcon,
+  InformationCircleIcon,
 } from "@heroicons/react/24/solid";
 import ForgotPasswordModal from "../components/modals/ForgotPasswordModal";
 import PasswordInput from "../components/ui/PasswordInput";
 
-const FormHeader = ({ subtitleKey }: { subtitleKey: string }) => {
+const FormHeader = ({ subtitleKey }: { subtitleKey: string | null }) => {
   const { t } = useTranslation();
   return (
     <div className="mb-6 w-full text-center">
@@ -19,18 +21,24 @@ const FormHeader = ({ subtitleKey }: { subtitleKey: string }) => {
         {" "}
         {t("home.title")}
       </h1>
-      <p className="italic text-lg my-3 text-gray-600 max-w-md mx-auto">
-        {" "}
-        {t(subtitleKey)}
-      </p>
+      {subtitleKey && (
+        <p className="italic text-lg my-3 text-gray-600 max-w-md mx-auto">
+          {t(subtitleKey)}
+        </p>
+      )}
     </div>
   );
 };
 
+// Where a successful login on the home page leads
+type LoginIntent = "profile" | "task";
+
 const CaseForm = ({
-  setIsLogin,
+  onLogin,
+  onCreateTask,
 }: {
-  setIsLogin: React.Dispatch<React.SetStateAction<boolean>>;
+  onLogin: () => void;
+  onCreateTask: () => void;
 }) => {
   const FORM_SECTION_MIN_HEIGHT = "min-h-55";
   const { t } = useTranslation("home");
@@ -39,6 +47,17 @@ const CaseForm = ({
       <div
         className={`flex flex-col justify-center items-stretch space-y-4 ${FORM_SECTION_MIN_HEIGHT}`}
       >
+        <div>
+          <Link
+            to="/submit-case?type=suggestion"
+            className="flex items-center gap-x-4 group"
+          >
+            <LightBulbIcon className="h-10 w-10 text-btnGreen group-hover:scale-110 transition-transform duration-300" />
+            <button className="bg-btnGreen hover:bg-green-700 active:bg-green-500 hover:cursor-pointer text-white rounded-lg w-full py-3 px-5 uppercase font-bold shadow-md lg:text-2xl transition-all duration-300">
+              {t("home.suggestion")}
+            </button>
+          </Link>
+        </div>
         <div>
           <Link
             to={`/submit-case?type=problem`}
@@ -51,21 +70,22 @@ const CaseForm = ({
           </Link>
         </div>
         <div>
-          <Link
-            to="/submit-case?type=suggestion"
-            className="flex items-center gap-x-4 group"
+          <button
+            type="button"
+            onClick={onCreateTask}
+            className="flex items-center gap-x-4 group w-full hover:cursor-pointer"
           >
-            <LightBulbIcon className="h-10 w-10 text-btnGreen group-hover:scale-110 transition-transform duration-300" />
-            <button className="bg-btnGreen hover:bg-green-700 active:bg-green-500 hover:cursor-pointer text-white rounded-lg w-full py-3 px-5 uppercase font-bold shadow-md lg:text-2xl transition-all duration-300">
-              {t("home.suggestion")}
-            </button>
-          </Link>
+            <ClipboardDocumentCheckIcon className="h-10 w-10 text-blue-600 group-hover:scale-110 transition-transform duration-300" />
+            <span className="bg-blue-600 group-hover:bg-blue-800 group-active:bg-blue-500 text-white rounded-lg w-full py-3 px-5 uppercase font-bold shadow-md lg:text-2xl transition-all duration-300">
+              {t("home.task")}
+            </span>
+          </button>
         </div>
       </div>
       <div className="mt-2 w-full text-center">
         <button
           className="text-gray-600 hover:text-gray-700 font-medium transition-all duration-300 hover:cursor-pointer"
-          onClick={() => setIsLogin(true)}
+          onClick={onLogin}
         >
           {t("home.enterYourProfile")} &rarr;
         </button>
@@ -76,8 +96,10 @@ const CaseForm = ({
 
 const LoginForm = ({
   setIsLogin,
+  intent,
 }: {
   setIsLogin: React.Dispatch<React.SetStateAction<boolean>>;
+  intent: LoginIntent;
 }) => {
   const navigate = useNavigate();
   const { t } = useTranslation("home");
@@ -105,7 +127,7 @@ const LoginForm = ({
       );
       setIsLoading(false);
       if (response.data.message === "Login successful") {
-        navigate("/dashboard");
+        navigate(intent === "task" ? "/tasks/new" : "/dashboard");
       } else {
         setError(response.data.message || "Login failed");
       }
@@ -139,6 +161,15 @@ const LoginForm = ({
           onSubmit={handleLoginSubmit}
           className={`flex flex-col justify-center items-center space-y-4 ${FORM_SECTION_MIN_HEIGHT}`}
         >
+          {intent === "task" && (
+            <div
+              role="status"
+              className="lg:w-88 w-full flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-left text-sm text-blue-800"
+            >
+              <InformationCircleIcon className="h-5 w-5 flex-shrink-0 mt-0.5" />
+              <span>{t("home.taskLoginRequired")}</span>
+            </div>
+          )}
           <div className="lg:w-88 w-full">
             <input
               type="text"
@@ -194,7 +225,7 @@ const LoginForm = ({
             disabled={isLoading}
             className="text-gray-600 hover:text-gray-700 font-medium transition-all duration-300 hover:cursor-pointer disabled:opacity-50"
           >
-            &larr; {t("home.submitCase")}
+            &larr; {t("home.back")}
           </button>
         </div>
       </div>
@@ -209,7 +240,17 @@ const showEuFunding = import.meta.env.VITE_SHOW_EU_FUNDING === "true";
 
 const Home = () => {
   const [isLogin, setIsLogin] = useState(false);
-  const subtitleKey = isLogin ? "home.enterYourProfile" : "home.subtitle";
+  const [loginIntent, setLoginIntent] = useState<LoginIntent>("profile");
+  const openLogin = (intent: LoginIntent) => {
+    setLoginIntent(intent);
+    setIsLogin(true);
+  };
+  // the three buttons speak for themselves; only the login forms get a line
+  const subtitleKey = !isLogin
+    ? null
+    : loginIntent === "task"
+      ? "home.loginToCreateTask"
+      : "home.enterYourProfile";
 
   return (
     <div className="h-screen flex flex-col">
@@ -240,9 +281,12 @@ const Home = () => {
 
           <div className="w-full max-w-sm">
             {isLogin ? (
-              <LoginForm setIsLogin={setIsLogin} />
+              <LoginForm setIsLogin={setIsLogin} intent={loginIntent} />
             ) : (
-              <CaseForm setIsLogin={setIsLogin} />
+              <CaseForm
+                onLogin={() => openLogin("profile")}
+                onCreateTask={() => openLogin("task")}
+              />
             )}
           </div>
         </div>

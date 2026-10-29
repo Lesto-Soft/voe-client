@@ -200,6 +200,37 @@ const CaseHistoryContent: React.FC<{
                   )}
                 </div>
               )}
+
+              {((h.added_guests?.length ?? 0) > 0 ||
+                (h.removed_guests?.length ?? 0) > 0) && (
+                <div className="space-y-1">
+                  <div className="text-gray-500 font-bold underline text-sm mb-1">
+                    {t("guests", "Достъпен и за")}:
+                  </div>
+                  {(h.added_guests?.length ?? 0) > 0 && (
+                    <div className="flex items-center flex-wrap gap-1">
+                      <span className="text-xs text-gray-500">
+                        {t("guest_access_granted", "Добавени:")}
+                      </span>
+                      {(h.added_guests || []).map((guest) => (
+                        <UserLink key={guest._id} user={guest} />
+                      ))}
+                    </div>
+                  )}
+                  {(h.removed_guests?.length ?? 0) > 0 && (
+                    <div className="flex items-center flex-wrap gap-1">
+                      <span className="text-xs text-gray-500">
+                        {t("guest_access_revoked", "Премахнати:")}
+                      </span>
+                      {(h.removed_guests || []).map((guest) => (
+                        <span key={guest._id} className="line-through opacity-70">
+                          <UserLink user={guest} />
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </li>
         );

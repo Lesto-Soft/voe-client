@@ -122,20 +122,29 @@ const MenuBar: React.FC<MenuBarProps> = ({
             )}
           </button>
         ))}
-        {(type !== "case" || !hideAttach) && (
-          <div className="w-[1px] h-6 bg-gray-300 mx-1 self-center" />
-        )}
-        {type !== "case" && (
-          <button
-            type="button"
-            disabled={disabled}
-            onClick={() => editor.chain().focus().insertContent(" @").run()}
-            title={t("rte.mention")}
-            className="p-2 text-blue-600 hover:bg-blue-100 rounded-md cursor-pointer"
-          >
-            <AtSymbolIcon className="w-5 h-5" />
-          </button>
-        )}
+        <div className="w-[1px] h-6 bg-gray-300 mx-1 self-center" />
+        <button
+          type="button"
+          disabled={disabled}
+          // keep the editor focused so the suggestion list opens right away
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => {
+            // a mention needs whitespace (or the line start) before the @
+            const { from } = editor.state.selection;
+            const before = editor.state.doc.textBetween(
+              Math.max(0, from - 1),
+              from,
+              "\n",
+              "\n",
+            );
+            const trigger = before === "" || /\s/.test(before) ? "@" : " @";
+            editor.chain().focus().insertContent(trigger).run();
+          }}
+          title={t("rte.mention")}
+          className="p-2 text-blue-600 hover:bg-blue-100 rounded-md cursor-pointer"
+        >
+          <AtSymbolIcon className="w-5 h-5" />
+        </button>
         {!hideAttach && (
           <button
             type="button"

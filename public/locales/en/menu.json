@@ -55,6 +55,7 @@
     "mention_in_answer": "<1>{{username}}</1> mentioned you in their answer",
     "mention_in_comment": "<1>{{username}}</1> mentioned you in their comment",
     "mention_in_answer_comment": "<1>{{username}}</1> mentioned you in a comment on answer",
+    "mention_in_case": "<1>{{username}}</1> mentioned you in case <1>#{{caseNumber}}</1>",
     "mark_as_read": "Mark as read",
     "mark_as_unread": "Mark as unread",
     "delete_notification": "Delete notification",

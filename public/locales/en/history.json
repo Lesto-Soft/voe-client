@@ -14,6 +14,9 @@
   "HIGH": "HIGH",
   "priority": "Priority",
   "categories": "Categories",
+  "guests": "Also accessible to",
+  "guest_access_granted": "Added:",
+  "guest_access_revoked": "Removed:",
   "PROBLEM": "PROBLEM",
   "SUGGESTION": "SUGGESTION",
   "type": "Type"

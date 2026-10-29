@@ -6,6 +6,9 @@ import "react-toastify/dist/ReactToastify.css";
 
 import { useGetActiveCategories } from "../graphql/hooks/category";
 import { useCreateCase } from "../graphql/hooks/case";
+import { useMentionTiers } from "../hooks/useMentionTiers";
+import { MentionGuestContext } from "../context/MentionGuestContext";
+import { MAX_CASE_CATEGORIES } from "../utils/GLOBAL_PARAMETERS";
 import { useCaseFormState } from "../components/features/caseSubmission/hooks/useCaseFormState";
 import { FormCategory } from "../components/features/caseSubmission/types";
 
@@ -80,6 +83,35 @@ const CaseSubmissionPage: React.FC = () => {
 
   const [isHelpModalOpen, setIsHelpModalOpen] = useState<boolean>(false);
 
+  // Mention suggestions follow the selected categories; other users may still
+  // be mentioned and receive guest access after a confirmation step
+  const selectedCategoryIds = useMemo(
+    () =>
+      formCategories
+        .filter((cat) => formState.selectedCategories.includes(cat.name))
+        .map((cat) => cat._id),
+    [formCategories, formState.selectedCategories]
+  );
+  const mentions = useMentionTiers({
+    categoryIds: selectedCategoryIds,
+    categories: formCategories,
+    creatorId: formState.fetchedCreatorId,
+  });
+  const mentionGuestOptions = {
+    addCategoryLabel: t("caseSubmission.mentionPickCategory", "Избери категория"),
+    emptyHint: t(
+      "caseSubmission.mentionEmptyHint",
+      "Търсят се всички служители по име и потребителско име."
+    ),
+    onAddCategory:
+      formState.selectedCategories.length < MAX_CASE_CATEGORIES
+        ? (categoryId: string) => {
+            const category = formCategories.find((cat) => cat._id === categoryId);
+            if (category) formState.toggleCategory(category.name);
+          }
+        : undefined,
+  };
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowSkeleton(false);
@@ -134,43 +166,46 @@ const CaseSubmissionPage: React.FC = () => {
           }
           submitText={t("caseSubmission.submitButton")}
         />
-        <form
-          id="case-form"
-          className="contents"
-          onSubmit={formState.handleSubmit}
-        >
-          <CaseSubmissionLeftPanel
-            t={t}
-            usernameInput={formState.usernameInput}
-            handleUsernameChange={formState.handleUsernameChange}
-            isUserLoading={formState.isUserLoading}
-            userLookupError={formState.userLookupError}
-            notFoundUsername={formState.notFoundUsername}
-            fetchedName={formState.fetchedName}
-            isAnonymous={formState.isAnonymous}
-            onToggleAnonymous={formState.toggleAnonymous}
-            content={formState.content}
-            onContentChange={formState.setContent}
-            priority={formState.priority}
-            onPriorityChange={formState.setPriority}
-            // Нови пропове за UnifiedEditor
-            attachments={formState.attachments}
-            setAttachments={formState.setAttachments}
-            onProcessingChange={setIsProcessingFiles}
-            isSending={formState.isSubmittingForm || createCaseLoadingHook}
-          />
+        <MentionGuestContext.Provider value={mentionGuestOptions}>
+          <form
+            id="case-form"
+            className="contents"
+            onSubmit={formState.handleSubmit}
+          >
+            <CaseSubmissionLeftPanel
+              t={t}
+              usernameInput={formState.usernameInput}
+              handleUsernameChange={formState.handleUsernameChange}
+              isUserLoading={formState.isUserLoading}
+              userLookupError={formState.userLookupError}
+              notFoundUsername={formState.notFoundUsername}
+              fetchedName={formState.fetchedName}
+              isAnonymous={formState.isAnonymous}
+              onToggleAnonymous={formState.toggleAnonymous}
+              content={formState.content}
+              onContentChange={formState.setContent}
+              priority={formState.priority}
+              onPriorityChange={formState.setPriority}
+              mentions={mentions}
+              // Нови пропове за UnifiedEditor
+              attachments={formState.attachments}
+              setAttachments={formState.setAttachments}
+              onProcessingChange={setIsProcessingFiles}
+              isSending={formState.isSubmittingForm || createCaseLoadingHook}
+            />
 
-          <CaseSubmissionRightPanel
-            t={t}
-            categoryList={formCategories}
-            selectedCategories={formState.selectedCategories}
-            toggleCategory={formState.toggleCategory}
-            getCategoryClass={formState.getCategoryClass}
-            attachments={formState.attachments}
-            onAttachmentsChange={formState.setAttachments}
-            onProcessingChange={setIsProcessingFiles} // ДОБАВЕНО: Предаваме състоянието за лоудъра
-          />
-        </form>
+            <CaseSubmissionRightPanel
+              t={t}
+              categoryList={formCategories}
+              selectedCategories={formState.selectedCategories}
+              toggleCategory={formState.toggleCategory}
+              getCategoryClass={formState.getCategoryClass}
+              attachments={formState.attachments}
+              onAttachmentsChange={formState.setAttachments}
+              onProcessingChange={setIsProcessingFiles} // ДОБАВЕНО: Предаваме състоянието за лоудъра
+            />
+          </form>
+        </MentionGuestContext.Provider>
       </div>
 
       <HelpModal

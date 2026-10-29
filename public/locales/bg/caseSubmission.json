@@ -19,6 +19,8 @@
     "fullNamePlaceholder": "(автоматично)",
     "descriptionLabel": "Описание",
     "descriptionPlaceholder": "Описание...",
+    "mentionPickCategory": "Избери категория",
+    "mentionEmptyHint": "Търсят се всички служители по име и потребителско име.",
     "attachmentsLabel": "Прикачени файлове ({{count}} / {{max}}) (макс. {{maxSize}} MB всеки)",
     "priorityLabel": "Приоритет",
     "categoriesLabel": "Категории",

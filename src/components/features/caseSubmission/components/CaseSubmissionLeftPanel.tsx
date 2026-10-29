@@ -5,6 +5,7 @@ import { ApolloError } from "@apollo/client";
 import UnifiedRichTextEditor from "../../../forms/partials/UnifiedRichTextEditor";
 import { CASE_CONTENT } from "../../../../utils/GLOBAL_PARAMETERS";
 import { CreateCaseMutationInput } from "../types";
+import type { MentionUser } from "../../../forms/partials/TextEditor/MentionSuggestion";
 
 interface CaseSubmissionLeftPanelProps {
   t: TFunction<"caseSubmission", undefined>;
@@ -25,6 +26,7 @@ interface CaseSubmissionLeftPanelProps {
   setAttachments: React.Dispatch<React.SetStateAction<File[]>>;
   onProcessingChange: (processing: boolean) => void;
   isSending: boolean;
+  mentions?: MentionUser[];
 }
 
 const CaseSubmissionLeftPanel: React.FC<CaseSubmissionLeftPanelProps> = ({
@@ -45,6 +47,7 @@ const CaseSubmissionLeftPanel: React.FC<CaseSubmissionLeftPanelProps> = ({
   setAttachments,
   onProcessingChange,
   isSending,
+  mentions,
 }) => {
   const priorityOptions = [
     { labelKey: "caseSubmission.priority.low", value: "LOW", color: "#009b00" },
@@ -164,6 +167,7 @@ const CaseSubmissionLeftPanel: React.FC<CaseSubmissionLeftPanelProps> = ({
           minLength={CASE_CONTENT.MIN}
           maxLength={CASE_CONTENT.MAX}
           type="case"
+          mentions={mentions}
           hideSideButtons={true}
           isSending={isSending}
           onProcessingChange={onProcessingChange}

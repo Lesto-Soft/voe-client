@@ -87,6 +87,8 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
         return <BanknotesIcon className="h-5 w-5 text-green-500" />;
       case "mention_in_answer":
         return <AtSymbolIcon className="h-5 w-5 text-green-600" />;
+      case "mention_in_case":
+        return <AtSymbolIcon className="h-5 w-5 text-blue-600" />;
       case "mention_in_comment":
         return <AtSymbolIcon className="h-5 w-5 text-purple-600" />;
       case "mention_in_answer_comment":

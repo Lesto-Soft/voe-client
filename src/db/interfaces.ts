@@ -16,6 +16,7 @@ export interface ICase {
   readBy?: IReadBy[]; // MODIFIED
   history?: ICaseHistory[];
   tasks?: ITask[];
+  guests?: IUser[];
   last_update?: string;
 }
 
@@ -143,6 +144,8 @@ export interface ICaseHistory {
   new_type?: string;
   old_categories: ICategory[];
   new_categories: ICategory[];
+  added_guests?: IUser[];
+  removed_guests?: IUser[];
 }
 
 export interface IReadBy {

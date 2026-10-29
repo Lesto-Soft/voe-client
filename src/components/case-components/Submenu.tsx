@@ -374,8 +374,12 @@ const Submenu: React.FC<SubmenuProps> = ({
     setCaseCommentAttachments([]); // Add this
   };
 
-  const isCreatorAndNothingElse =
-    userRights.length === 1 && userRights.includes("creator");
+  // creators and guests only read and comment: no history tab, no answers
+  const isParticipantOnly =
+    userRights.length > 0 &&
+    userRights.every(
+      (right) => right === USER_RIGHTS.CREATOR || right === USER_RIGHTS.GUEST,
+    );
 
   const isExampleCase = caseData.case_number === EXAMPLE_CASE_NUMBER;
   const isAdmin = userRights.includes(USER_RIGHTS.ADMIN);
@@ -431,18 +435,20 @@ const Submenu: React.FC<SubmenuProps> = ({
     },
   ];
 
-  if (isCreatorAndNothingElse) {
+  if (isParticipantOnly) {
     // Remove history tab (index 3) for creators who have no other rights
     submenu.splice(3, 1);
   }
 
   const visibleAnswers = (caseData.answers || []).filter((answer) => {
-    const isMentionedInAnswer =
-      answer.content?.includes(`data-id="${me.username}"`) ?? false;
+    // mention tags carry the user _id in data-id (older content: the username)
+    const mentionsMe = (html?: string) =>
+      !!html &&
+      (html.includes(`data-id="${me._id}"`) ||
+        html.includes(`data-id="${me.username}"`));
+    const isMentionedInAnswer = mentionsMe(answer.content);
     const isMentionedInComment =
-      answer.comments?.some((comment) =>
-        comment.content?.includes(`data-id="${me.username}"`),
-      ) ?? false;
+      answer.comments?.some((comment) => mentionsMe(comment.content)) ?? false;
 
     return (
       answer.approved ||

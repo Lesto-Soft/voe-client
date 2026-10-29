@@ -6,6 +6,7 @@ import {
   UPDATE_CASE,
   MARK_CASE_AS_READ,
   TOGGLE_CASE_READ_STATUS,
+  REMOVE_CASE_GUEST,
 } from "../mutation/case"; // RATE_CASE removed from imports
 import {
   COUNT_CASES,
@@ -455,4 +456,21 @@ export const useToggleCaseReadStatus = (
   };
 
   return { toggleReadStatus, loading, error };
+};
+
+export const useRemoveCaseGuest = (caseNumber: number) => {
+  const [removeCaseGuestMutation, { loading, error }] = useMutation(
+    REMOVE_CASE_GUEST,
+    {
+      refetchQueries: [
+        { query: GET_CASE_BY_CASE_NUMBER, variables: { caseNumber } },
+      ],
+      awaitRefetchQueries: true,
+    }
+  );
+
+  const removeCaseGuest = (caseId: string, userId: string) =>
+    removeCaseGuestMutation({ variables: { caseId, userId } });
+
+  return { removeCaseGuest, loading, error };
 };

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   LightBulbIcon,
   ExclamationTriangleIcon,
@@ -9,6 +9,8 @@ import { useUpdateCase, useCreateCase } from "../../graphql/hooks/case";
 import { getTextLength } from "../../utils/contentRenderer";
 import UnifiedEditor from "./partials/UnifiedRichTextEditor"; // Новият компонент
 import { CASE_CONTENT } from "../../utils/GLOBAL_PARAMETERS";
+import { useMentionTiers } from "../../hooks/useMentionTiers";
+import { MentionGuestContext } from "../../context/MentionGuestContext";
 
 const MAX_SELECTED_CATEGORIES = 3;
 
@@ -65,7 +67,6 @@ type CaseFormProps = {
   onSubmissionError: (message: string) => void;
   onUnsavedChangesChange: (hasChanges: boolean) => void;
   t: TFunction<("dashboard" | "caseSubmission")[], undefined>;
-  mentions?: any[];
 } & (
   | {
       mode: "edit";
@@ -78,6 +79,8 @@ type CaseFormProps = {
         categories: ICategory[];
         attachments: string[];
       };
+      creatorId?: string;
+      guestIds?: string[];
     }
   | {
       mode: "create";
@@ -95,7 +98,6 @@ const CaseForm: React.FC<CaseFormProps> = (props) => {
     onSubmissionError,
     onUnsavedChangesChange,
     t,
-    mentions = [],
   } = props;
 
   const getInitialFormData = (): CaseFormData => {
@@ -129,6 +131,31 @@ const CaseForm: React.FC<CaseFormProps> = (props) => {
   );
   const { createCase, loading: isCreating } = useCreateCase();
   const isLoading = isUpdating || isCreating;
+
+  // Mention tiers follow the categories currently selected in the form
+  const mentions = useMentionTiers({
+    categoryIds: formData.categoryIds,
+    categories: availableCategories,
+    creatorId: props.mode === "edit" ? props.creatorId : me._id,
+    guestIds: props.mode === "edit" ? props.guestIds : undefined,
+  });
+  const mentionGuestOptions = useMemo(
+    () => ({
+      addCategoryLabel: "Избери категория",
+      emptyHint: "Търсят се всички служители по име и потребителско име.",
+      onAddCategory:
+        formData.categoryIds.length < MAX_SELECTED_CATEGORIES
+          ? (categoryId: string) =>
+              setFormData((prev) =>
+                prev.categoryIds.includes(categoryId) ||
+                prev.categoryIds.length >= MAX_SELECTED_CATEGORIES
+                  ? prev
+                  : { ...prev, categoryIds: [...prev.categoryIds, categoryId] },
+              )
+          : undefined,
+    }),
+    [formData.categoryIds],
+  );
   const textLength = getTextLength(formData.content);
 
   useEffect(() => {
@@ -214,65 +241,120 @@ const CaseForm: React.FC<CaseFormProps> = (props) => {
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="flex-grow flex flex-col overflow-hidden"
-    >
-      <div className="overflow-y-auto flex-grow">
-        <div className="space-y-6 p-6 bg-white shadow">
-          <div>
-            <p className="text-sm font-medium mb-2 text-gray-700">
-              {t("content")} <span className="text-red-500">*</span>
-            </p>
-            <UnifiedEditor
-              content={formData.content}
-              onContentChange={(html) => {
-                setFormData((prev) => ({ ...prev, content: html }));
-                onFormError(null);
-              }}
-              attachments={newAttachments}
-              setAttachments={setNewAttachments}
-              existingAttachments={existingAttachments}
-              setExistingAttachments={setExistingAttachments}
-              mentions={mentions}
-              placeholder={
-                t("caseSubmission:caseSubmission.placeholder") ||
-                "Напишете съдържание..."
-              }
-              minLength={CASE_CONTENT.MIN}
-              maxLength={CASE_CONTENT.MAX}
-              hideSideButtons={true}
-              onProcessingChange={setIsProcessing}
-              caseId={props.mode === "edit" ? props.caseId : undefined}
-              type="case"
-              editorClassName="h-[180px] min-h-[180px] max-h-[180px]"
-              enableHeightToggle
-            />
-          </div>
+    <MentionGuestContext.Provider value={mentionGuestOptions}>
+      <form
+        onSubmit={handleSubmit}
+        className="flex-grow flex flex-col overflow-hidden"
+      >
+        <div className="overflow-y-auto flex-grow">
+          <div className="space-y-6 p-6 bg-white shadow">
+            <div>
+              <p className="text-sm font-medium mb-2 text-gray-700">
+                {t("content")} <span className="text-red-500">*</span>
+              </p>
+              <UnifiedEditor
+                content={formData.content}
+                onContentChange={(html) => {
+                  setFormData((prev) => ({ ...prev, content: html }));
+                  onFormError(null);
+                }}
+                attachments={newAttachments}
+                setAttachments={setNewAttachments}
+                existingAttachments={existingAttachments}
+                setExistingAttachments={setExistingAttachments}
+                mentions={mentions}
+                placeholder={
+                  t("caseSubmission:caseSubmission.placeholder") ||
+                  "Напишете съдържание..."
+                }
+                minLength={CASE_CONTENT.MIN}
+                maxLength={CASE_CONTENT.MAX}
+                hideSideButtons={true}
+                onProcessingChange={setIsProcessing}
+                caseId={props.mode === "edit" ? props.caseId : undefined}
+                type="case"
+                editorClassName="h-[180px] min-h-[180px] max-h-[180px]"
+                enableHeightToggle
+              />
+            </div>
 
-          {/* ОРИГИНАЛЕН ДИЗАЙН ЗА ТИП И ПРИОРИТЕТ */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-6">
-            {props.mode === "edit" && (
+            {/* ОРИГИНАЛЕН ДИЗАЙН ЗА ТИП И ПРИОРИТЕТ */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-6">
+              {props.mode === "edit" && (
+                <div>
+                  <p className="text-sm font-medium mb-3 text-gray-700">
+                    {t("type", "Тип на сигнала")}{" "}
+                    <span className="text-red-500">*</span>
+                  </p>
+                  <div className="flex flex-wrap gap-x-6 gap-y-2 p-3 rounded-lg items-center">
+                    {[
+                      {
+                        value: "PROBLEM",
+                        color: "#c30505",
+                        bgText: "Проблем",
+                        Icon: ExclamationTriangleIcon,
+                      },
+                      {
+                        value: "SUGGESTION",
+                        color: "#009b00",
+                        bgText: "Предложение",
+                        Icon: LightBulbIcon,
+                      },
+                    ].map(({ value, color, bgText, Icon }) => (
+                      <label
+                        key={value}
+                        className="flex items-center gap-2 cursor-pointer hover:opacity-80"
+                      >
+                        <input
+                          type="radio"
+                          value={value}
+                          checked={formData.type === value}
+                          onChange={() =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              type: value as any,
+                            }))
+                          }
+                          style={{ accentColor: color }}
+                          className="w-5 h-5 cursor-pointer"
+                          name="type"
+                          disabled={isCompressing}
+                        />
+                        <Icon className="h-5 w-5" style={{ color }} />
+                        <span className="text-sm text-gray-700 font-semibold">
+                          {bgText}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
               <div>
                 <p className="text-sm font-medium mb-3 text-gray-700">
-                  {t("type", "Тип на сигнала")}{" "}
+                  {t("caseSubmission:caseSubmission.priorityLabel", "Приоритет")}{" "}
                   <span className="text-red-500">*</span>
                 </p>
                 <div className="flex flex-wrap gap-x-6 gap-y-2 p-3 rounded-lg items-center">
                   {[
                     {
-                      value: "PROBLEM",
-                      color: "#c30505",
-                      bgText: "Проблем",
-                      Icon: ExclamationTriangleIcon,
+                      value: "LOW",
+                      color: "#009b00",
+                      bgText: "Нисък",
+                      key: "low",
                     },
                     {
-                      value: "SUGGESTION",
-                      color: "#009b00",
-                      bgText: "Предложение",
-                      Icon: LightBulbIcon,
+                      value: "MEDIUM",
+                      color: "#ad8600",
+                      bgText: "Среден",
+                      key: "medium",
                     },
-                  ].map(({ value, color, bgText, Icon }) => (
+                    {
+                      value: "HIGH",
+                      color: "#c30505",
+                      bgText: "Висок",
+                      key: "high",
+                    },
+                  ].map(({ value, color, bgText, key }) => (
                     <label
                       key={value}
                       className="flex items-center gap-2 cursor-pointer hover:opacity-80"
@@ -280,162 +362,109 @@ const CaseForm: React.FC<CaseFormProps> = (props) => {
                       <input
                         type="radio"
                         value={value}
-                        checked={formData.type === value}
+                        checked={formData.priority === value}
                         onChange={() =>
                           setFormData((prev) => ({
                             ...prev,
-                            type: value as any,
+                            priority: value as any,
                           }))
                         }
                         style={{ accentColor: color }}
                         className="w-5 h-5 cursor-pointer"
-                        name="type"
+                        name="priority"
                         disabled={isCompressing}
                       />
-                      <Icon className="h-5 w-5" style={{ color }} />
-                      <span className="text-sm text-gray-700 font-semibold">
-                        {bgText}
+                      <span className="text-sm text-gray-700">
+                        {t(`caseSubmission:caseSubmission.priority.${key}`) ||
+                          bgText}{" "}
                       </span>
                     </label>
                   ))}
                 </div>
               </div>
-            )}
+            </div>
+
+            {/* ОРИГИНАЛНИ КАТЕГОРИИ */}
             <div>
               <p className="text-sm font-medium mb-3 text-gray-700">
-                {t("caseSubmission:caseSubmission.priorityLabel", "Приоритет")}{" "}
-                <span className="text-red-500">*</span>
+                {`Категории`} <span className="text-red-500">*</span>{" "}
+                {`(максимум ${MAX_SELECTED_CATEGORIES})`}
               </p>
-              <div className="flex flex-wrap gap-x-6 gap-y-2 p-3 rounded-lg items-center">
-                {[
-                  {
-                    value: "LOW",
-                    color: "#009b00",
-                    bgText: "Нисък",
-                    key: "low",
-                  },
-                  {
-                    value: "MEDIUM",
-                    color: "#ad8600",
-                    bgText: "Среден",
-                    key: "medium",
-                  },
-                  {
-                    value: "HIGH",
-                    color: "#c30505",
-                    bgText: "Висок",
-                    key: "high",
-                  },
-                ].map(({ value, color, bgText, key }) => (
-                  <label
-                    key={value}
-                    className="flex items-center gap-2 cursor-pointer hover:opacity-80"
+              <div className="flex flex-wrap gap-2">
+                {availableCategories.map((cat) => (
+                  <button
+                    key={cat._id}
+                    type="button"
+                    onClick={() => {
+                      setFormData((prev) => {
+                        const isSelected = prev.categoryIds.includes(cat._id);
+                        if (isSelected)
+                          return {
+                            ...prev,
+                            categoryIds: prev.categoryIds.filter(
+                              (id) => id !== cat._id,
+                            ),
+                          };
+                        if (prev.categoryIds.length < MAX_SELECTED_CATEGORIES)
+                          return {
+                            ...prev,
+                            categoryIds: [...prev.categoryIds, cat._id],
+                          };
+                        return prev;
+                      });
+                      onFormError(null);
+                    }}
+                    className={getCategoryClass(
+                      cat._id,
+                      formData.categoryIds,
+                      formData.type,
+                    )}
+                    disabled={
+                      (!formData.categoryIds.includes(cat._id) &&
+                        formData.categoryIds.length >= MAX_SELECTED_CATEGORIES) ||
+                      isCompressing
+                    }
                   >
-                    <input
-                      type="radio"
-                      value={value}
-                      checked={formData.priority === value}
-                      onChange={() =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          priority: value as any,
-                        }))
-                      }
-                      style={{ accentColor: color }}
-                      className="w-5 h-5 cursor-pointer"
-                      name="priority"
-                      disabled={isCompressing}
-                    />
-                    <span className="text-sm text-gray-700">
-                      {t(`caseSubmission:caseSubmission.priority.${key}`) ||
-                        bgText}{" "}
-                    </span>
-                  </label>
+                    {cat.name}
+                  </button>
                 ))}
               </div>
             </div>
           </div>
+        </div>
 
-          {/* ОРИГИНАЛНИ КАТЕГОРИИ */}
-          <div>
-            <p className="text-sm font-medium mb-3 text-gray-700">
-              {`Категории`} <span className="text-red-500">*</span>{" "}
-              {`(максимум ${MAX_SELECTED_CATEGORIES})`}
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {availableCategories.map((cat) => (
-                <button
-                  key={cat._id}
-                  type="button"
-                  onClick={() => {
-                    setFormData((prev) => {
-                      const isSelected = prev.categoryIds.includes(cat._id);
-                      if (isSelected)
-                        return {
-                          ...prev,
-                          categoryIds: prev.categoryIds.filter(
-                            (id) => id !== cat._id,
-                          ),
-                        };
-                      if (prev.categoryIds.length < MAX_SELECTED_CATEGORIES)
-                        return {
-                          ...prev,
-                          categoryIds: [...prev.categoryIds, cat._id],
-                        };
-                      return prev;
-                    });
-                    onFormError(null);
-                  }}
-                  className={getCategoryClass(
-                    cat._id,
-                    formData.categoryIds,
-                    formData.type,
-                  )}
-                  disabled={
-                    (!formData.categoryIds.includes(cat._id) &&
-                      formData.categoryIds.length >= MAX_SELECTED_CATEGORIES) ||
-                    isCompressing
-                  }
-                >
-                  {cat.name}
-                </button>
-              ))}
-            </div>
+        {/* ОРИГИНАЛЕН ФУТЪР */}
+        <div className="flex-shrink-0 p-3 bg-stone-100 border-t border-gray-300 rounded-b-xl sticky bottom-0">
+          <div className="flex justify-center gap-3">
+            <button
+              type="button"
+              onClick={onCancel}
+              disabled={isCompressing}
+              className="w-34 px-6 py-2 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:outline-none hover:cursor-pointer disabled:opacity-50"
+            >
+              {t("cancel", "Отказ")}
+            </button>
+            <button
+              type="submit"
+              disabled={
+                isLoading || isCompressing || textLength < CASE_CONTENT.MIN
+              }
+              className={`${getSubmitButtonClass(
+                formData.type,
+              )} hover:cursor-pointer w-34 text-center disabled:opacity-70 disabled:cursor-not-allowed`}
+            >
+              {isCompressing
+                ? t("processingFiles", "Обработка...")
+                : isLoading
+                  ? t("saving", "Записване...")
+                  : props.mode === "edit"
+                    ? t("saveChanges", "Запази")
+                    : t("submit", "Изпрати")}
+            </button>
           </div>
         </div>
-      </div>
-
-      {/* ОРИГИНАЛЕН ФУТЪР */}
-      <div className="flex-shrink-0 p-3 bg-stone-100 border-t border-gray-300 rounded-b-xl sticky bottom-0">
-        <div className="flex justify-center gap-3">
-          <button
-            type="button"
-            onClick={onCancel}
-            disabled={isCompressing}
-            className="w-34 px-6 py-2 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:outline-none hover:cursor-pointer disabled:opacity-50"
-          >
-            {t("cancel", "Отказ")}
-          </button>
-          <button
-            type="submit"
-            disabled={
-              isLoading || isCompressing || textLength < CASE_CONTENT.MIN
-            }
-            className={`${getSubmitButtonClass(
-              formData.type,
-            )} hover:cursor-pointer w-34 text-center disabled:opacity-70 disabled:cursor-not-allowed`}
-          >
-            {isCompressing
-              ? t("processingFiles", "Обработка...")
-              : isLoading
-                ? t("saving", "Записване...")
-                : props.mode === "edit"
-                  ? t("saveChanges", "Запази")
-                  : t("submit", "Изпрати")}
-          </button>
-        </div>
-      </div>
-    </form>
+      </form>
+    </MentionGuestContext.Provider>
   );
 };
 

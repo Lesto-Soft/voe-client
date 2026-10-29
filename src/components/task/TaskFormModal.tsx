@@ -266,8 +266,6 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
           }}
           className="fixed top-1/2 left-1/2 z-50 w-[95vw] max-w-2xl -translate-x-1/2 -translate-y-1/2 rounded-lg bg-white shadow-xl focus:outline-none max-h-[90vh] flex flex-col"
         >
-          {/* Anchor so the mention popup mounts inside the dialog and stays clickable */}
-          <div data-mention-container="true" className="relative z-[1001]" />
           {/* Header */}
           <div className="flex-shrink-0 flex items-center justify-between border-b border-gray-200 px-6 py-4">
             <Dialog.Title className="flex items-center gap-2 text-lg font-semibold text-gray-900">

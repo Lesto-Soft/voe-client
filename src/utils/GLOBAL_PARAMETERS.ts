@@ -42,10 +42,12 @@ export const USER_RIGHTS = {
   MANAGER: "manager",
   EXPERT: "expert",
   ADMIN: "admin",
+  GUEST: "guest",
 };
 
 export const ANONYMOUS_USERNAME = "emp000";
 export const EXAMPLE_CASE_NUMBER = 0;
+export const MAX_CASE_CATEGORIES = 3;
 export const EXAMPLE_TASK_NUMBER = 0;
 
 export const UPLOAD_MAX_SIZE_MB = 1;

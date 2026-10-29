@@ -73,6 +73,16 @@ const caseHistoryFragment = gql`
   fragment CaseHistoryFragment on CaseHistory {
     _id
     date_change
+    added_guests {
+      _id
+      name
+      username
+    }
+    removed_guests {
+      _id
+      name
+      username
+    }
     user {
       name
       username
@@ -345,6 +355,13 @@ export const GET_CASE_BY_CASE_NUMBER = gql`
       }
       tasks {
         _id
+      }
+      guests {
+        _id
+        name
+        username
+        avatar
+        position
       }
     }
   }

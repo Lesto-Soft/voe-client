@@ -19,6 +19,8 @@
     "fullNamePlaceholder": "(automatic)",
     "descriptionLabel": "Description",
     "descriptionPlaceholder": "Description...",
+    "mentionPickCategory": "Pick category",
+    "mentionEmptyHint": "All employees are searched by name and username.",
     "attachmentsLabel": "Attachments ({{count}} / {{max}}) (max. {{maxSize}} MB each)",
     "priorityLabel": "Priority",
     "categoriesLabel": "Categories",

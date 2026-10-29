@@ -35,6 +35,8 @@ type CaseDialogProps = {
         categories: ICategory[];
         attachments: string[];
       };
+      creatorId?: string;
+      guestIds?: string[];
     }
   | {
       mode: "create";
@@ -183,6 +185,11 @@ const CaseDialog: React.FC<CaseDialogProps> = (props) => {
               onMouseUp={handleBackdropMouseUp}
             />
             <Dialog.Content
+              onPointerDownOutside={(e) => {
+                if ((e.target as Element)?.closest("[data-tippy-root]")) {
+                  e.preventDefault();
+                }
+              }}
               onMouseDown={(e) => e.stopPropagation()} // Prevent backdrop click logic when clicking inside content
               className="fixed z-50 left-1/2 top-1/2 w-[90vw] max-w-6xl -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-stone-100 shadow-lg focus:outline-none max-h-[90vh] flex flex-col"
             >

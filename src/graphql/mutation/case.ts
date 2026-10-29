@@ -65,3 +65,11 @@ export const TOGGLE_CASE_READ_STATUS = gql`
     toggleCaseReadStatus(caseId: $caseId)
   }
 `;
+
+export const REMOVE_CASE_GUEST = gql`
+  mutation RemoveCaseGuest($caseId: ID!, $userId: ID!) {
+    removeCaseGuest(caseId: $caseId, userId: $userId) {
+      _id
+    }
+  }
+`;

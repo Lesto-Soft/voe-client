@@ -2,9 +2,19 @@
 
 import React, { useState, useMemo, useRef, useEffect } from "react";
 import { ApolloError } from "@apollo/client";
-import { ICategory, IMe, IMetricScore } from "../../db/interfaces";
+import {
+  ICaseHistory,
+  ICategory,
+  IMe,
+  IMetricScore,
+  IUser,
+} from "../../db/interfaces";
 import CategoryLink from "../global/links/CategoryLink";
-import { FlagIcon, PencilSquareIcon } from "@heroicons/react/24/solid";
+import {
+  FlagIcon,
+  PencilSquareIcon,
+  UserGroupIcon,
+} from "@heroicons/react/24/solid";
 import {
   getPriorityStyle,
   getStatusStyle,
@@ -28,6 +38,8 @@ import { IReadBy } from "../../db/interfaces";
 import { EyeIcon } from "@heroicons/react/24/outline";
 import CaseReadByModal from "../modals/caseModals/CaseReadByModal";
 import CaseDialog from "../modals/caseModals/CaseDialog";
+import CaseGuestsModal from "../modals/caseModals/CaseGuestsModal";
+import { useRemoveCaseGuest } from "../../graphql/hooks/case";
 
 interface ICaseInfoProps {
   content: string;
@@ -48,6 +60,8 @@ interface ICaseInfoProps {
   error?: ApolloError | undefined; // <-- ADD THIS PROP
   rights: string[];
   readBy?: IReadBy[];
+  guests?: IUser[];
+  history?: ICaseHistory[];
 }
 
 const CaseInfo: React.FC<ICaseInfoProps> = ({
@@ -69,6 +83,8 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
   isLoading,
   error,
   readBy = [],
+  guests = [],
+  history = [],
 }) => {
   const { t } = useTranslation("dashboard");
 
@@ -78,6 +94,9 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
   const [isRatingModalOpen, setRatingModalOpen] = useState(false);
   // 2. ADD STATE FOR THE NEW MODAL
   const [isReadByModalOpen, setReadByModalOpen] = useState(false);
+  const [isGuestsModalOpen, setGuestsModalOpen] = useState(false);
+  const { removeCaseGuest, loading: isRemovingGuest } =
+    useRemoveCaseGuest(caseNumber);
 
   useEffect(() => {
     const container = scrollContainerRef.current;
@@ -139,6 +158,8 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
     rights.includes("expert");
 
   const isCurrentUserCreator = creator?._id === me._id;
+  const canManageGuests =
+    rights.includes(USER_RIGHTS.ADMIN) || rights.includes(USER_RIGHTS.MANAGER);
 
   const caseInitialDataForEdit = {
     content,
@@ -200,6 +221,8 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
                       mode="edit"
                       caseId={caseId}
                       caseNumber={caseNumber}
+                      creatorId={creator?._id}
+                      guestIds={guests.map((guest) => guest._id)}
                       initialData={{
                         content: caseInitialDataForEdit.content,
                         priority: caseInitialDataForEdit.priority,
@@ -333,9 +356,47 @@ const CaseInfo: React.FC<ICaseInfoProps> = ({
                 )}
               </span>
             </div>
+
+            {/* Users granted access by being mentioned; the names are
+                listed in a modal so a case with many of them stays compact */}
+            {guests.length > 0 && (
+              <div className={`${caseBoxClasses} flex-col bg-white`}>
+                <span className={labelTextClass}>
+                  {t("accessible_also_for", "Достъпен и за")}:
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setGuestsModalOpen(true)}
+                  title={t(
+                    "accessible_also_for_hint",
+                    "Потребители, получили достъп чрез споменаване"
+                  )}
+                  className="inline-flex items-center gap-1.5 self-start rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-800 hover:bg-amber-100 hover:cursor-pointer"
+                >
+                  <UserGroupIcon className="h-4 w-4" />
+                  {t("guest_users", { count: guests.length })}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
+
+      <CaseGuestsModal
+        isOpen={isGuestsModalOpen}
+        onClose={() => setGuestsModalOpen(false)}
+        guests={guests}
+        history={history}
+        canManage={canManageGuests}
+        isRemoving={isRemovingGuest}
+        onRemove={async (guest) => {
+          try {
+            await removeCaseGuest(caseId, guest._id);
+          } catch (err) {
+            console.error("Failed to remove case guest:", err);
+          }
+        }}
+      />
 
       <RateCaseModal
         isOpen={isRatingModalOpen}

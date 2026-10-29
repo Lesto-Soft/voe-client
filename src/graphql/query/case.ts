@@ -1,5 +1,6 @@
 // src/graphql/query/case.ts (Corrected)
 import { gql } from "@apollo/client";
+import { fiveWhyFragment, riskAssessmentFragment } from "./task";
 
 // --- Fragments ---
 
@@ -363,10 +364,18 @@ export const GET_CASE_BY_CASE_NUMBER = gql`
         avatar
         position
       }
+      fiveWhys {
+        ...FiveWhyFragment
+      }
+      riskAssessments {
+        ...RiskAssessmentFragment
+      }
     }
   }
   ${metricScoreFragment}
   ${caseHistoryFragment}
+  ${fiveWhyFragment}
+  ${riskAssessmentFragment}
   ${answerFragment}
   ${commentFragment}
 `;

@@ -17,6 +17,8 @@ export interface ICase {
   history?: ICaseHistory[];
   tasks?: ITask[];
   guests?: IUser[];
+  fiveWhys?: IFiveWhy[];
+  riskAssessments?: IRiskAssessment[];
   last_update?: string;
 }
 
@@ -302,7 +304,8 @@ export interface ITaskActivity {
 
 export interface IFiveWhy {
   _id: string;
-  task: ITask;
+  task?: ITask;
+  case?: ICase;
   whys: IWhyStep[];
   rootCause: string;
   counterMeasures: string;
@@ -313,7 +316,8 @@ export interface IFiveWhy {
 
 export interface IRiskAssessment {
   _id: string;
-  task: ITask;
+  task?: ITask;
+  case?: ICase;
   riskDescription: string;
   probability: number;
   impact: number;

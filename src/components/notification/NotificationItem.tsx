@@ -116,6 +116,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
       case "task_reopened":
         return <ArrowPathIcon className="h-5 w-5 text-orange-500" />;
       case "new_task_analysis":
+      case "new_case_analysis":
         return <BeakerIcon className="h-5 w-5 text-teal-500" />;
       case "task_assignee_changed":
         return <UserIcon className="h-5 w-5 text-blue-500" />;
@@ -192,6 +193,11 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
           }
           if (content.includes("reopen_")) {
             return navigate(`/case/${caseNumber}#answers`, {
+              state: { refetch: true },
+            });
+          }
+          if (content === "new_case_analysis") {
+            return navigate(`/case/${caseNumber}#analyses`, {
               state: { refetch: true },
             });
           }

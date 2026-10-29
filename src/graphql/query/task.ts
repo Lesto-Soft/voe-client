@@ -53,7 +53,7 @@ const taskActivityFragment = gql`
 /**
  * Five Why analysis with steps and user reference.
  */
-const fiveWhyFragment = gql`
+export const fiveWhyFragment = gql`
   fragment FiveWhyFragment on FiveWhy {
     _id
     whys {
@@ -74,7 +74,7 @@ const fiveWhyFragment = gql`
 /**
  * Risk assessment with user reference.
  */
-const riskAssessmentFragment = gql`
+export const riskAssessmentFragment = gql`
   fragment RiskAssessmentFragment on RiskAssessment {
     _id
     riskDescription

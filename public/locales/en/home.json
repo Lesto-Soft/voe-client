@@ -7,6 +7,10 @@
     "enterYourProfile": "Enter your profile",
     "enterUsernamePassword": "Enter your username and password",
     "submitCase": "Submit Case",
+    "task": "Task",
+    "taskLoginHint": "Requires login",
+    "taskLoginRequired": "To create a task you need to log in first.",
+    "loginToCreateTask": "Log in to create a task",
     "login": "Log in",
     "loggingIn": "Logging in..."
   },

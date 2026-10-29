@@ -7,6 +7,10 @@
     "enterYourProfile": "Влез в профила си",
     "enterUsernamePassword": "Въведете потребител и парола",
     "submitCase": "Подай сигнал",
+    "task": "Задача",
+    "taskLoginHint": "Изисква вход в профила",
+    "taskLoginRequired": "За да създадете задача, трябва първо да влезете в профила си.",
+    "loginToCreateTask": "Влез, за да създадеш задача",
     "login": "Влез",
     "loggingIn": "Влизане...",
     "errors": {

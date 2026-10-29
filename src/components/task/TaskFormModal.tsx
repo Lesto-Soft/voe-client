@@ -91,6 +91,8 @@ interface TaskFormModalProps {
   relatedCaseId?: string;
   initialDescription?: string;
   onSuccess?: () => void;
+  /** Called with the new task after a successful create, before closing */
+  onCreated?: (task: { _id: string; taskNumber: number }) => void;
 }
 
 const TaskFormModal: React.FC<TaskFormModalProps> = ({
@@ -101,6 +103,7 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
   relatedCaseId,
   initialDescription,
   onSuccess,
+  onCreated,
 }) => {
   const currentUser = useCurrentUser();
   const { createTask, loading: createLoading } = useCreateTask();
@@ -177,7 +180,7 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
 
     try {
       if (mode === "create") {
-        await createTask({
+        const created = await createTask({
           title: title.trim(),
           description: description || undefined,
           priority,
@@ -187,6 +190,7 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
           creator: currentUser._id,
           relatedCase: relatedCaseId,
         });
+        if (created) onCreated?.(created);
       } else if (task) {
         await updateTask(task._id, {
           title: title.trim(),

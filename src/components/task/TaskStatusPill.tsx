@@ -5,12 +5,8 @@ import { useChangeTaskStatus } from "../../graphql/hooks/task";
 import { useCurrentUser } from "../../context/UserContext";
 import ConfirmActionDialog from "../modals/ConfirmActionDialog";
 import TaskStatusBadge from "./TaskStatusBadge";
-import {
-  ChevronDownIcon,
-  ClockIcon,
-  PlayCircleIcon,
-  CheckCircleIcon,
-} from "@heroicons/react/24/outline";
+import { ChevronDownIcon } from "@heroicons/react/24/outline";
+import { TASK_STATUS_OPTIONS } from "./taskStatusOptions";
 
 interface TaskStatusPillProps {
   taskId: string;
@@ -18,28 +14,6 @@ interface TaskStatusPillProps {
   canChange: boolean;
   onStatusChanged?: () => void;
 }
-
-const statusOptions: {
-  value: TaskStatus;
-  label: string;
-  icon: React.ReactNode;
-}[] = [
-  {
-    value: TaskStatus.Todo,
-    label: "Незапочната",
-    icon: <ClockIcon className="h-4 w-4" />,
-  },
-  {
-    value: TaskStatus.InProgress,
-    label: "В процес",
-    icon: <PlayCircleIcon className="h-4 w-4" />,
-  },
-  {
-    value: TaskStatus.Done,
-    label: "Завършена",
-    icon: <CheckCircleIcon className="h-4 w-4" />,
-  },
-];
 
 const TaskStatusPill: React.FC<TaskStatusPillProps> = ({
   taskId,
@@ -93,7 +67,7 @@ const TaskStatusPill: React.FC<TaskStatusPillProps> = ({
           sideOffset={4}
           align="start"
         >
-          {statusOptions.map((option) => {
+          {TASK_STATUS_OPTIONS.map((option) => {
             const isCurrent = option.value === currentStatus;
             return (
               <DropdownMenu.Item
@@ -124,7 +98,7 @@ const TaskStatusPill: React.FC<TaskStatusPillProps> = ({
         onConfirm={() => { if (pendingStatus) { handleStatusChange(pendingStatus); setPendingStatus(null); } }}
         title="Промяна на статус"
         description={`Сигурни ли сте, че искате да промените статуса на задачата на "${
-          statusOptions.find(o => o.value === pendingStatus)?.label || ""
+          TASK_STATUS_OPTIONS.find(o => o.value === pendingStatus)?.label || ""
         }"?`}
         confirmButtonText="Промени"
         cancelButtonText="Отмени"

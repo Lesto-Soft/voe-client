@@ -8,8 +8,13 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
 } from "@heroicons/react/24/outline";
-import { ITask, CasePriority } from "../../db/interfaces";
-import { useCreateTask, useUpdateTask } from "../../graphql/hooks/task";
+import { ITask, CasePriority, TaskStatus } from "../../db/interfaces";
+import {
+  useAssignTask,
+  useChangeTaskStatus,
+  useCreateTask,
+  useUpdateTask,
+} from "../../graphql/hooks/task";
 import { useCurrentUser } from "../../context/UserContext";
 import { useQuery } from "@apollo/client";
 import { GET_LEAN_USERS } from "../../graphql/query/user";
@@ -17,6 +22,7 @@ import CaseAnswerSelector from "./CaseAnswerSelector";
 import UnifiedEditor from "../forms/partials/UnifiedRichTextEditor";
 import UserCombobox from "../global/dropdown/UserCombobox";
 import SubmissionTypeIcon from "../global/SubmissionTypeIcon";
+import { TASK_STATUS_OPTIONS } from "./taskStatusOptions";
 import ConfirmActionDialog from "../modals/ConfirmActionDialog";
 import { stripHtmlTags } from "../../utils/contentRenderer";
 
@@ -109,6 +115,10 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
   const currentUser = useCurrentUser();
   const { createTask, loading: createLoading } = useCreateTask();
   const { updateTask, loading: updateLoading } = useUpdateTask(task?._id);
+  const { assignTask, loading: assignLoading } = useAssignTask(task?._id);
+  const { changeTaskStatus, loading: statusLoading } = useChangeTaskStatus(
+    task?._id,
+  );
 
   // Mention suggestions for the description editor — mentioned users are
   // granted access to the task server-side
@@ -131,6 +141,7 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
   const [priority, setPriority] = useState<CasePriority>(CasePriority.Medium);
   const [dueDate, setDueDate] = useState<Date | null>(null);
   const [assigneeId, setAssigneeId] = useState<string>("");
+  const [status, setStatus] = useState<TaskStatus>(TaskStatus.Todo);
   const [error, setError] = useState<string | null>(null);
   const [attachments, setAttachments] = useState<File[]>([]);
   const [existingAttachments, setExistingAttachments] = useState<string[]>([]);
@@ -150,6 +161,7 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
         setPriority(task.priority);
         setDueDate(task.dueDate ? new Date(task.dueDate) : null);
         setAssigneeId(task.assignee?._id || "");
+        setStatus(task.status);
         setExistingAttachments(task.attachments || []);
       } else {
         // Reset form for create mode, use initialDescription if provided
@@ -158,6 +170,7 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
         setPriority(CasePriority.Medium);
         setDueDate(null);
         setAssigneeId("");
+        setStatus(TaskStatus.Todo);
         setExistingAttachments([]);
       }
       setAttachments([]);
@@ -202,6 +215,15 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
           deletedAttachments:
             removedAttachments.length > 0 ? removedAttachments : undefined,
         }, currentUser._id);
+        // Assignee and status go through their own mutations, as on the task
+        // page, so the activity log and notifications are the same; the
+        // assignee first, so a completion notice reaches the new assignee
+        if (assigneeId !== (task.assignee?._id || "")) {
+          await assignTask(task._id, assigneeId || undefined, currentUser._id);
+        }
+        if (status !== task.status) {
+          await changeTaskStatus(task._id, status, currentUser._id);
+        }
       }
 
       onOpenChange(false);
@@ -211,7 +233,8 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
     }
   };
 
-  const isLoading = createLoading || updateLoading;
+  const isLoading =
+    createLoading || updateLoading || assignLoading || statusLoading;
 
   // Dirty check: compare the form against the values it was initialized with
   // (mirrors the init effect above). Rich-text descriptions are compared as
@@ -224,6 +247,7 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
         priority: task.priority,
         dueDate: task.dueDate ? new Date(task.dueDate).getTime() : null,
         assigneeId: task.assignee?._id || "",
+        status: task.status,
       };
     }
     return {
@@ -232,6 +256,7 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
       priority: CasePriority.Medium,
       dueDate: null as number | null,
       assigneeId: "",
+      status: TaskStatus.Todo,
     };
   }, [mode, task, initialDescription]);
 
@@ -242,6 +267,7 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
     priority !== baseline.priority ||
     (dueDate ? dueDate.getTime() : null) !== baseline.dueDate ||
     assigneeId !== baseline.assigneeId ||
+    status !== baseline.status ||
     attachments.length > 0 ||
     existingAttachments.length !== originalExistingAttachments.length;
 
@@ -391,6 +417,36 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
               </div>
             </div>
 
+            {/* Status - edit mode only; new tasks start as TODO */}
+            {mode === "edit" && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Статус
+                </label>
+                <div className="flex flex-wrap gap-x-6 gap-y-2 items-center">
+                  {TASK_STATUS_OPTIONS.map(({ value, label, icon }) => (
+                    <label
+                      key={value}
+                      className="flex items-center gap-2 cursor-pointer hover:opacity-80"
+                    >
+                      <input
+                        type="radio"
+                        value={value}
+                        checked={status === value}
+                        onChange={() => setStatus(value)}
+                        className="w-5 h-5 cursor-pointer accent-blue-600"
+                        name="task-status"
+                      />
+                      <span className="flex items-center gap-1.5 text-sm text-gray-700">
+                        {icon}
+                        {label}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Due Date with DatePicker */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -434,28 +490,26 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({
               </div>
             </div>
 
-            {/* Assignee - only show in create mode */}
-            {mode === "create" && (
-              <UserCombobox
-                selectedUserId={assigneeId}
-                onSelect={setAssigneeId}
-                label="Възложи на"
-                placeholder="Търси потребител..."
-                allowUnassign
-                labelAction={
-                  assigneeId !== currentUser._id && (
-                    <button
-                      type="button"
-                      onClick={() => setAssigneeId(currentUser._id)}
-                      className="inline-flex items-center gap-1 rounded-md border border-blue-200 bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700 hover:bg-blue-100 cursor-pointer"
-                    >
-                      <UserIcon className="h-3.5 w-3.5" />
-                      Възложи на мен
-                    </button>
-                  )
-                }
-              />
-            )}
+            {/* Assignee */}
+            <UserCombobox
+              selectedUserId={assigneeId}
+              onSelect={setAssigneeId}
+              label="Възложи на"
+              placeholder="Търси потребител..."
+              allowUnassign
+              labelAction={
+                assigneeId !== currentUser._id && (
+                  <button
+                    type="button"
+                    onClick={() => setAssigneeId(currentUser._id)}
+                    className="inline-flex items-center gap-1 rounded-md border border-blue-200 bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700 hover:bg-blue-100 cursor-pointer"
+                  >
+                    <UserIcon className="h-3.5 w-3.5" />
+                    Възложи на мен
+                  </button>
+                )
+              }
+            />
 
           </div>
 

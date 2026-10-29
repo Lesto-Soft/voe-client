@@ -52,8 +52,8 @@ const CaseForm = ({
             to="/submit-case?type=suggestion"
             className="flex items-center gap-x-4 group"
           >
-            <LightBulbIcon className="h-10 w-10 text-btnGreen group-hover:scale-110 transition-transform duration-300" />
-            <button className="bg-btnGreen hover:bg-green-700 active:bg-green-500 hover:cursor-pointer text-white rounded-lg w-full py-3 px-5 uppercase font-bold shadow-md lg:text-2xl transition-all duration-300">
+            <LightBulbIcon className="h-10 w-10 text-green-600 group-hover:scale-110 transition-transform duration-300" />
+            <button className="bg-green-600 hover:bg-green-700 active:bg-green-500 hover:cursor-pointer text-white rounded-lg w-full py-3 px-5 uppercase font-bold shadow-md lg:text-2xl transition-all duration-300">
               {t("home.suggestion")}
             </button>
           </Link>
@@ -76,7 +76,7 @@ const CaseForm = ({
             className="flex items-center gap-x-4 group w-full hover:cursor-pointer"
           >
             <ClipboardDocumentCheckIcon className="h-10 w-10 text-blue-600 group-hover:scale-110 transition-transform duration-300" />
-            <span className="bg-blue-600 group-hover:bg-blue-800 group-active:bg-blue-500 text-white rounded-lg w-full py-3 px-5 uppercase font-bold shadow-md lg:text-2xl transition-all duration-300">
+            <span className="bg-blue-600 group-hover:bg-blue-700 group-active:bg-blue-500 text-white rounded-lg w-full py-3 px-5 uppercase font-bold shadow-md lg:text-2xl transition-all duration-300">
               {t("home.task")}
             </span>
           </button>
